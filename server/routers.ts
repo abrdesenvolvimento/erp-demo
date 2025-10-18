@@ -88,9 +88,25 @@ export const appRouter = router({
         active: z.boolean().optional().default(true),
         isComposite: z.boolean().optional().default(false),
         notes: z.string().optional(),
+        prices: z.record(z.string(), z.string()).optional(),
       }))
       .mutation(async ({ input }) => {
-        const id = await db.createProduct(input);
+        const { prices, ...productData } = input;
+        const id = await db.createProduct(productData);
+        
+        // Salvar preços por canal
+        if (prices) {
+          for (const [channelId, price] of Object.entries(prices)) {
+            if (price && parseFloat(price) > 0) {
+              await db.setProductPrice({
+                productId: id,
+                channelId: parseInt(channelId),
+                price: price,
+              });
+            }
+          }
+        }
+        
         return { id, success: true };
       }),
     
@@ -100,12 +116,35 @@ export const appRouter = router({
         data: z.object({
           name: z.string().optional(),
           categoryId: z.number().optional(),
+          subcategoryId: z.number().optional(),
+          ean: z.string().optional(),
+          uom: z.string().optional(),
           minStock: z.number().optional(),
+          currentStock: z.number().optional(),
+          avgCost: z.string().optional(),
+          isComposite: z.boolean().optional(),
+          notes: z.string().optional(),
           active: z.boolean().optional(),
+          prices: z.record(z.string(), z.string()).optional(),
         }),
       }))
       .mutation(async ({ input }) => {
-        await db.updateProduct(input.id, input.data);
+        const { prices, ...updateData } = input.data;
+        await db.updateProduct(input.id, updateData);
+        
+        // Atualizar preços por canal
+        if (prices) {
+          for (const [channelId, price] of Object.entries(prices)) {
+            if (price && parseFloat(price) > 0) {
+              await db.setProductPrice({
+                productId: input.id,
+                channelId: parseInt(channelId),
+                price: price,
+              });
+            }
+          }
+        }
+        
         return { success: true };
       }),
     

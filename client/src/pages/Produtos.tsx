@@ -90,7 +90,7 @@ export default function Produtos() {
     categoryId: "",
     subcategoryId: "",
     ean: "",
-    uom: "UN",
+    uom: "UN" as string,
     minStock: "0",
     currentStock: "0",
     avgCost: "0.00",
@@ -113,7 +113,7 @@ export default function Produtos() {
       categoryId: product.categoryId?.toString() || "",
       subcategoryId: product.subcategoryId?.toString() || "",
       ean: product.ean || "",
-      uom: product.uom || "UN",
+      uom: (product.uom || "UN") as string,
       minStock: product.minStock?.toString() || "0",
       currentStock: product.currentStock?.toString() || "0",
       avgCost: product.avgCost || "0.00",
@@ -143,6 +143,7 @@ export default function Produtos() {
       avgCost: formData.avgCost,
       isComposite: formData.isComposite,
       notes: formData.notes || undefined,
+      prices: formData.prices,
     };
 
     if (editingProduct) {
