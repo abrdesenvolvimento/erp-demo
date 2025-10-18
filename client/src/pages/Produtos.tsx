@@ -30,19 +30,35 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { trpc } from "@/lib/trpc";
-import { Package, Plus, Search, AlertTriangle } from "lucide-react";
+import { Package, Plus, Search, AlertTriangle, Edit } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+
+type ProductFormData = {
+  name: string;
+  categoryId: string;
+  subcategoryId: string;
+  ean: string;
+  uom: string;
+  minStock: string;
+  currentStock: string;
+  avgCost: string;
+  isComposite: boolean;
+  notes: string;
+  prices: { [channelId: string]: string };
+};
 
 export default function Produtos() {
   const [search, setSearch] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<any>(null);
   
   const { data: products, isLoading, refetch } = trpc.products.list.useQuery({
     search: search || undefined,
   });
   
   const { data: categories } = trpc.categories.list.useQuery();
+  const { data: channels } = trpc.salesChannels.list.useQuery();
   
   const createProduct = trpc.products.create.useMutation({
     onSuccess: () => {
@@ -56,7 +72,20 @@ export default function Produtos() {
     },
   });
 
-  const [formData, setFormData] = useState({
+  const updateProduct = trpc.products.update.useMutation({
+    onSuccess: () => {
+      toast.success("Produto atualizado com sucesso!");
+      setIsDialogOpen(false);
+      setEditingProduct(null);
+      refetch();
+      resetForm();
+    },
+    onError: (error) => {
+      toast.error("Erro ao atualizar produto: " + error.message);
+    },
+  });
+
+  const initialFormData: ProductFormData = {
     name: "",
     categoryId: "",
     subcategoryId: "",
@@ -67,26 +96,43 @@ export default function Produtos() {
     avgCost: "0.00",
     isComposite: false,
     notes: "",
-  });
+    prices: {},
+  };
+
+  const [formData, setFormData] = useState<ProductFormData>(initialFormData);
 
   const resetForm = () => {
+    setFormData(initialFormData);
+    setEditingProduct(null);
+  };
+
+  const handleEdit = (product: any) => {
+    setEditingProduct(product);
     setFormData({
-      name: "",
-      categoryId: "",
-      subcategoryId: "",
-      ean: "",
-      uom: "UN",
-      minStock: "0",
-      currentStock: "0",
-      avgCost: "0.00",
-      isComposite: false,
-      notes: "",
+      name: product.name || "",
+      categoryId: product.categoryId?.toString() || "",
+      subcategoryId: product.subcategoryId?.toString() || "",
+      ean: product.ean || "",
+      uom: product.uom || "UN",
+      minStock: product.minStock?.toString() || "0",
+      currentStock: product.currentStock?.toString() || "0",
+      avgCost: product.avgCost || "0.00",
+      isComposite: product.isComposite || false,
+      notes: product.notes || "",
+      prices: {},
     });
+    setIsDialogOpen(true);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    createProduct.mutate({
+    
+    if (!formData.categoryId) {
+      toast.error("Selecione uma categoria");
+      return;
+    }
+
+    const productData = {
       name: formData.name,
       categoryId: parseInt(formData.categoryId),
       subcategoryId: formData.subcategoryId ? parseInt(formData.subcategoryId) : undefined,
@@ -97,7 +143,16 @@ export default function Produtos() {
       avgCost: formData.avgCost,
       isComposite: formData.isComposite,
       notes: formData.notes || undefined,
-    });
+    };
+
+    if (editingProduct) {
+      updateProduct.mutate({
+        id: editingProduct.id,
+        data: productData,
+      });
+    } else {
+      createProduct.mutate(productData);
+    }
   };
 
   return (
@@ -111,19 +166,26 @@ export default function Produtos() {
             </p>
           </div>
 
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <Dialog open={isDialogOpen} onOpenChange={(open) => {
+            setIsDialogOpen(open);
+            if (!open) resetForm();
+          }}>
             <DialogTrigger asChild>
               <Button>
                 <Plus className="h-4 w-4 mr-2" />
                 Novo Produto
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+            <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
               <form onSubmit={handleSubmit}>
                 <DialogHeader>
-                  <DialogTitle>Novo Produto</DialogTitle>
+                  <DialogTitle>
+                    {editingProduct ? "Editar Produto" : "Novo Produto"}
+                  </DialogTitle>
                   <DialogDescription>
-                    Cadastre um novo produto no sistema
+                    {editingProduct
+                      ? "Atualize as informações do produto"
+                      : "Cadastre um novo produto no sistema"}
                   </DialogDescription>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
@@ -148,7 +210,7 @@ export default function Produtos() {
                       <Select
                         value={formData.categoryId}
                         onValueChange={(value) =>
-                          setFormData({ ...formData, categoryId: value, subcategoryId: "" })
+                          setFormData({ ...formData, categoryId: value })
                         }
                         required
                       >
@@ -166,22 +228,15 @@ export default function Produtos() {
                     </div>
 
                     <div className="grid gap-2">
-                      <Label htmlFor="subcategory">Subcategoria</Label>
-                      <Select
+                      <Label htmlFor="subcategory">Subcategoria (ID)</Label>
+                      <Input
+                        id="subcategory"
+                        placeholder="Opcional"
                         value={formData.subcategoryId}
-                        onValueChange={(value) =>
-                          setFormData({ ...formData, subcategoryId: value })
+                        onChange={(e) =>
+                          setFormData({ ...formData, subcategoryId: e.target.value })
                         }
-                        disabled={!formData.categoryId}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="">Nenhuma</SelectItem>
-                          {/* Aqui viriam as subcategorias filtradas */}
-                        </SelectContent>
-                      </Select>
+                      />
                     </div>
                   </div>
 
@@ -263,6 +318,36 @@ export default function Produtos() {
                     </div>
                   </div>
 
+                  {/* Preços por Canal */}
+                  <div className="grid gap-2">
+                    <Label>Preços por Canal de Venda</Label>
+                    <div className="grid grid-cols-2 gap-3 p-3 border rounded-lg">
+                      {channels?.map((channel) => (
+                        <div key={channel.id} className="grid gap-1.5">
+                          <Label htmlFor={`price-${channel.id}`} className="text-sm">
+                            {channel.name}
+                          </Label>
+                          <Input
+                            id={`price-${channel.id}`}
+                            type="number"
+                            step="0.01"
+                            placeholder="0.00"
+                            value={formData.prices[channel.id] || ""}
+                            onChange={(e) =>
+                              setFormData({
+                                ...formData,
+                                prices: {
+                                  ...formData.prices,
+                                  [channel.id]: e.target.value,
+                                },
+                              })
+                            }
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
                   {/* Produto Composto */}
                   <div className="flex items-center space-x-2">
                     <Checkbox
@@ -305,8 +390,15 @@ export default function Produtos() {
                   >
                     Cancelar
                   </Button>
-                  <Button type="submit" disabled={createProduct.isPending}>
-                    {createProduct.isPending ? "Salvando..." : "Salvar Produto"}
+                  <Button 
+                    type="submit" 
+                    disabled={createProduct.isPending || updateProduct.isPending}
+                  >
+                    {createProduct.isPending || updateProduct.isPending
+                      ? "Salvando..."
+                      : editingProduct
+                      ? "Atualizar Produto"
+                      : "Salvar Produto"}
                   </Button>
                 </DialogFooter>
               </form>
@@ -346,6 +438,7 @@ export default function Produtos() {
                     <TableHead className="text-right">Custo Médio</TableHead>
                     <TableHead>Tipo</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -398,6 +491,15 @@ export default function Produtos() {
                               OK
                             </span>
                           )}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEdit(product)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
                         </TableCell>
                       </TableRow>
                     );
