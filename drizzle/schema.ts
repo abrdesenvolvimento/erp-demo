@@ -179,3 +179,72 @@ export const saleItems = mysqlTable("saleItems", {
 export type SaleItem = typeof saleItems.$inferSelect;
 export type InsertSaleItem = typeof saleItems.$inferInsert;
 
+
+// Ordens de Compra
+export const purchaseOrders = mysqlTable("purchaseOrders", {
+  id: int("id").primaryKey().autoincrement(),
+  supplierId: int("supplierId").notNull(),
+  docType: mysqlEnum("docType", ["NOTA_FISCAL", "CUPOM", "SEM_DOCUMENTO"]).notNull(),
+  docNumber: varchar("docNumber", { length: 100 }),
+  issueDate: timestamp("issueDate").notNull(),
+  postingDate: timestamp("postingDate").notNull(),
+  totalAmount: decimal("totalAmount", { precision: 10, scale: 2 }).notNull(),
+  freightCost: decimal("freightCost", { precision: 10, scale: 2 }).default("0.00"),
+  chargesCost: decimal("chargesCost", { precision: 10, scale: 2 }).default("0.00"),
+  paymentMethod: varchar("paymentMethod", { length: 50 }).notNull(),
+  dueDate: timestamp("dueDate"),
+  invoiceFilePath: varchar("invoiceFilePath", { length: 255 }),
+  status: mysqlEnum("status", ["DRAFT", "CONFIRMED", "CANCELLED"]).default("DRAFT").notNull(),
+  notes: text("notes"),
+  createdBy: varchar("createdBy", { length: 64 }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow(),
+}, (table) => ({
+  supplierIdx: index("supplier_idx").on(table.supplierId),
+  statusIdx: index("status_idx").on(table.status),
+  dateIdx: index("date_idx").on(table.postingDate),
+}));
+
+export type PurchaseOrder = typeof purchaseOrders.$inferSelect;
+export type InsertPurchaseOrder = typeof purchaseOrders.$inferInsert;
+
+// Itens de Ordem de Compra
+export const purchaseOrderItems = mysqlTable("purchaseOrderItems", {
+  id: int("id").primaryKey().autoincrement(),
+  purchaseOrderId: int("purchaseOrderId").notNull(),
+  productId: int("productId").notNull(),
+  quantity: decimal("quantity", { precision: 10, scale: 3 }).notNull(),
+  unitCost: decimal("unitCost", { precision: 10, scale: 4 }).notNull(),
+  totalCost: decimal("totalCost", { precision: 10, scale: 2 }).notNull(),
+  expiryDate: timestamp("expiryDate"),
+  createdAt: timestamp("createdAt").defaultNow(),
+}, (table) => ({
+  poIdx: index("po_idx").on(table.purchaseOrderId),
+  productIdx: index("product_idx").on(table.productId),
+}));
+
+export type PurchaseOrderItem = typeof purchaseOrderItems.$inferSelect;
+export type InsertPurchaseOrderItem = typeof purchaseOrderItems.$inferInsert;
+
+// Contas a Pagar
+export const accountsPayable = mysqlTable("accountsPayable", {
+  id: int("id").primaryKey().autoincrement(),
+  description: varchar("description", { length: 255 }).notNull(),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  dueDate: timestamp("dueDate").notNull(),
+  paidDate: timestamp("paidDate"),
+  status: mysqlEnum("status", ["PENDING", "PAID", "OVERDUE", "CANCELLED"]).default("PENDING").notNull(),
+  supplierId: int("supplierId"),
+  purchaseOrderId: int("purchaseOrderId"),
+  notes: text("notes"),
+  createdAt: timestamp("createdAt").defaultNow(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow(),
+}, (table) => ({
+  statusIdx: index("status_idx").on(table.status),
+  dueDateIdx: index("due_date_idx").on(table.dueDate),
+  supplierIdx: index("supplier_idx").on(table.supplierId),
+}));
+
+export type AccountPayable = typeof accountsPayable.$inferSelect;
+export type InsertAccountPayable = typeof accountsPayable.$inferInsert;
+

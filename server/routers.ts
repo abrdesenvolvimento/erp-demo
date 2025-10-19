@@ -298,6 +298,109 @@ export const appRouter = router({
       }),
   }),
 
+  // ==================== COMPRAS ====================
+  purchases: router({
+    list: protectedProcedure
+      .input(z.object({
+        status: z.string().optional(),
+        supplierId: z.number().optional(),
+      }).optional())
+      .query(async ({ input }) => {
+        return await db.getPurchaseOrders(input);
+      }),
+    
+    getById: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .query(async ({ input }) => {
+        return await db.getPurchaseOrderById(input.id);
+      }),
+    
+    getItems: protectedProcedure
+      .input(z.object({ purchaseOrderId: z.number() }))
+      .query(async ({ input }) => {
+        return await db.getPurchaseOrderItems(input.purchaseOrderId);
+      }),
+    
+    searchProducts: protectedProcedure
+      .input(z.object({ search: z.string() }))
+      .query(async ({ input }) => {
+        return await db.searchProducts(input.search);
+      }),
+    
+    create: protectedProcedure
+      .input(z.object({
+        supplierId: z.number(),
+        docType: z.enum(["NOTA_FISCAL", "CUPOM", "SEM_DOCUMENTO"]),
+        docNumber: z.string().optional(),
+        issueDate: z.string(),
+        postingDate: z.string(),
+        paymentMethod: z.string(),
+        dueDate: z.string().optional(),
+        freightCost: z.string().optional(),
+        chargesCost: z.string().optional(),
+        notes: z.string().optional(),
+        items: z.array(z.object({
+          productId: z.number(),
+          quantity: z.number(),
+          unitCost: z.number(),
+          expiryDate: z.string().optional(),
+        })),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const { items, ...purchaseData } = input;
+        
+        // Calcular total
+        const subtotal = items.reduce((sum, item) => 
+          sum + (item.quantity * item.unitCost), 0
+        );
+        const freightCost = parseFloat(purchaseData.freightCost || "0");
+        const chargesCost = parseFloat(purchaseData.chargesCost || "0");
+        const totalAmount = subtotal + freightCost + chargesCost;
+        
+        // Criar ordem de compra
+        const purchaseOrderId = await db.createPurchaseOrder({
+          ...purchaseData,
+          issueDate: new Date(purchaseData.issueDate),
+          postingDate: new Date(purchaseData.postingDate),
+          dueDate: purchaseData.dueDate ? new Date(purchaseData.dueDate) : null,
+          totalAmount: totalAmount.toFixed(2),
+          freightCost: freightCost.toFixed(2),
+          chargesCost: chargesCost.toFixed(2),
+          status: "DRAFT",
+          createdBy: ctx.user.id,
+        });
+        
+        // Adicionar itens
+        for (const item of items) {
+          const totalCost = item.quantity * item.unitCost;
+          await db.addPurchaseOrderItem({
+            purchaseOrderId,
+            productId: item.productId,
+            quantity: item.quantity.toString(),
+            unitCost: item.unitCost.toFixed(4),
+            totalCost: totalCost.toFixed(2),
+            expiryDate: item.expiryDate ? new Date(item.expiryDate) : null,
+          });
+        }
+        
+        return { id: purchaseOrderId, success: true };
+      }),
+    
+    confirm: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        await db.confirmPurchaseOrder(input.id);
+        return { success: true };
+      }),
+    
+    cancel: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        await db.updatePurchaseOrder(input.id, { status: "CANCELLED" });
+        return { success: true };
+      }),
+  }),
+
   // ==================== DASHBOARD ====================
   dashboard: router({
     stats: protectedProcedure.query(async () => {

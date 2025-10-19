@@ -1,4 +1,4 @@
-import { eq, and, desc, sql } from "drizzle-orm";
+import { eq, desc, or, like, and, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import { 
   InsertUser, users,
@@ -10,7 +10,10 @@ import {
   productPrices, ProductPrice, InsertProductPrice,
   partners, Partner, InsertPartner,
   sales, Sale, InsertSale,
-  saleItems, SaleItem, InsertSaleItem
+  saleItems, SaleItem, InsertSaleItem,
+  purchaseOrders, PurchaseOrder, InsertPurchaseOrder,
+  purchaseOrderItems, PurchaseOrderItem, InsertPurchaseOrderItem,
+  accountsPayable, AccountPayable, InsertAccountPayable
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -412,5 +415,162 @@ export async function getProductCompositionsWithDetails(parentProductId: number)
   .where(eq(productCompositions.parentProductId, parentProductId));
   
   return compositions;
+}
+
+
+// ==================== COMPRAS ====================
+
+export async function createPurchaseOrder(data: InsertPurchaseOrder) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.insert(purchaseOrders).values(data);
+  return result[0].insertId;
+}
+
+export async function getPurchaseOrders(filters?: { status?: string; supplierId?: number }) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  let query = db.select({
+    purchaseOrder: purchaseOrders,
+    supplier: partners
+  })
+  .from(purchaseOrders)
+  .leftJoin(partners, eq(purchaseOrders.supplierId, partners.id))
+  .orderBy(desc(purchaseOrders.createdAt));
+  
+  // Aplicar filtros se fornecidos
+  // Por simplicidade, retornando todos por enquanto
+  
+  return await query;
+}
+
+export async function getPurchaseOrderById(id: number) {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const result = await db.select({
+    purchaseOrder: purchaseOrders,
+    supplier: partners
+  })
+  .from(purchaseOrders)
+  .leftJoin(partners, eq(purchaseOrders.supplierId, partners.id))
+  .where(eq(purchaseOrders.id, id))
+  .limit(1);
+  
+  return result.length > 0 ? result[0] : null;
+}
+
+export async function updatePurchaseOrder(id: number, data: Partial<InsertPurchaseOrder>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(purchaseOrders)
+    .set(data)
+    .where(eq(purchaseOrders.id, id));
+}
+
+export async function addPurchaseOrderItem(data: InsertPurchaseOrderItem) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.insert(purchaseOrderItems).values(data);
+  return result[0].insertId;
+}
+
+export async function getPurchaseOrderItems(purchaseOrderId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const items = await db.select({
+    item: purchaseOrderItems,
+    product: products
+  })
+  .from(purchaseOrderItems)
+  .leftJoin(products, eq(purchaseOrderItems.productId, products.id))
+  .where(eq(purchaseOrderItems.purchaseOrderId, purchaseOrderId));
+  
+  return items;
+}
+
+export async function deletePurchaseOrderItems(purchaseOrderId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.delete(purchaseOrderItems)
+    .where(eq(purchaseOrderItems.purchaseOrderId, purchaseOrderId));
+}
+
+export async function confirmPurchaseOrder(purchaseOrderId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  // Buscar itens da compra
+  const items = await getPurchaseOrderItems(purchaseOrderId);
+  
+  // Atualizar estoque e custo médio para cada item
+  for (const { item, product } of items) {
+    if (!product || !item) continue;
+    
+    const currentStock = parseFloat(product.currentStock?.toString() || "0");
+    const currentAvgCost = parseFloat(product.avgCost?.toString() || "0");
+    const quantityPurchased = parseFloat(item.quantity.toString());
+    const unitCost = parseFloat(item.unitCost.toString());
+    
+    // Calcular novo estoque
+    const newStock = currentStock + quantityPurchased;
+    
+    // Calcular novo custo médio ponderado (RN-COMP-01)
+    const newAvgCost = currentStock > 0
+      ? (currentStock * currentAvgCost + quantityPurchased * unitCost) / newStock
+      : unitCost;
+    
+    // Atualizar produto
+    await updateProduct(product.id, {
+      currentStock: newStock,
+      avgCost: newAvgCost.toFixed(4)
+    });
+  }
+  
+  // Atualizar status da ordem de compra
+  await updatePurchaseOrder(purchaseOrderId, { status: "CONFIRMED" });
+  
+  // Gerar conta a pagar (RN-COMP-03)
+  const po = await getPurchaseOrderById(purchaseOrderId);
+  if (po && po.purchaseOrder) {
+    const totalAmount = parseFloat(po.purchaseOrder.totalAmount.toString());
+    const freightCost = parseFloat(po.purchaseOrder.freightCost?.toString() || "0");
+    const chargesCost = parseFloat(po.purchaseOrder.chargesCost?.toString() || "0");
+    const finalAmount = totalAmount + freightCost + chargesCost;
+    
+    await db.insert(accountsPayable).values({
+      description: `Compra #${purchaseOrderId} - ${po.supplier?.name || 'Fornecedor'}`,
+      amount: finalAmount.toFixed(2),
+      dueDate: po.purchaseOrder.dueDate || po.purchaseOrder.postingDate,
+      status: "PENDING",
+      supplierId: po.purchaseOrder.supplierId,
+      purchaseOrderId: purchaseOrderId
+    });
+  }
+}
+
+export async function searchProducts(searchTerm: string) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const term = `%${searchTerm}%`;
+  
+  const results = await db.select()
+    .from(products)
+    .where(
+      or(
+        like(products.name, term),
+        like(products.ean, term)
+      )
+    )
+    .limit(10);
+  
+  return results;
 }
 
