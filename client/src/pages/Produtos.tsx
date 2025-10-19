@@ -64,10 +64,11 @@ export default function Produtos() {
   const createProduct = trpc.products.create.useMutation({
     onSuccess: () => {
       toast.success("Produto criado com sucesso!");
-      refetch();
-      resetForm();
-      // Delay para evitar erro do React DOM
-      setTimeout(() => setIsDialogOpen(false), 100);
+      setIsDialogOpen(false);
+      setTimeout(() => {
+        refetch();
+        resetForm();
+      }, 150);
     },
     onError: (error) => {
       toast.error("Erro ao criar produto: " + error.message);
@@ -77,11 +78,12 @@ export default function Produtos() {
   const updateProduct = trpc.products.update.useMutation({
     onSuccess: () => {
       toast.success("Produto atualizado com sucesso!");
-      refetch();
-      resetForm();
-      setEditingProduct(null);
-      // Delay para evitar erro do React DOM
-      setTimeout(() => setIsDialogOpen(false), 100);
+      setIsDialogOpen(false);
+      setTimeout(() => {
+        refetch();
+        resetForm();
+        setEditingProduct(null);
+      }, 150);
     },
     onError: (error) => {
       toast.error("Erro ao atualizar produto: " + error.message);
@@ -253,7 +255,7 @@ export default function Produtos() {
                         <SelectTrigger>
                           <SelectValue placeholder="Selecione" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent position="popper" sideOffset={5}>
                           {categories?.map((cat) => (
                             <SelectItem key={cat.id} value={cat.id.toString()}>
                               {cat.name}
@@ -303,7 +305,7 @@ export default function Produtos() {
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent position="popper" sideOffset={5}>
                           <SelectItem value="UN">Unidade (UN)</SelectItem>
                           <SelectItem value="CX">Caixa (CX)</SelectItem>
                           <SelectItem value="KG">Quilograma (KG)</SelectItem>
