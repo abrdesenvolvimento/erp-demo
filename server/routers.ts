@@ -167,6 +167,25 @@ export const appRouter = router({
         const id = await db.setProductPrice(input);
         return { id, success: true };
       }),
+    
+    getCompositions: protectedProcedure
+      .input(z.object({ productId: z.number() }))
+      .query(async ({ input }) => {
+        return await db.getProductCompositionsWithDetails(input.productId);
+      }),
+    
+    setCompositions: protectedProcedure
+      .input(z.object({
+        productId: z.number(),
+        compositions: z.array(z.object({
+          childProductId: z.number(),
+          quantity: z.number(),
+        })),
+      }))
+      .mutation(async ({ input }) => {
+        await db.setProductCompositions(input.productId, input.compositions);
+        return { success: true };
+      }),
   }),
 
   // ==================== PARCEIROS ====================

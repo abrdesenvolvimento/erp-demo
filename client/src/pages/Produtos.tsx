@@ -30,9 +30,135 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { trpc } from "@/lib/trpc";
-import { Package, Plus, Search, AlertTriangle, Edit } from "lucide-react";
-import { useState } from "react";
+import { Package, Plus, Search, AlertTriangle, Edit, Trash2 } from "lucide-react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
+
+// Componente para gerenciar composições de produtos
+function CompositionsSection({ productId }: { productId: number }) {
+  const [compositions, setCompositions] = useState<any[]>([]);
+  const [newComposition, setNewComposition] = useState({ childProductId: "", quantity: "" });
+  
+  const { data: products } = trpc.products.list.useQuery({ activeOnly: true });
+  const { data: compositionsData, refetch } = trpc.products.getCompositions.useQuery({ productId });
+  const setCompositionsMutation = trpc.products.setCompositions.useMutation({
+    onSuccess: () => {
+      toast.success("Composições atualizadas!");
+      refetch();
+    },
+    onError: (error) => {
+      toast.error("Erro ao atualizar composições: " + error.message);
+    },
+  });
+  
+  useEffect(() => {
+    if (compositionsData) {
+      setCompositions(compositionsData.map((c: any) => ({
+        childProductId: c.childProduct.id,
+        quantity: c.quantity,
+        childProduct: c.childProduct
+      })));
+    }
+  }, [compositionsData]);
+  
+  const handleAddComposition = () => {
+    if (!newComposition.childProductId || !newComposition.quantity) {
+      toast.error("Selecione um produto e quantidade");
+      return;
+    }
+    
+    const product = products?.find(p => p.id === parseInt(newComposition.childProductId));
+    if (!product) return;
+    
+    setCompositions([...compositions, {
+      childProductId: parseInt(newComposition.childProductId),
+      quantity: parseInt(newComposition.quantity),
+      childProduct: product
+    }]);
+    setNewComposition({ childProductId: "", quantity: "" });
+  };
+  
+  const handleRemoveComposition = (index: number) => {
+    setCompositions(compositions.filter((_, i) => i !== index));
+  };
+  
+  const handleSaveCompositions = () => {
+    setCompositionsMutation.mutate({
+      productId,
+      compositions: compositions.map(c => ({
+        childProductId: c.childProductId,
+        quantity: c.quantity
+      }))
+    });
+  };
+  
+  return (
+    <div className="grid gap-3 p-4 border rounded-lg bg-muted/30">
+      <div className="flex items-center justify-between">
+        <Label className="text-base font-semibold">Composição do Produto</Label>
+        <Button size="sm" onClick={handleSaveCompositions} disabled={setCompositionsMutation.isPending}>
+          Salvar Composições
+        </Button>
+      </div>
+      
+      {/* Lista de composições */}
+      {compositions.length > 0 && (
+        <div className="space-y-2">
+          {compositions.map((comp, index) => (
+            <div key={index} className="flex items-center justify-between p-2 bg-background rounded border">
+              <div className="flex-1">
+                <span className="font-medium">{comp.childProduct?.name}</span>
+                <span className="text-sm text-muted-foreground ml-2">x {comp.quantity}</span>
+              </div>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => handleRemoveComposition(index)}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          ))}
+        </div>
+      )}
+      
+      {/* Adicionar nova composição */}
+      <div className="grid grid-cols-[1fr_auto_auto] gap-2">
+        <Select
+          value={newComposition.childProductId}
+          onValueChange={(value) => setNewComposition({ ...newComposition, childProductId: value })}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Selecione o produto" />
+          </SelectTrigger>
+          <SelectContent position="popper" sideOffset={5}>
+            {products?.filter(p => !p.isComposite && p.id !== productId).map((product) => (
+              <SelectItem key={product.id} value={product.id.toString()}>
+                {product.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        
+        <Input
+          type="number"
+          placeholder="Qtd"
+          value={newComposition.quantity}
+          onChange={(e) => setNewComposition({ ...newComposition, quantity: e.target.value })}
+          className="w-20"
+        />
+        
+        <Button size="sm" onClick={handleAddComposition}>
+          <Plus className="h-4 w-4" />
+        </Button>
+      </div>
+      
+      <p className="text-xs text-muted-foreground">
+        Defina quais produtos serão descontados do estoque ao vender este pack.
+      </p>
+    </div>
+  );
+}
 
 type ProductFormData = {
   name: string;
@@ -403,6 +529,11 @@ export default function Produtos() {
                       Produto Composto (Pack/Caixa)
                     </Label>
                   </div>
+
+                  {/* Composições - Mostrar apenas se for produto composto e estiver editando */}
+                  {formData.isComposite && editingProduct && (
+                    <CompositionsSection productId={editingProduct.id} />
+                  )}
 
                   {/* Observações */}
                   <div className="grid gap-2">

@@ -368,3 +368,49 @@ export async function createSale(saleData: InsertSale, items: Omit<InsertSaleIte
   return saleId;
 }
 
+
+// ==================== PRODUCT COMPOSITIONS ====================
+
+export async function getProductCompositions(parentProductId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return await db.select().from(productCompositions)
+    .where(eq(productCompositions.parentProductId, parentProductId));
+}
+
+export async function setProductCompositions(parentProductId: number, compositions: { childProductId: number, quantity: number }[]) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  // Remover composições antigas
+  await db.delete(productCompositions)
+    .where(eq(productCompositions.parentProductId, parentProductId));
+  
+  // Adicionar novas composições
+  if (compositions.length > 0) {
+    const values = compositions.map(comp => ({
+      parentProductId,
+      childProductId: comp.childProductId,
+      quantity: comp.quantity
+    }));
+    await db.insert(productCompositions).values(values);
+  }
+}
+
+export async function getProductCompositionsWithDetails(parentProductId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const compositions = await db.select({
+    id: productCompositions.id,
+    quantity: productCompositions.quantity,
+    childProduct: products
+  })
+  .from(productCompositions)
+  .leftJoin(products, eq(productCompositions.childProductId, products.id))
+  .where(eq(productCompositions.parentProductId, parentProductId));
+  
+  return compositions;
+}
+
