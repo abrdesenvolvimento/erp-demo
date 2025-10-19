@@ -135,7 +135,7 @@ export default function Produtos() {
     const productData = {
       name: formData.name,
       categoryId: parseInt(formData.categoryId),
-      subcategoryId: formData.subcategoryId ? parseInt(formData.subcategoryId) : undefined,
+      subcategoryId: formData.subcategoryId && formData.subcategoryId.trim() !== "" ? parseInt(formData.subcategoryId) : undefined,
       ean: formData.ean || undefined,
       uom: formData.uom,
       minStock: parseInt(formData.minStock),
@@ -209,11 +209,10 @@ export default function Produtos() {
                     <div className="grid gap-2">
                       <Label htmlFor="category">Categoria *</Label>
                       <Select
-                        value={formData.categoryId}
+                        value={formData.categoryId || undefined}
                         onValueChange={(value) =>
                           setFormData({ ...formData, categoryId: value })
                         }
-                        required
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Selecione" />
@@ -259,7 +258,7 @@ export default function Produtos() {
                     <div className="grid gap-2">
                       <Label htmlFor="uom">Unidade de Medida *</Label>
                       <Select
-                        value={formData.uom}
+                        value={formData.uom || "UN"}
                         onValueChange={(value) =>
                           setFormData({ ...formData, uom: value })
                         }
