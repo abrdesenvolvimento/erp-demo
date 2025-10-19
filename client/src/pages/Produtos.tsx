@@ -59,13 +59,15 @@ export default function Produtos() {
   
   const { data: categories } = trpc.categories.list.useQuery();
   const { data: channels } = trpc.salesChannels.list.useQuery();
+  const utils = trpc.useUtils();
   
   const createProduct = trpc.products.create.useMutation({
     onSuccess: () => {
       toast.success("Produto criado com sucesso!");
-      setIsDialogOpen(false);
       refetch();
       resetForm();
+      // Delay para evitar erro do React DOM
+      setTimeout(() => setIsDialogOpen(false), 100);
     },
     onError: (error) => {
       toast.error("Erro ao criar produto: " + error.message);
@@ -75,10 +77,11 @@ export default function Produtos() {
   const updateProduct = trpc.products.update.useMutation({
     onSuccess: () => {
       toast.success("Produto atualizado com sucesso!");
-      setIsDialogOpen(false);
-      setEditingProduct(null);
       refetch();
       resetForm();
+      setEditingProduct(null);
+      // Delay para evitar erro do React DOM
+      setTimeout(() => setIsDialogOpen(false), 100);
     },
     onError: (error) => {
       toast.error("Erro ao atualizar produto: " + error.message);
@@ -108,20 +111,47 @@ export default function Produtos() {
 
   const handleEdit = (product: any) => {
     setEditingProduct(product);
-    setFormData({
-      name: product.name || "",
-      categoryId: product.categoryId?.toString() || "",
-      subcategoryId: product.subcategory || "",
-      ean: product.ean || "",
-      uom: (product.uom || "UN") as string,
-      minStock: product.minStock?.toString() || "0",
-      currentStock: product.currentStock?.toString() || "0",
-      avgCost: product.avgCost || "0.00",
-      isComposite: product.isComposite || false,
-      notes: product.notes || "",
-      prices: {},
-    });
     setIsDialogOpen(true);
+    
+    // Carregar preços por canal
+    utils.client.products.getPrices.query({ productId: product.id })
+      .then((productPrices: any) => {
+        const pricesData: Record<string, string> = {};
+        productPrices.forEach((p: any) => {
+          pricesData[p.channelId.toString()] = p.price;
+        });
+        
+        setFormData({
+          name: product.name || "",
+          categoryId: product.categoryId?.toString() || "",
+          subcategoryId: product.subcategory || "",
+          ean: product.ean || "",
+          uom: (product.uom || "UN") as string,
+          minStock: product.minStock?.toString() || "0",
+          currentStock: product.currentStock?.toString() || "0",
+          avgCost: product.avgCost || "0.00",
+          isComposite: product.isComposite || false,
+          notes: product.notes || "",
+          prices: pricesData,
+        });
+      })
+      .catch((error: any) => {
+        console.error("Erro ao carregar preços:", error);
+        // Preencher formulário mesmo sem preços
+        setFormData({
+          name: product.name || "",
+          categoryId: product.categoryId?.toString() || "",
+          subcategoryId: product.subcategory || "",
+          ean: product.ean || "",
+          uom: (product.uom || "UN") as string,
+          minStock: product.minStock?.toString() || "0",
+          currentStock: product.currentStock?.toString() || "0",
+          avgCost: product.avgCost || "0.00",
+          isComposite: product.isComposite || false,
+          notes: product.notes || "",
+          prices: {},
+        });
+      });
   };
 
   const handleSubmit = (e: React.FormEvent) => {
