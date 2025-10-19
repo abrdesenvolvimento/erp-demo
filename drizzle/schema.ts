@@ -70,6 +70,7 @@ export const products = mysqlTable("products", {
   name: varchar("name", { length: 200 }).notNull(),
   categoryId: int("categoryId").notNull(),
   subcategoryId: int("subcategoryId"),
+  subcategory: varchar("subcategory", { length: 100 }),
   ean: varchar("ean", { length: 20 }),
   uom: varchar("uom", { length: 10 }).notNull(), // UN, CX, KG, etc
   minStock: int("minStock").default(0),

@@ -1,0 +1,1 @@
+ALTER TABLE `products` ADD `subcategory` varchar(100);
