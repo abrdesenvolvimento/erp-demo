@@ -130,8 +130,14 @@ export const appRouter = router({
           prices: z.record(z.string(), z.string()).optional(),
         }),
       }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ input, ctx }) => {
         const { prices, ...updateData } = input.data;
+        
+        // Validar permissão de admin para ativar/desativar produtos
+        if (updateData.active !== undefined && ctx.user?.role !== "admin") {
+          throw new Error("Apenas administradores podem ativar/desativar produtos");
+        }
+        
         await db.updateProduct(input.id, updateData);
         
         // Atualizar preços por canal

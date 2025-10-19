@@ -34,6 +34,7 @@ import { Package, Plus, Search, AlertTriangle, Edit, Trash2 } from "lucide-react
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
+import { useAuth } from "@/_core/hooks/useAuth";
 
 // Componente para gerenciar composições de produtos
 function CompositionsSection({ productId }: { productId: number }) {
@@ -176,12 +177,16 @@ type ProductFormData = {
 };
 
 export default function Produtos() {
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
+  
   const [search, setSearch] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<any>(null);
   
   const { data: products, isLoading, refetch } = trpc.products.list.useQuery({
     search: search || undefined,
+    activeOnly: false, // Mostrar todos os produtos (ativos e inativos)
   });
   
   const { data: categories } = trpc.categories.list.useQuery();
@@ -228,6 +233,11 @@ export default function Produtos() {
   });
 
   const handleToggleActive = (product: any) => {
+    if (!isAdmin) {
+      toast.error("Apenas administradores podem ativar/desativar produtos");
+      return;
+    }
+    
     toggleProductStatus.mutate({
       id: product.id,
       data: { active: !product.active }
@@ -638,7 +648,7 @@ export default function Produtos() {
                       product.currentStock < product.minStock;
 
                     return (
-                      <TableRow key={product.id}>
+                      <TableRow key={product.id} className={!product.active ? "opacity-50 bg-muted/30" : ""}>
                         <TableCell>
                           <div className="flex items-center gap-2">
                             <Package className="h-4 w-4 text-muted-foreground" />
@@ -682,10 +692,16 @@ export default function Produtos() {
                           )}
                         </TableCell>
                         <TableCell>
-                          <Switch
-                            checked={product.active}
-                            onCheckedChange={() => handleToggleActive(product)}
-                          />
+                          <div className="flex items-center gap-2">
+                            <Switch
+                              checked={product.active}
+                              onCheckedChange={() => handleToggleActive(product)}
+                              disabled={!isAdmin}
+                            />
+                            {!product.active && (
+                              <span className="text-xs text-muted-foreground">Inativo</span>
+                            )}
+                          </div>
                         </TableCell>
                         <TableCell className="text-right">
                           <Button
