@@ -197,16 +197,22 @@ export default function Produtos() {
             </p>
           </div>
 
-          <Dialog open={isDialogOpen} onOpenChange={(open) => {
-            setIsDialogOpen(open);
-            if (!open) resetForm();
+          <Button onClick={() => {
+            resetForm();
+            setEditingProduct(null);
+            setIsDialogOpen(true);
           }}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Novo Produto
-              </Button>
-            </DialogTrigger>
+            <Plus className="h-4 w-4 mr-2" />
+            Novo Produto
+          </Button>
+
+          <Dialog open={isDialogOpen} onOpenChange={(open) => {
+            if (!open) {
+              resetForm();
+              setEditingProduct(null);
+            }
+            setIsDialogOpen(open);
+          }}>
             <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
               <form onSubmit={handleSubmit}>
                 <DialogHeader>
