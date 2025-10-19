@@ -3,6 +3,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
 import Home from "./pages/Home";
 import Produtos from "./pages/Produtos";
+import Vendas from "./pages/Vendas";
 import Parceiros from "./pages/Parceiros";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
@@ -13,6 +14,7 @@ function Router() {
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/produtos" component={Produtos} />
+      <Route path="/vendas" component={Vendas} />
       <Route path="/parceiros" component={Parceiros} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />

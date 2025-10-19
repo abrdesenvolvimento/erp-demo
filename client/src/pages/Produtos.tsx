@@ -33,6 +33,7 @@ import { trpc } from "@/lib/trpc";
 import { Package, Plus, Search, AlertTriangle, Edit, Trash2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
+import { Switch } from "@/components/ui/switch";
 
 // Componente para gerenciar composições de produtos
 function CompositionsSection({ productId }: { productId: number }) {
@@ -215,6 +216,23 @@ export default function Produtos() {
       toast.error("Erro ao atualizar produto: " + error.message);
     },
   });
+
+  const toggleProductStatus = trpc.products.update.useMutation({
+    onSuccess: () => {
+      toast.success("Status do produto atualizado!");
+      refetch();
+    },
+    onError: (error) => {
+      toast.error("Erro ao atualizar status: " + error.message);
+    },
+  });
+
+  const handleToggleActive = (product: any) => {
+    toggleProductStatus.mutate({
+      id: product.id,
+      data: { active: !product.active }
+    });
+  };
 
   const initialFormData: ProductFormData = {
     name: "",
@@ -608,6 +626,7 @@ export default function Produtos() {
                     <TableHead className="text-right">Custo Médio</TableHead>
                     <TableHead>Tipo</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead>Ativo</TableHead>
                     <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -661,6 +680,12 @@ export default function Produtos() {
                               OK
                             </span>
                           )}
+                        </TableCell>
+                        <TableCell>
+                          <Switch
+                            checked={product.active}
+                            onCheckedChange={() => handleToggleActive(product)}
+                          />
                         </TableCell>
                         <TableCell className="text-right">
                           <Button
