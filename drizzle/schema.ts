@@ -339,3 +339,49 @@ export const expenseInstallments = mysqlTable("expenseInstallments", {
 export type ExpenseInstallment = typeof expenseInstallments.$inferSelect;
 export type InsertExpenseInstallment = typeof expenseInstallments.$inferInsert;
 
+
+// ==================== CONTAS A RECEBER ====================
+
+// Recebíveis (vinculados às vendas A_PRAZO)
+export const receivables = mysqlTable("receivables", {
+  id: int("id").primaryKey().autoincrement(),
+  saleId: int("saleId").notNull(), // FK para venda
+  customerId: int("customerId").notNull(), // FK para cliente
+  totalAmount: decimal("totalAmount", { precision: 10, scale: 2 }).notNull(),
+  receivedAmount: decimal("receivedAmount", { precision: 10, scale: 2 }).default("0.00").notNull(),
+  status: mysqlEnum("status", ["PENDENTE", "PARCIAL", "QUITADO", "VENCIDO"]).default("PENDENTE").notNull(),
+  createdBy: varchar("createdBy", { length: 64 }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow(),
+}, (table) => ({
+  saleIdx: index("sale_idx").on(table.saleId),
+  customerIdx: index("customer_idx").on(table.customerId),
+  statusIdx: index("status_idx").on(table.status),
+}));
+
+export type Receivable = typeof receivables.$inferSelect;
+export type InsertReceivable = typeof receivables.$inferInsert;
+
+// Parcelas de Recebíveis
+export const receivableInstallments = mysqlTable("receivableInstallments", {
+  id: int("id").primaryKey().autoincrement(),
+  receivableId: int("receivableId").notNull(),
+  installmentNumber: int("installmentNumber").notNull(),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  dueDate: timestamp("dueDate").notNull(),
+  paidDate: timestamp("paidDate"),
+  paidAmount: decimal("paidAmount", { precision: 10, scale: 2 }),
+  paymentMethod: varchar("paymentMethod", { length: 50 }),
+  status: mysqlEnum("status", ["PENDENTE", "PAGO", "VENCIDO", "PARCIAL"]).default("PENDENTE").notNull(),
+  notes: text("notes"),
+  createdAt: timestamp("createdAt").defaultNow(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow(),
+}, (table) => ({
+  receivableIdx: index("receivable_idx").on(table.receivableId),
+  dueDateIdx: index("due_date_idx").on(table.dueDate),
+  statusIdx: index("status_idx").on(table.status),
+}));
+
+export type ReceivableInstallment = typeof receivableInstallments.$inferSelect;
+export type InsertReceivableInstallment = typeof receivableInstallments.$inferInsert;
+

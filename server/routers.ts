@@ -302,6 +302,10 @@ export const appRouter = router({
           unitPrice: z.string(),
           totalPrice: z.string(),
         })),
+        dueDates: z.array(z.object({
+          date: z.date(),
+          amount: z.string(),
+        })).optional(), // Para vendas A_PRAZO
       }))
       .mutation(async ({ input, ctx }) => {
         const { items, ...saleData } = input;
@@ -320,10 +324,35 @@ export const appRouter = router({
           }
         }
         
+        const { dueDates, ...saleDataWithoutDueDates } = saleData;
+        
         const id = await db.createSale(
-          { ...saleData, createdBy: ctx.user.id },
+          { ...saleDataWithoutDueDates, createdBy: ctx.user.id },
           items
         );
+        
+        // Criar recebível automaticamente para vendas A_PRAZO
+        if (saleData.saleType === 'A_PRAZO' && saleData.customerId && dueDates && dueDates.length > 0) {
+          const receivableId = await db.createReceivable({
+            saleId: id,
+            customerId: saleData.customerId,
+            totalAmount: saleData.finalAmount,
+            receivedAmount: "0.00",
+            status: "PENDENTE",
+            createdBy: ctx.user.id,
+          });
+          
+          // Criar parcelas
+          for (let i = 0; i < dueDates.length; i++) {
+            await db.createReceivableInstallment({
+              receivableId: receivableId.id,
+              installmentNumber: i + 1,
+              amount: dueDates[i].amount,
+              dueDate: dueDates[i].date,
+              status: "PENDENTE",
+            });
+          }
+        }
         
         return { id, success: true };
       }),
@@ -594,6 +623,58 @@ export const appRouter = router({
         }))
         .mutation(async ({ input }) => {
           await db.payExpenseInstallment(input.id, input);
+          return { success: true };
+        }),
+    }),
+  }),
+
+  // ==================== CONTAS A RECEBER ====================
+  receivables: router({
+    list: protectedProcedure
+      .input(z.object({
+        customerId: z.number().optional(),
+        status: z.enum(["PENDENTE", "PARCIAL", "QUITADO", "VENCIDO"]).optional(),
+      }).optional())
+      .query(async ({ input }) => {
+        return await db.listReceivables(input);
+      }),
+    
+    get: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .query(async ({ input }) => {
+        return await db.getReceivableById(input.id);
+      }),
+    
+    summary: protectedProcedure
+      .query(async () => {
+        return await db.getReceivablesSummary();
+      }),
+    
+    // Parcelas
+    installments: router({
+      pending: protectedProcedure
+        .input(z.object({
+          customerId: z.number().optional(),
+        }).optional())
+        .query(async ({ input }) => {
+          return await db.listPendingReceivableInstallments(input?.customerId);
+        }),
+      
+      overdue: protectedProcedure
+        .query(async () => {
+          return await db.listOverdueReceivableInstallments();
+        }),
+      
+      pay: protectedProcedure
+        .input(z.object({
+          id: z.number(),
+          paidDate: z.date(),
+          paidAmount: z.string(),
+          paymentMethod: z.string(),
+          notes: z.string().optional(),
+        }))
+        .mutation(async ({ input }) => {
+          await db.payReceivableInstallment(input.id, input);
           return { success: true };
         }),
     }),

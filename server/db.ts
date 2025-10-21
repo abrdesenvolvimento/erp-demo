@@ -17,7 +17,9 @@ import {
   accountsPayable, AccountPayable, InsertAccountPayable,
   expenseCategories, ExpenseCategory, InsertExpenseCategory,
   expenses, Expense, InsertExpense,
-  expenseInstallments, ExpenseInstallment, InsertExpenseInstallment
+  expenseInstallments, ExpenseInstallment, InsertExpenseInstallment,
+  receivables, Receivable, InsertReceivable,
+  receivableInstallments, ReceivableInstallment, InsertReceivableInstallment
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -895,5 +897,284 @@ export async function updateOverdueExpenseInstallments() {
       eq(expenseInstallments.status, "PENDENTE"),
       sql`${expenseInstallments.dueDate} < ${today}`
     ));
+}
+
+
+// ==================== CONTAS A RECEBER ====================
+
+// Criar recebível (chamado automaticamente ao criar venda A_PRAZO)
+export async function createReceivable(data: InsertReceivable) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.insert(receivables).values(data);
+  const receivableId = Number((result as any).insertId);
+  
+  // Buscar o recebível criado
+  const created = await db.select().from(receivables).where(eq(receivables.id, receivableId)).limit(1);
+  return created[0];
+}
+
+// Criar parcela de recebível
+export async function createReceivableInstallment(data: InsertReceivableInstallment) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.insert(receivableInstallments).values(data);
+  return Number((result as any).insertId);
+}
+
+// Listar recebíveis
+export async function listReceivables(filters?: {
+  customerId?: number;
+  status?: string;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  let query = db.select().from(receivables);
+  
+  const conditions = [];
+  if (filters?.customerId) {
+    conditions.push(eq(receivables.customerId, filters.customerId));
+  }
+  if (filters?.status) {
+    conditions.push(eq(receivables.status, filters.status as any));
+  }
+  
+  if (conditions.length > 0) {
+    query = query.where(and(...conditions)) as any;
+  }
+  
+  return await query.orderBy(desc(receivables.createdAt));
+}
+
+// Obter recebível por ID com parcelas
+export async function getReceivableById(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const receivable = await db.select().from(receivables).where(eq(receivables.id, id)).limit(1);
+  if (!receivable[0]) return null;
+  
+  const installments = await db.select()
+    .from(receivableInstallments)
+    .where(eq(receivableInstallments.receivableId, id))
+    .orderBy(receivableInstallments.installmentNumber);
+  
+  return {
+    ...receivable[0],
+    installments
+  };
+}
+
+// Listar parcelas pendentes
+export async function listPendingReceivableInstallments(customerId?: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  if (customerId) {
+    return await db.select({
+      installment: receivableInstallments,
+      receivable: receivables
+    })
+    .from(receivableInstallments)
+    .leftJoin(receivables, eq(receivableInstallments.receivableId, receivables.id))
+    .where(and(
+      eq(receivableInstallments.status, "PENDENTE"),
+      eq(receivables.customerId, customerId)
+    ))
+    .orderBy(receivableInstallments.dueDate);
+  }
+  
+  return await db.select({
+    installment: receivableInstallments,
+    receivable: receivables
+  })
+  .from(receivableInstallments)
+  .leftJoin(receivables, eq(receivableInstallments.receivableId, receivables.id))
+  .where(eq(receivableInstallments.status, "PENDENTE"))
+  .orderBy(receivableInstallments.dueDate);
+}
+
+// Listar parcelas vencidas
+export async function listOverdueReceivableInstallments() {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  return await db.select({
+    installment: receivableInstallments,
+    receivable: receivables
+  })
+  .from(receivableInstallments)
+  .leftJoin(receivables, eq(receivableInstallments.receivableId, receivables.id))
+  .where(and(
+    eq(receivableInstallments.status, "PENDENTE"),
+    sql`${receivableInstallments.dueDate} < ${today}`
+  ))
+  .orderBy(receivableInstallments.dueDate);
+}
+
+// Registrar pagamento de parcela
+export async function payReceivableInstallment(
+  id: number,
+  paymentData: {
+    paidDate: Date;
+    paidAmount: string;
+    paymentMethod: string;
+    notes?: string;
+  }
+) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  // Buscar parcela
+  const installment = await db.select().from(receivableInstallments).where(eq(receivableInstallments.id, id)).limit(1);
+  if (!installment[0]) throw new Error("Parcela não encontrada");
+  
+  const paidAmount = parseFloat(paymentData.paidAmount);
+  const installmentAmount = parseFloat(installment[0].amount);
+  
+  // Determinar status da parcela
+  let status: "PAGO" | "PARCIAL" = "PAGO";
+  if (paidAmount < installmentAmount) {
+    status = "PARCIAL";
+  }
+  
+  // Atualizar parcela
+  await db.update(receivableInstallments)
+    .set({
+      paidDate: paymentData.paidDate,
+      paidAmount: paymentData.paidAmount,
+      paymentMethod: paymentData.paymentMethod,
+      notes: paymentData.notes,
+      status
+    })
+    .where(eq(receivableInstallments.id, id));
+  
+  // Atualizar recebível
+  await updateReceivableStatus(installment[0].receivableId);
+}
+
+// Atualizar status do recebível baseado nas parcelas
+async function updateReceivableStatus(receivableId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  // Buscar todas as parcelas
+  const installments = await db.select()
+    .from(receivableInstallments)
+    .where(eq(receivableInstallments.receivableId, receivableId));
+  
+  // Calcular totais
+  let totalReceived = 0;
+  let hasPending = false;
+  let hasOverdue = false;
+  
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  for (const inst of installments) {
+    if (inst.paidAmount) {
+      totalReceived += parseFloat(inst.paidAmount);
+    }
+    if (inst.status === "PENDENTE") {
+      hasPending = true;
+      if (new Date(inst.dueDate) < today) {
+        hasOverdue = true;
+      }
+    }
+  }
+  
+  // Determinar status
+  let status: "PENDENTE" | "PARCIAL" | "QUITADO" | "VENCIDO" = "PENDENTE";
+  
+  if (totalReceived === 0) {
+    status = hasOverdue ? "VENCIDO" : "PENDENTE";
+  } else if (hasPending) {
+    status = hasOverdue ? "VENCIDO" : "PARCIAL";
+  } else {
+    status = "QUITADO";
+  }
+  
+  // Atualizar recebível
+  await db.update(receivables)
+    .set({
+      receivedAmount: totalReceived.toFixed(2),
+      status
+    })
+    .where(eq(receivables.id, receivableId));
+}
+
+// Atualizar status de parcelas vencidas
+export async function updateOverdueReceivableInstallments() {
+  const db = await getDb();
+  if (!db) return;
+  
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  await db.update(receivableInstallments)
+    .set({ status: "VENCIDO" })
+    .where(and(
+      eq(receivableInstallments.status, "PENDENTE"),
+      sql`${receivableInstallments.dueDate} < ${today}`
+    ));
+  
+  // Atualizar status dos recebíveis também
+  const overdueInstallments = await db.select()
+    .from(receivableInstallments)
+    .where(eq(receivableInstallments.status, "VENCIDO"));
+  
+  const receivableIds = Array.from(new Set(overdueInstallments.map(i => i.receivableId)));
+  
+  for (const id of receivableIds) {
+    await updateReceivableStatus(id);
+  }
+}
+
+// Resumo de recebíveis
+export async function getReceivablesSummary() {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  // Total a receber (parcelas pendentes)
+  const pending = await db.select({
+    total: sql<string>`COALESCE(SUM(${receivableInstallments.amount}), 0)`
+  })
+  .from(receivableInstallments)
+  .where(eq(receivableInstallments.status, "PENDENTE"));
+  
+  // Total vencido
+  const overdue = await db.select({
+    total: sql<string>`COALESCE(SUM(${receivableInstallments.amount}), 0)`
+  })
+  .from(receivableInstallments)
+  .where(and(
+    eq(receivableInstallments.status, "PENDENTE"),
+    sql`${receivableInstallments.dueDate} < ${today}`
+  ));
+  
+  // Total recebido hoje
+  const receivedToday = await db.select({
+    total: sql<string>`COALESCE(SUM(${receivableInstallments.paidAmount}), 0)`
+  })
+  .from(receivableInstallments)
+  .where(and(
+    eq(receivableInstallments.status, "PAGO"),
+    sql`DATE(${receivableInstallments.paidDate}) = DATE(${today})`
+  ));
+  
+  return {
+    totalPending: parseFloat(pending[0]?.total || "0"),
+    totalOverdue: parseFloat(overdue[0]?.total || "0"),
+    receivedToday: parseFloat(receivedToday[0]?.total || "0")
+  };
 }
 
