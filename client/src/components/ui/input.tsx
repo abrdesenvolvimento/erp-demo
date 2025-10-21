@@ -1,4 +1,4 @@
-import { useDialogComposition } from "@/components/ui/dialog";
+// import { useDialogComposition } from "@/components/ui/dialog";
 import { useComposition } from "@/hooks/useComposition";
 import { cn } from "@/lib/utils";
 import * as React from "react";
@@ -12,7 +12,12 @@ function Input({
   ...props
 }: React.ComponentProps<"input">) {
   // Get dialog composition context if available (will be no-op if not inside Dialog)
-  const dialogComposition = useDialogComposition();
+  // const dialogComposition = useDialogComposition();
+  const dialogComposition = {
+    justEndedComposing: () => false,
+    setComposing: () => {},
+    markCompositionEnd: () => {},
+  };
 
   // Add composition event handlers to support input method editor (IME) for CJK languages.
   const {
@@ -34,7 +39,7 @@ function Input({
       onKeyDown?.(e);
     },
     onCompositionStart: e => {
-      dialogComposition.setComposing(true);
+      dialogComposition.setComposing();
       onCompositionStart?.(e);
     },
     onCompositionEnd: e => {
@@ -43,7 +48,7 @@ function Input({
       // Delay setting composing to false to handle Safari's event order
       // In Safari, compositionEnd fires before the ESC keydown event
       setTimeout(() => {
-        dialogComposition.setComposing(false);
+        dialogComposition.setComposing();
       }, 100);
       onCompositionEnd?.(e);
     },

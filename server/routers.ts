@@ -219,7 +219,13 @@ export const appRouter = router({
         partnerType: z.enum(["CUSTOMER", "SUPPLIER", "BOTH"]),
         phone: z.string().optional(),
         email: z.string().optional(),
-        address: z.string().optional(),
+        // Endereço separado
+        street: z.string().optional(),
+        neighborhood: z.string().optional(),
+        city: z.string().optional(),
+        state: z.string().optional(),
+        zipCode: z.string().optional(),
+        notes: z.string().optional(),
         creditLimit: z.string().optional().default("0.00"),
         creditPolicy: z.enum(["ACTIVE", "BLOCKED"]).optional().default("ACTIVE"),
         active: z.boolean().optional().default(true),
@@ -227,6 +233,31 @@ export const appRouter = router({
       .mutation(async ({ input }) => {
         const id = await db.createPartner(input);
         return { id, success: true };
+      }),
+    
+    update: protectedProcedure
+      .input(z.object({
+        id: z.number(),
+        name: z.string().min(1),
+        docNumber: z.string().optional(),
+        partnerType: z.enum(["CUSTOMER", "SUPPLIER", "BOTH"]),
+        phone: z.string().optional(),
+        email: z.string().optional(),
+        // Endereço separado
+        street: z.string().optional(),
+        neighborhood: z.string().optional(),
+        city: z.string().optional(),
+        state: z.string().optional(),
+        zipCode: z.string().optional(),
+        notes: z.string().optional(),
+        creditLimit: z.string().optional(),
+        creditPolicy: z.enum(["ACTIVE", "BLOCKED"]).optional(),
+        active: z.boolean().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const { id, ...data } = input;
+        await db.updatePartner(id, data);
+        return { success: true };
       }),
   }),
 
@@ -332,13 +363,17 @@ export const appRouter = router({
         supplierId: z.number(),
         docType: z.enum(["NOTA_FISCAL", "CUPOM", "SEM_DOCUMENTO"]),
         docNumber: z.string().optional(),
+        accessKey: z.string().optional(),
         issueDate: z.string(),
         postingDate: z.string(),
         paymentMethod: z.string(),
-        dueDate: z.string().optional(),
         freightCost: z.string().optional(),
         chargesCost: z.string().optional(),
         notes: z.string().optional(),
+        installments: z.array(z.object({
+          dueDate: z.string(),
+          amount: z.number(),
+        })),
         items: z.array(z.object({
           productId: z.number(),
           quantity: z.number(),
@@ -347,7 +382,7 @@ export const appRouter = router({
         })),
       }))
       .mutation(async ({ input, ctx }) => {
-        const { items, ...purchaseData } = input;
+        const { items, installments, ...purchaseData } = input;
         
         // Calcular total
         const subtotal = items.reduce((sum, item) => 
@@ -358,17 +393,30 @@ export const appRouter = router({
         const totalAmount = subtotal + freightCost + chargesCost;
         
         // Criar ordem de compra
-        const purchaseOrderId = await db.createPurchaseOrder({
-          ...purchaseData,
+        const purchaseOrderData: any = {
+          supplierId: purchaseData.supplierId,
+          docType: purchaseData.docType,
           issueDate: new Date(purchaseData.issueDate),
           postingDate: new Date(purchaseData.postingDate),
-          dueDate: purchaseData.dueDate ? new Date(purchaseData.dueDate) : null,
           totalAmount: totalAmount.toFixed(2),
           freightCost: freightCost.toFixed(2),
           chargesCost: chargesCost.toFixed(2),
+          paymentMethod: purchaseData.paymentMethod,
           status: "DRAFT",
+          notes: purchaseData.notes || null,
+          invoiceFilePath: null,
           createdBy: ctx.user.id,
-        });
+        };
+        
+        // Adicionar campos opcionais apenas se tiverem valor
+        if (purchaseData.docNumber) {
+          purchaseOrderData.docNumber = purchaseData.docNumber;
+        }
+        if (purchaseData.accessKey) {
+          purchaseOrderData.accessKey = purchaseData.accessKey;
+        }
+        
+        const purchaseOrderId = await db.createPurchaseOrder(purchaseOrderData);
         
         // Adicionar itens
         for (const item of items) {
@@ -380,6 +428,17 @@ export const appRouter = router({
             unitCost: item.unitCost.toFixed(4),
             totalCost: totalCost.toFixed(2),
             expiryDate: item.expiryDate ? new Date(item.expiryDate) : null,
+          });
+        }
+        
+        // Adicionar parcelas
+        for (let i = 0; i < installments.length; i++) {
+          await db.addPurchaseInstallment({
+            purchaseOrderId,
+            installmentNumber: i + 1,
+            dueDate: new Date(installments[i].dueDate),
+            amount: installments[i].amount.toFixed(2),
+            status: "PENDING",
           });
         }
         
@@ -399,6 +458,142 @@ export const appRouter = router({
         await db.updatePurchaseOrder(input.id, { status: "CANCELLED" });
         return { success: true };
       }),
+  }),
+
+  // ==================== DESPESAS OPERACIONAIS ====================
+  expenses: router({
+    // Categorias
+    categories: router({
+      list: protectedProcedure
+        .input(z.object({ activeOnly: z.boolean().optional().default(true) }).optional())
+        .query(async ({ input }) => {
+          return await db.getExpenseCategories(input?.activeOnly ?? true);
+        }),
+      
+      create: protectedProcedure
+        .input(z.object({
+          name: z.string().min(1),
+          description: z.string().optional(),
+          active: z.boolean().optional().default(true),
+        }))
+        .mutation(async ({ input }) => {
+          const id = await db.createExpenseCategory(input);
+          return { id, success: true };
+        }),
+      
+      update: protectedProcedure
+        .input(z.object({
+          id: z.number(),
+          data: z.object({
+            name: z.string().optional(),
+            description: z.string().optional(),
+            active: z.boolean().optional(),
+          }),
+        }))
+        .mutation(async ({ input }) => {
+          await db.updateExpenseCategory(input.id, input.data);
+          return { success: true };
+        }),
+    }),
+    
+    // Despesas
+    list: protectedProcedure
+      .input(z.object({
+        categoryId: z.number().optional(),
+        status: z.enum(["ATIVA", "CANCELADA"]).optional(),
+        supplierId: z.number().optional(),
+        startDate: z.date().optional(),
+        endDate: z.date().optional(),
+      }).optional())
+      .query(async ({ input }) => {
+        return await db.getExpenses(input);
+      }),
+    
+    get: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .query(async ({ input }) => {
+        return await db.getExpenseById(input.id);
+      }),
+    
+    create: protectedProcedure
+      .input(z.object({
+        categoryId: z.number(),
+        description: z.string().min(3),
+        totalAmount: z.string(),
+        paymentType: z.enum(["AVISTA", "PARCELADO"]),
+        installments: z.number().min(1).max(60).optional().default(1),
+        dueDay: z.number().min(1).max(31).optional(),
+        firstDueDate: z.date(),
+        supplierId: z.number().optional(),
+        notes: z.string().optional(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const expenseId = await db.createExpense({
+          ...input,
+          firstDueDate: input.firstDueDate,
+          status: "ATIVA",
+          createdBy: ctx.user.id,
+        });
+        
+        // Criar parcelas
+        const amount = parseFloat(input.totalAmount);
+        const installmentAmount = (amount / input.installments).toFixed(2);
+        
+        for (let i = 0; i < input.installments; i++) {
+          const dueDate = new Date(input.firstDueDate);
+          dueDate.setMonth(dueDate.getMonth() + i);
+          
+          await db.createExpenseInstallment({
+            expenseId,
+            installmentNumber: i + 1,
+            amount: installmentAmount,
+            dueDate,
+            status: "PENDENTE",
+          });
+        }
+        
+        return { id: expenseId, success: true };
+      }),
+    
+    cancel: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        await db.cancelExpense(input.id);
+        return { success: true };
+      }),
+    
+    // Parcelas
+    installments: router({
+      pending: protectedProcedure
+        .input(z.object({
+          categoryId: z.number().optional(),
+          startDate: z.date().optional(),
+          endDate: z.date().optional(),
+        }).optional())
+        .query(async ({ input }) => {
+          return await db.getPendingExpenseInstallments(input);
+        }),
+      
+      pay: protectedProcedure
+        .input(z.object({
+          id: z.number(),
+          paymentDate: z.date(),
+          paymentAmount: z.string(),
+          paymentMethod: z.enum([
+            "DINHEIRO",
+            "PIX",
+            "CARTAO_DEBITO",
+            "CARTAO_CREDITO",
+            "TRANSFERENCIA",
+            "BOLETO"
+          ]),
+          notes: z.string().optional(),
+        }))
+        .mutation(async ({ input }) => {
+          await db.payExpenseInstallment(input.id, input);
+          return { success: true };
+        }),
+    }),
   }),
 
   // ==================== DASHBOARD ====================

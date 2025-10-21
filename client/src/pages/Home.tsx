@@ -155,40 +155,34 @@ export default function Home() {
             </CardHeader>
             <CardContent>
               <div className="grid gap-3">
-                <Link href="/vendas/nova">
-                  <a className="flex items-center gap-3 p-4 rounded-lg border hover:bg-accent transition-colors">
-                    <ShoppingCart className="h-5 w-5 text-primary" />
-                    <div>
-                      <p className="font-medium">Nova Venda</p>
-                      <p className="text-sm text-muted-foreground">
-                        Registrar uma nova venda
-                      </p>
-                    </div>
-                  </a>
+                <Link href="/vendas/nova" className="flex items-center gap-3 p-4 rounded-lg border hover:bg-accent transition-colors">
+                  <ShoppingCart className="h-5 w-5 text-primary" />
+                  <div>
+                    <p className="font-medium">Nova Venda</p>
+                    <p className="text-sm text-muted-foreground">
+                      Registrar uma nova venda
+                    </p>
+                  </div>
                 </Link>
 
-                <Link href="/produtos">
-                  <a className="flex items-center gap-3 p-4 rounded-lg border hover:bg-accent transition-colors">
-                    <Package className="h-5 w-5 text-primary" />
-                    <div>
-                      <p className="font-medium">Gerenciar Produtos</p>
-                      <p className="text-sm text-muted-foreground">
-                        Ver e editar produtos
-                      </p>
-                    </div>
-                  </a>
+                <Link href="/produtos" className="flex items-center gap-3 p-4 rounded-lg border hover:bg-accent transition-colors">
+                  <Package className="h-5 w-5 text-primary" />
+                  <div>
+                    <p className="font-medium">Gerenciar Produtos</p>
+                    <p className="text-sm text-muted-foreground">
+                      Ver e editar produtos
+                    </p>
+                  </div>
                 </Link>
 
-                <Link href="/parceiros">
-                  <a className="flex items-center gap-3 p-4 rounded-lg border hover:bg-accent transition-colors">
-                    <Users className="h-5 w-5 text-primary" />
-                    <div>
-                      <p className="font-medium">Gerenciar Parceiros</p>
-                      <p className="text-sm text-muted-foreground">
-                        Clientes e fornecedores
-                      </p>
-                    </div>
-                  </a>
+                <Link href="/parceiros" className="flex items-center gap-3 p-4 rounded-lg border hover:bg-accent transition-colors">
+                  <Users className="h-5 w-5 text-primary" />
+                  <div>
+                    <p className="font-medium">Gerenciar Parceiros</p>
+                    <p className="text-sm text-muted-foreground">
+                      Clientes e fornecedores
+                    </p>
+                  </div>
                 </Link>
               </div>
             </CardContent>

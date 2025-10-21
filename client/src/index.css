@@ -79,10 +79,10 @@
 }
 
 .dark {
-  --primary: var(--color-blue-700);
-  --primary-foreground: var(--color-blue-50);
-  --sidebar-primary: var(--color-blue-500);
-  --sidebar-primary-foreground: var(--color-blue-50);
+  --primary: 43 96% 56%; /* #F3B21B - Amarelo Adega (mantido no dark mode) */
+  --primary-foreground: 0 0% 0%; /* Preto para contraste */
+  --sidebar-primary: 43 96% 56%; /* #F3B21B - Amarelo Adega */
+  --sidebar-primary-foreground: 0 0% 0%; /* Preto */
   --background: oklch(0.141 0.005 285.823);
   --foreground: oklch(0.85 0.005 65);
   --card: oklch(0.21 0.006 285.885);

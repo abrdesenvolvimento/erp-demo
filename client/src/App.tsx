@@ -6,6 +6,7 @@ import Produtos from "./pages/Produtos";
 import Vendas from "./pages/Vendas";
 import Parceiros from "./pages/Parceiros";
 import Compras from "./pages/Compras";
+import Despesas from "./pages/Despesas";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
@@ -18,6 +19,7 @@ function Router() {
       <Route path="/compras" component={Compras} />
       <Route path="/vendas" component={Vendas} />
       <Route path="/parceiros" component={Parceiros} />
+      <Route path="/despesas" component={Despesas} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>

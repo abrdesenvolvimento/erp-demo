@@ -125,7 +125,13 @@ export const partners = mysqlTable("partners", {
   partnerType: mysqlEnum("partnerType", ["CUSTOMER", "SUPPLIER", "BOTH"]).notNull(),
   phone: varchar("phone", { length: 20 }),
   email: varchar("email", { length: 320 }),
-  address: text("address"),
+  // Endereço separado em campos
+  street: varchar("street", { length: 255 }), // Logradouro (Rua + Número)
+  neighborhood: varchar("neighborhood", { length: 100 }), // Bairro
+  city: varchar("city", { length: 100 }), // Cidade
+  state: varchar("state", { length: 2 }), // UF (SP, RJ, etc)
+  zipCode: varchar("zipCode", { length: 10 }), // CEP
+  notes: text("notes"), // Observações
   creditLimit: decimal("creditLimit", { precision: 10, scale: 2 }).default("0.00"),
   currentBalance: decimal("currentBalance", { precision: 10, scale: 2 }).default("0.00"),
   creditPolicy: mysqlEnum("creditPolicy", ["ACTIVE", "BLOCKED"]).default("ACTIVE"),
@@ -186,13 +192,13 @@ export const purchaseOrders = mysqlTable("purchaseOrders", {
   supplierId: int("supplierId").notNull(),
   docType: mysqlEnum("docType", ["NOTA_FISCAL", "CUPOM", "SEM_DOCUMENTO"]).notNull(),
   docNumber: varchar("docNumber", { length: 100 }),
+  accessKey: varchar("accessKey", { length: 44 }), // Chave de acesso da NF-e (44 dígitos)
   issueDate: timestamp("issueDate").notNull(),
   postingDate: timestamp("postingDate").notNull(),
   totalAmount: decimal("totalAmount", { precision: 10, scale: 2 }).notNull(),
   freightCost: decimal("freightCost", { precision: 10, scale: 2 }).default("0.00"),
   chargesCost: decimal("chargesCost", { precision: 10, scale: 2 }).default("0.00"),
   paymentMethod: varchar("paymentMethod", { length: 50 }).notNull(),
-  dueDate: timestamp("dueDate"),
   invoiceFilePath: varchar("invoiceFilePath", { length: 255 }),
   status: mysqlEnum("status", ["DRAFT", "CONFIRMED", "CANCELLED"]).default("DRAFT").notNull(),
   notes: text("notes"),
@@ -247,4 +253,97 @@ export const accountsPayable = mysqlTable("accountsPayable", {
 
 export type AccountPayable = typeof accountsPayable.$inferSelect;
 export type InsertAccountPayable = typeof accountsPayable.$inferInsert;
+
+// Parcelas de Compra
+export const purchaseInstallments = mysqlTable("purchaseInstallments", {
+  id: int("id").primaryKey().autoincrement(),
+  purchaseOrderId: int("purchaseOrderId").notNull(),
+  installmentNumber: int("installmentNumber").notNull(),
+  dueDate: timestamp("dueDate").notNull(),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  paidDate: timestamp("paidDate"),
+  status: mysqlEnum("status", ["PENDING", "PAID", "OVERDUE"]).default("PENDING").notNull(),
+  createdAt: timestamp("createdAt").defaultNow(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow(),
+}, (table) => ({
+  poIdx: index("po_idx").on(table.purchaseOrderId),
+  dueDateIdx: index("due_date_idx").on(table.dueDate),
+}));
+
+export type PurchaseInstallment = typeof purchaseInstallments.$inferSelect;
+export type InsertPurchaseInstallment = typeof purchaseInstallments.$inferInsert;
+
+
+
+// ============================================
+// MÓDULO DE DESPESAS OPERACIONAIS
+// ============================================
+
+// Categorias de Despesas
+export const expenseCategories = mysqlTable("expenseCategories", {
+  id: int("id").primaryKey().autoincrement(),
+  name: varchar("name", { length: 100 }).notNull(),
+  description: text("description"),
+  active: boolean("active").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow(),
+});
+
+export type ExpenseCategory = typeof expenseCategories.$inferSelect;
+export type InsertExpenseCategory = typeof expenseCategories.$inferInsert;
+
+// Despesas Operacionais
+export const expenses = mysqlTable("expenses", {
+  id: int("id").primaryKey().autoincrement(),
+  categoryId: int("categoryId").notNull(),
+  description: varchar("description", { length: 255 }).notNull(),
+  totalAmount: decimal("totalAmount", { precision: 10, scale: 2 }).notNull(),
+  paymentType: mysqlEnum("paymentType", ["AVISTA", "PARCELADO"]).notNull(),
+  installments: int("installments").default(1).notNull(),
+  dueDay: int("dueDay"), // Dia do mês para vencimento (1-31)
+  firstDueDate: timestamp("firstDueDate").notNull(),
+  supplierId: int("supplierId"), // FK para fornecedor (opcional)
+  notes: text("notes"),
+  status: mysqlEnum("status", ["ATIVA", "CANCELADA"]).default("ATIVA").notNull(),
+  createdBy: varchar("createdBy", { length: 64 }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow(),
+}, (table) => ({
+  categoryIdx: index("category_idx").on(table.categoryId),
+  statusIdx: index("status_idx").on(table.status),
+  supplierIdx: index("supplier_idx").on(table.supplierId),
+}));
+
+export type Expense = typeof expenses.$inferSelect;
+export type InsertExpense = typeof expenses.$inferInsert;
+
+// Parcelas de Despesas
+export const expenseInstallments = mysqlTable("expenseInstallments", {
+  id: int("id").primaryKey().autoincrement(),
+  expenseId: int("expenseId").notNull(),
+  installmentNumber: int("installmentNumber").notNull(),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  dueDate: timestamp("dueDate").notNull(),
+  paymentDate: timestamp("paymentDate"),
+  paymentAmount: decimal("paymentAmount", { precision: 10, scale: 2 }),
+  paymentMethod: mysqlEnum("paymentMethod", [
+    "DINHEIRO",
+    "PIX",
+    "CARTAO_DEBITO",
+    "CARTAO_CREDITO",
+    "TRANSFERENCIA",
+    "BOLETO"
+  ]),
+  status: mysqlEnum("status", ["PENDENTE", "PAGO", "VENCIDO", "CANCELADO"]).default("PENDENTE").notNull(),
+  notes: text("notes"),
+  createdAt: timestamp("createdAt").defaultNow(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow(),
+}, (table) => ({
+  expenseIdx: index("expense_idx").on(table.expenseId),
+  dueDateIdx: index("due_date_idx").on(table.dueDate),
+  statusIdx: index("status_idx").on(table.status),
+}));
+
+export type ExpenseInstallment = typeof expenseInstallments.$inferSelect;
+export type InsertExpenseInstallment = typeof expenseInstallments.$inferInsert;
 

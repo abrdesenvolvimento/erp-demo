@@ -13,7 +13,11 @@ import {
   saleItems, SaleItem, InsertSaleItem,
   purchaseOrders, PurchaseOrder, InsertPurchaseOrder,
   purchaseOrderItems, PurchaseOrderItem, InsertPurchaseOrderItem,
-  accountsPayable, AccountPayable, InsertAccountPayable
+  purchaseInstallments, PurchaseInstallment, InsertPurchaseInstallment,
+  accountsPayable, AccountPayable, InsertAccountPayable,
+  expenseCategories, ExpenseCategory, InsertExpenseCategory,
+  expenses, Expense, InsertExpense,
+  expenseInstallments, ExpenseInstallment, InsertExpenseInstallment
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -158,6 +162,7 @@ export async function getProducts(filters?: { search?: string; categoryId?: numb
   const db = await getDb();
   if (!db) return [];
   
+  // Get products
   let query = db.select().from(products);
   const conditions = [];
   
@@ -170,8 +175,9 @@ export async function getProducts(filters?: { search?: string; categoryId?: numb
   }
   
   if (filters?.search) {
+    const searchLower = filters.search.toLowerCase();
     conditions.push(
-      sql`(${products.name} LIKE ${`%${filters.search}%`} OR ${products.ean} LIKE ${`%${filters.search}%`})`
+      sql`(LOWER(${products.name}) LIKE ${`%${searchLower}%`} OR LOWER(${products.ean}) LIKE ${`%${searchLower}%`})`
     );
   }
   
@@ -179,7 +185,30 @@ export async function getProducts(filters?: { search?: string; categoryId?: numb
     query = query.where(and(...conditions)) as any;
   }
   
-  return await query.orderBy(products.name);
+  const productList = await query.orderBy(products.name);
+  
+  // Get all prices in a single query
+  if (productList.length === 0) return [];
+  
+  const productIds = productList.map(p => p.id);
+  const allPrices = await db.select()
+    .from(productPrices)
+    .where(sql`${productPrices.productId} IN (${sql.join(productIds.map(id => sql`${id}`), sql`, `)})`);
+  
+  // Group prices by product
+  const pricesByProduct = new Map<number, typeof allPrices>();
+  for (const price of allPrices) {
+    if (!pricesByProduct.has(price.productId)) {
+      pricesByProduct.set(price.productId, []);
+    }
+    pricesByProduct.get(price.productId)!.push(price);
+  }
+  
+  // Attach prices to products
+  return productList.map(product => ({
+    ...product,
+    prices: pricesByProduct.get(product.id) || []
+  }));
 }
 
 export async function getProduct(id: number) {
@@ -212,6 +241,32 @@ export async function updateProductStock(id: number, quantity: number) {
   await db.update(products)
     .set({ currentStock: sql`${products.currentStock} + ${quantity}` })
     .where(eq(products.id, id));
+}
+
+// Update stock considering composite products
+export async function updateProductStockWithCompositions(id: number, quantity: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  // Update main product stock
+  await updateProductStock(id, quantity);
+  
+  // Check if product is composite
+  const product = await db.select().from(products).where(eq(products.id, id)).limit(1);
+  if (product.length === 0 || !product[0].isComposite) {
+    return; // Not composite, done
+  }
+  
+  // Get compositions
+  const compositions = await db.select()
+    .from(productCompositions)
+    .where(eq(productCompositions.parentProductId, id));
+  
+  // Update stock of each component
+  for (const comp of compositions) {
+    const componentQuantity = quantity * comp.quantity;
+    await updateProductStock(comp.childProductId, componentQuantity);
+  }
 }
 
 // ==================== PREÇOS DE PRODUTOS ====================
@@ -265,8 +320,9 @@ export async function getPartners(filters?: { search?: string; partnerType?: str
   }
   
   if (filters?.search) {
+    const searchLower = filters.search.toLowerCase();
     conditions.push(
-      sql`(${partners.name} LIKE ${`%${filters.search}%`} OR ${partners.docNumber} LIKE ${`%${filters.search}%`})`
+      sql`(LOWER(${partners.name}) LIKE ${`%${searchLower}%`} OR LOWER(${partners.docNumber}) LIKE ${`%${searchLower}%`})`
     );
   }
   
@@ -350,15 +406,18 @@ export async function createSale(saleData: InsertSale, items: Omit<InsertSaleIte
   
   // Inserir venda
   const saleResult = await db.insert(sales).values(saleData);
-  const saleId = Number((saleResult as any).insertId);
+  console.log('[createSale] saleResult:', saleResult);
+  // O insertId está no primeiro elemento do array
+  const saleId = Number((saleResult as any)[0]?.insertId || (saleResult as any).insertId);
+  console.log('[createSale] saleId:', saleId);
   
   // Inserir itens
   const itemsWithSaleId = items.map(item => ({ ...item, saleId }));
   await db.insert(saleItems).values(itemsWithSaleId);
   
-  // Baixar estoque
+  // Baixar estoque (considerando produtos compostos)
   for (const item of items) {
-    await updateProductStock(item.productId, -item.quantity);
+    await updateProductStockWithCompositions(item.productId, -item.quantity);
   }
   
   // Atualizar saldo do cliente se for venda a prazo
@@ -424,8 +483,15 @@ export async function createPurchaseOrder(data: InsertPurchaseOrder) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
-  const result = await db.insert(purchaseOrders).values(data);
-  return result[0].insertId;
+  try {
+    console.log("[createPurchaseOrder] Data:", JSON.stringify(data, null, 2));
+    const result = await db.insert(purchaseOrders).values(data);
+    return result[0].insertId;
+  } catch (error: any) {
+    console.error("[createPurchaseOrder] Error:", error.message);
+    console.error("[createPurchaseOrder] SQL:", error.sql);
+    throw error;
+  }
 }
 
 export async function getPurchaseOrders(filters?: { status?: string; supplierId?: number }) {
@@ -502,6 +568,24 @@ export async function deletePurchaseOrderItems(purchaseOrderId: number) {
     .where(eq(purchaseOrderItems.purchaseOrderId, purchaseOrderId));
 }
 
+export async function addPurchaseInstallment(data: InsertPurchaseInstallment) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.insert(purchaseInstallments).values(data);
+  return result[0].insertId;
+}
+
+export async function getPurchaseInstallments(purchaseOrderId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return await db.select()
+    .from(purchaseInstallments)
+    .where(eq(purchaseInstallments.purchaseOrderId, purchaseOrderId))
+    .orderBy(purchaseInstallments.installmentNumber);
+}
+
 export async function confirmPurchaseOrder(purchaseOrderId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
@@ -536,22 +620,21 @@ export async function confirmPurchaseOrder(purchaseOrderId: number) {
   // Atualizar status da ordem de compra
   await updatePurchaseOrder(purchaseOrderId, { status: "CONFIRMED" });
   
-  // Gerar conta a pagar (RN-COMP-03)
+  // Gerar contas a pagar baseadas nas parcelas (RN-COMP-03)
   const po = await getPurchaseOrderById(purchaseOrderId);
-  if (po && po.purchaseOrder) {
-    const totalAmount = parseFloat(po.purchaseOrder.totalAmount.toString());
-    const freightCost = parseFloat(po.purchaseOrder.freightCost?.toString() || "0");
-    const chargesCost = parseFloat(po.purchaseOrder.chargesCost?.toString() || "0");
-    const finalAmount = totalAmount + freightCost + chargesCost;
-    
-    await db.insert(accountsPayable).values({
-      description: `Compra #${purchaseOrderId} - ${po.supplier?.name || 'Fornecedor'}`,
-      amount: finalAmount.toFixed(2),
-      dueDate: po.purchaseOrder.dueDate || po.purchaseOrder.postingDate,
-      status: "PENDING",
-      supplierId: po.purchaseOrder.supplierId,
-      purchaseOrderId: purchaseOrderId
-    });
+  const installments = await getPurchaseInstallments(purchaseOrderId);
+  
+  if (po && po.purchaseOrder && installments.length > 0) {
+    for (const installment of installments) {
+      await db.insert(accountsPayable).values({
+        description: `Compra #${purchaseOrderId} - Parcela ${installment.installmentNumber}/${installments.length} - ${po.supplier?.name || 'Fornecedor'}`,
+        amount: installment.amount.toString(),
+        dueDate: installment.dueDate,
+        status: "PENDING",
+        supplierId: po.purchaseOrder.supplierId,
+        purchaseOrderId: purchaseOrderId
+      });
+    }
   }
 }
 
@@ -559,18 +642,264 @@ export async function searchProducts(searchTerm: string) {
   const db = await getDb();
   if (!db) return [];
   
-  const term = `%${searchTerm}%`;
+  const searchLower = searchTerm.toLowerCase();
+  const term = `%${searchLower}%`;
   
   const results = await db.select()
     .from(products)
     .where(
       or(
-        like(products.name, term),
-        like(products.ean, term)
+        sql`LOWER(${products.name}) LIKE ${term}`,
+        sql`LOWER(${products.ean}) LIKE ${term}`
       )
     )
     .limit(10);
   
   return results;
+}
+
+// ==================== DESPESAS OPERACIONAIS ====================
+
+// Categorias de Despesas
+export async function getExpenseCategories(activeOnly = true) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  let query = db.select().from(expenseCategories);
+  if (activeOnly) {
+    query = query.where(eq(expenseCategories.active, true)) as any;
+  }
+  
+  return await query.orderBy(expenseCategories.name);
+}
+
+export async function createExpenseCategory(data: InsertExpenseCategory) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.insert(expenseCategories).values(data);
+  return Number((result as any).insertId);
+}
+
+export async function updateExpenseCategory(id: number, data: Partial<InsertExpenseCategory>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(expenseCategories).set(data).where(eq(expenseCategories.id, id));
+}
+
+// Despesas
+export async function getExpenses(filters?: { 
+  categoryId?: number; 
+  status?: string; 
+  supplierId?: number;
+  startDate?: Date;
+  endDate?: Date;
+}) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  let query = db.select({
+    expense: expenses,
+    category: expenseCategories,
+    supplier: partners
+  })
+  .from(expenses)
+  .leftJoin(expenseCategories, eq(expenses.categoryId, expenseCategories.id))
+  .leftJoin(partners, eq(expenses.supplierId, partners.id));
+  
+  const conditions = [];
+  
+  if (filters?.categoryId) {
+    conditions.push(eq(expenses.categoryId, filters.categoryId));
+  }
+  
+  if (filters?.status) {
+    conditions.push(eq(expenses.status, filters.status as any));
+  }
+  
+  if (filters?.supplierId) {
+    conditions.push(eq(expenses.supplierId, filters.supplierId));
+  }
+  
+  if (filters?.startDate) {
+    conditions.push(sql`${expenses.firstDueDate} >= ${filters.startDate}`);
+  }
+  
+  if (filters?.endDate) {
+    conditions.push(sql`${expenses.firstDueDate} <= ${filters.endDate}`);
+  }
+  
+  if (conditions.length > 0) {
+    query = query.where(and(...conditions)) as any;
+  }
+  
+  return await query.orderBy(desc(expenses.createdAt));
+}
+
+export async function getExpenseById(id: number) {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const result = await db.select({
+    expense: expenses,
+    category: expenseCategories,
+    supplier: partners
+  })
+  .from(expenses)
+  .leftJoin(expenseCategories, eq(expenses.categoryId, expenseCategories.id))
+  .leftJoin(partners, eq(expenses.supplierId, partners.id))
+  .where(eq(expenses.id, id))
+  .limit(1);
+  
+  if (result.length === 0) return null;
+  
+  // Buscar parcelas
+  const installments = await getExpenseInstallments(id);
+  
+  return {
+    ...result[0],
+    installments
+  };
+}
+
+export async function createExpense(data: InsertExpense) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.insert(expenses).values(data);
+  const insertId = (result as any)[0]?.insertId || (result as any).insertId;
+  if (!insertId) {
+    // Fallback: buscar o último registro inserido
+    const lastRecord = await db.select().from(expenses).orderBy(desc(expenses.id)).limit(1);
+    return lastRecord[0]?.id || 0;
+  }
+  return Number(insertId);
+}
+
+export async function updateExpense(id: number, data: Partial<InsertExpense>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(expenses).set(data).where(eq(expenses.id, id));
+}
+
+export async function cancelExpense(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  // Marcar despesa como cancelada
+  await db.update(expenses)
+    .set({ status: "CANCELADA" })
+    .where(eq(expenses.id, id));
+  
+  // Cancelar todas as parcelas pendentes
+  await db.update(expenseInstallments)
+    .set({ status: "CANCELADO" })
+    .where(and(
+      eq(expenseInstallments.expenseId, id),
+      eq(expenseInstallments.status, "PENDENTE")
+    ));
+}
+
+// Parcelas de Despesas
+export async function getExpenseInstallments(expenseId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return await db.select()
+    .from(expenseInstallments)
+    .where(eq(expenseInstallments.expenseId, expenseId))
+    .orderBy(expenseInstallments.installmentNumber);
+}
+
+export async function getPendingExpenseInstallments(filters?: {
+  categoryId?: number;
+  startDate?: Date;
+  endDate?: Date;
+}) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  let query = db.select({
+    installment: expenseInstallments,
+    expense: expenses,
+    category: expenseCategories,
+    supplier: partners
+  })
+  .from(expenseInstallments)
+  .innerJoin(expenses, eq(expenseInstallments.expenseId, expenses.id))
+  .leftJoin(expenseCategories, eq(expenses.categoryId, expenseCategories.id))
+  .leftJoin(partners, eq(expenses.supplierId, partners.id));
+  
+  const conditions = [
+    or(
+      eq(expenseInstallments.status, "PENDENTE"),
+      eq(expenseInstallments.status, "VENCIDO")
+    )
+  ];
+  
+  if (filters?.categoryId) {
+    conditions.push(eq(expenses.categoryId, filters.categoryId));
+  }
+  
+  if (filters?.startDate) {
+    conditions.push(sql`${expenseInstallments.dueDate} >= ${filters.startDate}`);
+  }
+  
+  if (filters?.endDate) {
+    conditions.push(sql`${expenseInstallments.dueDate} <= ${filters.endDate}`);
+  }
+  
+  query = query.where(and(...conditions)) as any;
+  
+  return await query.orderBy(expenseInstallments.dueDate);
+}
+
+export async function createExpenseInstallment(data: InsertExpenseInstallment) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.insert(expenseInstallments).values(data);
+  return Number((result as any).insertId);
+}
+
+export async function payExpenseInstallment(
+  id: number, 
+  paymentData: {
+    paymentDate: Date;
+    paymentAmount: string;
+    paymentMethod: string;
+    notes?: string;
+  }
+) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(expenseInstallments)
+    .set({
+      paymentDate: paymentData.paymentDate,
+      paymentAmount: paymentData.paymentAmount,
+      paymentMethod: paymentData.paymentMethod as any,
+      notes: paymentData.notes,
+      status: "PAGO"
+    })
+    .where(eq(expenseInstallments.id, id));
+}
+
+// Atualizar status de parcelas vencidas
+export async function updateOverdueExpenseInstallments() {
+  const db = await getDb();
+  if (!db) return;
+  
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  await db.update(expenseInstallments)
+    .set({ status: "VENCIDO" })
+    .where(and(
+      eq(expenseInstallments.status, "PENDENTE"),
+      sql`${expenseInstallments.dueDate} < ${today}`
+    ));
 }
 
