@@ -524,7 +524,10 @@ export const appRouter = router({
         description: z.string().min(3),
         amount: z.string(),
         paymentMethod: z.string(),
-        dueDates: z.array(z.date()).min(1), // Array de datas de vencimento
+        dueDates: z.array(z.object({
+          date: z.date(),
+          amount: z.string()
+        })).min(1), // Array de datas e valores de vencimento
         notes: z.string().optional(),
       }))
       .mutation(async ({ input, ctx }) => {
@@ -541,16 +544,13 @@ export const appRouter = router({
           createdBy: ctx.user.id,
         });
         
-        // Criar parcelas baseadas nas datas fornecidas
-        const totalAmount = parseFloat(input.amount);
-        const installmentAmount = (totalAmount / input.dueDates.length).toFixed(2);
-        
+        // Criar parcelas com valores individuais
         for (let i = 0; i < input.dueDates.length; i++) {
           await db.createExpenseInstallment({
             expenseId,
             installmentNumber: i + 1,
-            amount: installmentAmount,
-            dueDate: input.dueDates[i],
+            amount: input.dueDates[i].amount,
+            dueDate: input.dueDates[i].date,
             status: "PENDENTE",
           });
         }

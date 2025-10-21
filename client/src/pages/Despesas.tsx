@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 
 interface DueDate {
   date: string;
+  amount: string;
 }
 
 const PAYMENT_METHODS = [
@@ -43,7 +44,7 @@ export default function Despesas() {
   const [amount, setAmount] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("");
   const [dueDates, setDueDates] = useState<DueDate[]>([
-    { date: new Date(Date.now() + 30*24*60*60*1000).toISOString().split('T')[0] }
+    { date: new Date(Date.now() + 30*24*60*60*1000).toISOString().split('T')[0], amount: "" }
   ]);
   const [notes, setNotes] = useState("");
   
@@ -83,7 +84,7 @@ export default function Despesas() {
     setDescription("");
     setAmount("");
     setPaymentMethod("");
-    setDueDates([{ date: new Date(Date.now() + 30*24*60*60*1000).toISOString().split('T')[0] }]);
+    setDueDates([{ date: new Date(Date.now() + 30*24*60*60*1000).toISOString().split('T')[0], amount: "" }]);
     setNotes("");
     setSupplierSearch("");
     setCategorySearch("");
@@ -93,7 +94,7 @@ export default function Despesas() {
     const lastDate = dueDates[dueDates.length - 1]?.date || new Date().toISOString().split('T')[0];
     const nextDate = new Date(lastDate);
     nextDate.setMonth(nextDate.getMonth() + 1);
-    setDueDates([...dueDates, { date: nextDate.toISOString().split('T')[0] }]);
+    setDueDates([...dueDates, { date: nextDate.toISOString().split('T')[0], amount: "" }]);
   };
   
   const removeDueDate = (index: number) => {
@@ -102,9 +103,9 @@ export default function Despesas() {
     }
   };
   
-  const updateDueDate = (index: number, date: string) => {
+  const updateDueDate = (index: number, field: 'date' | 'amount', value: string) => {
     const newDueDates = [...dueDates];
-    newDueDates[index] = { date };
+    newDueDates[index] = { ...newDueDates[index], [field]: value };
     setDueDates(newDueDates);
   };
   
@@ -117,10 +118,7 @@ export default function Despesas() {
       toast.error("Informe a descrição");
       return;
     }
-    if (!amount || parseFloat(amount) <= 0) {
-      toast.error("Informe um valor válido");
-      return;
-    }
+    // Valor total não é mais obrigatório - será calculado pela soma das parcelas
     if (!paymentMethod) {
       toast.error("Selecione a forma de pagamento");
       return;
@@ -129,6 +127,13 @@ export default function Despesas() {
       toast.error("Informe pelo menos uma data de vencimento");
       return;
     }
+    if (dueDates.some(d => !d.amount || parseFloat(d.amount) <= 0)) {
+      toast.error("Informe o valor de todas as parcelas");
+      return;
+    }
+    
+    // Calcular valor total somando as parcelas
+    const totalAmount = dueDates.reduce((sum, d) => sum + parseFloat(d.amount), 0).toFixed(2);
     
     createMutation.mutate({
       supplierId,
@@ -136,9 +141,12 @@ export default function Despesas() {
       docNumber,
       categoryId,
       description,
-      amount,
+      amount: totalAmount,
       paymentMethod,
-      dueDates: dueDates.map(d => new Date(d.date)),
+      dueDates: dueDates.map(d => ({
+        date: new Date(d.date),
+        amount: d.amount
+      })),
       notes,
     });
   };
@@ -373,16 +381,6 @@ export default function Despesas() {
                       />
                     </div>
                     <div>
-                      <Label>Valor *</Label>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        value={amount}
-                        onChange={(e) => setAmount(e.target.value)}
-                        placeholder="0.00"
-                      />
-                    </div>
-                    <div>
                       <Label>Forma de Pagamento *</Label>
                       <Select value={paymentMethod} onValueChange={setPaymentMethod}>
                         <SelectTrigger>
@@ -417,11 +415,21 @@ export default function Despesas() {
                     {dueDates.map((dueDate, index) => (
                       <div key={index} className="flex gap-2">
                         <div className="flex-1">
-                          <Label>Parcela {index + 1}</Label>
+                          <Label>Data Vencimento - Parcela {index + 1}</Label>
                           <Input
                             type="date"
                             value={dueDate.date}
-                            onChange={(e) => updateDueDate(index, e.target.value)}
+                            onChange={(e) => updateDueDate(index, 'date', e.target.value)}
+                          />
+                        </div>
+                        <div className="flex-1">
+                          <Label>Valor - Parcela {index + 1}</Label>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            placeholder="0.00"
+                            value={dueDate.amount}
+                            onChange={(e) => updateDueDate(index, 'amount', e.target.value)}
                           />
                         </div>
                         {dueDates.length > 1 && (
@@ -437,9 +445,6 @@ export default function Despesas() {
                       </div>
                     ))}
                   </div>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    O valor será dividido igualmente entre as {dueDates.length} parcela(s)
-                  </p>
                 </div>
 
                 {/* Observações */}
