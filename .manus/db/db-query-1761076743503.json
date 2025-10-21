@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE expenses (\n  id INT PRIMARY KEY AUTO_INCREMENT,\n  supplierId INT,\n  docType ENUM('NOTA_FISCAL', 'CUPOM') NOT NULL,\n  docNumber VARCHAR(100),\n  categoryId INT NOT NULL,\n  description VARCHAR(255) NOT NULL,\n  amount DECIMAL(10, 2) NOT NULL,\n  paymentMethod VARCHAR(50) NOT NULL,\n  notes TEXT,\n  status ENUM('ATIVA', 'PAGA', 'CANCELADA') NOT NULL DEFAULT 'ATIVA',\n  createdBy VARCHAR(64) NOT NULL,\n  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\n  updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n  INDEX category_idx (categoryId),\n  INDEX status_idx (status),\n  INDEX supplier_idx (supplierId)\n)",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute CREATE TABLE expenses (\n  id INT PRIMARY KEY AUTO_INCREMENT,\n  supplierId INT,\n  docType ENUM('NOTA_FISCAL', 'CUPOM') NOT NULL,\n  docNumber VARCHAR(100),\n  categoryId INT NOT NULL,\n  description VARCHAR(255) NOT NULL,\n  amount DECIMAL(10, 2) NOT NULL,\n  paymentMethod VARCHAR(50) NOT NULL,\n  notes TEXT,\n  status ENUM('ATIVA', 'PAGA', 'CANCELADA') NOT NULL DEFAULT 'ATIVA',\n  createdBy VARCHAR(64) NOT NULL,\n  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\n  updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n  INDEX category_idx (categoryId),\n  INDEX status_idx (status),\n  INDEX supplier_idx (supplierId)\n)",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 295
+}

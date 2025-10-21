@@ -517,37 +517,40 @@ export const appRouter = router({
     
     create: protectedProcedure
       .input(z.object({
+        supplierId: z.number().optional(),
+        docType: z.enum(["NOTA_FISCAL", "CUPOM"]),
+        docNumber: z.string().optional(),
         categoryId: z.number(),
         description: z.string().min(3),
-        totalAmount: z.string(),
-        paymentType: z.enum(["AVISTA", "PARCELADO"]),
-        installments: z.number().min(1).max(60).optional().default(1),
-        dueDay: z.number().min(1).max(31).optional(),
-        firstDueDate: z.date(),
-        supplierId: z.number().optional(),
+        amount: z.string(),
+        paymentMethod: z.string(),
+        dueDates: z.array(z.date()).min(1), // Array de datas de vencimento
         notes: z.string().optional(),
       }))
       .mutation(async ({ input, ctx }) => {
         const expenseId = await db.createExpense({
-          ...input,
-          firstDueDate: input.firstDueDate,
+          supplierId: input.supplierId,
+          docType: input.docType,
+          docNumber: input.docNumber,
+          categoryId: input.categoryId,
+          description: input.description,
+          amount: input.amount,
+          paymentMethod: input.paymentMethod,
+          notes: input.notes,
           status: "ATIVA",
           createdBy: ctx.user.id,
         });
         
-        // Criar parcelas
-        const amount = parseFloat(input.totalAmount);
-        const installmentAmount = (amount / input.installments).toFixed(2);
+        // Criar parcelas baseadas nas datas fornecidas
+        const totalAmount = parseFloat(input.amount);
+        const installmentAmount = (totalAmount / input.dueDates.length).toFixed(2);
         
-        for (let i = 0; i < input.installments; i++) {
-          const dueDate = new Date(input.firstDueDate);
-          dueDate.setMonth(dueDate.getMonth() + i);
-          
+        for (let i = 0; i < input.dueDates.length; i++) {
           await db.createExpenseInstallment({
             expenseId,
             installmentNumber: i + 1,
             amount: installmentAmount,
-            dueDate,
+            dueDate: input.dueDates[i],
             status: "PENDENTE",
           });
         }

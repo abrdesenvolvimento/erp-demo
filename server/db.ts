@@ -722,13 +722,7 @@ export async function getExpenses(filters?: {
     conditions.push(eq(expenses.supplierId, filters.supplierId));
   }
   
-  if (filters?.startDate) {
-    conditions.push(sql`${expenses.firstDueDate} >= ${filters.startDate}`);
-  }
-  
-  if (filters?.endDate) {
-    conditions.push(sql`${expenses.firstDueDate} <= ${filters.endDate}`);
-  }
+  // Filtros de data removidos - agora controlado pelas parcelas
   
   if (conditions.length > 0) {
     query = query.where(and(...conditions)) as any;

@@ -1,581 +1,545 @@
 import { useState } from "react";
-import { Plus, Filter, DollarSign, Calendar, AlertCircle } from "lucide-react";
+import { useAuth } from "@/_core/hooks/useAuth";
+import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { trpc } from "@/lib/trpc";
+import { Plus, Search, Check, ChevronLeft, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
+
+interface DueDate {
+  date: string;
+}
+
+const PAYMENT_METHODS = [
+  "Boleto",
+  "Crédito G",
+  "Crédito R",
+  "Crédito ABR",
+  "À Vista",
+  "Débito Automático"
+];
 
 export default function Despesas() {
-  const [showNewExpenseDialog, setShowNewExpenseDialog] = useState(false);
-  const [showPaymentDialog, setShowPaymentDialog] = useState(false);
-  const [selectedInstallment, setSelectedInstallment] = useState<any>(null);
-  const [viewMode, setViewMode] = useState<"list" | "pending">("list");
-
+  const { user } = useAuth();
+  const [isCreating, setIsCreating] = useState(false);
+  
+  // Form state
+  const [supplierOpen, setSupplierOpen] = useState(false);
+  const [supplierSearch, setSupplierSearch] = useState("");
+  const [supplierId, setSupplierId] = useState<number | undefined>();
+  const [docType, setDocType] = useState<"NOTA_FISCAL" | "CUPOM">("CUPOM");
+  const [docNumber, setDocNumber] = useState("");
+  const [categoryOpen, setCategoryOpen] = useState(false);
+  const [categorySearch, setCategorySearch] = useState("");
+  const [categoryId, setCategoryId] = useState<number | undefined>();
+  const [description, setDescription] = useState("");
+  const [amount, setAmount] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState("");
+  const [dueDates, setDueDates] = useState<DueDate[]>([
+    { date: new Date(Date.now() + 30*24*60*60*1000).toISOString().split('T')[0] }
+  ]);
+  const [notes, setNotes] = useState("");
+  
   // Queries
-  const { data: expenses, refetch: refetchExpenses } = trpc.expenses.list.useQuery();
-  const { data: categories } = trpc.expenses.categories.list.useQuery();
-  const { data: suppliers } = trpc.partners.list.useQuery({ partnerType: "SUPPLIER" });
-  const { data: pendingInstallments, refetch: refetchPending } = trpc.expenses.installments.pending.useQuery();
-
+  const { data: expenses = [], refetch } = trpc.expenses.list.useQuery();
+  const { data: suppliers = [] } = trpc.partners.list.useQuery({ partnerType: "SUPPLIER" });
+  const { data: categories = [] } = trpc.expenses.categories.list.useQuery({ activeOnly: true });
+  
   // Mutations
-  const createExpense = trpc.expenses.create.useMutation({
+  const createMutation = trpc.expenses.create.useMutation({
     onSuccess: () => {
-      toast.success("Despesa cadastrada com sucesso!");
-      setShowNewExpenseDialog(false);
-      refetchExpenses();
-      refetchPending();
+      toast.success("Despesa registrada com sucesso!");
+      refetch();
       resetForm();
+      setIsCreating(false);
     },
     onError: (error) => {
-      toast.error("Erro ao cadastrar despesa: " + error.message);
+      toast.error(`Erro ao registrar despesa: ${error.message}`);
     },
   });
-
-  const payInstallment = trpc.expenses.installments.pay.useMutation({
+  
+  const cancelMutation = trpc.expenses.cancel.useMutation({
     onSuccess: () => {
-      toast.success("Pagamento registrado com sucesso!");
-      setShowPaymentDialog(false);
-      setSelectedInstallment(null);
-      refetchExpenses();
-      refetchPending();
-      resetPaymentForm();
+      toast.success("Despesa cancelada!");
+      refetch();
     },
     onError: (error) => {
-      toast.error("Erro ao registrar pagamento: " + error.message);
+      toast.error(`Erro ao cancelar despesa: ${error.message}`);
     },
   });
-
-  // Form states
-  const [formData, setFormData] = useState({
-    categoryId: "",
-    description: "",
-    totalAmount: "",
-    paymentType: "AVISTA" as "AVISTA" | "PARCELADO",
-    installments: "1",
-    dueDay: "",
-    firstDueDate: "",
-    supplierId: "",
-    notes: "",
-  });
-
-  const [paymentData, setPaymentData] = useState({
-    paymentDate: new Date().toISOString().split('T')[0],
-    paymentAmount: "",
-    paymentMethod: "",
-    notes: "",
-  });
-
+  
   const resetForm = () => {
-    setFormData({
-      categoryId: "",
-      description: "",
-      totalAmount: "",
-      paymentType: "AVISTA",
-      installments: "1",
-      dueDay: "",
-      firstDueDate: "",
-      supplierId: "",
-      notes: "",
-    });
+    setSupplierId(undefined);
+    setDocType("CUPOM");
+    setDocNumber("");
+    setCategoryId(undefined);
+    setDescription("");
+    setAmount("");
+    setPaymentMethod("");
+    setDueDates([{ date: new Date(Date.now() + 30*24*60*60*1000).toISOString().split('T')[0] }]);
+    setNotes("");
+    setSupplierSearch("");
+    setCategorySearch("");
   };
-
-  const resetPaymentForm = () => {
-    setPaymentData({
-      paymentDate: new Date().toISOString().split('T')[0],
-      paymentAmount: "",
-      paymentMethod: "",
-      notes: "",
-    });
+  
+  const addDueDate = () => {
+    const lastDate = dueDates[dueDates.length - 1]?.date || new Date().toISOString().split('T')[0];
+    const nextDate = new Date(lastDate);
+    nextDate.setMonth(nextDate.getMonth() + 1);
+    setDueDates([...dueDates, { date: nextDate.toISOString().split('T')[0] }]);
   };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!formData.categoryId || !formData.description || !formData.totalAmount || !formData.firstDueDate) {
-      toast.error("Preencha todos os campos obrigatórios");
+  
+  const removeDueDate = (index: number) => {
+    if (dueDates.length > 1) {
+      setDueDates(dueDates.filter((_, i) => i !== index));
+    }
+  };
+  
+  const updateDueDate = (index: number, date: string) => {
+    const newDueDates = [...dueDates];
+    newDueDates[index] = { date };
+    setDueDates(newDueDates);
+  };
+  
+  const handleSubmit = () => {
+    if (!categoryId) {
+      toast.error("Selecione a categoria");
       return;
     }
-
-    createExpense.mutate({
-      categoryId: parseInt(formData.categoryId),
-      description: formData.description,
-      totalAmount: formData.totalAmount,
-      paymentType: formData.paymentType,
-      installments: parseInt(formData.installments),
-      dueDay: formData.dueDay ? parseInt(formData.dueDay) : undefined,
-      firstDueDate: new Date(formData.firstDueDate),
-      supplierId: formData.supplierId ? parseInt(formData.supplierId) : undefined,
-      notes: formData.notes || undefined,
-    });
-  };
-
-  const handlePayment = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!selectedInstallment || !paymentData.paymentAmount || !paymentData.paymentMethod) {
-      toast.error("Preencha todos os campos obrigatórios");
+    if (!description) {
+      toast.error("Informe a descrição");
       return;
     }
-
-    payInstallment.mutate({
-      id: selectedInstallment.installment.id,
-      paymentDate: new Date(paymentData.paymentDate),
-      paymentAmount: paymentData.paymentAmount,
-      paymentMethod: paymentData.paymentMethod as any,
-      notes: paymentData.notes || undefined,
+    if (!amount || parseFloat(amount) <= 0) {
+      toast.error("Informe um valor válido");
+      return;
+    }
+    if (!paymentMethod) {
+      toast.error("Selecione a forma de pagamento");
+      return;
+    }
+    if (dueDates.length === 0 || dueDates.some(d => !d.date)) {
+      toast.error("Informe pelo menos uma data de vencimento");
+      return;
+    }
+    
+    createMutation.mutate({
+      supplierId,
+      docType,
+      docNumber,
+      categoryId,
+      description,
+      amount,
+      paymentMethod,
+      dueDates: dueDates.map(d => new Date(d.date)),
+      notes,
     });
   };
-
-  const openPaymentDialog = (installment: any) => {
-    setSelectedInstallment(installment);
-    setPaymentData({
-      ...paymentData,
-      paymentAmount: installment.installment.amount,
-    });
-    setShowPaymentDialog(true);
-  };
-
-  const formatCurrency = (value: string | number) => {
-    const num = typeof value === 'string' ? parseFloat(value) : value;
-    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(num);
-  };
-
-  const formatDate = (date: Date | string) => {
-    return new Date(date).toLocaleDateString('pt-BR');
-  };
-
-  const getDaysUntilDue = (dueDate: Date | string) => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const due = new Date(dueDate);
-    due.setHours(0, 0, 0, 0);
-    const diff = Math.ceil((due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-    return diff;
-  };
-
-  const getStatusBadge = (status: string) => {
-    const variants: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
-      ATIVA: "default",
-      CANCELADA: "secondary",
-      PENDENTE: "outline",
-      PAGO: "default",
-      VENCIDO: "destructive",
-    };
-    return <Badge variant={variants[status] || "default"}>{status}</Badge>;
-  };
-
-  return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold">Despesas Operacionais</h1>
-          <p className="text-muted-foreground">Gerencie as despesas da empresa</p>
-        </div>
-        <Button onClick={() => setShowNewExpenseDialog(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Nova Despesa
-        </Button>
-      </div>
-
-      {/* Resumo */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Despesas Ativas</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {expenses?.filter(e => e.expense.status === 'ATIVA').length || 0}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Parcelas Pendentes</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {pendingInstallments?.length || 0}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Pendente</CardTitle>
-            <AlertCircle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {formatCurrency(
-                pendingInstallments?.reduce((sum, p) => sum + parseFloat(p.installment.amount), 0) || 0
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Tabs */}
-      <div className="flex gap-2">
-        <Button
-          variant={viewMode === "list" ? "default" : "outline"}
-          onClick={() => setViewMode("list")}
-        >
-          Despesas
-        </Button>
-        <Button
-          variant={viewMode === "pending" ? "default" : "outline"}
-          onClick={() => setViewMode("pending")}
-        >
-          Parcelas Pendentes
-          {pendingInstallments && pendingInstallments.length > 0 && (
-            <Badge className="ml-2" variant="secondary">{pendingInstallments.length}</Badge>
-          )}
-        </Button>
-      </div>
-
-      {/* Lista de Despesas */}
-      {viewMode === "list" && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Despesas Cadastradas</CardTitle>
-            <CardDescription>Lista de todas as despesas operacionais</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {expenses?.map((item) => (
-                <div key={item.expense.id} className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-semibold">{item.expense.description}</h3>
-                      {getStatusBadge(item.expense.status)}
-                    </div>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      {item.category?.name} • {item.expense.paymentType === 'AVISTA' ? 'À Vista' : `${item.expense.installments}x`}
-                      {item.supplier && ` • ${item.supplier.name}`}
+  
+  const selectedSupplier = suppliers.find(s => s.id === supplierId);
+  const filteredSuppliers = suppliers.filter(s => 
+    s.name.toLowerCase().includes(supplierSearch.toLowerCase()) ||
+    s.docNumber?.toLowerCase().includes(supplierSearch.toLowerCase())
+  );
+  
+  const selectedCategory = categories.find(c => c.id === categoryId);
+  const filteredCategories = categories.filter(c => 
+    c.name.toLowerCase().includes(categorySearch.toLowerCase())
+  );
+  
+  // Tela de criação de despesa
+  if (isCreating) {
+    return (
+      <DashboardLayout>
+        <div className="h-full flex flex-col">
+          {/* Header */}
+          <div className="border-b bg-background sticky top-0 z-10">
+            <div className="container py-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => {
+                      if (categoryId || description || amount) {
+                        if (confirm("Deseja descartar as alterações?")) {
+                          setIsCreating(false);
+                          resetForm();
+                        }
+                      } else {
+                        setIsCreating(false);
+                        resetForm();
+                      }
+                    }}
+                  >
+                    <ChevronLeft className="h-5 w-5" />
+                  </Button>
+                  <div>
+                    <h1 className="text-2xl font-bold">Nova Despesa Operacional</h1>
+                    <p className="text-sm text-muted-foreground">
+                      Registre uma nova despesa da empresa
                     </p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Vencimento: {formatDate(item.expense.firstDueDate)}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-lg font-bold">{formatCurrency(item.expense.totalAmount)}</p>
                   </div>
                 </div>
-              ))}
-              {(!expenses || expenses.length === 0) && (
-                <p className="text-center text-muted-foreground py-8">
-                  Nenhuma despesa cadastrada
-                </p>
-              )}
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      if (categoryId || description || amount) {
+                        if (confirm("Deseja descartar as alterações?")) {
+                          setIsCreating(false);
+                          resetForm();
+                        }
+                      } else {
+                        setIsCreating(false);
+                        resetForm();
+                      }
+                    }}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button onClick={handleSubmit} disabled={createMutation.isPending}>
+                    {createMutation.isPending ? "Salvando..." : "Salvar Despesa"}
+                  </Button>
+                </div>
+              </div>
             </div>
-          </CardContent>
-        </Card>
-      )}
+          </div>
 
-      {/* Parcelas Pendentes */}
-      {viewMode === "pending" && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Parcelas Pendentes</CardTitle>
-            <CardDescription>Parcelas aguardando pagamento</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {pendingInstallments?.map((item) => {
-                const daysUntilDue = getDaysUntilDue(item.installment.dueDate);
-                const isOverdue = daysUntilDue < 0;
-                
-                return (
-                  <div key={item.installment.id} className="flex items-center justify-between p-4 border rounded-lg">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-semibold">{item.expense?.description}</h3>
-                        {getStatusBadge(item.installment.status)}
-                      </div>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        {item.category?.name} • Parcela {item.installment.installmentNumber}
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Vencimento: {formatDate(item.installment.dueDate)}
-                        {isOverdue ? (
-                          <span className="text-red-600 font-semibold ml-2">
-                            (Vencido há {Math.abs(daysUntilDue)} dias)
-                          </span>
-                        ) : (
-                          <span className="ml-2">
-                            (Vence em {daysUntilDue} dias)
-                          </span>
-                        )}
-                      </p>
-                    </div>
-                    <div className="text-right flex items-center gap-4">
-                      <div>
-                        <p className="text-lg font-bold">{formatCurrency(item.installment.amount)}</p>
-                      </div>
-                      <Button onClick={() => openPaymentDialog(item)}>
-                        Pagar
+          {/* Content */}
+          <div className="flex-1 overflow-auto">
+            <div className="container py-6">
+              <div className="max-w-3xl mx-auto space-y-6">
+                {/* Fornecedor */}
+                <div className="bg-card border rounded-lg p-6">
+                  <h3 className="text-lg font-semibold mb-4">Fornecedor (Opcional)</h3>
+                  <Popover open={supplierOpen} onOpenChange={setSupplierOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={supplierOpen}
+                        className="w-full justify-between"
+                      >
+                        {selectedSupplier ? selectedSupplier.name : "Selecione um fornecedor..."}
+                        <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                       </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[400px] p-0" align="start">
+                      <Command>
+                        <CommandInput 
+                          placeholder="Buscar fornecedor..." 
+                          value={supplierSearch}
+                          onValueChange={setSupplierSearch}
+                        />
+                        <CommandList>
+                          <CommandEmpty>Nenhum fornecedor encontrado.</CommandEmpty>
+                          <CommandGroup>
+                            {filteredSuppliers.map((supplier) => (
+                              <CommandItem
+                                key={supplier.id}
+                                value={supplier.id.toString()}
+                                onSelect={() => {
+                                  setSupplierId(supplier.id);
+                                  setSupplierOpen(false);
+                                  setSupplierSearch("");
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    supplierId === supplier.id ? "opacity-100" : "opacity-0"
+                                  )}
+                                />
+                                <div className="flex-1">
+                                  <div className="font-medium">{supplier.name}</div>
+                                  {supplier.docNumber && (
+                                    <div className="text-xs text-muted-foreground">
+                                      {supplier.docNumber}
+                                    </div>
+                                  )}
+                                </div>
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                </div>
+
+                {/* Documento */}
+                <div className="bg-card border rounded-lg p-6">
+                  <h3 className="text-lg font-semibold mb-4">Documento</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label>Tipo de Documento *</Label>
+                      <Select value={docType} onValueChange={(v: any) => setDocType(v)}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent position="popper">
+                          <SelectItem value="NOTA_FISCAL">Nota Fiscal</SelectItem>
+                          <SelectItem value="CUPOM">Cupom</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label>Número do Documento</Label>
+                      <Input
+                        value={docNumber}
+                        onChange={(e) => setDocNumber(e.target.value)}
+                        placeholder="Ex: 123456"
+                      />
                     </div>
                   </div>
-                );
-              })}
-              {(!pendingInstallments || pendingInstallments.length === 0) && (
-                <p className="text-center text-muted-foreground py-8">
-                  Nenhuma parcela pendente
-                </p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Dialog: Nova Despesa */}
-      <Dialog open={showNewExpenseDialog} onOpenChange={setShowNewExpenseDialog}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Nova Despesa Operacional</DialogTitle>
-            <DialogDescription>
-              Cadastre uma nova despesa da empresa
-            </DialogDescription>
-          </DialogHeader>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="categoryId">Categoria *</Label>
-                <Select
-                  value={formData.categoryId}
-                  onValueChange={(value) => setFormData({ ...formData, categoryId: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories?.map((cat) => (
-                      <SelectItem key={cat.id} value={cat.id.toString()}>
-                        {cat.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="supplierId">Fornecedor (opcional)</Label>
-                <Select
-                  value={formData.supplierId}
-                  onValueChange={(value) => setFormData({ ...formData, supplierId: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {suppliers?.map((supplier) => (
-                      <SelectItem key={supplier.id} value={supplier.id.toString()}>
-                        {supplier.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="description">Descrição *</Label>
-              <Input
-                id="description"
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                placeholder="Ex: Aluguel do mês de outubro"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="totalAmount">Valor Total *</Label>
-                <Input
-                  id="totalAmount"
-                  type="number"
-                  step="0.01"
-                  value={formData.totalAmount}
-                  onChange={(e) => setFormData({ ...formData, totalAmount: e.target.value })}
-                  placeholder="0.00"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="firstDueDate">Data de Vencimento *</Label>
-                <Input
-                  id="firstDueDate"
-                  type="date"
-                  value={formData.firstDueDate}
-                  onChange={(e) => setFormData({ ...formData, firstDueDate: e.target.value })}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Tipo de Pagamento</Label>
-              <RadioGroup
-                value={formData.paymentType}
-                onValueChange={(value: "AVISTA" | "PARCELADO") => 
-                  setFormData({ ...formData, paymentType: value, installments: value === 'AVISTA' ? '1' : formData.installments })
-                }
-              >
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="AVISTA" id="avista" />
-                  <Label htmlFor="avista">À Vista</Label>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="PARCELADO" id="parcelado" />
-                  <Label htmlFor="parcelado">Parcelado</Label>
-                </div>
-              </RadioGroup>
-            </div>
 
-            {formData.paymentType === 'PARCELADO' && (
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="installments">Número de Parcelas</Label>
-                  <Input
-                    id="installments"
-                    type="number"
-                    min="2"
-                    max="60"
-                    value={formData.installments}
-                    onChange={(e) => setFormData({ ...formData, installments: e.target.value })}
+                {/* Categoria */}
+                <div className="bg-card border rounded-lg p-6">
+                  <h3 className="text-lg font-semibold mb-4">Categoria *</h3>
+                  <Popover open={categoryOpen} onOpenChange={setCategoryOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={categoryOpen}
+                        className="w-full justify-between"
+                      >
+                        {selectedCategory ? selectedCategory.name : "Selecione uma categoria..."}
+                        <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[400px] p-0" align="start">
+                      <Command>
+                        <CommandInput 
+                          placeholder="Buscar categoria..." 
+                          value={categorySearch}
+                          onValueChange={setCategorySearch}
+                        />
+                        <CommandList>
+                          <CommandEmpty>Nenhuma categoria encontrada.</CommandEmpty>
+                          <CommandGroup>
+                            {filteredCategories.map((category) => (
+                              <CommandItem
+                                key={category.id}
+                                value={category.id.toString()}
+                                onSelect={() => {
+                                  setCategoryId(category.id);
+                                  setCategoryOpen(false);
+                                  setCategorySearch("");
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    categoryId === category.id ? "opacity-100" : "opacity-0"
+                                  )}
+                                />
+                                <div className="flex-1">
+                                  <div className="font-medium">{category.name}</div>
+                                  {category.description && (
+                                    <div className="text-xs text-muted-foreground">
+                                      {category.description}
+                                    </div>
+                                  )}
+                                </div>
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                </div>
+
+                {/* Informações da Despesa */}
+                <div className="bg-card border rounded-lg p-6">
+                  <h3 className="text-lg font-semibold mb-4">Informações da Despesa</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <Label>Descrição *</Label>
+                      <Input
+                        value={description}
+                        onChange={(e) => setDescription(e.target.value)}
+                        placeholder="Ex: Aluguel do mês de novembro/2025"
+                      />
+                    </div>
+                    <div>
+                      <Label>Valor *</Label>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        value={amount}
+                        onChange={(e) => setAmount(e.target.value)}
+                        placeholder="0.00"
+                      />
+                    </div>
+                    <div>
+                      <Label>Forma de Pagamento *</Label>
+                      <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione..." />
+                        </SelectTrigger>
+                        <SelectContent position="popper">
+                          {PAYMENT_METHODS.map((method) => (
+                            <SelectItem key={method} value={method}>
+                              {method}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Datas de Vencimento */}
+                <div className="bg-card border rounded-lg p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold">Datas de Vencimento *</h3>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={addDueDate}
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Adicionar Data
+                    </Button>
+                  </div>
+                  <div className="space-y-3">
+                    {dueDates.map((dueDate, index) => (
+                      <div key={index} className="flex gap-2">
+                        <div className="flex-1">
+                          <Label>Parcela {index + 1}</Label>
+                          <Input
+                            type="date"
+                            value={dueDate.date}
+                            onChange={(e) => updateDueDate(index, e.target.value)}
+                          />
+                        </div>
+                        {dueDates.length > 1 && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="mt-6"
+                            onClick={() => removeDueDate(index)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    O valor será dividido igualmente entre as {dueDates.length} parcela(s)
+                  </p>
+                </div>
+
+                {/* Observações */}
+                <div className="bg-card border rounded-lg p-6">
+                  <h3 className="text-lg font-semibold mb-4">Observações</h3>
+                  <Textarea
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    placeholder="Informações adicionais sobre a despesa..."
+                    rows={4}
                   />
                 </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+  
+  // Tela de listagem
+  return (
+    <DashboardLayout>
+      <div className="container py-6">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-3xl font-bold">Despesas Operacionais</h1>
+            <p className="text-muted-foreground">
+              Gerencie as despesas da empresa
+            </p>
+          </div>
+          <Button onClick={() => setIsCreating(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Nova Despesa
+          </Button>
+        </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="dueDay">Dia do Vencimento (1-31)</Label>
-                  <Input
-                    id="dueDay"
-                    type="number"
-                    min="1"
-                    max="31"
-                    value={formData.dueDay}
-                    onChange={(e) => setFormData({ ...formData, dueDay: e.target.value })}
-                    placeholder="Ex: 10"
-                  />
-                </div>
+        {/* Lista de despesas */}
+        <div className="bg-card border rounded-lg">
+          <div className="p-6">
+            <h2 className="text-lg font-semibold mb-4">Despesas Cadastradas</h2>
+            {expenses.length === 0 ? (
+              <div className="text-center py-12 text-muted-foreground">
+                Nenhuma despesa cadastrada
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {expenses.map((item) => (
+                  <div
+                    key={item.expense.id}
+                    className="border rounded-lg p-4 hover:bg-accent/50 transition-colors"
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="font-semibold">{item.expense.description}</h3>
+                          <span className={cn(
+                            "text-xs px-2 py-1 rounded-full",
+                            item.expense.status === "ATIVA" && "bg-green-100 text-green-700",
+                            item.expense.status === "PAGA" && "bg-blue-100 text-blue-700",
+                            item.expense.status === "CANCELADA" && "bg-red-100 text-red-700"
+                          )}>
+                            {item.expense.status}
+                          </span>
+                        </div>
+                        <div className="text-sm text-muted-foreground space-y-1">
+                          <div>Categoria: {item.category?.name || "N/A"}</div>
+                          {item.supplier && <div>Fornecedor: {item.supplier.name}</div>}
+                          <div>Documento: {item.expense.docType} {item.expense.docNumber && `- ${item.expense.docNumber}`}</div>
+                          <div>Forma de Pagamento: {item.expense.paymentMethod}</div>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-xl font-bold">
+                          R$ {parseFloat(item.expense.amount).toFixed(2)}
+                        </div>
+                        {item.expense.status === "ATIVA" && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="mt-2"
+                            onClick={() => {
+                              if (confirm("Deseja cancelar esta despesa?")) {
+                                cancelMutation.mutate({ id: item.expense.id });
+                              }
+                            }}
+                          >
+                            Cancelar
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
-
-            <div className="space-y-2">
-              <Label htmlFor="notes">Observações</Label>
-              <Textarea
-                id="notes"
-                value={formData.notes}
-                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                placeholder="Informações adicionais..."
-                rows={3}
-              />
-            </div>
-
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setShowNewExpenseDialog(false)}>
-                Cancelar
-              </Button>
-              <Button type="submit" disabled={createExpense.isPending}>
-                {createExpense.isPending ? "Salvando..." : "Salvar Despesa"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-
-      {/* Dialog: Registrar Pagamento */}
-      <Dialog open={showPaymentDialog} onOpenChange={setShowPaymentDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Registrar Pagamento</DialogTitle>
-            <DialogDescription>
-              {selectedInstallment?.expense?.description} - Parcela {selectedInstallment?.installment?.installmentNumber}
-            </DialogDescription>
-          </DialogHeader>
-          <form onSubmit={handlePayment} className="space-y-4">
-            <div className="space-y-2">
-              <Label>Valor da Parcela</Label>
-              <p className="text-2xl font-bold">{formatCurrency(selectedInstallment?.installment?.amount || 0)}</p>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="paymentDate">Data do Pagamento *</Label>
-                <Input
-                  id="paymentDate"
-                  type="date"
-                  value={paymentData.paymentDate}
-                  onChange={(e) => setPaymentData({ ...paymentData, paymentDate: e.target.value })}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="paymentAmount">Valor Pago *</Label>
-                <Input
-                  id="paymentAmount"
-                  type="number"
-                  step="0.01"
-                  value={paymentData.paymentAmount}
-                  onChange={(e) => setPaymentData({ ...paymentData, paymentAmount: e.target.value })}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="paymentMethod">Forma de Pagamento *</Label>
-              <Select
-                value={paymentData.paymentMethod}
-                onValueChange={(value) => setPaymentData({ ...paymentData, paymentMethod: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione..." />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="DINHEIRO">Dinheiro</SelectItem>
-                  <SelectItem value="PIX">PIX</SelectItem>
-                  <SelectItem value="CARTAO_DEBITO">Cartão de Débito</SelectItem>
-                  <SelectItem value="CARTAO_CREDITO">Cartão de Crédito</SelectItem>
-                  <SelectItem value="TRANSFERENCIA">Transferência</SelectItem>
-                  <SelectItem value="BOLETO">Boleto</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="paymentNotes">Observações</Label>
-              <Textarea
-                id="paymentNotes"
-                value={paymentData.notes}
-                onChange={(e) => setPaymentData({ ...paymentData, notes: e.target.value })}
-                placeholder="Informações adicionais sobre o pagamento..."
-                rows={3}
-              />
-            </div>
-
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setShowPaymentDialog(false)}>
-                Cancelar
-              </Button>
-              <Button type="submit" disabled={payInstallment.isPending}>
-                {payInstallment.isPending ? "Registrando..." : "Confirmar Pagamento"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-    </div>
+          </div>
+        </div>
+      </div>
+    </DashboardLayout>
   );
 }
 

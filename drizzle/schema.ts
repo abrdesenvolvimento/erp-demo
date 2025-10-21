@@ -295,16 +295,15 @@ export type InsertExpenseCategory = typeof expenseCategories.$inferInsert;
 // Despesas Operacionais
 export const expenses = mysqlTable("expenses", {
   id: int("id").primaryKey().autoincrement(),
+  supplierId: int("supplierId"), // FK para fornecedor (opcional) - PRIMEIRO CAMPO
+  docType: mysqlEnum("docType", ["NOTA_FISCAL", "CUPOM"]).notNull(), // Tipo de documento
+  docNumber: varchar("docNumber", { length: 100 }), // Número do documento
   categoryId: int("categoryId").notNull(),
   description: varchar("description", { length: 255 }).notNull(),
-  totalAmount: decimal("totalAmount", { precision: 10, scale: 2 }).notNull(),
-  paymentType: mysqlEnum("paymentType", ["AVISTA", "PARCELADO"]).notNull(),
-  installments: int("installments").default(1).notNull(),
-  dueDay: int("dueDay"), // Dia do mês para vencimento (1-31)
-  firstDueDate: timestamp("firstDueDate").notNull(),
-  supplierId: int("supplierId"), // FK para fornecedor (opcional)
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(), // Renomeado de totalAmount
+  paymentMethod: varchar("paymentMethod", { length: 50 }).notNull(), // Forma de pagamento (igual Compras)
   notes: text("notes"),
-  status: mysqlEnum("status", ["ATIVA", "CANCELADA"]).default("ATIVA").notNull(),
+  status: mysqlEnum("status", ["ATIVA", "PAGA", "CANCELADA"]).default("ATIVA").notNull(),
   createdBy: varchar("createdBy", { length: 64 }).notNull(),
   createdAt: timestamp("createdAt").defaultNow(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow(),
@@ -326,14 +325,7 @@ export const expenseInstallments = mysqlTable("expenseInstallments", {
   dueDate: timestamp("dueDate").notNull(),
   paymentDate: timestamp("paymentDate"),
   paymentAmount: decimal("paymentAmount", { precision: 10, scale: 2 }),
-  paymentMethod: mysqlEnum("paymentMethod", [
-    "DINHEIRO",
-    "PIX",
-    "CARTAO_DEBITO",
-    "CARTAO_CREDITO",
-    "TRANSFERENCIA",
-    "BOLETO"
-  ]),
+  paymentMethod: varchar("paymentMethod", { length: 50 }), // Mesmas formas de Compras
   status: mysqlEnum("status", ["PENDENTE", "PAGO", "VENCIDO", "CANCELADO"]).default("PENDENTE").notNull(),
   notes: text("notes"),
   createdAt: timestamp("createdAt").defaultNow(),
