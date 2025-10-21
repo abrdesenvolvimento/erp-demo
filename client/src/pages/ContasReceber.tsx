@@ -1,40 +1,44 @@
 import { useState } from "react";
-import { trpc } from "@/lib/trpc";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { trpc } from "../lib/trpc";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
+import { Button } from "../components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "../components/ui/dialog";
+import { Input } from "../components/ui/input";
+import { Label } from "../components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
+import { Textarea } from "../components/ui/textarea";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table";
 import { toast } from "sonner";
-import { DollarSign, AlertCircle, TrendingUp, Calendar } from "lucide-react";
+import { DollarSign, User, ChevronRight } from "lucide-react";
 
 export default function ContasReceber() {
-  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
-  const [selectedInstallment, setSelectedInstallment] = useState<any>(null);
-  const [paymentData, setPaymentData] = useState({
+  const [selectedCustomerId, setSelectedCustomerId] = useState<number | null>(null);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [paymentForm, setPaymentForm] = useState({
     paidDate: new Date().toISOString().split('T')[0],
     paidAmount: "",
     paymentMethod: "",
+    saleId: "oldest",
     notes: ""
   });
 
   // Queries
-  const { data: summary, refetch: refetchSummary } = trpc.receivables.summary.useQuery();
-  const { data: pendingInstallments, refetch: refetchPending } = trpc.receivables.installments.pending.useQuery();
-  const { data: overdueInstallments, refetch: refetchOverdue } = trpc.receivables.installments.overdue.useQuery();
+  const { data: totalPending, refetch: refetchTotal } = trpc.receivables.totalPending.useQuery();
+  const { data: customers, refetch: refetchCustomers } = trpc.receivables.byCustomer.useQuery();
+  const { data: customerDetail, refetch: refetchDetail } = trpc.receivables.customerDetail.useQuery(
+    { customerId: selectedCustomerId! },
+    { enabled: !!selectedCustomerId }
+  );
 
   // Mutation
-  const payMutation = trpc.receivables.installments.pay.useMutation({
+  const registerPayment = trpc.receivables.registerPayment.useMutation({
     onSuccess: () => {
       toast.success("Recebimento registrado com sucesso!");
-      setPaymentModalOpen(false);
-      refetchSummary();
-      refetchPending();
-      refetchOverdue();
+      setShowPaymentModal(false);
       resetPaymentForm();
+      refetchTotal();
+      refetchCustomers();
+      refetchDetail();
     },
     onError: (error) => {
       toast.error(`Erro ao registrar recebimento: ${error.message}`);
@@ -42,40 +46,53 @@ export default function ContasReceber() {
   });
 
   const resetPaymentForm = () => {
-    setSelectedInstallment(null);
-    setPaymentData({
+    setPaymentForm({
       paidDate: new Date().toISOString().split('T')[0],
       paidAmount: "",
       paymentMethod: "",
+      saleId: "oldest",
       notes: ""
     });
   };
 
-  const handleOpenPaymentModal = (installment: any) => {
-    setSelectedInstallment(installment);
-    setPaymentData({
-      paidDate: new Date().toISOString().split('T')[0],
-      paidAmount: installment.installment.amount,
-      paymentMethod: "",
-      notes: ""
-    });
-    setPaymentModalOpen(true);
+  const handleOpenCustomerDetail = (customerId: number) => {
+    setSelectedCustomerId(customerId);
   };
 
-  const handlePayInstallment = () => {
-    if (!selectedInstallment) return;
+  const handleCloseCustomerDetail = () => {
+    setSelectedCustomerId(null);
+    resetPaymentForm();
+  };
 
-    if (!paymentData.paymentMethod) {
+  const handleOpenPaymentModal = () => {
+    setShowPaymentModal(true);
+  };
+
+  const handleSubmitPayment = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!selectedCustomerId) {
+      toast.error("Cliente não selecionado");
+      return;
+    }
+
+    if (!paymentForm.paidAmount || parseFloat(paymentForm.paidAmount) <= 0) {
+      toast.error("Valor recebido deve ser maior que zero");
+      return;
+    }
+
+    if (!paymentForm.paymentMethod) {
       toast.error("Selecione a forma de pagamento");
       return;
     }
 
-    payMutation.mutate({
-      id: selectedInstallment.installment.id,
-      paidDate: new Date(paymentData.paidDate),
-      paidAmount: paymentData.paidAmount,
-      paymentMethod: paymentData.paymentMethod,
-      notes: paymentData.notes || undefined
+    registerPayment.mutate({
+      customerId: selectedCustomerId,
+      saleId: paymentForm.saleId && paymentForm.saleId !== "oldest" ? parseInt(paymentForm.saleId) : undefined,
+      paidDate: new Date(paymentForm.paidDate),
+      paidAmount: paymentForm.paidAmount,
+      paymentMethod: paymentForm.paymentMethod,
+      notes: paymentForm.notes || undefined
     });
   };
 
@@ -88,17 +105,8 @@ export default function ContasReceber() {
   };
 
   const formatDate = (date: Date | string) => {
-    return new Date(date).toLocaleDateString('pt-BR');
-  };
-
-  const getDaysUntilDue = (dueDate: Date | string) => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const due = new Date(dueDate);
-    due.setHours(0, 0, 0, 0);
-    const diffTime = due.getTime() - today.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays;
+    const d = typeof date === 'string' ? new Date(date) : date;
+    return d.toLocaleDateString('pt-BR');
   };
 
   return (
@@ -106,257 +114,254 @@ export default function ContasReceber() {
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold">Contas a Receber</h1>
-        <p className="text-muted-foreground">Gerencie os recebimentos das vendas a prazo</p>
+        <p className="text-muted-foreground">Gestão de recebimentos das vendas a prazo</p>
       </div>
 
-      {/* Cards de Resumo */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">A Receber</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(summary?.totalPending || 0)}</div>
-            <p className="text-xs text-muted-foreground">Parcelas pendentes</p>
-          </CardContent>
-        </Card>
+      {/* Card de Resumo */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">
+            Total Pendente de Recebimento
+          </CardTitle>
+          <DollarSign className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-3xl font-bold text-green-600">
+            {totalPending ? formatCurrency(totalPending.total) : "R$ 0,00"}
+          </div>
+          <p className="text-xs text-muted-foreground mt-1">
+            Soma de todas as vendas A_PRAZO pendentes
+          </p>
+        </CardContent>
+      </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Vencidas</CardTitle>
-            <AlertCircle className="h-4 w-4 text-red-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-600">{formatCurrency(summary?.totalOverdue || 0)}</div>
-            <p className="text-xs text-muted-foreground">Parcelas em atraso</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Recebido Hoje</CardTitle>
-            <TrendingUp className="h-4 w-4 text-green-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">{formatCurrency(summary?.receivedToday || 0)}</div>
-            <p className="text-xs text-muted-foreground">Total do dia</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Abas */}
-      <Tabs defaultValue="pending" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="pending">
-            Parcelas Pendentes
-            {pendingInstallments && pendingInstallments.length > 0 && (
-              <span className="ml-2 rounded-full bg-primary px-2 py-0.5 text-xs text-primary-foreground">
-                {pendingInstallments.length}
-              </span>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="overdue">
-            Parcelas Vencidas
-            {overdueInstallments && overdueInstallments.length > 0 && (
-              <span className="ml-2 rounded-full bg-red-500 px-2 py-0.5 text-xs text-white">
-                {overdueInstallments.length}
-              </span>
-            )}
-          </TabsTrigger>
-        </TabsList>
-
-        {/* Parcelas Pendentes */}
-        <TabsContent value="pending" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Parcelas Pendentes</CardTitle>
-              <CardDescription>Parcelas a receber nos próximos dias</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {!pendingInstallments || pendingInstallments.length === 0 ? (
-                <p className="text-center text-muted-foreground py-8">Nenhuma parcela pendente</p>
-              ) : (
-                <div className="space-y-3">
-                  {pendingInstallments.map((item: any) => {
-                    const daysUntilDue = getDaysUntilDue(item.installment.dueDate);
-                    return (
-                      <div key={item.installment.id} className="flex items-center justify-between p-4 border rounded-lg">
-                        <div className="space-y-1">
-                          <p className="font-medium">Venda #{item.receivable?.saleId}</p>
-                          <p className="text-sm text-muted-foreground">
-                            Parcela {item.installment.installmentNumber}
-                          </p>
-                          <div className="flex items-center gap-2 text-sm">
-                            <Calendar className="h-3 w-3" />
-                            <span>Vencimento: {formatDate(item.installment.dueDate)}</span>
-                            <span className={daysUntilDue < 7 ? "text-orange-600 font-medium" : "text-muted-foreground"}>
-                              ({daysUntilDue > 0 ? `Vence em ${daysUntilDue} dias` : `Vence hoje`})
-                            </span>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-4">
-                          <div className="text-right">
-                            <p className="text-lg font-bold">{formatCurrency(item.installment.amount)}</p>
-                          </div>
-                          <Button onClick={() => handleOpenPaymentModal(item)}>
-                            Receber
-                          </Button>
-                        </div>
-                      </div>
-                    );
-                  })}
+      {/* Lista de Clientes */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Clientes com Saldo Devedor</CardTitle>
+          <CardDescription>
+            Clique em um cliente para ver detalhes e registrar recebimentos
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {!customers || customers.length === 0 ? (
+            <p className="text-center text-muted-foreground py-8">
+              Nenhum cliente com saldo devedor
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {customers.map((customer) => (
+                <div
+                  key={customer.customerId}
+                  onClick={() => handleOpenCustomerDetail(customer.customerId)}
+                  className="flex items-center justify-between p-4 border rounded-lg cursor-pointer hover:bg-accent transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <User className="h-5 w-5 text-muted-foreground" />
+                    <div>
+                      <p className="font-medium">{customer.customerName}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {customer.salesCount} {customer.salesCount === 1 ? 'venda' : 'vendas'} pendente{customer.salesCount !== 1 ? 's' : ''}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg font-bold text-red-600">
+                      {formatCurrency(customer.totalPending)}
+                    </span>
+                    <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                  </div>
                 </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
-        {/* Parcelas Vencidas */}
-        <TabsContent value="overdue" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Parcelas Vencidas</CardTitle>
-              <CardDescription>Parcelas com vencimento atrasado</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {!overdueInstallments || overdueInstallments.length === 0 ? (
-                <p className="text-center text-muted-foreground py-8">Nenhuma parcela vencida</p>
-              ) : (
-                <div className="space-y-3">
-                  {overdueInstallments.map((item: any) => {
-                    const daysOverdue = Math.abs(getDaysUntilDue(item.installment.dueDate));
-                    return (
-                      <div key={item.installment.id} className="flex items-center justify-between p-4 border border-red-200 bg-red-50 rounded-lg">
-                        <div className="space-y-1">
-                          <p className="font-medium">Venda #{item.receivable?.saleId}</p>
-                          <p className="text-sm text-muted-foreground">
-                            Parcela {item.installment.installmentNumber}
-                          </p>
-                          <div className="flex items-center gap-2 text-sm">
-                            <Calendar className="h-3 w-3 text-red-600" />
-                            <span>Vencimento: {formatDate(item.installment.dueDate)}</span>
-                            <span className="text-red-600 font-medium">
-                              ({daysOverdue} {daysOverdue === 1 ? 'dia' : 'dias'} de atraso)
-                            </span>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-4">
-                          <div className="text-right">
-                            <p className="text-lg font-bold text-red-600">{formatCurrency(item.installment.amount)}</p>
-                          </div>
-                          <Button variant="destructive" onClick={() => handleOpenPaymentModal(item)}>
-                            Receber
-                          </Button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-
-      {/* Modal de Pagamento */}
-      <Dialog open={paymentModalOpen} onOpenChange={setPaymentModalOpen}>
-        <DialogContent className="sm:max-w-[500px]">
+      {/* Modal de Detalhamento do Cliente */}
+      <Dialog open={!!selectedCustomerId} onOpenChange={(open) => !open && handleCloseCustomerDetail()}>
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Registrar Recebimento</DialogTitle>
+            <DialogTitle>Conta Corrente - {customerDetail?.customer.name}</DialogTitle>
             <DialogDescription>
-              Registre o recebimento da parcela
+              Histórico de vendas e recebimentos
             </DialogDescription>
           </DialogHeader>
 
-          {selectedInstallment && (
-            <div className="space-y-4">
-              {/* Informações da Parcela */}
-              <div className="p-4 bg-muted rounded-lg space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-sm text-muted-foreground">Venda:</span>
-                  <span className="font-medium">#{selectedInstallment.receivable?.saleId}</span>
+          {customerDetail && (
+            <div className="space-y-6">
+              {/* Informações do Cliente */}
+              <div className="grid grid-cols-3 gap-4 p-4 bg-accent rounded-lg">
+                <div>
+                  <Label className="text-xs text-muted-foreground">Cliente</Label>
+                  <p className="font-bold">{customerDetail.customer.name}</p>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-muted-foreground">Parcela:</span>
-                  <span className="font-medium">{selectedInstallment.installment.installmentNumber}</span>
+                <div>
+                  <Label className="text-xs text-muted-foreground">Limite de Crédito</Label>
+                  <p className="font-medium">{formatCurrency(customerDetail.customer.creditLimit || "0")}</p>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-muted-foreground">Valor da Parcela:</span>
-                  <span className="text-lg font-bold">{formatCurrency(selectedInstallment.installment.amount)}</span>
+                <div>
+                  <Label className="text-xs text-muted-foreground">Saldo Devedor</Label>
+                  <p className="text-lg font-bold text-red-600">
+                    {formatCurrency(customerDetail.totalPending)}
+                  </p>
                 </div>
               </div>
 
-              {/* Formulário */}
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="paidDate">Data do Recebimento *</Label>
-                  <Input
-                    id="paidDate"
-                    type="date"
-                    value={paymentData.paidDate}
-                    onChange={(e) => setPaymentData({ ...paymentData, paidDate: e.target.value })}
-                  />
+              {/* Tabela de Vendas */}
+              <div>
+                <h3 className="font-bold mb-3">Vendas A Prazo</h3>
+                <div className="border rounded-lg">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Data</TableHead>
+                        <TableHead>Venda #</TableHead>
+                        <TableHead>Produtos</TableHead>
+                        <TableHead className="text-right">Total</TableHead>
+                        <TableHead className="text-right">Pago</TableHead>
+                        <TableHead className="text-right">Saldo</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {customerDetail.sales.map((sale) => (
+                        <TableRow key={sale.id}>
+                          <TableCell>{formatDate(sale.saleDate!)}</TableCell>
+                          <TableCell className="font-medium">#{sale.id}</TableCell>
+                          <TableCell className="max-w-xs truncate">
+                            {sale.items.map(item => item.productName).join(', ')}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {formatCurrency(sale.totalAmount)}
+                          </TableCell>
+                          <TableCell className="text-right text-green-600">
+                            {formatCurrency(sale.paidAmount)}
+                          </TableCell>
+                          <TableCell className="text-right font-bold text-red-600">
+                            {formatCurrency(sale.pendingAmount)}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
                 </div>
+              </div>
 
-                <div>
-                  <Label htmlFor="paidAmount">Valor Recebido *</Label>
-                  <Input
-                    id="paidAmount"
-                    type="number"
-                    step="0.01"
-                    placeholder="0.00"
-                    value={paymentData.paidAmount}
-                    onChange={(e) => setPaymentData({ ...paymentData, paidAmount: e.target.value })}
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="paymentMethod">Forma de Pagamento *</Label>
-                  <Select
-                    value={paymentData.paymentMethod}
-                    onValueChange={(value) => setPaymentData({ ...paymentData, paymentMethod: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="DINHEIRO">Dinheiro</SelectItem>
-                      <SelectItem value="PIX">PIX</SelectItem>
-                      <SelectItem value="CARTAO_DEBITO">Cartão de Débito</SelectItem>
-                      <SelectItem value="CARTAO_CREDITO">Cartão de Crédito</SelectItem>
-                      <SelectItem value="TRANSFERENCIA">Transferência</SelectItem>
-                      <SelectItem value="BOLETO">Boleto</SelectItem>
-                      <SelectItem value="CREDITO_G">Crédito G</SelectItem>
-                      <SelectItem value="CREDITO_R">Crédito R</SelectItem>
-                      <SelectItem value="CREDITO_ABR">Crédito ABR</SelectItem>
-                      <SelectItem value="A_VISTA">À Vista</SelectItem>
-                      <SelectItem value="DEBITO_AUTOMATICO">Débito Automático</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label htmlFor="notes">Observações</Label>
-                  <Textarea
-                    id="notes"
-                    placeholder="Informações adicionais sobre o recebimento..."
-                    value={paymentData.notes}
-                    onChange={(e) => setPaymentData({ ...paymentData, notes: e.target.value })}
-                  />
-                </div>
+              {/* Botão para Registrar Recebimento */}
+              <div className="flex justify-end">
+                <Button onClick={handleOpenPaymentModal} size="lg">
+                  Registrar Recebimento
+                </Button>
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
 
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setPaymentModalOpen(false)}>
-              Cancelar
-            </Button>
-            <Button onClick={handlePayInstallment} disabled={payMutation.isPending}>
-              {payMutation.isPending ? "Registrando..." : "Confirmar Recebimento"}
-            </Button>
-          </DialogFooter>
+      {/* Modal de Registro de Recebimento */}
+      <Dialog open={showPaymentModal} onOpenChange={setShowPaymentModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Registrar Recebimento</DialogTitle>
+            <DialogDescription>
+              Registre o recebimento de valores do cliente
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleSubmitPayment} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="paidDate">Data do Recebimento *</Label>
+                <Input
+                  id="paidDate"
+                  type="date"
+                  value={paymentForm.paidDate}
+                  onChange={(e) => setPaymentForm({ ...paymentForm, paidDate: e.target.value })}
+                  required
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="paidAmount">Valor Recebido *</Label>
+                <Input
+                  id="paidAmount"
+                  type="number"
+                  step="0.01"
+                  placeholder="0.00"
+                  value={paymentForm.paidAmount}
+                  onChange={(e) => setPaymentForm({ ...paymentForm, paidAmount: e.target.value })}
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="paymentMethod">Forma de Pagamento *</Label>
+                <Select
+                  value={paymentForm.paymentMethod}
+                  onValueChange={(value) => setPaymentForm({ ...paymentForm, paymentMethod: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="DINHEIRO">Dinheiro</SelectItem>
+                    <SelectItem value="PIX">PIX</SelectItem>
+                    <SelectItem value="CARTAO_DEBITO">Cartão de Débito</SelectItem>
+                    <SelectItem value="CARTAO_CREDITO">Cartão de Crédito</SelectItem>
+                    <SelectItem value="TRANSFERENCIA">Transferência</SelectItem>
+                    <SelectItem value="BOLETO">Boleto</SelectItem>
+                    <SelectItem value="CREDITO_G">Crédito G</SelectItem>
+                    <SelectItem value="CREDITO_R">Crédito R</SelectItem>
+                    <SelectItem value="CREDITO_ABR">Crédito ABR</SelectItem>
+                    <SelectItem value="A_VISTA">À Vista</SelectItem>
+                    <SelectItem value="DEBITO_AUTOMATICO">Débito Automático</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="saleId">Aplicar em</Label>
+                <Select
+                  value={paymentForm.saleId}
+                  onValueChange={(value) => setPaymentForm({ ...paymentForm, saleId: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Venda mais antiga" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="oldest">Venda mais antiga (FIFO)</SelectItem>
+                    {customerDetail?.sales.map((sale) => (
+                      <SelectItem key={sale.id} value={sale.id?.toString() || ""}>
+                        Venda #{sale.id} - {formatCurrency(sale.pendingAmount)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="notes">Observações</Label>
+              <Textarea
+                id="notes"
+                placeholder="Informações adicionais sobre o recebimento..."
+                value={paymentForm.notes}
+                onChange={(e) => setPaymentForm({ ...paymentForm, notes: e.target.value })}
+                rows={3}
+              />
+            </div>
+
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="outline" onClick={() => setShowPaymentModal(false)}>
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={registerPayment.isPending}>
+                {registerPayment.isPending ? "Registrando..." : "Confirmar Recebimento"}
+              </Button>
+            </div>
+          </form>
         </DialogContent>
       </Dialog>
     </div>

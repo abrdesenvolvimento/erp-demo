@@ -1178,3 +1178,242 @@ export async function getReceivablesSummary() {
   };
 }
 
+
+
+// Listar clientes com saldo devedor
+export async function getCustomersWithPendingReceivables() {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  // Buscar todos os recebíveis pendentes agrupados por cliente
+  const results = await db.select({
+    customerId: receivables.customerId,
+    customerName: partners.name,
+    totalPending: sql<string>`SUM(CAST(${receivables.totalAmount} AS DECIMAL(10,2)) - CAST(${receivables.receivedAmount} AS DECIMAL(10,2)))`,
+    salesCount: sql<number>`COUNT(DISTINCT ${receivables.saleId})`
+  })
+  .from(receivables)
+  .leftJoin(partners, eq(receivables.customerId, partners.id))
+  .where(sql`${receivables.status} IN ('PENDENTE', 'PARCIAL', 'VENCIDO')`)
+  .groupBy(receivables.customerId, partners.name)
+  .having(sql`SUM(CAST(${receivables.totalAmount} AS DECIMAL(10,2)) - CAST(${receivables.receivedAmount} AS DECIMAL(10,2))) > 0`)
+  .orderBy(desc(sql`SUM(CAST(${receivables.totalAmount} AS DECIMAL(10,2)) - CAST(${receivables.receivedAmount} AS DECIMAL(10,2)))`));
+  
+  return results;
+}
+
+// Obter total pendente de todos os clientes
+export async function getTotalPendingReceivables() {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.select({
+    total: sql<string>`COALESCE(SUM(CAST(${receivables.totalAmount} AS DECIMAL(10,2)) - CAST(${receivables.receivedAmount} AS DECIMAL(10,2))), 0)`
+  })
+  .from(receivables)
+  .where(sql`${receivables.status} IN ('PENDENTE', 'PARCIAL', 'VENCIDO')`);
+  
+  return parseFloat(result[0]?.total || "0");
+}
+
+// Obter detalhamento completo de um cliente
+export async function getCustomerReceivableDetail(customerId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  // Buscar informações do cliente
+  const customer = await db.select().from(partners).where(eq(partners.id, customerId)).limit(1);
+  if (!customer[0]) throw new Error("Cliente não encontrado");
+  
+  // Buscar todas as vendas A_PRAZO do cliente com recebíveis
+  const salesWithReceivables = await db.select({
+    sale: sales,
+    receivable: receivables
+  })
+  .from(sales)
+  .leftJoin(receivables, eq(sales.id, receivables.saleId))
+  .where(and(
+    eq(sales.customerId, customerId),
+    eq(sales.saleType, "A_PRAZO")
+  ))
+  .orderBy(desc(sales.saleDate));
+  
+  // Para cada venda, buscar itens e parcelas
+  const salesWithDetails = await Promise.all(
+    salesWithReceivables.map(async (item) => {
+      const items = await db.select({
+        productId: saleItems.productId,
+        productName: products.name,
+        quantity: saleItems.quantity,
+        unitPrice: saleItems.unitPrice,
+        totalPrice: saleItems.totalPrice
+      })
+      .from(saleItems)
+      .leftJoin(products, eq(saleItems.productId, products.id))
+      .where(eq(saleItems.saleId, item.sale.id!));
+      
+      let installments: any[] = [];
+      if (item.receivable) {
+        installments = await db.select()
+          .from(receivableInstallments)
+          .where(eq(receivableInstallments.receivableId, item.receivable.id!))
+          .orderBy(receivableInstallments.installmentNumber);
+      }
+      
+      const totalAmount = parseFloat(item.sale.finalAmount || "0");
+      const paidAmount = item.receivable ? parseFloat(item.receivable.receivedAmount || "0") : 0;
+      const pendingAmount = totalAmount - paidAmount;
+      
+      return {
+        ...item.sale,
+        receivable: item.receivable,
+        items,
+        installments,
+        totalAmount: totalAmount.toFixed(2),
+        paidAmount: paidAmount.toFixed(2),
+        pendingAmount: pendingAmount.toFixed(2)
+      };
+    })
+  );
+  
+  // Calcular total pendente
+  const totalPending = salesWithDetails.reduce((sum, sale) => 
+    sum + parseFloat(sale.pendingAmount), 0
+  );
+  
+  return {
+    customer: customer[0],
+    sales: salesWithDetails,
+    totalPending: totalPending.toFixed(2)
+  };
+}
+
+// Registrar recebimento para um cliente (aplicado na venda mais antiga ou específica)
+export async function registerCustomerPayment(data: {
+  customerId: number;
+  saleId?: number;
+  paidDate: Date;
+  paidAmount: string;
+  paymentMethod: string;
+  notes?: string;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const amount = parseFloat(data.paidAmount);
+  let remainingAmount = amount;
+  
+  // Se saleId foi especificado, aplicar apenas nessa venda
+  if (data.saleId) {
+    const receivable = await db.select()
+      .from(receivables)
+      .where(and(
+        eq(receivables.saleId, data.saleId),
+        eq(receivables.customerId, data.customerId)
+      ))
+      .limit(1);
+    
+    if (!receivable[0]) throw new Error("Recebível não encontrado");
+    
+    // Buscar parcelas pendentes dessa venda
+    const pendingInstallments = await db.select()
+      .from(receivableInstallments)
+      .where(and(
+        eq(receivableInstallments.receivableId, receivable[0].id!),
+        sql`${receivableInstallments.status} IN ('PENDENTE', 'PARCIAL', 'VENCIDO')`
+      ))
+      .orderBy(receivableInstallments.installmentNumber);
+    
+    // Aplicar pagamento nas parcelas
+    for (const installment of pendingInstallments) {
+      if (remainingAmount <= 0) break;
+      
+      const installmentAmount = parseFloat(installment.amount);
+      const alreadyPaid = parseFloat(installment.paidAmount || "0");
+      const installmentPending = installmentAmount - alreadyPaid;
+      
+      const paymentForThisInstallment = Math.min(remainingAmount, installmentPending);
+      const newPaidAmount = alreadyPaid + paymentForThisInstallment;
+      
+      await db.update(receivableInstallments)
+        .set({
+          paidDate: data.paidDate,
+          paidAmount: newPaidAmount.toFixed(2),
+          paymentMethod: data.paymentMethod,
+          notes: data.notes,
+          status: newPaidAmount >= installmentAmount ? "PAGO" : "PARCIAL"
+        })
+        .where(eq(receivableInstallments.id, installment.id!));
+      
+      remainingAmount -= paymentForThisInstallment;
+    }
+    
+    // Atualizar recebível
+    await updateReceivableStatus(receivable[0].id!);
+    
+  } else {
+    // Aplicar na venda mais antiga (FIFO)
+    const receivablesWithPending = await db.select()
+      .from(receivables)
+      .where(and(
+        eq(receivables.customerId, data.customerId),
+        sql`${receivables.status} IN ('PENDENTE', 'PARCIAL', 'VENCIDO')`
+      ))
+      .orderBy(receivables.createdAt); // Mais antiga primeiro
+    
+    for (const receivable of receivablesWithPending) {
+      if (remainingAmount <= 0) break;
+      
+      // Buscar parcelas pendentes
+      const pendingInstallments = await db.select()
+        .from(receivableInstallments)
+        .where(and(
+          eq(receivableInstallments.receivableId, receivable.id!),
+          sql`${receivableInstallments.status} IN ('PENDENTE', 'PARCIAL', 'VENCIDO')`
+        ))
+        .orderBy(receivableInstallments.installmentNumber);
+      
+      // Aplicar pagamento nas parcelas
+      for (const installment of pendingInstallments) {
+        if (remainingAmount <= 0) break;
+        
+        const installmentAmount = parseFloat(installment.amount);
+        const alreadyPaid = parseFloat(installment.paidAmount || "0");
+        const installmentPending = installmentAmount - alreadyPaid;
+        
+        const paymentForThisInstallment = Math.min(remainingAmount, installmentPending);
+        const newPaidAmount = alreadyPaid + paymentForThisInstallment;
+        
+        await db.update(receivableInstallments)
+          .set({
+            paidDate: data.paidDate,
+            paidAmount: newPaidAmount.toFixed(2),
+            paymentMethod: data.paymentMethod,
+            notes: data.notes,
+            status: newPaidAmount >= installmentAmount ? "PAGO" : "PARCIAL"
+          })
+          .where(eq(receivableInstallments.id, installment.id!));
+        
+        remainingAmount -= paymentForThisInstallment;
+      }
+      
+      // Atualizar recebível
+      await updateReceivableStatus(receivable.id!);
+    }
+  }
+  
+  // Atualizar saldo do cliente
+  const currentBalance = await db.select({ balance: partners.currentBalance })
+    .from(partners)
+    .where(eq(partners.id, data.customerId))
+    .limit(1);
+  
+  const newBalance = parseFloat(currentBalance[0]?.balance || "0") - amount;
+  
+  await db.update(partners)
+    .set({ currentBalance: newBalance.toFixed(2) })
+    .where(eq(partners.id, data.customerId));
+  
+  return { success: true, appliedAmount: amount - remainingAmount };
+}
+

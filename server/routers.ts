@@ -650,6 +650,37 @@ export const appRouter = router({
         return await db.getReceivablesSummary();
       }),
     
+    // Gestão por cliente
+    byCustomer: protectedProcedure
+      .query(async () => {
+        return await db.getCustomersWithPendingReceivables();
+      }),
+    
+    totalPending: protectedProcedure
+      .query(async () => {
+        const total = await db.getTotalPendingReceivables();
+        return { total: total.toFixed(2) };
+      }),
+    
+    customerDetail: protectedProcedure
+      .input(z.object({ customerId: z.number() }))
+      .query(async ({ input }) => {
+        return await db.getCustomerReceivableDetail(input.customerId);
+      }),
+    
+    registerPayment: protectedProcedure
+      .input(z.object({
+        customerId: z.number(),
+        saleId: z.number().optional(),
+        paidDate: z.date(),
+        paidAmount: z.string(),
+        paymentMethod: z.string(),
+        notes: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        return await db.registerCustomerPayment(input);
+      }),
+    
     // Parcelas
     installments: router({
       pending: protectedProcedure
