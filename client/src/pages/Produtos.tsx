@@ -174,6 +174,7 @@ type ProductFormData = {
   isComposite: boolean;
   notes: string;
   prices: { [channelId: string]: string };
+  compositions: { childProductId: number; quantity: number }[];
 };
 
 export default function Produtos() {
@@ -256,6 +257,7 @@ export default function Produtos() {
     isComposite: false,
     notes: "",
     prices: {},
+    compositions: [],
   };
 
   const [formData, setFormData] = useState<ProductFormData>(initialFormData);
@@ -289,6 +291,7 @@ export default function Produtos() {
           isComposite: product.isComposite || false,
           notes: product.notes || "",
           prices: pricesData,
+          compositions: [],
         });
       })
       .catch((error: any) => {
@@ -306,6 +309,7 @@ export default function Produtos() {
           isComposite: product.isComposite || false,
           notes: product.notes || "",
           prices: {},
+          compositions: [],
         });
       });
   };

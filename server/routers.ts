@@ -332,7 +332,7 @@ export const appRouter = router({
         );
         
         // Criar recebível automaticamente para vendas A_PRAZO
-        if (saleData.saleType === 'A_PRAZO' && saleData.customerId && dueDates && dueDates.length > 0) {
+        if (saleData.saleType === 'A_PRAZO' && saleData.customerId) {
           const receivableId = await db.createReceivable({
             saleId: id,
             customerId: saleData.customerId,
@@ -343,12 +343,27 @@ export const appRouter = router({
           });
           
           // Criar parcelas
-          for (let i = 0; i < dueDates.length; i++) {
+          if (dueDates && dueDates.length > 0) {
+            // Se dueDates foi fornecido, criar parcelas conforme especificado
+            for (let i = 0; i < dueDates.length; i++) {
+              await db.createReceivableInstallment({
+                receivableId: receivableId.id,
+                installmentNumber: i + 1,
+                amount: dueDates[i].amount,
+                dueDate: dueDates[i].date,
+                status: "PENDENTE",
+              });
+            }
+          } else {
+            // Se não foi fornecido, criar uma única parcela com vencimento padrão (30 dias)
+            const dueDate = new Date();
+            dueDate.setDate(dueDate.getDate() + 30);
+            
             await db.createReceivableInstallment({
               receivableId: receivableId.id,
-              installmentNumber: i + 1,
-              amount: dueDates[i].amount,
-              dueDate: dueDates[i].date,
+              installmentNumber: 1,
+              amount: saleData.finalAmount,
+              dueDate,
               status: "PENDENTE",
             });
           }

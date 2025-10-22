@@ -1281,9 +1281,24 @@ export async function getCustomerReceivableDetail(customerId: number) {
     sum + parseFloat(sale.pendingAmount), 0
   );
   
+  // Buscar histórico de pagamentos (parcelas pagas)
+  const payments = await db.select({
+    paidDate: receivableInstallments.paidDate,
+    paidAmount: receivableInstallments.paidAmount,
+    paymentMethod: receivableInstallments.paymentMethod
+  })
+  .from(receivableInstallments)
+  .leftJoin(receivables, eq(receivableInstallments.receivableId, receivables.id))
+  .where(and(
+    eq(receivables.customerId, customerId),
+    eq(receivableInstallments.status, "PAGO")
+  ))
+  .orderBy(desc(receivableInstallments.paidDate));
+  
   return {
     customer: customer[0],
     sales: salesWithDetails,
+    payments,
     totalPending: totalPending.toFixed(2)
   };
 }
