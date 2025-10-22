@@ -30,7 +30,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { trpc } from "@/lib/trpc";
-import { Package, Plus, Search, AlertTriangle, Edit, Trash2 } from "lucide-react";
+import { Package, Plus, Search, AlertTriangle, Edit, Trash2, Check, X } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
@@ -42,6 +42,8 @@ function CompositionsSection({ productId }: { productId: number }) {
   const [newComposition, setNewComposition] = useState({ childProductId: "", quantity: "" });
   const [productSearch, setProductSearch] = useState("");
   const [showProductSuggestions, setShowProductSuggestions] = useState(false);
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [editingQuantity, setEditingQuantity] = useState("");
   
   const { data: products } = trpc.products.list.useQuery({ activeOnly: true });
   const { data: compositionsData, refetch } = trpc.products.getCompositions.useQuery({ productId });
@@ -99,6 +101,33 @@ function CompositionsSection({ productId }: { productId: number }) {
     setCompositions(compositions.filter((_, i) => i !== index));
   };
   
+  const handleStartEdit = (index: number, currentQuantity: number) => {
+    setEditingIndex(index);
+    setEditingQuantity(currentQuantity.toString());
+  };
+  
+  const handleSaveEdit = (index: number) => {
+    const newQuantity = parseFloat(editingQuantity);
+    if (isNaN(newQuantity) || newQuantity <= 0) {
+      toast.error("Quantidade inválida");
+      return;
+    }
+    
+    const updatedCompositions = [...compositions];
+    updatedCompositions[index] = {
+      ...updatedCompositions[index],
+      quantity: newQuantity
+    };
+    setCompositions(updatedCompositions);
+    setEditingIndex(null);
+    setEditingQuantity("");
+  };
+  
+  const handleCancelEdit = () => {
+    setEditingIndex(null);
+    setEditingQuantity("");
+  };
+  
   const handleSaveCompositions = () => {
     setCompositionsMutation.mutate({
       productId,
@@ -123,9 +152,38 @@ function CompositionsSection({ productId }: { productId: number }) {
         <div className="space-y-2">
           {compositions.map((comp, index) => (
             <div key={index} className="flex items-center justify-between p-2 bg-background rounded border">
-              <div className="flex-1">
+              <div className="flex-1 flex items-center gap-2">
                 <span className="font-medium">{comp.childProduct?.name}</span>
-                <span className="text-sm text-muted-foreground ml-2">x {comp.quantity}</span>
+                {editingIndex === index ? (
+                  <div className="flex items-center gap-1">
+                    <Input
+                      type="number"
+                      step="0.001"
+                      value={editingQuantity}
+                      onChange={(e) => setEditingQuantity(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') handleSaveEdit(index);
+                        if (e.key === 'Escape') handleCancelEdit();
+                      }}
+                      className="w-20 h-7"
+                      autoFocus
+                    />
+                    <Button size="sm" variant="ghost" onClick={() => handleSaveEdit(index)} className="h-7 w-7 p-0">
+                      <Check className="h-4 w-4" />
+                    </Button>
+                    <Button size="sm" variant="ghost" onClick={handleCancelEdit} className="h-7 w-7 p-0">
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <span 
+                    className="text-sm text-muted-foreground ml-2 cursor-pointer hover:text-primary hover:underline"
+                    onClick={() => handleStartEdit(index, comp.quantity)}
+                    title="Clique para editar"
+                  >
+                    x {comp.quantity}
+                  </span>
+                )}
               </div>
               <Button
                 size="sm"
@@ -250,9 +308,38 @@ function TempCompositionsSection({
         <div className="space-y-2">
           {compositions.map((comp, index) => (
             <div key={index} className="flex items-center justify-between p-2 bg-background rounded border">
-              <div className="flex-1">
+              <div className="flex-1 flex items-center gap-2">
                 <span className="font-medium">{comp.childProduct?.name}</span>
-                <span className="text-sm text-muted-foreground ml-2">x {comp.quantity}</span>
+                {editingIndex === index ? (
+                  <div className="flex items-center gap-1">
+                    <Input
+                      type="number"
+                      step="0.001"
+                      value={editingQuantity}
+                      onChange={(e) => setEditingQuantity(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') handleSaveEdit(index);
+                        if (e.key === 'Escape') handleCancelEdit();
+                      }}
+                      className="w-20 h-7"
+                      autoFocus
+                    />
+                    <Button size="sm" variant="ghost" onClick={() => handleSaveEdit(index)} className="h-7 w-7 p-0">
+                      <Check className="h-4 w-4" />
+                    </Button>
+                    <Button size="sm" variant="ghost" onClick={handleCancelEdit} className="h-7 w-7 p-0">
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <span 
+                    className="text-sm text-muted-foreground ml-2 cursor-pointer hover:text-primary hover:underline"
+                    onClick={() => handleStartEdit(index, comp.quantity)}
+                    title="Clique para editar"
+                  >
+                    x {comp.quantity}
+                  </span>
+                )}
               </div>
               <Button
                 size="sm"

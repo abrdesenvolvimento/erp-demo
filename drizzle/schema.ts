@@ -94,7 +94,7 @@ export const productCompositions = mysqlTable("productCompositions", {
   id: int("id").primaryKey().autoincrement(),
   parentProductId: int("parentProductId").notNull(),
   childProductId: int("childProductId").notNull(),
-  quantity: int("quantity").notNull(),
+  quantity: decimal("quantity", { precision: 10, scale: 3 }).notNull(),
   createdAt: timestamp("createdAt").defaultNow(),
 });
 

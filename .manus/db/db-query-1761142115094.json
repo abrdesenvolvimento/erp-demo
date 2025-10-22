@@ -1,0 +1,17 @@
+{
+  "query": "\nSELECT * FROM productCompositions WHERE id = 60001\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute \nSELECT * FROM productCompositions WHERE id = 60001\n",
+  "rows": [
+    {
+      "id": "60001",
+      "parentProductId": "150005",
+      "childProductId": "150001",
+      "quantity": "0",
+      "createdAt": "2025-10-22 13:21:07"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tparentProductId\tchildProductId\tquantity\tcreatedAt\n60001\t150005\t150001\t0\t2025-10-22 13:21:07\n",
+  "stderr": "",
+  "execution_time_ms": 125
+}
