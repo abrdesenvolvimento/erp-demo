@@ -18,6 +18,7 @@ export default function ContasPagar() {
   const [paymentForm, setPaymentForm] = useState({
     paidDate: new Date().toISOString().split('T')[0],
     paidAmount: "",
+    additionalAmount: "",
     paymentMethod: "",
     notes: ""
   });
@@ -49,6 +50,7 @@ export default function ContasPagar() {
     setPaymentForm({
       paidDate: new Date().toISOString().split('T')[0],
       paidAmount: "",
+      additionalAmount: "",
       paymentMethod: "",
       notes: ""
     });
@@ -63,7 +65,10 @@ export default function ContasPagar() {
     resetPaymentForm();
   };
 
-  const handleOpenPaymentModal = () => {
+  const handleOpenPaymentModal = (supplierId?: number) => {
+    if (supplierId) {
+      setSelectedSupplierId(supplierId);
+    }
     setShowPaymentModal(true);
   };
 
@@ -85,10 +90,12 @@ export default function ContasPagar() {
       return;
     }
 
+    const totalAmount = parseFloat(paymentForm.paidAmount) + (parseFloat(paymentForm.additionalAmount) || 0);
+    
     registerPayment.mutate({
       supplierId: selectedSupplierId,
       paidDate: new Date(paymentForm.paidDate),
-      paidAmount: paymentForm.paidAmount,
+      paidAmount: totalAmount.toFixed(2),
       paymentMethod: paymentForm.paymentMethod,
       notes: paymentForm.notes || undefined
     });
@@ -263,7 +270,28 @@ export default function ContasPagar() {
                 </div>
 
                 <div>
-                  <Label htmlFor="paidAmount">Valor Pago *</Label>
+                  <Label htmlFor="paymentMethod">Forma de Pagamento *</Label>
+                  <Select
+                    value={paymentForm.paymentMethod}
+                    onValueChange={(value) => setPaymentForm({ ...paymentForm, paymentMethod: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="DINHEIRO">Dinheiro</SelectItem>
+                      <SelectItem value="PIX">PIX</SelectItem>
+                      <SelectItem value="CARTAO_DEBITO">Débito</SelectItem>
+                      <SelectItem value="CARTAO_CREDITO">Crédito</SelectItem>
+                      <SelectItem value="TRANSFERENCIA">Transferência Bancária</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="paidAmount">Valor Base *</Label>
                   <Input
                     id="paidAmount"
                     type="number"
@@ -274,25 +302,31 @@ export default function ContasPagar() {
                     required
                   />
                 </div>
+
+                <div>
+                  <Label htmlFor="additionalAmount">Acréscimo (Juros/Multa)</Label>
+                  <Input
+                    id="additionalAmount"
+                    type="number"
+                    step="0.01"
+                    placeholder="0.00"
+                    value={paymentForm.additionalAmount}
+                    onChange={(e) => setPaymentForm({ ...paymentForm, additionalAmount: e.target.value })}
+                  />
+                </div>
               </div>
 
-              <div>
-                <Label htmlFor="paymentMethod">Forma de Pagamento *</Label>
-                <Select
-                  value={paymentForm.paymentMethod}
-                  onValueChange={(value) => setPaymentForm({ ...paymentForm, paymentMethod: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="DINHEIRO">Dinheiro</SelectItem>
-                    <SelectItem value="PIX">PIX</SelectItem>
-                    <SelectItem value="CARTAO_DEBITO">Débito</SelectItem>
-                    <SelectItem value="CARTAO_CREDITO">Crédito</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              {(paymentForm.paidAmount || paymentForm.additionalAmount) && (
+                <div className="bg-muted p-3 rounded-md">
+                  <p className="text-sm font-medium">Total a Pagar:</p>
+                  <p className="text-2xl font-bold">
+                    {formatCurrency(
+                      (parseFloat(paymentForm.paidAmount) || 0) + 
+                      (parseFloat(paymentForm.additionalAmount) || 0)
+                    )}
+                  </p>
+                </div>
+              )}
 
               <div>
                 <Label htmlFor="notes">Observações</Label>
@@ -354,7 +388,7 @@ export default function ContasPagar() {
         <CardHeader>
           <CardTitle>Fornecedores com Saldo a Pagar</CardTitle>
           <CardDescription>
-            Clique em um fornecedor para ver detalhes e registrar pagamentos
+            Clique em um fornecedor para registrar pagamento
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -367,7 +401,7 @@ export default function ContasPagar() {
               {suppliers.map((supplier) => (
                 <div
                   key={supplier.supplierId}
-                  onClick={() => handleOpenSupplierDetail(supplier.supplierId)}
+                  onClick={() => handleOpenPaymentModal(supplier.supplierId)}
                   className="flex items-center justify-between p-4 border rounded-lg cursor-pointer hover:bg-accent transition-colors"
                 >
                   <div className="flex items-center gap-3">

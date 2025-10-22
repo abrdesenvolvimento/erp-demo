@@ -1,0 +1,38 @@
+{
+  "query": "SELECT s.id, s.createdAt, si.productId, p.name, si.quantity FROM sales s JOIN saleItems si ON s.id = si.saleId JOIN products p ON si.productId = p.id WHERE p.name = 'Dose Gin Dober' ORDER BY s.createdAt DESC",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT s.id, s.createdAt, si.productId, p.name, si.quantity FROM sales s JOIN saleItems si ON s.id = si.saleId JOIN products p ON si.productId = p.id WHERE p.name = 'Dose Gin Dober' ORDER BY s.createdAt DESC",
+  "rows": [
+    {
+      "id": "360001",
+      "createdAt": "2025-10-22 16:19:13",
+      "productId": "150005",
+      "name": "Dose Gin Dober",
+      "quantity": "1"
+    },
+    {
+      "id": "330003",
+      "createdAt": "2025-10-22 13:58:04",
+      "productId": "150005",
+      "name": "Dose Gin Dober",
+      "quantity": "1"
+    },
+    {
+      "id": "330002",
+      "createdAt": "2025-10-22 13:57:13",
+      "productId": "150005",
+      "name": "Dose Gin Dober",
+      "quantity": "1"
+    },
+    {
+      "id": "330001",
+      "createdAt": "2025-10-22 13:56:00",
+      "productId": "150005",
+      "name": "Dose Gin Dober",
+      "quantity": "1"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tcreatedAt\tproductId\tname\tquantity\n360001\t2025-10-22 16:19:13\t150005\tDose Gin Dober\t1\n330003\t2025-10-22 13:58:04\t150005\tDose Gin Dober\t1\n330002\t2025-10-22 13:57:13\t150005\tDose Gin Dober\t1\n330001\t2025-10-22 13:56:00\t150005\tDose Gin Dober\t1\n",
+  "stderr": "",
+  "execution_time_ms": 48
+}
