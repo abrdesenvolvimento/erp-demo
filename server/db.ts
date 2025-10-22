@@ -1452,3 +1452,238 @@ export async function registerCustomerPayment(data: {
   return { success: true, appliedAmount: amount - remainingAmount };
 }
 
+
+
+// ==================== CONTAS A PAGAR ====================
+
+// Listar fornecedores com saldo devedor (contas a pagar pendentes)
+export async function getSuppliersWithPendingPayables() {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  // Buscar todas as despesas pendentes agrupadas por fornecedor
+  const results = await db.select({
+    supplierId: expenses.supplierId,
+    supplierName: partners.name,
+    totalPending: sql<string>`SUM(CAST(${expenses.totalAmount} AS DECIMAL(10,2)) - CAST(${expenses.paidAmount} AS DECIMAL(10,2)))`,
+    expensesCount: sql<number>`COUNT(DISTINCT ${expenses.id})`
+  })
+  .from(expenses)
+  .leftJoin(partners, eq(expenses.supplierId, partners.id))
+  .where(sql`${expenses.status} IN ('PENDENTE', 'PARCIAL', 'VENCIDO')`)
+  .groupBy(expenses.supplierId, partners.name)
+  .having(sql`SUM(CAST(${expenses.totalAmount} AS DECIMAL(10,2)) - CAST(${expenses.paidAmount} AS DECIMAL(10,2))) > 0`)
+  .orderBy(desc(sql`SUM(CAST(${expenses.totalAmount} AS DECIMAL(10,2)) - CAST(${expenses.paidAmount} AS DECIMAL(10,2)))`));
+  
+  return results;
+}
+
+// Obter total pendente de pagamento a todos os fornecedores
+export async function getTotalPendingPayables() {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.select({
+    total: sql<string>`COALESCE(SUM(CAST(${expenses.totalAmount} AS DECIMAL(10,2)) - CAST(${expenses.paidAmount} AS DECIMAL(10,2))), 0)`
+  })
+  .from(expenses)
+  .where(sql`${expenses.status} IN ('PENDENTE', 'PARCIAL', 'VENCIDO')`);
+  
+  return parseFloat(result[0]?.total || "0");
+}
+
+// Obter detalhamento completo de um fornecedor
+export async function getSupplierPayableDetail(supplierId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  // Buscar informações do fornecedor
+  const supplier = await db.select().from(partners).where(eq(partners.id, supplierId)).limit(1);
+  if (!supplier[0]) throw new Error("Fornecedor não encontrado");
+  
+  // Buscar todas as despesas do fornecedor
+  const expensesList = await db.select()
+    .from(expenses)
+    .where(eq(expenses.supplierId, supplierId))
+    .orderBy(desc(expenses.expenseDate));
+  
+  // Para cada despesa, buscar parcelas
+  const expensesWithDetails = await Promise.all(
+    expensesList.map(async (expense) => {
+      let installments: any[] = [];
+      installments = await db.select()
+        .from(expenseInstallments)
+        .where(eq(expenseInstallments.expenseId, expense.id!))
+        .orderBy(expenseInstallments.installmentNumber);
+      
+      const totalAmount = parseFloat(expense.totalAmount || "0");
+      const paidAmount = parseFloat(expense.paidAmount || "0");
+      const pendingAmount = totalAmount - paidAmount;
+      
+      return {
+        ...expense,
+        installments,
+        totalAmount: totalAmount.toFixed(2),
+        paidAmount: paidAmount.toFixed(2),
+        pendingAmount: pendingAmount.toFixed(2)
+      };
+    })
+  );
+  
+  // Calcular total pendente
+  const totalPending = expensesWithDetails.reduce((sum, expense) => 
+    sum + parseFloat(expense.pendingAmount), 0
+  );
+  
+  // Buscar histórico de pagamentos (parcelas pagas)
+  const payments = await db.select({
+    paidDate: expenseInstallments.paidDate,
+    paidAmount: expenseInstallments.paidAmount,
+    paymentMethod: expenseInstallments.paymentMethod,
+    notes: expenseInstallments.notes
+  })
+  .from(expenseInstallments)
+  .leftJoin(expenses, eq(expenseInstallments.expenseId, expenses.id))
+  .where(and(
+    eq(expenses.supplierId, supplierId),
+    eq(expenseInstallments.status, "PAGO")
+  ))
+  .orderBy(desc(expenseInstallments.paidDate));
+  
+  return {
+    supplier: supplier[0],
+    expenses: expensesWithDetails,
+    payments,
+    totalPending: totalPending.toFixed(2)
+  };
+}
+
+// Registrar pagamento para um fornecedor
+export async function registerSupplierPayment(data: {
+  supplierId: number;
+  expenseId?: number;
+  paidDate: Date;
+  paidAmount: string;
+  paymentMethod: string;
+  notes?: string;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const amount = parseFloat(data.paidAmount);
+  let remainingAmount = amount;
+  
+  // Se expenseId foi especificado, aplicar apenas nessa despesa
+  if (data.expenseId) {
+    const expense = await db.select()
+      .from(expenses)
+      .where(and(
+        eq(expenses.id, data.expenseId),
+        eq(expenses.supplierId, data.supplierId)
+      ))
+      .limit(1);
+    
+    if (!expense[0]) throw new Error("Despesa não encontrada");
+    
+    // Buscar parcelas pendentes dessa despesa
+    const pendingInstallments = await db.select()
+      .from(expenseInstallments)
+      .where(and(
+        eq(expenseInstallments.expenseId, expense[0].id!),
+        sql`${expenseInstallments.status} IN ('PENDENTE', 'PARCIAL', 'VENCIDO')`
+      ))
+      .orderBy(expenseInstallments.installmentNumber);
+    
+    // Aplicar pagamento nas parcelas
+    for (const installment of pendingInstallments) {
+      if (remainingAmount <= 0) break;
+      
+      const installmentAmount = parseFloat(installment.amount);
+      const alreadyPaid = parseFloat(installment.paidAmount || "0");
+      const installmentPending = installmentAmount - alreadyPaid;
+      
+      const paymentForThisInstallment = Math.min(remainingAmount, installmentPending);
+      const newPaidAmount = alreadyPaid + paymentForThisInstallment;
+      
+      await db.update(expenseInstallments)
+        .set({
+          paidDate: data.paidDate,
+          paidAmount: newPaidAmount.toFixed(2),
+          paymentMethod: data.paymentMethod,
+          notes: data.notes,
+          status: newPaidAmount >= installmentAmount ? "PAGO" : "PARCIAL"
+        })
+        .where(eq(expenseInstallments.id, installment.id!));
+      
+      remainingAmount -= paymentForThisInstallment;
+    }
+    
+    // Atualizar status da despesa
+    await updateExpenseStatus(expense[0].id!);
+    
+  } else {
+    // Aplicar na despesa mais antiga (FIFO)
+    const expensesWithPending = await db.select()
+      .from(expenses)
+      .where(and(
+        eq(expenses.supplierId, data.supplierId),
+        sql`${expenses.status} IN ('PENDENTE', 'PARCIAL', 'VENCIDO')`
+      ))
+      .orderBy(expenses.createdAt); // Mais antiga primeiro
+    
+    for (const expense of expensesWithPending) {
+      if (remainingAmount <= 0) break;
+      
+      // Buscar parcelas pendentes
+      const pendingInstallments = await db.select()
+        .from(expenseInstallments)
+        .where(and(
+          eq(expenseInstallments.expenseId, expense.id!),
+          sql`${expenseInstallments.status} IN ('PENDENTE', 'PARCIAL', 'VENCIDO')`
+        ))
+        .orderBy(expenseInstallments.installmentNumber);
+      
+      // Aplicar pagamento nas parcelas
+      for (const installment of pendingInstallments) {
+        if (remainingAmount <= 0) break;
+        
+        const installmentAmount = parseFloat(installment.amount);
+        const alreadyPaid = parseFloat(installment.paidAmount || "0");
+        const installmentPending = installmentAmount - alreadyPaid;
+        
+        const paymentForThisInstallment = Math.min(remainingAmount, installmentPending);
+        const newPaidAmount = alreadyPaid + paymentForThisInstallment;
+        
+        await db.update(expenseInstallments)
+          .set({
+            paidDate: data.paidDate,
+            paidAmount: newPaidAmount.toFixed(2),
+            paymentMethod: data.paymentMethod,
+            notes: data.notes,
+            status: newPaidAmount >= installmentAmount ? "PAGO" : "PARCIAL"
+          })
+          .where(eq(expenseInstallments.id, installment.id!));
+        
+        remainingAmount -= paymentForThisInstallment;
+      }
+      
+      // Atualizar status da despesa
+      await updateExpenseStatus(expense.id!);
+    }
+  }
+  
+  // Atualizar saldo do fornecedor
+  const currentBalance = await db.select({ balance: partners.currentBalance })
+    .from(partners)
+    .where(eq(partners.id, data.supplierId))
+    .limit(1);
+  
+  const newBalance = parseFloat(currentBalance[0]?.balance || "0") + amount;
+  
+  await db.update(partners)
+    .set({ currentBalance: newBalance.toFixed(2) })
+    .where(eq(partners.id, data.supplierId));
+  
+  return { success: true, appliedAmount: amount - remainingAmount };
+}
+

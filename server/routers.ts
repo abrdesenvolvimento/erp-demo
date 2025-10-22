@@ -735,6 +735,43 @@ export const appRouter = router({
     }),
   }),
 
+  // ==================== CONTAS A PAGAR ====================
+  payables: router({
+    // Listar fornecedores com saldo devedor
+    bySupplier: protectedProcedure
+      .query(async () => {
+        return await db.getSuppliersWithPendingPayables();
+      }),
+    
+    // Total pendente de pagamento
+    totalPending: protectedProcedure
+      .query(async () => {
+        const total = await db.getTotalPendingPayables();
+        return { total: total.toFixed(2) };
+      }),
+    
+    // Detalhamento de um fornecedor
+    supplierDetail: protectedProcedure
+      .input(z.object({ supplierId: z.number() }))
+      .query(async ({ input }) => {
+        return await db.getSupplierPayableDetail(input.supplierId);
+      }),
+    
+    // Registrar pagamento
+    registerPayment: protectedProcedure
+      .input(z.object({
+        supplierId: z.number(),
+        expenseId: z.number().optional(),
+        paidDate: z.date(),
+        paidAmount: z.string(),
+        paymentMethod: z.string(),
+        notes: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        return await db.registerSupplierPayment(input);
+      }),
+  }),
+
   // ==================== DASHBOARD ====================
   dashboard: router({
     stats: protectedProcedure.query(async () => {
