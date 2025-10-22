@@ -90,9 +90,13 @@ export const appRouter = router({
         isComposite: z.boolean().optional().default(false),
         notes: z.string().optional(),
         prices: z.record(z.string(), z.string()).optional(),
+        compositions: z.array(z.object({
+          childProductId: z.number(),
+          quantity: z.number(),
+        })).optional(),
       }))
       .mutation(async ({ input }) => {
-        const { prices, ...productData } = input;
+        const { prices, compositions, ...productData } = input;
         const id = await db.createProduct(productData);
         
         // Salvar preços por canal
@@ -106,6 +110,11 @@ export const appRouter = router({
               });
             }
           }
+        }
+        
+        // Salvar composições se for produto composto
+        if (compositions && compositions.length > 0) {
+          await db.setProductCompositions(id, compositions);
         }
         
         return { id, success: true };
