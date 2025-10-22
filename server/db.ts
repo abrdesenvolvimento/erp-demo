@@ -1461,19 +1461,19 @@ export async function getSuppliersWithPendingPayables() {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
-  // Buscar todas as despesas pendentes agrupadas por fornecedor
+  // Buscar todas as despesas ativas agrupadas por fornecedor
   const results = await db.select({
     supplierId: expenses.supplierId,
     supplierName: partners.name,
-    totalPending: sql<string>`SUM(CAST(${expenses.totalAmount} AS DECIMAL(10,2)) - CAST(${expenses.paidAmount} AS DECIMAL(10,2)))`,
+    totalPending: sql<string>`SUM(CAST(${expenses.amount} AS DECIMAL(10,2)))`,
     expensesCount: sql<number>`COUNT(DISTINCT ${expenses.id})`
   })
   .from(expenses)
   .leftJoin(partners, eq(expenses.supplierId, partners.id))
-  .where(sql`${expenses.status} IN ('PENDENTE', 'PARCIAL', 'VENCIDO')`)
+  .where(eq(expenses.status, 'ATIVA'))
   .groupBy(expenses.supplierId, partners.name)
-  .having(sql`SUM(CAST(${expenses.totalAmount} AS DECIMAL(10,2)) - CAST(${expenses.paidAmount} AS DECIMAL(10,2))) > 0`)
-  .orderBy(desc(sql`SUM(CAST(${expenses.totalAmount} AS DECIMAL(10,2)) - CAST(${expenses.paidAmount} AS DECIMAL(10,2)))`));
+  .having(sql`SUM(CAST(${expenses.amount} AS DECIMAL(10,2))) > 0`)
+  .orderBy(desc(sql`SUM(CAST(${expenses.amount} AS DECIMAL(10,2)))`));
   
   return results;
 }
@@ -1484,10 +1484,10 @@ export async function getTotalPendingPayables() {
   if (!db) throw new Error("Database not available");
   
   const result = await db.select({
-    total: sql<string>`COALESCE(SUM(CAST(${expenses.totalAmount} AS DECIMAL(10,2)) - CAST(${expenses.paidAmount} AS DECIMAL(10,2))), 0)`
+    total: sql<string>`COALESCE(SUM(CAST(${expenses.amount} AS DECIMAL(10,2))), 0)`
   })
   .from(expenses)
-  .where(sql`${expenses.status} IN ('PENDENTE', 'PARCIAL', 'VENCIDO')`);
+  .where(eq(expenses.status, 'ATIVA'));
   
   return parseFloat(result[0]?.total || "0");
 }
@@ -1505,7 +1505,7 @@ export async function getSupplierPayableDetail(supplierId: number) {
   const expensesList = await db.select()
     .from(expenses)
     .where(eq(expenses.supplierId, supplierId))
-    .orderBy(desc(expenses.expenseDate));
+    .orderBy(desc(expenses.createdAt));
   
   // Para cada despesa, buscar parcelas
   const expensesWithDetails = await Promise.all(
@@ -1516,12 +1516,15 @@ export async function getSupplierPayableDetail(supplierId: number) {
         .where(eq(expenseInstallments.expenseId, expense.id!))
         .orderBy(expenseInstallments.installmentNumber);
       
-      const totalAmount = parseFloat(expense.totalAmount || "0");
-      const paidAmount = parseFloat(expense.paidAmount || "0");
+      const totalAmount = parseFloat(expense.amount || "0");
+      const paidAmount = installments
+        .filter((i: any) => i.status === 'PAGO')
+        .reduce((sum: number, i: any) => sum + parseFloat(i.amount || "0"), 0);
       const pendingAmount = totalAmount - paidAmount;
       
       return {
         ...expense,
+        expenseDate: expense.createdAt,
         installments,
         totalAmount: totalAmount.toFixed(2),
         paidAmount: paidAmount.toFixed(2),
@@ -1590,7 +1593,7 @@ export async function registerSupplierPayment(data: {
       .from(expenseInstallments)
       .where(and(
         eq(expenseInstallments.expenseId, expense[0].id!),
-        sql`${expenseInstallments.status} IN ('PENDENTE', 'PARCIAL', 'VENCIDO')`
+        sql`${expenseInstallments.status} IN ('PENDENTE', 'VENCIDA')`
       ))
       .orderBy(expenseInstallments.installmentNumber);
     
@@ -1627,7 +1630,7 @@ export async function registerSupplierPayment(data: {
       .from(expenses)
       .where(and(
         eq(expenses.supplierId, data.supplierId),
-        sql`${expenses.status} IN ('PENDENTE', 'PARCIAL', 'VENCIDO')`
+        eq(expenses.status, 'ATIVA')
       ))
       .orderBy(expenses.createdAt); // Mais antiga primeiro
     
@@ -1639,7 +1642,7 @@ export async function registerSupplierPayment(data: {
         .from(expenseInstallments)
         .where(and(
           eq(expenseInstallments.expenseId, expense.id!),
-          sql`${expenseInstallments.status} IN ('PENDENTE', 'PARCIAL', 'VENCIDO')`
+          sql`${expenseInstallments.status} IN ('PENDENTE', 'VENCIDA')`
         ))
         .orderBy(expenseInstallments.installmentNumber);
       
