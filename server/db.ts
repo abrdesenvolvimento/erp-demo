@@ -908,10 +908,17 @@ export async function createReceivable(data: InsertReceivable) {
   if (!db) throw new Error("Database not available");
   
   const result = await db.insert(receivables).values(data);
-  const receivableId = Number((result as any).insertId);
   
-  // Buscar o recebível criado
-  const created = await db.select().from(receivables).where(eq(receivables.id, receivableId)).limit(1);
+  // Buscar o recebível criado pela venda (mais confiável que insertId)
+  const created = await db.select().from(receivables)
+    .where(eq(receivables.saleId, data.saleId))
+    .orderBy(desc(receivables.id))
+    .limit(1);
+  
+  if (!created || created.length === 0) {
+    throw new Error("Failed to create receivable");
+  }
+  
   return created[0];
 }
 
