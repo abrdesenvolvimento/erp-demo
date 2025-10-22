@@ -40,9 +40,17 @@ import { useAuth } from "@/_core/hooks/useAuth";
 function CompositionsSection({ productId }: { productId: number }) {
   const [compositions, setCompositions] = useState<any[]>([]);
   const [newComposition, setNewComposition] = useState({ childProductId: "", quantity: "" });
+  const [productSearch, setProductSearch] = useState("");
+  const [showProductSuggestions, setShowProductSuggestions] = useState(false);
   
   const { data: products } = trpc.products.list.useQuery({ activeOnly: true });
   const { data: compositionsData, refetch } = trpc.products.getCompositions.useQuery({ productId });
+  
+  const filteredProducts = products?.filter(p => 
+    !p.isComposite && 
+    p.id !== productId &&
+    p.name.toLowerCase().includes(productSearch.toLowerCase())
+  ) || [];
   const setCompositionsMutation = trpc.products.setCompositions.useMutation({
     onSuccess: () => {
       toast.success("Composições atualizadas!");
@@ -63,6 +71,12 @@ function CompositionsSection({ productId }: { productId: number }) {
     }
   }, [compositionsData]);
   
+  const handleSelectProduct = (product: any) => {
+    setNewComposition({ ...newComposition, childProductId: product.id.toString() });
+    setProductSearch(product.name);
+    setShowProductSuggestions(false);
+  };
+  
   const handleAddComposition = () => {
     if (!newComposition.childProductId || !newComposition.quantity) {
       toast.error("Selecione um produto e quantidade");
@@ -78,6 +92,7 @@ function CompositionsSection({ productId }: { productId: number }) {
       childProduct: product
     }]);
     setNewComposition({ childProductId: "", quantity: "" });
+    setProductSearch("");
   };
   
   const handleRemoveComposition = (index: number) => {
@@ -126,21 +141,36 @@ function CompositionsSection({ productId }: { productId: number }) {
       
       {/* Adicionar nova composição */}
       <div className="grid grid-cols-[1fr_auto_auto] gap-2">
-        <Select
-          value={newComposition.childProductId}
-          onValueChange={(value) => setNewComposition({ ...newComposition, childProductId: value })}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Selecione o produto" />
-          </SelectTrigger>
-          <SelectContent position="popper" sideOffset={5}>
-            {products?.filter(p => !p.isComposite && p.id !== productId).map((product) => (
-              <SelectItem key={product.id} value={product.id.toString()}>
-                {product.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="relative">
+          <Input
+            placeholder="Digite o nome do produto..."
+            value={productSearch}
+            onChange={(e) => {
+              setProductSearch(e.target.value);
+              setShowProductSuggestions(true);
+              if (!e.target.value) {
+                setNewComposition({ ...newComposition, childProductId: "" });
+              }
+            }}
+            onFocus={() => setShowProductSuggestions(true)}
+          />
+          {showProductSuggestions && productSearch && filteredProducts.length > 0 && (
+            <div className="absolute z-50 w-full mt-1 bg-popover border rounded-md shadow-md max-h-60 overflow-auto">
+              {filteredProducts.map((product) => (
+                <div
+                  key={product.id}
+                  className="px-3 py-2 hover:bg-accent cursor-pointer"
+                  onClick={() => handleSelectProduct(product)}
+                >
+                  <div className="font-medium">{product.name}</div>
+                  <div className="text-sm text-muted-foreground">
+                    Estoque: {product.currentStock}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
         
         <Input
           type="number"

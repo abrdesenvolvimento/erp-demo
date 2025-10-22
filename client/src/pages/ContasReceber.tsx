@@ -10,6 +10,7 @@ import { Textarea } from "../components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table";
 import { toast } from "sonner";
 import { DollarSign, User, ChevronRight, ArrowLeft } from "lucide-react";
+import DashboardLayout from "../components/DashboardLayout";
 
 export default function ContasReceber() {
   const [selectedCustomerId, setSelectedCustomerId] = useState<number | null>(null);
@@ -109,7 +110,8 @@ export default function ContasReceber() {
   // Se um cliente está selecionado, mostra o detalhamento
   if (selectedCustomerId && customerDetail) {
     return (
-      <div className="space-y-6">
+      <DashboardLayout>
+        <div className="space-y-6">
         {/* Header com botão voltar */}
         <div className="flex items-center gap-4">
           <Button variant="outline" size="sm" onClick={handleCloseCustomerDetail}>
@@ -320,13 +322,15 @@ export default function ContasReceber() {
             </form>
           </DialogContent>
         </Dialog>
-      </div>
+        </div>
+      </DashboardLayout>
     );
   }
 
   // Lista de clientes (tela principal)
   return (
-    <div className="space-y-6">
+    <DashboardLayout>
+      <div className="space-y-6">
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold">Contas a Receber</h1>
@@ -393,7 +397,8 @@ export default function ContasReceber() {
           )}
         </CardContent>
       </Card>
-    </div>
+      </div>
+    </DashboardLayout>
   );
 }
 
