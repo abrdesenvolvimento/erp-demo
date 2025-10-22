@@ -250,11 +250,16 @@ export async function updateProductStockWithCompositions(id: number, quantity: n
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
+  console.log('[updateProductStockWithCompositions] Called with id:', id, 'quantity:', quantity);
+  
   // Check if product is composite
   const product = await db.select().from(products).where(eq(products.id, id)).limit(1);
   if (product.length === 0) {
+    console.log('[updateProductStockWithCompositions] Product not found!');
     return;
   }
+  
+  console.log('[updateProductStockWithCompositions] Product:', product[0].name, 'isComposite:', product[0].isComposite);
   
   if (product[0].isComposite) {
     // For composite products, ONLY update component stocks (not the composite itself)
@@ -262,15 +267,21 @@ export async function updateProductStockWithCompositions(id: number, quantity: n
       .from(productCompositions)
       .where(eq(productCompositions.parentProductId, id));
     
+    console.log('[updateProductStockWithCompositions] Found', compositions.length, 'compositions');
+    
     // Update stock of each component
     for (const comp of compositions) {
       const componentQuantity = quantity * comp.quantity;
+      console.log('[updateProductStockWithCompositions] Updating component', comp.childProductId, 'by', componentQuantity);
       await updateProductStock(comp.childProductId, componentQuantity);
     }
   } else {
     // For regular products, update their own stock
+    console.log('[updateProductStockWithCompositions] Updating regular product stock');
     await updateProductStock(id, quantity);
   }
+  
+  console.log('[updateProductStockWithCompositions] Completed');
 }
 
 // ==================== PREÇOS DE PRODUTOS ====================

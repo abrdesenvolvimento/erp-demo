@@ -1,0 +1,24 @@
+{
+  "query": "SELECT id, name, ean, isComposite, currentStock FROM products WHERE name LIKE '%Beats GT%' ORDER BY name;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT id, name, ean, isComposite, currentStock FROM products WHERE name LIKE '%Beats GT%' ORDER BY name;",
+  "rows": [
+    {
+      "id": "120001",
+      "name": "Beats GT 269ml Long Neck",
+      "ean": "7891991301114",
+      "isComposite": "0",
+      "currentStock": "7"
+    },
+    {
+      "id": "120002",
+      "name": "Beats GT 269ml Long Neck Pack 6 Unidades",
+      "ean": "7891991301121",
+      "isComposite": "1",
+      "currentStock": "2"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tean\tisComposite\tcurrentStock\n120001\tBeats GT 269ml Long Neck\t7891991301114\t0\t7\n120002\tBeats GT 269ml Long Neck Pack 6 Unidades\t7891991301121\t1\t2\n",
+  "stderr": "",
+  "execution_time_ms": 53
+}
