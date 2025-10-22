@@ -250,24 +250,26 @@ export async function updateProductStockWithCompositions(id: number, quantity: n
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
-  // Update main product stock
-  await updateProductStock(id, quantity);
-  
   // Check if product is composite
   const product = await db.select().from(products).where(eq(products.id, id)).limit(1);
-  if (product.length === 0 || !product[0].isComposite) {
-    return; // Not composite, done
+  if (product.length === 0) {
+    return;
   }
   
-  // Get compositions
-  const compositions = await db.select()
-    .from(productCompositions)
-    .where(eq(productCompositions.parentProductId, id));
-  
-  // Update stock of each component
-  for (const comp of compositions) {
-    const componentQuantity = quantity * comp.quantity;
-    await updateProductStock(comp.childProductId, componentQuantity);
+  if (product[0].isComposite) {
+    // For composite products, ONLY update component stocks (not the composite itself)
+    const compositions = await db.select()
+      .from(productCompositions)
+      .where(eq(productCompositions.parentProductId, id));
+    
+    // Update stock of each component
+    for (const comp of compositions) {
+      const componentQuantity = quantity * comp.quantity;
+      await updateProductStock(comp.childProductId, componentQuantity);
+    }
+  } else {
+    // For regular products, update their own stock
+    await updateProductStock(id, quantity);
   }
 }
 
