@@ -1,39 +1,33 @@
-import { getDb } from './server/db.js';
-import { productCompositions, products } from './drizzle/schema.js';
+import { getDb } from './server/db.ts';
+import { productCompositions, products } from './drizzle/schema.ts';
 import { eq, and } from 'drizzle-orm';
 
 const db = await getDb();
 
-// Buscar IDs
-const ginProduct = await db.select().from(products).where(eq(products.name, 'Dose Gin Dober'));
-const ginComponent = await db.select().from(products).where(eq(products.name, 'Gin Dober 750ml'));
+// Find Dose Gin Dober
+const dose = await db.select().from(products).where(eq(products.name, 'Dose Gin Dober')).limit(1);
+console.log('Dose ID:', dose[0].id);
 
-console.log('Dose Gin Dober ID:', ginProduct[0].id);
-console.log('Gin Dober 750ml ID:', ginComponent[0].id);
+// Find Gin Dober
+const gin = await db.select().from(products).where(eq(products.name, 'Gin Dober 750ml')).limit(1);
+console.log('Gin ID:', gin[0].id);
 
-// Atualizar quantidade
-const result = await db.update(productCompositions)
+// Update composition
+await db.update(productCompositions)
   .set({ quantity: '0.2' })
-  .where(
-    and(
-      eq(productCompositions.parentProductId, ginProduct[0].id),
-      eq(productCompositions.childProductId, ginComponent[0].id)
-    )
-  );
+  .where(and(
+    eq(productCompositions.parentProductId, dose[0].id),
+    eq(productCompositions.childProductId, gin[0].id)
+  ));
 
-console.log('\n✅ Quantidade atualizada!');
-console.log('Linhas afetadas:', result);
+console.log('Updated!');
 
-// Verificar atualização
-const updated = await db.select().from(productCompositions)
-  .where(
-    and(
-      eq(productCompositions.parentProductId, ginProduct[0].id),
-      eq(productCompositions.childProductId, ginComponent[0].id)
-    )
-  );
+// Verify
+const comp = await db.select().from(productCompositions)
+  .where(and(
+    eq(productCompositions.parentProductId, dose[0].id),
+    eq(productCompositions.childProductId, gin[0].id)
+  ));
 
-console.log('\nComposição atualizada:');
-console.log(updated[0]);
-
+console.log('New quantity:', comp[0].quantity);
 process.exit(0);

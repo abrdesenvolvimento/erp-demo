@@ -635,19 +635,38 @@ export async function confirmPurchaseOrder(purchaseOrderId: number) {
   // Atualizar status da ordem de compra
   await updatePurchaseOrder(purchaseOrderId, { status: "CONFIRMED" });
   
-  // Gerar contas a pagar baseadas nas parcelas (RN-COMP-03)
+  // Gerar despesa (expense) e parcelas baseadas nas parcelas da compra (RN-COMP-03)
   const po = await getPurchaseOrderById(purchaseOrderId);
   const installments = await getPurchaseInstallments(purchaseOrderId);
   
   if (po && po.purchaseOrder && installments.length > 0) {
+    // Criar uma despesa para a compra
+    const expenseId = await createExpense({
+      supplierId: po.purchaseOrder.supplierId,
+      purchaseOrderId: purchaseOrderId,
+      docType: po.purchaseOrder.docType || 'NOTA_FISCAL',
+      docNumber: po.purchaseOrder.docNumber || null,
+      categoryId: 1, // Categoria padrão (pode ser ajustado)
+      description: `Compra #${purchaseOrderId} - ${po.supplier?.name || 'Fornecedor'}`,
+      amount: po.purchaseOrder.totalAmount.toString(),
+      paymentMethod: po.purchaseOrder.paymentMethod,
+      notes: `Gerado automaticamente da compra #${purchaseOrderId}`,
+      status: 'ATIVA',
+      createdBy: 'system'
+    });
+    
+    // Criar parcelas da despesa
     for (const installment of installments) {
-      await db.insert(accountsPayable).values({
-        description: `Compra #${purchaseOrderId} - Parcela ${installment.installmentNumber}/${installments.length} - ${po.supplier?.name || 'Fornecedor'}`,
+      await createExpenseInstallment({
+        expenseId: expenseId,
+        installmentNumber: installment.installmentNumber,
         amount: installment.amount.toString(),
         dueDate: installment.dueDate,
-        status: "PENDING",
-        supplierId: po.purchaseOrder.supplierId,
-        purchaseOrderId: purchaseOrderId
+        paymentDate: null,
+        paymentAmount: null,
+        paymentMethod: null,
+        status: 'PENDENTE',
+        notes: null
       });
     }
   }
@@ -873,27 +892,163 @@ export async function createExpenseInstallment(data: InsertExpenseInstallment) {
   return Number((result as any).insertId);
 }
 
-export async function payExpenseInstallment(
-  id: number, 
-  paymentData: {
-    paymentDate: Date;
-    paymentAmount: string;
-    paymentMethod: string;
-    notes?: string;
-  }
-) {
+export async function getPaymentHistory(filters: {
+  supplierId?: number;
+  startDate?: string;
+  endDate?: string;
+  docNumber?: string;
+  paymentMethod?: string;
+}) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
+  // Buscar todas as parcelas pagas com filtros
+  let query = db
+    .select({
+      id: expenseInstallments.id,
+      expenseId: expenseInstallments.expenseId,
+      installmentNumber: expenseInstallments.installmentNumber,
+      amount: expenseInstallments.amount,
+      paymentAmount: expenseInstallments.paymentAmount,
+      paymentDate: expenseInstallments.paymentDate,
+      paymentMethod: expenseInstallments.paymentMethod,
+      notes: expenseInstallments.notes,
+      dueDate: expenseInstallments.dueDate,
+      status: expenseInstallments.status,
+      supplierId: expenses.supplierId,
+      supplierName: partners.name,
+      purchaseOrderId: expenses.purchaseOrderId,
+      docType: expenses.docType,
+      docNumber: expenses.docNumber,
+      description: expenses.description,
+      createdAt: expenses.createdAt,
+    })
+    .from(expenseInstallments)
+    .innerJoin(expenses, eq(expenseInstallments.expenseId, expenses.id))
+    .leftJoin(partners, eq(expenses.supplierId, partners.id))
+    .where(eq(expenseInstallments.status, "PAGO"));
+  
+  // Aplicar filtros
+  const conditions: any[] = [eq(expenseInstallments.status, "PAGO")];
+  
+  if (filters.supplierId) {
+    conditions.push(eq(expenses.supplierId, filters.supplierId));
+  }
+  
+  if (filters.startDate) {
+    conditions.push(sql`${expenseInstallments.paymentDate} >= ${filters.startDate}`);
+  }
+  
+  if (filters.endDate) {
+    conditions.push(sql`${expenseInstallments.paymentDate} <= ${filters.endDate}`);
+  }
+  
+  if (filters.docNumber) {
+    conditions.push(sql`${expenses.docNumber} LIKE ${`%${filters.docNumber}%`}`);
+  }
+  
+  if (filters.paymentMethod) {
+    conditions.push(eq(expenseInstallments.paymentMethod, filters.paymentMethod));
+  }
+  
+  const paidInstallments = await db
+    .select({
+      id: expenseInstallments.id,
+      expenseId: expenseInstallments.expenseId,
+      installmentNumber: expenseInstallments.installmentNumber,
+      amount: expenseInstallments.amount,
+      paymentAmount: expenseInstallments.paymentAmount,
+      paymentDate: expenseInstallments.paymentDate,
+      paymentMethod: expenseInstallments.paymentMethod,
+      notes: expenseInstallments.notes,
+      dueDate: expenseInstallments.dueDate,
+      status: expenseInstallments.status,
+      supplierId: expenses.supplierId,
+      supplierName: partners.name,
+      purchaseOrderId: expenses.purchaseOrderId,
+      docType: expenses.docType,
+      docNumber: expenses.docNumber,
+      description: expenses.description,
+      createdAt: expenses.createdAt,
+    })
+    .from(expenseInstallments)
+    .innerJoin(expenses, eq(expenseInstallments.expenseId, expenses.id))
+    .leftJoin(partners, eq(expenses.supplierId, partners.id))
+    .where(and(...conditions))
+    .orderBy(desc(expenseInstallments.paymentDate));
+  
+  // Formatar resultado
+  const result = paidInstallments.map(installment => {
+    const docTypeLabel = installment.docType === 'NOTA_FISCAL' ? 'NF' :
+                        installment.docType === 'CUPOM' ? 'Cupom' :
+                        installment.docType === 'RECIBO' ? 'Recibo' : 'Doc';
+    
+    const origin = installment.purchaseOrderId ? 'Compra' : 'Despesa';
+    
+    const description = installment.purchaseOrderId 
+      ? `Compra #${installment.purchaseOrderId} - ${docTypeLabel} ${installment.docNumber || 's/n'} - Parcela ${installment.installmentNumber}`
+      : `${installment.description || 'Despesa'} - Parcela ${installment.installmentNumber}`;
+    
+    return {
+      id: installment.id,
+      expenseId: installment.expenseId,
+      supplierId: installment.supplierId || 0,
+      supplierName: installment.supplierName || 'Sem nome',
+      description,
+      origin,
+      expenseDate: installment.createdAt || new Date(),
+      dueDate: installment.dueDate || new Date(),
+      paidDate: installment.paymentDate || null,
+      paymentMethod: installment.paymentMethod || null,
+      notes: installment.notes || null,
+      totalAmount: installment.amount || "0",
+      paidAmount: installment.paymentAmount || "0",
+      status: installment.status,
+    };
+  });
+  
+  return result;
+}
+
+export async function payExpenseInstallment(data: {
+  installmentId: number;
+  expenseId: number;
+  paidDate: Date;
+  paidAmount: string;
+  paymentMethod: string;
+  notes?: string;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  // Buscar a parcela
+  const installment = await db.select()
+    .from(expenseInstallments)
+    .where(eq(expenseInstallments.id, data.installmentId))
+    .limit(1);
+  
+  if (!installment[0]) throw new Error("Parcela não encontrada");
+  
+  const installmentAmount = parseFloat(installment[0].amount);
+  const paidAmount = parseFloat(data.paidAmount);
+  const alreadyPaid = parseFloat(installment[0].paymentAmount || "0");
+  const newPaidAmount = alreadyPaid + paidAmount;
+  
+  // Atualizar parcela
   await db.update(expenseInstallments)
     .set({
-      paymentDate: paymentData.paymentDate,
-      paymentAmount: paymentData.paymentAmount,
-      paymentMethod: paymentData.paymentMethod as any,
-      notes: paymentData.notes,
-      status: "PAGO"
+      paymentDate: data.paidDate,
+      paymentAmount: newPaidAmount.toFixed(2),
+      paymentMethod: data.paymentMethod,
+      notes: data.notes,
+      status: newPaidAmount >= installmentAmount ? "PAGO" : "PENDENTE"
     })
-    .where(eq(expenseInstallments.id, id));
+    .where(eq(expenseInstallments.id, data.installmentId));
+  
+  // Atualizar status da despesa
+  await updateExpenseStatus(data.expenseId);
+  
+  return { success: true };
 }
 
 // Atualizar status de parcelas vencidas
@@ -1376,7 +1531,7 @@ export async function registerCustomerPayment(data: {
           paidAmount: newPaidAmount.toFixed(2),
           paymentMethod: data.paymentMethod,
           notes: data.notes,
-          status: newPaidAmount >= installmentAmount ? "PAGO" : "PARCIAL"
+          status: newPaidAmount >= installmentAmount ? "PAGO" : "PENDENTE"
         })
         .where(eq(receivableInstallments.id, installment.id!));
       
@@ -1425,7 +1580,7 @@ export async function registerCustomerPayment(data: {
             paidAmount: newPaidAmount.toFixed(2),
             paymentMethod: data.paymentMethod,
             notes: data.notes,
-            status: newPaidAmount >= installmentAmount ? "PAGO" : "PARCIAL"
+            status: newPaidAmount >= installmentAmount ? "PAGO" : "PENDENTE"
           })
           .where(eq(receivableInstallments.id, installment.id!));
         
@@ -1507,58 +1662,128 @@ export async function getSupplierPayableDetail(supplierId: number) {
     .where(eq(expenses.supplierId, supplierId))
     .orderBy(desc(expenses.createdAt));
   
-  // Para cada despesa, buscar parcelas
-  const expensesWithDetails = await Promise.all(
-    expensesList.map(async (expense) => {
-      let installments: any[] = [];
+  // Processar cada despesa e "explodir" em parcelas individuais
+  const allInstallments: any[] = [];
+  
+  for (const expense of expensesList.filter(expense => expense && expense.id)) {
+    let installments: any[] = [];
+    try {
       installments = await db.select()
         .from(expenseInstallments)
         .where(eq(expenseInstallments.expenseId, expense.id!))
         .orderBy(expenseInstallments.installmentNumber);
+    } catch (error) {
+      console.error('Error fetching installments:', error);
+    }
+    
+    // Determinar origem (Compra ou Despesa)
+    const origin = expense.purchaseOrderId ? 'Compra' : 'Despesa';
+    
+    // Formatar tipo de documento
+    const docTypeLabel = expense.docType === 'NOTA_FISCAL' ? 'NF' : 
+                        expense.docType === 'CUPOM_FISCAL' ? 'Cupom' : 
+                        expense.docType === 'RECIBO' ? 'Recibo' : 'Doc';
+    
+    // Para cada parcela, criar uma linha
+    for (const installment of installments) {
+      const installmentAmount = parseFloat(installment.amount || "0");
+      const paidAmount = parseFloat(installment.paymentAmount || "0");
+      const pendingAmount = installmentAmount - paidAmount;
       
-      const totalAmount = parseFloat(expense.amount || "0");
-      const paidAmount = installments
-        .filter((i: any) => i.status === 'PAGO')
-        .reduce((sum: number, i: any) => sum + parseFloat(i.amount || "0"), 0);
-      const pendingAmount = totalAmount - paidAmount;
+      // Montar descrição detalhada
+      const description = expense.purchaseOrderId 
+        ? `Compra #${expense.purchaseOrderId} - ${docTypeLabel} ${expense.docNumber || 's/n'} - Parcela ${installment.installmentNumber}/${installments.length}`
+        : `${expense.description || 'Despesa'} - Parcela ${installment.installmentNumber}/${installments.length}`;
       
-      return {
-        ...expense,
-        expenseDate: expense.createdAt,
-        installments,
-        totalAmount: totalAmount.toFixed(2),
+      allInstallments.push({
+        id: installment.id || 0,
+        expenseId: expense.id || 0,
+        supplierId: expense.supplierId || 0,
+        purchaseOrderId: expense.purchaseOrderId || null,
+        categoryId: expense.categoryId || null,
+        description: description,
+        installmentNumber: installment.installmentNumber,
+        totalInstallments: installments.length,
+        expenseDate: expense.createdAt || new Date(),
+        dueDate: installment.dueDate || new Date(),
+        paidDate: installment.paymentDate || null,
+        paymentMethod: installment.paymentMethod || null,
+        notes: installment.notes || null,
+        origin: origin,
+        status: installment.status || 'PENDENTE',
+        totalAmount: installmentAmount.toFixed(2),
         paidAmount: paidAmount.toFixed(2),
         pendingAmount: pendingAmount.toFixed(2)
-      };
-    })
-  );
+      });
+    }
+  }
   
   // Calcular total pendente
-  const totalPending = expensesWithDetails.reduce((sum, expense) => 
-    sum + parseFloat(expense.pendingAmount), 0
+  const totalPending = allInstallments.reduce((sum, installment) => 
+    sum + parseFloat(installment.pendingAmount), 0
   );
   
   // Buscar histórico de pagamentos (parcelas pagas)
-  const payments = await db.select({
-    paidDate: expenseInstallments.paidDate,
-    paidAmount: expenseInstallments.paidAmount,
-    paymentMethod: expenseInstallments.paymentMethod,
-    notes: expenseInstallments.notes
-  })
-  .from(expenseInstallments)
-  .leftJoin(expenses, eq(expenseInstallments.expenseId, expenses.id))
-  .where(and(
-    eq(expenses.supplierId, supplierId),
-    eq(expenseInstallments.status, "PAGO")
-  ))
-  .orderBy(desc(expenseInstallments.paidDate));
+  let payments: any[] = [];
+  try {
+    // Primeiro buscar todas as despesas do fornecedor
+    const supplierExpenses = await db.select({ id: expenses.id })
+      .from(expenses)
+      .where(eq(expenses.supplierId, supplierId));
+    
+    const expenseIds = supplierExpenses.map(e => e.id).filter(id => id !== null && id !== undefined);
+    
+    if (expenseIds.length > 0) {
+      payments = await db.select({
+        paidDate: expenseInstallments.paidDate,
+        paidAmount: expenseInstallments.paidAmount,
+        paymentMethod: expenseInstallments.paymentMethod,
+        notes: expenseInstallments.notes
+      })
+      .from(expenseInstallments)
+      .where(and(
+        sql`${expenseInstallments.expenseId} IN (${sql.join(expenseIds.map(id => sql`${id}`), sql`, `)})`,
+        eq(expenseInstallments.status, "PAGO")
+      ))
+      .orderBy(desc(expenseInstallments.paidDate));
+    }
+  } catch (error) {
+    console.error('Error fetching payments:', error);
+    payments = [];
+  }
+  
+  // Filtrar pagamentos com dados válidos
+  const validPayments = payments.filter(p => p && p.paidDate && p.paidAmount);
   
   return {
     supplier: supplier[0],
-    expenses: expensesWithDetails,
-    payments,
+    expenses: allInstallments,
+    payments: validPayments,
     totalPending: totalPending.toFixed(2)
   };
+}
+
+
+
+// Atualizar status da despesa baseado nas parcelas
+export async function updateExpenseStatus(expenseId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  // Buscar todas as parcelas da despesa
+  const installments = await db.select()
+    .from(expenseInstallments)
+    .where(eq(expenseInstallments.expenseId, expenseId));
+  
+  if (installments.length === 0) return;
+  
+  // Verificar se todas as parcelas estão pagas
+  const allPaid = installments.every(i => i.status === 'PAGO');
+  
+  // Atualizar status da despesa
+  await db.update(expenses)
+    .set({ status: allPaid ? 'PAGA' : 'ATIVA' })
+    .where(eq(expenses.id, expenseId));
 }
 
 // Registrar pagamento para um fornecedor
@@ -1614,7 +1839,7 @@ export async function registerSupplierPayment(data: {
           paidAmount: newPaidAmount.toFixed(2),
           paymentMethod: data.paymentMethod,
           notes: data.notes,
-          status: newPaidAmount >= installmentAmount ? "PAGO" : "PARCIAL"
+          status: newPaidAmount >= installmentAmount ? "PAGO" : "PENDENTE"
         })
         .where(eq(expenseInstallments.id, installment.id!));
       
@@ -1663,7 +1888,7 @@ export async function registerSupplierPayment(data: {
             paidAmount: newPaidAmount.toFixed(2),
             paymentMethod: data.paymentMethod,
             notes: data.notes,
-            status: newPaidAmount >= installmentAmount ? "PAGO" : "PARCIAL"
+            status: newPaidAmount >= installmentAmount ? "PAGO" : "PENDENTE"
           })
           .where(eq(expenseInstallments.id, installment.id!));
         

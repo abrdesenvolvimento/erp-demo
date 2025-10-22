@@ -1,0 +1,42 @@
+{
+  "query": "SELECT pc.id, pc.parentProductId, pc.childProductId, pc.quantity, p1.name as parent_name, p2.name as child_name FROM productCompositions pc JOIN products p1 ON pc.parentProductId = p1.id JOIN products p2 ON pc.childProductId = p2.id WHERE p1.name = 'Dose Gin Dober'",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT pc.id, pc.parentProductId, pc.childProductId, pc.quantity, p1.name as parent_name, p2.name as child_name FROM productCompositions pc JOIN products p1 ON pc.parentProductId = p1.id JOIN products p2 ON pc.childProductId = p2.id WHERE p1.name = 'Dose Gin Dober'",
+  "rows": [
+    {
+      "id": "60001",
+      "parentProductId": "150005",
+      "childProductId": "150001",
+      "quantity": "0",
+      "parent_name": "Dose Gin Dober",
+      "child_name": "Gin Dober 750ml"
+    },
+    {
+      "id": "60002",
+      "parentProductId": "150005",
+      "childProductId": "150002",
+      "quantity": "1",
+      "parent_name": "Dose Gin Dober",
+      "child_name": "Energético Red Bull 250ml"
+    },
+    {
+      "id": "60003",
+      "parentProductId": "150005",
+      "childProductId": "150003",
+      "quantity": "1",
+      "parent_name": "Dose Gin Dober",
+      "child_name": "Gelo de Sabor Limão"
+    },
+    {
+      "id": "60004",
+      "parentProductId": "150005",
+      "childProductId": "150004",
+      "quantity": "1",
+      "parent_name": "Dose Gin Dober",
+      "child_name": "Copo Descartável 700ml"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tparentProductId\tchildProductId\tquantity\tparent_name\tchild_name\n60001\t150005\t150001\t0\tDose Gin Dober\tGin Dober 750ml\n60002\t150005\t150002\t1\tDose Gin Dober\tEnergético Red Bull 250ml\n60003\t150005\t150003\t1\tDose Gin Dober\tGelo de Sabor Limão\n60004\t150005\t150004\t1\tDose Gin Dober\tCopo Descartável 700ml\n",
+  "stderr": "",
+  "execution_time_ms": 2009
+}

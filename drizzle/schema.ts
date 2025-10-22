@@ -296,6 +296,7 @@ export type InsertExpenseCategory = typeof expenseCategories.$inferInsert;
 export const expenses = mysqlTable("expenses", {
   id: int("id").primaryKey().autoincrement(),
   supplierId: int("supplierId"), // FK para fornecedor (opcional) - PRIMEIRO CAMPO
+  purchaseOrderId: int("purchaseOrderId"), // FK para ordem de compra (se origem for Compra)
   docType: mysqlEnum("docType", ["NOTA_FISCAL", "CUPOM"]).notNull(), // Tipo de documento
   docNumber: varchar("docNumber", { length: 100 }), // Número do documento
   categoryId: int("categoryId").notNull(),

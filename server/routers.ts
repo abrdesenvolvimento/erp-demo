@@ -99,6 +99,10 @@ export const appRouter = router({
         const { prices, compositions, ...productData } = input;
         const id = await db.createProduct(productData);
         
+        if (!id || isNaN(id)) {
+          throw new Error("Failed to create product: invalid ID returned");
+        }
+        
         // Salvar preços por canal
         if (prices) {
           for (const [channelId, price] of Object.entries(prices)) {
@@ -769,6 +773,33 @@ export const appRouter = router({
       }))
       .mutation(async ({ input }) => {
         return await db.registerSupplierPayment(input);
+      }),
+    
+    // Pagar parcela individual
+    payInstallment: protectedProcedure
+      .input(z.object({
+        installmentId: z.number(),
+        expenseId: z.number(),
+        paidDate: z.date(),
+        paidAmount: z.string(),
+        paymentMethod: z.string(),
+        notes: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        return await db.payExpenseInstallment(input);
+      }),
+    
+    // Histórico de pagamentos
+    paymentHistory: protectedProcedure
+      .input(z.object({
+        supplierId: z.number().optional(),
+        startDate: z.string().optional(),
+        endDate: z.string().optional(),
+        docNumber: z.string().optional(),
+        paymentMethod: z.string().optional(),
+      }))
+      .query(async ({ input }) => {
+        return await db.getPaymentHistory(input);
       }),
   }),
 
