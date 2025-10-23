@@ -19,6 +19,8 @@ export default function ContasPagar() {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showPaymentDetailsModal, setShowPaymentDetailsModal] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
+  const [searchSupplier, setSearchSupplier] = useState("");
+  const [sortBy, setSortBy] = useState<"name" | "amount">("amount");
   const [historyFilters, setHistoryFilters] = useState({
     supplierId: "",
     startDate: "",
@@ -475,10 +477,31 @@ export default function ContasPagar() {
       {/* Lista de Fornecedores */}
       <Card>
         <CardHeader>
-          <CardTitle>Fornecedores com Saldo a Pagar</CardTitle>
-          <CardDescription>
-            Clique em um fornecedor para ver detalhes
-          </CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Fornecedores com Saldo a Pagar</CardTitle>
+              <CardDescription>
+                Clique em um fornecedor para ver detalhes
+              </CardDescription>
+            </div>
+            <div className="flex gap-2">
+              <Input
+                placeholder="Buscar fornecedor..."
+                value={searchSupplier}
+                onChange={(e) => setSearchSupplier(e.target.value)}
+                className="w-64"
+              />
+              <Select value={sortBy} onValueChange={(v: any) => setSortBy(v)}>
+                <SelectTrigger className="w-48">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="amount">Maior débito</SelectItem>
+                  <SelectItem value="name">Nome A-Z</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           {!suppliers || suppliers.length === 0 ? (
@@ -487,7 +510,18 @@ export default function ContasPagar() {
             </p>
           ) : (
             <div className="space-y-2">
-              {suppliers.map((supplier) => (
+              {suppliers
+                .filter((s) => 
+                  !searchSupplier || 
+                  s.supplierName.toLowerCase().includes(searchSupplier.toLowerCase())
+                )
+                .sort((a, b) => {
+                  if (sortBy === "amount") {
+                    return parseFloat(b.totalPending) - parseFloat(a.totalPending);
+                  }
+                  return a.supplierName.localeCompare(b.supplierName);
+                })
+                .map((supplier) => (
                 <div
                   key={supplier.supplierId}
                   onClick={() => setSelectedSupplierId(supplier.supplierId)}

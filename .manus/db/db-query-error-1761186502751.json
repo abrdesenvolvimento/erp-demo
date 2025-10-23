@@ -1,0 +1,8 @@
+{
+  "query": "\nSELECT \n  p.id, p.name, p.isComposite,\n  pc.childProductId, pc.quantity,\n  cp.name as componentName\nFROM products p\nLEFT JOIN productCompositions pc ON p.id = pc.productId\nLEFT JOIN products cp ON pc.childProductId = cp.id\nWHERE p.name LIKE '%Dose%' OR p.name LIKE '%Dober%'\nORDER BY p.id;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute \nSELECT \n  p.id, p.name, p.isComposite,\n  pc.childProductId, pc.quantity,\n  cp.name as componentName\nFROM products p\nLEFT JOIN productCompositions pc ON p.id = pc.productId\nLEFT JOIN products cp ON pc.childProductId = cp.id\nWHERE p.name LIKE '%Dose%' OR p.name LIKE '%Dober%'\nORDER BY p.id;\n",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 2: Unknown column 'pc.productid' in 'on clause'"
+  ]
+}

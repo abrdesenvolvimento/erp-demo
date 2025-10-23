@@ -1,0 +1,9 @@
+{
+  "query": "SELECT \n  pc.id,\n  pc.parentProductId,\n  p1.name as parent_name,\n  pc.childProductId,\n  p2.name as child_name,\n  pc.quantity\nFROM productCompositions pc\nLEFT JOIN products p1 ON pc.parentProductId = p1.id\nLEFT JOIN products p2 ON pc.childProductId = p2.id\nORDER BY pc.parentProductId DESC\nLIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  pc.id,\n  pc.parentProductId,\n  p1.name as parent_name,\n  pc.childProductId,\n  p2.name as child_name,\n  pc.quantity\nFROM productCompositions pc\nLEFT JOIN products p1 ON pc.parentProductId = p1.id\nLEFT JOIN products p2 ON pc.childProductId = p2.id\nORDER BY pc.parentProductId DESC\nLIMIT 10;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 916
+}

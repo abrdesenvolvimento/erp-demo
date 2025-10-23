@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
@@ -180,6 +180,16 @@ export default function Compras() {
       i === index ? { ...inst, [field]: value } : inst
     ));
   };
+  
+  // Auto-preencher parcela única com o total
+  useEffect(() => {
+    if (installments.length === 1 && items.length > 0) {
+      const total = calculateTotal();
+      if (installments[0].amount === 0 || installments[0].amount !== total) {
+        setInstallments([{ ...installments[0], amount: parseFloat(total.toFixed(2)) }]);
+      }
+    }
+  }, [items, freightCost, chargesCost]);
   
   const calculateTotal = () => {
     const itemsTotal = items.reduce((sum, item) => sum + (item.quantity * item.unitCost), 0);
@@ -644,14 +654,36 @@ export default function Compras() {
                       <div>
                         <div className="flex items-center justify-between mb-2">
                           <Label>Parcelas</Label>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={addInstallment}
-                          >
-                            <Plus className="h-3 w-3 mr-1" />
-                            Adicionar
-                          </Button>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                const total = calculateTotal();
+                                const numParcels = installments.length;
+                                const parcelValue = total / numParcels;
+                                
+                                setInstallments(installments.map((inst, i) => ({
+                                  ...inst,
+                                  amount: i === numParcels - 1
+                                    ? parseFloat((total - (parcelValue * (numParcels - 1))).toFixed(2))
+                                    : parseFloat(parcelValue.toFixed(2))
+                                })));
+                                
+                                toast.success(`Total dividido em ${numParcels} parcela${numParcels > 1 ? 's' : ''}`);
+                              }}
+                            >
+                              Dividir Igualmente
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={addInstallment}
+                            >
+                              <Plus className="h-3 w-3 mr-1" />
+                              Adicionar
+                            </Button>
+                          </div>
                         </div>
                         <div className="space-y-2">
                           {installments.map((inst, index) => (

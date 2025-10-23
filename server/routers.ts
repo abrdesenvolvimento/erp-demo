@@ -96,8 +96,11 @@ export const appRouter = router({
         })).optional(),
       }))
       .mutation(async ({ input }) => {
+        console.log('[products.create] Received input:', JSON.stringify(input, null, 2));
         const { prices, compositions, ...productData } = input;
+        console.log('[products.create] Compositions extracted:', compositions);
         const id = await db.createProduct(productData);
+        console.log('[products.create] Product created with ID:', id);
         
         if (!id || isNaN(id)) {
           throw new Error("Failed to create product: invalid ID returned");
@@ -117,8 +120,13 @@ export const appRouter = router({
         }
         
         // Salvar composições se for produto composto
+        console.log('[products.create] Checking compositions:', { hasCompositions: !!compositions, length: compositions?.length });
         if (compositions && compositions.length > 0) {
+          console.log('[products.create] Saving compositions for product', id, ':', compositions);
           await db.setProductCompositions(id, compositions);
+          console.log('[products.create] Compositions saved successfully');
+        } else {
+          console.log('[products.create] No compositions to save');
         }
         
         return { id, success: true };
@@ -141,10 +149,14 @@ export const appRouter = router({
           notes: z.string().optional(),
           active: z.boolean().optional(),
           prices: z.record(z.string(), z.string()).optional(),
+          compositions: z.array(z.object({
+            childProductId: z.number(),
+            quantity: z.number(),
+          })).optional(),
         }),
       }))
       .mutation(async ({ input, ctx }) => {
-        const { prices, ...updateData } = input.data;
+        const { prices, compositions, ...updateData } = input.data;
         
         // Validar permissão de admin para ativar/desativar produtos
         if (updateData.active !== undefined && ctx.user?.role !== "admin") {
@@ -164,6 +176,15 @@ export const appRouter = router({
               });
             }
           }
+        }
+        
+        // Atualizar composições se for produto composto
+        console.log('[products.update] Compositions received:', { hasCompositions: compositions !== undefined, length: compositions?.length, compositions });
+        if (compositions !== undefined) {
+          console.log('[products.update] Updating compositions for product', input.id);
+          await db.setProductCompositions(input.id, compositions);
+        } else {
+          console.log('[products.update] Compositions not provided, skipping update');
         }
         
         return { success: true };

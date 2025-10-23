@@ -529,13 +529,23 @@ export default function Vendas() {
                         </div>
                       )}
                     </div>
-                    <Input
-                      type="number"
-                      placeholder="Qtd"
-                      value={quantity}
-                      onChange={(e) => setQuantity(e.target.value)}
-                      className="w-24"
-                    />
+                    <div className="flex flex-col gap-1">
+                      <Input
+                        type="number"
+                        placeholder="Qtd"
+                        value={quantity}
+                        onChange={(e) => setQuantity(e.target.value)}
+                        className="w-24"
+                      />
+                      {selectedProduct && (
+                        <div className="text-xs text-muted-foreground whitespace-nowrap">
+                          Disp: {selectedProduct.currentStock}
+                          {parseInt(quantity) > selectedProduct.currentStock && (
+                            <span className="text-destructive ml-1">⚠️</span>
+                          )}
+                        </div>
+                      )}
+                    </div>
                     <Button onClick={handleAddProduct} size="icon">
                       <Plus className="h-4 w-4" />
                     </Button>

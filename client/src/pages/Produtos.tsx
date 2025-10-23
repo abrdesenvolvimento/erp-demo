@@ -35,6 +35,7 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/_core/hooks/useAuth";
+import { validateEAN } from "@/lib/validators";
 
 // Componente para gerenciar composições de produtos
 function CompositionsSection({ productId }: { productId: number }) {
@@ -90,7 +91,7 @@ function CompositionsSection({ productId }: { productId: number }) {
     
     setCompositions([...compositions, {
       childProductId: parseInt(newComposition.childProductId),
-      quantity: parseInt(newComposition.quantity),
+      quantity: parseFloat(newComposition.quantity),
       childProduct: product
     }]);
     setNewComposition({ childProductId: "", quantity: "" });
@@ -261,6 +262,8 @@ function TempCompositionsSection({
   const [newComposition, setNewComposition] = useState({ childProductId: "", quantity: "" });
   const [productSearch, setProductSearch] = useState("");
   const [showProductSuggestions, setShowProductSuggestions] = useState(false);
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [editingQuantity, setEditingQuantity] = useState("");
   
   const { data: products } = trpc.products.list.useQuery({ activeOnly: true });
   
@@ -286,7 +289,7 @@ function TempCompositionsSection({
     
     onCompositionsChange([...compositions, {
       childProductId: parseInt(newComposition.childProductId),
-      quantity: parseInt(newComposition.quantity),
+      quantity: parseFloat(newComposition.quantity),
       childProduct: product
     }]);
     setNewComposition({ childProductId: "", quantity: "" });
@@ -295,6 +298,31 @@ function TempCompositionsSection({
   
   const handleRemoveComposition = (index: number) => {
     onCompositionsChange(compositions.filter((_, i) => i !== index));
+  };
+  
+  const handleStartEdit = (index: number, currentQuantity: number) => {
+    setEditingIndex(index);
+    setEditingQuantity(currentQuantity.toString());
+  };
+  
+  const handleSaveEdit = (index: number) => {
+    const newQuantity = parseFloat(editingQuantity);
+    if (isNaN(newQuantity) || newQuantity <= 0) {
+      toast.error("Quantidade inválida");
+      return;
+    }
+    
+    const updatedCompositions = compositions.map((comp, i) => 
+      i === index ? { ...comp, quantity: newQuantity } : comp
+    );
+    onCompositionsChange(updatedCompositions);
+    setEditingIndex(null);
+    setEditingQuantity("");
+  };
+  
+  const handleCancelEdit = () => {
+    setEditingIndex(null);
+    setEditingQuantity("");
   };
   
   return (
@@ -505,67 +533,108 @@ export default function Produtos() {
   };
 
   const [formData, setFormData] = useState<ProductFormData>(initialFormData);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const resetForm = () => {
+    setIsSubmitting(false);
     setFormData(initialFormData);
     setEditingProduct(null);
   };
 
-  const handleEdit = (product: any) => {
+  const handleEdit = async (product: any) => {
     setEditingProduct(product);
     setIsDialogOpen(true);
     
-    // Carregar preços por canal
-    utils.client.products.getPrices.query({ productId: product.id })
-      .then((productPrices: any) => {
-        const pricesData: Record<string, string> = {};
-        productPrices.forEach((p: any) => {
-          pricesData[p.channelId.toString()] = p.price;
-        });
-        
-        setFormData({
-          name: product.name || "",
-          categoryId: product.categoryId?.toString() || "",
-          subcategoryId: product.subcategory || "",
-          ean: product.ean || "",
-          uom: (product.uom || "UN") as string,
-          minStock: product.minStock?.toString() || "0",
-          currentStock: product.currentStock?.toString() || "0",
-          avgCost: product.avgCost || "0.00",
-          isComposite: product.isComposite || false,
-          notes: product.notes || "",
-          prices: pricesData,
-          compositions: [],
-        });
-      })
-      .catch((error: any) => {
-        console.error("Erro ao carregar preços:", error);
-        // Preencher formulário mesmo sem preços
-        setFormData({
-          name: product.name || "",
-          categoryId: product.categoryId?.toString() || "",
-          subcategoryId: product.subcategory || "",
-          ean: product.ean || "",
-          uom: (product.uom || "UN") as string,
-          minStock: product.minStock?.toString() || "0",
-          currentStock: product.currentStock?.toString() || "0",
-          avgCost: product.avgCost || "0.00",
-          isComposite: product.isComposite || false,
-          notes: product.notes || "",
-          prices: {},
-          compositions: [],
-        });
+    try {
+      // Carregar preços por canal
+      const productPrices: any = await utils.client.products.getPrices.query({ productId: product.id });
+      const pricesData: Record<string, string> = {};
+      productPrices.forEach((p: any) => {
+        pricesData[p.channelId.toString()] = p.price;
       });
+      
+      // Carregar composições se for produto composto
+      let compositionsData: any[] = [];
+      if (product.isComposite) {
+        try {
+          console.log('[handleEdit] Carregando composições para produto', product.id);
+          compositionsData = await utils.client.products.getCompositions.query({ productId: product.id });
+          console.log('[handleEdit] Composições carregadas:', compositionsData);
+        } catch (error) {
+          console.error("Erro ao carregar composições:", error);
+        }
+      }
+      
+      const mappedCompositions = compositionsData.map((c: any) => ({
+        childProductId: c.childProductId,
+        quantity: parseFloat(c.quantity),
+        childProduct: c.childProduct
+      }));
+      console.log('[handleEdit] Composições mapeadas:', mappedCompositions);
+      
+      setFormData({
+        name: product.name || "",
+        categoryId: product.categoryId?.toString() || "",
+        subcategoryId: product.subcategory || "",
+        ean: product.ean || "",
+        uom: (product.uom || "UN") as string,
+        minStock: product.minStock?.toString() || "0",
+        currentStock: product.currentStock?.toString() || "0",
+        avgCost: product.avgCost || "0.00",
+        isComposite: product.isComposite || false,
+        notes: product.notes || "",
+        prices: pricesData,
+        compositions: mappedCompositions,
+      });
+    } catch (error: any) {
+      console.error("Erro ao carregar dados do produto:", error);
+      // Preencher formulário mesmo com erro
+      setFormData({
+        name: product.name || "",
+        categoryId: product.categoryId?.toString() || "",
+        subcategoryId: product.subcategory || "",
+        ean: product.ean || "",
+        uom: (product.uom || "UN") as string,
+        minStock: product.minStock?.toString() || "0",
+        currentStock: product.currentStock?.toString() || "0",
+        avgCost: product.avgCost || "0.00",
+        isComposite: product.isComposite || false,
+        notes: product.notes || "",
+        prices: {},
+        compositions: [],
+      });
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (isSubmitting) {
+      return; // Evita clique duplo
+    }
+    
     if (!formData.categoryId) {
       toast.error("Selecione uma categoria");
       return;
     }
+    
+    setIsSubmitting(true);
 
+    console.log('[DEBUG] formData.compositions ANTES do processamento:', formData.compositions);
+    
+    const compositionsFiltered = formData.compositions
+      .filter(c => c.childProductId && (c.quantity !== null && c.quantity !== undefined && c.quantity !== ''));
+    console.log('[DEBUG] Composições após primeiro filtro:', compositionsFiltered);
+    
+    const compositionsMapped = compositionsFiltered.map(c => ({
+      childProductId: typeof c.childProductId === 'number' ? c.childProductId : parseInt(c.childProductId as any),
+      quantity: typeof c.quantity === 'number' ? c.quantity : parseFloat(c.quantity as any)
+    }));
+    console.log('[DEBUG] Composições após mapeamento:', compositionsMapped);
+    
+    const compositionsFinal = compositionsMapped.filter(c => !isNaN(c.childProductId) && !isNaN(c.quantity) && c.quantity > 0);
+    console.log('[DEBUG] Composições FINAIS (após filtro de NaN):', compositionsFinal);
+    
     const productData = {
       name: formData.name,
       categoryId: parseInt(formData.categoryId),
@@ -578,7 +647,10 @@ export default function Produtos() {
       isComposite: formData.isComposite,
       notes: formData.notes || undefined,
       prices: formData.prices,
+      compositions: compositionsFinal,
     };
+    
+    console.log('[DEBUG] Enviando productData:', productData);
 
     if (editingProduct) {
       updateProduct.mutate({
@@ -691,9 +763,21 @@ export default function Produtos() {
                         onChange={(e) =>
                           setFormData({ ...formData, ean: e.target.value })
                         }
+                        onBlur={(e) => {
+                          const ean = e.target.value.trim();
+                          if (ean && !validateEAN(ean)) {
+                            toast.error("EAN inválido. Deve ter 8, 13 ou 14 dígitos válidos.");
+                          }
+                        }}
                         placeholder="7891234567890"
                         maxLength={14}
+                        className={formData.ean && !validateEAN(formData.ean) ? "border-destructive" : ""}
                       />
+                      {formData.ean && !validateEAN(formData.ean) && (
+                        <p className="text-xs text-destructive">
+                          EAN inválido. Verifique o código de barras.
+                        </p>
+                      )}
                     </div>
 
                     <div className="grid gap-2">
@@ -808,14 +892,14 @@ export default function Produtos() {
 
                   {/* Composições */}
                   {formData.isComposite && (
-                    editingProduct ? (
-                      <CompositionsSection productId={editingProduct.id} />
-                    ) : (
-                      <TempCompositionsSection 
-                        compositions={formData.compositions}
-                        onCompositionsChange={(compositions) => setFormData({ ...formData, compositions })}
-                      />
-                    )
+                    <TempCompositionsSection 
+                      compositions={formData.compositions}
+                      onCompositionsChange={(compositions) => {
+                        console.log('[DEBUG] onCompositionsChange called with:', compositions);
+                        setFormData({ ...formData, compositions });
+                        console.log('[DEBUG] formData.compositions updated to:', compositions);
+                      }}
+                    />
                   )}
 
                   {/* Observações */}
@@ -845,9 +929,9 @@ export default function Produtos() {
                   </Button>
                   <Button 
                     type="submit" 
-                    disabled={createProduct.isPending || updateProduct.isPending}
+                    disabled={isSubmitting || createProduct.isPending || updateProduct.isPending}
                   >
-                    {createProduct.isPending || updateProduct.isPending
+                    {isSubmitting || createProduct.isPending || updateProduct.isPending
                       ? "Salvando..."
                       : editingProduct
                       ? "Atualizar Produto"

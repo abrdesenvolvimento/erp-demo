@@ -226,7 +226,17 @@ export async function createProduct(data: InsertProduct) {
   if (!db) throw new Error("Database not available");
   
   const result = await db.insert(products).values(data);
-  return Number((result as any).insertId);
+  console.log('[createProduct] Insert result:', result);
+  
+  // Tentar diferentes formas de obter o ID
+  const insertId = (result as any).insertId || (result as any).lastInsertRowid || (result as any)[0]?.insertId;
+  
+  if (!insertId) {
+    console.error('[createProduct] Failed to get insertId from result:', result);
+    throw new Error("Failed to get product ID after insert");
+  }
+  
+  return Number(insertId);
 }
 
 export async function updateProduct(id: number, data: Partial<InsertProduct>) {
@@ -460,9 +470,13 @@ export async function setProductCompositions(parentProductId: number, compositio
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
+  console.log('[setProductCompositions] Called with:', { parentProductId, compositions });
+  
   // Remover composições antigas
+  console.log('[setProductCompositions] Deleting old compositions for product', parentProductId);
   await db.delete(productCompositions)
     .where(eq(productCompositions.parentProductId, parentProductId));
+  console.log('[setProductCompositions] Old compositions deleted');
   
   // Adicionar novas composições
   if (compositions.length > 0) {
@@ -471,8 +485,16 @@ export async function setProductCompositions(parentProductId: number, compositio
       childProductId: comp.childProductId,
       quantity: comp.quantity
     }));
-    await db.insert(productCompositions).values(values);
+    console.log('[setProductCompositions] Inserting new compositions:', values);
+    const result = await db.insert(productCompositions).values(values);
+    console.log('[setProductCompositions] Insert result:', result);
+  } else {
+    console.log('[setProductCompositions] No compositions to insert');
   }
+  
+  // Verificar se foram salvas
+  const [saved] = await db.execute(`SELECT * FROM productCompositions WHERE parentProductId = ${parentProductId}`);
+  console.log('[setProductCompositions] Compositions after save:', saved);
 }
 
 export async function getProductCompositionsWithDetails(parentProductId: number) {
@@ -481,6 +503,7 @@ export async function getProductCompositionsWithDetails(parentProductId: number)
   
   const compositions = await db.select({
     id: productCompositions.id,
+    childProductId: productCompositions.childProductId,
     quantity: productCompositions.quantity,
     childProduct: products
   })
@@ -488,6 +511,7 @@ export async function getProductCompositionsWithDetails(parentProductId: number)
   .leftJoin(products, eq(productCompositions.childProductId, products.id))
   .where(eq(productCompositions.parentProductId, parentProductId));
   
+  console.log('[getProductCompositionsWithDetails] Returning compositions for product', parentProductId, ':', compositions);
   return compositions;
 }
 

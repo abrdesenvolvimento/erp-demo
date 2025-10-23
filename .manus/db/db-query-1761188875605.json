@@ -1,0 +1,30 @@
+{
+  "query": "\n-- Listar produtos de teste\nSELECT id, name FROM products \nWHERE name LIKE '%Teste%' OR name LIKE '%Pack Teste%'\nORDER BY id;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute \n-- Listar produtos de teste\nSELECT id, name FROM products \nWHERE name LIKE '%Teste%' OR name LIKE '%Pack Teste%'\nORDER BY id;\n",
+  "rows": [
+    {
+      "id": "240003",
+      "name": "Teste Produto Composto"
+    },
+    {
+      "id": "240004",
+      "name": "Teste Composto 2"
+    },
+    {
+      "id": "240007",
+      "name": "Teste Composição Automático"
+    },
+    {
+      "id": "240008",
+      "name": "Teste Edição Composições"
+    },
+    {
+      "id": "240009",
+      "name": "Pack Teste Completo"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\n240003\tTeste Produto Composto\n240004\tTeste Composto 2\n240007\tTeste Composição Automático\n240008\tTeste Edição Composições\n240009\tPack Teste Completo\n",
+  "stderr": "",
+  "execution_time_ms": 729
+}

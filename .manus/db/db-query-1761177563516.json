@@ -1,0 +1,31 @@
+{
+  "query": "SELECT p.id, p.name, p.isComposite, p.currentStock, \n  (SELECT COUNT(*) FROM productCompositions WHERE parentProductId = p.id) as num_components\nFROM products p \nWHERE p.name LIKE '%Original 269ml%' OR p.name LIKE '%Pack%'\nORDER BY p.id DESC;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT p.id, p.name, p.isComposite, p.currentStock, \n  (SELECT COUNT(*) FROM productCompositions WHERE parentProductId = p.id) as num_components\nFROM products p \nWHERE p.name LIKE '%Original 269ml%' OR p.name LIKE '%Pack%'\nORDER BY p.id DESC;",
+  "rows": [
+    {
+      "id": "210003",
+      "name": "Original 269ml Pack 8 Unidades",
+      "isComposite": "1",
+      "currentStock": "10",
+      "num_components": "0"
+    },
+    {
+      "id": "210002",
+      "name": "Original 269ml Pack 8 Unidades",
+      "isComposite": "0",
+      "currentStock": "0",
+      "num_components": "0"
+    },
+    {
+      "id": "210001",
+      "name": "Original 269ml",
+      "isComposite": "0",
+      "currentStock": "16",
+      "num_components": "0"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tisComposite\tcurrentStock\tnum_components\n210003\tOriginal 269ml Pack 8 Unidades\t1\t10\t0\n210002\tOriginal 269ml Pack 8 Unidades\t0\t0\t0\n210001\tOriginal 269ml\t0\t16\t0\n",
+  "stderr": "",
+  "execution_time_ms": 204
+}

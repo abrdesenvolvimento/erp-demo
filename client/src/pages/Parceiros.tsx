@@ -35,6 +35,8 @@ import { trpc } from "@/lib/trpc";
 import { Users, Plus, Search, Pencil, Ban, Check } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { formatCPFCNPJ, validateCPFCNPJ } from "@/lib/validators";
+import { fetchCEP, formatCEP } from "@/lib/cep";
 
 export default function Parceiros() {
   const [search, setSearch] = useState("");
@@ -356,12 +358,26 @@ export default function Parceiros() {
                       <Label htmlFor="docNumber">CPF/CNPJ</Label>
                       <Input
                         id="docNumber"
-                        value={formData.docNumber}
-                        onChange={(e) =>
-                          setFormData({ ...formData, docNumber: e.target.value })
-                        }
-                        placeholder="000.000.000-00"
+                        value={formatCPFCNPJ(formData.docNumber)}
+                        onChange={(e) => {
+                          const cleaned = e.target.value.replace(/\D/g, '');
+                          setFormData({ ...formData, docNumber: cleaned });
+                        }}
+                        onBlur={(e) => {
+                          const doc = e.target.value.replace(/\D/g, '');
+                          if (doc && !validateCPFCNPJ(doc)) {
+                            toast.error("CPF/CNPJ inválido. Verifique os dígitos.");
+                          }
+                        }}
+                        placeholder="000.000.000-00 ou 00.000.000/0000-00"
+                        maxLength={18}
+                        className={formData.docNumber && !validateCPFCNPJ(formData.docNumber) ? "border-destructive" : ""}
                       />
+                      {formData.docNumber && !validateCPFCNPJ(formData.docNumber) && (
+                        <p className="text-xs text-destructive">
+                          CPF/CNPJ inválido
+                        </p>
+                      )}
                     </div>
 
                     <div className="grid gap-2">
@@ -468,12 +484,36 @@ export default function Parceiros() {
                           <Label htmlFor="zipCode">CEP</Label>
                           <Input
                             id="zipCode"
-                            value={formData.zipCode}
-                            onChange={(e) =>
-                              setFormData({ ...formData, zipCode: e.target.value })
-                            }
-                            placeholder="Ex: 06223-050"
+                            value={formatCEP(formData.zipCode)}
+                            onChange={(e) => {
+                              const cleaned = e.target.value.replace(/\D/g, '');
+                              setFormData({ ...formData, zipCode: cleaned });
+                            }}
+                            onBlur={async (e) => {
+                              const cep = e.target.value.replace(/\D/g, '');
+                              if (cep.length === 8) {
+                                const data = await fetchCEP(cep);
+                                if (data) {
+                                  setFormData({
+                                    ...formData,
+                                    zipCode: cep,
+                                    street: data.logradouro || formData.street,
+                                    neighborhood: data.bairro || formData.neighborhood,
+                                    city: data.localidade || formData.city,
+                                    state: data.uf || formData.state,
+                                  });
+                                  toast.success("Endere\u00e7o preenchido automaticamente!");
+                                } else {
+                                  toast.error("CEP n\u00e3o encontrado. Preencha manualmente.");
+                                }
+                              }
+                            }}
+                            placeholder="00000-000"
+                            maxLength={9}
                           />
+                          <p className="text-xs text-muted-foreground">
+                            Digite o CEP e pressione Tab para buscar automaticamente
+                          </p>
                         </div>
                       </div>
                     </div>

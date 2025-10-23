@@ -1,0 +1,24 @@
+{
+  "query": "SELECT \n  p.id,\n  p.name,\n  p.isComposite,\n  p.currentStock,\n  (SELECT COUNT(*) FROM productCompositions WHERE parentProductId = p.id) as num_compositions\nFROM products p\nWHERE p.name LIKE '%Coca%' OR p.name LIKE '%6 Unidades%'\nORDER BY p.id DESC;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  p.id,\n  p.name,\n  p.isComposite,\n  p.currentStock,\n  (SELECT COUNT(*) FROM productCompositions WHERE parentProductId = p.id) as num_compositions\nFROM products p\nWHERE p.name LIKE '%Coca%' OR p.name LIKE '%6 Unidades%'\nORDER BY p.id DESC;",
+  "rows": [
+    {
+      "id": "240002",
+      "name": "Coca-Cola 2L 6 Unidades",
+      "isComposite": "1",
+      "currentStock": "20",
+      "num_compositions": "0"
+    },
+    {
+      "id": "240001",
+      "name": "Coca Cola 2l",
+      "isComposite": "0",
+      "currentStock": "100",
+      "num_compositions": "0"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tisComposite\tcurrentStock\tnum_compositions\n240002\tCoca-Cola 2L 6 Unidades\t1\t20\t0\n240001\tCoca Cola 2l\t0\t100\t0\n",
+  "stderr": "",
+  "execution_time_ms": 162
+}

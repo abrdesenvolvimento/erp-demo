@@ -1,0 +1,19 @@
+{
+  "query": "SELECT pc.*, p1.name as parentName, p2.name as childName FROM productCompositions pc LEFT JOIN products p1 ON pc.parentProductId = p1.id LEFT JOIN products p2 ON pc.childProductId = p2.id",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT pc.*, p1.name as parentName, p2.name as childName FROM productCompositions pc LEFT JOIN products p1 ON pc.parentProductId = p1.id LEFT JOIN products p2 ON pc.childProductId = p2.id",
+  "rows": [
+    {
+      "id": "90001",
+      "parentProductId": "240004",
+      "childProductId": "240001",
+      "quantity": "3.000",
+      "createdAt": "2025-10-23 02:16:08",
+      "parentName": "Teste Composto 2",
+      "childName": "Coca Cola 2l"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tparentProductId\tchildProductId\tquantity\tcreatedAt\tparentName\tchildName\n90001\t240004\t240001\t3.000\t2025-10-23 02:16:08\tTeste Composto 2\tCoca Cola 2l\n",
+  "stderr": "",
+  "execution_time_ms": 123
+}

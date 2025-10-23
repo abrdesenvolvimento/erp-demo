@@ -15,6 +15,8 @@ import DashboardLayout from "../components/DashboardLayout";
 export default function ContasReceber() {
   const [selectedCustomerId, setSelectedCustomerId] = useState<number | null>(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [searchCustomer, setSearchCustomer] = useState("");
+  const [sortBy, setSortBy] = useState<"name" | "amount">("amount");
   const [paymentForm, setPaymentForm] = useState({
     paidDate: new Date().toISOString().split('T')[0],
     paidAmount: "",
@@ -358,10 +360,31 @@ export default function ContasReceber() {
       {/* Lista de Clientes */}
       <Card>
         <CardHeader>
-          <CardTitle>Clientes com Saldo Devedor</CardTitle>
-          <CardDescription>
-            Clique em um cliente para ver detalhes e registrar recebimentos
-          </CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Clientes com Saldo Devedor</CardTitle>
+              <CardDescription>
+                Clique em um cliente para ver detalhes e registrar recebimentos
+              </CardDescription>
+            </div>
+            <div className="flex gap-2">
+              <Input
+                placeholder="Buscar cliente..."
+                value={searchCustomer}
+                onChange={(e) => setSearchCustomer(e.target.value)}
+                className="w-64"
+              />
+              <Select value={sortBy} onValueChange={(v: any) => setSortBy(v)}>
+                <SelectTrigger className="w-48">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="amount">Maior débito</SelectItem>
+                  <SelectItem value="name">Nome A-Z</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           {!customers || customers.length === 0 ? (
@@ -370,7 +393,18 @@ export default function ContasReceber() {
             </p>
           ) : (
             <div className="space-y-2">
-              {customers.map((customer) => (
+              {customers
+                .filter((c) => 
+                  !searchCustomer || 
+                  c.customerName.toLowerCase().includes(searchCustomer.toLowerCase())
+                )
+                .sort((a, b) => {
+                  if (sortBy === "amount") {
+                    return parseFloat(b.totalPending) - parseFloat(a.totalPending);
+                  }
+                  return a.customerName.localeCompare(b.customerName);
+                })
+                .map((customer) => (
                 <div
                   key={customer.customerId}
                   onClick={() => handleOpenCustomerDetail(customer.customerId)}
