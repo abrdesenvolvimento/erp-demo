@@ -1002,9 +1002,42 @@ export async function getPaymentHistory(filters: {
   return result;
 }
 
+// Pagar parcela de compra
+export async function payPurchaseInstallment(data: {
+  installmentId: number;
+  paidDate: Date;
+  paidAmount: string;
+  paymentMethod: string;
+  notes?: string;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  // Buscar a parcela
+  const installment = await db.select()
+    .from(purchaseInstallments)
+    .where(eq(purchaseInstallments.id, data.installmentId))
+    .limit(1);
+  
+  if (!installment[0]) throw new Error("Parcela não encontrada");
+  
+  const installmentAmount = parseFloat(installment[0].amount);
+  const paidAmount = parseFloat(data.paidAmount);
+  
+  // Atualizar parcela
+  await db.update(purchaseInstallments)
+    .set({
+      paidDate: data.paidDate,
+      status: paidAmount >= installmentAmount ? "PAID" : "PENDING"
+    })
+    .where(eq(purchaseInstallments.id, data.installmentId));
+  
+  return { success: true };
+}
+
+// Pagar parcela de despesa
 export async function payExpenseInstallment(data: {
   installmentId: number;
-  expenseId: number;
   paidDate: Date;
   paidAmount: string;
   paymentMethod: string;

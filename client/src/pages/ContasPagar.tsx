@@ -139,7 +139,7 @@ export default function ContasPagar() {
     
     payInstallment.mutate({
       installmentId: selectedInstallment.id,
-      expenseId: selectedInstallment.expenseId,
+      type: selectedInstallment.type || 'expense',
       paidDate: new Date(paymentForm.paidDate),
       paidAmount: totalAmount.toFixed(2),
       paymentMethod: paymentForm.paymentMethod,

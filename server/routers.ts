@@ -799,18 +799,22 @@ export const appRouter = router({
         return await db.registerSupplierPayment(input);
       }),
     
-    // Pagar parcela individual
+    // Pagar parcela individual (compra ou despesa)
     payInstallment: protectedProcedure
       .input(z.object({
         installmentId: z.number(),
-        expenseId: z.number(),
+        type: z.enum(['purchase', 'expense']),
         paidDate: z.date(),
         paidAmount: z.string(),
         paymentMethod: z.string(),
         notes: z.string().optional(),
       }))
       .mutation(async ({ input }) => {
-        return await db.payExpenseInstallment(input);
+        if (input.type === 'purchase') {
+          return await db.payPurchaseInstallment(input);
+        } else {
+          return await db.payExpenseInstallment(input);
+        }
       }),
     
     // Histórico de pagamentos
