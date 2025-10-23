@@ -1,0 +1,82 @@
+{
+  "query": "SELECT id, saleType, finalAmount, DATE_FORMAT(createdAt, '%Y-%m-%d %H:%i') as created FROM sales ORDER BY id DESC LIMIT 15",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT id, saleType, finalAmount, DATE_FORMAT(createdAt, '%Y-%m-%d %H:%i') as created FROM sales ORDER BY id DESC LIMIT 15",
+  "rows": [
+    {
+      "id": "570002",
+      "saleType": "BALCAO",
+      "finalAmount": "40.00",
+      "created": "2025-10-23 13:32"
+    },
+    {
+      "id": "570001",
+      "saleType": "BALCAO",
+      "finalAmount": "320.00",
+      "created": "2025-10-23 13:31"
+    },
+    {
+      "id": "540003",
+      "saleType": "BALCAO",
+      "finalAmount": "32.00",
+      "created": "2025-10-23 13:23"
+    },
+    {
+      "id": "540002",
+      "saleType": "A_PRAZO",
+      "finalAmount": "50.00",
+      "created": "2025-10-23 13:21"
+    },
+    {
+      "id": "540001",
+      "saleType": "BALCAO",
+      "finalAmount": "50.00",
+      "created": "2025-10-23 13:20"
+    },
+    {
+      "id": "510005",
+      "saleType": "DELIVERY",
+      "finalAmount": "200.00",
+      "created": "2025-10-23 02:45"
+    },
+    {
+      "id": "510004",
+      "saleType": "BALCAO",
+      "finalAmount": "50.00",
+      "created": "2025-10-23 02:20"
+    },
+    {
+      "id": "510003",
+      "saleType": "BALCAO",
+      "finalAmount": "110.00",
+      "created": "2025-10-23 02:16"
+    },
+    {
+      "id": "510002",
+      "saleType": "BALCAO",
+      "finalAmount": "65.00",
+      "created": "2025-10-23 02:03"
+    },
+    {
+      "id": "510001",
+      "saleType": "BALCAO",
+      "finalAmount": "32.00",
+      "created": "2025-10-23 01:50"
+    },
+    {
+      "id": "480002",
+      "saleType": "A_PRAZO",
+      "finalAmount": "32.00",
+      "created": "2025-10-22 23:55"
+    },
+    {
+      "id": "480001",
+      "saleType": "A_PRAZO",
+      "finalAmount": "32.00",
+      "created": "2025-10-22 23:55"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tsaleType\tfinalAmount\tcreated\n570002\tBALCAO\t40.00\t2025-10-23 13:32\n570001\tBALCAO\t320.00\t2025-10-23 13:31\n540003\tBALCAO\t32.00\t2025-10-23 13:23\n540002\tA_PRAZO\t50.00\t2025-10-23 13:21\n540001\tBALCAO\t50.00\t2025-10-23 13:20\n510005\tDELIVERY\t200.00\t2025-10-23 02:45\n510004\tBALCAO\t50.00\t2025-10-23 02:20\n510003\tBALCAO\t110.00\t2025-10-23 02:16\n510002\tBALCAO\t65.00\t2025-10-23 02:03\n510001\tBALCAO\t32.00\t2025-10-23 01:50\n480002\tA_PRAZO\t32.00\t2025-10-22 23:55\n480001\tA_PRAZO\t32.00\t2025-10-22 23:55\n",
+  "stderr": "",
+  "execution_time_ms": 133
+}
