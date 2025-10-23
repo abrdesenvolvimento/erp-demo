@@ -111,6 +111,8 @@ export default function Parceiros() {
     email: "",
     // Endereço separado
     street: "",
+    streetNumber: "",
+    complement: "",
     neighborhood: "",
     city: "",
     state: "",
@@ -129,6 +131,8 @@ export default function Parceiros() {
       phone: "",
       email: "",
       street: "",
+      streetNumber: "",
+      complement: "",
       neighborhood: "",
       city: "",
       state: "",
@@ -150,6 +154,8 @@ export default function Parceiros() {
       phone: partner.phone || "",
       email: partner.email || "",
       street: partner.street || "",
+      streetNumber: partner.streetNumber || "",
+      complement: partner.complement || "",
       neighborhood: partner.neighborhood || "",
       city: partner.city || "",
       state: partner.state || "",
@@ -428,21 +434,91 @@ export default function Parceiros() {
                     </div>
                   </div>
 
-                  {/* Endereço Separado */}
+                  {/* Endereço */}
                   <div className="space-y-4">
                     <h3 className="text-sm font-medium">Endereço</h3>
                     <div className="grid gap-4">
+                      {/* CEP primeiro */}
                       <div className="grid gap-2">
-                        <Label htmlFor="street">Logradouro (Rua + Número)</Label>
+                        <Label htmlFor="zipCode">CEP</Label>
                         <Input
-                          id="street"
-                          value={formData.street}
+                          id="zipCode"
+                          value={formatCEP(formData.zipCode)}
+                          onChange={(e) => {
+                            const cleaned = e.target.value.replace(/\D/g, '');
+                            setFormData({ ...formData, zipCode: cleaned });
+                          }}
+                          onBlur={async (e) => {
+                            const cep = e.target.value.replace(/\D/g, '');
+                            if (cep.length === 8) {
+                              const data = await fetchCEP(cep);
+                              if (data) {
+                                setFormData({
+                                  ...formData,
+                                  zipCode: cep,
+                                  street: data.logradouro || formData.street,
+                                  neighborhood: data.bairro || formData.neighborhood,
+                                  city: data.localidade || formData.city,
+                                  state: data.uf || formData.state,
+                                });
+                                toast.success("Endereço preenchido automaticamente!");
+                                // Foca no campo número após preencher
+                                setTimeout(() => {
+                                  document.getElementById('streetNumber')?.focus();
+                                }, 100);
+                              } else {
+                                toast.error("CEP não encontrado. Preencha manualmente.");
+                              }
+                            }
+                          }}
+                          placeholder="00000-000"
+                          maxLength={9}
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Digite o CEP e pressione Tab - os campos abaixo serão preenchidos automaticamente
+                        </p>
+                      </div>
+
+                      {/* Logradouro e Número */}
+                      <div className="grid grid-cols-3 gap-4">
+                        <div className="grid gap-2 col-span-2">
+                          <Label htmlFor="street">Logradouro</Label>
+                          <Input
+                            id="street"
+                            value={formData.street}
+                            onChange={(e) =>
+                              setFormData({ ...formData, street: e.target.value })
+                            }
+                            placeholder="Ex: Rua Américo de Campo"
+                          />
+                        </div>
+                        <div className="grid gap-2">
+                          <Label htmlFor="streetNumber">Número</Label>
+                          <Input
+                            id="streetNumber"
+                            value={formData.streetNumber || ""}
+                            onChange={(e) =>
+                              setFormData({ ...formData, streetNumber: e.target.value })
+                            }
+                            placeholder="123"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Complemento */}
+                      <div className="grid gap-2">
+                        <Label htmlFor="complement">Complemento (opcional)</Label>
+                        <Input
+                          id="complement"
+                          value={formData.complement || ""}
                           onChange={(e) =>
-                            setFormData({ ...formData, street: e.target.value })
+                            setFormData({ ...formData, complement: e.target.value })
                           }
-                          placeholder="Ex: Rua Américo de Campo, 174"
+                          placeholder="Ex: Apto 5, Sala 201, Bloco B"
                         />
                       </div>
+
+                      {/* Bairro e Cidade */}
                       <div className="grid grid-cols-2 gap-4">
                         <div className="grid gap-2">
                           <Label htmlFor="neighborhood">Bairro</Label>
@@ -452,7 +528,7 @@ export default function Parceiros() {
                             onChange={(e) =>
                               setFormData({ ...formData, neighborhood: e.target.value })
                             }
-                            placeholder="Ex: Rochdale"
+                            placeholder="Ex: Centro"
                           />
                         </div>
                         <div className="grid gap-2">
@@ -463,58 +539,24 @@ export default function Parceiros() {
                             onChange={(e) =>
                               setFormData({ ...formData, city: e.target.value })
                             }
-                            placeholder="Ex: Osasco"
+                            placeholder="Ex: São Paulo"
                           />
                         </div>
                       </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="grid gap-2">
-                          <Label htmlFor="state">Estado (UF)</Label>
-                          <Input
-                            id="state"
-                            value={formData.state}
-                            onChange={(e) =>
-                              setFormData({ ...formData, state: e.target.value.toUpperCase() })
-                            }
-                            placeholder="Ex: SP"
-                            maxLength={2}
-                          />
-                        </div>
-                        <div className="grid gap-2">
-                          <Label htmlFor="zipCode">CEP</Label>
-                          <Input
-                            id="zipCode"
-                            value={formatCEP(formData.zipCode)}
-                            onChange={(e) => {
-                              const cleaned = e.target.value.replace(/\D/g, '');
-                              setFormData({ ...formData, zipCode: cleaned });
-                            }}
-                            onBlur={async (e) => {
-                              const cep = e.target.value.replace(/\D/g, '');
-                              if (cep.length === 8) {
-                                const data = await fetchCEP(cep);
-                                if (data) {
-                                  setFormData({
-                                    ...formData,
-                                    zipCode: cep,
-                                    street: data.logradouro || formData.street,
-                                    neighborhood: data.bairro || formData.neighborhood,
-                                    city: data.localidade || formData.city,
-                                    state: data.uf || formData.state,
-                                  });
-                                  toast.success("Endere\u00e7o preenchido automaticamente!");
-                                } else {
-                                  toast.error("CEP n\u00e3o encontrado. Preencha manualmente.");
-                                }
-                              }
-                            }}
-                            placeholder="00000-000"
-                            maxLength={9}
-                          />
-                          <p className="text-xs text-muted-foreground">
-                            Digite o CEP e pressione Tab para buscar automaticamente
-                          </p>
-                        </div>
+
+                      {/* Estado */}
+                      <div className="grid gap-2">
+                        <Label htmlFor="state">Estado (UF)</Label>
+                        <Input
+                          id="state"
+                          value={formData.state}
+                          onChange={(e) =>
+                            setFormData({ ...formData, state: e.target.value.toUpperCase() })
+                          }
+                          placeholder="Ex: SP"
+                          maxLength={2}
+                          className="w-32"
+                        />
                       </div>
                     </div>
                   </div>

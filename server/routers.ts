@@ -255,6 +255,8 @@ export const appRouter = router({
         email: z.string().optional(),
         // Endereço separado
         street: z.string().optional(),
+        streetNumber: z.string().optional(),
+        complement: z.string().optional(),
         neighborhood: z.string().optional(),
         city: z.string().optional(),
         state: z.string().optional(),
@@ -277,8 +279,9 @@ export const appRouter = router({
         partnerType: z.enum(["CUSTOMER", "SUPPLIER", "BOTH"]),
         phone: z.string().optional(),
         email: z.string().optional(),
-        // Endereço separado
         street: z.string().optional(),
+        streetNumber: z.string().optional(),
+        complement: z.string().optional(),
         neighborhood: z.string().optional(),
         city: z.string().optional(),
         state: z.string().optional(),
