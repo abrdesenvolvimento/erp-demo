@@ -223,7 +223,7 @@ export default function ContasPagar() {
               </TableHeader>
               <TableBody>
                 {(supplierDetail.expenses || []).map((expense) => (
-                  <TableRow key={expense.id}>
+                  <TableRow key={`${expense.type}-${expense.id}`}>
                     <TableCell className="font-medium">#{expense.id}</TableCell>
                     <TableCell>{formatDate(expense.expenseDate!)}</TableCell>
                     <TableCell className="font-medium">
