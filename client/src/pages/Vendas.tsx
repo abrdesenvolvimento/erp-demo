@@ -30,6 +30,7 @@ import { ShoppingCart, Plus, Search, X, Store, Truck, Calendar } from "lucide-re
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
+import { formatSaleType, formatPaymentMethod } from "@/lib/formatters";
 
 type SaleType = "BALCAO" | "DELIVERY" | "A_PRAZO";
 
@@ -277,15 +278,16 @@ export default function Vendas() {
   };
 
   const getSaleTypeBadge = (type: string) => {
+    const formatted = formatSaleType(type);
     switch (type) {
       case "BALCAO":
-        return <Badge className="bg-blue-500">Balcão</Badge>;
+        return <Badge className="bg-blue-500">{formatted}</Badge>;
       case "DELIVERY":
-        return <Badge className="bg-purple-500">Delivery</Badge>;
+        return <Badge className="bg-purple-500">{formatted}</Badge>;
       case "A_PRAZO":
-        return <Badge className="bg-orange-500">A Prazo</Badge>;
+        return <Badge className="bg-orange-500">{formatted}</Badge>;
       default:
-        return <Badge>{type}</Badge>;
+        return <Badge>{formatted}</Badge>;
     }
   };
 
@@ -368,8 +370,8 @@ export default function Vendas() {
                   <CardContent className="flex flex-col items-center justify-center p-6 space-y-4">
                     <Store className="h-16 w-16 text-blue-500" />
                     <div className="text-center">
-                      <h3 className="font-bold text-lg">BALCÃO</h3>
-                      <p className="text-sm text-muted-foreground">Venda direta no estabelecimento</p>
+                      <h3 className="font-bold text-lg">Balcão</h3>
+                      <p className="text-sm text-muted-foreground">Venda presencial no balcão</p>
                     </div>
                   </CardContent>
                 </Card>
@@ -394,8 +396,8 @@ export default function Vendas() {
                   <CardContent className="flex flex-col items-center justify-center p-6 space-y-4">
                     <Calendar className="h-16 w-16 text-orange-500" />
                     <div className="text-center">
-                      <h3 className="font-bold text-lg">A PRAZO</h3>
-                      <p className="text-sm text-muted-foreground">Venda com pagamento futuro</p>
+                      <h3 className="font-bold text-lg">A Prazo</h3>
+                      <p className="text-sm text-muted-foreground">Venda parcelada para cliente</p>
                     </div>
                   </CardContent>
                 </Card>
@@ -403,7 +405,9 @@ export default function Vendas() {
             )}
 
             {step === "form" && (
-              <div className="space-y-6 py-4">
+              <div className="grid grid-cols-3 gap-6 py-4">
+                {/* Coluna Principal - Formulário */}
+                <div className="col-span-2 space-y-6">
                 {/* Canal de Venda - Apenas para DELIVERY */}
                 {saleType === "DELIVERY" && (
                   <div className="space-y-2">
@@ -586,48 +590,6 @@ export default function Vendas() {
                 </div>
 
                 {/* Resumo */}
-                <div className="bg-gray-50 p-4 rounded-lg space-y-3">
-                  <h3 className="font-semibold">Resumo</h3>
-                  
-                  <div className="flex justify-between">
-                    <span>Subtotal:</span>
-                    <span className="font-semibold">{formatCurrency(subtotal)}</span>
-                  </div>
-
-                  <div className="flex justify-between items-center">
-                    <span>Desconto:</span>
-                    <div className="flex items-center gap-2">
-                      <Input
-                        type="number"
-                        placeholder="0.00"
-                        value={discountAmount}
-                        onChange={(e) => setDiscountAmount(e.target.value)}
-                        className="w-32 text-right"
-                      />
-                      <span className="text-red-600 font-semibold">-{formatCurrency(discount)}</span>
-                    </div>
-                  </div>
-
-                  <div className="flex justify-between items-center">
-                    <span>Acréscimo:</span>
-                    <div className="flex items-center gap-2">
-                      <Input
-                        type="number"
-                        placeholder="0.00"
-                        value={surchargeAmount}
-                        onChange={(e) => setSurchargeAmount(e.target.value)}
-                        className="w-32 text-right"
-                      />
-                      <span className="text-green-600 font-semibold">+{formatCurrency(surcharge)}</span>
-                    </div>
-                  </div>
-
-                  <div className="flex justify-between text-lg font-bold pt-2 border-t">
-                    <span>TOTAL:</span>
-                    <span>{formatCurrency(total)}</span>
-                  </div>
-                </div>
-
                 {/* Forma de Pagamento - Não aparece para A_PRAZO */}
                 {saleType !== "A_PRAZO" && (
                   <div className="space-y-2">
@@ -659,14 +621,62 @@ export default function Vendas() {
                   />
                 </div>
 
-                {/* Botões */}
-                <div className="flex justify-end gap-2 pt-4">
-                  <Button variant="outline" onClick={handleCloseModal}>
-                    Cancelar
-                  </Button>
-                  <Button onClick={handleFinalizeSale} disabled={createSale.isPending}>
-                    {createSale.isPending ? "Salvando..." : "Finalizar Venda"}
-                  </Button>
+                </div>
+                
+                {/* Coluna Lateral - Resumo Fixo */}
+                <div className="col-span-1">
+                  <Card className="sticky top-4">
+                    <CardHeader>
+                      <h3 className="font-semibold text-lg">Resumo da Venda</h3>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="space-y-3">
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Subtotal:</span>
+                          <span className="font-semibold">{formatCurrency(subtotal)}</span>
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label className="text-sm">Desconto:</Label>
+                          <Input
+                            type="number"
+                            placeholder="0.00"
+                            value={discountAmount}
+                            onChange={(e) => setDiscountAmount(e.target.value)}
+                            className="text-right"
+                          />
+                          <span className="text-red-600 font-semibold text-sm">-{formatCurrency(discount)}</span>
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label className="text-sm">Acréscimo:</Label>
+                          <Input
+                            type="number"
+                            placeholder="0.00"
+                            value={surchargeAmount}
+                            onChange={(e) => setSurchargeAmount(e.target.value)}
+                            className="text-right"
+                          />
+                          <span className="text-green-600 font-semibold text-sm">+{formatCurrency(surcharge)}</span>
+                        </div>
+
+                        <div className="flex justify-between text-xl font-bold pt-3 border-t-2">
+                          <span>TOTAL:</span>
+                          <span className="text-blue-600">{formatCurrency(total)}</span>
+                        </div>
+                      </div>
+                      
+                      {/* Botões */}
+                      <div className="flex flex-col gap-2 pt-4 border-t">
+                        <Button onClick={handleFinalizeSale} disabled={createSale.isPending} className="w-full">
+                          {createSale.isPending ? "Salvando..." : "Finalizar Venda"}
+                        </Button>
+                        <Button variant="outline" onClick={handleCloseModal} className="w-full">
+                          Cancelar
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
                 </div>
               </div>
             )}

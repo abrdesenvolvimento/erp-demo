@@ -13,6 +13,22 @@ import { toast } from "sonner";
 import { DollarSign, User, ChevronRight, ArrowLeft } from "lucide-react";
 import DashboardLayout from "../components/DashboardLayout";
 
+// Função para determinar cor baseado no vencimento
+function getDueDateColor(dueDate: Date | string, status: string): string {
+  if (status === 'PAGO' || status === 'PAID') return 'text-green-600';
+  
+  const due = new Date(dueDate);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  due.setHours(0, 0, 0, 0);
+  
+  const diffDays = Math.ceil((due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+  
+  if (diffDays < 0) return 'text-red-600 font-bold'; // Vencido
+  if (diffDays <= 7) return 'text-orange-600 font-semibold'; // Vence em 7 dias
+  return 'text-gray-900'; // Normal
+}
+
 export default function ContasPagar() {
   const [selectedSupplierId, setSelectedSupplierId] = useState<number | null>(null);
   const [selectedInstallment, setSelectedInstallment] = useState<any | null>(null);
@@ -227,7 +243,11 @@ export default function ContasPagar() {
                     <TableCell className="font-medium">#{expense.id}</TableCell>
                     <TableCell>{formatDate(expense.expenseDate!)}</TableCell>
                     <TableCell className="font-medium">
-                      {expense.dueDate ? formatDate(expense.dueDate) : '-'}
+                      {expense.dueDate ? (
+                        <span className={getDueDateColor(expense.dueDate, expense.status)}>
+                          {formatDate(expense.dueDate)}
+                        </span>
+                      ) : '-'}
                     </TableCell>
                     <TableCell>{expense.description || '-'}</TableCell>
                     <TableCell>
