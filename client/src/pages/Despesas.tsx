@@ -402,14 +402,45 @@ export default function Despesas() {
                 <div className="bg-card border rounded-lg p-6">
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-lg font-semibold">Datas de Vencimento *</h3>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={addDueDate}
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      Adicionar Data
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          if (!amount || parseFloat(amount) <= 0) {
+                            toast.error("Preencha o valor total da despesa primeiro");
+                            return;
+                          }
+                          if (dueDates.length === 0) {
+                            toast.error("Adicione pelo menos uma parcela");
+                            return;
+                          }
+                          const total = parseFloat(amount);
+                          const count = dueDates.length;
+                          const perInstallment = total / count;
+                          const remainder = total - (Math.floor(perInstallment * 100) / 100) * count;
+                          
+                          const newDueDates = dueDates.map((dd, i) => ({
+                            ...dd,
+                            amount: i === count - 1 
+                              ? (perInstallment + remainder).toFixed(2)
+                              : perInstallment.toFixed(2)
+                          }));
+                          setDueDates(newDueDates);
+                          toast.success(`Valor dividido em ${count} parcelas iguais`);
+                        }}
+                      >
+                        Dividir Igualmente
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={addDueDate}
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Adicionar Data
+                      </Button>
+                    </div>
                   </div>
                   <div className="space-y-3">
                     {dueDates.map((dueDate, index) => (

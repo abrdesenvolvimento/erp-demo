@@ -659,41 +659,9 @@ export async function confirmPurchaseOrder(purchaseOrderId: number) {
   // Atualizar status da ordem de compra
   await updatePurchaseOrder(purchaseOrderId, { status: "CONFIRMED" });
   
-  // Gerar despesa (expense) e parcelas baseadas nas parcelas da compra (RN-COMP-03)
-  const po = await getPurchaseOrderById(purchaseOrderId);
-  const installments = await getPurchaseInstallments(purchaseOrderId);
-  
-  if (po && po.purchaseOrder && installments.length > 0) {
-    // Criar uma despesa para a compra
-    const expenseId = await createExpense({
-      supplierId: po.purchaseOrder.supplierId,
-      purchaseOrderId: purchaseOrderId,
-      docType: po.purchaseOrder.docType || 'NOTA_FISCAL',
-      docNumber: po.purchaseOrder.docNumber || null,
-      categoryId: 1, // Categoria padrão (pode ser ajustado)
-      description: `Compra #${purchaseOrderId} - ${po.supplier?.name || 'Fornecedor'}`,
-      amount: po.purchaseOrder.totalAmount.toString(),
-      paymentMethod: po.purchaseOrder.paymentMethod,
-      notes: `Gerado automaticamente da compra #${purchaseOrderId}`,
-      status: 'ATIVA',
-      createdBy: 'system'
-    });
-    
-    // Criar parcelas da despesa
-    for (const installment of installments) {
-      await createExpenseInstallment({
-        expenseId: expenseId,
-        installmentNumber: installment.installmentNumber,
-        amount: installment.amount.toString(),
-        dueDate: installment.dueDate,
-        paymentDate: null,
-        paymentAmount: null,
-        paymentMethod: null,
-        status: 'PENDENTE',
-        notes: null
-      });
-    }
-  }
+  // NOTA: Compras de produtos NÃO devem gerar despesas operacionais.
+  // Elas já são registradas em Contas a Pagar (purchaseInstallments).
+  // Despesas operacionais são para custos fixos (aluguel, energia, etc).
 }
 
 export async function searchProducts(searchTerm: string) {
@@ -1640,19 +1608,61 @@ export async function getSuppliersWithPendingPayables() {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
-  // Buscar todas as despesas ativas agrupadas por fornecedor
-  const results = await db.select({
-    supplierId: expenses.supplierId,
-    supplierName: partners.name,
-    totalPending: sql<string>`SUM(CAST(${expenses.amount} AS DECIMAL(10,2)))`,
-    expensesCount: sql<number>`COUNT(DISTINCT ${expenses.id})`
+  // Buscar pendências de COMPRAS (purchaseInstallments)
+  const purchasePendings = await db.select({
+    supplierId: purchaseOrders.supplierId,
+    totalPending: sql<string>`SUM(CAST(${purchaseInstallments.amount} AS DECIMAL(10,2)))`
   })
-  .from(expenses)
-  .leftJoin(partners, eq(expenses.supplierId, partners.id))
-  .where(eq(expenses.status, 'ATIVA'))
-  .groupBy(expenses.supplierId, partners.name)
-  .having(sql`SUM(CAST(${expenses.amount} AS DECIMAL(10,2))) > 0`)
-  .orderBy(desc(sql`SUM(CAST(${expenses.amount} AS DECIMAL(10,2)))`));
+  .from(purchaseInstallments)
+  .leftJoin(purchaseOrders, eq(purchaseInstallments.purchaseOrderId, purchaseOrders.id))
+  .where(eq(purchaseInstallments.status, 'PENDING'))
+  .groupBy(purchaseOrders.supplierId);
+  
+  // Buscar pendências de DESPESAS (expenseInstallments)
+  const expensePendings = await db.select({
+    supplierId: expenses.supplierId,
+    totalPending: sql<string>`SUM(CAST(${expenseInstallments.amount} AS DECIMAL(10,2)))`
+  })
+  .from(expenseInstallments)
+  .leftJoin(expenses, eq(expenseInstallments.expenseId, expenses.id))
+  .where(eq(expenseInstallments.status, 'PENDENTE'))
+  .groupBy(expenses.supplierId);
+  
+  // Consolidar por fornecedor
+  const supplierMap = new Map<number, { totalPending: number; count: number }>();
+  
+  for (const p of purchasePendings) {
+    if (!p.supplierId) continue;
+    const current = supplierMap.get(p.supplierId) || { totalPending: 0, count: 0 };
+    current.totalPending += parseFloat(p.totalPending || "0");
+    current.count++;
+    supplierMap.set(p.supplierId, current);
+  }
+  
+  for (const e of expensePendings) {
+    if (!e.supplierId) continue;
+    const current = supplierMap.get(e.supplierId) || { totalPending: 0, count: 0 };
+    current.totalPending += parseFloat(e.totalPending || "0");
+    current.count++;
+    supplierMap.set(e.supplierId, current);
+  }
+  
+  // Buscar nomes dos fornecedores e montar resultado
+  const results = [];
+  for (const [supplierId, data] of supplierMap.entries()) {
+    const supplier = await db.select().from(partners).where(eq(partners.id, supplierId)).limit(1);
+    if (supplier[0]) {
+      results.push({
+        supplierId,
+        supplierName: supplier[0].name,
+        totalPending: data.totalPending.toFixed(2),
+        expensesCount: data.count
+      });
+    }
+  }
+  
+  // Ordenar por valor pendente (maior primeiro)
+  results.sort((a, b) => parseFloat(b.totalPending) - parseFloat(a.totalPending));
   
   return results;
 }
@@ -1662,13 +1672,24 @@ export async function getTotalPendingPayables() {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
-  const result = await db.select({
-    total: sql<string>`COALESCE(SUM(CAST(${expenses.amount} AS DECIMAL(10,2))), 0)`
+  // Total de compras pendentes
+  const purchaseResult = await db.select({
+    total: sql<string>`COALESCE(SUM(CAST(${purchaseInstallments.amount} AS DECIMAL(10,2))), 0)`
   })
-  .from(expenses)
-  .where(eq(expenses.status, 'ATIVA'));
+  .from(purchaseInstallments)
+  .where(eq(purchaseInstallments.status, 'PENDING'));
   
-  return parseFloat(result[0]?.total || "0");
+  // Total de despesas pendentes
+  const expenseResult = await db.select({
+    total: sql<string>`COALESCE(SUM(CAST(${expenseInstallments.amount} AS DECIMAL(10,2))), 0)`
+  })
+  .from(expenseInstallments)
+  .where(eq(expenseInstallments.status, 'PENDENTE'));
+  
+  const purchaseTotal = parseFloat(purchaseResult[0]?.total || "0");
+  const expenseTotal = parseFloat(expenseResult[0]?.total || "0");
+  
+  return purchaseTotal + expenseTotal;
 }
 
 // Obter detalhamento completo de um fornecedor
@@ -1680,109 +1701,102 @@ export async function getSupplierPayableDetail(supplierId: number) {
   const supplier = await db.select().from(partners).where(eq(partners.id, supplierId)).limit(1);
   if (!supplier[0]) throw new Error("Fornecedor não encontrado");
   
-  // Buscar todas as despesas do fornecedor
+  const allInstallments: any[] = [];
+  
+  // 1. Buscar parcelas de COMPRAS
+  const purchases = await db.select()
+    .from(purchaseOrders)
+    .where(eq(purchaseOrders.supplierId, supplierId))
+    .orderBy(desc(purchaseOrders.createdAt));
+  
+  for (const purchase of purchases) {
+    const installments = await db.select()
+      .from(purchaseInstallments)
+      .where(eq(purchaseInstallments.purchaseOrderId, purchase.id))
+      .orderBy(purchaseInstallments.installmentNumber);
+    
+    const docTypeLabel = purchase.docType === 'NOTA_FISCAL' ? 'NF' : 
+                        purchase.docType === 'CUPOM' ? 'Cupom' : 'Doc';
+    
+    for (const inst of installments) {
+      const amount = parseFloat(inst.amount || "0");
+      allInstallments.push({
+        id: inst.id,
+        type: 'purchase',
+        purchaseOrderId: purchase.id,
+        expenseId: null,
+        supplierId: purchase.supplierId,
+        categoryId: null,
+        description: `Compra #${purchase.id} - ${docTypeLabel} ${purchase.docNumber || 's/n'} - Parcela ${inst.installmentNumber}`,
+        installmentNumber: inst.installmentNumber,
+        totalInstallments: installments.length,
+        expenseDate: purchase.createdAt || new Date(),
+        dueDate: inst.dueDate || new Date(),
+        paidDate: inst.paidDate || null,
+        paymentMethod: null,
+        notes: null,
+        origin: 'Compra',
+        status: inst.status || 'PENDING',
+        totalAmount: amount.toFixed(2),
+        paidAmount: "0.00",
+        pendingAmount: amount.toFixed(2)
+      });
+    }
+  }
+  
+  // 2. Buscar parcelas de DESPESAS
   const expensesList = await db.select()
     .from(expenses)
     .where(eq(expenses.supplierId, supplierId))
     .orderBy(desc(expenses.createdAt));
   
-  // Processar cada despesa e "explodir" em parcelas individuais
-  const allInstallments: any[] = [];
-  
-  for (const expense of expensesList.filter(expense => expense && expense.id)) {
-    let installments: any[] = [];
-    try {
-      installments = await db.select()
-        .from(expenseInstallments)
-        .where(eq(expenseInstallments.expenseId, expense.id!))
-        .orderBy(expenseInstallments.installmentNumber);
-    } catch (error) {
-      console.error('Error fetching installments:', error);
-    }
+  for (const expense of expensesList) {
+    const installments = await db.select()
+      .from(expenseInstallments)
+      .where(eq(expenseInstallments.expenseId, expense.id))
+      .orderBy(expenseInstallments.installmentNumber);
     
-    // Determinar origem (Compra ou Despesa)
-    const origin = expense.purchaseOrderId ? 'Compra' : 'Despesa';
-    
-    // Formatar tipo de documento
-    const docTypeLabel = expense.docType === 'NOTA_FISCAL' ? 'NF' : 
-                        expense.docType === 'CUPOM_FISCAL' ? 'Cupom' : 
-                        expense.docType === 'RECIBO' ? 'Recibo' : 'Doc';
-    
-    // Para cada parcela, criar uma linha
-    for (const installment of installments) {
-      const installmentAmount = parseFloat(installment.amount || "0");
-      const paidAmount = parseFloat(installment.paymentAmount || "0");
-      const pendingAmount = installmentAmount - paidAmount;
-      
-      // Montar descrição detalhada
-      const description = expense.purchaseOrderId 
-        ? `Compra #${expense.purchaseOrderId} - ${docTypeLabel} ${expense.docNumber || 's/n'} - Parcela ${installment.installmentNumber}/${installments.length}`
-        : `${expense.description || 'Despesa'} - Parcela ${installment.installmentNumber}/${installments.length}`;
+    for (const inst of installments) {
+      const amount = parseFloat(inst.amount || "0");
+      const paid = parseFloat(inst.paymentAmount || "0");
+      const pending = amount - paid;
       
       allInstallments.push({
-        id: installment.id || 0,
-        expenseId: expense.id || 0,
-        supplierId: expense.supplierId || 0,
-        purchaseOrderId: expense.purchaseOrderId || null,
-        categoryId: expense.categoryId || null,
-        description: description,
-        installmentNumber: installment.installmentNumber,
+        id: inst.id,
+        type: 'expense',
+        purchaseOrderId: null,
+        expenseId: expense.id,
+        supplierId: expense.supplierId,
+        categoryId: expense.categoryId,
+        description: `${expense.description || 'Despesa'} - Parcela ${inst.installmentNumber}/${installments.length}`,
+        installmentNumber: inst.installmentNumber,
         totalInstallments: installments.length,
         expenseDate: expense.createdAt || new Date(),
-        dueDate: installment.dueDate || new Date(),
-        paidDate: installment.paymentDate || null,
-        paymentMethod: installment.paymentMethod || null,
-        notes: installment.notes || null,
-        origin: origin,
-        status: installment.status || 'PENDENTE',
-        totalAmount: installmentAmount.toFixed(2),
-        paidAmount: paidAmount.toFixed(2),
-        pendingAmount: pendingAmount.toFixed(2)
+        dueDate: inst.dueDate || new Date(),
+        paidDate: inst.paymentDate || null,
+        paymentMethod: inst.paymentMethod || null,
+        notes: inst.notes || null,
+        origin: 'Despesa',
+        status: inst.status || 'PENDENTE',
+        totalAmount: amount.toFixed(2),
+        paidAmount: paid.toFixed(2),
+        pendingAmount: pending.toFixed(2)
       });
     }
   }
   
+  // Ordenar por data de vencimento
+  allInstallments.sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
+  
   // Calcular total pendente
-  const totalPending = allInstallments.reduce((sum, installment) => 
-    sum + parseFloat(installment.pendingAmount), 0
+  const totalPending = allInstallments.reduce((sum, inst) => 
+    sum + parseFloat(inst.pendingAmount), 0
   );
-  
-  // Buscar histórico de pagamentos (parcelas pagas)
-  let payments: any[] = [];
-  try {
-    // Primeiro buscar todas as despesas do fornecedor
-    const supplierExpenses = await db.select({ id: expenses.id })
-      .from(expenses)
-      .where(eq(expenses.supplierId, supplierId));
-    
-    const expenseIds = supplierExpenses.map(e => e.id).filter(id => id !== null && id !== undefined);
-    
-    if (expenseIds.length > 0) {
-      payments = await db.select({
-        paidDate: expenseInstallments.paidDate,
-        paidAmount: expenseInstallments.paidAmount,
-        paymentMethod: expenseInstallments.paymentMethod,
-        notes: expenseInstallments.notes
-      })
-      .from(expenseInstallments)
-      .where(and(
-        sql`${expenseInstallments.expenseId} IN (${sql.join(expenseIds.map(id => sql`${id}`), sql`, `)})`,
-        eq(expenseInstallments.status, "PAGO")
-      ))
-      .orderBy(desc(expenseInstallments.paidDate));
-    }
-  } catch (error) {
-    console.error('Error fetching payments:', error);
-    payments = [];
-  }
-  
-  // Filtrar pagamentos com dados válidos
-  const validPayments = payments.filter(p => p && p.paidDate && p.paidAmount);
   
   return {
     supplier: supplier[0],
     expenses: allInstallments,
-    payments: validPayments,
+    payments: [], // TODO: implementar histórico de pagamentos consolidado
     totalPending: totalPending.toFixed(2)
   };
 }
