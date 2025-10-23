@@ -1753,6 +1753,7 @@ export async function getSupplierPayableDetail(supplierId: number) {
     
     for (const inst of installments) {
       const amount = parseFloat(inst.amount || "0");
+      const isPaid = inst.status === 'PAID';
       allInstallments.push({
         id: inst.id,
         type: 'purchase',
@@ -1771,8 +1772,8 @@ export async function getSupplierPayableDetail(supplierId: number) {
         origin: 'Compra',
         status: inst.status || 'PENDING',
         totalAmount: amount.toFixed(2),
-        paidAmount: "0.00",
-        pendingAmount: amount.toFixed(2)
+        paidAmount: isPaid ? amount.toFixed(2) : "0.00",
+        pendingAmount: isPaid ? "0.00" : amount.toFixed(2)
       });
     }
   }
