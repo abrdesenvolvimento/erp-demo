@@ -85,3 +85,7 @@
 
 - [x] Ajustar tamanho do logo ABRWF para ficar visualmente proporcional
 
+
+
+- [x] Atualizar caminho do logo no código para usar logo-abrwf.png
+
