@@ -89,3 +89,9 @@
 
 - [x] Atualizar caminho do logo no código para usar logo-abrwf.png
 
+
+
+## Melhorias de UX (Rodada 5)
+
+- [x] Implementar animação de carregamento (loading spinner) no dashboard enquanto dados são carregados
+

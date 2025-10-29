@@ -1,5 +1,6 @@
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { trpc } from "@/lib/trpc";
 import { Package, Users, TrendingUp, AlertTriangle, ShoppingCart } from "lucide-react";
 import { Link } from "wouter";
@@ -10,22 +11,8 @@ export default function Home() {
   if (isLoading) {
     return (
       <DashboardLayout>
-        <div className="space-y-6">
-          <h1 className="text-3xl font-bold">Dashboard</h1>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            {[1, 2, 3, 4].map((i) => (
-              <Card key={i}>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    <div className="h-4 bg-muted animate-pulse rounded w-24"></div>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-8 bg-muted animate-pulse rounded w-16"></div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <LoadingSpinner size="lg" text="Carregando dados do dashboard..." />
         </div>
       </DashboardLayout>
     );
