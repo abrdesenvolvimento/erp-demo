@@ -1,0 +1,18 @@
+{
+  "query": "SELECT \n  (SELECT COUNT(*) FROM products) as products,\n  (SELECT COUNT(*) FROM sales) as sales,\n  (SELECT COUNT(*) FROM purchaseOrders) as purchases,\n  (SELECT COUNT(*) FROM partners) as partners,\n  (SELECT COUNT(*) FROM receivables) as receivables,\n  (SELECT COUNT(*) FROM expenses) as expenses;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  (SELECT COUNT(*) FROM products) as products,\n  (SELECT COUNT(*) FROM sales) as sales,\n  (SELECT COUNT(*) FROM purchaseOrders) as purchases,\n  (SELECT COUNT(*) FROM partners) as partners,\n  (SELECT COUNT(*) FROM receivables) as receivables,\n  (SELECT COUNT(*) FROM expenses) as expenses;",
+  "rows": [
+    {
+      "products": "0",
+      "sales": "0",
+      "purchases": "0",
+      "partners": "0",
+      "receivables": "0",
+      "expenses": "0"
+    }
+  ],
+  "messages": [],
+  "stdout": "products\tsales\tpurchases\tpartners\treceivables\texpenses\n0\t0\t0\t0\t0\t0\n",
+  "stderr": "",
+  "execution_time_ms": 55
+}

@@ -1,0 +1,19 @@
+{
+  "query": "SHOW TABLES LIKE '%purchase%'",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SHOW TABLES LIKE '%purchase%'",
+  "rows": [
+    {
+      "Tables_in_7RkrCeS5KipYf8hkuNqrCk (%purchase%)": "purchaseInstallments"
+    },
+    {
+      "Tables_in_7RkrCeS5KipYf8hkuNqrCk (%purchase%)": "purchaseOrderItems"
+    },
+    {
+      "Tables_in_7RkrCeS5KipYf8hkuNqrCk (%purchase%)": "purchaseOrders"
+    }
+  ],
+  "messages": [],
+  "stdout": "Tables_in_7RkrCeS5KipYf8hkuNqrCk (%purchase%)\npurchaseInstallments\npurchaseOrderItems\npurchaseOrders\n",
+  "stderr": "",
+  "execution_time_ms": 51
+}

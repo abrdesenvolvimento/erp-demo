@@ -72,3 +72,12 @@
 
 - [x] Ajustar coluna ID no histórico de pagamentos para mostrar apenas número (remover prefixos #purchase- e #expense-)
 
+
+
+## Rebranding - ABRWF (Rodada 4)
+
+- [x] Limpar banco de dados - remover produtos, vendas, compras, parceiros de teste
+- [ ] Atualizar logo do sistema para ABRWF
+- [ ] Atualizar nome do sistema para "ABRWF - Administração Baseada em Resultados Workflow"
+- [x] Copiar logo para diretório público do projeto
+
