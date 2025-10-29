@@ -43,13 +43,13 @@
 }
 
 :root {
-  --primary: 43 96% 56%; /* #F3B21B - Amarelo Adega */
+  --primary: 45 65% 52%; /* #D4AF37 - Dourado ABRWF */
   --primary-foreground: 0 0% 100%; /* Branco */
-  --sidebar-primary: 43 96% 56%; /* #F3B21B - Amarelo Adega */
+  --sidebar-primary: 45 65% 52%; /* #D4AF37 - Dourado ABRWF */
   --sidebar-primary-foreground: 0 0% 0%; /* Preto */
-  --chart-1: 43 96% 56%; /* Amarelo */
-  --chart-2: 78 45% 39%; /* Verde */
-  --chart-3: 39 75% 40%; /* Dourado */
+  --chart-1: 45 65% 52%; /* Dourado ABRWF */
+  --chart-2: 142 71% 45%; /* #10B981 - Verde ABRWF */
+  --chart-3: 195 51% 23%; /* #1E4D5B - Azul-petróleo ABRWF */
   --chart-4: 0 0% 83%; /* Cinza */
   --chart-5: 0 0% 20%; /* Preto */
   --radius: 0.65rem;
@@ -70,18 +70,18 @@
   --border: oklch(0.92 0.004 286.32);
   --input: oklch(0.92 0.004 286.32);
   --ring: oklch(0.623 0.214 259.815);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.235 0.015 65);
-  --sidebar-accent: oklch(0.967 0.001 286.375);
-  --sidebar-accent-foreground: oklch(0.141 0.005 285.823);
-  --sidebar-border: oklch(0.92 0.004 286.32);
-  --sidebar-ring: oklch(0.623 0.214 259.815);
+  --sidebar: 195 51% 23%; /* #1E4D5B - Azul-petróleo ABRWF */
+  --sidebar-foreground: 0 0% 100%; /* Branco */
+  --sidebar-accent: 45 65% 52%; /* #D4AF37 - Dourado ABRWF */
+  --sidebar-accent-foreground: 0 0% 0%; /* Preto */
+  --sidebar-border: 195 51% 30%; /* Azul-petróleo mais claro */
+  --sidebar-ring: 45 65% 52%; /* Dourado ABRWF */
 }
 
 .dark {
-  --primary: 43 96% 56%; /* #F3B21B - Amarelo Adega (mantido no dark mode) */
+  --primary: 45 65% 52%; /* #D4AF37 - Dourado ABRWF */
   --primary-foreground: 0 0% 0%; /* Preto para contraste */
-  --sidebar-primary: 43 96% 56%; /* #F3B21B - Amarelo Adega */
+  --sidebar-primary: 45 65% 52%; /* #D4AF37 - Dourado ABRWF */
   --sidebar-primary-foreground: 0 0% 0%; /* Preto */
   --background: oklch(0.141 0.005 285.823);
   --foreground: oklch(0.85 0.005 65);
@@ -100,17 +100,17 @@
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.488 0.243 264.376);
-  --chart-1: 43 96% 56%; /* Amarelo */
-  --chart-2: 78 45% 39%; /* Verde */
-  --chart-3: 39 75% 40%; /* Dourado */
+  --chart-1: 45 65% 52%; /* Dourado ABRWF */
+  --chart-2: 142 71% 45%; /* Verde ABRWF */
+  --chart-3: 195 51% 23%; /* Azul-petróleo ABRWF */
   --chart-4: 0 0% 83%; /* Cinza */
   --chart-5: 0 0% 20%; /* Preto */
-  --sidebar: oklch(0.21 0.006 285.885);
-  --sidebar-foreground: oklch(0.85 0.005 65);
-  --sidebar-accent: oklch(0.274 0.006 286.033);
-  --sidebar-accent-foreground:  oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.488 0.243 264.376);
+  --sidebar: 195 51% 18%; /* Azul-petróleo mais escuro para dark mode */
+  --sidebar-foreground: 0 0% 100%; /* Branco */
+  --sidebar-accent: 45 65% 52%; /* Dourado ABRWF */
+  --sidebar-accent-foreground: 0 0% 0%; /* Preto */
+  --sidebar-border: 195 51% 25%; /* Azul-petróleo */
+  --sidebar-ring: 45 65% 52%; /* Dourado ABRWF */
 }
 
 @layer base {
@@ -170,3 +170,17 @@
     }
   }
 }
+
+/* Botão com gradiente ABRWF (Dourado → Verde) */
+.btn-gradient-abrwf {
+  background: linear-gradient(135deg, hsl(45, 65%, 52%) 0%, hsl(142, 71%, 45%) 100%);
+  color: white;
+  transition: all 0.3s ease;
+}
+
+.btn-gradient-abrwf:hover {
+  background: linear-gradient(135deg, hsl(45, 65%, 42%) 0%, hsl(142, 71%, 35%) 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
+}
+

@@ -95,3 +95,25 @@
 
 - [x] Implementar animação de carregamento (loading spinner) no dashboard enquanto dados são carregados
 
+
+
+## Melhorias de Branding e UX (Rodada 6)
+
+### Aplicação de Cores ABRWF
+- [x] Definir paleta de cores no tema (dourado, verde, azul-petróleo)
+- [x] Aplicar cores na sidebar (fundo azul-petróleo, hover dourado)
+- [x] Ajustar cores de gráficos e indicadores
+- [x] Estilizar cards do dashboard com bordas coloridas
+- [x] Criar botões primários com gradiente dourado → verde
+
+### Seção "Minha Conta"
+- [x] Criar página de perfil do usuário
+- [x] Implementar edição de informações pessoais (nome, email, telefone)
+- [x] Adicionar upload de foto de perfil (UI pronta, backend pendente)
+- [x] Criar seção de alteração de senha
+- [x] Adicionar histórico de atividades do usuário
+- [x] Adicionar link "Minha Conta" no menu dropdown do usuário
+
+### Nova Tela de Login
+- [x] Não aplicável - Sistema usa autenticação OAuth externa
+

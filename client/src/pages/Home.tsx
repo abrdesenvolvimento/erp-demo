@@ -29,7 +29,7 @@ export default function Home() {
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <Card>
+          <Card className="border-t-4 border-t-chart-1">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
                 Total de Produtos
@@ -44,7 +44,7 @@ export default function Home() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="border-t-4 border-t-yellow-500">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
                 Estoque Baixo
@@ -61,7 +61,7 @@ export default function Home() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="border-t-4 border-t-chart-3">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
                 Clientes
@@ -76,7 +76,7 @@ export default function Home() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="border-t-4 border-t-chart-2">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
                 Vendas Hoje
