@@ -70,12 +70,12 @@
   --border: oklch(0.92 0.004 286.32);
   --input: oklch(0.92 0.004 286.32);
   --ring: oklch(0.623 0.214 259.815);
-  --sidebar: 195 51% 23%; /* #1E4D5B - Azul-petróleo ABRWF */
-  --sidebar-foreground: 0 0% 100%; /* Branco */
-  --sidebar-accent: 45 65% 52%; /* #D4AF37 - Dourado ABRWF */
-  --sidebar-accent-foreground: 0 0% 0%; /* Preto */
-  --sidebar-border: 195 51% 30%; /* Azul-petróleo mais claro */
-  --sidebar-ring: 45 65% 52%; /* Dourado ABRWF */
+  --sidebar: oklch(0.35 0.06 220); /* Azul-petróleo ABRWF */
+  --sidebar-foreground: oklch(0.98 0 0); /* Branco */
+  --sidebar-accent: oklch(0.72 0.12 85); /* Dourado ABRWF */
+  --sidebar-accent-foreground: oklch(0.15 0 0); /* Preto */
+  --sidebar-border: oklch(0.45 0.06 220); /* Azul-petróleo mais claro */
+  --sidebar-ring: oklch(0.72 0.12 85); /* Dourado ABRWF */
 }
 
 .dark {
@@ -105,12 +105,12 @@
   --chart-3: 195 51% 23%; /* Azul-petróleo ABRWF */
   --chart-4: 0 0% 83%; /* Cinza */
   --chart-5: 0 0% 20%; /* Preto */
-  --sidebar: 195 51% 18%; /* Azul-petróleo mais escuro para dark mode */
-  --sidebar-foreground: 0 0% 100%; /* Branco */
-  --sidebar-accent: 45 65% 52%; /* Dourado ABRWF */
-  --sidebar-accent-foreground: 0 0% 0%; /* Preto */
-  --sidebar-border: 195 51% 25%; /* Azul-petróleo */
-  --sidebar-ring: 45 65% 52%; /* Dourado ABRWF */
+  --sidebar: oklch(0.25 0.06 220); /* Azul-petróleo mais escuro para dark mode */
+  --sidebar-foreground: oklch(0.98 0 0); /* Branco */
+  --sidebar-accent: oklch(0.72 0.12 85); /* Dourado ABRWF */
+  --sidebar-accent-foreground: oklch(0.15 0 0); /* Preto */
+  --sidebar-border: oklch(0.35 0.06 220); /* Azul-petróleo */
+  --sidebar-ring: oklch(0.72 0.12 85); /* Dourado ABRWF */
 }
 
 @layer base {
