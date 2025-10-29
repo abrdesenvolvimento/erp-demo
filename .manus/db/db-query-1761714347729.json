@@ -1,0 +1,17 @@
+{
+  "query": "SELECT pc.parentProductId, p1.name as parentName, pc.childProductId, p2.name as childName, pc.quantity\nFROM productCompositions pc\nJOIN products p1 ON pc.parentProductId = p1.id\nJOIN products p2 ON pc.childProductId = p2.id",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT pc.parentProductId, p1.name as parentName, pc.childProductId, p2.name as childName, pc.quantity\nFROM productCompositions pc\nJOIN products p1 ON pc.parentProductId = p1.id\nJOIN products p2 ON pc.childProductId = p2.id",
+  "rows": [
+    {
+      "parentProductId": "270002",
+      "parentName": "Stella Artois 330ml Pure Gold 6 Unidades",
+      "childProductId": "270001",
+      "childName": "Stella Artois 330ml Pure Gold",
+      "quantity": "3.000"
+    }
+  ],
+  "messages": [],
+  "stdout": "parentProductId\tparentName\tchildProductId\tchildName\tquantity\n270002\tStella Artois 330ml Pure Gold 6 Unidades\t270001\tStella Artois 330ml Pure Gold\t3.000\n",
+  "stderr": "",
+  "execution_time_ms": 55
+}

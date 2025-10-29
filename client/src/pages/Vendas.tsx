@@ -405,9 +405,7 @@ export default function Vendas() {
             )}
 
             {step === "form" && (
-              <div className="grid grid-cols-3 gap-6 py-4">
-                {/* Coluna Principal - Formulário */}
-                <div className="col-span-2 space-y-6">
+              <div className="space-y-6 py-4">
                 {/* Canal de Venda - Apenas para DELIVERY */}
                 {saleType === "DELIVERY" && (
                   <div className="space-y-2">
@@ -621,11 +619,9 @@ export default function Vendas() {
                   />
                 </div>
 
-                </div>
                 
-                {/* Coluna Lateral - Resumo Fixo */}
-                <div className="col-span-1">
-                  <Card className="sticky top-4">
+                {/* Resumo da Venda */}
+                  <Card>
                     <CardHeader>
                       <h3 className="font-semibold text-lg">Resumo da Venda</h3>
                     </CardHeader>
@@ -677,7 +673,6 @@ export default function Vendas() {
                       </div>
                     </CardContent>
                   </Card>
-                </div>
               </div>
             )}
           </DialogContent>

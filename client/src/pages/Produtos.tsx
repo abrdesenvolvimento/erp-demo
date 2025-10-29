@@ -565,12 +565,16 @@ export default function Produtos() {
         }
       }
       
-      const mappedCompositions = compositionsData.map((c: any) => ({
-        childProductId: c.childProductId,
-        quantity: parseFloat(c.quantity),
-        childProduct: c.childProduct
-      }));
+      const mappedCompositions = compositionsData.map((c: any) => {
+        console.log('[handleEdit] Mapeando composição:', c);
+        return {
+          childProductId: c.childProductId,
+          quantity: parseFloat(c.quantity),
+          childProduct: c.childProduct
+        };
+      });
       console.log('[handleEdit] Composições mapeadas:', mappedCompositions);
+      console.log('[handleEdit] Exemplo childProduct:', mappedCompositions[0]?.childProduct);
       
       setFormData({
         name: product.name || "",
@@ -892,14 +896,18 @@ export default function Produtos() {
 
                   {/* Composições */}
                   {formData.isComposite && (
-                    <TempCompositionsSection 
-                      compositions={formData.compositions}
-                      onCompositionsChange={(compositions) => {
-                        console.log('[DEBUG] onCompositionsChange called with:', compositions);
-                        setFormData({ ...formData, compositions });
-                        console.log('[DEBUG] formData.compositions updated to:', compositions);
-                      }}
-                    />
+                    editingProduct ? (
+                      <CompositionsSection productId={editingProduct.id} />
+                    ) : (
+                      <TempCompositionsSection 
+                        compositions={formData.compositions}
+                        onCompositionsChange={(compositions) => {
+                          console.log('[DEBUG] onCompositionsChange called with:', compositions);
+                          setFormData({ ...formData, compositions });
+                          console.log('[DEBUG] formData.compositions updated to:', compositions);
+                        }}
+                      />
+                    )
                   )}
 
                   {/* Observações */}

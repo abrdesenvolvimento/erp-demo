@@ -495,6 +495,49 @@ export async function setProductCompositions(parentProductId: number, compositio
   // Verificar se foram salvas
   const [saved] = await db.execute(`SELECT * FROM productCompositions WHERE parentProductId = ${parentProductId}`);
   console.log('[setProductCompositions] Compositions after save:', saved);
+  
+  // Calcular e atualizar custo médio do produto composto
+  await updateCompositeProductCost(parentProductId);
+}
+
+// Calcular custo médio de produto composto baseado nos componentes
+export async function updateCompositeProductCost(parentProductId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  console.log('[updateCompositeProductCost] Calculating cost for product', parentProductId);
+  
+  // Buscar composições com detalhes dos produtos
+  const compositions = await db.select({
+    quantity: productCompositions.quantity,
+    avgCost: products.avgCost
+  })
+  .from(productCompositions)
+  .leftJoin(products, eq(productCompositions.childProductId, products.id))
+  .where(eq(productCompositions.parentProductId, parentProductId));
+  
+  if (compositions.length === 0) {
+    console.log('[updateCompositeProductCost] No compositions found, skipping cost calculation');
+    return;
+  }
+  
+  // Calcular custo total somando (quantidade * custo) de cada componente
+  let totalCost = 0;
+  for (const comp of compositions) {
+    const quantity = parseFloat(comp.quantity.toString());
+    const cost = parseFloat(comp.avgCost || "0");
+    totalCost += quantity * cost;
+    console.log('[updateCompositeProductCost] Component:', { quantity, cost, subtotal: quantity * cost });
+  }
+  
+  console.log('[updateCompositeProductCost] Total calculated cost:', totalCost);
+  
+  // Atualizar custo médio do produto composto
+  await db.update(products)
+    .set({ avgCost: totalCost.toFixed(2) })
+    .where(eq(products.id, parentProductId));
+  
+  console.log('[updateCompositeProductCost] Cost updated successfully');
 }
 
 export async function getProductCompositionsWithDetails(parentProductId: number) {
