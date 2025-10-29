@@ -81,3 +81,7 @@
 - [ ] Atualizar nome do sistema para "ABRWF - Administração Baseada em Resultados Workflow"
 - [x] Copiar logo para diretório público do projeto
 
+
+
+- [x] Ajustar tamanho do logo ABRWF para ficar visualmente proporcional
+
