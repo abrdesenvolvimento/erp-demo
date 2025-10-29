@@ -1056,7 +1056,7 @@ export async function getPaymentHistory(filters: {
   // Adicionar compras
   for (const purchase of paidPurchases) {
     result.push({
-      id: `purchase-${purchase.id}`,
+      id: purchase.id,
       type: 'purchase',
       supplierId: purchase.supplierId || 0,
       supplierName: purchase.supplierName || 'Sem nome',
@@ -1080,7 +1080,7 @@ export async function getPaymentHistory(filters: {
                         expense.docType === 'RECIBO' ? 'Recibo' : 'Doc';
     
     result.push({
-      id: `expense-${expense.id}`,
+      id: expense.id,
       type: 'expense',
       expenseId: expense.expenseId,
       supplierId: expense.supplierId || 0,

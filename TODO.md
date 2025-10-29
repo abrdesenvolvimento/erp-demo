@@ -66,3 +66,9 @@
 - Banco de dados MySQL limpo e pronto para produção
 - GitHub sincronizado: https://github.com/abrdesenvolvimento/Projeto-ERP-ABR
 
+
+
+## Ajustes Solicitados (Rodada 3)
+
+- [x] Ajustar coluna ID no histórico de pagamentos para mostrar apenas número (remover prefixos #purchase- e #expense-)
+
