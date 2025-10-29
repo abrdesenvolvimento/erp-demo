@@ -7,11 +7,19 @@
 - [x] Corrigir baixa de estoque para produtos compostos em vendas (deve deduzir dos componentes, não do composto)
 - [x] Implementar cálculo automático de custo para produtos compostos baseado no custo dos componentes
 
-## Novos Bugs Reportados (Testes do Usuário)
+## Novos Bugs Reportados (Testes do Usuário - Rodada 1)
 
 - [x] Custo de produto composto não atualiza quando custo dos componentes muda (apenas calcula na criação)
 - [x] Formulário de vendas precisa de mais espaço vertical para evitar scroll excessivo
 - [x] Histórico de pagamentos em Contas a Pagar não aparece após efetuar baixa
+
+## Novos Bugs Reportados (Testes do Usuário - Rodada 2)
+
+- [x] Formulário de vendas ainda expande e causa scroll - precisa ser maior para evitar isso
+- [ ] Atualização de custo de produto composto ainda não está funcionando (investigar)
+- [x] Contas a Receber - Não é possível consultar histórico do cliente após quitação
+- [x] Baixa de produto composto - Funcionando perfeitamente
+- [x] Baixa e consulta em Contas a Pagar - Funcionando perfeitamente
 
 ## Melhorias Implementadas
 

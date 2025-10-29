@@ -1,0 +1,22 @@
+{
+  "query": "SELECT \n  p.id,\n  p.name,\n  p.avgCost as currentCost,\n  (\n    SELECT SUM(pc.quantity * p2.avgCost)\n    FROM productCompositions pc\n    JOIN products p2 ON pc.childProductId = p2.id\n    WHERE pc.parentProductId = p.id\n  ) as calculatedCost\nFROM products p\nWHERE p.isComposite = 1 AND p.id IN (\n  SELECT DISTINCT parentProductId FROM productCompositions\n)",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  p.id,\n  p.name,\n  p.avgCost as currentCost,\n  (\n    SELECT SUM(pc.quantity * p2.avgCost)\n    FROM productCompositions pc\n    JOIN products p2 ON pc.childProductId = p2.id\n    WHERE pc.parentProductId = p.id\n  ) as calculatedCost\nFROM products p\nWHERE p.isComposite = 1 AND p.id IN (\n  SELECT DISTINCT parentProductId FROM productCompositions\n)",
+  "rows": [
+    {
+      "id": "270002",
+      "name": "Stella Artois 330ml Pure Gold 6 Unidades",
+      "currentCost": "32.34",
+      "calculatedCost": "16.68000"
+    },
+    {
+      "id": "360002",
+      "name": "Del Valle Kapo - 200ml Laranja 12 Unidades",
+      "currentCost": "27.00",
+      "calculatedCost": "27.00000"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tcurrentCost\tcalculatedCost\n270002\tStella Artois 330ml Pure Gold 6 Unidades\t32.34\t16.68000\n360002\tDel Valle Kapo - 200ml Laranja 12 Unidades\t27.00\t27.00000\n",
+  "stderr": "",
+  "execution_time_ms": 76
+}

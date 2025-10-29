@@ -527,16 +527,20 @@ export async function updateCompositeProductCost(parentProductId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
-  console.log('[updateCompositeProductCost] Calculating cost for product', parentProductId);
+  console.log('[updateCompositeProductCost] ===== START ===== Calculating cost for product', parentProductId);
   
   // Buscar composições com detalhes dos produtos
   const compositions = await db.select({
+    childProductId: productCompositions.childProductId,
     quantity: productCompositions.quantity,
-    avgCost: products.avgCost
+    avgCost: products.avgCost,
+    childName: products.name
   })
   .from(productCompositions)
   .leftJoin(products, eq(productCompositions.childProductId, products.id))
   .where(eq(productCompositions.parentProductId, parentProductId));
+  
+  console.log('[updateCompositeProductCost] Found', compositions.length, 'compositions');
   
   if (compositions.length === 0) {
     console.log('[updateCompositeProductCost] No compositions found, skipping cost calculation');
@@ -546,20 +550,30 @@ export async function updateCompositeProductCost(parentProductId: number) {
   // Calcular custo total somando (quantidade * custo) de cada componente
   let totalCost = 0;
   for (const comp of compositions) {
-    const quantity = parseFloat(comp.quantity.toString());
-    const cost = parseFloat(comp.avgCost || "0");
-    totalCost += quantity * cost;
-    console.log('[updateCompositeProductCost] Component:', { quantity, cost, subtotal: quantity * cost });
+    const quantity = parseFloat(comp.quantity?.toString() || "0");
+    const cost = parseFloat(comp.avgCost?.toString() || "0");
+    const subtotal = quantity * cost;
+    totalCost += subtotal;
+    console.log('[updateCompositeProductCost] Component:', {
+      childId: comp.childProductId,
+      childName: comp.childName,
+      quantity,
+      cost,
+      subtotal
+    });
   }
   
   console.log('[updateCompositeProductCost] Total calculated cost:', totalCost);
   
-  // Atualizar custo médio do produto composto
+  // Atualizar custo médio do produto composto (mantendo 4 casas decimais como nas compras)
+  const newCost = totalCost.toFixed(4);
+  console.log('[updateCompositeProductCost] Updating product', parentProductId, 'with new cost:', newCost);
+  
   await db.update(products)
-    .set({ avgCost: totalCost.toFixed(2) })
+    .set({ avgCost: newCost })
     .where(eq(products.id, parentProductId));
   
-  console.log('[updateCompositeProductCost] Cost updated successfully');
+  console.log('[updateCompositeProductCost] ===== END ===== Cost updated successfully');
 }
 
 export async function getProductCompositionsWithDetails(parentProductId: number) {
@@ -1573,17 +1587,19 @@ export async function getCustomerReceivableDetail(customerId: number) {
     sum + parseFloat(sale.pendingAmount), 0
   );
   
-  // Buscar histórico de pagamentos (parcelas pagas)
+  // Buscar histórico de pagamentos (parcelas pagas ou parciais que já receberam algum valor)
   const payments = await db.select({
     paidDate: receivableInstallments.paidDate,
     paidAmount: receivableInstallments.paidAmount,
-    paymentMethod: receivableInstallments.paymentMethod
+    paymentMethod: receivableInstallments.paymentMethod,
+    installmentNumber: receivableInstallments.installmentNumber,
+    status: receivableInstallments.status
   })
   .from(receivableInstallments)
   .leftJoin(receivables, eq(receivableInstallments.receivableId, receivables.id))
   .where(and(
     eq(receivables.customerId, customerId),
-    eq(receivableInstallments.status, "PAGO")
+    sql`${receivableInstallments.paidAmount} IS NOT NULL AND ${receivableInstallments.paidAmount} > 0`
   ))
   .orderBy(desc(receivableInstallments.paidDate));
   
