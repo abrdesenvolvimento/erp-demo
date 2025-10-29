@@ -500,6 +500,28 @@ export async function setProductCompositions(parentProductId: number, compositio
   await updateCompositeProductCost(parentProductId);
 }
 
+// Atualizar custo de todos os produtos compostos que usam um componente específico
+export async function updateCompositeProductsUsingComponent(componentId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  console.log('[updateCompositeProductsUsingComponent] Finding composite products using component', componentId);
+  
+  // Buscar todos os produtos compostos que usam este componente
+  const compositeProducts = await db.select({
+    parentProductId: productCompositions.parentProductId
+  })
+  .from(productCompositions)
+  .where(eq(productCompositions.childProductId, componentId));
+  
+  console.log('[updateCompositeProductsUsingComponent] Found', compositeProducts.length, 'composite products');
+  
+  // Atualizar custo de cada produto composto
+  for (const comp of compositeProducts) {
+    await updateCompositeProductCost(comp.parentProductId);
+  }
+}
+
 // Calcular custo médio de produto composto baseado nos componentes
 export async function updateCompositeProductCost(parentProductId: number) {
   const db = await getDb();
@@ -697,6 +719,9 @@ export async function confirmPurchaseOrder(purchaseOrderId: number) {
       currentStock: newStock,
       avgCost: newAvgCost.toFixed(4)
     });
+    
+    // Atualizar custo de produtos compostos que usam este componente
+    await updateCompositeProductsUsingComponent(product.id);
   }
   
   // Atualizar status da ordem de compra
@@ -937,56 +962,56 @@ export async function getPaymentHistory(filters: {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
-  // Buscar todas as parcelas pagas com filtros
-  let query = db
-    .select({
-      id: expenseInstallments.id,
-      expenseId: expenseInstallments.expenseId,
-      installmentNumber: expenseInstallments.installmentNumber,
-      amount: expenseInstallments.amount,
-      paymentAmount: expenseInstallments.paymentAmount,
-      paymentDate: expenseInstallments.paymentDate,
-      paymentMethod: expenseInstallments.paymentMethod,
-      notes: expenseInstallments.notes,
-      dueDate: expenseInstallments.dueDate,
-      status: expenseInstallments.status,
-      supplierId: expenses.supplierId,
-      supplierName: partners.name,
-      purchaseOrderId: expenses.purchaseOrderId,
-      docType: expenses.docType,
-      docNumber: expenses.docNumber,
-      description: expenses.description,
-      createdAt: expenses.createdAt,
-    })
-    .from(expenseInstallments)
-    .innerJoin(expenses, eq(expenseInstallments.expenseId, expenses.id))
-    .leftJoin(partners, eq(expenses.supplierId, partners.id))
-    .where(eq(expenseInstallments.status, "PAGO"));
-  
-  // Aplicar filtros
-  const conditions: any[] = [eq(expenseInstallments.status, "PAGO")];
+  // Buscar parcelas PAGAS de COMPRAS
+  const purchaseConditions: any[] = [eq(purchaseInstallments.status, "PAID")];
   
   if (filters.supplierId) {
-    conditions.push(eq(expenses.supplierId, filters.supplierId));
+    purchaseConditions.push(eq(purchaseOrders.supplierId, filters.supplierId));
   }
   
   if (filters.startDate) {
-    conditions.push(sql`${expenseInstallments.paymentDate} >= ${filters.startDate}`);
+    purchaseConditions.push(sql`${purchaseInstallments.paidDate} >= ${filters.startDate}`);
   }
   
   if (filters.endDate) {
-    conditions.push(sql`${expenseInstallments.paymentDate} <= ${filters.endDate}`);
+    purchaseConditions.push(sql`${purchaseInstallments.paidDate} <= ${filters.endDate}`);
   }
   
-  if (filters.docNumber) {
-    conditions.push(sql`${expenses.docNumber} LIKE ${`%${filters.docNumber}%`}`);
+  const paidPurchases = await db
+    .select({
+      id: purchaseInstallments.id,
+      purchaseOrderId: purchaseInstallments.purchaseOrderId,
+      installmentNumber: purchaseInstallments.installmentNumber,
+      amount: purchaseInstallments.amount,
+      paidDate: purchaseInstallments.paidDate,
+      dueDate: purchaseInstallments.dueDate,
+      status: purchaseInstallments.status,
+      supplierId: purchaseOrders.supplierId,
+      supplierName: partners.name,
+      createdAt: purchaseOrders.createdAt,
+    })
+    .from(purchaseInstallments)
+    .innerJoin(purchaseOrders, eq(purchaseInstallments.purchaseOrderId, purchaseOrders.id))
+    .leftJoin(partners, eq(purchaseOrders.supplierId, partners.id))
+    .where(and(...purchaseConditions))
+    .orderBy(desc(purchaseInstallments.paidDate));
+  
+  // Buscar parcelas PAGAS de DESPESAS
+  const expenseConditions: any[] = [eq(expenseInstallments.status, "PAGO")];
+  
+  if (filters.supplierId) {
+    expenseConditions.push(eq(expenses.supplierId, filters.supplierId));
   }
   
-  if (filters.paymentMethod) {
-    conditions.push(eq(expenseInstallments.paymentMethod, filters.paymentMethod));
+  if (filters.startDate) {
+    expenseConditions.push(sql`${expenseInstallments.paymentDate} >= ${filters.startDate}`);
   }
   
-  const paidInstallments = await db
+  if (filters.endDate) {
+    expenseConditions.push(sql`${expenseInstallments.paymentDate} <= ${filters.endDate}`);
+  }
+  
+  const paidExpenses = await db
     .select({
       id: expenseInstallments.id,
       expenseId: expenseInstallments.expenseId,
@@ -1000,7 +1025,6 @@ export async function getPaymentHistory(filters: {
       status: expenseInstallments.status,
       supplierId: expenses.supplierId,
       supplierName: partners.name,
-      purchaseOrderId: expenses.purchaseOrderId,
       docType: expenses.docType,
       docNumber: expenses.docNumber,
       description: expenses.description,
@@ -1009,37 +1033,62 @@ export async function getPaymentHistory(filters: {
     .from(expenseInstallments)
     .innerJoin(expenses, eq(expenseInstallments.expenseId, expenses.id))
     .leftJoin(partners, eq(expenses.supplierId, partners.id))
-    .where(and(...conditions))
+    .where(and(...expenseConditions))
     .orderBy(desc(expenseInstallments.paymentDate));
   
-  // Formatar resultado
-  const result = paidInstallments.map(installment => {
-    const docTypeLabel = installment.docType === 'NOTA_FISCAL' ? 'NF' :
-                        installment.docType === 'CUPOM' ? 'Cupom' :
-                        installment.docType === 'RECIBO' ? 'Recibo' : 'Doc';
+  // Consolidar resultados
+  const result: any[] = [];
+  
+  // Adicionar compras
+  for (const purchase of paidPurchases) {
+    result.push({
+      id: `purchase-${purchase.id}`,
+      type: 'purchase',
+      supplierId: purchase.supplierId || 0,
+      supplierName: purchase.supplierName || 'Sem nome',
+      description: `Compra #${purchase.purchaseOrderId} - Parcela ${purchase.installmentNumber}`,
+      origin: 'Compra',
+      expenseDate: purchase.createdAt || new Date(),
+      dueDate: purchase.dueDate || new Date(),
+      paidDate: purchase.paidDate || null,
+      paymentMethod: null,
+      notes: null,
+      totalAmount: purchase.amount || "0",
+      paidAmount: purchase.amount || "0",
+      status: purchase.status,
+    });
+  }
+  
+  // Adicionar despesas
+  for (const expense of paidExpenses) {
+    const docTypeLabel = expense.docType === 'NOTA_FISCAL' ? 'NF' :
+                        expense.docType === 'CUPOM' ? 'Cupom' :
+                        expense.docType === 'RECIBO' ? 'Recibo' : 'Doc';
     
-    const origin = installment.purchaseOrderId ? 'Compra' : 'Despesa';
-    
-    const description = installment.purchaseOrderId 
-      ? `Compra #${installment.purchaseOrderId} - ${docTypeLabel} ${installment.docNumber || 's/n'} - Parcela ${installment.installmentNumber}`
-      : `${installment.description || 'Despesa'} - Parcela ${installment.installmentNumber}`;
-    
-    return {
-      id: installment.id,
-      expenseId: installment.expenseId,
-      supplierId: installment.supplierId || 0,
-      supplierName: installment.supplierName || 'Sem nome',
-      description,
-      origin,
-      expenseDate: installment.createdAt || new Date(),
-      dueDate: installment.dueDate || new Date(),
-      paidDate: installment.paymentDate || null,
-      paymentMethod: installment.paymentMethod || null,
-      notes: installment.notes || null,
-      totalAmount: installment.amount || "0",
-      paidAmount: installment.paymentAmount || "0",
-      status: installment.status,
-    };
+    result.push({
+      id: `expense-${expense.id}`,
+      type: 'expense',
+      expenseId: expense.expenseId,
+      supplierId: expense.supplierId || 0,
+      supplierName: expense.supplierName || 'Sem nome',
+      description: `${expense.description || 'Despesa'} - ${docTypeLabel} ${expense.docNumber || 's/n'} - Parcela ${expense.installmentNumber}`,
+      origin: 'Despesa',
+      expenseDate: expense.createdAt || new Date(),
+      dueDate: expense.dueDate || new Date(),
+      paidDate: expense.paymentDate || null,
+      paymentMethod: expense.paymentMethod || null,
+      notes: expense.notes || null,
+      totalAmount: expense.amount || "0",
+      paidAmount: expense.paymentAmount || "0",
+      status: expense.status,
+    });
+  }
+  
+  // Ordenar por data de pagamento (mais recente primeiro)
+  result.sort((a, b) => {
+    const dateA = a.paidDate ? new Date(a.paidDate).getTime() : 0;
+    const dateB = b.paidDate ? new Date(b.paidDate).getTime() : 0;
+    return dateB - dateA;
   });
   
   return result;

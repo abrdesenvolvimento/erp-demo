@@ -7,6 +7,12 @@
 - [x] Corrigir baixa de estoque para produtos compostos em vendas (deve deduzir dos componentes, não do composto)
 - [x] Implementar cálculo automático de custo para produtos compostos baseado no custo dos componentes
 
+## Novos Bugs Reportados (Testes do Usuário)
+
+- [x] Custo de produto composto não atualiza quando custo dos componentes muda (apenas calcula na criação)
+- [x] Formulário de vendas precisa de mais espaço vertical para evitar scroll excessivo
+- [x] Histórico de pagamentos em Contas a Pagar não aparece após efetuar baixa
+
 ## Melhorias Implementadas
 
 ### Sprint 1 - Validações e Cálculos Automáticos

@@ -354,7 +354,7 @@ export default function Vendas() {
 
         {/* Modal de Nova Venda */}
         <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-          <DialogContent className="max-w-5xl max-h-[95vh] overflow-y-auto">
+          <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
                 {step === "type" ? "Nova Venda - Selecione o Tipo" : `Nova Venda - ${saleType?.replace("_", " ")}`}
@@ -405,7 +405,7 @@ export default function Vendas() {
             )}
 
             {step === "form" && (
-              <div className="space-y-6 py-4">
+              <div className="space-y-4 py-2">
                 {/* Canal de Venda - Apenas para DELIVERY */}
                 {saleType === "DELIVERY" && (
                   <div className="space-y-2">
