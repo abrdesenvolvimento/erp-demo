@@ -42,3 +42,10 @@
 - [x] Travar campos de endereço após busca de CEP
 - [ ] Implementar filtro por subcategoria em Produtos (ADIADO)
 
+
+## Bugs Identificados em Testes (13/11/2025)
+
+- [x] BUG: Histórico de recebimentos agrupando múltiplos pagamentos em uma única linha (criada tabela receivablePayments)
+- [x] BUG: Cliente "Gabriel" não aparece na busca ao registrar venda (filtro modificado para aceitar CUSTOMER ou BOTH)
+- [x] MELHORIA: Restringir botão "Desbloquear Campos de Endereço" apenas para usuários admin
+

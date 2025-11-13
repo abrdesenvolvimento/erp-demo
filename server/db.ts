@@ -19,7 +19,8 @@ import {
   expenses, Expense, InsertExpense,
   expenseInstallments, ExpenseInstallment, InsertExpenseInstallment,
   receivables, Receivable, InsertReceivable,
-  receivableInstallments, ReceivableInstallment, InsertReceivableInstallment
+  receivableInstallments, ReceivableInstallment, InsertReceivableInstallment,
+  receivablePayments, ReceivablePayment, InsertReceivablePayment
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -1587,21 +1588,17 @@ export async function getCustomerReceivableDetail(customerId: number) {
     sum + parseFloat(sale.pendingAmount), 0
   );
   
-  // Buscar histórico de pagamentos (parcelas pagas ou parciais que já receberam algum valor)
+  // Buscar histórico de pagamentos da nova tabela receivablePayments
   const payments = await db.select({
-    paidDate: receivableInstallments.paidDate,
-    paidAmount: receivableInstallments.paidAmount,
-    paymentMethod: receivableInstallments.paymentMethod,
-    installmentNumber: receivableInstallments.installmentNumber,
-    status: receivableInstallments.status
+    paidDate: receivablePayments.paidDate,
+    paidAmount: receivablePayments.paidAmount,
+    paymentMethod: receivablePayments.paymentMethod,
+    notes: receivablePayments.notes,
+    createdAt: receivablePayments.createdAt
   })
-  .from(receivableInstallments)
-  .leftJoin(receivables, eq(receivableInstallments.receivableId, receivables.id))
-  .where(and(
-    eq(receivables.customerId, customerId),
-    sql`${receivableInstallments.paidAmount} IS NOT NULL AND ${receivableInstallments.paidAmount} > 0`
-  ))
-  .orderBy(desc(receivableInstallments.paidDate));
+  .from(receivablePayments)
+  .where(eq(receivablePayments.customerId, customerId))
+  .orderBy(desc(receivablePayments.paidDate));
   
   return {
     customer: customer[0],
@@ -1658,13 +1655,24 @@ export async function registerCustomerPayment(data: {
       const paymentForThisInstallment = Math.min(remainingAmount, installmentPending);
       const newPaidAmount = alreadyPaid + paymentForThisInstallment;
       
+      // Criar registro de pagamento no histórico
+      await db.insert(receivablePayments).values({
+        installmentId: installment.id!,
+        receivableId: receivable[0].id!,
+        customerId: data.customerId,
+        paidDate: data.paidDate,
+        paidAmount: paymentForThisInstallment.toFixed(2),
+        paymentMethod: data.paymentMethod,
+        notes: data.notes
+      });
+      
+      // Atualizar parcela com totais acumulados
       await db.update(receivableInstallments)
         .set({
           paidDate: data.paidDate,
           paidAmount: newPaidAmount.toFixed(2),
           paymentMethod: data.paymentMethod,
-          notes: data.notes,
-          status: newPaidAmount >= installmentAmount ? "PAGO" : "PENDENTE"
+          status: newPaidAmount >= installmentAmount ? "PAGO" : "PARCIAL"
         })
         .where(eq(receivableInstallments.id, installment.id!));
       
@@ -1707,13 +1715,24 @@ export async function registerCustomerPayment(data: {
         const paymentForThisInstallment = Math.min(remainingAmount, installmentPending);
         const newPaidAmount = alreadyPaid + paymentForThisInstallment;
         
+        // Criar registro de pagamento no histórico
+        await db.insert(receivablePayments).values({
+          installmentId: installment.id!,
+          receivableId: receivable.id!,
+          customerId: data.customerId,
+          paidDate: data.paidDate,
+          paidAmount: paymentForThisInstallment.toFixed(2),
+          paymentMethod: data.paymentMethod,
+          notes: data.notes
+        });
+        
+        // Atualizar parcela com totais acumulados
         await db.update(receivableInstallments)
           .set({
             paidDate: data.paidDate,
             paidAmount: newPaidAmount.toFixed(2),
             paymentMethod: data.paymentMethod,
-            notes: data.notes,
-            status: newPaidAmount >= installmentAmount ? "PAGO" : "PENDENTE"
+            status: newPaidAmount >= installmentAmount ? "PAGO" : "PARCIAL"
           })
           .where(eq(receivableInstallments.id, installment.id!));
         

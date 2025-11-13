@@ -1,0 +1,33 @@
+{
+  "query": "SELECT * FROM partners WHERE name LIKE '%Gabriel%'",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT * FROM partners WHERE name LIKE '%Gabriel%'",
+  "rows": [
+    {
+      "id": "240002",
+      "name": "Gabriel Morais Santos",
+      "tradeName": "Gabriel Teste",
+      "docNumber": "44626646808",
+      "partnerType": "BOTH",
+      "phone": "11970707761",
+      "email": "gmsantos.96@gmail.com",
+      "creditLimit": "500.00",
+      "currentBalance": "0.00",
+      "creditPolicy": "ACTIVE",
+      "active": "1",
+      "createdAt": "2025-10-29 17:44:21",
+      "updatedAt": "2025-11-13 23:32:23",
+      "street": "Rua Américo de Campos",
+      "streetNumber": "",
+      "complement": "",
+      "neighborhood": "Rochdale",
+      "city": "Osasco",
+      "state": "SP",
+      "zipCode": "06223050",
+      "notes": "NULL"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\ttradeName\tdocNumber\tpartnerType\tphone\temail\tcreditLimit\tcurrentBalance\tcreditPolicy\tactive\tcreatedAt\tupdatedAt\tstreet\tstreetNumber\tcomplement\tneighborhood\tcity\tstate\tzipCode\tnotes\n240002\tGabriel Morais Santos\tGabriel Teste\t44626646808\tBOTH\t11970707761\tgmsantos.96@gmail.com\t500.00\t0.00\tACTIVE\t1\t2025-10-29 17:44:21\t2025-11-13 23:32:23\tRua Américo de Campos\t\t\tRochdale\tOsasco\tSP\t06223050\tNULL\n",
+  "stderr": "",
+  "execution_time_ms": 55
+}

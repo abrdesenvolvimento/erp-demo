@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE IF NOT EXISTS receivablePayments (\n  id INT AUTO_INCREMENT PRIMARY KEY,\n  installmentId INT NOT NULL,\n  receivableId INT NOT NULL,\n  customerId INT NOT NULL,\n  paidDate TIMESTAMP NOT NULL,\n  paidAmount DECIMAL(10,2) NOT NULL,\n  paymentMethod VARCHAR(50) NOT NULL,\n  notes TEXT,\n  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\n  INDEX installment_idx (installmentId),\n  INDEX receivable_idx (receivableId),\n  INDEX customer_idx (customerId),\n  INDEX paid_date_idx (paidDate)\n)",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute CREATE TABLE IF NOT EXISTS receivablePayments (\n  id INT AUTO_INCREMENT PRIMARY KEY,\n  installmentId INT NOT NULL,\n  receivableId INT NOT NULL,\n  customerId INT NOT NULL,\n  paidDate TIMESTAMP NOT NULL,\n  paidAmount DECIMAL(10,2) NOT NULL,\n  paymentMethod VARCHAR(50) NOT NULL,\n  notes TEXT,\n  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\n  INDEX installment_idx (installmentId),\n  INDEX receivable_idx (receivableId),\n  INDEX customer_idx (customerId),\n  INDEX paid_date_idx (paidDate)\n)",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 201
+}

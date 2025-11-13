@@ -66,10 +66,16 @@ export default function Vendas() {
   // Queries
   const { data: sales = [], refetch } = trpc.sales.list.useQuery();
   const { data: channels = [] } = trpc.salesChannels.list.useQuery({ activeOnly: true });
-  const { data: partners = [] } = trpc.partners.list.useQuery({ 
-    partnerType: "CUSTOMER", 
+  // Buscar parceiros que sejam CUSTOMER ou BOTH (clientes e fornecedores)
+  const { data: allPartners = [] } = trpc.partners.list.useQuery({ 
     activeOnly: true 
   });
+  
+  // Filtrar apenas parceiros que podem ser clientes (CUSTOMER ou BOTH)
+  const partners = useMemo(() => 
+    allPartners.filter((p: any) => p.partnerType === "CUSTOMER" || p.partnerType === "BOTH"),
+    [allPartners]
+  );
   const { data: products = [] } = trpc.products.list.useQuery({ 
     search: productSearch,
     activeOnly: true 

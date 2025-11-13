@@ -37,8 +37,12 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { formatCPFCNPJ, validateCPFCNPJ } from "@/lib/validators";
 import { fetchCEP, formatCEP } from "@/lib/cep";
+import { useAuth } from "@/_core/hooks/useAuth";
 
 export default function Parceiros() {
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
+  
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState("all");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -498,7 +502,7 @@ export default function Parceiros() {
                         <p className="text-xs text-muted-foreground">
                           Digite o CEP e pressione Tab - os campos abaixo serão preenchidos automaticamente
                         </p>
-                        {cepFetched && (
+                        {cepFetched && isAdmin && (
                           <Button
                             type="button"
                             variant="outline"

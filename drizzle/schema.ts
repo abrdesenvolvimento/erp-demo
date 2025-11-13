@@ -389,3 +389,24 @@ export const receivableInstallments = mysqlTable("receivableInstallments", {
 export type ReceivableInstallment = typeof receivableInstallments.$inferSelect;
 export type InsertReceivableInstallment = typeof receivableInstallments.$inferInsert;
 
+// Histórico de Pagamentos de Recebíveis (para armazenar múltiplos pagamentos por parcela)
+export const receivablePayments = mysqlTable("receivablePayments", {
+  id: int("id").primaryKey().autoincrement(),
+  installmentId: int("installmentId").notNull(), // Parcela que recebeu o pagamento
+  receivableId: int("receivableId").notNull(), // Recebível relacionado
+  customerId: int("customerId").notNull(), // Cliente que pagou
+  paidDate: timestamp("paidDate").notNull(), // Data do pagamento
+  paidAmount: decimal("paidAmount", { precision: 10, scale: 2 }).notNull(), // Valor pago
+  paymentMethod: varchar("paymentMethod", { length: 50 }).notNull(), // Forma de pagamento
+  notes: text("notes"), // Observações
+  createdAt: timestamp("createdAt").defaultNow(),
+}, (table) => ({
+  installmentIdx: index("installment_idx").on(table.installmentId),
+  receivableIdx: index("receivable_idx").on(table.receivableId),
+  customerIdx: index("customer_idx").on(table.customerId),
+  paidDateIdx: index("paid_date_idx").on(table.paidDate),
+}));
+
+export type ReceivablePayment = typeof receivablePayments.$inferSelect;
+export type InsertReceivablePayment = typeof receivablePayments.$inferInsert;
+
