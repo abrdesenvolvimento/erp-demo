@@ -33,3 +33,12 @@
 - [x] Sincronização com GitHub
 - [x] Guia de instalação local
 
+
+## Sprint Atual (13/11/2025)
+
+- [x] Corrigir subcategorias duplicadas (VInho → Vinho, Ess → Essência)
+- [x] Gerar arquivo CSV de produtos para inventário
+- [x] Implementar campo "Nome Fantasia" em Parceiros
+- [x] Travar campos de endereço após busca de CEP
+- [ ] Implementar filtro por subcategoria em Produtos (ADIADO)
+

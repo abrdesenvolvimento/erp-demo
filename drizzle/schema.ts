@@ -121,12 +121,15 @@ export type InsertProductPrice = typeof productPrices.$inferInsert;
 export const partners = mysqlTable("partners", {
   id: int("id").primaryKey().autoincrement(),
   name: varchar("name", { length: 200 }).notNull(),
+  tradeName: varchar("tradeName", { length: 200 }), // Nome Fantasia
   docNumber: varchar("docNumber", { length: 20 }),
   partnerType: mysqlEnum("partnerType", ["CUSTOMER", "SUPPLIER", "BOTH"]).notNull(),
   phone: varchar("phone", { length: 20 }),
   email: varchar("email", { length: 320 }),
   // Endereço separado em campos
-  street: varchar("street", { length: 255 }), // Logradouro (Rua + Número)
+  street: varchar("street", { length: 255 }), // Logradouro (apenas rua)
+  streetNumber: varchar("streetNumber", { length: 20 }), // Número
+  complement: varchar("complement", { length: 100 }), // Complemento
   neighborhood: varchar("neighborhood", { length: 100 }), // Bairro
   city: varchar("city", { length: 100 }), // Cidade
   state: varchar("state", { length: 2 }), // UF (SP, RJ, etc)

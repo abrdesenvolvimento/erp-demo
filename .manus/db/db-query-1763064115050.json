@@ -1,0 +1,220 @@
+{
+  "query": "\nSELECT \n  subcategory,\n  COUNT(*) as quantidade,\n  SUM(CASE WHEN active = 1 THEN 1 ELSE 0 END) as ativos,\n  SUM(CASE WHEN active = 0 THEN 1 ELSE 0 END) as inativos,\n  SUM(CASE WHEN isComposite = 1 THEN 1 ELSE 0 END) as compostos\nFROM products\nWHERE subcategory IS NOT NULL AND subcategory != ''\nGROUP BY subcategory\nORDER BY quantidade DESC\nLIMIT 50\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute \nSELECT \n  subcategory,\n  COUNT(*) as quantidade,\n  SUM(CASE WHEN active = 1 THEN 1 ELSE 0 END) as ativos,\n  SUM(CASE WHEN active = 0 THEN 1 ELSE 0 END) as inativos,\n  SUM(CASE WHEN isComposite = 1 THEN 1 ELSE 0 END) as compostos\nFROM products\nWHERE subcategory IS NOT NULL AND subcategory != ''\nGROUP BY subcategory\nORDER BY quantidade DESC\nLIMIT 50\n",
+  "rows": [
+    {
+      "subcategory": "Cerveja",
+      "quantidade": "93",
+      "ativos": "93",
+      "inativos": "0",
+      "compostos": "42"
+    },
+    {
+      "subcategory": "Refrigerante",
+      "quantidade": "46",
+      "ativos": "46",
+      "inativos": "0",
+      "compostos": "0"
+    },
+    {
+      "subcategory": "Energetico",
+      "quantidade": "39",
+      "ativos": "39",
+      "inativos": "0",
+      "compostos": "0"
+    },
+    {
+      "subcategory": "Essência",
+      "quantidade": "22",
+      "ativos": "22",
+      "inativos": "0",
+      "compostos": "0"
+    },
+    {
+      "subcategory": "Bebida Mista",
+      "quantidade": "21",
+      "ativos": "21",
+      "inativos": "0",
+      "compostos": "1"
+    },
+    {
+      "subcategory": "Vinho",
+      "quantidade": "18",
+      "ativos": "18",
+      "inativos": "0",
+      "compostos": "0"
+    },
+    {
+      "subcategory": "Cigarro",
+      "quantidade": "17",
+      "ativos": "17",
+      "inativos": "0",
+      "compostos": "0"
+    },
+    {
+      "subcategory": "Suco",
+      "quantidade": "17",
+      "ativos": "17",
+      "inativos": "0",
+      "compostos": "0"
+    },
+    {
+      "subcategory": "Chocolate",
+      "quantidade": "12",
+      "ativos": "12",
+      "inativos": "0",
+      "compostos": "0"
+    },
+    {
+      "subcategory": "Água",
+      "quantidade": "9",
+      "ativos": "9",
+      "inativos": "0",
+      "compostos": "0"
+    },
+    {
+      "subcategory": "Salgadinho",
+      "quantidade": "8",
+      "ativos": "8",
+      "inativos": "0",
+      "compostos": "0"
+    },
+    {
+      "subcategory": "Bala",
+      "quantidade": "7",
+      "ativos": "7",
+      "inativos": "0",
+      "compostos": "0"
+    },
+    {
+      "subcategory": "Seda",
+      "quantidade": "7",
+      "ativos": "7",
+      "inativos": "0",
+      "compostos": "0"
+    },
+    {
+      "subcategory": "Chiclete",
+      "quantidade": "6",
+      "ativos": "6",
+      "inativos": "0",
+      "compostos": "0"
+    },
+    {
+      "subcategory": "Gelo de Sabor",
+      "quantidade": "5",
+      "ativos": "5",
+      "inativos": "0",
+      "compostos": "0"
+    },
+    {
+      "subcategory": "Whisky",
+      "quantidade": "5",
+      "ativos": "5",
+      "inativos": "0",
+      "compostos": "0"
+    },
+    {
+      "subcategory": "Coquetel",
+      "quantidade": "4",
+      "ativos": "4",
+      "inativos": "0",
+      "compostos": "0"
+    },
+    {
+      "subcategory": "Amendoim",
+      "quantidade": "4",
+      "ativos": "4",
+      "inativos": "0",
+      "compostos": "0"
+    },
+    {
+      "subcategory": "Cachaça",
+      "quantidade": "4",
+      "ativos": "4",
+      "inativos": "0",
+      "compostos": "0"
+    },
+    {
+      "subcategory": "Licor",
+      "quantidade": "3",
+      "ativos": "3",
+      "inativos": "0",
+      "compostos": "0"
+    },
+    {
+      "subcategory": "Piteira",
+      "quantidade": "2",
+      "ativos": "2",
+      "inativos": "0",
+      "compostos": "0"
+    },
+    {
+      "subcategory": "Água de Coco",
+      "quantidade": "2",
+      "ativos": "2",
+      "inativos": "0",
+      "compostos": "0"
+    },
+    {
+      "subcategory": "Carvão",
+      "quantidade": "2",
+      "ativos": "2",
+      "inativos": "0",
+      "compostos": "0"
+    },
+    {
+      "subcategory": "Aluminio",
+      "quantidade": "2",
+      "ativos": "2",
+      "inativos": "0",
+      "compostos": "1"
+    },
+    {
+      "subcategory": "Ess",
+      "quantidade": "1",
+      "ativos": "1",
+      "inativos": "0",
+      "compostos": "0"
+    },
+    {
+      "subcategory": "Copo",
+      "quantidade": "1",
+      "ativos": "1",
+      "inativos": "0",
+      "compostos": "0"
+    },
+    {
+      "subcategory": "VInho",
+      "quantidade": "1",
+      "ativos": "1",
+      "inativos": "0",
+      "compostos": "0"
+    },
+    {
+      "subcategory": "Bitter",
+      "quantidade": "1",
+      "ativos": "1",
+      "inativos": "0",
+      "compostos": "0"
+    },
+    {
+      "subcategory": "Dose Whisky",
+      "quantidade": "1",
+      "ativos": "1",
+      "inativos": "0",
+      "compostos": "1"
+    },
+    {
+      "subcategory": "Tabaco",
+      "quantidade": "1",
+      "ativos": "1",
+      "inativos": "0",
+      "compostos": "0"
+    }
+  ],
+  "messages": [],
+  "stdout": "subcategory\tquantidade\tativos\tinativos\tcompostos\nCerveja\t93\t93\t0\t42\nRefrigerante\t46\t46\t0\t0\nEnergetico\t39\t39\t0\t0\nEssência\t22\t22\t0\t0\nBebida Mista\t21\t21\t0\t1\nVinho\t18\t18\t0\t0\nCigarro\t17\t17\t0\t0\nSuco\t17\t17\t0\t0\nChocolate\t12\t12\t0\t0\nÁgua\t9\t9\t0\t0\nSalgadinho\t8\t8\t0\t0\nBala\t7\t7\t0\t0\nSeda\t7\t7\t0\t0\nChiclete\t6\t6\t0\t0\nGelo de Sabor\t5\t5\t0\t0\nWhisky\t5\t5\t0\t0\nCoquetel\t4\t4\t0\t0\nAmendoim\t4\t4\t0\t0\nCachaça\t4\t4\t0\t0\nLicor\t3\t3\t0\t0\nPiteira\t2\t2\t0\t0\nÁgua de Coco\t2\t2\t0\t0\nCarvão\t2\t2\t0\t0\nAluminio\t2\t2\t0\t1\nEss\t1\t1\t0\t0\nCopo\t1\t1\t0\t0\nVInho\t1\t1\t0\t0\nBitter\t1\t1\t0\t0\nDose Whisky\t1\t1\t0\t1\nTabaco\t1\t1\t0\t0\n",
+  "stderr": "",
+  "execution_time_ms": 59
+}

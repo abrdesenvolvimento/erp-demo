@@ -1,0 +1,18 @@
+{
+  "query": "\nSELECT subcategory, COUNT(*) as quantidade \nFROM products \nWHERE subcategory IN ('Vinho', 'VInho', 'Essência', 'Ess')\nGROUP BY subcategory\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute \nSELECT subcategory, COUNT(*) as quantidade \nFROM products \nWHERE subcategory IN ('Vinho', 'VInho', 'Essência', 'Ess')\nGROUP BY subcategory\n",
+  "rows": [
+    {
+      "subcategory": "Vinho",
+      "quantidade": "19"
+    },
+    {
+      "subcategory": "Essência",
+      "quantidade": "23"
+    }
+  ],
+  "messages": [],
+  "stdout": "subcategory\tquantidade\nVinho\t19\nEssência\t23\n",
+  "stderr": "",
+  "execution_time_ms": 183
+}

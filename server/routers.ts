@@ -249,6 +249,7 @@ export const appRouter = router({
     create: protectedProcedure
       .input(z.object({
         name: z.string().min(1),
+        tradeName: z.string().optional(),
         docNumber: z.string().optional(),
         partnerType: z.enum(["CUSTOMER", "SUPPLIER", "BOTH"]),
         phone: z.string().optional(),
@@ -275,6 +276,7 @@ export const appRouter = router({
       .input(z.object({
         id: z.number(),
         name: z.string().min(1),
+        tradeName: z.string().optional(),
         docNumber: z.string().optional(),
         partnerType: z.enum(["CUSTOMER", "SUPPLIER", "BOTH"]),
         phone: z.string().optional(),

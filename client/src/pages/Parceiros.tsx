@@ -43,6 +43,7 @@ export default function Parceiros() {
   const [activeTab, setActiveTab] = useState("all");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingPartner, setEditingPartner] = useState<any>(null);
+  const [cepFetched, setCepFetched] = useState(false);
   
   const { data: partners, isLoading, refetch } = trpc.partners.list.useQuery({
     search: search || undefined,
@@ -105,6 +106,7 @@ export default function Parceiros() {
 
   const [formData, setFormData] = useState({
     name: "",
+    tradeName: "",
     docNumber: "",
     partnerType: "CUSTOMER" as "CUSTOMER" | "SUPPLIER" | "BOTH",
     phone: "",
@@ -126,6 +128,7 @@ export default function Parceiros() {
   const resetForm = () => {
     setFormData({
       name: "",
+      tradeName: "",
       docNumber: "",
       partnerType: "CUSTOMER",
       phone: "",
@@ -143,12 +146,14 @@ export default function Parceiros() {
       active: true,
     });
     setEditingPartner(null);
+    setCepFetched(false);
   };
 
   const handleEdit = (partner: any) => {
     setEditingPartner(partner);
     setFormData({
       name: partner.name,
+      tradeName: partner.tradeName || "",
       docNumber: partner.docNumber || "",
       partnerType: partner.partnerType,
       phone: partner.phone || "",
@@ -175,6 +180,7 @@ export default function Parceiros() {
       updatePartner.mutate({
         id: editingPartner.id,
         ...formData,
+        tradeName: formData.tradeName || undefined,
         docNumber: formData.docNumber || undefined,
         phone: formData.phone || undefined,
         email: formData.email || undefined,
@@ -188,6 +194,7 @@ export default function Parceiros() {
     } else {
       createPartner.mutate({
         ...formData,
+        tradeName: formData.tradeName || undefined,
         docNumber: formData.docNumber || undefined,
         phone: formData.phone || undefined,
         email: formData.email || undefined,
@@ -358,6 +365,19 @@ export default function Parceiros() {
                     />
                   </div>
 
+                  {/* Nome Fantasia */}
+                  <div className="grid gap-2">
+                    <Label htmlFor="tradeName">Nome Fantasia</Label>
+                    <Input
+                      id="tradeName"
+                      value={formData.tradeName}
+                      onChange={(e) =>
+                        setFormData({ ...formData, tradeName: e.target.value })
+                      }
+                      placeholder="Nome comercial (opcional)"
+                    />
+                  </div>
+
                   {/* Documento e Tipo */}
                   <div className="grid grid-cols-2 gap-4">
                     <div className="grid gap-2">
@@ -461,6 +481,7 @@ export default function Parceiros() {
                                   city: data.localidade || formData.city,
                                   state: data.uf || formData.state,
                                 });
+                                setCepFetched(true);
                                 toast.success("Endereço preenchido automaticamente!");
                                 // Foca no campo número após preencher
                                 setTimeout(() => {
@@ -477,12 +498,26 @@ export default function Parceiros() {
                         <p className="text-xs text-muted-foreground">
                           Digite o CEP e pressione Tab - os campos abaixo serão preenchidos automaticamente
                         </p>
+                        {cepFetched && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setCepFetched(false);
+                              toast.info("Campos de endereço desbloqueados para edição");
+                            }}
+                            className="mt-2"
+                          >
+                            🔓 Desbloquear Campos de Endereço
+                          </Button>
+                        )}
                       </div>
 
                       {/* Logradouro e Número */}
                       <div className="grid grid-cols-3 gap-4">
                         <div className="grid gap-2 col-span-2">
-                          <Label htmlFor="street">Logradouro</Label>
+                          <Label htmlFor="street">Logradouro {cepFetched && <span className="text-xs text-muted-foreground">(travado)</span>}</Label>
                           <Input
                             id="street"
                             value={formData.street}
@@ -490,6 +525,7 @@ export default function Parceiros() {
                               setFormData({ ...formData, street: e.target.value })
                             }
                             placeholder="Ex: Rua Américo de Campo"
+                            disabled={cepFetched}
                           />
                         </div>
                         <div className="grid gap-2">
@@ -521,7 +557,7 @@ export default function Parceiros() {
                       {/* Bairro e Cidade */}
                       <div className="grid grid-cols-2 gap-4">
                         <div className="grid gap-2">
-                          <Label htmlFor="neighborhood">Bairro</Label>
+                          <Label htmlFor="neighborhood">Bairro {cepFetched && <span className="text-xs text-muted-foreground">(travado)</span>}</Label>
                           <Input
                             id="neighborhood"
                             value={formData.neighborhood}
@@ -529,10 +565,11 @@ export default function Parceiros() {
                               setFormData({ ...formData, neighborhood: e.target.value })
                             }
                             placeholder="Ex: Centro"
+                            disabled={cepFetched}
                           />
                         </div>
                         <div className="grid gap-2">
-                          <Label htmlFor="city">Cidade</Label>
+                          <Label htmlFor="city">Cidade {cepFetched && <span className="text-xs text-muted-foreground">(travado)</span>}</Label>
                           <Input
                             id="city"
                             value={formData.city}
@@ -540,13 +577,14 @@ export default function Parceiros() {
                               setFormData({ ...formData, city: e.target.value })
                             }
                             placeholder="Ex: São Paulo"
+                            disabled={cepFetched}
                           />
                         </div>
                       </div>
 
                       {/* Estado */}
                       <div className="grid gap-2">
-                        <Label htmlFor="state">Estado (UF)</Label>
+                        <Label htmlFor="state">Estado (UF) {cepFetched && <span className="text-xs text-muted-foreground">(travado)</span>}</Label>
                         <Input
                           id="state"
                           value={formData.state}
@@ -556,6 +594,7 @@ export default function Parceiros() {
                           placeholder="Ex: SP"
                           maxLength={2}
                           className="w-32"
+                          disabled={cepFetched}
                         />
                       </div>
                     </div>
