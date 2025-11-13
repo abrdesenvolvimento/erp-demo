@@ -674,7 +674,7 @@ export const appRouter = router({
           notes: z.string().optional(),
         }))
         .mutation(async ({ input }) => {
-          await db.payExpenseInstallment(input.id, input);
+          await db.payExpenseInstallment({ installmentId: input.id, paidDate: input.paymentDate, paidAmount: input.paymentAmount, paymentMethod: input.paymentMethod, notes: input.notes });
           return { success: true };
         }),
     }),

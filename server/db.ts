@@ -281,7 +281,7 @@ export async function updateProductStockWithCompositions(id: number, quantity: n
     
     // Update stock of each component
     for (const comp of compositions) {
-      const componentQuantity = quantity * comp.quantity;
+      const componentQuantity = quantity * parseFloat(comp.quantity || "0");
       console.log('[updateProductStockWithCompositions] Updating component', comp.childProductId, 'by', componentQuantity);
       await updateProductStock(comp.childProductId, componentQuantity);
     }
@@ -483,7 +483,7 @@ export async function setProductCompositions(parentProductId: number, compositio
     const values = compositions.map(comp => ({
       parentProductId,
       childProductId: comp.childProductId,
-      quantity: comp.quantity
+      quantity: typeof comp.quantity === 'number' ? comp.quantity.toString() : comp.quantity
     }));
     console.log('[setProductCompositions] Inserting new compositions:', values);
     const result = await db.insert(productCompositions).values(values);
@@ -1177,7 +1177,7 @@ export async function payExpenseInstallment(data: {
     .where(eq(expenseInstallments.id, data.installmentId));
   
   // Atualizar status da despesa
-  await updateExpenseStatus(data.expenseId);
+  await updateExpenseStatus(installment[0].expenseId);
   
   return { success: true };
 }
@@ -1790,7 +1790,7 @@ export async function getSuppliersWithPendingPayables() {
   
   // Buscar nomes dos fornecedores e montar resultado
   const results = [];
-  for (const [supplierId, data] of supplierMap.entries()) {
+  for (const [supplierId, data] of Array.from(supplierMap.entries())) {
     const supplier = await db.select().from(partners).where(eq(partners.id, supplierId)).limit(1);
     if (supplier[0]) {
       results.push({
@@ -2007,7 +2007,7 @@ export async function registerSupplierPayment(data: {
       if (remainingAmount <= 0) break;
       
       const installmentAmount = parseFloat(installment.amount);
-      const alreadyPaid = parseFloat(installment.paidAmount || "0");
+      const alreadyPaid = parseFloat(installment.paymentAmount || "0");
       const installmentPending = installmentAmount - alreadyPaid;
       
       const paymentForThisInstallment = Math.min(remainingAmount, installmentPending);
@@ -2015,8 +2015,8 @@ export async function registerSupplierPayment(data: {
       
       await db.update(expenseInstallments)
         .set({
-          paidDate: data.paidDate,
-          paidAmount: newPaidAmount.toFixed(2),
+          paymentDate: data.paidDate,
+          paymentAmount: newPaidAmount.toFixed(2),
           paymentMethod: data.paymentMethod,
           notes: data.notes,
           status: newPaidAmount >= installmentAmount ? "PAGO" : "PENDENTE"
@@ -2056,7 +2056,7 @@ export async function registerSupplierPayment(data: {
         if (remainingAmount <= 0) break;
         
         const installmentAmount = parseFloat(installment.amount);
-        const alreadyPaid = parseFloat(installment.paidAmount || "0");
+        const alreadyPaid = parseFloat(installment.paymentAmount || "0");
         const installmentPending = installmentAmount - alreadyPaid;
         
         const paymentForThisInstallment = Math.min(remainingAmount, installmentPending);
@@ -2064,8 +2064,8 @@ export async function registerSupplierPayment(data: {
         
         await db.update(expenseInstallments)
           .set({
-            paidDate: data.paidDate,
-            paidAmount: newPaidAmount.toFixed(2),
+            paymentDate: data.paidDate,
+            paymentAmount: newPaidAmount.toFixed(2),
             paymentMethod: data.paymentMethod,
             notes: data.notes,
             status: newPaidAmount >= installmentAmount ? "PAGO" : "PENDENTE"

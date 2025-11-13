@@ -396,13 +396,13 @@ export default function ContasReceber() {
               {customers
                 .filter((c) => 
                   !searchCustomer || 
-                  c.customerName.toLowerCase().includes(searchCustomer.toLowerCase())
+                  (c.customerName || "").toLowerCase().includes(searchCustomer.toLowerCase())
                 )
                 .sort((a, b) => {
                   if (sortBy === "amount") {
                     return parseFloat(b.totalPending) - parseFloat(a.totalPending);
                   }
-                  return a.customerName.localeCompare(b.customerName);
+                  return (a.customerName || "").localeCompare(b.customerName || "");
                 })
                 .map((customer) => (
                 <div

@@ -102,7 +102,7 @@ function CompositionsSection({ productId }: { productId: number }) {
     setCompositions(compositions.filter((_, i) => i !== index));
   };
   
-  const handleStartEdit = (index: number, currentQuantity: number) => {
+  const handleStartEdit = (index: number, currentQuantity: number | string) => {
     setEditingIndex(index);
     setEditingQuantity(currentQuantity.toString());
   };
@@ -256,8 +256,8 @@ function TempCompositionsSection({
   compositions, 
   onCompositionsChange 
 }: { 
-  compositions: { childProductId: number; quantity: number; childProduct?: any }[];
-  onCompositionsChange: (compositions: { childProductId: number; quantity: number; childProduct?: any }[]) => void;
+  compositions: { childProductId: number | string; quantity: number | string; childProduct?: any }[];
+  onCompositionsChange: (compositions: { childProductId: number | string; quantity: number | string; childProduct?: any }[]) => void;
 }) {
   const [newComposition, setNewComposition] = useState({ childProductId: "", quantity: "" });
   const [productSearch, setProductSearch] = useState("");
@@ -300,7 +300,7 @@ function TempCompositionsSection({
     onCompositionsChange(compositions.filter((_, i) => i !== index));
   };
   
-  const handleStartEdit = (index: number, currentQuantity: number) => {
+  const handleStartEdit = (index: number, currentQuantity: number | string) => {
     setEditingIndex(index);
     setEditingQuantity(currentQuantity.toString());
   };
@@ -446,7 +446,7 @@ type ProductFormData = {
   isComposite: boolean;
   notes: string;
   prices: { [channelId: string]: string };
-  compositions: { childProductId: number; quantity: number }[];
+  compositions: { childProductId: number | string; quantity: number | string; childProduct?: any }[];
 };
 
 export default function Produtos() {
@@ -627,7 +627,7 @@ export default function Produtos() {
     console.log('[DEBUG] formData.compositions ANTES do processamento:', formData.compositions);
     
     const compositionsFiltered = formData.compositions
-      .filter(c => c.childProductId && (c.quantity !== null && c.quantity !== undefined && c.quantity !== ''));
+      .filter(c => c.childProductId && (c.quantity !== null && c.quantity !== undefined && c.quantity !== '' && c.quantity !== 0));
     console.log('[DEBUG] Composições após primeiro filtro:', compositionsFiltered);
     
     const compositionsMapped = compositionsFiltered.map(c => ({
