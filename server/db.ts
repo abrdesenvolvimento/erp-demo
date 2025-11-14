@@ -139,6 +139,14 @@ export async function getSubcategories(categoryId?: number) {
   return await query.orderBy(subcategories.name);
 }
 
+export async function createSubcategory(data: InsertSubcategory) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.insert(subcategories).values(data);
+  return Number((result as any).insertId);
+}
+
 // ==================== CANAIS DE VENDA ====================
 export async function getSalesChannels(activeOnly = true) {
   const db = await getDb();

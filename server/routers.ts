@@ -43,6 +43,16 @@ export const appRouter = router({
       .query(async ({ input }) => {
         return await db.getSubcategories(input?.categoryId);
       }),
+    
+    create: protectedProcedure
+      .input(z.object({
+        name: z.string().min(1),
+        categoryId: z.number(),
+      }))
+      .mutation(async ({ input }) => {
+        const id = await db.createSubcategory(input);
+        return { id, success: true };
+      }),
   }),
 
   // ==================== CANAIS DE VENDA ====================

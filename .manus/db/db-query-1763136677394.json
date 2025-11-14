@@ -1,0 +1,9 @@
+{
+  "query": "DELETE s1 FROM subcategories s1\nINNER JOIN subcategories s2 \nWHERE s1.id > s2.id AND s1.name = s2.name",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute DELETE s1 FROM subcategories s1\nINNER JOIN subcategories s2 \nWHERE s1.id > s2.id AND s1.name = s2.name",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 55
+}

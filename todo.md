@@ -155,3 +155,18 @@
   - **BACKEND:** Criado router `subcategories.list` que retorna todas as subcategorias do banco
   - **TESTE:** Produto "Água Mineral Teste 500ml" criado com sucesso, subcategoryId = 55 (Água)
   - **RESULTADO:** Sistema 100% funcional, cadastro de produtos com subcategoria funcionando perfeitamente
+
+## ✅ MELHORIAS CONCLUÍDAS - Dropdown de Subcategorias (14/11/2025)
+
+- [x] Remover subcategorias duplicadas no dropdown
+  - **CAUSA:** Script de importação executado 2 vezes
+  - **SOLUÇÃO:** Removidas 28 subcategorias duplicadas via SQL, mantendo apenas primeira ocorrência
+  - **RESULTADO:** 28 subcategorias únicas no banco
+- [x] Adicionar botão para cadastrar novas subcategorias diretamente no formulário de produtos
+  - **BACKEND:** Criado mutation `subcategories.create` e função `createSubcategory` no db.ts
+  - **FRONTEND:** Adicionado botão "Nova" ao lado do dropdown + modal controlado para cadastro
+  - **UX:** Modal fecha automaticamente após sucesso e nova subcategoria é selecionada automaticamente
+  - **TESTE:** Criadas subcategorias "Cerveja Artesanal" e "Suco Natural" com sucesso
+- [x] Implementar validação para evitar duplicatas ao criar subcategorias
+  - **SOLUÇÃO:** Schema do banco já possui constraint UNIQUE em (name, categoryId)
+  - **RESULTADO:** Banco rejeita automaticamente duplicatas com erro SQL

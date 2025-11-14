@@ -496,6 +496,20 @@ export default function Produtos() {
   const { data: channels } = trpc.salesChannels.list.useQuery();
   const utils = trpc.useUtils();
   
+  const createSubcategory = trpc.subcategories.create.useMutation({
+    onSuccess: (data) => {
+      toast.success("Subcategoria criada com sucesso!");
+      setNewSubcategoryName("");
+      setIsSubcategoryDialogOpen(false);
+      utils.subcategories.list.invalidate();
+      // Selecionar automaticamente a nova subcategoria
+      setFormData({ ...formData, subcategoryId: data.id.toString() });
+    },
+    onError: (error) => {
+      toast.error("Erro ao criar subcategoria: " + error.message);
+    },
+  });
+
   const createProduct = trpc.products.create.useMutation({
     onSuccess: () => {
       toast.success("Produto criado com sucesso!");
@@ -564,6 +578,8 @@ export default function Produtos() {
 
   const [formData, setFormData] = useState<ProductFormData>(initialFormData);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [newSubcategoryName, setNewSubcategoryName] = useState("");
+  const [isSubcategoryDialogOpen, setIsSubcategoryDialogOpen] = useState(false);
 
   const resetForm = () => {
     setIsSubmitting(false);
@@ -638,6 +654,23 @@ export default function Produtos() {
         compositions: [],
       });
     }
+  };
+
+  const handleCreateSubcategory = () => {
+    if (!newSubcategoryName.trim()) {
+      toast.error("Digite o nome da subcategoria");
+      return;
+    }
+
+    if (!formData.categoryId) {
+      toast.error("Selecione uma categoria primeiro");
+      return;
+    }
+
+    createSubcategory.mutate({
+      name: newSubcategoryName.trim(),
+      categoryId: parseInt(formData.categoryId),
+    });
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -802,7 +835,45 @@ export default function Produtos() {
                           ))}
                         </SelectContent>
                       </Select>
-                      <p className="text-xs text-muted-foreground">Selecione a subcategoria do produto</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <p className="text-xs text-muted-foreground flex-1">Selecione a subcategoria do produto</p>
+                        <Dialog open={isSubcategoryDialogOpen} onOpenChange={setIsSubcategoryDialogOpen}>
+                          <DialogTrigger asChild>
+                            <Button type="button" variant="outline" size="sm">
+                              <Plus className="h-3 w-3 mr-1" />
+                              Nova
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>Nova Subcategoria</DialogTitle>
+                              <DialogDescription>
+                                Crie uma nova subcategoria para organizar melhor seus produtos
+                              </DialogDescription>
+                            </DialogHeader>
+                            <div className="grid gap-4 py-4">
+                              <div className="grid gap-2">
+                                <Label htmlFor="new-subcategory-name">Nome da Subcategoria *</Label>
+                                <Input
+                                  id="new-subcategory-name"
+                                  placeholder="Ex: Cerveja Artesanal"
+                                  value={newSubcategoryName}
+                                  onChange={(e) => setNewSubcategoryName(e.target.value)}
+                                />
+                              </div>
+                            </div>
+                            <DialogFooter>
+                              <Button
+                                type="button"
+                                onClick={handleCreateSubcategory}
+                                disabled={!newSubcategoryName.trim()}
+                              >
+                                Criar Subcategoria
+                              </Button>
+                            </DialogFooter>
+                          </DialogContent>
+                        </Dialog>
+                      </div>
                     </div>
                   </div>
 
