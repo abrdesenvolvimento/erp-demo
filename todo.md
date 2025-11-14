@@ -54,3 +54,8 @@
 
 - [x] BUG: Vendas com saldo devedor não aparecem na tela de Contas a Receber (corrigida lógica de updateReceivableStatus para considerar parcelas PARCIAL)
 
+
+## Bug Cadastro de Produto Composto (13/11/2025 - Noite)
+
+- [x] BUG: Modal de produto composto fecha ao tentar adicionar segundo componente (adicionado type="button" ao botão)
+

@@ -239,7 +239,7 @@ function CompositionsSection({ productId }: { productId: number }) {
           className="w-20"
         />
         
-        <Button size="sm" onClick={handleAddComposition}>
+        <Button type="button" size="sm" onClick={handleAddComposition}>
           <Plus className="h-4 w-4" />
         </Button>
       </div>
@@ -422,7 +422,7 @@ function TempCompositionsSection({
           className="w-20"
         />
         
-        <Button size="sm" onClick={handleAddComposition}>
+        <Button type="button" size="sm" onClick={handleAddComposition}>
           <Plus className="h-4 w-4" />
         </Button>
       </div>
