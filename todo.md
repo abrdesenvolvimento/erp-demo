@@ -197,3 +197,12 @@
   - **TESTE 1:** Digitei "gin" (não existe) → botão "Incluir" habilitado, criada subcategoria com sucesso
   - **TESTE 2:** Digitei "cerv" (existe) → botão "Incluir" desabilitado, força seleção da lista
   - **RESULTADO:** Sistema 100% funcional, UX intuitiva e rápida
+
+## ✅ PROBLEMA RESOLVIDO - Rollback Executado (14/11/2025)
+
+- [x] Checkpoint e6765682 voltou para versão antiga com Select dropdown
+  - **CAUSA:** Git fez reset para origin/main perdendo as mudanças do frontend
+  - **SOLUÇÃO:** Executado rollback para checkpoint a7871533 (versão com Input + sugestões)
+  - **VERIFICAÇÃO:** Router subcategories e função createSubcategory já existiam no a7871533
+  - **TESTE:** Sistema 100% funcional, Input com sugestões funcionando perfeitamente
+  - **RESULTADO:** Versão correta restaurada, novo checkpoint 203f1760
