@@ -1,0 +1,78 @@
+{
+  "query": "SELECT id, name FROM products WHERE name IN ('Copo', 'Coko Morango', 'Coko Maracuja', 'Coko Melancia', 'Red Bull Tropical', 'Red Bull Melancia', 'Red Bull Morango e Pessego') OR name LIKE '%Coko%' OR name LIKE '%Red Bull%' ORDER BY name",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT id, name FROM products WHERE name IN ('Copo', 'Coko Morango', 'Coko Maracuja', 'Coko Melancia', 'Red Bull Tropical', 'Red Bull Melancia', 'Red Bull Morango e Pessego') OR name LIKE '%Coko%' OR name LIKE '%Red Bull%' ORDER BY name",
+  "rows": [
+    {
+      "id": "690004",
+      "name": "Coko Coco 200ml"
+    },
+    {
+      "id": "690003",
+      "name": "Coko Maracuja 200ml"
+    },
+    {
+      "id": "690002",
+      "name": "Coko Melancia 200ml"
+    },
+    {
+      "id": "690001",
+      "name": "Coko Morango 200ml"
+    },
+    {
+      "id": "690005",
+      "name": "Coko Uva 200ml"
+    },
+    {
+      "id": "1080001",
+      "name": "Red Bull 250ml"
+    },
+    {
+      "id": "1050006",
+      "name": "Red Bull Blueberry e Baunilha 250ml "
+    },
+    {
+      "id": "1050010",
+      "name": "Red Bull Cereja e Frutas Silvestres "
+    },
+    {
+      "id": "1050007",
+      "name": "Red Bull Frutas Vermelhas 250ml"
+    },
+    {
+      "id": "1050008",
+      "name": "Red Bull Maracujá e Melão"
+    },
+    {
+      "id": "1050004",
+      "name": "Red Bull Melancia 250ml"
+    },
+    {
+      "id": "1050002",
+      "name": "Red Bull Morango e Pêssego 250ml"
+    },
+    {
+      "id": "1050005",
+      "name": "Red Bull Nectaria 250ml"
+    },
+    {
+      "id": "1050003",
+      "name": "Red Bull Pomelo 250ml"
+    },
+    {
+      "id": "1440001",
+      "name": "Red Bull Sugar Free 250ml"
+    },
+    {
+      "id": "1050001",
+      "name": "Red Bull Tropical 250ml"
+    },
+    {
+      "id": "1050009",
+      "name": "Red Bull Zero 250ml"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\n690004\tCoko Coco 200ml\n690003\tCoko Maracuja 200ml\n690002\tCoko Melancia 200ml\n690001\tCoko Morango 200ml\n690005\tCoko Uva 200ml\n1080001\tRed Bull 250ml\n1050006\tRed Bull Blueberry e Baunilha 250ml \n1050010\tRed Bull Cereja e Frutas Silvestres \n1050007\tRed Bull Frutas Vermelhas 250ml\n1050008\tRed Bull Maracujá e Melão\n1050004\tRed Bull Melancia 250ml\n1050002\tRed Bull Morango e Pêssego 250ml\n1050005\tRed Bull Nectaria 250ml\n1050003\tRed Bull Pomelo 250ml\n1440001\tRed Bull Sugar Free 250ml\n1050001\tRed Bull Tropical 250ml\n1050009\tRed Bull Zero 250ml\n",
+  "stderr": "",
+  "execution_time_ms": 53
+}

@@ -1,0 +1,78 @@
+{
+  "query": "SELECT id, name FROM products WHERE name LIKE '%Tanqueray Dry 750ml%' OR name LIKE '%Copo Ultra%' OR name LIKE '%Coko%200ml%' OR name LIKE '%Red Bull%250ml%' ORDER BY name",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT id, name FROM products WHERE name LIKE '%Tanqueray Dry 750ml%' OR name LIKE '%Copo Ultra%' OR name LIKE '%Coko%200ml%' OR name LIKE '%Red Bull%250ml%' ORDER BY name",
+  "rows": [
+    {
+      "id": "690004",
+      "name": "Coko Coco 200ml"
+    },
+    {
+      "id": "690003",
+      "name": "Coko Maracuja 200ml"
+    },
+    {
+      "id": "690002",
+      "name": "Coko Melancia 200ml"
+    },
+    {
+      "id": "690001",
+      "name": "Coko Morango 200ml"
+    },
+    {
+      "id": "690005",
+      "name": "Coko Uva 200ml"
+    },
+    {
+      "id": "690013",
+      "name": "Copo Ultra 700ml"
+    },
+    {
+      "id": "1080001",
+      "name": "Red Bull 250ml"
+    },
+    {
+      "id": "1050006",
+      "name": "Red Bull Blueberry e Baunilha 250ml "
+    },
+    {
+      "id": "1050007",
+      "name": "Red Bull Frutas Vermelhas 250ml"
+    },
+    {
+      "id": "1050004",
+      "name": "Red Bull Melancia 250ml"
+    },
+    {
+      "id": "1050002",
+      "name": "Red Bull Morango e Pêssego 250ml"
+    },
+    {
+      "id": "1050005",
+      "name": "Red Bull Nectaria 250ml"
+    },
+    {
+      "id": "1050003",
+      "name": "Red Bull Pomelo 250ml"
+    },
+    {
+      "id": "1440001",
+      "name": "Red Bull Sugar Free 250ml"
+    },
+    {
+      "id": "1050001",
+      "name": "Red Bull Tropical 250ml"
+    },
+    {
+      "id": "1050009",
+      "name": "Red Bull Zero 250ml"
+    },
+    {
+      "id": "1950001",
+      "name": "Tanqueray Dry 750ml"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\n690004\tCoko Coco 200ml\n690003\tCoko Maracuja 200ml\n690002\tCoko Melancia 200ml\n690001\tCoko Morango 200ml\n690005\tCoko Uva 200ml\n690013\tCopo Ultra 700ml\n1080001\tRed Bull 250ml\n1050006\tRed Bull Blueberry e Baunilha 250ml \n1050007\tRed Bull Frutas Vermelhas 250ml\n1050004\tRed Bull Melancia 250ml\n1050002\tRed Bull Morango e Pêssego 250ml\n1050005\tRed Bull Nectaria 250ml\n1050003\tRed Bull Pomelo 250ml\n1440001\tRed Bull Sugar Free 250ml\n1050001\tRed Bull Tropical 250ml\n1050009\tRed Bull Zero 250ml\n1950001\tTanqueray Dry 750ml\n",
+  "stderr": "",
+  "execution_time_ms": 852
+}

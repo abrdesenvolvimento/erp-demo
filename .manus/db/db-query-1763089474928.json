@@ -1,0 +1,250 @@
+{
+  "query": "SELECT \n  p.id,\n  p.name,\n  COUNT(pc.id) as num_compositions\nFROM products p\nLEFT JOIN productCompositions pc ON p.id = pc.parentProductId\nWHERE p.isComposite = 1\nGROUP BY p.id, p.name\nORDER BY p.id",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  p.id,\n  p.name,\n  COUNT(pc.id) as num_compositions\nFROM products p\nLEFT JOIN productCompositions pc ON p.id = pc.parentProductId\nWHERE p.isComposite = 1\nGROUP BY p.id, p.name\nORDER BY p.id",
+  "rows": [
+    {
+      "id": "420001",
+      "name": "Itaipava 269ml 12 Unidades",
+      "num_compositions": "1"
+    },
+    {
+      "id": "420003",
+      "name": "Petra 350ml 12 Unidades",
+      "num_compositions": "1"
+    },
+    {
+      "id": "420005",
+      "name": "Petra 269ml 12 Unidades",
+      "num_compositions": "1"
+    },
+    {
+      "id": "420007",
+      "name": "Itaipava 350ml 12 Unidades",
+      "num_compositions": "1"
+    },
+    {
+      "id": "450002",
+      "name": "Amstel 269ml 12 Unidades",
+      "num_compositions": "1"
+    },
+    {
+      "id": "480002",
+      "name": "Amstel Ultra 269ml 12 Unidades",
+      "num_compositions": "1"
+    },
+    {
+      "id": "510002",
+      "name": "Heineken 269ml 8 Unidades",
+      "num_compositions": "1"
+    },
+    {
+      "id": "510004",
+      "name": "Heineken 250ml 6 Unidades",
+      "num_compositions": "1"
+    },
+    {
+      "id": "510006",
+      "name": "Heineken 350ml 12 Unidades",
+      "num_compositions": "1"
+    },
+    {
+      "id": "510008",
+      "name": "Heineken 330ml 6 Unidades",
+      "num_compositions": "1"
+    },
+    {
+      "id": "510011",
+      "name": "Heineken 269ml 0.0% Álcool 8 Unidades",
+      "num_compositions": "1"
+    },
+    {
+      "id": "510013",
+      "name": "Heineken 350ml 0.0% Álcool 12 Unidades",
+      "num_compositions": "1"
+    },
+    {
+      "id": "540002",
+      "name": "Coronita Extra 210ml 6 Unidades",
+      "num_compositions": "1"
+    },
+    {
+      "id": "540004",
+      "name": "Corona Extra 330ml 6 Unidades",
+      "num_compositions": "1"
+    },
+    {
+      "id": "540006",
+      "name": "Corona Cero Sunbrew 330ml 0.0% 6 Unidades",
+      "num_compositions": "1"
+    },
+    {
+      "id": "540008",
+      "name": "Corona Extra 269ml 8 Unidades",
+      "num_compositions": "1"
+    },
+    {
+      "id": "540010",
+      "name": "Corona Extra 350ml 8 Unidades",
+      "num_compositions": "1"
+    },
+    {
+      "id": "540012",
+      "name": "Corona Cero Sunbrew 350ml 0.0% 8 Unidades",
+      "num_compositions": "1"
+    },
+    {
+      "id": "540014",
+      "name": "Original 269ml 8 Unidades",
+      "num_compositions": "1"
+    },
+    {
+      "id": "540015",
+      "name": "Original 269ml 15 Unidades",
+      "num_compositions": "1"
+    },
+    {
+      "id": "540017",
+      "name": "Original 350ml 12 Unidades",
+      "num_compositions": "1"
+    },
+    {
+      "id": "540019",
+      "name": "Spaten 269ml 8 Unidades",
+      "num_compositions": "1"
+    },
+    {
+      "id": "540021",
+      "name": "Spaten 350ml 12 Unidades",
+      "num_compositions": "1"
+    },
+    {
+      "id": "540023",
+      "name": "Spaten 330ml 6 Unidades",
+      "num_compositions": "1"
+    },
+    {
+      "id": "690014",
+      "name": "Dose Chanceler",
+      "num_compositions": "5"
+    },
+    {
+      "id": "840002",
+      "name": "Brahma Duplo Malte 350ml 12 Unidades",
+      "num_compositions": "1"
+    },
+    {
+      "id": "840004",
+      "name": "Brahma Duplo Malte 269ml 15 Unidades",
+      "num_compositions": "1"
+    },
+    {
+      "id": "870002",
+      "name": "Budweiser 269ml 8 Unidades",
+      "num_compositions": "1"
+    },
+    {
+      "id": "870003",
+      "name": "Budweiser 269ml 15 Unidades",
+      "num_compositions": "1"
+    },
+    {
+      "id": "900001",
+      "name": "Budweiser 330ml 6 Unidades",
+      "num_compositions": "1"
+    },
+    {
+      "id": "930002",
+      "name": "Budweiser 350ml 0,0% Álcool 8 Unidades",
+      "num_compositions": "1"
+    },
+    {
+      "id": "930004",
+      "name": "Budweiser 330ml 0,0% Álcool 6 Unidades",
+      "num_compositions": "1"
+    },
+    {
+      "id": "960002",
+      "name": "Budweiser 350ml 12 Unidades",
+      "num_compositions": "1"
+    },
+    {
+      "id": "990002",
+      "name": "Stella Artois 330ml 6 Unidades",
+      "num_compositions": "1"
+    },
+    {
+      "id": "990004",
+      "name": "Stella Artois Pure Gold 269ml 6 Unidades",
+      "num_compositions": "1"
+    },
+    {
+      "id": "990006",
+      "name": "Stella Artois 269ml 8 Unidades",
+      "num_compositions": "1"
+    },
+    {
+      "id": "990008",
+      "name": "Stella Artois 350ml Pure Gold 8 Unidades",
+      "num_compositions": "1"
+    },
+    {
+      "id": "990010",
+      "name": "Stella Artois 330ml Pure Gold 6 Unidades",
+      "num_compositions": "1"
+    },
+    {
+      "id": "1080003",
+      "name": "Heineken 330ml 0.0% Álcool 6 Unidades",
+      "num_compositions": "1"
+    },
+    {
+      "id": "1200003",
+      "name": "Smirnoff Ice 275ml 6 Unidades",
+      "num_compositions": "1"
+    },
+    {
+      "id": "1560002",
+      "name": "Predator 50 Folhas",
+      "num_compositions": "1"
+    },
+    {
+      "id": "1650006",
+      "name": "Moema 350ml 12 Unidades",
+      "num_compositions": "1"
+    },
+    {
+      "id": "1680002",
+      "name": "Império Pilsen 269ml 12 Unidades",
+      "num_compositions": "1"
+    },
+    {
+      "id": "1680004",
+      "name": "Império Pilsen 269ml 15 Unidades",
+      "num_compositions": "1"
+    },
+    {
+      "id": "1680005",
+      "name": "Skol 269ml 15 Unidades",
+      "num_compositions": "1"
+    },
+    {
+      "id": "1950009",
+      "name": "Dose Tanqueray ",
+      "num_compositions": "1"
+    },
+    {
+      "id": "1980001",
+      "name": "Dose Tanqueray Teste",
+      "num_compositions": "3"
+    },
+    {
+      "id": "1980002",
+      "name": "Dose Jack Daniel's ",
+      "num_compositions": "5"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tnum_compositions\n420001\tItaipava 269ml 12 Unidades\t1\n420003\tPetra 350ml 12 Unidades\t1\n420005\tPetra 269ml 12 Unidades\t1\n420007\tItaipava 350ml 12 Unidades\t1\n450002\tAmstel 269ml 12 Unidades\t1\n480002\tAmstel Ultra 269ml 12 Unidades\t1\n510002\tHeineken 269ml 8 Unidades\t1\n510004\tHeineken 250ml 6 Unidades\t1\n510006\tHeineken 350ml 12 Unidades\t1\n510008\tHeineken 330ml 6 Unidades\t1\n510011\tHeineken 269ml 0.0% Álcool 8 Unidades\t1\n510013\tHeineken 350ml 0.0% Álcool 12 Unidades\t1\n540002\tCoronita Extra 210ml 6 Unidades\t1\n540004\tCorona Extra 330ml 6 Unidades\t1\n540006\tCorona Cero Sunbrew 330ml 0.0% 6 Unidades\t1\n540008\tCorona Extra 269ml 8 Unidades\t1\n540010\tCorona Extra 350ml 8 Unidades\t1\n540012\tCorona Cero Sunbrew 350ml 0.0% 8 Unidades\t1\n540014\tOriginal 269ml 8 Unidades\t1\n540015\tOriginal 269ml 15 Unidades\t1\n540017\tOriginal 350ml 12 Unidades\t1\n540019\tSpaten 269ml 8 Unidades\t1\n540021\tSpaten 350ml 12 Unidades\t1\n540023\tSpaten 330ml 6 Unidades\t1\n690014\tDose Chanceler\t5\n840002\tBrahma Duplo Malte 350ml 12 Unidades\t1\n840004\tBrahma Duplo Malte 269ml 15 Unidades\t1\n870002\tBudweiser 269ml 8 Unidades\t1\n870003\tBudweiser 269ml 15 Unidades\t1\n900001\tBudweiser 330ml 6 Unidades\t1\n930002\tBudweiser 350ml 0,0% Álcool 8 Unidades\t1\n930004\tBudweiser 330ml 0,0% Álcool 6 Unidades\t1\n960002\tBudweiser 350ml 12 Unidades\t1\n990002\tStella Artois 330ml 6 Unidades\t1\n990004\tStella Artois Pure Gold 269ml 6 Unidades\t1\n990006\tStella Artois 269ml 8 Unidades\t1\n990008\tStella Artois 350ml Pure Gold 8 Unidades\t1\n990010\tStella Artois 330ml Pure Gold 6 Unidades\t1\n1080003\tHeineken 330ml 0.0% Álcool 6 Unidades\t1\n1200003\tSmirnoff Ice 275ml 6 Unidades\t1\n1560002\tPredator 50 Folhas\t1\n1650006\tMoema 350ml 12 Unidades\t1\n1680002\tImpério Pilsen 269ml 12 Unidades\t1\n1680004\tImpério Pilsen 269ml 15 Unidades\t1\n1680005\tSkol 269ml 15 Unidades\t1\n1950009\tDose Tanqueray \t1\n1980001\tDose Tanqueray Teste\t3\n1980002\tDose Jack Daniel's \t5\n",
+  "stderr": "",
+  "execution_time_ms": 786
+}

@@ -1,0 +1,13 @@
+{
+  "query": "SELECT COUNT(*) as total FROM productCompositions WHERE parentProductId = 990003",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT COUNT(*) as total FROM productCompositions WHERE parentProductId = 990003",
+  "rows": [
+    {
+      "total": "8"
+    }
+  ],
+  "messages": [],
+  "stdout": "total\n8\n",
+  "stderr": "",
+  "execution_time_ms": 48
+}

@@ -1,0 +1,108 @@
+{
+  "query": "SELECT \n  pc.id,\n  p1.name as parent_product,\n  p2.name as child_product,\n  pc.quantity,\n  pc.createdAt\nFROM productCompositions pc\nJOIN products p1 ON pc.parentProductId = p1.id\nJOIN products p2 ON pc.childProductId = p2.id\nWHERE p1.name LIKE '%Dose%'\nORDER BY p1.name, pc.id",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  pc.id,\n  p1.name as parent_product,\n  p2.name as child_product,\n  pc.quantity,\n  pc.createdAt\nFROM productCompositions pc\nJOIN products p1 ON pc.parentProductId = p1.id\nJOIN products p2 ON pc.childProductId = p2.id\nWHERE p1.name LIKE '%Dose%'\nORDER BY p1.name, pc.id",
+  "rows": [
+    {
+      "id": "450015",
+      "parent_product": "Dose Chanceler",
+      "child_product": "Coko Coco 200ml",
+      "quantity": "0.700",
+      "createdAt": "2025-10-30 02:56:28"
+    },
+    {
+      "id": "450016",
+      "parent_product": "Dose Chanceler",
+      "child_product": "Long One 2l",
+      "quantity": "0.350",
+      "createdAt": "2025-10-30 02:56:28"
+    },
+    {
+      "id": "450017",
+      "parent_product": "Dose Chanceler",
+      "child_product": "Chanceler 1l",
+      "quantity": "0.150",
+      "createdAt": "2025-10-30 02:56:28"
+    },
+    {
+      "id": "450018",
+      "parent_product": "Dose Chanceler",
+      "child_product": "Copo Ultra 700ml",
+      "quantity": "1.000",
+      "createdAt": "2025-10-30 02:56:28"
+    },
+    {
+      "id": "450019",
+      "parent_product": "Dose Chanceler",
+      "child_product": "Coko Maracuja 200ml",
+      "quantity": "0.300",
+      "createdAt": "2025-10-30 02:56:28"
+    },
+    {
+      "id": "1020021",
+      "parent_product": "Dose Jack Daniel's ",
+      "child_product": "Jack Daniel's Nº 07 1l",
+      "quantity": "0.150",
+      "createdAt": "2025-11-14 02:57:11"
+    },
+    {
+      "id": "1020022",
+      "parent_product": "Dose Jack Daniel's ",
+      "child_product": "Coko Coco 200ml",
+      "quantity": "0.500",
+      "createdAt": "2025-11-14 02:57:11"
+    },
+    {
+      "id": "1020023",
+      "parent_product": "Dose Jack Daniel's ",
+      "child_product": "Coko Maracuja 200ml",
+      "quantity": "0.500",
+      "createdAt": "2025-11-14 02:57:11"
+    },
+    {
+      "id": "1020024",
+      "parent_product": "Dose Jack Daniel's ",
+      "child_product": "Red Bull 250ml",
+      "quantity": "1.000",
+      "createdAt": "2025-11-14 02:57:11"
+    },
+    {
+      "id": "1020025",
+      "parent_product": "Dose Jack Daniel's ",
+      "child_product": "Copo Ultra 700ml",
+      "quantity": "1.000",
+      "createdAt": "2025-11-14 02:57:11"
+    },
+    {
+      "id": "1020011",
+      "parent_product": "Dose Tanqueray ",
+      "child_product": "Tanqueray Dry 750ml",
+      "quantity": "0.150",
+      "createdAt": "2025-11-14 02:51:30"
+    },
+    {
+      "id": "1020018",
+      "parent_product": "Dose Tanqueray Teste",
+      "child_product": "Coko Maracuja 200ml",
+      "quantity": "1.000",
+      "createdAt": "2025-11-14 02:55:29"
+    },
+    {
+      "id": "1020019",
+      "parent_product": "Dose Tanqueray Teste",
+      "child_product": "Copo Ultra 700ml",
+      "quantity": "1.000",
+      "createdAt": "2025-11-14 02:55:29"
+    },
+    {
+      "id": "1020020",
+      "parent_product": "Dose Tanqueray Teste",
+      "child_product": "Tanqueray Dry 750ml",
+      "quantity": "0.150",
+      "createdAt": "2025-11-14 02:55:29"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tparent_product\tchild_product\tquantity\tcreatedAt\n450015\tDose Chanceler\tCoko Coco 200ml\t0.700\t2025-10-30 02:56:28\n450016\tDose Chanceler\tLong One 2l\t0.350\t2025-10-30 02:56:28\n450017\tDose Chanceler\tChanceler 1l\t0.150\t2025-10-30 02:56:28\n450018\tDose Chanceler\tCopo Ultra 700ml\t1.000\t2025-10-30 02:56:28\n450019\tDose Chanceler\tCoko Maracuja 200ml\t0.300\t2025-10-30 02:56:28\n1020021\tDose Jack Daniel's \tJack Daniel's Nº 07 1l\t0.150\t2025-11-14 02:57:11\n1020022\tDose Jack Daniel's \tCoko Coco 200ml\t0.500\t2025-11-14 02:57:11\n1020023\tDose Jack Daniel's \tCoko Maracuja 200ml\t0.500\t2025-11-14 02:57:11\n1020024\tDose Jack Daniel's \tRed Bull 250ml\t1.000\t2025-11-14 02:57:11\n1020025\tDose Jack Daniel's \tCopo Ultra 700ml\t1.000\t2025-11-14 02:57:11\n1020011\tDose Tanqueray \tTanqueray Dry 750ml\t0.150\t2025-11-14 02:51:30\n1020018\tDose Tanqueray Teste\tCoko Maracuja 200ml\t1.000\t2025-11-14 02:55:29\n1020019\tDose Tanqueray Teste\tCopo Ultra 700ml\t1.000\t2025-11-14 02:55:29\n1020020\tDose Tanqueray Teste\tTanqueray Dry 750ml\t0.150\t2025-11-14 02:55:29\n",
+  "stderr": "",
+  "execution_time_ms": 49
+}

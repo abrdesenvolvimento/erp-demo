@@ -59,3 +59,9 @@
 
 - [x] BUG: Modal de produto composto fecha ao tentar adicionar segundo componente (adicionado type="button" ao botão)
 
+
+## Bug Salvamento de Produto Composto (13/11/2025 - Noite)
+
+- [x] BUG: Erro ao salvar produto composto após adicionar múltiplos componentes (Dose Tanqueray) - RESOLVIDO: criação funciona
+- [x] BUG CRÍTICO: Composições de produtos compostos não salvam ao EDITAR produtos existentes - RESOLVIDO: implementado sistema de callback com key dinâmica para forçar remontagem do componente
+

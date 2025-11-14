@@ -1,0 +1,74 @@
+{
+  "query": "SELECT \n  pc.id,\n  pc.parentProductId,\n  p1.name as parentName,\n  pc.childProductId,\n  p2.name as childName,\n  pc.quantity\nFROM productCompositions pc\nJOIN products p1 ON pc.parentProductId = p1.id\nJOIN products p2 ON pc.childProductId = p2.id\nWHERE pc.parentProductId = 990003\nORDER BY pc.id",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  pc.id,\n  pc.parentProductId,\n  p1.name as parentName,\n  pc.childProductId,\n  p2.name as childName,\n  pc.quantity\nFROM productCompositions pc\nJOIN products p1 ON pc.parentProductId = p1.id\nJOIN products p2 ON pc.childProductId = p2.id\nWHERE pc.parentProductId = 990003\nORDER BY pc.id",
+  "rows": [
+    {
+      "id": "1020001",
+      "parentProductId": "990003",
+      "parentName": "Stella Artois Pure Gold 269ml",
+      "childProductId": "990001",
+      "childName": "Stella Artois 330ml",
+      "quantity": "0.150"
+    },
+    {
+      "id": "1020002",
+      "parentProductId": "990003",
+      "parentName": "Stella Artois Pure Gold 269ml",
+      "childProductId": "690013",
+      "childName": "Copo Ultra 700ml",
+      "quantity": "1.000"
+    },
+    {
+      "id": "1020003",
+      "parentProductId": "990003",
+      "parentName": "Stella Artois Pure Gold 269ml",
+      "childProductId": "690003",
+      "childName": "Coko Maracuja 200ml",
+      "quantity": "0.333"
+    },
+    {
+      "id": "1020004",
+      "parentProductId": "990003",
+      "parentName": "Stella Artois Pure Gold 269ml",
+      "childProductId": "690002",
+      "childName": "Coko Melancia 200ml",
+      "quantity": "0.333"
+    },
+    {
+      "id": "1020005",
+      "parentProductId": "990003",
+      "parentName": "Stella Artois Pure Gold 269ml",
+      "childProductId": "690001",
+      "childName": "Coko Morango 200ml",
+      "quantity": "0.334"
+    },
+    {
+      "id": "1020006",
+      "parentProductId": "990003",
+      "parentName": "Stella Artois Pure Gold 269ml",
+      "childProductId": "1050004",
+      "childName": "Red Bull Melancia 250ml",
+      "quantity": "0.333"
+    },
+    {
+      "id": "1020007",
+      "parentProductId": "990003",
+      "parentName": "Stella Artois Pure Gold 269ml",
+      "childProductId": "1050002",
+      "childName": "Red Bull Morango e Pêssego 250ml",
+      "quantity": "0.334"
+    },
+    {
+      "id": "1020008",
+      "parentProductId": "990003",
+      "parentName": "Stella Artois Pure Gold 269ml",
+      "childProductId": "1050001",
+      "childName": "Red Bull Tropical 250ml",
+      "quantity": "0.333"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tparentProductId\tparentName\tchildProductId\tchildName\tquantity\n1020001\t990003\tStella Artois Pure Gold 269ml\t990001\tStella Artois 330ml\t0.150\n1020002\t990003\tStella Artois Pure Gold 269ml\t690013\tCopo Ultra 700ml\t1.000\n1020003\t990003\tStella Artois Pure Gold 269ml\t690003\tCoko Maracuja 200ml\t0.333\n1020004\t990003\tStella Artois Pure Gold 269ml\t690002\tCoko Melancia 200ml\t0.333\n1020005\t990003\tStella Artois Pure Gold 269ml\t690001\tCoko Morango 200ml\t0.334\n1020006\t990003\tStella Artois Pure Gold 269ml\t1050004\tRed Bull Melancia 250ml\t0.333\n1020007\t990003\tStella Artois Pure Gold 269ml\t1050002\tRed Bull Morango e Pêssego 250ml\t0.334\n1020008\t990003\tStella Artois Pure Gold 269ml\t1050001\tRed Bull Tropical 250ml\t0.333\n",
+  "stderr": "",
+  "execution_time_ms": 47
+}

@@ -92,7 +92,7 @@ export const appRouter = router({
         prices: z.record(z.string(), z.string()).optional(),
         compositions: z.array(z.object({
           childProductId: z.number(),
-          quantity: z.number(),
+          quantity: z.union([z.number(), z.string()]).transform(val => typeof val === 'number' ? val : parseFloat(val)),
         })).optional(),
       }))
       .mutation(async ({ input }) => {
@@ -151,7 +151,7 @@ export const appRouter = router({
           prices: z.record(z.string(), z.string()).optional(),
           compositions: z.array(z.object({
             childProductId: z.number(),
-            quantity: z.number(),
+            quantity: z.union([z.number(), z.string()]).transform(val => typeof val === 'number' ? val : parseFloat(val)),
           })).optional(),
         }),
       }))
@@ -219,7 +219,7 @@ export const appRouter = router({
         productId: z.number(),
         compositions: z.array(z.object({
           childProductId: z.number(),
-          quantity: z.number(),
+          quantity: z.union([z.number(), z.string()]).transform(val => typeof val === 'number' ? val : parseFloat(val)),
         })),
       }))
       .mutation(async ({ input }) => {

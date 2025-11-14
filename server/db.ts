@@ -585,13 +585,27 @@ export async function getProductCompositionsWithDetails(parentProductId: number)
     id: productCompositions.id,
     childProductId: productCompositions.childProductId,
     quantity: productCompositions.quantity,
-    childProduct: products
+    childProduct: {
+      id: products.id,
+      name: products.name,
+      ean: products.ean,
+      uom: products.uom,
+      categoryId: products.categoryId,
+      subcategory: products.subcategory,
+      minStock: products.minStock,
+      currentStock: products.currentStock,
+      avgCost: products.avgCost,
+      isComposite: products.isComposite,
+      active: products.active
+    }
   })
   .from(productCompositions)
   .leftJoin(products, eq(productCompositions.childProductId, products.id))
   .where(eq(productCompositions.parentProductId, parentProductId));
   
-  console.log('[getProductCompositionsWithDetails] Returning compositions for product', parentProductId, ':', compositions);
+  console.log('[getProductCompositionsWithDetails] Query for product', parentProductId);
+  console.log('[getProductCompositionsWithDetails] Found', compositions.length, 'compositions');
+  console.log('[getProductCompositionsWithDetails] Compositions:', JSON.stringify(compositions, null, 2));
   return compositions;
 }
 

@@ -1,0 +1,66 @@
+{
+  "query": "SELECT \n  pc.id,\n  pc.childProductId,\n  pc.quantity,\n  p.id as product_id,\n  p.name as product_name\nFROM productCompositions pc\nLEFT JOIN products p ON pc.childProductId = p.id\nWHERE pc.parentProductId = 990003",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  pc.id,\n  pc.childProductId,\n  pc.quantity,\n  p.id as product_id,\n  p.name as product_name\nFROM productCompositions pc\nLEFT JOIN products p ON pc.childProductId = p.id\nWHERE pc.parentProductId = 990003",
+  "rows": [
+    {
+      "id": "1020005",
+      "childProductId": "690001",
+      "quantity": "0.334",
+      "product_id": "690001",
+      "product_name": "Coko Morango 200ml"
+    },
+    {
+      "id": "1020004",
+      "childProductId": "690002",
+      "quantity": "0.333",
+      "product_id": "690002",
+      "product_name": "Coko Melancia 200ml"
+    },
+    {
+      "id": "1020003",
+      "childProductId": "690003",
+      "quantity": "0.333",
+      "product_id": "690003",
+      "product_name": "Coko Maracuja 200ml"
+    },
+    {
+      "id": "1020002",
+      "childProductId": "690013",
+      "quantity": "1.000",
+      "product_id": "690013",
+      "product_name": "Copo Ultra 700ml"
+    },
+    {
+      "id": "1020001",
+      "childProductId": "990001",
+      "quantity": "0.150",
+      "product_id": "990001",
+      "product_name": "Stella Artois 330ml"
+    },
+    {
+      "id": "1020008",
+      "childProductId": "1050001",
+      "quantity": "0.333",
+      "product_id": "1050001",
+      "product_name": "Red Bull Tropical 250ml"
+    },
+    {
+      "id": "1020007",
+      "childProductId": "1050002",
+      "quantity": "0.334",
+      "product_id": "1050002",
+      "product_name": "Red Bull Morango e Pêssego 250ml"
+    },
+    {
+      "id": "1020006",
+      "childProductId": "1050004",
+      "quantity": "0.333",
+      "product_id": "1050004",
+      "product_name": "Red Bull Melancia 250ml"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tchildProductId\tquantity\tproduct_id\tproduct_name\n1020005\t690001\t0.334\t690001\tCoko Morango 200ml\n1020004\t690002\t0.333\t690002\tCoko Melancia 200ml\n1020003\t690003\t0.333\t690003\tCoko Maracuja 200ml\n1020002\t690013\t1.000\t690013\tCopo Ultra 700ml\n1020001\t990001\t0.150\t990001\tStella Artois 330ml\n1020008\t1050001\t0.333\t1050001\tRed Bull Tropical 250ml\n1020007\t1050002\t0.334\t1050002\tRed Bull Morango e Pêssego 250ml\n1020006\t1050004\t0.333\t1050004\tRed Bull Melancia 250ml\n",
+  "stderr": "",
+  "execution_time_ms": 52
+}

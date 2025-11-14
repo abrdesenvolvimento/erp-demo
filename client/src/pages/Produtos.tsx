@@ -38,7 +38,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { validateEAN } from "@/lib/validators";
 
 // Componente para gerenciar composições de produtos
-function CompositionsSection({ productId }: { productId: number }) {
+function CompositionsSection({ productId, refreshKey, onSaved }: { productId: number; refreshKey?: number; onSaved?: () => void }) {
   const [compositions, setCompositions] = useState<any[]>([]);
   const [newComposition, setNewComposition] = useState({ childProductId: "", quantity: "" });
   const [productSearch, setProductSearch] = useState("");
@@ -46,8 +46,16 @@ function CompositionsSection({ productId }: { productId: number }) {
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editingQuantity, setEditingQuantity] = useState("");
   
+  const utils = trpc.useUtils();
   const { data: products } = trpc.products.list.useQuery({ activeOnly: true });
-  const { data: compositionsData, refetch } = trpc.products.getCompositions.useQuery({ productId });
+  const { data: compositionsData, refetch } = trpc.products.getCompositions.useQuery(
+    { productId },
+    {
+      refetchOnMount: true,
+      refetchOnWindowFocus: false,
+      staleTime: 0, // Sempre considerar dados como stale
+    }
+  );
   
   const filteredProducts = products?.filter(p => 
     !p.isComposite && 
@@ -55,22 +63,42 @@ function CompositionsSection({ productId }: { productId: number }) {
     p.name.toLowerCase().includes(productSearch.toLowerCase())
   ) || [];
   const setCompositionsMutation = trpc.products.setCompositions.useMutation({
-    onSuccess: () => {
+    onSuccess: async () => {
+      console.log('[setCompositionsMutation] Success! Invalidating and refetching...');
       toast.success("Composições atualizadas!");
-      refetch();
+      // Invalidar cache E forçar refetch manual
+      await utils.products.getCompositions.invalidate({ productId });
+      await refetch();
+      console.log('[setCompositionsMutation] Refetch completed');
+      // Forçar atualização do custo do produto
+      await utils.products.list.invalidate();
+      // Notificar o componente pai para forçar remontagem
+      if (onSaved) {
+        console.log('[setCompositionsMutation] Calling onSaved callback');
+        onSaved();
+      }
     },
     onError: (error) => {
+      console.error('[setCompositionsMutation] Error:', error);
       toast.error("Erro ao atualizar composições: " + error.message);
     },
   });
   
   useEffect(() => {
+    console.log('[CompositionsSection] useEffect triggered');
+    console.log('[CompositionsSection] compositionsData:', compositionsData);
     if (compositionsData) {
-      setCompositions(compositionsData.map((c: any) => ({
-        childProductId: c.childProduct.id,
-        quantity: c.quantity,
-        childProduct: c.childProduct
-      })));
+      console.log('[CompositionsSection] compositionsData.length:', compositionsData.length);
+      const mapped = compositionsData.map((c: any) => {
+        console.log('[CompositionsSection] Processing composition:', c);
+        return {
+          childProductId: c.childProduct?.id,
+          quantity: c.quantity,
+          childProduct: c.childProduct
+        };
+      });
+      console.log('[CompositionsSection] Mapped compositions:', mapped);
+      setCompositions(mapped);
     }
   }, [compositionsData]);
   
@@ -456,6 +484,7 @@ export default function Produtos() {
   const [search, setSearch] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<any>(null);
+  const [compositionsKey, setCompositionsKey] = useState(0);
   
   const { data: products, isLoading, refetch } = trpc.products.list.useQuery({
     search: search || undefined,
@@ -630,10 +659,14 @@ export default function Produtos() {
       .filter(c => c.childProductId && (c.quantity !== null && c.quantity !== undefined && c.quantity !== '' && c.quantity !== 0));
     console.log('[DEBUG] Composições após primeiro filtro:', compositionsFiltered);
     
-    const compositionsMapped = compositionsFiltered.map(c => ({
-      childProductId: typeof c.childProductId === 'number' ? c.childProductId : parseInt(c.childProductId as any),
-      quantity: typeof c.quantity === 'number' ? c.quantity : parseFloat(c.quantity as any)
-    }));
+    const compositionsMapped = compositionsFiltered.map(c => {
+      const childId = typeof c.childProductId === 'number' ? c.childProductId : parseInt(String(c.childProductId));
+      const qty = typeof c.quantity === 'number' ? c.quantity : parseFloat(String(c.quantity));
+      return {
+        childProductId: childId,
+        quantity: qty
+      };
+    });
     console.log('[DEBUG] Composições após mapeamento:', compositionsMapped);
     
     const compositionsFinal = compositionsMapped.filter(c => !isNaN(c.childProductId) && !isNaN(c.quantity) && c.quantity > 0);
@@ -651,10 +684,13 @@ export default function Produtos() {
       isComposite: formData.isComposite,
       notes: formData.notes || undefined,
       prices: formData.prices,
-      compositions: compositionsFinal,
+      // IMPORTANTE: Ao editar, compositions são gerenciadas separadamente pelo CompositionsSection
+      // Ao criar, compositions vem do TempCompositionsSection via formData
+      compositions: editingProduct ? [] : compositionsFinal,
     };
     
     console.log('[DEBUG] Enviando productData:', productData);
+    console.log('[DEBUG] editingProduct:', editingProduct ? 'SIM (compositions ignoradas)' : 'NÃO (compositions incluídas)');
 
     if (editingProduct) {
       updateProduct.mutate({
@@ -897,7 +933,15 @@ export default function Produtos() {
                   {/* Composições */}
                   {formData.isComposite && (
                     editingProduct ? (
-                      <CompositionsSection productId={editingProduct.id} />
+                      <CompositionsSection 
+                        key={`compositions-${editingProduct.id}-${compositionsKey}`}
+                        productId={editingProduct.id} 
+                        refreshKey={compositionsKey}
+                        onSaved={() => {
+                          console.log('[Produtos] onSaved called, incrementing compositionsKey');
+                          setCompositionsKey(prev => prev + 1);
+                        }}
+                      />
                     ) : (
                       <TempCompositionsSection 
                         compositions={formData.compositions}
