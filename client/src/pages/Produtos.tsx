@@ -492,6 +492,7 @@ export default function Produtos() {
   });
   
   const { data: categories } = trpc.categories.list.useQuery();
+  const { data: subcategories } = trpc.subcategories.list.useQuery();
   const { data: channels } = trpc.salesChannels.list.useQuery();
   const utils = trpc.useUtils();
   
@@ -608,7 +609,7 @@ export default function Produtos() {
       setFormData({
         name: product.name || "",
         categoryId: product.categoryId?.toString() || "",
-        subcategoryId: product.subcategory || "",
+        subcategoryId: product.subcategoryId?.toString() || "",
         ean: product.ean || "",
         uom: (product.uom || "UN") as string,
         minStock: product.minStock?.toString() || "0",
@@ -625,7 +626,7 @@ export default function Produtos() {
       setFormData({
         name: product.name || "",
         categoryId: product.categoryId?.toString() || "",
-        subcategoryId: product.subcategory || "",
+        subcategoryId: product.subcategoryId?.toString() || "",
         ean: product.ean || "",
         uom: (product.uom || "UN") as string,
         minStock: product.minStock?.toString() || "0",
@@ -784,15 +785,24 @@ export default function Produtos() {
 
                     <div className="grid gap-2">
                       <Label htmlFor="subcategory">Subcategoria</Label>
-                      <Input
-                        id="subcategory"
-                        placeholder="Ex: Refrigerante, Cerveja Lager..."
+                      <Select
                         value={formData.subcategoryId}
-                        onChange={(e) =>
-                          setFormData({ ...formData, subcategoryId: e.target.value })
+                        onValueChange={(value) =>
+                          setFormData({ ...formData, subcategoryId: value })
                         }
-                      />
-                      <p className="text-xs text-muted-foreground">Campo livre para complementar a categoria</p>
+                      >
+                        <SelectTrigger id="subcategory">
+                          <SelectValue placeholder="Selecione uma subcategoria" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {subcategories?.map((sub: any) => (
+                            <SelectItem key={sub.id} value={sub.id.toString()}>
+                              {sub.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-muted-foreground">Selecione a subcategoria do produto</p>
                     </div>
                   </div>
 

@@ -146,3 +146,12 @@
   - **IMPORTAÇÃO:** 361 produtos atualizados com subcategorias corretas via CSV fornecido pelo usuário
   - **SUBCATEGORIAS CRIADAS:** 28 subcategorias criadas no banco (Cerveja, Refrigerante, Whisky, etc)
   - **RESULTADO:** Sistema 100% funcional, todos os produtos com subcategorias corretas
+
+## ✅ BUG CRÍTICO RESOLVIDO - Cadastro de Produtos (14/11/2025)
+
+- [x] Campo Subcategoria enviando texto ("Água") ao invés de ID numérico ao criar produto
+  - **CAUSA:** Formulário usava Input de texto livre ao invés de Select com IDs
+  - **SOLUÇÃO:** Substituído Input por Select que busca subcategorias via tRPC e envia ID numérico
+  - **BACKEND:** Criado router `subcategories.list` que retorna todas as subcategorias do banco
+  - **TESTE:** Produto "Água Mineral Teste 500ml" criado com sucesso, subcategoryId = 55 (Água)
+  - **RESULTADO:** Sistema 100% funcional, cadastro de produtos com subcategoria funcionando perfeitamente

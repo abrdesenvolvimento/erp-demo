@@ -36,6 +36,15 @@ export const appRouter = router({
       }),
   }),
 
+  // ==================== SUBCATEGORIAS ====================
+  subcategories: router({
+    list: protectedProcedure
+      .input(z.object({ categoryId: z.number().optional() }).optional())
+      .query(async ({ input }) => {
+        return await db.getSubcategories(input?.categoryId);
+      }),
+  }),
+
   // ==================== CANAIS DE VENDA ====================
   salesChannels: router({
     list: protectedProcedure
