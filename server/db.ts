@@ -139,11 +139,15 @@ export async function getSubcategories(categoryId?: number) {
   return await query.orderBy(subcategories.name);
 }
 
-export async function createSubcategory(data: InsertSubcategory) {
+export async function createSubcategory(data: { name: string; categoryId: number }) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
-  const result = await db.insert(subcategories).values(data);
+  const result = await db.insert(subcategories).values({
+    name: data.name,
+    categoryId: data.categoryId,
+  });
+  
   return Number((result as any).insertId);
 }
 

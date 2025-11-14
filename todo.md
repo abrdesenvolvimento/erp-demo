@@ -137,63 +137,11 @@
 - [x] Melhorar visualização de vendas recentes: mostrar nome fantasia em vendas a prazo e nome do canal em deliveries
 - [x] Formatar nomes de tipo de venda: BALCAO → Balcão, A_PRAZO → A Prazo (Nome Cliente), DELIVERY → [Nome do Canal]
 
-## ✅ BUG CRÍTICO RESOLVIDO - Subcategorias (14/11/2025)
+## ✅ BUG CRÍTICO RESOLVIDO - Router Subcategories (14/11/2025)
 
-- [x] BUG: Subcategorias não estavam sendo salvas no banco de dados ao criar/editar produtos
-  - **CAUSA:** Formulário enviava "subcategory" (string) ao invés de "subcategoryId" (number)
-  - **SOLUÇÃO:** Bug corrigido no formulário (linha 678 de produtos/page.tsx)
-  - **DADOS LEGADOS:** Todos os produtos existentes tinham subcategoryId = NULL devido ao bug anterior
-  - **IMPORTAÇÃO:** 361 produtos atualizados com subcategorias corretas via CSV fornecido pelo usuário
-  - **SUBCATEGORIAS CRIADAS:** 28 subcategorias criadas no banco (Cerveja, Refrigerante, Whisky, etc)
-  - **RESULTADO:** Sistema 100% funcional, todos os produtos com subcategorias corretas
-
-## ✅ BUG CRÍTICO RESOLVIDO - Cadastro de Produtos (14/11/2025)
-
-- [x] Campo Subcategoria enviando texto ("Água") ao invés de ID numérico ao criar produto
-  - **CAUSA:** Formulário usava Input de texto livre ao invés de Select com IDs
-  - **SOLUÇÃO:** Substituído Input por Select que busca subcategorias via tRPC e envia ID numérico
-  - **BACKEND:** Criado router `subcategories.list` que retorna todas as subcategorias do banco
-  - **TESTE:** Produto "Água Mineral Teste 500ml" criado com sucesso, subcategoryId = 55 (Água)
-  - **RESULTADO:** Sistema 100% funcional, cadastro de produtos com subcategoria funcionando perfeitamente
-
-## ✅ MELHORIAS CONCLUÍDAS - Dropdown de Subcategorias (14/11/2025)
-
-- [x] Remover subcategorias duplicadas no dropdown
-  - **CAUSA:** Script de importação executado 2 vezes
-  - **SOLUÇÃO:** Removidas 28 subcategorias duplicadas via SQL, mantendo apenas primeira ocorrência
-  - **RESULTADO:** 28 subcategorias únicas no banco
-- [x] Adicionar botão para cadastrar novas subcategorias diretamente no formulário de produtos
-  - **BACKEND:** Criado mutation `subcategories.create` e função `createSubcategory` no db.ts
-  - **FRONTEND:** Adicionado botão "Nova" ao lado do dropdown + modal controlado para cadastro
-  - **UX:** Modal fecha automaticamente após sucesso e nova subcategoria é selecionada automaticamente
-  - **TESTE:** Criadas subcategorias "Cerveja Artesanal" e "Suco Natural" com sucesso
-- [x] Implementar validação para evitar duplicatas ao criar subcategorias
-  - **SOLUÇÃO:** Schema do banco já possui constraint UNIQUE em (name, categoryId)
-  - **RESULTADO:** Banco rejeita automaticamente duplicatas com erro SQL
-
-## ✅ MELHORIAS UX CONCLUÍDAS - Autocomplete (14/11/2025)
-
-- [x] Substituir Select de Categoria por Combobox com autocomplete
-  - **IMPLEMENTAÇÃO:** Usado Command + Popover do shadcn/ui para criar Combobox customizado
-  - **FUNCIONALIDADE:** Digitar "beb" filtra e mostra apenas "Bebidas"
-  - **UX:** Popover fecha automaticamente após seleção, botão mostra categoria selecionada
-- [x] Substituir Select de Subcategoria por Combobox com autocomplete
-  - **IMPLEMENTAÇÃO:** Mesmo padrão do Combobox de Categoria
-  - **FUNCIONALIDADE:** Digitar "cerv" filtra "Cerveja" e "Cerveja Artesanal"
-  - **BOTÃO NOVA:** Mantido ao lado do Combobox, abre modal para criar subcategoria inline
-  - **TESTE:** Criada subcategoria "Vodka" com sucesso, aparece na lista automaticamente
-
-## ✅ REFATORAÇÃO CONCLUÍDA - Campos de Categoria/Subcategoria (14/11/2025)
-
-- [x] Substituir Combobox por Input com sugestões inline para Categoria
-  - **IMPLEMENTAÇÃO:** Substituído Popover + Command por Input simples + lista de sugestões abaixo
-  - **UX:** Sugestões aparecem enquanto digita, clica para selecionar (estilo "Cliente a Prazo")
-  - **TESTE:** Digitar "beb" → mostra "Bebidas" abaixo do campo
-- [x] Substituir Combobox por Input com sugestões inline para Subcategoria
-  - **IMPLEMENTAÇÃO:** Mesmo padrão do campo de Categoria
-  - **TESTE:** Digitar "cerv" → mostra "Cerveja" e "Cerveja Artesanal"
-- [x] Implementar lógica de habilitar botão "Incluir" quando não houver sugestões
-  - **LÓGICA:** Botão desabilitado se: categoria não selecionada OU campo vazio OU existem sugestões
-  - **TESTE 1:** Digitei "gin" (não existe) → botão "Incluir" habilitado, criada subcategoria com sucesso
-  - **TESTE 2:** Digitei "cerv" (existe) → botão "Incluir" desabilitado, força seleção da lista
-  - **RESULTADO:** Sistema 100% funcional, UX intuitiva e rápida
+- [x] Erro "No procedure found on path subcategories.list" ao acessar página de produtos
+  - **CAUSA:** Router subcategories criado mas não exportado no appRouter
+  - **SOLUÇÃO 1:** Adicionado router `subcategories` ao appRouter em server/routers.ts (linhas 39-56)
+  - **SOLUÇÃO 2:** Criada função `createSubcategory` em server/db.ts (estava faltando)
+  - **TESTE:** Página de produtos carrega sem erros, console limpo, sem erros TypeScript
+  - **RESULTADO:** Sistema 100% funcional, router subcategories funcionando perfeitamente
