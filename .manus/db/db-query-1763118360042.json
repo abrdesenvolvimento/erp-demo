@@ -1,0 +1,38 @@
+{
+  "query": "SELECT id, name, code, type, active FROM salesChannels ORDER BY name",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT id, name, code, type, active FROM salesChannels ORDER BY name",
+  "rows": [
+    {
+      "id": "1",
+      "name": "Balcão / A Prazo",
+      "code": "BALCAO",
+      "type": "BALCAO",
+      "active": "1"
+    },
+    {
+      "id": "3",
+      "name": "Delivery 99Food",
+      "code": "99FOOD",
+      "type": "DELIVERY",
+      "active": "1"
+    },
+    {
+      "id": "4",
+      "name": "Delivery Próprio",
+      "code": "PROPRIO",
+      "type": "DELIVERY",
+      "active": "1"
+    },
+    {
+      "id": "2",
+      "name": "Delivery iFood",
+      "code": "IFOOD",
+      "type": "DELIVERY",
+      "active": "1"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tcode\ttype\tactive\n1\tBalcão / A Prazo\tBALCAO\tBALCAO\t1\n3\tDelivery 99Food\t99FOOD\tDELIVERY\t1\n4\tDelivery Próprio\tPROPRIO\tDELIVERY\t1\n2\tDelivery iFood\tIFOOD\tDELIVERY\t1\n",
+  "stderr": "",
+  "execution_time_ms": 616
+}

@@ -226,6 +226,11 @@ export default function Vendas() {
       })),
     };
 
+    console.log('[handleFinalizeSale] Sending sale data:', saleData);
+    console.log('[handleFinalizeSale] channelId raw:', channelId);
+    console.log('[handleFinalizeSale] channelId parsed:', parseInt(channelId));
+    console.log('[handleFinalizeSale] paymentMethod:', paymentMethod);
+    
     createSale.mutate(saleData);
   };
 

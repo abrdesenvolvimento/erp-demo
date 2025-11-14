@@ -859,12 +859,16 @@ export const appRouter = router({
         sum + parseFloat(sale.finalAmount || '0'), 0
       );
       
+      // Total pendente a receber
+      const totalPendingReceivables = await db.getTotalPendingReceivables();
+      
       return {
         totalProducts,
         lowStockProducts,
         totalCustomers,
         todaySales: todaySales.length,
         todayRevenue: todayRevenue.toFixed(2),
+        totalPendingReceivables: totalPendingReceivables.toFixed(2),
         recentSales: recentSales.slice(0, 5),
       };
     }),

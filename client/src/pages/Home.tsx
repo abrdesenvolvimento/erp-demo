@@ -2,7 +2,7 @@ import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { trpc } from "@/lib/trpc";
-import { Package, Users, TrendingUp, AlertTriangle, ShoppingCart } from "lucide-react";
+import { Package, Users, TrendingUp, AlertTriangle, ShoppingCart, DollarSign } from "lucide-react";
 import { Link } from "wouter";
 
 export default function Home() {
@@ -28,7 +28,7 @@ export default function Home() {
           </p>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
           <Card className="border-t-4 border-t-chart-1">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
@@ -92,6 +92,23 @@ export default function Home() {
               </p>
             </CardContent>
           </Card>
+
+          <Card className="border-t-4 border-t-blue-500">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">
+                Saldo Pendente a Receber
+              </CardTitle>
+              <DollarSign className="h-4 w-4 text-blue-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-blue-600">
+                R$ {stats?.totalPendingReceivables || "0.00"}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Total de vendas a prazo pendentes
+              </p>
+            </CardContent>
+          </Card>
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">
@@ -116,7 +133,7 @@ export default function Home() {
                             Venda #{sale.id}
                           </p>
                           <p className="text-sm text-muted-foreground">
-                            {sale.saleType} - {new Date(sale.saleDate!).toLocaleDateString('pt-BR')}
+                            {sale.saleType} - {new Date(sale.saleDate!).toLocaleDateString('pt-BR')} às {new Date(sale.saleDate!).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                           </p>
                         </div>
                       </div>
