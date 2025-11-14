@@ -1,0 +1,42 @@
+{
+  "query": "SELECT id, name FROM categories ORDER BY name",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT id, name FROM categories ORDER BY name",
+  "rows": [
+    {
+      "id": "8",
+      "name": "Bebidas"
+    },
+    {
+      "id": "13",
+      "name": "Carvão"
+    },
+    {
+      "id": "11",
+      "name": "Cigarro"
+    },
+    {
+      "id": "9",
+      "name": "Doces / Salgadinhos e Bolachas"
+    },
+    {
+      "id": "14",
+      "name": "Gelo"
+    },
+    {
+      "id": "12",
+      "name": "Gelo de Sabor"
+    },
+    {
+      "id": "15",
+      "name": "Outros"
+    },
+    {
+      "id": "10",
+      "name": "Tabacaria"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\n8\tBebidas\n13\tCarvão\n11\tCigarro\n9\tDoces / Salgadinhos e Bolachas\n14\tGelo\n12\tGelo de Sabor\n15\tOutros\n10\tTabacaria\n",
+  "stderr": "",
+  "execution_time_ms": 51
+}

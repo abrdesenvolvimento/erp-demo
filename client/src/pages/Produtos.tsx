@@ -675,7 +675,7 @@ export default function Produtos() {
     const productData: any = {
       name: formData.name,
       categoryId: parseInt(formData.categoryId),
-      subcategory: formData.subcategoryId || undefined,
+      subcategoryId: formData.subcategoryId ? parseInt(formData.subcategoryId) : undefined,
       ean: formData.ean || undefined,
       uom: formData.uom,
       minStock: parseInt(formData.minStock),

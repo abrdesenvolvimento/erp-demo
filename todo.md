@@ -136,3 +136,13 @@
 - [x] Implementar modal de Estoque Baixo listando produtos
 - [x] Melhorar visualização de vendas recentes: mostrar nome fantasia em vendas a prazo e nome do canal em deliveries
 - [x] Formatar nomes de tipo de venda: BALCAO → Balcão, A_PRAZO → A Prazo (Nome Cliente), DELIVERY → [Nome do Canal]
+
+## ✅ BUG CRÍTICO RESOLVIDO - Subcategorias (14/11/2025)
+
+- [x] BUG: Subcategorias não estavam sendo salvas no banco de dados ao criar/editar produtos
+  - **CAUSA:** Formulário enviava "subcategory" (string) ao invés de "subcategoryId" (number)
+  - **SOLUÇÃO:** Bug corrigido no formulário (linha 678 de produtos/page.tsx)
+  - **DADOS LEGADOS:** Todos os produtos existentes tinham subcategoryId = NULL devido ao bug anterior
+  - **IMPORTAÇÃO:** 361 produtos atualizados com subcategorias corretas via CSV fornecido pelo usuário
+  - **SUBCATEGORIAS CRIADAS:** 28 subcategorias criadas no banco (Cerveja, Refrigerante, Whisky, etc)
+  - **RESULTADO:** Sistema 100% funcional, todos os produtos com subcategorias corretas
