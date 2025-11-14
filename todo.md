@@ -170,3 +170,15 @@
 - [x] Implementar validação para evitar duplicatas ao criar subcategorias
   - **SOLUÇÃO:** Schema do banco já possui constraint UNIQUE em (name, categoryId)
   - **RESULTADO:** Banco rejeita automaticamente duplicatas com erro SQL
+
+## ✅ MELHORIAS UX CONCLUÍDAS - Autocomplete (14/11/2025)
+
+- [x] Substituir Select de Categoria por Combobox com autocomplete
+  - **IMPLEMENTAÇÃO:** Usado Command + Popover do shadcn/ui para criar Combobox customizado
+  - **FUNCIONALIDADE:** Digitar "beb" filtra e mostra apenas "Bebidas"
+  - **UX:** Popover fecha automaticamente após seleção, botão mostra categoria selecionada
+- [x] Substituir Select de Subcategoria por Combobox com autocomplete
+  - **IMPLEMENTAÇÃO:** Mesmo padrão do Combobox de Categoria
+  - **FUNCIONALIDADE:** Digitar "cerv" filtra "Cerveja" e "Cerveja Artesanal"
+  - **BOTÃO NOVA:** Mantido ao lado do Combobox, abre modal para criar subcategoria inline
+  - **TESTE:** Criada subcategoria "Vodka" com sucesso, aparece na lista automaticamente

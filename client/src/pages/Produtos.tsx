@@ -29,8 +29,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { trpc } from "@/lib/trpc";
-import { Package, Plus, Search, AlertTriangle, Edit, Trash2, Check, X } from "lucide-react";
+import { Package, Plus, Search, AlertTriangle, Edit, Trash2, Check, X, ChevronsUpDown } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
@@ -580,6 +593,8 @@ export default function Produtos() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [newSubcategoryName, setNewSubcategoryName] = useState("");
   const [isSubcategoryDialogOpen, setIsSubcategoryDialogOpen] = useState(false);
+  const [categoryPopoverOpen, setCategoryPopoverOpen] = useState(false);
+  const [subcategoryPopoverOpen, setSubcategoryPopoverOpen] = useState(false);
 
   const resetForm = () => {
     setIsSubmitting(false);
@@ -797,46 +812,91 @@ export default function Produtos() {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="grid gap-2">
                       <Label htmlFor="category">Categoria *</Label>
-                      <Select
-                        value={formData.categoryId || undefined}
-                        onValueChange={(value) =>
-                          setFormData({ ...formData, categoryId: value })
-                        }
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione" />
-                        </SelectTrigger>
-                        <SelectContent position="popper" sideOffset={5}>
-                          {categories?.map((cat) => (
-                            <SelectItem key={cat.id} value={cat.id.toString()}>
-                              {cat.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <Popover open={categoryPopoverOpen} onOpenChange={setCategoryPopoverOpen}>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            role="combobox"
+                            aria-expanded={categoryPopoverOpen}
+                            className="w-full justify-between"
+                          >
+                            {formData.categoryId
+                              ? categories?.find((cat) => cat.id.toString() === formData.categoryId)?.name
+                              : "Selecione uma categoria"}
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[200px] p-0">
+                          <Command>
+                            <CommandInput placeholder="Buscar categoria..." />
+                            <CommandList>
+                              <CommandEmpty>Nenhuma categoria encontrada.</CommandEmpty>
+                              <CommandGroup>
+                                {categories?.map((cat) => (
+                                  <CommandItem
+                                    key={cat.id}
+                                    value={cat.name}
+                                    onSelect={() => {
+                                      setFormData({ ...formData, categoryId: cat.id.toString() });
+                                      setCategoryPopoverOpen(false);
+                                    }}
+                                  >
+                                    <Check
+                                      className={"mr-2 h-4 w-4 " + (formData.categoryId === cat.id.toString() ? "opacity-100" : "opacity-0")}
+                                    />
+                                    {cat.name}
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
                     </div>
 
                     <div className="grid gap-2">
                       <Label htmlFor="subcategory">Subcategoria</Label>
-                      <Select
-                        value={formData.subcategoryId}
-                        onValueChange={(value) =>
-                          setFormData({ ...formData, subcategoryId: value })
-                        }
-                      >
-                        <SelectTrigger id="subcategory">
-                          <SelectValue placeholder="Selecione uma subcategoria" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {subcategories?.map((sub: any) => (
-                            <SelectItem key={sub.id} value={sub.id.toString()}>
-                              {sub.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <div className="flex items-center gap-2 mt-1">
-                        <p className="text-xs text-muted-foreground flex-1">Selecione a subcategoria do produto</p>
+                      <div className="flex gap-2">
+                        <Popover open={subcategoryPopoverOpen} onOpenChange={setSubcategoryPopoverOpen}>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="outline"
+                              role="combobox"
+                              aria-expanded={subcategoryPopoverOpen}
+                              className="w-full justify-between"
+                            >
+                              {formData.subcategoryId
+                                ? subcategories?.find((sub: any) => sub.id.toString() === formData.subcategoryId)?.name
+                                : "Selecione uma subcategoria"}
+                              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-[250px] p-0">
+                            <Command>
+                              <CommandInput placeholder="Buscar subcategoria..." />
+                              <CommandList>
+                                <CommandEmpty>Nenhuma subcategoria encontrada.</CommandEmpty>
+                                <CommandGroup>
+                                  {subcategories?.map((sub: any) => (
+                                    <CommandItem
+                                      key={sub.id}
+                                      value={sub.name}
+                                      onSelect={() => {
+                                        setFormData({ ...formData, subcategoryId: sub.id.toString() });
+                                        setSubcategoryPopoverOpen(false);
+                                      }}
+                                    >
+                                      <Check
+                                        className={"mr-2 h-4 w-4 " + (formData.subcategoryId === sub.id.toString() ? "opacity-100" : "opacity-0")}
+                                      />
+                                      {sub.name}
+                                    </CommandItem>
+                                  ))}
+                                </CommandGroup>
+                              </CommandList>
+                            </Command>
+                          </PopoverContent>
+                        </Popover>
                         <Dialog open={isSubcategoryDialogOpen} onOpenChange={setIsSubcategoryDialogOpen}>
                           <DialogTrigger asChild>
                             <Button type="button" variant="outline" size="sm">
@@ -874,6 +934,7 @@ export default function Produtos() {
                           </DialogContent>
                         </Dialog>
                       </div>
+                      <p className="text-xs text-muted-foreground mt-1">Selecione a subcategoria do produto</p>
                     </div>
                   </div>
 
