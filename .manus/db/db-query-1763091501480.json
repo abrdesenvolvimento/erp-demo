@@ -1,0 +1,50 @@
+{
+  "query": "SELECT \n  pc.id,\n  p.name as child_name,\n  pc.quantity\nFROM productCompositions pc\nLEFT JOIN products p ON pc.childProductId = p.id\nWHERE pc.parentProductId = (SELECT id FROM products WHERE name = 'Dose Tanqueray' AND name NOT LIKE '%Teste%' LIMIT 1)\nORDER BY pc.id",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  pc.id,\n  p.name as child_name,\n  pc.quantity\nFROM productCompositions pc\nLEFT JOIN products p ON pc.childProductId = p.id\nWHERE pc.parentProductId = (SELECT id FROM products WHERE name = 'Dose Tanqueray' AND name NOT LIKE '%Teste%' LIMIT 1)\nORDER BY pc.id",
+  "rows": [
+    {
+      "id": "1080001",
+      "child_name": "Coko Maracuja 200ml",
+      "quantity": "0.333"
+    },
+    {
+      "id": "1080002",
+      "child_name": "Coko Melancia 200ml",
+      "quantity": "0.333"
+    },
+    {
+      "id": "1080003",
+      "child_name": "Coko Morango 200ml",
+      "quantity": "0.334"
+    },
+    {
+      "id": "1080004",
+      "child_name": "Copo Ultra 700ml",
+      "quantity": "1.000"
+    },
+    {
+      "id": "1080005",
+      "child_name": "Red Bull Melancia 250ml",
+      "quantity": "0.333"
+    },
+    {
+      "id": "1080006",
+      "child_name": "Red Bull Morango e Pêssego 250ml",
+      "quantity": "0.334"
+    },
+    {
+      "id": "1080007",
+      "child_name": "Red Bull Tropical 250ml",
+      "quantity": "0.333"
+    },
+    {
+      "id": "1080008",
+      "child_name": "Tanqueray Dry 750ml",
+      "quantity": "0.150"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tchild_name\tquantity\n1080001\tCoko Maracuja 200ml\t0.333\n1080002\tCoko Melancia 200ml\t0.333\n1080003\tCoko Morango 200ml\t0.334\n1080004\tCopo Ultra 700ml\t1.000\n1080005\tRed Bull Melancia 250ml\t0.333\n1080006\tRed Bull Morango e Pêssego 250ml\t0.334\n1080007\tRed Bull Tropical 250ml\t0.333\n1080008\tTanqueray Dry 750ml\t0.150\n",
+  "stderr": "",
+  "execution_time_ms": 48
+}

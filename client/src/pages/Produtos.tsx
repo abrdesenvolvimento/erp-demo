@@ -672,7 +672,7 @@ export default function Produtos() {
     const compositionsFinal = compositionsMapped.filter(c => !isNaN(c.childProductId) && !isNaN(c.quantity) && c.quantity > 0);
     console.log('[DEBUG] Composições FINAIS (após filtro de NaN):', compositionsFinal);
     
-    const productData = {
+    const productData: any = {
       name: formData.name,
       categoryId: parseInt(formData.categoryId),
       subcategory: formData.subcategoryId || undefined,
@@ -684,10 +684,13 @@ export default function Produtos() {
       isComposite: formData.isComposite,
       notes: formData.notes || undefined,
       prices: formData.prices,
-      // IMPORTANTE: Ao editar, compositions são gerenciadas separadamente pelo CompositionsSection
-      // Ao criar, compositions vem do TempCompositionsSection via formData
-      compositions: editingProduct ? [] : compositionsFinal,
     };
+    
+    // IMPORTANTE: Ao editar, compositions são gerenciadas separadamente pelo CompositionsSection
+    // Só incluir compositions ao CRIAR produto (undefined = não atualizar)
+    if (!editingProduct) {
+      productData.compositions = compositionsFinal;
+    }
     
     console.log('[DEBUG] Enviando productData:', productData);
     console.log('[DEBUG] editingProduct:', editingProduct ? 'SIM (compositions ignoradas)' : 'NÃO (compositions incluídas)');
