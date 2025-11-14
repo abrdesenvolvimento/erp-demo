@@ -182,3 +182,18 @@
   - **FUNCIONALIDADE:** Digitar "cerv" filtra "Cerveja" e "Cerveja Artesanal"
   - **BOTÃO NOVA:** Mantido ao lado do Combobox, abre modal para criar subcategoria inline
   - **TESTE:** Criada subcategoria "Vodka" com sucesso, aparece na lista automaticamente
+
+## ✅ REFATORAÇÃO CONCLUÍDA - Campos de Categoria/Subcategoria (14/11/2025)
+
+- [x] Substituir Combobox por Input com sugestões inline para Categoria
+  - **IMPLEMENTAÇÃO:** Substituído Popover + Command por Input simples + lista de sugestões abaixo
+  - **UX:** Sugestões aparecem enquanto digita, clica para selecionar (estilo "Cliente a Prazo")
+  - **TESTE:** Digitar "beb" → mostra "Bebidas" abaixo do campo
+- [x] Substituir Combobox por Input com sugestões inline para Subcategoria
+  - **IMPLEMENTAÇÃO:** Mesmo padrão do campo de Categoria
+  - **TESTE:** Digitar "cerv" → mostra "Cerveja" e "Cerveja Artesanal"
+- [x] Implementar lógica de habilitar botão "Incluir" quando não houver sugestões
+  - **LÓGICA:** Botão desabilitado se: categoria não selecionada OU campo vazio OU existem sugestões
+  - **TESTE 1:** Digitei "gin" (não existe) → botão "Incluir" habilitado, criada subcategoria com sucesso
+  - **TESTE 2:** Digitei "cerv" (existe) → botão "Incluir" desabilitado, força seleção da lista
+  - **RESULTADO:** Sistema 100% funcional, UX intuitiva e rápida

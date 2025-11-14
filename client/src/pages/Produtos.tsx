@@ -512,11 +512,12 @@ export default function Produtos() {
   const createSubcategory = trpc.subcategories.create.useMutation({
     onSuccess: (data) => {
       toast.success("Subcategoria criada com sucesso!");
-      setNewSubcategoryName("");
       setIsSubcategoryDialogOpen(false);
       utils.subcategories.list.invalidate();
       // Selecionar automaticamente a nova subcategoria
       setFormData({ ...formData, subcategoryId: data.id.toString() });
+      // Manter o nome no campo de busca
+      setShowSubcategorySuggestions(false);
     },
     onError: (error) => {
       toast.error("Erro ao criar subcategoria: " + error.message);
@@ -593,13 +594,23 @@ export default function Produtos() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [newSubcategoryName, setNewSubcategoryName] = useState("");
   const [isSubcategoryDialogOpen, setIsSubcategoryDialogOpen] = useState(false);
-  const [categoryPopoverOpen, setCategoryPopoverOpen] = useState(false);
-  const [subcategoryPopoverOpen, setSubcategoryPopoverOpen] = useState(false);
+  
+  // Estados para autocomplete de categoria
+  const [categorySearch, setCategorySearch] = useState("");
+  const [showCategorySuggestions, setShowCategorySuggestions] = useState(false);
+  
+  // Estados para autocomplete de subcategoria
+  const [subcategorySearch, setSubcategorySearch] = useState("");
+  const [showSubcategorySuggestions, setShowSubcategorySuggestions] = useState(false);
 
   const resetForm = () => {
     setIsSubmitting(false);
     setFormData(initialFormData);
     setEditingProduct(null);
+    setCategorySearch("");
+    setSubcategorySearch("");
+    setShowCategorySuggestions(false);
+    setShowSubcategorySuggestions(false);
   };
 
   const handleEdit = async (product: any) => {
@@ -651,6 +662,12 @@ export default function Produtos() {
         prices: pricesData,
         compositions: mappedCompositions,
       });
+      
+      // Popular campos de busca
+      const category = categories?.find(c => c.id.toString() === product.categoryId?.toString());
+      const subcategory = subcategories?.find((s: any) => s.id.toString() === product.subcategoryId?.toString());
+      setCategorySearch(category?.name || "");
+      setSubcategorySearch(subcategory?.name || "");
     } catch (error: any) {
       console.error("Erro ao carregar dados do produto:", error);
       // Preencher formulário mesmo com erro
@@ -672,7 +689,7 @@ export default function Produtos() {
   };
 
   const handleCreateSubcategory = () => {
-    if (!newSubcategoryName.trim()) {
+    if (!subcategorySearch.trim()) {
       toast.error("Digite o nome da subcategoria");
       return;
     }
@@ -683,7 +700,7 @@ export default function Produtos() {
     }
 
     createSubcategory.mutate({
-      name: newSubcategoryName.trim(),
+      name: subcategorySearch.trim(),
       categoryId: parseInt(formData.categoryId),
     });
   };
@@ -810,98 +827,108 @@ export default function Produtos() {
 
                   {/* Categoria e Subcategoria */}
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="grid gap-2">
+                    <div className="grid gap-2 relative">
                       <Label htmlFor="category">Categoria *</Label>
-                      <Popover open={categoryPopoverOpen} onOpenChange={setCategoryPopoverOpen}>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant="outline"
-                            role="combobox"
-                            aria-expanded={categoryPopoverOpen}
-                            className="w-full justify-between"
-                          >
-                            {formData.categoryId
-                              ? categories?.find((cat) => cat.id.toString() === formData.categoryId)?.name
-                              : "Selecione uma categoria"}
-                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-[200px] p-0">
-                          <Command>
-                            <CommandInput placeholder="Buscar categoria..." />
-                            <CommandList>
-                              <CommandEmpty>Nenhuma categoria encontrada.</CommandEmpty>
-                              <CommandGroup>
-                                {categories?.map((cat) => (
-                                  <CommandItem
-                                    key={cat.id}
-                                    value={cat.name}
-                                    onSelect={() => {
-                                      setFormData({ ...formData, categoryId: cat.id.toString() });
-                                      setCategoryPopoverOpen(false);
-                                    }}
-                                  >
-                                    <Check
-                                      className={"mr-2 h-4 w-4 " + (formData.categoryId === cat.id.toString() ? "opacity-100" : "opacity-0")}
-                                    />
-                                    {cat.name}
-                                  </CommandItem>
-                                ))}
-                              </CommandGroup>
-                            </CommandList>
-                          </Command>
-                        </PopoverContent>
-                      </Popover>
+                      <Input
+                        id="category"
+                        value={categorySearch}
+                        onChange={(e) => {
+                          setCategorySearch(e.target.value);
+                          setShowCategorySuggestions(true);
+                        }}
+                        onFocus={() => setShowCategorySuggestions(true)}
+                        placeholder="Digite para buscar ou criar categoria"
+                      />
+                      {showCategorySuggestions && categorySearch && (
+                        <div className="absolute top-full left-0 right-0 mt-1 bg-background border rounded-md shadow-lg z-50 max-h-48 overflow-y-auto">
+                          {categories
+                            ?.filter((cat) =>
+                              cat.name.toLowerCase().includes(categorySearch.toLowerCase())
+                            )
+                            .map((cat) => (
+                              <div
+                                key={cat.id}
+                                className="px-3 py-2 hover:bg-accent cursor-pointer"
+                                onClick={() => {
+                                  setFormData({ ...formData, categoryId: cat.id.toString() });
+                                  setCategorySearch(cat.name);
+                                  setShowCategorySuggestions(false);
+                                }}
+                              >
+                                {cat.name}
+                              </div>
+                            ))}
+                          {categories?.filter((cat) =>
+                            cat.name.toLowerCase().includes(categorySearch.toLowerCase())
+                          ).length === 0 && (
+                            <div className="px-3 py-2 text-sm text-muted-foreground">
+                              Nenhuma categoria encontrada
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
 
-                    <div className="grid gap-2">
+                    <div className="grid gap-2 relative">
                       <Label htmlFor="subcategory">Subcategoria</Label>
                       <div className="flex gap-2">
-                        <Popover open={subcategoryPopoverOpen} onOpenChange={setSubcategoryPopoverOpen}>
-                          <PopoverTrigger asChild>
-                            <Button
-                              variant="outline"
-                              role="combobox"
-                              aria-expanded={subcategoryPopoverOpen}
-                              className="w-full justify-between"
-                            >
-                              {formData.subcategoryId
-                                ? subcategories?.find((sub: any) => sub.id.toString() === formData.subcategoryId)?.name
-                                : "Selecione uma subcategoria"}
-                              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                            </Button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-[250px] p-0">
-                            <Command>
-                              <CommandInput placeholder="Buscar subcategoria..." />
-                              <CommandList>
-                                <CommandEmpty>Nenhuma subcategoria encontrada.</CommandEmpty>
-                                <CommandGroup>
-                                  {subcategories?.map((sub: any) => (
-                                    <CommandItem
-                                      key={sub.id}
-                                      value={sub.name}
-                                      onSelect={() => {
-                                        setFormData({ ...formData, subcategoryId: sub.id.toString() });
-                                        setSubcategoryPopoverOpen(false);
-                                      }}
-                                    >
-                                      <Check
-                                        className={"mr-2 h-4 w-4 " + (formData.subcategoryId === sub.id.toString() ? "opacity-100" : "opacity-0")}
-                                      />
-                                      {sub.name}
-                                    </CommandItem>
-                                  ))}
-                                </CommandGroup>
-                              </CommandList>
-                            </Command>
-                          </PopoverContent>
-                        </Popover>
+                        <div className="relative flex-1">
+                          <Input
+                            id="subcategory"
+                            value={subcategorySearch}
+                            onChange={(e) => {
+                              setSubcategorySearch(e.target.value);
+                              setShowSubcategorySuggestions(true);
+                            }}
+                            onFocus={() => setShowSubcategorySuggestions(true)}
+                            placeholder="Digite para buscar ou criar subcategoria"
+                            disabled={!formData.categoryId}
+                          />
+                          {showSubcategorySuggestions && subcategorySearch && formData.categoryId && (
+                            <div className="absolute top-full left-0 right-0 mt-1 bg-background border rounded-md shadow-lg z-50 max-h-48 overflow-y-auto">
+                              {subcategories
+                                ?.filter((sub: any) =>
+                                  sub.name.toLowerCase().includes(subcategorySearch.toLowerCase())
+                                )
+                                .map((sub: any) => (
+                                  <div
+                                    key={sub.id}
+                                    className="px-3 py-2 hover:bg-accent cursor-pointer"
+                                    onClick={() => {
+                                      setFormData({ ...formData, subcategoryId: sub.id.toString() });
+                                      setSubcategorySearch(sub.name);
+                                      setShowSubcategorySuggestions(false);
+                                    }}
+                                  >
+                                    {sub.name}
+                                  </div>
+                                ))}
+                              {subcategories?.filter((sub: any) =>
+                                sub.name.toLowerCase().includes(subcategorySearch.toLowerCase())
+                              ).length === 0 && (
+                                <div className="px-3 py-2 text-sm text-muted-foreground">
+                                  Nenhuma subcategoria encontrada
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
                         <Dialog open={isSubcategoryDialogOpen} onOpenChange={setIsSubcategoryDialogOpen}>
                           <DialogTrigger asChild>
-                            <Button type="button" variant="outline" size="sm">
+                            <Button 
+                              type="button" 
+                              variant="outline" 
+                              size="sm"
+                              disabled={
+                                !formData.categoryId || 
+                                !subcategorySearch.trim() ||
+                                (subcategories?.filter((sub: any) =>
+                                  sub.name.toLowerCase().includes(subcategorySearch.toLowerCase())
+                                ).length ?? 0) > 0
+                              }
+                            >
                               <Plus className="h-3 w-3 mr-1" />
-                              Nova
+                              Incluir
                             </Button>
                           </DialogTrigger>
                           <DialogContent>
@@ -917,16 +944,19 @@ export default function Produtos() {
                                 <Input
                                   id="new-subcategory-name"
                                   placeholder="Ex: Cerveja Artesanal"
-                                  value={newSubcategoryName}
-                                  onChange={(e) => setNewSubcategoryName(e.target.value)}
+                                  value={subcategorySearch}
+                                  disabled
                                 />
+                                <p className="text-sm text-muted-foreground">
+                                  Confirme a criação da subcategoria "{subcategorySearch}"
+                                </p>
                               </div>
                             </div>
                             <DialogFooter>
                               <Button
                                 type="button"
                                 onClick={handleCreateSubcategory}
-                                disabled={!newSubcategoryName.trim()}
+                                disabled={!subcategorySearch.trim()}
                               >
                                 Criar Subcategoria
                               </Button>
