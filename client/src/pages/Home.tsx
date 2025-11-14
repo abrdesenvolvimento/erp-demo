@@ -1,12 +1,15 @@
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { trpc } from "@/lib/trpc";
-import { Package, Users, TrendingUp, AlertTriangle, ShoppingCart, DollarSign } from "lucide-react";
+import { TrendingUp, AlertTriangle, ShoppingCart, DollarSign, Calendar } from "lucide-react";
 import { Link } from "wouter";
+import { useState } from "react";
 
 export default function Home() {
   const { data: stats, isLoading } = trpc.dashboard.stats.useQuery();
+  const [showLowStockModal, setShowLowStockModal] = useState(false);
 
   if (isLoading) {
     return (
@@ -18,6 +21,17 @@ export default function Home() {
     );
   }
 
+  const formatSaleType = (saleType: string, channelName: string | null, customerTradeName: string | null) => {
+    if (saleType === "BALCAO") return "Balcão";
+    if (saleType === "A_PRAZO") {
+      return customerTradeName ? `A Prazo (${customerTradeName})` : "A Prazo";
+    }
+    if (saleType === "DELIVERY") {
+      return channelName || "Delivery";
+    }
+    return saleType;
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -28,58 +42,45 @@ export default function Home() {
           </p>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
-          <Card className="border-t-4 border-t-chart-1">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <Card className="border-t-4 border-t-blue-500">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
-                Total de Produtos
+                Faturamento Mês
               </CardTitle>
-              <Package className="h-4 w-4 text-muted-foreground" />
+              <Calendar className="h-4 w-4 text-blue-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats?.totalProducts || 0}</div>
-              <p className="text-xs text-muted-foreground mt-1">
-                Produtos cadastrados
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="border-t-4 border-t-yellow-500">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Estoque Baixo
-              </CardTitle>
-              <AlertTriangle className="h-4 w-4 text-yellow-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-yellow-600">
-                {stats?.lowStockProducts || 0}
+              <div className="text-2xl font-bold text-blue-600">
+                R$ {stats?.monthRevenue || "0.00"}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                Produtos abaixo do mínimo
+                Total faturado no mês atual
               </p>
             </CardContent>
           </Card>
 
-          <Card className="border-t-4 border-t-chart-3">
+          <Card className="border-t-4 border-t-orange-500">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
-                Clientes
+                Pendente Recebimento
               </CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
+              <DollarSign className="h-4 w-4 text-orange-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats?.totalCustomers || 0}</div>
+              <div className="text-2xl font-bold text-orange-600">
+                R$ {stats?.totalPendingReceivables || "0.00"}
+              </div>
               <p className="text-xs text-muted-foreground mt-1">
-                Clientes cadastrados
+                Total em aberto de vendas a prazo
               </p>
             </CardContent>
           </Card>
 
-          <Card className="border-t-4 border-t-chart-2">
+          <Card className="border-t-4 border-t-green-500">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
-                Vendas Hoje
+                Venda Diária
               </CardTitle>
               <TrendingUp className="h-4 w-4 text-green-500" />
             </CardHeader>
@@ -88,24 +89,27 @@ export default function Home() {
                 R$ {stats?.todayRevenue || "0.00"}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                {stats?.todaySales || 0} vendas realizadas
+                Total vendido hoje
               </p>
             </CardContent>
           </Card>
 
-          <Card className="border-t-4 border-t-blue-500">
+          <Card 
+            className="border-t-4 border-t-yellow-500 cursor-pointer hover:bg-accent transition-colors"
+            onClick={() => setShowLowStockModal(true)}
+          >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
-                Saldo Pendente a Receber
+                Estoque Baixo
               </CardTitle>
-              <DollarSign className="h-4 w-4 text-blue-500" />
+              <AlertTriangle className="h-4 w-4 text-yellow-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-blue-600">
-                R$ {stats?.totalPendingReceivables || "0.00"}
+              <div className="text-2xl font-bold text-yellow-600">
+                {stats?.lowStockCount || 0}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                Total de vendas a prazo pendentes
+                Produtos abaixo do mínimo
               </p>
             </CardContent>
           </Card>
@@ -119,7 +123,7 @@ export default function Home() {
             <CardContent>
               {stats?.recentSales && stats.recentSales.length > 0 ? (
                 <div className="space-y-4">
-                  {stats.recentSales.map((sale) => (
+                  {stats.recentSales.map((sale: any) => (
                     <div
                       key={sale.id}
                       className="flex items-center justify-between border-b pb-3 last:border-0 last:pb-0"
@@ -133,7 +137,7 @@ export default function Home() {
                             Venda #{sale.id}
                           </p>
                           <p className="text-sm text-muted-foreground">
-                            {sale.saleType} - {new Date(sale.saleDate!).toLocaleDateString('pt-BR')} às {new Date(sale.saleDate!).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                            {formatSaleType(sale.saleType, sale.channelName, sale.customerTradeName)} - {new Date(sale.saleDate!).toLocaleDateString('pt-BR')} às {new Date(sale.saleDate!).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                           </p>
                         </div>
                       </div>
@@ -159,7 +163,7 @@ export default function Home() {
             </CardHeader>
             <CardContent>
               <div className="grid gap-3">
-                <Link href="/vendas/nova" className="flex items-center gap-3 p-4 rounded-lg border hover:bg-accent transition-colors">
+                <Link href="/vendas" className="flex items-center gap-3 p-4 rounded-lg border hover:bg-accent transition-colors">
                   <ShoppingCart className="h-5 w-5 text-primary" />
                   <div>
                     <p className="font-medium">Nova Venda</p>
@@ -170,7 +174,7 @@ export default function Home() {
                 </Link>
 
                 <Link href="/produtos" className="flex items-center gap-3 p-4 rounded-lg border hover:bg-accent transition-colors">
-                  <Package className="h-5 w-5 text-primary" />
+                  <TrendingUp className="h-5 w-5 text-primary" />
                   <div>
                     <p className="font-medium">Gerenciar Produtos</p>
                     <p className="text-sm text-muted-foreground">
@@ -180,7 +184,7 @@ export default function Home() {
                 </Link>
 
                 <Link href="/parceiros" className="flex items-center gap-3 p-4 rounded-lg border hover:bg-accent transition-colors">
-                  <Users className="h-5 w-5 text-primary" />
+                  <DollarSign className="h-5 w-5 text-primary" />
                   <div>
                     <p className="font-medium">Gerenciar Parceiros</p>
                     <p className="text-sm text-muted-foreground">
@@ -193,7 +197,50 @@ export default function Home() {
           </Card>
         </div>
       </div>
+
+      {/* Modal de Estoque Baixo */}
+      <Dialog open={showLowStockModal} onOpenChange={setShowLowStockModal}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Produtos com Estoque Baixo</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            {stats?.lowStockProducts && stats.lowStockProducts.length > 0 ? (
+              stats.lowStockProducts.map((product: any) => (
+                <div
+                  key={product.id}
+                  className="flex items-center justify-between p-4 border rounded-lg"
+                >
+                  <div>
+                    <p className="font-medium">{product.name}</p>
+                    <p className="text-sm text-muted-foreground">
+                      ID: {product.id}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm">
+                      <span className="font-semibold text-yellow-600">
+                        {product.currentStock || 0}
+                      </span>
+                      {" / "}
+                      <span className="text-muted-foreground">
+                        {product.minStock || 0}
+                      </span>
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Atual / Mínimo
+                    </p>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p className="text-center text-muted-foreground py-8">
+                Nenhum produto com estoque baixo
+              </p>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 }
-

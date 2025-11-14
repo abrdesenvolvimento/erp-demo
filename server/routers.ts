@@ -837,20 +837,16 @@ export const appRouter = router({
   dashboard: router({
     stats: protectedProcedure.query(async () => {
       const products = await db.getProducts({ activeOnly: false });
-      const partners = await db.getPartners({ activeOnly: false });
       const recentSales = await db.getSales({ limit: 10 });
       
-      const totalProducts = products.length;
+      // Produtos com estoque baixo
       const lowStockProducts = products.filter(p => 
         p.currentStock !== null && p.minStock !== null && p.currentStock < p.minStock
-      ).length;
+      );
       
-      const totalCustomers = partners.filter(p => 
-        p.partnerType === 'CUSTOMER' || p.partnerType === 'BOTH'
-      ).length;
-      
+      // Vendas de hoje
+      const today = new Date();
       const todaySales = recentSales.filter(s => {
-        const today = new Date();
         const saleDate = new Date(s.saleDate!);
         return saleDate.toDateString() === today.toDateString();
       });
@@ -859,17 +855,45 @@ export const appRouter = router({
         sum + parseFloat(sale.finalAmount || '0'), 0
       );
       
+      // Faturamento do mês atual
+      const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+      const monthSales = recentSales.filter(s => {
+        const saleDate = new Date(s.saleDate!);
+        return saleDate >= firstDayOfMonth;
+      });
+      
+      const monthRevenue = monthSales.reduce((sum, sale) => 
+        sum + parseFloat(sale.finalAmount || '0'), 0
+      );
+      
       // Total pendente a receber
       const totalPendingReceivables = await db.getTotalPendingReceivables();
       
+      // Buscar vendas recentes com detalhes (cliente e canal)
+      const channels = await db.getSalesChannels();
+      const recentSalesWithDetails = [];
+      for (const sale of recentSales.slice(0, 5)) {
+        const customer = sale.customerId ? await db.getPartner(sale.customerId) : null;
+        const channel = sale.channelId ? channels.find(c => c.id === sale.channelId) : null;
+        recentSalesWithDetails.push({
+          ...sale,
+          customerTradeName: customer?.tradeName || null,
+          channelName: channel?.name || null,
+        });
+      }
+      
       return {
-        totalProducts,
-        lowStockProducts,
-        totalCustomers,
-        todaySales: todaySales.length,
+        lowStockCount: lowStockProducts.length,
+        lowStockProducts: lowStockProducts.map(p => ({
+          id: p.id,
+          name: p.name,
+          currentStock: p.currentStock,
+          minStock: p.minStock,
+        })),
         todayRevenue: todayRevenue.toFixed(2),
+        monthRevenue: monthRevenue.toFixed(2),
         totalPendingReceivables: totalPendingReceivables.toFixed(2),
-        recentSales: recentSales.slice(0, 5),
+        recentSales: recentSalesWithDetails,
       };
     }),
   }),

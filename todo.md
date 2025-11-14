@@ -129,3 +129,10 @@
   - Criar script de importação com validações
   - Testar importação com amostra pequena
   - Executar importação completa
+
+## ✅ MELHORIAS DASHBOARD CONCLUÍDAS (14/11/2025)
+
+- [x] Reorganizar cards: Faturamento Mês, Pendente Recebimento, Venda Diária, Estoque Baixo (clicável)
+- [x] Implementar modal de Estoque Baixo listando produtos
+- [x] Melhorar visualização de vendas recentes: mostrar nome fantasia em vendas a prazo e nome do canal em deliveries
+- [x] Formatar nomes de tipo de venda: BALCAO → Balcão, A_PRAZO → A Prazo (Nome Cliente), DELIVERY → [Nome do Canal]
