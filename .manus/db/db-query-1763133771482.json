@@ -1,0 +1,40 @@
+{
+  "query": "SELECT \n  p.id,\n  p.name,\n  p.subcategoryId,\n  sc.name as subcategoryName\nFROM products p\nLEFT JOIN subcategories sc ON p.subcategoryId = sc.id\nWHERE p.name LIKE '%Heineken%' OR p.name LIKE '%Jack%'\nLIMIT 5",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  p.id,\n  p.name,\n  p.subcategoryId,\n  sc.name as subcategoryName\nFROM products p\nLEFT JOIN subcategories sc ON p.subcategoryId = sc.id\nWHERE p.name LIKE '%Heineken%' OR p.name LIKE '%Jack%'\nLIMIT 5",
+  "rows": [
+    {
+      "id": "510001",
+      "name": "Heineken 269ml",
+      "subcategoryId": "NULL",
+      "subcategoryName": "NULL"
+    },
+    {
+      "id": "510002",
+      "name": "Heineken 269ml 8 Unidades",
+      "subcategoryId": "NULL",
+      "subcategoryName": "NULL"
+    },
+    {
+      "id": "510003",
+      "name": "Heineken 250ml",
+      "subcategoryId": "NULL",
+      "subcategoryName": "NULL"
+    },
+    {
+      "id": "510004",
+      "name": "Heineken 250ml 6 Unidades",
+      "subcategoryId": "NULL",
+      "subcategoryName": "NULL"
+    },
+    {
+      "id": "510005",
+      "name": "Heineken 350ml",
+      "subcategoryId": "NULL",
+      "subcategoryName": "NULL"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tsubcategoryId\tsubcategoryName\n510001\tHeineken 269ml\tNULL\tNULL\n510002\tHeineken 269ml 8 Unidades\tNULL\tNULL\n510003\tHeineken 250ml\tNULL\tNULL\n510004\tHeineken 250ml 6 Unidades\tNULL\tNULL\n510005\tHeineken 350ml\tNULL\tNULL\n",
+  "stderr": "",
+  "execution_time_ms": 49
+}

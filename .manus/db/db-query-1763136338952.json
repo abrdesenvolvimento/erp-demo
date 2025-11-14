@@ -1,0 +1,16 @@
+{
+  "query": "SELECT p.id, p.name, p.subcategoryId, s.name as subcategoryName \nFROM products p \nLEFT JOIN subcategories s ON p.subcategoryId = s.id \nWHERE p.name LIKE '%Água Mineral Teste%'",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT p.id, p.name, p.subcategoryId, s.name as subcategoryName \nFROM products p \nLEFT JOIN subcategories s ON p.subcategoryId = s.id \nWHERE p.name LIKE '%Água Mineral Teste%'",
+  "rows": [
+    {
+      "id": "2010005",
+      "name": "Água Mineral Teste 500ml",
+      "subcategoryId": "27",
+      "subcategoryName": "Água"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tsubcategoryId\tsubcategoryName\n2010005\tÁgua Mineral Teste 500ml\t27\tÁgua\n",
+  "stderr": "",
+  "execution_time_ms": 52
+}
