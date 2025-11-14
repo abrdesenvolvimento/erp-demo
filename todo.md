@@ -49,3 +49,8 @@
 - [x] BUG: Cliente "Gabriel" não aparece na busca ao registrar venda (filtro modificado para aceitar CUSTOMER ou BOTH)
 - [x] MELHORIA: Restringir botão "Desbloquear Campos de Endereço" apenas para usuários admin
 
+
+## Novo Bug Identificado (13/11/2025 - Tarde)
+
+- [x] BUG: Vendas com saldo devedor não aparecem na tela de Contas a Receber (corrigida lógica de updateReceivableStatus para considerar parcelas PARCIAL)
+

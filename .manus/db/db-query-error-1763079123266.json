@@ -1,0 +1,8 @@
+{
+  "query": "SELECT s.id, s.saleDate, s.saleType, s.finalAmount, s.paymentStatus, r.id as receivableId, r.status as receivableStatus, r.totalAmount, r.receivedAmount\nFROM sales s\nLEFT JOIN receivables r ON s.id = r.saleId\nLEFT JOIN partners p ON s.customerId = p.id\nWHERE p.name LIKE '%Rian%'\nORDER BY s.saleDate DESC\nLIMIT 5",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT s.id, s.saleDate, s.saleType, s.finalAmount, s.paymentStatus, r.id as receivableId, r.status as receivableStatus, r.totalAmount, r.receivedAmount\nFROM sales s\nLEFT JOIN receivables r ON s.id = r.saleId\nLEFT JOIN partners p ON s.customerId = p.id\nWHERE p.name LIKE '%Rian%'\nORDER BY s.saleDate DESC\nLIMIT 5",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 1: Unknown column 's.paymentstatus' in 'field list'"
+  ]
+}

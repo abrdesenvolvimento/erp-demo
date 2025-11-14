@@ -1388,7 +1388,8 @@ async function updateReceivableStatus(receivableId: number) {
     if (inst.paidAmount) {
       totalReceived += parseFloat(inst.paidAmount);
     }
-    if (inst.status === "PENDENTE") {
+    // Verificar se há parcelas não quitadas (PENDENTE, PARCIAL ou VENCIDO)
+    if (inst.status === "PENDENTE" || inst.status === "PARCIAL" || inst.status === "VENCIDO") {
       hasPending = true;
       if (new Date(inst.dueDate) < today) {
         hasOverdue = true;

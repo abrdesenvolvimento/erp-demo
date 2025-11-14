@@ -1,0 +1,15 @@
+{
+  "query": "SELECT \n  p.id,\n  p.name,\n  SUM(CAST(r.totalAmount AS DECIMAL(10,2)) - CAST(r.receivedAmount AS DECIMAL(10,2))) as pendingAmount\nFROM partners p\nINNER JOIN receivables r ON p.id = r.customerId\nWHERE r.status IN ('PENDENTE', 'PARCIAL', 'VENCIDO')\n  AND p.active = 1\nGROUP BY p.id, p.name\nHAVING pendingAmount > 0\nORDER BY pendingAmount DESC\nLIMIT 10",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  p.id,\n  p.name,\n  SUM(CAST(r.totalAmount AS DECIMAL(10,2)) - CAST(r.receivedAmount AS DECIMAL(10,2))) as pendingAmount\nFROM partners p\nINNER JOIN receivables r ON p.id = r.customerId\nWHERE r.status IN ('PENDENTE', 'PARCIAL', 'VENCIDO')\n  AND p.active = 1\nGROUP BY p.id, p.name\nHAVING pendingAmount > 0\nORDER BY pendingAmount DESC\nLIMIT 10",
+  "rows": [
+    {
+      "id": "360006",
+      "name": "Rian Brito",
+      "pendingAmount": "20.00"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tpendingAmount\n360006\tRian Brito\t20.00\n",
+  "stderr": "",
+  "execution_time_ms": 50
+}

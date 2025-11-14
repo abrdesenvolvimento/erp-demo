@@ -1,0 +1,30 @@
+{
+  "query": "SELECT s.id, s.saleDate, s.saleType, s.finalAmount, r.id as receivableId, r.status as receivableStatus, r.totalAmount, r.receivedAmount\nFROM sales s\nLEFT JOIN receivables r ON s.id = r.saleId\nLEFT JOIN partners p ON s.customerId = p.id\nWHERE p.name LIKE '%Rian%'\nORDER BY s.saleDate DESC\nLIMIT 5",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT s.id, s.saleDate, s.saleType, s.finalAmount, r.id as receivableId, r.status as receivableStatus, r.totalAmount, r.receivedAmount\nFROM sales s\nLEFT JOIN receivables r ON s.id = r.saleId\nLEFT JOIN partners p ON s.customerId = p.id\nWHERE p.name LIKE '%Rian%'\nORDER BY s.saleDate DESC\nLIMIT 5",
+  "rows": [
+    {
+      "id": "1410002",
+      "saleDate": "2025-11-14 00:10:02",
+      "saleType": "A_PRAZO",
+      "finalAmount": "12.00",
+      "receivableId": "450002",
+      "receivableStatus": "QUITADO",
+      "totalAmount": "12.00",
+      "receivedAmount": "3.00"
+    },
+    {
+      "id": "1410001",
+      "saleDate": "2025-11-14 00:08:01",
+      "saleType": "A_PRAZO",
+      "finalAmount": "12.50",
+      "receivableId": "450001",
+      "receivableStatus": "QUITADO",
+      "totalAmount": "12.50",
+      "receivedAmount": "1.50"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tsaleDate\tsaleType\tfinalAmount\treceivableId\treceivableStatus\ttotalAmount\treceivedAmount\n1410002\t2025-11-14 00:10:02\tA_PRAZO\t12.00\t450002\tQUITADO\t12.00\t3.00\n1410001\t2025-11-14 00:08:01\tA_PRAZO\t12.50\t450001\tQUITADO\t12.50\t1.50\n",
+  "stderr": "",
+  "execution_time_ms": 50
+}
