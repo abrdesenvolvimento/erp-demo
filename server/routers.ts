@@ -874,6 +874,15 @@ export const appRouter = router({
         sum + parseFloat(sale.finalAmount || '0'), 0
       );
       
+      // Faturamento diário por canal
+      const todayRevenueBalcao = todaySales
+        .filter(s => s.saleType === 'BALCAO' || s.saleType === 'A_PRAZO')
+        .reduce((sum, sale) => sum + parseFloat(sale.finalAmount || '0'), 0);
+      
+      const todayRevenueDelivery = todaySales
+        .filter(s => s.saleType === 'DELIVERY')
+        .reduce((sum, sale) => sum + parseFloat(sale.finalAmount || '0'), 0);
+      
       // Faturamento do mês atual
       const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
       const monthSales = recentSales.filter(s => {
@@ -919,6 +928,8 @@ export const appRouter = router({
           minStock: p.minStock,
         })),
         todayRevenue: todayRevenue.toFixed(2),
+        todayRevenueBalcao: todayRevenueBalcao.toFixed(2),
+        todayRevenueDelivery: todayRevenueDelivery.toFixed(2),
         monthRevenue: monthRevenue.toFixed(2),
         monthRevenueBalcao: monthRevenueBalcao.toFixed(2),
         monthRevenueDelivery: monthRevenueDelivery.toFixed(2),

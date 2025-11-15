@@ -247,3 +247,19 @@
   - **SCRIPT:** update-subcategories-from-excel.mjs (reutilizável)
   - **FORMATO:** Excel com colunas "ID" e "Subcategoria Correção"
   - **FUTURO:** Mesmo processo pode ser usado para estoque, custo médio e preços
+
+## ✅ MELHORIAS CONCLUÍDAS - Cards Dashboard com Percentuais (14/11/2025)
+
+- [x] Adicionar detalhamento por canal no card "Venda Diária" (igual ao Faturamento Mês)
+  - **IMPLEMENTAÇÃO:** Mesmo layout do card Faturamento Mês
+  - **RESULTADO:** Venda Diária R$ 492,49 (Balcão/A Prazo: R$ 483,00 | Delivery: R$ 9,49)
+- [x] Adicionar percentuais em ambos os cards (Balcão/A Prazo + Delivery)
+  - **BACKEND:** Cálculo automático de percentual baseado no total
+  - **FRONTEND:** Percentual exibido ao lado do valor em cinza claro
+  - **TESTE:** Faturamento Mês (99% Balcão/A Prazo, 1% Delivery) | Venda Diária (98% Balcão/A Prazo, 2% Delivery)
+- [x] Calcular faturamento diário por canal no backend
+  - **IMPLEMENTAÇÃO:** Adicionado todayRevenueBalcao e todayRevenueDelivery no router dashboard.stats
+  - **LÓGICA:** Filtra vendas do dia por saleType (BALCAO/A_PRAZO vs DELIVERY)
+- [x] Testar visualização e validar cálculos de percentual
+  - **VALIDAÇÃO:** Percentuais somam 100%, valores corretos
+  - **UX:** Layout compacto, fácil leitura, consistente entre os dois cards

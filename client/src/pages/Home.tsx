@@ -57,11 +57,21 @@ export default function Home() {
               <div className="mt-3 space-y-1.5">
                 <div className="flex items-center justify-between text-xs">
                   <span className="text-muted-foreground">Balcão/A Prazo</span>
-                  <span className="font-medium text-blue-600">R$ {stats?.monthRevenueBalcao || "0.00"}</span>
+                  <span className="font-medium text-blue-600">
+                    R$ {stats?.monthRevenueBalcao || "0.00"}
+                    <span className="text-muted-foreground ml-1">
+                      ({stats ? Math.round((parseFloat(stats.monthRevenueBalcao) / parseFloat(stats.monthRevenue)) * 100) : 0}%)
+                    </span>
+                  </span>
                 </div>
                 <div className="flex items-center justify-between text-xs">
                   <span className="text-muted-foreground">Delivery</span>
-                  <span className="font-medium text-blue-600">R$ {stats?.monthRevenueDelivery || "0.00"}</span>
+                  <span className="font-medium text-blue-600">
+                    R$ {stats?.monthRevenueDelivery || "0.00"}
+                    <span className="text-muted-foreground ml-1">
+                      ({stats ? Math.round((parseFloat(stats.monthRevenueDelivery) / parseFloat(stats.monthRevenue)) * 100) : 0}%)
+                    </span>
+                  </span>
                 </div>
               </div>
             </CardContent>
@@ -95,9 +105,26 @@ export default function Home() {
               <div className="text-2xl font-bold text-green-600">
                 R$ {stats?.todayRevenue || "0.00"}
               </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                Total vendido hoje
-              </p>
+              <div className="mt-3 space-y-1.5">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-muted-foreground">Balcão/A Prazo</span>
+                  <span className="font-medium text-green-600">
+                    R$ {stats?.todayRevenueBalcao || "0.00"}
+                    <span className="text-muted-foreground ml-1">
+                      ({stats && parseFloat(stats.todayRevenue) > 0 ? Math.round((parseFloat(stats.todayRevenueBalcao) / parseFloat(stats.todayRevenue)) * 100) : 0}%)
+                    </span>
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-muted-foreground">Delivery</span>
+                  <span className="font-medium text-green-600">
+                    R$ {stats?.todayRevenueDelivery || "0.00"}
+                    <span className="text-muted-foreground ml-1">
+                      ({stats && parseFloat(stats.todayRevenue) > 0 ? Math.round((parseFloat(stats.todayRevenueDelivery) / parseFloat(stats.todayRevenue)) * 100) : 0}%)
+                    </span>
+                  </span>
+                </div>
+              </div>
             </CardContent>
           </Card>
 
