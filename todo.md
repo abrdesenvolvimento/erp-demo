@@ -263,3 +263,29 @@
 - [x] Testar visualização e validar cálculos de percentual
   - **VALIDAÇÃO:** Percentuais somam 100%, valores corretos
   - **UX:** Layout compacto, fácil leitura, consistente entre os dois cards
+
+
+## ✅ MELHORIAS CONCLUÍDAS (15/11/2025)
+
+- [x] Definir "Pago na plataforma" como forma de pagamento padrão em vendas Delivery
+  - **JUSTIFICATIVA:** Independente da forma de pagamento do cliente, o repasse é feito pela plataforma
+  - **IMPLEMENTAÇÃO:** useEffect que define automaticamente "Pago na Plataforma" ao selecionar tipo DELIVERY
+  - **IMPACTO:** Otimiza fluxo de trabalho, reduz campos a preencher
+  - **TESTE:** Usuário pode alterar se necessário, mas padrão já vem preenchido
+
+## 📊 FUNCIONALIDADE FUTURA - Regras de Comissão por Canal (ALTA PRIORIDADE)
+
+- [ ] Implementar sistema de cálculo de comissões e taxas por canal de delivery
+  - **OBJETIVO:** Calcular rentabilidade real considerando custos de cada plataforma
+  - **CANAIS AFETADOS:** iFood, 99Food, Aiqfome
+  - **EXEMPLO iFood:**
+    - % de comissão sobre vendas (ex: 12% a 27% dependendo do plano)
+    - % referente ao repasse (ex: taxa de processamento)
+    - Valor fixo mensal (ex: R$ 130,00 de mensalidade)
+  - **FUNCIONALIDADES NECESSÁRIAS:**
+    - [ ] Cadastro de regras por canal (% comissão, % repasse, valor fixo)
+    - [ ] Cálculo automático de custo por venda delivery
+    - [ ] Relatório de rentabilidade real por canal
+    - [ ] Dashboard com margem líquida (descontando comissões)
+  - **IMPACTO:** Essencial para análise financeira precisa e decisões estratégicas
+  - **PRIORIDADE:** Alta (após estabilização do sistema com dados reais)

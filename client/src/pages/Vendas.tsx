@@ -246,6 +246,13 @@ export default function Vendas() {
     }
   }, [saleType, channels]);
 
+  // Auto-select "Pago na Plataforma" for DELIVERY
+  useEffect(() => {
+    if (saleType === "DELIVERY") {
+      setPaymentMethod("Pago na Plataforma");
+    }
+  }, [saleType]);
+
   const filteredChannels = channels.filter((ch: any) => {
     if (saleType === "DELIVERY") {
       return ch.type === "DELIVERY" || 
