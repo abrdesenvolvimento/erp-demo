@@ -885,6 +885,15 @@ export const appRouter = router({
         sum + parseFloat(sale.finalAmount || '0'), 0
       );
       
+      // Faturamento por canal
+      const monthRevenueBalcao = monthSales
+        .filter(s => s.saleType === 'BALCAO' || s.saleType === 'A_PRAZO')
+        .reduce((sum, sale) => sum + parseFloat(sale.finalAmount || '0'), 0);
+      
+      const monthRevenueDelivery = monthSales
+        .filter(s => s.saleType === 'DELIVERY')
+        .reduce((sum, sale) => sum + parseFloat(sale.finalAmount || '0'), 0);
+      
       // Total pendente a receber
       const totalPendingReceivables = await db.getTotalPendingReceivables();
       
@@ -911,6 +920,8 @@ export const appRouter = router({
         })),
         todayRevenue: todayRevenue.toFixed(2),
         monthRevenue: monthRevenue.toFixed(2),
+        monthRevenueBalcao: monthRevenueBalcao.toFixed(2),
+        monthRevenueDelivery: monthRevenueDelivery.toFixed(2),
         totalPendingReceivables: totalPendingReceivables.toFixed(2),
         recentSales: recentSalesWithDetails,
       };

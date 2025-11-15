@@ -1,0 +1,8 @@
+{
+  "query": "SELECT \n  c.name as categoria,\n  COUNT(p.id) as total_produtos,\n  SUM(p.currentStock) as estoque_total,\n  COUNT(CASE WHEN p.currentStock <= p.minimumStock THEN 1 END) as produtos_estoque_baixo\nFROM products p\nLEFT JOIN categories c ON p.categoryId = c.id\nGROUP BY c.id, c.name\nORDER BY total_produtos DESC",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  c.name as categoria,\n  COUNT(p.id) as total_produtos,\n  SUM(p.currentStock) as estoque_total,\n  COUNT(CASE WHEN p.currentStock <= p.minimumStock THEN 1 END) as produtos_estoque_baixo\nFROM products p\nLEFT JOIN categories c ON p.categoryId = c.id\nGROUP BY c.id, c.name\nORDER BY total_produtos DESC",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 1: Unknown column 'p.minimumstock' in 'group statement'"
+  ]
+}

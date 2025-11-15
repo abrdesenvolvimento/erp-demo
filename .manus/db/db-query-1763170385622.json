@@ -1,0 +1,50 @@
+{
+  "query": "SELECT \n  c.name as categoria,\n  COUNT(p.id) as total_produtos,\n  SUM(p.currentStock) as estoque_total\nFROM products p\nLEFT JOIN categories c ON p.categoryId = c.id\nGROUP BY c.id, c.name\nORDER BY total_produtos DESC",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  c.name as categoria,\n  COUNT(p.id) as total_produtos,\n  SUM(p.currentStock) as estoque_total\nFROM products p\nLEFT JOIN categories c ON p.categoryId = c.id\nGROUP BY c.id, c.name\nORDER BY total_produtos DESC",
+  "rows": [
+    {
+      "categoria": "Bebidas",
+      "total_produtos": "426",
+      "estoque_total": "3778"
+    },
+    {
+      "categoria": "Doces / Salgadinhos e Bolachas",
+      "total_produtos": "66",
+      "estoque_total": "2288"
+    },
+    {
+      "categoria": "Tabacaria",
+      "total_produtos": "48",
+      "estoque_total": "2498"
+    },
+    {
+      "categoria": "Cigarro",
+      "total_produtos": "17",
+      "estoque_total": "498"
+    },
+    {
+      "categoria": "Outros",
+      "total_produtos": "13",
+      "estoque_total": "1634"
+    },
+    {
+      "categoria": "Gelo de Sabor",
+      "total_produtos": "5",
+      "estoque_total": "189"
+    },
+    {
+      "categoria": "Carvão",
+      "total_produtos": "4",
+      "estoque_total": "39"
+    },
+    {
+      "categoria": "Gelo",
+      "total_produtos": "3",
+      "estoque_total": "50"
+    }
+  ],
+  "messages": [],
+  "stdout": "categoria\ttotal_produtos\testoque_total\nBebidas\t426\t3778\nDoces / Salgadinhos e Bolachas\t66\t2288\nTabacaria\t48\t2498\nCigarro\t17\t498\nOutros\t13\t1634\nGelo de Sabor\t5\t189\nCarvão\t4\t39\nGelo\t3\t50\n",
+  "stderr": "",
+  "execution_time_ms": 64
+}

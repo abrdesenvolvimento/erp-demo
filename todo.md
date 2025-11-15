@@ -206,3 +206,44 @@
   - **VERIFICAÇÃO:** Router subcategories e função createSubcategory já existiam no a7871533
   - **TESTE:** Sistema 100% funcional, Input com sugestões funcionando perfeitamente
   - **RESULTADO:** Versão correta restaurada, novo checkpoint 203f1760
+
+## ✅ COMPORTAMENTO NORMAL - Hibernação do Sandbox (14/11/2025)
+
+- [x] Servidor de desenvolvimento "cai" após alguns minutos de inatividade
+  - **CAUSA:** Não é um bug! É comportamento normal de hibernação do sandbox para economizar recursos
+  - **SINTOMA:** Erro "Unexpected token '<'" ao acessar após hibernação
+  - **SOLUÇÃO:** Sandbox acorda automaticamente ao acessar novamente, ou usar webdev_restart_server
+  - **VERIFICAÇÃO:** Servidor rodando normalmente (PID 50760), Dashboard funcionando
+  - **RESULTADO:** Comportamento esperado, não requer correção
+
+## ✅ TAREFA CONCLUÍDA - Levantamento de Inventário (14/11/2025)
+
+- [x] Fazer levantamento de produtos cadastrados
+  - **TOTAL:** 582 produtos cadastrados (aumento de 221 produtos, +61.2%)
+  - **ESTOQUE:** 10.974 unidades totais
+  - **ESTOQUE ZERADO:** Apenas 8 produtos
+- [x] Gerar CSV atualizado para base de inventário
+  - **ARQUIVO:** produtos_atualizados.csv
+  - **REGISTROS:** 582 produtos com todas as informações (categoria, subcategoria, estoque, preços)
+- [x] Criar relatório com estatísticas dos produtos
+  - **ARQUIVO:** relatorio-inventario.md
+  - **CONTEÚDO:** Estatísticas por categoria, top 10 subcategorias, crescimento
+
+## ✅ TAREFAS CONCLUÍDAS - Correções e Melhorias Dashboard (14/11/2025)
+
+- [x] Processar arquivo Excel de correção de subcategorias
+  - **ARQUIVO:** CorreçãodeSubcategoria.xlsx (582 registros)
+  - **RESULTADO:** 582 produtos atualizados com 100% de sucesso
+  - **SUBCATEGORIAS CRIADAS:** Cerveja Sem Alcool, Outros, Rosh, Palheiro
+- [x] Atualizar subcategorias dos produtos no banco de dados
+  - **MÉTODO:** Script Node.js com biblioteca xlsx para ler Excel
+  - **PROCESSO:** Mapeamento automático nome → ID, atualização em lote
+  - **VALIDAÇÃO:** Subcategorias não encontradas são criadas automaticamente
+- [x] Melhorar card "Faturamento Mês" com detalhamento por canal (Balcão/A Prazo + Delivery)
+  - **BACKEND:** Adicionado cálculo separado de monthRevenueBalcao e monthRevenueDelivery
+  - **FRONTEND:** Card mostra total + detalhamento em linhas compactas
+  - **TESTE:** Faturamento Mês R$ 754,49 (Balcão/A Prazo: R$ 745,00 | Delivery: R$ 9,49)
+- [x] Documentar processo de correção em massa via Excel para futuras atualizações
+  - **SCRIPT:** update-subcategories-from-excel.mjs (reutilizável)
+  - **FORMATO:** Excel com colunas "ID" e "Subcategoria Correção"
+  - **FUTURO:** Mesmo processo pode ser usado para estoque, custo médio e preços

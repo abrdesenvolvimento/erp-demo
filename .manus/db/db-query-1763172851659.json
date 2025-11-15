@@ -1,0 +1,9 @@
+{
+  "query": "INSERT INTO subcategories (name, categoryId) VALUES \n('Cerveja Sem Alcool', 1),\n('Outros', 1),\n('Rosh', 7),\n('Palheiro', 7)",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute INSERT INTO subcategories (name, categoryId) VALUES \n('Cerveja Sem Alcool', 1),\n('Outros', 1),\n('Rosh', 7),\n('Palheiro', 7)",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 78
+}

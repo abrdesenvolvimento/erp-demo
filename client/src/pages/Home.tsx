@@ -54,9 +54,16 @@ export default function Home() {
               <div className="text-2xl font-bold text-blue-600">
                 R$ {stats?.monthRevenue || "0.00"}
               </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                Total faturado no mês atual
-              </p>
+              <div className="mt-3 space-y-1.5">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-muted-foreground">Balcão/A Prazo</span>
+                  <span className="font-medium text-blue-600">R$ {stats?.monthRevenueBalcao || "0.00"}</span>
+                </div>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-muted-foreground">Delivery</span>
+                  <span className="font-medium text-blue-600">R$ {stats?.monthRevenueDelivery || "0.00"}</span>
+                </div>
+              </div>
             </CardContent>
           </Card>
 
