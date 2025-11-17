@@ -289,3 +289,13 @@
     - [ ] Dashboard com margem líquida (descontando comissões)
   - **IMPACTO:** Essencial para análise financeira precisa e decisões estratégicas
   - **PRIORIDADE:** Alta (após estabilização do sistema com dados reais)
+
+
+## ✅ BUG CRÍTICO CORRIGIDO (15/11/2025)
+
+- [x] Ícone de lixeira em composições fecha formulário sem salvar alteração
+  - **DESCRIÇÃO:** Ao editar produto composto e clicar no ícone de lixeira para remover item da composição, o formulário fechava automaticamente
+  - **IMPACTO:** Era impossível remover itens de composições existentes
+  - **CAUSA:** Botão de lixeira sem type="button", sendo tratado como submit do formulário
+  - **SOLUÇÃO:** Adicionado type="button" a todos os botões de exclusão em CompositionsSection e TempCompositionsSection
+  - **TESTE:** Agora é possível remover itens de composições sem fechar o formulário

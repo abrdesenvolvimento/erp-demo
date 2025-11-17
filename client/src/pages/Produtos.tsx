@@ -228,6 +228,7 @@ function CompositionsSection({ productId, refreshKey, onSaved }: { productId: nu
                 )}
               </div>
               <Button
+                type="button"
                 size="sm"
                 variant="ghost"
                 onClick={() => handleRemoveComposition(index)}
@@ -411,6 +412,7 @@ function TempCompositionsSection({
                 )}
               </div>
               <Button
+                type="button"
                 size="sm"
                 variant="ghost"
                 onClick={() => handleRemoveComposition(index)}
