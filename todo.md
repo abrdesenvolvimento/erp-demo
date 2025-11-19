@@ -299,3 +299,14 @@
   - **CAUSA:** Botão de lixeira sem type="button", sendo tratado como submit do formulário
   - **SOLUÇÃO:** Adicionado type="button" a todos os botões de exclusão em CompositionsSection e TempCompositionsSection
   - **TESTE:** Agora é possível remover itens de composições sem fechar o formulário
+
+
+## ✅ TAREFAS CONCLUÍDAS (18/11/2025)
+
+- [x] Excluir produto de teste "Água Mineral Teste 500ml" (ID: 2010005)
+  - **RESULTADO:** Produto excluído com sucesso do banco de dados
+- [x] Adicionar horário no campo "Data de Compra" em Contas a Receber
+  - **JUSTIFICATIVA:** Importante mostrar hora exata da compra para o cliente
+  - **LOCAL:** Tela de Contas a Receber, coluna "Data de Compra"
+  - **FORMATO:** DD/MM/YYYY HH:MM
+  - **IMPLEMENTAÇÃO:** Modificada função formatDate para usar toLocaleString com hour e minute
