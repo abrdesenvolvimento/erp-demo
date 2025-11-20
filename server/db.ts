@@ -751,11 +751,19 @@ export async function confirmPurchaseOrder(purchaseOrderId: number) {
       ? (currentStock * currentAvgCost + quantityPurchased * unitCost) / newStock
       : unitCost;
     
-    // Atualizar produto
-    await updateProduct(product.id, {
+    // Preparar dados de atualização
+    const updateData: any = {
       currentStock: newStock,
       avgCost: newAvgCost.toFixed(4)
-    });
+    };
+    
+    // Se o item tem data de vencimento, atualizar no produto
+    if (item.expiryDate) {
+      updateData.expirationDate = item.expiryDate;
+    }
+    
+    // Atualizar produto
+    await updateProduct(product.id, updateData);
     
     // Atualizar custo de produtos compostos que usam este componente
     await updateCompositeProductsUsingComponent(product.id);
