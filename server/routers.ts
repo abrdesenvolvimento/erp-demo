@@ -906,15 +906,15 @@ export const appRouter = router({
       // Total pendente a receber
       const totalPendingReceivables = await db.getTotalPendingReceivables();
       
-      // Valor total em estoque
+      // Valor total em estoque (excluindo produtos compostos)
       const totalStockValue = products
-        .filter(p => p.active && p.currentStock && p.avgCost)
+        .filter(p => p.active && !p.isComposite && p.currentStock && p.avgCost)
         .reduce((sum, p) => sum + (parseFloat(p.currentStock!.toString()) * parseFloat(p.avgCost!.toString())), 0);
       
-      // Valor em estoque por categoria
+      // Valor em estoque por categoria (excluindo produtos compostos)
       const categories = await db.getCategories();
       const stockValueByCategory = categories.map(cat => {
-        const categoryProducts = products.filter(p => p.active && p.categoryId === cat.id);
+        const categoryProducts = products.filter(p => p.active && !p.isComposite && p.categoryId === cat.id);
         const value = categoryProducts.reduce((sum, p) => {
           if (p.currentStock && p.avgCost) {
             return sum + (parseFloat(p.currentStock.toString()) * parseFloat(p.avgCost.toString()));

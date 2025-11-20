@@ -407,3 +407,8 @@
 - [ ] **Histórico de alterações (auditoria)**
   - **OBJETIVO:** Log de quem alterou o quê e quando
   - **FOCO:** Composições de produtos, preços, custos
+
+## 🔧 CORREÇÕES SOLICITADAS (19/11/2025 - 01:30)
+
+- [x] **Formatação do Valor Total em Estoque** - Adicionar separadores de milhar (R$ 129.247,05 ao invés de R$ 129247.05)
+- [x] **Excluir produtos compostos do cálculo de estoque** - Produtos compostos (isComposite=true) não devem ser contabilizados no valor total, pois duplicariam o valor (componentes já estão no estoque)

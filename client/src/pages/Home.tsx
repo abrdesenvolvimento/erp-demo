@@ -162,7 +162,10 @@ export default function Home() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-purple-600">
-                R$ {stats?.totalStockValue || "0.00"}
+                {stats?.totalStockValue 
+                  ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(parseFloat(stats.totalStockValue))
+                  : 'R$ 0,00'
+                }
               </div>
               <p className="text-xs text-muted-foreground mt-1">
                 Clique para ver detalhes por categoria
@@ -341,7 +344,12 @@ export default function Home() {
           <div className="space-y-4">
             <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
               <p className="text-sm text-muted-foreground">Valor Total em Estoque</p>
-              <p className="text-3xl font-bold text-purple-600">R$ {stats?.totalStockValue || "0.00"}</p>
+              <p className="text-3xl font-bold text-purple-600">
+                {stats?.totalStockValue 
+                  ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(parseFloat(stats.totalStockValue))
+                  : 'R$ 0,00'
+                }
+              </p>
             </div>
             
             <div className="space-y-3">
@@ -359,7 +367,7 @@ export default function Home() {
                     </div>
                     <div className="text-right">
                       <p className="text-lg font-bold text-purple-600">
-                        R$ {category.value}
+                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(parseFloat(category.value))}
                       </p>
                     </div>
                   </div>
