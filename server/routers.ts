@@ -429,6 +429,11 @@ export const appRouter = router({
         
         return { id, success: true };
       }),
+    
+    stats: protectedProcedure
+      .query(async () => {
+        return await db.getSalesStats();
+      }),
   }),
 
   // ==================== COMPRAS ====================

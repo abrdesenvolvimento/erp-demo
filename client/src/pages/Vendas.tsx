@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
@@ -68,6 +68,7 @@ export default function Vendas() {
 
   // Queries
   const { data: sales = [], refetch } = trpc.sales.list.useQuery();
+  const { data: stats } = trpc.sales.stats.useQuery();
   const { data: channels = [] } = trpc.salesChannels.list.useQuery({ activeOnly: true });
   // Buscar parceiros que sejam CUSTOMER ou BOTH (clientes e fornecedores)
   const { data: allPartners = [] } = trpc.partners.list.useQuery({ 
@@ -95,10 +96,12 @@ export default function Vendas() {
   }, [partners, customerSearch]);
 
   // Mutations
+  const utils = trpc.useUtils();
   const createSale = trpc.sales.create.useMutation({
     onSuccess: () => {
       toast.success("Venda registrada com sucesso!");
       refetch();
+      utils.sales.stats.invalidate();
       handleCloseModal();
     },
     onError: (error: any) => {
@@ -329,6 +332,69 @@ export default function Vendas() {
             <Plus className="h-4 w-4 mr-2" />
             Nova Venda
           </Button>
+        </div>
+
+        {/* Cards de Resumo */}
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <Card className="border-t-4 border-t-blue-500">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Vendas Balcão</CardTitle>
+              <Store className="h-4 w-4 text-blue-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-blue-600">
+                {stats?.balcao.count || 0}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                R$ {stats?.balcao.total ? parseFloat(stats.balcao.total).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0,00'}
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="border-t-4 border-t-purple-500">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Vendas Delivery</CardTitle>
+              <Truck className="h-4 w-4 text-purple-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-purple-600">
+                {stats?.delivery.count || 0}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                R$ {stats?.delivery.total ? parseFloat(stats.delivery.total).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0,00'}
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="border-t-4 border-t-green-500">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Vendas A Prazo</CardTitle>
+              <Calendar className="h-4 w-4 text-green-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-green-600">
+                {stats?.aPrazo.count || 0}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                R$ {stats?.aPrazo.total ? parseFloat(stats.aPrazo.total).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0,00'}
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="border-t-4 border-t-gray-500">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Geral</CardTitle>
+              <ShoppingCart className="h-4 w-4 text-gray-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-gray-600">
+                {stats?.total.count || 0}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                R$ {stats?.total.total ? parseFloat(stats.total.total).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0,00'}
+              </p>
+            </CardContent>
+          </Card>
         </div>
 
         <Card>

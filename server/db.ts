@@ -479,6 +479,49 @@ export async function createSale(saleData: InsertSale, items: Omit<InsertSaleIte
   return saleId;
 }
 
+export async function getSalesStats() {
+  const db = await getDb();
+  if (!db) return {
+    balcao: { count: 0, total: "0.00" },
+    delivery: { count: 0, total: "0.00" },
+    aPrazo: { count: 0, total: "0.00" },
+    total: { count: 0, total: "0.00" },
+  };
+  
+  // Buscar todas as vendas e agrupar por tipo
+  const allSales = await db.select().from(sales);
+  
+  const stats = {
+    balcao: { count: 0, total: 0 },
+    delivery: { count: 0, total: 0 },
+    aPrazo: { count: 0, total: 0 },
+  };
+  
+  for (const sale of allSales) {
+    const amount = parseFloat(sale.finalAmount);
+    
+    if (sale.saleType === "BALCAO") {
+      stats.balcao.count++;
+      stats.balcao.total += amount;
+    } else if (sale.saleType === "DELIVERY") {
+      stats.delivery.count++;
+      stats.delivery.total += amount;
+    } else if (sale.saleType === "A_PRAZO") {
+      stats.aPrazo.count++;
+      stats.aPrazo.total += amount;
+    }
+  }
+  
+  const totalCount = stats.balcao.count + stats.delivery.count + stats.aPrazo.count;
+  const totalAmount = stats.balcao.total + stats.delivery.total + stats.aPrazo.total;
+  
+  return {
+    balcao: { count: stats.balcao.count, total: stats.balcao.total.toFixed(2) },
+    delivery: { count: stats.delivery.count, total: stats.delivery.total.toFixed(2) },
+    aPrazo: { count: stats.aPrazo.count, total: stats.aPrazo.total.toFixed(2) },
+    total: { count: totalCount, total: totalAmount.toFixed(2) },
+  };
+}
 
 // ==================== PRODUCT COMPOSITIONS ====================
 

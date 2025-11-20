@@ -469,3 +469,5 @@
 - [x] **Corrigir formatação de valores no dashboard** - Valores de faturamento mensal e diário estavam sem separador de milhar (1127.00). RESOLVIDO: Criada função formatCurrency usando Intl.NumberFormat com locale pt-BR. Agora exibe 1.127,00 corretamente.
 
 - [x] **Melhorar campo Canal na tela de vendas** - Campo "Canal" estava sempre vazio (mostra "-"). RESOLVIDO: Para vendas Delivery, agora exibe o código do pedido da plataforma (platformOrderId) quando informado, facilitando conferência e conciliação com relatórios das plataformas.
+
+- [x] **Adicionar cards de resumo na tela de Vendas** - Exibir cards no topo da tela mostrando quantidade e valor total por tipo de venda (Balcão, Delivery, A Prazo). RESOLVIDO: Criado endpoint sales.stats no backend e 4 cards no frontend (Balcão, Delivery, A Prazo, Total Geral) com cores distintas e ícones.
