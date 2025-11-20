@@ -1,0 +1,21 @@
+{
+  "query": "SELECT * FROM receivables WHERE status IN ('PENDENTE', 'PARCIAL', 'VENCIDO')",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT * FROM receivables WHERE status IN ('PENDENTE', 'PARCIAL', 'VENCIDO')",
+  "rows": [
+    {
+      "id": "630001",
+      "saleId": "1770001",
+      "customerId": "240002",
+      "totalAmount": "13.00",
+      "receivedAmount": "0.00",
+      "status": "PENDENTE",
+      "createdBy": "3sp2FmLhkenyjqMFmfLoex",
+      "createdAt": "2025-11-19 02:20:50",
+      "updatedAt": "2025-11-19 02:20:50"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tsaleId\tcustomerId\ttotalAmount\treceivedAmount\tstatus\tcreatedBy\tcreatedAt\tupdatedAt\n630001\t1770001\t240002\t13.00\t0.00\tPENDENTE\t3sp2FmLhkenyjqMFmfLoex\t2025-11-19 02:20:50\t2025-11-19 02:20:50\n",
+  "stderr": "",
+  "execution_time_ms": 53
+}

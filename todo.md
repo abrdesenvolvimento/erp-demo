@@ -420,3 +420,7 @@
 ## 🎨 MELHORIAS UX SOLICITADAS (19/11/2025 - 01:50)
 
 - [x] **Expansão de categorias no modal de estoque** - Ao clicar em uma categoria no modal "Valor em Estoque", expandir e mostrar lista de produtos individuais com seus valores (estoque × custo), ordenados do maior para o menor valor
+
+## 🐛 BUG REPORTADO (19/11/2025 - 02:05)
+
+- [x] **R$ 13,00 em contas a receber após exclusão de vendas teste** - Mesmo após excluir todas as vendas de teste, dashboard ainda mostra R$ 13,00 pendente de recebimento. RESOLVIDO: Registro órfão na tabela receivables foi identificado e removido.
