@@ -1,0 +1,8 @@
+{
+  "query": "SELECT \n  COUNT(*) as total_vendas,\n  SUM(totalAmount) as faturamento_total,\n  SUM(CASE WHEN channel = 'BALCAO' THEN totalAmount ELSE 0 END) as balcao,\n  SUM(CASE WHEN channel = 'A_PRAZO' THEN totalAmount ELSE 0 END) as a_prazo,\n  SUM(CASE WHEN channel = 'DELIVERY' THEN totalAmount ELSE 0 END) as delivery\nFROM sales\nWHERE MONTH(createdAt) = MONTH(NOW())\n  AND YEAR(createdAt) = YEAR(NOW())",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  COUNT(*) as total_vendas,\n  SUM(totalAmount) as faturamento_total,\n  SUM(CASE WHEN channel = 'BALCAO' THEN totalAmount ELSE 0 END) as balcao,\n  SUM(CASE WHEN channel = 'A_PRAZO' THEN totalAmount ELSE 0 END) as a_prazo,\n  SUM(CASE WHEN channel = 'DELIVERY' THEN totalAmount ELSE 0 END) as delivery\nFROM sales\nWHERE MONTH(createdAt) = MONTH(NOW())\n  AND YEAR(createdAt) = YEAR(NOW())",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 1: Unknown column 'totalamount' in 'where clause'"
+  ]
+}

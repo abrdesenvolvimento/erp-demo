@@ -1,33 +1,30 @@
-import mysql from 'mysql2/promise';
-import fs from 'fs';
+import { drizzle } from 'drizzle-orm/mysql2';
+import { products } from './drizzle/schema.ts';
+import { eq } from 'drizzle-orm';
+import { readFileSync } from 'fs';
 
-const connection = await mysql.createConnection(process.env.DATABASE_URL);
+const db = drizzle(process.env.DATABASE_URL);
+const updates = JSON.parse(readFileSync('/home/ubuntu/lote-updates.json', 'utf-8'));
 
-const updates = JSON.parse(fs.readFileSync('/home/ubuntu/lote-updates.json', 'utf8'));
-
-console.log(`🔄 Atualizando ${updates.length} produtos...\n`);
+console.log(`🔄 Aplicando ${updates.length} atualizações...`);
 
 let success = 0;
 let errors = 0;
 
 for (const update of updates) {
   try {
-    await connection.execute(
-      'UPDATE products SET currentStock = ? WHERE id = ?',
-      [update.estoque, update.id]
-    );
+    await db.update(products)
+      .set({ currentStock: update.estoque })
+      .where(eq(products.id, update.id));
     success++;
-    if (success <= 10 || success % 10 === 0) {
-      console.log(`✅ [${success}/${updates.length}] ID ${update.id} → ${update.estoque} unidades`);
-    }
-  } catch (error) {
-    console.error(`❌ Erro ID ${update.id}:`, error.message);
+    console.log(`✅ ${update.id} → ${update.estoque}`);
+  } catch (err) {
     errors++;
+    console.error(`❌ Erro no produto ${update.id}:`, err.message);
   }
 }
 
-console.log(`\n📊 Resultado Final:`);
-console.log(`   ✅ Atualizados: ${success}`);
+console.log(`\n📊 Resultado:`);
+console.log(`   ✅ Sucesso: ${success}`);
 console.log(`   ❌ Erros: ${errors}`);
-
-await connection.end();
+process.exit(0);

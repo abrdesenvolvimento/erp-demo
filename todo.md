@@ -424,3 +424,27 @@
 ## 🐛 BUG REPORTADO (19/11/2025 - 02:05)
 
 - [x] **R$ 13,00 em contas a receber após exclusão de vendas teste** - Mesmo após excluir todas as vendas de teste, dashboard ainda mostra R$ 13,00 pendente de recebimento. RESOLVIDO: Registro órfão na tabela receivables foi identificado e removido.
+
+## 🐛 BUG REPORTADO (20/11/2025 - 13:30)
+
+- [x] **Divergência no faturamento do dashboard** - Usuário fez vendas que somam R$ 700+, mas dashboard mostra apenas R$ 505. RESOLVIDO: Dashboard buscava apenas 10 vendas recentes. Corrigido para buscar todas as vendas do mês (limit 10000).
+
+## 🚀 NOVAS FUNCIONALIDADES SOLICITADAS (20/11/2025 - 13:30)
+
+### Alta Prioridade
+
+- [x] **Inventário completo com todas informações** - Exportar Excel com: ID, Nome, Categoria, EAN, Unidade, Estoque Atual, Estoque Mínimo, Custo Médio, Valor em Estoque, Vencimento. CONCLUÍDO: Arquivo gerado com 10 colunas. Preços por canal serão adicionados em versão futura.
+
+- [x] **Detalhamento de vendas (Modal/Página)** - Ao clicar em uma venda, abrir modal ou página com detalhes completos:
+  - Cabeçalho: Número da venda, data/hora, canal, cliente (se houver), status
+  - Itens: Lista de produtos vendidos (nome, quantidade, preço unitário, subtotal)
+  - Totais: Subtotal, descontos, acréscimos, total final
+  - Pagamento: Forma de pagamento, valor pago, troco
+  - Observações: Notas adicionais
+  - Ações: Botão para imprimir/exportar comprovante (PDF ou impressão direta)
+  - **Objetivo futuro:** Base para emissão de documentos fiscais (NFC-e, etc)
+
+**Observações:**
+- Inventário completo será base para atualizações futuras e auditoria de preços
+- Detalhamento de vendas é preparação para futura emissão fiscal
+- Usuário quer possibilidade de gerar comprovante de venda para o cliente

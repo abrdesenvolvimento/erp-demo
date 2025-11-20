@@ -431,7 +431,22 @@ export async function getSaleItems(saleId: number) {
   const db = await getDb();
   if (!db) return [];
   
-  return await db.select().from(saleItems).where(eq(saleItems.saleId, saleId));
+  // Buscar itens com nome do produto
+  const result = await db
+    .select({
+      id: saleItems.id,
+      saleId: saleItems.saleId,
+      productId: saleItems.productId,
+      productName: products.name,
+      quantity: saleItems.quantity,
+      unitPrice: saleItems.unitPrice,
+      totalPrice: saleItems.totalPrice,
+    })
+    .from(saleItems)
+    .leftJoin(products, eq(saleItems.productId, products.id))
+    .where(eq(saleItems.saleId, saleId));
+  
+  return result;
 }
 
 export async function createSale(saleData: InsertSale, items: Omit<InsertSaleItem, 'saleId'>[]) {

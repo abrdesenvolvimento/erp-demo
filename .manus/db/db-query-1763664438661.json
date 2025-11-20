@@ -1,0 +1,200 @@
+{
+  "query": "SELECT \n  id,\n  saleType,\n  DATE_FORMAT(createdAt, '%d/%m/%Y %H:%i') as data_hora,\n  subtotal,\n  discountAmount,\n  surchargeAmount,\n  finalAmount,\n  paymentMethod\nFROM sales\nWHERE MONTH(createdAt) = MONTH(NOW())\n  AND YEAR(createdAt) = YEAR(NOW())\nORDER BY createdAt DESC",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  id,\n  saleType,\n  DATE_FORMAT(createdAt, '%d/%m/%Y %H:%i') as data_hora,\n  subtotal,\n  discountAmount,\n  surchargeAmount,\n  finalAmount,\n  paymentMethod\nFROM sales\nWHERE MONTH(createdAt) = MONTH(NOW())\n  AND YEAR(createdAt) = YEAR(NOW())\nORDER BY createdAt DESC",
+  "rows": [
+    {
+      "id": "1800019",
+      "saleType": "BALCAO",
+      "data_hora": "20/11/2025 18:46",
+      "subtotal": "24.00",
+      "discountAmount": "0.00",
+      "surchargeAmount": "0.00",
+      "finalAmount": "24.00",
+      "paymentMethod": "Cartão de Débito"
+    },
+    {
+      "id": "1800018",
+      "saleType": "BALCAO",
+      "data_hora": "20/11/2025 18:37",
+      "subtotal": "34.00",
+      "discountAmount": "0.00",
+      "surchargeAmount": "0.00",
+      "finalAmount": "34.00",
+      "paymentMethod": "Cartão de Crédito"
+    },
+    {
+      "id": "1800017",
+      "saleType": "BALCAO",
+      "data_hora": "20/11/2025 18:36",
+      "subtotal": "57.00",
+      "discountAmount": "0.00",
+      "surchargeAmount": "0.00",
+      "finalAmount": "57.00",
+      "paymentMethod": "Cartão de Débito"
+    },
+    {
+      "id": "1800016",
+      "saleType": "BALCAO",
+      "data_hora": "20/11/2025 18:36",
+      "subtotal": "30.00",
+      "discountAmount": "0.00",
+      "surchargeAmount": "0.00",
+      "finalAmount": "30.00",
+      "paymentMethod": "PIX"
+    },
+    {
+      "id": "1800015",
+      "saleType": "BALCAO",
+      "data_hora": "20/11/2025 18:35",
+      "subtotal": "19.50",
+      "discountAmount": "0.00",
+      "surchargeAmount": "0.00",
+      "finalAmount": "19.50",
+      "paymentMethod": "Cartão de Débito"
+    },
+    {
+      "id": "1800014",
+      "saleType": "BALCAO",
+      "data_hora": "20/11/2025 18:34",
+      "subtotal": "50.00",
+      "discountAmount": "0.00",
+      "surchargeAmount": "0.00",
+      "finalAmount": "50.00",
+      "paymentMethod": "Cartão de Crédito"
+    },
+    {
+      "id": "1800013",
+      "saleType": "BALCAO",
+      "data_hora": "20/11/2025 18:34",
+      "subtotal": "273.00",
+      "discountAmount": "0.00",
+      "surchargeAmount": "0.00",
+      "finalAmount": "273.00",
+      "paymentMethod": "Cartão de Crédito"
+    },
+    {
+      "id": "1800012",
+      "saleType": "BALCAO",
+      "data_hora": "20/11/2025 18:32",
+      "subtotal": "6.00",
+      "discountAmount": "0.00",
+      "surchargeAmount": "0.00",
+      "finalAmount": "6.00",
+      "paymentMethod": "Cartão de Débito"
+    },
+    {
+      "id": "1800011",
+      "saleType": "BALCAO",
+      "data_hora": "20/11/2025 18:31",
+      "subtotal": "10.00",
+      "discountAmount": "0.00",
+      "surchargeAmount": "0.00",
+      "finalAmount": "10.00",
+      "paymentMethod": "Cartão de Crédito"
+    },
+    {
+      "id": "1800010",
+      "saleType": "BALCAO",
+      "data_hora": "20/11/2025 18:31",
+      "subtotal": "18.00",
+      "discountAmount": "0.00",
+      "surchargeAmount": "0.00",
+      "finalAmount": "18.00",
+      "paymentMethod": "PIX"
+    },
+    {
+      "id": "1800009",
+      "saleType": "BALCAO",
+      "data_hora": "20/11/2025 18:29",
+      "subtotal": "8.00",
+      "discountAmount": "0.00",
+      "surchargeAmount": "0.00",
+      "finalAmount": "8.00",
+      "paymentMethod": "Cartão de Crédito"
+    },
+    {
+      "id": "1800008",
+      "saleType": "BALCAO",
+      "data_hora": "20/11/2025 18:29",
+      "subtotal": "6.50",
+      "discountAmount": "0.00",
+      "surchargeAmount": "0.00",
+      "finalAmount": "6.50",
+      "paymentMethod": "Cartão de Crédito"
+    },
+    {
+      "id": "1800007",
+      "saleType": "BALCAO",
+      "data_hora": "20/11/2025 18:29",
+      "subtotal": "13.00",
+      "discountAmount": "0.00",
+      "surchargeAmount": "0.00",
+      "finalAmount": "13.00",
+      "paymentMethod": "Cartão de Débito"
+    },
+    {
+      "id": "1800006",
+      "saleType": "BALCAO",
+      "data_hora": "20/11/2025 18:28",
+      "subtotal": "15.00",
+      "discountAmount": "0.00",
+      "surchargeAmount": "0.00",
+      "finalAmount": "15.00",
+      "paymentMethod": "PIX"
+    },
+    {
+      "id": "1800005",
+      "saleType": "BALCAO",
+      "data_hora": "20/11/2025 18:27",
+      "subtotal": "18.00",
+      "discountAmount": "0.00",
+      "surchargeAmount": "0.00",
+      "finalAmount": "18.00",
+      "paymentMethod": "Cartão de Crédito"
+    },
+    {
+      "id": "1800004",
+      "saleType": "BALCAO",
+      "data_hora": "20/11/2025 18:27",
+      "subtotal": "10.00",
+      "discountAmount": "0.00",
+      "surchargeAmount": "0.00",
+      "finalAmount": "10.00",
+      "paymentMethod": "Dinheiro"
+    },
+    {
+      "id": "1800003",
+      "saleType": "BALCAO",
+      "data_hora": "20/11/2025 18:19",
+      "subtotal": "16.00",
+      "discountAmount": "0.00",
+      "surchargeAmount": "0.00",
+      "finalAmount": "16.00",
+      "paymentMethod": "Dinheiro"
+    },
+    {
+      "id": "1800002",
+      "saleType": "BALCAO",
+      "data_hora": "20/11/2025 18:16",
+      "subtotal": "62.50",
+      "discountAmount": "0.00",
+      "surchargeAmount": "0.00",
+      "finalAmount": "62.50",
+      "paymentMethod": "PIX"
+    },
+    {
+      "id": "1800001",
+      "saleType": "BALCAO",
+      "data_hora": "20/11/2025 18:12",
+      "subtotal": "70.00",
+      "discountAmount": "0.00",
+      "surchargeAmount": "0.00",
+      "finalAmount": "70.00",
+      "paymentMethod": "Dinheiro"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tsaleType\tdata_hora\tsubtotal\tdiscountAmount\tsurchargeAmount\tfinalAmount\tpaymentMethod\n1800019\tBALCAO\t20/11/2025 18:46\t24.00\t0.00\t0.00\t24.00\tCartão de Débito\n1800018\tBALCAO\t20/11/2025 18:37\t34.00\t0.00\t0.00\t34.00\tCartão de Crédito\n1800017\tBALCAO\t20/11/2025 18:36\t57.00\t0.00\t0.00\t57.00\tCartão de Débito\n1800016\tBALCAO\t20/11/2025 18:36\t30.00\t0.00\t0.00\t30.00\tPIX\n1800015\tBALCAO\t20/11/2025 18:35\t19.50\t0.00\t0.00\t19.50\tCartão de Débito\n1800014\tBALCAO\t20/11/2025 18:34\t50.00\t0.00\t0.00\t50.00\tCartão de Crédito\n1800013\tBALCAO\t20/11/2025 18:34\t273.00\t0.00\t0.00\t273.00\tCartão de Crédito\n1800012\tBALCAO\t20/11/2025 18:32\t6.00\t0.00\t0.00\t6.00\tCartão de Débito\n1800011\tBALCAO\t20/11/2025 18:31\t10.00\t0.00\t0.00\t10.00\tCartão de Crédito\n1800010\tBALCAO\t20/11/2025 18:31\t18.00\t0.00\t0.00\t18.00\tPIX\n1800009\tBALCAO\t20/11/2025 18:29\t8.00\t0.00\t0.00\t8.00\tCartão de Crédito\n1800008\tBALCAO\t20/11/2025 18:29\t6.50\t0.00\t0.00\t6.50\tCartão de Crédito\n1800007\tBALCAO\t20/11/2025 18:29\t13.00\t0.00\t0.00\t13.00\tCartão de Débito\n1800006\tBALCAO\t20/11/2025 18:28\t15.00\t0.00\t0.00\t15.00\tPIX\n1800005\tBALCAO\t20/11/2025 18:27\t18.00\t0.00\t0.00\t18.00\tCartão de Crédito\n1800004\tBALCAO\t20/11/2025 18:27\t10.00\t0.00\t0.00\t10.00\tDinheiro\n1800003\tBALCAO\t20/11/2025 18:19\t16.00\t0.00\t0.00\t16.00\tDinheiro\n1800002\tBALCAO\t20/11/2025 18:16\t62.50\t0.00\t0.00\t62.50\tPIX\n1800001\tBALCAO\t20/11/2025 18:12\t70.00\t0.00\t0.00\t70.00\tDinheiro\n",
+  "stderr": "",
+  "execution_time_ms": 53
+}

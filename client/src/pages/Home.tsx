@@ -6,6 +6,7 @@ import { trpc } from "@/lib/trpc";
 import { TrendingUp, AlertTriangle, ShoppingCart, DollarSign, Calendar, Package, Clock, ChevronDown, ChevronRight } from "lucide-react";
 import { Link } from "wouter";
 import { useState } from "react";
+import { SaleDetailsModal } from "@/components/SaleDetailsModal";
 
 export default function Home() {
   const { data: stats, isLoading } = trpc.dashboard.stats.useQuery();
@@ -13,6 +14,18 @@ export default function Home() {
   const [showExpiringModal, setShowExpiringModal] = useState(false);
   const [showStockValueModal, setShowStockValueModal] = useState(false);
   const [expandedCategories, setExpandedCategories] = useState<Set<number>>(new Set());
+  const [selectedSaleId, setSelectedSaleId] = useState<number | null>(null);
+  const [showSaleDetailsModal, setShowSaleDetailsModal] = useState(false);
+
+  const handleSaleClick = (saleId: number) => {
+    setSelectedSaleId(saleId);
+    setShowSaleDetailsModal(true);
+  };
+
+  const closeSaleDetailsModal = () => {
+    setShowSaleDetailsModal(false);
+    setSelectedSaleId(null);
+  };
 
   const toggleCategory = (categoryId: number) => {
     const newExpanded = new Set(expandedCategories);
@@ -227,10 +240,11 @@ export default function Home() {
             <CardContent>
               {stats?.recentSales && stats.recentSales.length > 0 ? (
                 <div className="space-y-4">
-                  {stats.recentSales.map((sale: any) => (
+                   {stats.recentSales.map((sale: any) => (
                     <div
                       key={sale.id}
-                      className="flex items-center justify-between border-b pb-3 last:border-0 last:pb-0"
+                      onClick={() => handleSaleClick(sale.id)}
+                      className="flex items-center justify-between border-b pb-3 last:border-0 last:pb-0 cursor-pointer hover:bg-muted/50 transition-colors rounded-lg p-2 -m-2"
                     >
                       <div className="flex items-center gap-3">
                         <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
@@ -503,6 +517,13 @@ export default function Home() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Modal de Detalhes da Venda */}
+      <SaleDetailsModal
+        saleId={selectedSaleId}
+        open={showSaleDetailsModal}
+        onClose={closeSaleDetailsModal}
+      />
     </DashboardLayout>
   );
 }

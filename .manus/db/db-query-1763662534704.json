@@ -1,0 +1,647 @@
+{
+  "query": "SELECT id, name, categoryId, currentStock, active \nFROM products \nWHERE active = true \n  AND isComposite = false \n  AND (currentStock IS NULL OR currentStock = 0)\nORDER BY id",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT id, name, categoryId, currentStock, active \nFROM products \nWHERE active = true \n  AND isComposite = false \n  AND (currentStock IS NULL OR currentStock = 0)\nORDER BY id",
+  "rows": [
+    {
+      "id": "630009",
+      "name": "Coca Cola 1l Zero Açucar",
+      "categoryId": "8",
+      "currentStock": "0",
+      "active": "1"
+    },
+    {
+      "id": "630010",
+      "name": "Coca Cola 1l",
+      "categoryId": "8",
+      "currentStock": "0",
+      "active": "1"
+    },
+    {
+      "id": "630013",
+      "name": "Coca Cola 2l Retornável Zero Açúcar",
+      "categoryId": "8",
+      "currentStock": "0",
+      "active": "1"
+    },
+    {
+      "id": "630014",
+      "name": "Fanta Laranja 2l Retornável",
+      "categoryId": "8",
+      "currentStock": "0",
+      "active": "1"
+    },
+    {
+      "id": "630015",
+      "name": "Fanta Laranja Zero Açucar 2l",
+      "categoryId": "8",
+      "currentStock": "0",
+      "active": "1"
+    },
+    {
+      "id": "690004",
+      "name": "Coko Coco 200ml",
+      "categoryId": "12",
+      "currentStock": "0",
+      "active": "1"
+    },
+    {
+      "id": "750002",
+      "name": "Minalba Com Gás 510ml",
+      "categoryId": "8",
+      "currentStock": "0",
+      "active": "1"
+    },
+    {
+      "id": "1170002",
+      "name": "Pepsi 2l",
+      "categoryId": "8",
+      "currentStock": "0",
+      "active": "1"
+    },
+    {
+      "id": "1170004",
+      "name": "Pepsi Black 2l",
+      "categoryId": "8",
+      "currentStock": "0",
+      "active": "1"
+    },
+    {
+      "id": "1170006",
+      "name": "Pepsi Black 350ml",
+      "categoryId": "8",
+      "currentStock": "0",
+      "active": "1"
+    },
+    {
+      "id": "1380003",
+      "name": "L&M Blue First Cut",
+      "categoryId": "11",
+      "currentStock": "0",
+      "active": "1"
+    },
+    {
+      "id": "1410009",
+      "name": "Gudang Garam Cravo",
+      "categoryId": "11",
+      "currentStock": "0",
+      "active": "1"
+    },
+    {
+      "id": "1410010",
+      "name": "Gudang Garam Menta",
+      "categoryId": "11",
+      "currentStock": "0",
+      "active": "1"
+    },
+    {
+      "id": "1470002",
+      "name": "Santomé Suave 1l",
+      "categoryId": "8",
+      "currentStock": "0",
+      "active": "1"
+    },
+    {
+      "id": "1560001",
+      "name": "Predator Unidade",
+      "categoryId": "10",
+      "currentStock": "0",
+      "active": "1"
+    },
+    {
+      "id": "1590001",
+      "name": "Amsterdam 25gr",
+      "categoryId": "10",
+      "currentStock": "0",
+      "active": "1"
+    },
+    {
+      "id": "1710002",
+      "name": "Bis Original 100,8gr",
+      "categoryId": "9",
+      "currentStock": "0",
+      "active": "1"
+    },
+    {
+      "id": "1710003",
+      "name": "Bis Limão 100,8gr",
+      "categoryId": "9",
+      "currentStock": "0",
+      "active": "1"
+    },
+    {
+      "id": "1740006",
+      "name": "Fandangos Presunto 37gr",
+      "categoryId": "9",
+      "currentStock": "0",
+      "active": "1"
+    },
+    {
+      "id": "1740009",
+      "name": "Casal Garcia Rosé 750ml",
+      "categoryId": "8",
+      "currentStock": "0",
+      "active": "1"
+    },
+    {
+      "id": "1740015",
+      "name": "Concha Y Toro Malbec 750ml",
+      "categoryId": "8",
+      "currentStock": "0",
+      "active": "1"
+    },
+    {
+      "id": "1830011",
+      "name": "Trident Cereja Ice 8gr",
+      "categoryId": "9",
+      "currentStock": "0",
+      "active": "1"
+    },
+    {
+      "id": "1830024",
+      "name": "Kit Kat Lemon 41,5gr",
+      "categoryId": "9",
+      "currentStock": "0",
+      "active": "1"
+    },
+    {
+      "id": "1890008",
+      "name": "Lacta Laka/ Diamante Negro 80gr",
+      "categoryId": "9",
+      "currentStock": "0",
+      "active": "1"
+    },
+    {
+      "id": "1890010",
+      "name": "Nestlé Alpino Ao Leite 85gr",
+      "categoryId": "9",
+      "currentStock": "0",
+      "active": "1"
+    },
+    {
+      "id": "1890012",
+      "name": "Lacta Shot 80gr",
+      "categoryId": "9",
+      "currentStock": "0",
+      "active": "1"
+    },
+    {
+      "id": "1920001",
+      "name": "Lacta Recheados Caramelo Ao Leite 104gr",
+      "categoryId": "9",
+      "currentStock": "0",
+      "active": "1"
+    },
+    {
+      "id": "1920003",
+      "name": "Cup Noodles Costela 68gr",
+      "categoryId": "15",
+      "currentStock": "0",
+      "active": "1"
+    },
+    {
+      "id": "2010001",
+      "name": "Brahma Chopp 269ml",
+      "categoryId": "8",
+      "currentStock": "0",
+      "active": "1"
+    },
+    {
+      "id": "2070026",
+      "name": "Gatorade Morango e Maracujá 500ml",
+      "categoryId": "8",
+      "currentStock": "0",
+      "active": "1"
+    },
+    {
+      "id": "2070043",
+      "name": "Rock's Dry 1l",
+      "categoryId": "8",
+      "currentStock": "0",
+      "active": "1"
+    },
+    {
+      "id": "2100003",
+      "name": "Cereser Maça Verde 275ml",
+      "categoryId": "8",
+      "currentStock": "0",
+      "active": "1"
+    },
+    {
+      "id": "2130010",
+      "name": "Pringles Upside Down Bacon 100gr",
+      "categoryId": "9",
+      "currentStock": "0",
+      "active": "1"
+    },
+    {
+      "id": "2640001",
+      "name": "Ruffles Original 115gr",
+      "categoryId": "9",
+      "currentStock": "0",
+      "active": "1"
+    },
+    {
+      "id": "2640008",
+      "name": "Lays Sour Cream 70gr",
+      "categoryId": "9",
+      "currentStock": "0",
+      "active": "1"
+    },
+    {
+      "id": "2640009",
+      "name": "Lays Classica 70gr",
+      "categoryId": "9",
+      "currentStock": "0",
+      "active": "1"
+    },
+    {
+      "id": "2640012",
+      "name": "Lays Salt Vinegar 70gr",
+      "categoryId": "9",
+      "currentStock": "0",
+      "active": "1"
+    },
+    {
+      "id": "2640013",
+      "name": "Lays Rústica Sal Marinho 68gr",
+      "categoryId": "9",
+      "currentStock": "0",
+      "active": "1"
+    },
+    {
+      "id": "2640014",
+      "name": "Lays Rústica Cream Cheese 68gr",
+      "categoryId": "9",
+      "currentStock": "0",
+      "active": "1"
+    },
+    {
+      "id": "2670001",
+      "name": "Lays Rústica Sal Marinho 30gr",
+      "categoryId": "9",
+      "currentStock": "0",
+      "active": "1"
+    },
+    {
+      "id": "2670003",
+      "name": "Lays Sensações Frango Grelhado 70gr",
+      "categoryId": "9",
+      "currentStock": "0",
+      "active": "1"
+    },
+    {
+      "id": "2670005",
+      "name": "Lays Sensações Peito de Peru 70gr",
+      "categoryId": "9",
+      "currentStock": "0",
+      "active": "1"
+    },
+    {
+      "id": "2670007",
+      "name": "Doritos Sweet Chili 70gr",
+      "categoryId": "9",
+      "currentStock": "0",
+      "active": "1"
+    },
+    {
+      "id": "2700001",
+      "name": "Cheetos Mix 82gr",
+      "categoryId": "9",
+      "currentStock": "0",
+      "active": "1"
+    },
+    {
+      "id": "2700004",
+      "name": "Cebolitos 36gr",
+      "categoryId": "9",
+      "currentStock": "0",
+      "active": "1"
+    },
+    {
+      "id": "2700005",
+      "name": "Cebolitos 91gr",
+      "categoryId": "9",
+      "currentStock": "0",
+      "active": "1"
+    },
+    {
+      "id": "2730002",
+      "name": "Bauduco Chocolate Wafer 140gr",
+      "categoryId": "9",
+      "currentStock": "0",
+      "active": "1"
+    },
+    {
+      "id": "2730003",
+      "name": "Bauduco Triple Chocolate Wafer 140gr",
+      "categoryId": "9",
+      "currentStock": "0",
+      "active": "1"
+    },
+    {
+      "id": "2730004",
+      "name": "Bauduco Avelã Wafer 140gr",
+      "categoryId": "9",
+      "currentStock": "0",
+      "active": "1"
+    },
+    {
+      "id": "2730007",
+      "name": "Trakinas Meio a Meio 126gr",
+      "categoryId": "9",
+      "currentStock": "0",
+      "active": "1"
+    },
+    {
+      "id": "2730008",
+      "name": "Trakinas Chocolate 126gr",
+      "categoryId": "9",
+      "currentStock": "0",
+      "active": "1"
+    },
+    {
+      "id": "2730009",
+      "name": "Trakinas Morango 126gr",
+      "categoryId": "9",
+      "currentStock": "0",
+      "active": "1"
+    },
+    {
+      "id": "2910013",
+      "name": "Nestlé 510ml",
+      "categoryId": "8",
+      "currentStock": "0",
+      "active": "1"
+    },
+    {
+      "id": "2940007",
+      "name": "Colorado Appia 600ml",
+      "categoryId": "8",
+      "currentStock": "0",
+      "active": "1"
+    },
+    {
+      "id": "2970002",
+      "name": "Baden Baden Witbier 600ml",
+      "categoryId": "8",
+      "currentStock": "0",
+      "active": "1"
+    },
+    {
+      "id": "3060011",
+      "name": "Tanqueray Rangpur 700ml",
+      "categoryId": "8",
+      "currentStock": "0",
+      "active": "1"
+    },
+    {
+      "id": "3060018",
+      "name": "Wild Turkey 81 1l",
+      "categoryId": "8",
+      "currentStock": "0",
+      "active": "1"
+    },
+    {
+      "id": "3060019",
+      "name": "Wild Turkey Rye 700ml",
+      "categoryId": "8",
+      "currentStock": "0",
+      "active": "1"
+    },
+    {
+      "id": "3060037",
+      "name": "Grey Goose L'Orange 750ml",
+      "categoryId": "8",
+      "currentStock": "0",
+      "active": "1"
+    },
+    {
+      "id": "3060038",
+      "name": "Grey Goose Watermelon 750ml",
+      "categoryId": "8",
+      "currentStock": "0",
+      "active": "1"
+    },
+    {
+      "id": "3060039",
+      "name": "Grey Goose Strawberry And Lemongrass 750ml",
+      "categoryId": "8",
+      "currentStock": "0",
+      "active": "1"
+    },
+    {
+      "id": "3090001",
+      "name": "Jagermeister 750ml",
+      "categoryId": "8",
+      "currentStock": "0",
+      "active": "1"
+    },
+    {
+      "id": "3090008",
+      "name": "Ballantine's 12 Anos 1l",
+      "categoryId": "8",
+      "currentStock": "0",
+      "active": "1"
+    },
+    {
+      "id": "3090009",
+      "name": "Ballantine's 17 Anos 750ml",
+      "categoryId": "8",
+      "currentStock": "0",
+      "active": "1"
+    },
+    {
+      "id": "3120001",
+      "name": "Askov Frutas Vermelhas 900ml",
+      "categoryId": "8",
+      "currentStock": "0",
+      "active": "1"
+    },
+    {
+      "id": "3120002",
+      "name": "Askov Maracuja 900ml",
+      "categoryId": "8",
+      "currentStock": "0",
+      "active": "1"
+    },
+    {
+      "id": "3120003",
+      "name": "Askov Limão 900ml",
+      "categoryId": "8",
+      "currentStock": "0",
+      "active": "1"
+    },
+    {
+      "id": "3120004",
+      "name": "Askov Kiwi 900ml",
+      "categoryId": "8",
+      "currentStock": "0",
+      "active": "1"
+    },
+    {
+      "id": "3120005",
+      "name": "Askov Blueberry 900ml",
+      "categoryId": "8",
+      "currentStock": "0",
+      "active": "1"
+    },
+    {
+      "id": "3120011",
+      "name": "Seleta Tricolor 700ml",
+      "categoryId": "8",
+      "currentStock": "0",
+      "active": "1"
+    },
+    {
+      "id": "3120012",
+      "name": "Seleta do Verdão 700ml",
+      "categoryId": "8",
+      "currentStock": "0",
+      "active": "1"
+    },
+    {
+      "id": "3180005",
+      "name": "Amarula 750ml",
+      "categoryId": "8",
+      "currentStock": "0",
+      "active": "1"
+    },
+    {
+      "id": "3180007",
+      "name": "Amarula Raspberry 750ml",
+      "categoryId": "8",
+      "currentStock": "0",
+      "active": "1"
+    },
+    {
+      "id": "3180008",
+      "name": "Amarula Vanilla Spice 750ml",
+      "categoryId": "8",
+      "currentStock": "0",
+      "active": "1"
+    },
+    {
+      "id": "3210006",
+      "name": "Jim Beam White 1l",
+      "categoryId": "8",
+      "currentStock": "0",
+      "active": "1"
+    },
+    {
+      "id": "3210009",
+      "name": "Jim Beam Rye 700ml",
+      "categoryId": "8",
+      "currentStock": "0",
+      "active": "1"
+    },
+    {
+      "id": "3240006",
+      "name": "Nusakinho Morango 500ml",
+      "categoryId": "8",
+      "currentStock": "0",
+      "active": "1"
+    },
+    {
+      "id": "3270001",
+      "name": "Nusakinho Maracujá 500ml",
+      "categoryId": "8",
+      "currentStock": "0",
+      "active": "1"
+    },
+    {
+      "id": "3300001",
+      "name": "Nusakinho Limão 500ml",
+      "categoryId": "8",
+      "currentStock": "0",
+      "active": "1"
+    },
+    {
+      "id": "3300002",
+      "name": "Nusakinho Abacaxi e Vinho 500ml",
+      "categoryId": "8",
+      "currentStock": "0",
+      "active": "1"
+    },
+    {
+      "id": "3360002",
+      "name": "Fosforo",
+      "categoryId": "15",
+      "currentStock": "0",
+      "active": "1"
+    },
+    {
+      "id": "3450001",
+      "name": "Patagonia Amber Lager 355ml",
+      "categoryId": "8",
+      "currentStock": "0",
+      "active": "1"
+    },
+    {
+      "id": "3450002",
+      "name": "Colorado Indica 350ml",
+      "categoryId": "8",
+      "currentStock": "0",
+      "active": "1"
+    },
+    {
+      "id": "3450003",
+      "name": "Patagonia Ipa 355ml",
+      "categoryId": "8",
+      "currentStock": "0",
+      "active": "1"
+    },
+    {
+      "id": "3480003",
+      "name": "Corote Maracujá 500ml",
+      "categoryId": "8",
+      "currentStock": "0",
+      "active": "1"
+    },
+    {
+      "id": "3480006",
+      "name": "Monster Ultra Paradise 473ml",
+      "categoryId": "8",
+      "currentStock": "0",
+      "active": "1"
+    },
+    {
+      "id": "3540001",
+      "name": "Baconzitos 86gr",
+      "categoryId": "9",
+      "currentStock": "0",
+      "active": "1"
+    },
+    {
+      "id": "3540003",
+      "name": "Gato Negro Cabernet Sauvignon 750ml",
+      "categoryId": "8",
+      "currentStock": "0",
+      "active": "1"
+    },
+    {
+      "id": "3540004",
+      "name": "Santa Helena Carmenere 750ml",
+      "categoryId": "8",
+      "currentStock": "0",
+      "active": "1"
+    },
+    {
+      "id": "3540005",
+      "name": "Santa Helena Chadonnay 750ml",
+      "categoryId": "8",
+      "currentStock": "0",
+      "active": "1"
+    },
+    {
+      "id": "3630001",
+      "name": "Gato Negro Merlot 750ml",
+      "categoryId": "8",
+      "currentStock": "0",
+      "active": "1"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tcategoryId\tcurrentStock\tactive\n630009\tCoca Cola 1l Zero Açucar\t8\t0\t1\n630010\tCoca Cola 1l\t8\t0\t1\n630013\tCoca Cola 2l Retornável Zero Açúcar\t8\t0\t1\n630014\tFanta Laranja 2l Retornável\t8\t0\t1\n630015\tFanta Laranja Zero Açucar 2l\t8\t0\t1\n690004\tCoko Coco 200ml\t12\t0\t1\n750002\tMinalba Com Gás 510ml\t8\t0\t1\n1170002\tPepsi 2l\t8\t0\t1\n1170004\tPepsi Black 2l\t8\t0\t1\n1170006\tPepsi Black 350ml\t8\t0\t1\n1380003\tL&M Blue First Cut\t11\t0\t1\n1410009\tGudang Garam Cravo\t11\t0\t1\n1410010\tGudang Garam Menta\t11\t0\t1\n1470002\tSantomé Suave 1l\t8\t0\t1\n1560001\tPredator Unidade\t10\t0\t1\n1590001\tAmsterdam 25gr\t10\t0\t1\n1710002\tBis Original 100,8gr\t9\t0\t1\n1710003\tBis Limão 100,8gr\t9\t0\t1\n1740006\tFandangos Presunto 37gr\t9\t0\t1\n1740009\tCasal Garcia Rosé 750ml\t8\t0\t1\n1740015\tConcha Y Toro Malbec 750ml\t8\t0\t1\n1830011\tTrident Cereja Ice 8gr\t9\t0\t1\n1830024\tKit Kat Lemon 41,5gr\t9\t0\t1\n1890008\tLacta Laka/ Diamante Negro 80gr\t9\t0\t1\n1890010\tNestlé Alpino Ao Leite 85gr\t9\t0\t1\n1890012\tLacta Shot 80gr\t9\t0\t1\n1920001\tLacta Recheados Caramelo Ao Leite 104gr\t9\t0\t1\n1920003\tCup Noodles Costela 68gr\t15\t0\t1\n2010001\tBrahma Chopp 269ml\t8\t0\t1\n2070026\tGatorade Morango e Maracujá 500ml\t8\t0\t1\n2070043\tRock's Dry 1l\t8\t0\t1\n2100003\tCereser Maça Verde 275ml\t8\t0\t1\n2130010\tPringles Upside Down Bacon 100gr\t9\t0\t1\n2640001\tRuffles Original 115gr\t9\t0\t1\n2640008\tLays Sour Cream 70gr\t9\t0\t1\n2640009\tLays Classica 70gr\t9\t0\t1\n2640012\tLays Salt Vinegar 70gr\t9\t0\t1\n2640013\tLays Rústica Sal Marinho 68gr\t9\t0\t1\n2640014\tLays Rústica Cream Cheese 68gr\t9\t0\t1\n2670001\tLays Rústica Sal Marinho 30gr\t9\t0\t1\n2670003\tLays Sensações Frango Grelhado 70gr\t9\t0\t1\n2670005\tLays Sensações Peito de Peru 70gr\t9\t0\t1\n2670007\tDoritos Sweet Chili 70gr\t9\t0\t1\n2700001\tCheetos Mix 82gr\t9\t0\t1\n2700004\tCebolitos 36gr\t9\t0\t1\n2700005\tCebolitos 91gr\t9\t0\t1\n2730002\tBauduco Chocolate Wafer 140gr\t9\t0\t1\n2730003\tBauduco Triple Chocolate Wafer 140gr\t9\t0\t1\n2730004\tBauduco Avelã Wafer 140gr\t9\t0\t1\n2730007\tTrakinas Meio a Meio 126gr\t9\t0\t1\n2730008\tTrakinas Chocolate 126gr\t9\t0\t1\n2730009\tTrakinas Morango 126gr\t9\t0\t1\n2910013\tNestlé 510ml\t8\t0\t1\n2940007\tColorado Appia 600ml\t8\t0\t1\n2970002\tBaden Baden Witbier 600ml\t8\t0\t1\n3060011\tTanqueray Rangpur 700ml\t8\t0\t1\n3060018\tWild Turkey 81 1l\t8\t0\t1\n3060019\tWild Turkey Rye 700ml\t8\t0\t1\n3060037\tGrey Goose L'Orange 750ml\t8\t0\t1\n3060038\tGrey Goose Watermelon 750ml\t8\t0\t1\n3060039\tGrey Goose Strawberry And Lemongrass 750ml\t8\t0\t1\n3090001\tJagermeister 750ml\t8\t0\t1\n3090008\tBallantine's 12 Anos 1l\t8\t0\t1\n3090009\tBallantine's 17 Anos 750ml\t8\t0\t1\n3120001\tAskov Frutas Vermelhas 900ml\t8\t0\t1\n3120002\tAskov Maracuja 900ml\t8\t0\t1\n3120003\tAskov Limão 900ml\t8\t0\t1\n3120004\tAskov Kiwi 900ml\t8\t0\t1\n3120005\tAskov Blueberry 900ml\t8\t0\t1\n3120011\tSeleta Tricolor 700ml\t8\t0\t1\n3120012\tSeleta do Verdão 700ml\t8\t0\t1\n3180005\tAmarula 750ml\t8\t0\t1\n3180007\tAmarula Raspberry 750ml\t8\t0\t1\n3180008\tAmarula Vanilla Spice 750ml\t8\t0\t1\n3210006\tJim Beam White 1l\t8\t0\t1\n3210009\tJim Beam Rye 700ml\t8\t0\t1\n3240006\tNusakinho Morango 500ml\t8\t0\t1\n3270001\tNusakinho Maracujá 500ml\t8\t0\t1\n3300001\tNusakinho Limão 500ml\t8\t0\t1\n3300002\tNusakinho Abacaxi e Vinho 500ml\t8\t0\t1\n3360002\tFosforo\t15\t0\t1\n3450001\tPatagonia Amber Lager 355ml\t8\t0\t1\n3450002\tColorado Indica 350ml\t8\t0\t1\n3450003\tPatagonia Ipa 355ml\t8\t0\t1\n3480003\tCorote Maracujá 500ml\t8\t0\t1\n3480006\tMonster Ultra Paradise 473ml\t8\t0\t1\n3540001\tBaconzitos 86gr\t9\t0\t1\n3540003\tGato Negro Cabernet Sauvignon 750ml\t8\t0\t1\n3540004\tSanta Helena Carmenere 750ml\t8\t0\t1\n3540005\tSanta Helena Chadonnay 750ml\t8\t0\t1\n3630001\tGato Negro Merlot 750ml\t8\t0\t1\n",
+  "stderr": "",
+  "execution_time_ms": 54
+}

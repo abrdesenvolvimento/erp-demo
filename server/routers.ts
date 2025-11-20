@@ -858,14 +858,18 @@ export const appRouter = router({
       const products = await db.getProducts({ activeOnly: false });
       const recentSales = await db.getSales({ limit: 10 });
       
+      // Buscar TODAS as vendas do mês atual para cálculos corretos
+      const today = new Date();
+      const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+      const allMonthSales = await db.getSales({ limit: 10000 }); // Buscar todas as vendas
+      
       // Produtos com estoque baixo
       const lowStockProducts = products.filter(p => 
         p.currentStock !== null && p.minStock !== null && p.currentStock < p.minStock
       );
       
       // Vendas de hoje
-      const today = new Date();
-      const todaySales = recentSales.filter(s => {
+      const todaySales = allMonthSales.filter(s => {
         const saleDate = new Date(s.saleDate!);
         return saleDate.toDateString() === today.toDateString();
       });
@@ -883,9 +887,8 @@ export const appRouter = router({
         .filter(s => s.saleType === 'DELIVERY')
         .reduce((sum, sale) => sum + parseFloat(sale.finalAmount || '0'), 0);
       
-      // Faturamento do mês atual
-      const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-      const monthSales = recentSales.filter(s => {
+      // Faturamento do mês atual - TODAS as vendas do mês
+      const monthSales = allMonthSales.filter(s => {
         const saleDate = new Date(s.saleDate!);
         return saleDate >= firstDayOfMonth;
       });

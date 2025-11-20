@@ -1,0 +1,19 @@
+{
+  "query": "SELECT \n  COUNT(*) as total_vendas,\n  SUM(finalAmount) as faturamento_total,\n  SUM(CASE WHEN saleType = 'BALCAO' THEN finalAmount ELSE 0 END) as balcao,\n  SUM(CASE WHEN saleType = 'A_PRAZO' THEN finalAmount ELSE 0 END) as a_prazo,\n  SUM(CASE WHEN saleType = 'DELIVERY' THEN finalAmount ELSE 0 END) as delivery,\n  MIN(createdAt) as primeira_venda,\n  MAX(createdAt) as ultima_venda\nFROM sales\nWHERE MONTH(createdAt) = MONTH(NOW())\n  AND YEAR(createdAt) = YEAR(NOW())",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  COUNT(*) as total_vendas,\n  SUM(finalAmount) as faturamento_total,\n  SUM(CASE WHEN saleType = 'BALCAO' THEN finalAmount ELSE 0 END) as balcao,\n  SUM(CASE WHEN saleType = 'A_PRAZO' THEN finalAmount ELSE 0 END) as a_prazo,\n  SUM(CASE WHEN saleType = 'DELIVERY' THEN finalAmount ELSE 0 END) as delivery,\n  MIN(createdAt) as primeira_venda,\n  MAX(createdAt) as ultima_venda\nFROM sales\nWHERE MONTH(createdAt) = MONTH(NOW())\n  AND YEAR(createdAt) = YEAR(NOW())",
+  "rows": [
+    {
+      "total_vendas": "19",
+      "faturamento_total": "740.50",
+      "balcao": "740.50",
+      "a_prazo": "0.00",
+      "delivery": "0.00",
+      "primeira_venda": "2025-11-20 18:12:36",
+      "ultima_venda": "2025-11-20 18:46:38"
+    }
+  ],
+  "messages": [],
+  "stdout": "total_vendas\tfaturamento_total\tbalcao\ta_prazo\tdelivery\tprimeira_venda\tultima_venda\n19\t740.50\t740.50\t0.00\t0.00\t2025-11-20 18:12:36\t2025-11-20 18:46:38\n",
+  "stderr": "",
+  "execution_time_ms": 101
+}
