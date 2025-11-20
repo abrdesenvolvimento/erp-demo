@@ -95,7 +95,8 @@ export function SaleDetailsModal({ saleId, open, onClose }: SaleDetailsModalProp
       </head>
       <body>
         <div class="header">
-          <h1>ERP ADEGA BEIRA RIO</h1>
+          <img src="/logo-adega.png" alt="Adega Beira Rio" style="max-width: 150px; margin: 0 auto 10px; display: block;">
+          <h1>Adega Beira Rio</h1>
           <p>Comprovante de Venda</p>
         </div>
         
@@ -126,7 +127,7 @@ export function SaleDetailsModal({ saleId, open, onClose }: SaleDetailsModalProp
                   <td>${item.productName || 'Produto'}</td>
                   <td style="text-align: center;">${item.quantity}</td>
                   <td style="text-align: right;">${formatCurrency(item.unitPrice)}</td>
-                  <td style="text-align: right;">${formatCurrency(item.subtotal)}</td>
+                  <td style="text-align: right;">${formatCurrency(item.totalPrice)}</td>
                 </tr>
               `).join('') || ''}
             </tbody>

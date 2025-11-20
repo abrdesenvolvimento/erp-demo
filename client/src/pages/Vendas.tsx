@@ -31,6 +31,7 @@ import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
 import { formatSaleType, formatPaymentMethod } from "@/lib/formatters";
+import { SaleDetailsModal } from "@/components/SaleDetailsModal";
 
 type SaleType = "BALCAO" | "DELIVERY" | "A_PRAZO";
 
@@ -45,6 +46,8 @@ interface SaleItem {
 
 export default function Vendas() {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedSaleId, setSelectedSaleId] = useState<number | null>(null);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [saleType, setSaleType] = useState<SaleType | null>(null);
   const [step, setStep] = useState<"type" | "form">("type");
   
@@ -354,7 +357,14 @@ export default function Vendas() {
                 </TableHeader>
                 <TableBody>
                   {sales.map((sale: any) => (
-                    <TableRow key={sale.id}>
+                    <TableRow 
+                      key={sale.id} 
+                      className="cursor-pointer hover:bg-muted/50 transition-colors"
+                      onClick={() => {
+                        setSelectedSaleId(sale.id);
+                        setIsDetailsModalOpen(true);
+                      }}
+                    >
                       <TableCell>#{sale.id}</TableCell>
                       <TableCell>{formatDateTime(sale.saleDate || sale.createdAt)}</TableCell>
                       <TableCell>{getSaleTypeBadge(sale.saleType)}</TableCell>
@@ -696,6 +706,15 @@ export default function Vendas() {
           </DialogContent>
         </Dialog>
       </div>
+
+      <SaleDetailsModal
+        saleId={selectedSaleId}
+        open={isDetailsModalOpen}
+        onClose={() => {
+          setIsDetailsModalOpen(false);
+          setSelectedSaleId(null);
+        }}
+      />
     </DashboardLayout>
   );
 }

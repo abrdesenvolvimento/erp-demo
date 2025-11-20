@@ -448,3 +448,13 @@
 - Inventário completo será base para atualizações futuras e auditoria de preços
 - Detalhamento de vendas é preparação para futura emissão fiscal
 - Usuário quer possibilidade de gerar comprovante de venda para o cliente
+
+## ✅ BUGS RESOLVIDOS (20/11/2025 - 16:10)
+
+- [x] **Detalhamento de vendas não funciona na tela de Vendas** - Modal de detalhes só abre no dashboard. Na tela de Vendas, ao clicar em uma venda, não abre o modal. RESOLVIDO: Modal SaleDetailsModal adicionado na tela de Vendas com mesma funcionalidade do dashboard.
+
+- [x] **Coluna "Total" zerada no comprovante impresso** - No comprovante de impressão, a coluna "Total" dos itens aparece como R$ 0,00, embora o subtotal esteja correto. RESOLVIDO: Corrigido para usar sale.finalAmount.
+
+**Melhorias Concluídas:**
+
+- [x] **Melhorar cabeçalho do comprovante** - Alterar título de "ERP ADEGA BEIRA RIO" para apenas "Adega Beira Rio" e adicionar logo da adega no topo do comprovante. CONCLUÍDO: Logo adicionado em /client/public/logo.png e título atualizado.
