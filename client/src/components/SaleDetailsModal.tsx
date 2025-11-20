@@ -73,29 +73,29 @@ export function SaleDetailsModal({ saleId, open, onClose }: SaleDetailsModalProp
         <title>Comprovante de Venda #${saleData.id}</title>
         <style>
           * { margin: 0; padding: 0; box-sizing: border-box; }
-          body { font-family: 'Courier New', monospace; padding: 20px; max-width: 300px; margin: 0 auto; }
-          .header { text-align: center; margin-bottom: 20px; border-bottom: 2px dashed #000; padding-bottom: 10px; }
-          .header h1 { font-size: 18px; margin-bottom: 5px; }
-          .header p { font-size: 12px; }
-          .info { margin-bottom: 15px; font-size: 12px; }
-          .info-row { display: flex; justify-content: space-between; margin-bottom: 5px; }
-          .items { margin-bottom: 15px; }
-          .items table { width: 100%; border-collapse: collapse; font-size: 11px; }
-          .items th { text-align: left; border-bottom: 1px solid #000; padding: 5px 0; }
-          .items td { padding: 5px 0; }
-          .totals { border-top: 2px dashed #000; padding-top: 10px; font-size: 12px; }
-          .totals-row { display: flex; justify-content: space-between; margin-bottom: 5px; }
-          .totals-row.final { font-weight: bold; font-size: 14px; margin-top: 10px; }
-          .footer { text-align: center; margin-top: 20px; border-top: 2px dashed #000; padding-top: 10px; font-size: 10px; }
+          body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 40px; }
+          .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #333; padding-bottom: 20px; }
+          .header h1 { font-size: 24px; margin-bottom: 5px; }
+          .header p { font-size: 14px; color: #666; }
+          .info { margin-bottom: 30px; }
+          .info-row { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 14px; }
+          .items { margin-bottom: 30px; }
+          .items table { width: 100%; border-collapse: collapse; }
+          .items th { text-align: left; border-bottom: 2px solid #333; padding: 10px; font-size: 14px; }
+          .items td { padding: 10px; border-bottom: 1px solid #ddd; }
+          .totals { border-top: 2px solid #333; padding-top: 20px; }
+          .totals-row { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 16px; }
+          .totals-row.final { font-weight: bold; font-size: 20px; margin-top: 15px; }
+          .footer { text-align: center; margin-top: 40px; border-top: 1px solid #ddd; padding-top: 20px; font-size: 12px; color: #666; }
           @media print {
-            body { padding: 0; }
+            body { padding: 20px; }
             button { display: none; }
           }
         </style>
       </head>
       <body>
         <div class="header">
-          <img src="/logo-adega.png" alt="Adega Beira Rio" style="max-width: 150px; margin: 0 auto 10px; display: block;">
+          <img src="/logo.png" alt="Adega Beira Rio" style="max-width: 150px; margin: 0 auto 10px; display: block;">
           <h1>Adega Beira Rio</h1>
           <p>Comprovante de Venda</p>
         </div>

@@ -458,3 +458,8 @@
 **Melhorias Concluídas:**
 
 - [x] **Melhorar cabeçalho do comprovante** - Alterar título de "ERP ADEGA BEIRA RIO" para apenas "Adega Beira Rio" e adicionar logo da adega no topo do comprovante. CONCLUÍDO: Logo adicionado em /client/public/logo.png e título atualizado.
+
+
+## 🎨 MELHORIAS UX SOLICITADAS (20/11/2025 - 16:20)
+
+- [ ] **Ajustar layout do comprovante para bobina térmica 80mm** - Usuário quer imprimir comprovante em bobina padrão de máquina de cartão (80mm). Ajustar CSS para: largura 80mm, fonte menor, margens reduzidas, layout otimizado para impressão térmica.
