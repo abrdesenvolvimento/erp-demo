@@ -467,3 +467,5 @@
 - [x] **Corrigir logo do comprovante para usar logo da adega** - Logo atual estava usando logo do sistema (ABRWF). RESOLVIDO: Alterado para /logo-adega.png que é o logo correto da Adega Beira Rio.
 
 - [x] **Corrigir formatação de valores no dashboard** - Valores de faturamento mensal e diário estavam sem separador de milhar (1127.00). RESOLVIDO: Criada função formatCurrency usando Intl.NumberFormat com locale pt-BR. Agora exibe 1.127,00 corretamente.
+
+- [x] **Melhorar campo Canal na tela de vendas** - Campo "Canal" estava sempre vazio (mostra "-"). RESOLVIDO: Para vendas Delivery, agora exibe o código do pedido da plataforma (platformOrderId) quando informado, facilitando conferência e conciliação com relatórios das plataformas.

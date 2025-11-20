@@ -369,7 +369,11 @@ export default function Vendas() {
                       <TableCell>{formatDateTime(sale.saleDate || sale.createdAt)}</TableCell>
                       <TableCell>{getSaleTypeBadge(sale.saleType)}</TableCell>
                       <TableCell>{sale.customerName || "Venda Avulsa"}</TableCell>
-                      <TableCell>{sale.channelName || "-"}</TableCell>
+                      <TableCell>
+                        {sale.saleType === "DELIVERY" && sale.platformOrderId 
+                          ? sale.platformOrderId 
+                          : (sale.channelName || "-")}
+                      </TableCell>
                       <TableCell className="font-semibold">{formatCurrency(parseFloat(sale.finalAmount))}</TableCell>
                       <TableCell>{sale.paymentMethod}</TableCell>
                     </TableRow>
