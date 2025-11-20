@@ -471,3 +471,5 @@
 - [x] **Melhorar campo Canal na tela de vendas** - Campo "Canal" estava sempre vazio (mostra "-"). RESOLVIDO: Para vendas Delivery, agora exibe o código do pedido da plataforma (platformOrderId) quando informado, facilitando conferência e conciliação com relatórios das plataformas.
 
 - [x] **Adicionar cards de resumo na tela de Vendas** - Exibir cards no topo da tela mostrando quantidade e valor total por tipo de venda (Balcão, Delivery, A Prazo). RESOLVIDO: Criado endpoint sales.stats no backend e 4 cards no frontend (Balcão, Delivery, A Prazo, Total Geral) com cores distintas e ícones.
+
+- [x] **Criar script de migração de vendas a prazo** - Importar vendas a prazo históricas do cliente Alexandre Lima mantendo data original da venda e sem alterar estoque (vendas anteriores ao inventário). RESOLVIDO: Script migrate-sales.mjs criado. Migradas 4 vendas (R$ 136,00) com datas originais, recebíveis e parcelas criadas automaticamente.
