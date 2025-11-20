@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { trpc } from "@/lib/trpc";
-import { TrendingUp, AlertTriangle, ShoppingCart, DollarSign, Calendar, Package, Clock } from "lucide-react";
+import { TrendingUp, AlertTriangle, ShoppingCart, DollarSign, Calendar, Package, Clock, ChevronDown, ChevronRight } from "lucide-react";
 import { Link } from "wouter";
 import { useState } from "react";
 
@@ -12,6 +12,17 @@ export default function Home() {
   const [showLowStockModal, setShowLowStockModal] = useState(false);
   const [showExpiringModal, setShowExpiringModal] = useState(false);
   const [showStockValueModal, setShowStockValueModal] = useState(false);
+  const [expandedCategories, setExpandedCategories] = useState<Set<number>>(new Set());
+
+  const toggleCategory = (categoryId: number) => {
+    const newExpanded = new Set(expandedCategories);
+    if (newExpanded.has(categoryId)) {
+      newExpanded.delete(categoryId);
+    } else {
+      newExpanded.add(categoryId);
+    }
+    setExpandedCategories(newExpanded);
+  };
 
   if (isLoading) {
     return (
@@ -354,24 +365,63 @@ export default function Home() {
             
             <div className="space-y-3">
               {stats?.stockValueByCategory && stats.stockValueByCategory.length > 0 ? (
-                stats.stockValueByCategory.map((category: any) => (
-                  <div
-                    key={category.categoryId}
-                    className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent transition-colors"
-                  >
-                    <div>
-                      <p className="font-medium">{category.categoryName}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {((parseFloat(category.value) / parseFloat(stats.totalStockValue)) * 100).toFixed(1)}% do total
-                      </p>
+                stats.stockValueByCategory.map((category: any) => {
+                  const isExpanded = expandedCategories.has(category.categoryId);
+                  return (
+                    <div key={category.categoryId} className="border rounded-lg">
+                      {/* Cabeçalho da categoria (clicável) */}
+                      <div
+                        className="flex items-center justify-between p-4 cursor-pointer hover:bg-accent transition-colors"
+                        onClick={() => toggleCategory(category.categoryId)}
+                      >
+                        <div className="flex items-center gap-2 flex-1">
+                          {isExpanded ? (
+                            <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                          ) : (
+                            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                          )}
+                          <div>
+                            <p className="font-medium">{category.categoryName}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {((parseFloat(category.value) / parseFloat(stats.totalStockValue)) * 100).toFixed(1)}% do total • {category.products?.length || 0} produtos
+                            </p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-lg font-bold text-purple-600">
+                            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(parseFloat(category.value))}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Lista de produtos (expansível) */}
+                      {isExpanded && category.products && category.products.length > 0 && (
+                        <div className="border-t bg-muted/30">
+                          <div className="p-3 space-y-2">
+                            {category.products.map((product: any) => (
+                              <div
+                                key={product.id}
+                                className="flex items-center justify-between p-3 bg-background rounded border text-sm"
+                              >
+                                <div className="flex-1">
+                                  <p className="font-medium">{product.name}</p>
+                                  <p className="text-xs text-muted-foreground">
+                                    ID: {product.id} • Estoque: {product.currentStock} un • Custo médio: R$ {product.avgCost}
+                                  </p>
+                                </div>
+                                <div className="text-right">
+                                  <p className="font-semibold text-purple-600">
+                                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(parseFloat(product.value))}
+                                  </p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
-                    <div className="text-right">
-                      <p className="text-lg font-bold text-purple-600">
-                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(parseFloat(category.value))}
-                      </p>
-                    </div>
-                  </div>
-                ))
+                  );
+                })
               ) : (
                 <p className="text-center text-muted-foreground py-8">
                   Nenhum produto com estoque

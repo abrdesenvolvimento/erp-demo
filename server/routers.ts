@@ -921,10 +921,27 @@ export const appRouter = router({
           }
           return sum;
         }, 0);
+        
+        // Mapear produtos com seus valores individuais
+        const productsWithValue = categoryProducts
+          .filter(p => p.currentStock && p.avgCost)
+          .map(p => {
+            const productValue = parseFloat(p.currentStock!.toString()) * parseFloat(p.avgCost!.toString());
+            return {
+              id: p.id,
+              name: p.name,
+              currentStock: p.currentStock,
+              avgCost: parseFloat(p.avgCost!.toString()).toFixed(2),
+              value: productValue.toFixed(2),
+            };
+          })
+          .sort((a, b) => parseFloat(b.value) - parseFloat(a.value)); // Ordenar por valor (maior para menor)
+        
         return {
           categoryId: cat.id,
           categoryName: cat.name,
           value: value.toFixed(2),
+          products: productsWithValue,
         };
       }).filter(c => parseFloat(c.value) > 0).sort((a, b) => parseFloat(b.value) - parseFloat(a.value));
       

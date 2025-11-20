@@ -416,3 +416,7 @@
 ## 🐛 BUG REPORTADO (19/11/2025 - 01:40)
 
 - [x] **Campo de vencimento não aparece no dashboard** - Usuário cadastrou compra com vencimento 24/11, mas produto não aparece no card "Produtos Vencendo". RESOLVIDO: Função confirmPurchaseOrder agora transfere expiryDate de purchaseOrderItems para products.expirationDate automaticamente.
+
+## 🎨 MELHORIAS UX SOLICITADAS (19/11/2025 - 01:50)
+
+- [x] **Expansão de categorias no modal de estoque** - Ao clicar em uma categoria no modal "Valor em Estoque", expandir e mostrar lista de produtos individuais com seus valores (estoque × custo), ordenados do maior para o menor valor
