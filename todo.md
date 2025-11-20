@@ -464,4 +464,4 @@
 
 - [x] **Ajustar layout do comprovante para bobina térmica 80mm** - Usuário quer imprimir comprovante em bobina padrão de máquina de cartão (80mm). CANCELADO: Revertido para layout A4 padrão. Otimização para térmica fica para o futuro.
 
-- [x] **Corrigir caminho do logo no comprovante** - Logo está quebrado no comprovante (caminho /logo.png não existe). RESOLVIDO: Corrigido para usar /logo-abrwf.png que é o logo correto do sistema.
+- [x] **Corrigir logo do comprovante para usar logo da adega** - Logo atual estava usando logo do sistema (ABRWF). RESOLVIDO: Alterado para /logo-adega.png que é o logo correto da Adega Beira Rio.
