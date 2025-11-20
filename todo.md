@@ -465,3 +465,5 @@
 - [x] **Ajustar layout do comprovante para bobina térmica 80mm** - Usuário quer imprimir comprovante em bobina padrão de máquina de cartão (80mm). CANCELADO: Revertido para layout A4 padrão. Otimização para térmica fica para o futuro.
 
 - [x] **Corrigir logo do comprovante para usar logo da adega** - Logo atual estava usando logo do sistema (ABRWF). RESOLVIDO: Alterado para /logo-adega.png que é o logo correto da Adega Beira Rio.
+
+- [x] **Corrigir formatação de valores no dashboard** - Valores de faturamento mensal e diário estavam sem separador de milhar (1127.00). RESOLVIDO: Criada função formatCurrency usando Intl.NumberFormat com locale pt-BR. Agora exibe 1.127,00 corretamente.

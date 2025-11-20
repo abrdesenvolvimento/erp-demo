@@ -47,6 +47,15 @@ export default function Home() {
     );
   }
 
+  const formatCurrency = (value: string | number | null | undefined): string => {
+    if (!value) return "0,00";
+    const num = typeof value === 'string' ? parseFloat(value) : value;
+    return new Intl.NumberFormat('pt-BR', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(num);
+  };
+
   const formatSaleType = (saleType: string, channelName: string | null, customerTradeName: string | null) => {
     if (saleType === "BALCAO") return "Balcão";
     if (saleType === "A_PRAZO") {
@@ -78,13 +87,13 @@ export default function Home() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-blue-600">
-                R$ {stats?.monthRevenue || "0.00"}
+                R$ {formatCurrency(stats?.monthRevenue)}
               </div>
               <div className="mt-3 space-y-1.5">
                 <div className="flex items-center justify-between text-xs">
                   <span className="text-muted-foreground">Balcão/A Prazo</span>
                   <span className="font-medium text-blue-600">
-                    R$ {stats?.monthRevenueBalcao || "0.00"}
+                    R$ {formatCurrency(stats?.monthRevenueBalcao)}
                     <span className="text-muted-foreground ml-1">
                       ({stats ? Math.round((parseFloat(stats.monthRevenueBalcao) / parseFloat(stats.monthRevenue)) * 100) : 0}%)
                     </span>
@@ -93,7 +102,7 @@ export default function Home() {
                 <div className="flex items-center justify-between text-xs">
                   <span className="text-muted-foreground">Delivery</span>
                   <span className="font-medium text-blue-600">
-                    R$ {stats?.monthRevenueDelivery || "0.00"}
+                    R$ {formatCurrency(stats?.monthRevenueDelivery)}
                     <span className="text-muted-foreground ml-1">
                       ({stats ? Math.round((parseFloat(stats.monthRevenueDelivery) / parseFloat(stats.monthRevenue)) * 100) : 0}%)
                     </span>
@@ -112,7 +121,7 @@ export default function Home() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-orange-600">
-                R$ {stats?.totalPendingReceivables || "0.00"}
+                R$ {formatCurrency(stats?.totalPendingReceivables)}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
                 Total em aberto de vendas a prazo
@@ -129,13 +138,13 @@ export default function Home() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-green-600">
-                R$ {stats?.todayRevenue || "0.00"}
+                R$ {formatCurrency(stats?.todayRevenue)}
               </div>
               <div className="mt-3 space-y-1.5">
                 <div className="flex items-center justify-between text-xs">
                   <span className="text-muted-foreground">Balcão/A Prazo</span>
                   <span className="font-medium text-green-600">
-                    R$ {stats?.todayRevenueBalcao || "0.00"}
+                    R$ {formatCurrency(stats?.todayRevenueBalcao)}
                     <span className="text-muted-foreground ml-1">
                       ({stats && parseFloat(stats.todayRevenue) > 0 ? Math.round((parseFloat(stats.todayRevenueBalcao) / parseFloat(stats.todayRevenue)) * 100) : 0}%)
                     </span>
@@ -144,7 +153,7 @@ export default function Home() {
                 <div className="flex items-center justify-between text-xs">
                   <span className="text-muted-foreground">Delivery</span>
                   <span className="font-medium text-green-600">
-                    R$ {stats?.todayRevenueDelivery || "0.00"}
+                    R$ {formatCurrency(stats?.todayRevenueDelivery)}
                     <span className="text-muted-foreground ml-1">
                       ({stats && parseFloat(stats.todayRevenue) > 0 ? Math.round((parseFloat(stats.todayRevenueDelivery) / parseFloat(stats.todayRevenue)) * 100) : 0}%)
                     </span>
