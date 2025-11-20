@@ -906,6 +906,46 @@ export const appRouter = router({
       // Total pendente a receber
       const totalPendingReceivables = await db.getTotalPendingReceivables();
       
+      // Valor total em estoque
+      const totalStockValue = products
+        .filter(p => p.active && p.currentStock && p.avgCost)
+        .reduce((sum, p) => sum + (parseFloat(p.currentStock!.toString()) * parseFloat(p.avgCost!.toString())), 0);
+      
+      // Valor em estoque por categoria
+      const categories = await db.getCategories();
+      const stockValueByCategory = categories.map(cat => {
+        const categoryProducts = products.filter(p => p.active && p.categoryId === cat.id);
+        const value = categoryProducts.reduce((sum, p) => {
+          if (p.currentStock && p.avgCost) {
+            return sum + (parseFloat(p.currentStock.toString()) * parseFloat(p.avgCost.toString()));
+          }
+          return sum;
+        }, 0);
+        return {
+          categoryId: cat.id,
+          categoryName: cat.name,
+          value: value.toFixed(2),
+        };
+      }).filter(c => parseFloat(c.value) > 0).sort((a, b) => parseFloat(b.value) - parseFloat(a.value));
+      
+      // Produtos próximos ao vencimento (30 dias)
+      const expiringProducts = products.filter(p => {
+        if (!p.active || !p.expirationDate) return false;
+        const expDate = new Date(p.expirationDate);
+        const daysUntilExpiration = Math.ceil((expDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+        return daysUntilExpiration <= 30;
+      }).map(p => {
+        const expDate = new Date(p.expirationDate!);
+        const daysUntilExpiration = Math.ceil((expDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+        return {
+          id: p.id,
+          name: p.name,
+          expirationDate: p.expirationDate,
+          daysUntilExpiration,
+          currentStock: p.currentStock,
+        };
+      }).sort((a, b) => a.daysUntilExpiration - b.daysUntilExpiration);
+      
       // Buscar vendas recentes com detalhes (cliente e canal)
       const channels = await db.getSalesChannels();
       const recentSalesWithDetails = [];
@@ -934,6 +974,10 @@ export const appRouter = router({
         monthRevenueBalcao: monthRevenueBalcao.toFixed(2),
         monthRevenueDelivery: monthRevenueDelivery.toFixed(2),
         totalPendingReceivables: totalPendingReceivables.toFixed(2),
+        totalStockValue: totalStockValue.toFixed(2),
+        stockValueByCategory,
+        expiringProductsCount: expiringProducts.length,
+        expiringProducts,
         recentSales: recentSalesWithDetails,
       };
     }),

@@ -3,13 +3,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { trpc } from "@/lib/trpc";
-import { TrendingUp, AlertTriangle, ShoppingCart, DollarSign, Calendar } from "lucide-react";
+import { TrendingUp, AlertTriangle, ShoppingCart, DollarSign, Calendar, Package, Clock } from "lucide-react";
 import { Link } from "wouter";
 import { useState } from "react";
 
 export default function Home() {
   const { data: stats, isLoading } = trpc.dashboard.stats.useQuery();
   const [showLowStockModal, setShowLowStockModal] = useState(false);
+  const [showExpiringModal, setShowExpiringModal] = useState(false);
+  const [showStockValueModal, setShowStockValueModal] = useState(false);
 
   if (isLoading) {
     return (
@@ -147,6 +149,60 @@ export default function Home() {
               </p>
             </CardContent>
           </Card>
+
+          <Card 
+            className="border-t-4 border-t-purple-500 cursor-pointer hover:bg-accent transition-colors"
+            onClick={() => setShowStockValueModal(true)}
+          >
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">
+                Valor Total em Estoque
+              </CardTitle>
+              <Package className="h-4 w-4 text-purple-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-purple-600">
+                R$ {stats?.totalStockValue || "0.00"}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Clique para ver detalhes por categoria
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card 
+            className={`border-t-4 cursor-pointer hover:bg-accent transition-colors ${
+              (stats?.expiringProductsCount || 0) > 0 
+                ? 'border-t-red-500' 
+                : 'border-t-gray-300'
+            }`}
+            onClick={() => setShowExpiringModal(true)}
+          >
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">
+                Produtos Vencendo
+              </CardTitle>
+              <Clock className={`h-4 w-4 ${
+                (stats?.expiringProductsCount || 0) > 0 
+                  ? 'text-red-500' 
+                  : 'text-gray-400'
+              }`} />
+            </CardHeader>
+            <CardContent>
+              <div className={`text-2xl font-bold ${
+                (stats?.expiringProductsCount || 0) > 0 
+                  ? 'text-red-600' 
+                  : 'text-gray-400'
+              }`}>
+                {stats?.expiringProductsCount || 0}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                {(stats?.expiringProductsCount || 0) > 0 
+                  ? 'Produtos com vencimento em até 30 dias' 
+                  : 'Nenhum produto vencendo'}
+              </p>
+            </CardContent>
+          </Card>
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">
@@ -271,6 +327,120 @@ export default function Home() {
               <p className="text-center text-muted-foreground py-8">
                 Nenhum produto com estoque baixo
               </p>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de Valor em Estoque por Categoria */}
+      <Dialog open={showStockValueModal} onOpenChange={setShowStockValueModal}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Valor em Estoque por Categoria</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
+              <p className="text-sm text-muted-foreground">Valor Total em Estoque</p>
+              <p className="text-3xl font-bold text-purple-600">R$ {stats?.totalStockValue || "0.00"}</p>
+            </div>
+            
+            <div className="space-y-3">
+              {stats?.stockValueByCategory && stats.stockValueByCategory.length > 0 ? (
+                stats.stockValueByCategory.map((category: any) => (
+                  <div
+                    key={category.categoryId}
+                    className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent transition-colors"
+                  >
+                    <div>
+                      <p className="font-medium">{category.categoryName}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {((parseFloat(category.value) / parseFloat(stats.totalStockValue)) * 100).toFixed(1)}% do total
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-lg font-bold text-purple-600">
+                        R$ {category.value}
+                      </p>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="text-center text-muted-foreground py-8">
+                  Nenhum produto com estoque
+                </p>
+              )}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de Produtos Vencendo */}
+      <Dialog open={showExpiringModal} onOpenChange={setShowExpiringModal}>
+        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Produtos Próximos ao Vencimento</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            {stats?.expiringProducts && stats.expiringProducts.length > 0 ? (
+              stats.expiringProducts.map((product: any) => {
+                const isExpired = product.daysUntilExpiration < 0;
+                const isUrgent = product.daysUntilExpiration >= 0 && product.daysUntilExpiration <= 7;
+                const isWarning = product.daysUntilExpiration > 7 && product.daysUntilExpiration <= 15;
+                
+                return (
+                  <div
+                    key={product.id}
+                    className={`flex items-center justify-between p-4 border rounded-lg ${
+                      isExpired ? 'bg-red-50 border-red-300' :
+                      isUrgent ? 'bg-orange-50 border-orange-300' :
+                      isWarning ? 'bg-yellow-50 border-yellow-300' :
+                      'bg-blue-50 border-blue-300'
+                    }`}
+                  >
+                    <div className="flex-1">
+                      <p className="font-medium">{product.name}</p>
+                      <div className="flex items-center gap-4 mt-1">
+                        <p className="text-sm text-muted-foreground">
+                          ID: {product.id}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          Estoque: {product.currentStock || 0} un
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className={`text-sm font-semibold ${
+                        isExpired ? 'text-red-600' :
+                        isUrgent ? 'text-orange-600' :
+                        isWarning ? 'text-yellow-600' :
+                        'text-blue-600'
+                      }`}>
+                        {isExpired 
+                          ? `Vencido há ${Math.abs(product.daysUntilExpiration)} dias`
+                          : product.daysUntilExpiration === 0
+                          ? 'Vence hoje!'
+                          : product.daysUntilExpiration === 1
+                          ? 'Vence amanhã!'
+                          : `Vence em ${product.daysUntilExpiration} dias`
+                        }
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {new Date(product.expirationDate).toLocaleDateString('pt-BR')}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })
+            ) : (
+              <div className="text-center py-12">
+                <Clock className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+                <p className="text-muted-foreground">
+                  Nenhum produto com vencimento próximo
+                </p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Produtos com data de vencimento em até 30 dias aparecerão aqui
+                </p>
+              </div>
             )}
           </div>
         </DialogContent>

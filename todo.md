@@ -1,5 +1,38 @@
 # Project TODO - ERP Adega Beira Rio
 
+## 🚀 NOVAS FUNCIONALIDADES SOLICITADAS - PRÉ-PUBLICAÇÃO (19/11/2025)
+
+### Alta Prioridade
+
+- [x] **Alerta de Produtos Próximos ao Vencimento**
+  - Sistema já possui campo de data de vencimento nos produtos
+  - Implementar card no dashboard com alerta visual de produtos vencendo
+  - Definir prazo de alerta (ex: 30 dias antes do vencimento)
+  - Listar produtos com vencimento próximo/vencido
+  - Permitir filtro por categoria/subcategoria
+  - Adicionar notificação visual (badge vermelho/laranja)
+
+- [x] **Card "Valor Total em Estoque" no Dashboard**
+  - Calcular valor total: soma de (currentStock × avgCost) de todos os produtos
+  - Exibir no dashboard como card destacado
+  - Possível breakdown por categoria principal (Bebidas, Doces, etc)
+  - Atualização em tempo real
+  - Formato: R$ XX.XXX,XX
+
+- [ ] **Controle de Acesso por Perfil de Usuário**
+  - Revisar permissões antes da publicação
+  - **Admin (proprietário):** acesso total a dashboard e relatórios completos
+  - **Usuário comum:** acesso limitado (definir quais módulos)
+  - Implementar restrições no frontend (ocultar menus) e backend (validar permissões)
+  - Testar com usuário não-admin
+  - Documentar níveis de acesso no README
+  - Criar página de "Acesso Negado" para usuários sem permissão
+
+**Observações:**
+- Funcionalidades solicitadas pelo usuário para implementação antes da publicação em produção
+- Prioridade: implementar após conclusão do inventário físico (atualmente 86.1% completo)
+- Usuário quer dashboard e relatórios completos para admin, mas limitado para outros usuários
+
 ## 🔴 BUGS CRÍTICOS - PENDENTES (1 item)
 
 - [ ] **Layout de vendas quebrado no mobile** - Resumo não tem layout responsivo adequado, tudo em scroll vertical único
@@ -310,3 +343,67 @@
   - **LOCAL:** Tela de Contas a Receber, coluna "Data de Compra"
   - **FORMATO:** DD/MM/YYYY HH:MM
   - **IMPLEMENTAÇÃO:** Modificada função formatDate para usar toLocaleString com hour e minute
+
+
+## 📋 PENDÊNCIAS PRIORITÁRIAS (19/11/2025)
+
+### 🔴 Alta Prioridade - Operação
+
+- [ ] **Completar inventário físico** (620 produtos restantes)
+  - **STATUS:** 212 de 833 produtos com estoque atualizado (25%)
+  - **MÉTODO:** Enviar arquivo Excel com coluna "Estoque Atual" preenchida
+  - **SCRIPT:** Já existe e funciona perfeitamente (processar-inventario.py)
+  - **PRAZO:** Até quinta-feira (21/11/2025)
+
+- [ ] **Implementar sistema de cálculo de comissões por canal**
+  - **JUSTIFICATIVA:** Necessário para análise de rentabilidade real por canal de venda
+  - **EXEMPLO iFood:** % comissão sobre vendas + % repasse + valor fixo mensal (R$ 130,00)
+  - **CANAIS:** iFood, 99Food, Aiqfome
+  - **IMPACTO:** Permitirá relatório de lucro líquido por canal descontando taxas
+
+### 🟡 Média Prioridade - Melhorias
+
+- [ ] **Criar relatório de margem de lucro por produto**
+  - **OBJETIVO:** Mostrar diferença entre custo e preço de venda por canal
+  - **FUNCIONALIDADE:** Identificar produtos com margem baixa ou negativa
+  - **USO:** Ajuste estratégico de preços e decisões de compra
+
+- [ ] **Implementar alerta de estoque crítico no dashboard**
+  - **OBJETIVO:** Notificação visual quando produtos atingirem estoque mínimo
+  - **FUNCIONALIDADE:** Opção de gerar ordem de compra automática
+  - **IMPACTO:** Evitar rupturas de estoque e perda de vendas
+
+- [ ] **Corrigir layout mobile de vendas**
+  - **PROBLEMA:** Resumo não tem layout responsivo adequado
+  - **SOLUÇÃO:** Implementar grid responsivo com resumo lateral fixo em desktop
+
+### 🔵 Baixa Prioridade - UX
+
+- [ ] **Tooltips explicativos nos formulários**
+  - **OBJETIVO:** Ajudar usuários novos a entender campos complexos
+
+- [ ] **Confirmação antes de deletar registros**
+  - **OBJETIVO:** Prevenir deleções acidentais
+
+- [ ] **Filtro por subcategoria em Produtos**
+  - **OBJETIVO:** Facilitar navegação no catálogo de 833 produtos
+
+### 📊 Funcionalidades Futuras
+
+- [ ] **Importar histórico de vendas 2022-2025**
+  - **OBJETIVO:** Análises históricas e comparativos
+  - **FORMATO:** Definir CSV/Excel com mapeamento de campos
+
+- [ ] **Relatório de rentabilidade por canal**
+  - **DEPENDÊNCIA:** Requer sistema de comissões implementado
+  - **OBJETIVO:** Comparar lucro líquido entre canais (Balcão vs Delivery)
+
+- [ ] **Card de ticket médio no dashboard**
+  - **OBJETIVO:** Acompanhar valor médio por venda
+
+- [ ] **Filtro de período customizado**
+  - **OBJETIVO:** Análises por semana, quinzena, trimestre
+
+- [ ] **Histórico de alterações (auditoria)**
+  - **OBJETIVO:** Log de quem alterou o quê e quando
+  - **FOCO:** Composições de produtos, preços, custos

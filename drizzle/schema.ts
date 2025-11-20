@@ -79,6 +79,7 @@ export const products = mysqlTable("products", {
   active: boolean("active").default(true).notNull(),
   isComposite: boolean("isComposite").default(false).notNull(),
   notes: text("notes"),
+  expirationDate: timestamp("expirationDate"),
   createdAt: timestamp("createdAt").defaultNow(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow(),
 }, (table) => ({
