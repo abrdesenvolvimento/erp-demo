@@ -488,3 +488,16 @@
 - [x] **Saldo residual em Contas a Pagar** - Existe um saldo de R$ 0,05 pendente em Contas a Pagar que ainda permanece. RESOLVIDO: Encontrada parcela residual em purchaseInstallments com valor < R$ 0,10 (erro de arredondamento). Deletada via SQL. Saldo agora R$ 0,00.
 
 - [x] **Deletar compra de teste #420001 e corrigir produto** - Usuário fez compra de teste para demonstração e baixa no contas a pagar. RESOLVIDO: Compra deletada, custo médio corrigido (R$ 9,32 → R$ 11,39) e data de validade removida. Produto Baden Baden Ipa não aparece mais em "Produtos Vencendo".
+
+## 📥 MIGRAÇÃO DE DADOS - 21/11/2025
+
+- [x] Migrar vendas a prazo históricas de 2 clientes (Jhonatan Gaspar removido)
+  - Arquivo: MigraçãoVendasa Prazo.csv (corrigido)
+  - 11 vendas migradas (02/11 a 20/11/2025)
+  - 11 recebíveis criados automaticamente (vencimento em 30 dias)
+  - Total: R$ 252,00 em vendas a prazo
+  - Clientes: Ericles Araujo (4 vendas, R$ 80,00), Jackson Vinicius (7 vendas, R$ 172,00)
+
+## 🐛 CORREÇÕES - 21/11/2025
+
+- [x] Corrigir página de Gerenciar Usuários para exibir menu lateral (DashboardLayout)
