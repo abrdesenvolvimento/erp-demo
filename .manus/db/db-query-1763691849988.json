@@ -1,0 +1,21 @@
+{
+  "query": "\nSELECT \n  poi.*,\n  pr.name as product_name\nFROM purchaseOrderItems poi\nLEFT JOIN products pr ON pr.id = poi.productId\nWHERE poi.purchaseOrderId = 420001;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute \nSELECT \n  poi.*,\n  pr.name as product_name\nFROM purchaseOrderItems poi\nLEFT JOIN products pr ON pr.id = poi.productId\nWHERE poi.purchaseOrderId = 420001;\n",
+  "rows": [
+    {
+      "id": "420001",
+      "purchaseOrderId": "420001",
+      "productId": "2970001",
+      "quantity": "8.000",
+      "unitCost": "7.5000",
+      "totalCost": "60.00",
+      "expiryDate": "2025-11-27 00:00:00",
+      "createdAt": "2025-11-21 02:11:39",
+      "product_name": "Baden Baden Ipa 600ml"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tpurchaseOrderId\tproductId\tquantity\tunitCost\ttotalCost\texpiryDate\tcreatedAt\tproduct_name\n420001\t420001\t2970001\t8.000\t7.5000\t60.00\t2025-11-27 00:00:00\t2025-11-21 02:11:39\tBaden Baden Ipa 600ml\n",
+  "stderr": "",
+  "execution_time_ms": 58
+}

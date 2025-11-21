@@ -1,0 +1,14 @@
+{
+  "query": "\nSELECT productId, quantity FROM purchaseOrderItems WHERE purchaseOrderId = 420001;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute \nSELECT productId, quantity FROM purchaseOrderItems WHERE purchaseOrderId = 420001;\n",
+  "rows": [
+    {
+      "productId": "2970001",
+      "quantity": "8.000"
+    }
+  ],
+  "messages": [],
+  "stdout": "productId\tquantity\n2970001\t8.000\n",
+  "stderr": "",
+  "execution_time_ms": 50
+}

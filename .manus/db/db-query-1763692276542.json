@@ -1,0 +1,17 @@
+{
+  "query": "\nSELECT id, name, avgCost, expirationDate, currentStock \nFROM products \nWHERE id = 2970001;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute \nSELECT id, name, avgCost, expirationDate, currentStock \nFROM products \nWHERE id = 2970001;\n",
+  "rows": [
+    {
+      "id": "2970001",
+      "name": "Baden Baden Ipa 600ml",
+      "avgCost": "9.32",
+      "expirationDate": "2025-11-27 00:00:00",
+      "currentStock": "7"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tavgCost\texpirationDate\tcurrentStock\n2970001\tBaden Baden Ipa 600ml\t9.32\t2025-11-27 00:00:00\t7\n",
+  "stderr": "",
+  "execution_time_ms": 55
+}

@@ -1,0 +1,30 @@
+{
+  "query": "\nSELECT \n  po.*,\n  p.name as supplier_name\nFROM purchaseOrders po\nLEFT JOIN partners p ON p.id = po.supplierId\nWHERE po.id = 420001;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute \nSELECT \n  po.*,\n  p.name as supplier_name\nFROM purchaseOrders po\nLEFT JOIN partners p ON p.id = po.supplierId\nWHERE po.id = 420001;\n",
+  "rows": [
+    {
+      "id": "420001",
+      "supplierId": "240001",
+      "docType": "CUPOM",
+      "docNumber": "135",
+      "issueDate": "2025-11-21 00:00:00",
+      "postingDate": "2025-11-21 00:00:00",
+      "totalAmount": "60.00",
+      "freightCost": "0.00",
+      "chargesCost": "0.00",
+      "paymentMethod": "Crédito R",
+      "invoiceFilePath": "NULL",
+      "status": "CONFIRMED",
+      "notes": "Teste",
+      "createdBy": "3sp2FmLhkenyjqMFmfLoex",
+      "createdAt": "2025-11-21 02:11:39",
+      "updatedAt": "2025-11-21 02:12:13",
+      "accessKey": "NULL",
+      "supplier_name": "Cervejaria Petropolis S/A (Barueri)"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tsupplierId\tdocType\tdocNumber\tissueDate\tpostingDate\ttotalAmount\tfreightCost\tchargesCost\tpaymentMethod\tinvoiceFilePath\tstatus\tnotes\tcreatedBy\tcreatedAt\tupdatedAt\taccessKey\tsupplier_name\n420001\t240001\tCUPOM\t135\t2025-11-21 00:00:00\t2025-11-21 00:00:00\t60.00\t0.00\t0.00\tCrédito R\tNULL\tCONFIRMED\tTeste\t3sp2FmLhkenyjqMFmfLoex\t2025-11-21 02:11:39\t2025-11-21 02:12:13\tNULL\tCervejaria Petropolis S/A (Barueri)\n",
+  "stderr": "",
+  "execution_time_ms": 349
+}

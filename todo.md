@@ -481,3 +481,5 @@
 - [x] **Cards de resumo na tela de Vendas sem filtro de período** - Cards mostram total histórico de TODAS as vendas. Ao migrar vendas antigas (Alexandre Lima 04/11-15/11), elas foram somadas. RESOLVIDO: Adicionado filtro de período (Hoje, 7 dias, Mês, Todos) acima dos cards. Padrão: Mês.
 
 - [x] **Saldo residual em Contas a Pagar** - Existe um saldo de R$ 0,05 pendente em Contas a Pagar que ainda permanece. RESOLVIDO: Encontrada parcela residual em purchaseInstallments com valor < R$ 0,10 (erro de arredondamento). Deletada via SQL. Saldo agora R$ 0,00.
+
+- [x] **Deletar compra de teste #420001 e corrigir produto** - Usuário fez compra de teste para demonstração e baixa no contas a pagar. RESOLVIDO: Compra deletada, custo médio corrigido (R$ 9,32 → R$ 11,39) e data de validade removida. Produto Baden Baden Ipa não aparece mais em "Produtos Vencendo".
