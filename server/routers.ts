@@ -431,8 +431,11 @@ export const appRouter = router({
       }),
     
     stats: protectedProcedure
-      .query(async () => {
-        return await db.getSalesStats();
+      .input(z.object({
+        period: z.enum(['today', 'week', 'month', 'all']).optional().default('month'),
+      }).optional())
+      .query(async ({ input }) => {
+        return await db.getSalesStats(input?.period || 'month');
       }),
   }),
 

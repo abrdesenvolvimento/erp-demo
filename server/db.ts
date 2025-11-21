@@ -479,7 +479,7 @@ export async function createSale(saleData: InsertSale, items: Omit<InsertSaleIte
   return saleId;
 }
 
-export async function getSalesStats() {
+export async function getSalesStats(period?: 'today' | 'week' | 'month' | 'all') {
   const db = await getDb();
   if (!db) return {
     balcao: { count: 0, total: "0.00" },
@@ -488,8 +488,30 @@ export async function getSalesStats() {
     total: { count: 0, total: "0.00" },
   };
   
-  // Buscar todas as vendas e agrupar por tipo
-  const allSales = await db.select().from(sales);
+  // Buscar vendas com filtro de período
+  let allSales = await db.select().from(sales);
+  
+  // Aplicar filtro de período
+  if (period && period !== 'all') {
+    const now = new Date();
+    let startDate: Date;
+    
+    if (period === 'today') {
+      startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    } else if (period === 'week') {
+      startDate = new Date(now);
+      startDate.setDate(now.getDate() - 7);
+    } else if (period === 'month') {
+      startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+    } else {
+      startDate = new Date(0); // Todas as vendas
+    }
+    
+    allSales = allSales.filter(sale => {
+      const saleDate = new Date(sale.saleDate!);
+      return saleDate >= startDate;
+    });
+  }
   
   const stats = {
     balcao: { count: 0, total: 0 },

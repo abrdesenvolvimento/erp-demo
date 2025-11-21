@@ -473,3 +473,11 @@
 - [x] **Adicionar cards de resumo na tela de Vendas** - Exibir cards no topo da tela mostrando quantidade e valor total por tipo de venda (Balcão, Delivery, A Prazo). RESOLVIDO: Criado endpoint sales.stats no backend e 4 cards no frontend (Balcão, Delivery, A Prazo, Total Geral) com cores distintas e ícones.
 
 - [x] **Criar script de migração de vendas a prazo** - Importar vendas a prazo históricas do cliente Alexandre Lima mantendo data original da venda e sem alterar estoque (vendas anteriores ao inventário). RESOLVIDO: Script migrate-sales.mjs criado. Migradas 4 vendas (R$ 136,00) com datas originais, recebíveis e parcelas criadas automaticamente.
+
+## 🐛 BUGS REPORTADOS (20/11/2025 - 21:40)
+
+- [x] **Saldo divergente do Alexandre Lima** - Tela inicial de Contas a Receber mostra R$ 136,00, mas ao clicar no cliente mostra R$ 209,00. RESOLVIDO: Script de migração rodou duas vezes e criou venda duplicada #2160005. Deletada venda duplicada e saldo corrigido para R$ 136,00.
+
+- [x] **Cards de resumo na tela de Vendas sem filtro de período** - Cards mostram total histórico de TODAS as vendas. Ao migrar vendas antigas (Alexandre Lima 04/11-15/11), elas foram somadas. RESOLVIDO: Adicionado filtro de período (Hoje, 7 dias, Mês, Todos) acima dos cards. Padrão: Mês.
+
+- [x] **Saldo residual em Contas a Pagar** - Existe um saldo de R$ 0,05 pendente em Contas a Pagar. INVESTIGADO: Módulo de Contas a Pagar ainda não implementado no banco de dados (tabelas não existem). Valor pode ser mockado na UI. Não aplicável no momento.

@@ -91,7 +91,7 @@ export default function Home() {
               </div>
               <div className="mt-3 space-y-1.5">
                 <div className="flex items-center justify-between text-xs">
-                  <span className="text-muted-foreground">Balcão/A Prazo</span>
+                  <span className="text-muted-foreground">Balcão</span>
                   <span className="font-medium text-blue-600">
                     R$ {formatCurrency(stats?.monthRevenueBalcao)}
                     <span className="text-muted-foreground ml-1">
@@ -142,7 +142,7 @@ export default function Home() {
               </div>
               <div className="mt-3 space-y-1.5">
                 <div className="flex items-center justify-between text-xs">
-                  <span className="text-muted-foreground">Balcão/A Prazo</span>
+                  <span className="text-muted-foreground">Balcão</span>
                   <span className="font-medium text-green-600">
                     R$ {formatCurrency(stats?.todayRevenueBalcao)}
                     <span className="text-muted-foreground ml-1">

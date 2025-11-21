@@ -1,0 +1,13 @@
+{
+  "query": "\n-- Deletar parcelas do recebível duplicado\nDELETE FROM receivableInstallments WHERE receivableId = 690005;\n\n-- Deletar recebível duplicado\nDELETE FROM receivables WHERE id = 690005;\n\n-- Deletar itens da venda duplicada\nDELETE FROM saleItems WHERE saleId = 2160005;\n\n-- Deletar venda duplicada\nDELETE FROM sales WHERE id = 2160005;\n\n-- Atualizar saldo do cliente para R$ 136,00\nUPDATE partners SET currentBalance = '136.00' WHERE id = 270001;\n\nSELECT 'Venda duplicada removida e saldo corrigido' as resultado;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute \n-- Deletar parcelas do recebível duplicado\nDELETE FROM receivableInstallments WHERE receivableId = 690005;\n\n-- Deletar recebível duplicado\nDELETE FROM receivables WHERE id = 690005;\n\n-- Deletar itens da venda duplicada\nDELETE FROM saleItems WHERE saleId = 2160005;\n\n-- Deletar venda duplicada\nDELETE FROM sales WHERE id = 2160005;\n\n-- Atualizar saldo do cliente para R$ 136,00\nUPDATE partners SET currentBalance = '136.00' WHERE id = 270001;\n\nSELECT 'Venda duplicada removida e saldo corrigido' as resultado;\n",
+  "rows": [
+    {
+      "resultado": "Venda duplicada removida e saldo corrigido"
+    }
+  ],
+  "messages": [],
+  "stdout": "resultado\nVenda duplicada removida e saldo corrigido\n",
+  "stderr": "",
+  "execution_time_ms": 72
+}

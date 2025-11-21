@@ -1,0 +1,8 @@
+{
+  "query": "\nSELECT \n  poi.id,\n  poi.purchaseOrderId,\n  poi.installmentNumber,\n  poi.amount,\n  poi.paidAmount,\n  (poi.amount - COALESCE(poi.paidAmount, 0)) as pending,\n  poi.status,\n  poi.dueDate,\n  po.supplierId,\n  p.name as supplier_name\nFROM purchaseOrderInstallments poi\nLEFT JOIN purchaseOrders po ON po.id = poi.purchaseOrderId\nLEFT JOIN partners p ON p.id = po.supplierId\nWHERE poi.status = 'PENDENTE' OR (poi.amount - COALESCE(poi.paidAmount, 0)) > 0\nORDER BY pending;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute \nSELECT \n  poi.id,\n  poi.purchaseOrderId,\n  poi.installmentNumber,\n  poi.amount,\n  poi.paidAmount,\n  (poi.amount - COALESCE(poi.paidAmount, 0)) as pending,\n  poi.status,\n  poi.dueDate,\n  po.supplierId,\n  p.name as supplier_name\nFROM purchaseOrderInstallments poi\nLEFT JOIN purchaseOrders po ON po.id = poi.purchaseOrderId\nLEFT JOIN partners p ON p.id = po.supplierId\nWHERE poi.status = 'PENDENTE' OR (poi.amount - COALESCE(poi.paidAmount, 0)) > 0\nORDER BY pending;\n",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1146 (42S02) at line 2: Table '7rkrces5kipyf8hkunqrck.purchaseOrderInstallments' doesn't exist"
+  ]
+}

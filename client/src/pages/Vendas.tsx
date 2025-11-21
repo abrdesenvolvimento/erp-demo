@@ -50,6 +50,7 @@ export default function Vendas() {
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [saleType, setSaleType] = useState<SaleType | null>(null);
   const [step, setStep] = useState<"type" | "form">("type");
+  const [statsPeriod, setStatsPeriod] = useState<'today' | 'week' | 'month' | 'all'>('month');
   
   // Form states
   const [channelId, setChannelId] = useState<string>("");
@@ -68,7 +69,7 @@ export default function Vendas() {
 
   // Queries
   const { data: sales = [], refetch } = trpc.sales.list.useQuery();
-  const { data: stats } = trpc.sales.stats.useQuery();
+  const { data: stats } = trpc.sales.stats.useQuery({ period: statsPeriod });
   const { data: channels = [] } = trpc.salesChannels.list.useQuery({ activeOnly: true });
   // Buscar parceiros que sejam CUSTOMER ou BOTH (clientes e fornecedores)
   const { data: allPartners = [] } = trpc.partners.list.useQuery({ 
@@ -332,6 +333,41 @@ export default function Vendas() {
             <Plus className="h-4 w-4 mr-2" />
             Nova Venda
           </Button>
+        </div>
+
+        {/* Filtro de Período */}
+        <div className="flex items-center gap-2 mb-4">
+          <span className="text-sm text-muted-foreground">Período:</span>
+          <div className="flex gap-2">
+            <Button 
+              variant={statsPeriod === 'today' ? 'default' : 'outline'} 
+              size="sm"
+              onClick={() => setStatsPeriod('today')}
+            >
+              Hoje
+            </Button>
+            <Button 
+              variant={statsPeriod === 'week' ? 'default' : 'outline'} 
+              size="sm"
+              onClick={() => setStatsPeriod('week')}
+            >
+              7 dias
+            </Button>
+            <Button 
+              variant={statsPeriod === 'month' ? 'default' : 'outline'} 
+              size="sm"
+              onClick={() => setStatsPeriod('month')}
+            >
+              Mês
+            </Button>
+            <Button 
+              variant={statsPeriod === 'all' ? 'default' : 'outline'} 
+              size="sm"
+              onClick={() => setStatsPeriod('all')}
+            >
+              Todos
+            </Button>
+          </div>
         </div>
 
         {/* Cards de Resumo */}

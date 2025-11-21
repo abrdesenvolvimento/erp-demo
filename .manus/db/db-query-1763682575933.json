@@ -1,0 +1,60 @@
+{
+  "query": "\nSELECT \n  s.id as venda_id,\n  s.saleDate,\n  s.finalAmount,\n  s.saleType,\n  r.id as recebi_id,\n  r.totalAmount as recebivel_total,\n  r.receivedAmount as recebivel_recebido,\n  r.status as recebivel_status\nFROM sales s\nLEFT JOIN receivables r ON r.saleId = s.id\nWHERE s.customerId = 270001\nORDER BY s.saleDate DESC;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute \nSELECT \n  s.id as venda_id,\n  s.saleDate,\n  s.finalAmount,\n  s.saleType,\n  r.id as recebi_id,\n  r.totalAmount as recebivel_total,\n  r.receivedAmount as recebivel_recebido,\n  r.status as recebivel_status\nFROM sales s\nLEFT JOIN receivables r ON r.saleId = s.id\nWHERE s.customerId = 270001\nORDER BY s.saleDate DESC;\n",
+  "rows": [
+    {
+      "venda_id": "2160009",
+      "saleDate": "2025-11-15 12:00:00",
+      "finalAmount": "10.00",
+      "saleType": "A_PRAZO",
+      "recebi_id": "690004",
+      "recebivel_total": "10.00",
+      "recebivel_recebido": "0.00",
+      "recebivel_status": "PENDENTE"
+    },
+    {
+      "venda_id": "2160008",
+      "saleDate": "2025-11-12 12:00:00",
+      "finalAmount": "38.00",
+      "saleType": "A_PRAZO",
+      "recebi_id": "690003",
+      "recebivel_total": "38.00",
+      "recebivel_recebido": "0.00",
+      "recebivel_status": "PENDENTE"
+    },
+    {
+      "venda_id": "2160007",
+      "saleDate": "2025-11-09 12:00:00",
+      "finalAmount": "15.00",
+      "saleType": "A_PRAZO",
+      "recebi_id": "690002",
+      "recebivel_total": "15.00",
+      "recebivel_recebido": "0.00",
+      "recebivel_status": "PENDENTE"
+    },
+    {
+      "venda_id": "2160006",
+      "saleDate": "2025-11-04 12:00:00",
+      "finalAmount": "73.00",
+      "saleType": "A_PRAZO",
+      "recebi_id": "690001",
+      "recebivel_total": "73.00",
+      "recebivel_recebido": "0.00",
+      "recebivel_status": "PENDENTE"
+    },
+    {
+      "venda_id": "2160005",
+      "saleDate": "2025-11-04 12:00:00",
+      "finalAmount": "73.00",
+      "saleType": "A_PRAZO",
+      "recebi_id": "NULL",
+      "recebivel_total": "NULL",
+      "recebivel_recebido": "NULL",
+      "recebivel_status": "NULL"
+    }
+  ],
+  "messages": [],
+  "stdout": "venda_id\tsaleDate\tfinalAmount\tsaleType\trecebi_id\trecebivel_total\trecebivel_recebido\trecebivel_status\n2160009\t2025-11-15 12:00:00\t10.00\tA_PRAZO\t690004\t10.00\t0.00\tPENDENTE\n2160008\t2025-11-12 12:00:00\t38.00\tA_PRAZO\t690003\t38.00\t0.00\tPENDENTE\n2160007\t2025-11-09 12:00:00\t15.00\tA_PRAZO\t690002\t15.00\t0.00\tPENDENTE\n2160006\t2025-11-04 12:00:00\t73.00\tA_PRAZO\t690001\t73.00\t0.00\tPENDENTE\n2160005\t2025-11-04 12:00:00\t73.00\tA_PRAZO\tNULL\tNULL\tNULL\tNULL\n",
+  "stderr": "",
+  "execution_time_ms": 433
+}

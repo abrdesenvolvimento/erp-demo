@@ -1,0 +1,50 @@
+{
+  "query": "\nSELECT \n  s.id,\n  DATE_FORMAT(s.saleDate, '%d/%m/%Y %H:%i') as data,\n  s.finalAmount,\n  s.saleType,\n  s.notes,\n  r.totalAmount as recebivel\nFROM sales s\nLEFT JOIN receivables r ON r.saleId = s.id\nWHERE s.customerId = 270001\nORDER BY s.saleDate;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute \nSELECT \n  s.id,\n  DATE_FORMAT(s.saleDate, '%d/%m/%Y %H:%i') as data,\n  s.finalAmount,\n  s.saleType,\n  s.notes,\n  r.totalAmount as recebivel\nFROM sales s\nLEFT JOIN receivables r ON r.saleId = s.id\nWHERE s.customerId = 270001\nORDER BY s.saleDate;\n",
+  "rows": [
+    {
+      "id": "2160005",
+      "data": "04/11/2025 12:00",
+      "finalAmount": "73.00",
+      "saleType": "A_PRAZO",
+      "notes": "Migração de venda histórica - NÃO BAIXOU ESTOQUE",
+      "recebivel": "NULL"
+    },
+    {
+      "id": "2160006",
+      "data": "04/11/2025 12:00",
+      "finalAmount": "73.00",
+      "saleType": "A_PRAZO",
+      "notes": "Migração de venda histórica - NÃO BAIXOU ESTOQUE",
+      "recebivel": "73.00"
+    },
+    {
+      "id": "2160007",
+      "data": "09/11/2025 12:00",
+      "finalAmount": "15.00",
+      "saleType": "A_PRAZO",
+      "notes": "Migração de venda histórica - NÃO BAIXOU ESTOQUE",
+      "recebivel": "15.00"
+    },
+    {
+      "id": "2160008",
+      "data": "12/11/2025 12:00",
+      "finalAmount": "38.00",
+      "saleType": "A_PRAZO",
+      "notes": "Migração de venda histórica - NÃO BAIXOU ESTOQUE",
+      "recebivel": "38.00"
+    },
+    {
+      "id": "2160009",
+      "data": "15/11/2025 12:00",
+      "finalAmount": "10.00",
+      "saleType": "A_PRAZO",
+      "notes": "Migração de venda histórica - NÃO BAIXOU ESTOQUE",
+      "recebivel": "10.00"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tdata\tfinalAmount\tsaleType\tnotes\trecebivel\n2160005\t04/11/2025 12:00\t73.00\tA_PRAZO\tMigração de venda histórica - NÃO BAIXOU ESTOQUE\tNULL\n2160006\t04/11/2025 12:00\t73.00\tA_PRAZO\tMigração de venda histórica - NÃO BAIXOU ESTOQUE\t73.00\n2160007\t09/11/2025 12:00\t15.00\tA_PRAZO\tMigração de venda histórica - NÃO BAIXOU ESTOQUE\t15.00\n2160008\t12/11/2025 12:00\t38.00\tA_PRAZO\tMigração de venda histórica - NÃO BAIXOU ESTOQUE\t38.00\n2160009\t15/11/2025 12:00\t10.00\tA_PRAZO\tMigração de venda histórica - NÃO BAIXOU ESTOQUE\t10.00\n",
+  "stderr": "",
+  "execution_time_ms": 58
+}
