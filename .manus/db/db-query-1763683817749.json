@@ -1,0 +1,21 @@
+{
+  "query": "\nSELECT * FROM purchaseInstallments WHERE status = 'PENDING';\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute \nSELECT * FROM purchaseInstallments WHERE status = 'PENDING';\n",
+  "rows": [
+    {
+      "id": "390001",
+      "purchaseOrderId": "390001",
+      "installmentNumber": "1",
+      "dueDate": "2025-12-20 00:00:00",
+      "amount": "0.05",
+      "paidDate": "NULL",
+      "status": "PENDING",
+      "createdAt": "2025-11-20 04:42:53",
+      "updatedAt": "2025-11-20 04:42:53"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tpurchaseOrderId\tinstallmentNumber\tdueDate\tamount\tpaidDate\tstatus\tcreatedAt\tupdatedAt\n390001\t390001\t1\t2025-12-20 00:00:00\t0.05\tNULL\tPENDING\t2025-11-20 04:42:53\t2025-11-20 04:42:53\n",
+  "stderr": "",
+  "execution_time_ms": 52
+}

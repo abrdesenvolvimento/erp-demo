@@ -480,4 +480,4 @@
 
 - [x] **Cards de resumo na tela de Vendas sem filtro de período** - Cards mostram total histórico de TODAS as vendas. Ao migrar vendas antigas (Alexandre Lima 04/11-15/11), elas foram somadas. RESOLVIDO: Adicionado filtro de período (Hoje, 7 dias, Mês, Todos) acima dos cards. Padrão: Mês.
 
-- [x] **Saldo residual em Contas a Pagar** - Existe um saldo de R$ 0,05 pendente em Contas a Pagar. INVESTIGADO: Módulo de Contas a Pagar ainda não implementado no banco de dados (tabelas não existem). Valor pode ser mockado na UI. Não aplicável no momento.
+- [x] **Saldo residual em Contas a Pagar** - Existe um saldo de R$ 0,05 pendente em Contas a Pagar que ainda permanece. RESOLVIDO: Encontrada parcela residual em purchaseInstallments com valor < R$ 0,10 (erro de arredondamento). Deletada via SQL. Saldo agora R$ 0,00.

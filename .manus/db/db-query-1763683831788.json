@@ -1,0 +1,24 @@
+{
+  "query": "\nSELECT \n  pi.*,\n  po.supplierId,\n  p.name as supplier_name,\n  po.totalAmount as purchase_total\nFROM purchaseInstallments pi\nLEFT JOIN purchaseOrders po ON po.id = pi.purchaseOrderId\nLEFT JOIN partners p ON p.id = po.supplierId\nWHERE pi.status = 'PENDING';\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute \nSELECT \n  pi.*,\n  po.supplierId,\n  p.name as supplier_name,\n  po.totalAmount as purchase_total\nFROM purchaseInstallments pi\nLEFT JOIN purchaseOrders po ON po.id = pi.purchaseOrderId\nLEFT JOIN partners p ON p.id = po.supplierId\nWHERE pi.status = 'PENDING';\n",
+  "rows": [
+    {
+      "id": "390001",
+      "purchaseOrderId": "390001",
+      "installmentNumber": "1",
+      "dueDate": "2025-12-20 00:00:00",
+      "amount": "0.05",
+      "paidDate": "NULL",
+      "status": "PENDING",
+      "createdAt": "2025-11-20 04:42:53",
+      "updatedAt": "2025-11-20 04:42:53",
+      "supplierId": "NULL",
+      "supplier_name": "NULL",
+      "purchase_total": "NULL"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tpurchaseOrderId\tinstallmentNumber\tdueDate\tamount\tpaidDate\tstatus\tcreatedAt\tupdatedAt\tsupplierId\tsupplier_name\tpurchase_total\n390001\t390001\t1\t2025-12-20 00:00:00\t0.05\tNULL\tPENDING\t2025-11-20 04:42:53\t2025-11-20 04:42:53\tNULL\tNULL\tNULL\n",
+  "stderr": "",
+  "execution_time_ms": 58
+}
