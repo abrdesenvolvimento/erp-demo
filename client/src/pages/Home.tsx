@@ -7,8 +7,11 @@ import { TrendingUp, AlertTriangle, ShoppingCart, DollarSign, Calendar, Package,
 import { Link } from "wouter";
 import { useState } from "react";
 import { SaleDetailsModal } from "@/components/SaleDetailsModal";
+import { useAuth } from "@/_core/hooks/useAuth";
 
 export default function Home() {
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
   const { data: stats, isLoading } = trpc.dashboard.stats.useQuery();
   const [showLowStockModal, setShowLowStockModal] = useState(false);
   const [showExpiringModal, setShowExpiringModal] = useState(false);
@@ -183,28 +186,30 @@ export default function Home() {
             </CardContent>
           </Card>
 
-          <Card 
-            className="border-t-4 border-t-purple-500 cursor-pointer hover:bg-accent transition-colors"
-            onClick={() => setShowStockValueModal(true)}
-          >
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Valor Total em Estoque
-              </CardTitle>
-              <Package className="h-4 w-4 text-purple-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-purple-600">
-                {stats?.totalStockValue 
-                  ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(parseFloat(stats.totalStockValue))
-                  : 'R$ 0,00'
-                }
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                Clique para ver detalhes por categoria
-              </p>
-            </CardContent>
-          </Card>
+          {isAdmin && (
+            <Card 
+              className="border-t-4 border-t-purple-500 cursor-pointer hover:bg-accent transition-colors"
+              onClick={() => setShowStockValueModal(true)}
+            >
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Valor Total em Estoque
+                </CardTitle>
+                <Package className="h-4 w-4 text-purple-500" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-purple-600">
+                  {stats?.totalStockValue 
+                    ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(parseFloat(stats.totalStockValue))
+                    : 'R$ 0,00'
+                  }
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Clique para ver detalhes por categoria
+                </p>
+              </CardContent>
+            </Card>
+          )}
 
           <Card 
             className={`border-t-4 cursor-pointer hover:bg-accent transition-colors ${

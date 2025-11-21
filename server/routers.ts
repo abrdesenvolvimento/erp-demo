@@ -1,8 +1,9 @@
 import { z } from "zod";
+import { TRPCError } from "@trpc/server";
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
-import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
+import { publicProcedure, protectedProcedure, adminProcedure, router } from "./_core/trpc";
 import * as db from "./db";
 
 export const appRouter = router({
@@ -15,6 +16,36 @@ export const appRouter = router({
       ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
       return { success: true } as const;
     }),
+  }),
+
+  // ==================== USUÁRIOS ====================
+  users: router({
+    list: protectedProcedure
+      .query(async ({ ctx }) => {
+        // Apenas admins podem listar usuários
+        if (ctx.user.role !== 'admin') {
+          throw new TRPCError({ code: 'FORBIDDEN', message: 'Apenas administradores podem listar usuários' });
+        }
+        return await db.getAllUsers();
+      }),
+    
+    updateRole: protectedProcedure
+      .input(z.object({
+        userId: z.string(),
+        role: z.enum(['admin', 'user'])
+      }))
+      .mutation(async ({ ctx, input }) => {
+        // Apenas admins podem alterar roles
+        if (ctx.user.role !== 'admin') {
+          throw new TRPCError({ code: 'FORBIDDEN', message: 'Apenas administradores podem alterar permissões' });
+        }
+        // Não pode alterar o próprio role
+        if (input.userId === ctx.user.id) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'Você não pode alterar seu próprio nível de acesso' });
+        }
+        await db.updateUserRole(input.userId, input.role);
+        return { success: true };
+      }),
   }),
 
   // ==================== CATEGORIAS ====================
@@ -441,7 +472,7 @@ export const appRouter = router({
 
   // ==================== COMPRAS ====================
   purchases: router({
-    list: protectedProcedure
+    list: adminProcedure
       .input(z.object({
         status: z.string().optional(),
         supplierId: z.number().optional(),
@@ -450,25 +481,25 @@ export const appRouter = router({
         return await db.getPurchaseOrders(input);
       }),
     
-    getById: protectedProcedure
+    getById: adminProcedure
       .input(z.object({ id: z.number() }))
       .query(async ({ input }) => {
         return await db.getPurchaseOrderById(input.id);
       }),
     
-    getItems: protectedProcedure
+    getItems: adminProcedure
       .input(z.object({ purchaseOrderId: z.number() }))
       .query(async ({ input }) => {
         return await db.getPurchaseOrderItems(input.purchaseOrderId);
       }),
     
-    searchProducts: protectedProcedure
+    searchProducts: adminProcedure
       .input(z.object({ search: z.string() }))
       .query(async ({ input }) => {
         return await db.searchProducts(input.search);
       }),
     
-    create: protectedProcedure
+    create: adminProcedure
       .input(z.object({
         supplierId: z.number(),
         docType: z.enum(["NOTA_FISCAL", "CUPOM", "SEM_DOCUMENTO"]),
@@ -555,14 +586,14 @@ export const appRouter = router({
         return { id: purchaseOrderId, success: true };
       }),
     
-    confirm: protectedProcedure
+    confirm: adminProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ input }) => {
         await db.confirmPurchaseOrder(input.id);
         return { success: true };
       }),
     
-    cancel: protectedProcedure
+    cancel: adminProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ input }) => {
         await db.updatePurchaseOrder(input.id, { status: "CANCELLED" });
@@ -574,13 +605,13 @@ export const appRouter = router({
   expenses: router({
     // Categorias
     categories: router({
-      list: protectedProcedure
+      list: adminProcedure
         .input(z.object({ activeOnly: z.boolean().optional().default(true) }).optional())
         .query(async ({ input }) => {
           return await db.getExpenseCategories(input?.activeOnly ?? true);
         }),
       
-      create: protectedProcedure
+      create: adminProcedure
         .input(z.object({
           name: z.string().min(1),
           description: z.string().optional(),
@@ -591,7 +622,7 @@ export const appRouter = router({
           return { id, success: true };
         }),
       
-      update: protectedProcedure
+      update: adminProcedure
         .input(z.object({
           id: z.number(),
           data: z.object({
@@ -607,7 +638,7 @@ export const appRouter = router({
     }),
     
     // Despesas
-    list: protectedProcedure
+    list: adminProcedure
       .input(z.object({
         categoryId: z.number().optional(),
         status: z.enum(["ATIVA", "CANCELADA"]).optional(),
@@ -619,13 +650,13 @@ export const appRouter = router({
         return await db.getExpenses(input);
       }),
     
-    get: protectedProcedure
+    get: adminProcedure
       .input(z.object({ id: z.number() }))
       .query(async ({ input }) => {
         return await db.getExpenseById(input.id);
       }),
     
-    create: protectedProcedure
+    create: adminProcedure
       .input(z.object({
         supplierId: z.number().optional(),
         docType: z.enum(["NOTA_FISCAL", "CUPOM"]),
@@ -668,7 +699,7 @@ export const appRouter = router({
         return { id: expenseId, success: true };
       }),
     
-    cancel: protectedProcedure
+    cancel: adminProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ input }) => {
         await db.cancelExpense(input.id);
@@ -795,27 +826,27 @@ export const appRouter = router({
   // ==================== CONTAS A PAGAR ====================
   payables: router({
     // Listar fornecedores com saldo devedor
-    bySupplier: protectedProcedure
+    bySupplier: adminProcedure
       .query(async () => {
         return await db.getSuppliersWithPendingPayables();
       }),
     
     // Total pendente de pagamento
-    totalPending: protectedProcedure
+    totalPending: adminProcedure
       .query(async () => {
         const total = await db.getTotalPendingPayables();
         return { total: total.toFixed(2) };
       }),
     
     // Detalhamento de um fornecedor
-    supplierDetail: protectedProcedure
+    supplierDetail: adminProcedure
       .input(z.object({ supplierId: z.number() }))
       .query(async ({ input }) => {
         return await db.getSupplierPayableDetail(input.supplierId);
       }),
     
     // Registrar pagamento
-    registerPayment: protectedProcedure
+    registerPayment: adminProcedure
       .input(z.object({
         supplierId: z.number(),
         expenseId: z.number().optional(),
@@ -829,7 +860,7 @@ export const appRouter = router({
       }),
     
     // Pagar parcela individual (compra ou despesa)
-    payInstallment: protectedProcedure
+    payInstallment: adminProcedure
       .input(z.object({
         installmentId: z.number(),
         type: z.enum(['purchase', 'expense']),
@@ -847,7 +878,7 @@ export const appRouter = router({
       }),
     
     // Histórico de pagamentos
-    paymentHistory: protectedProcedure
+    paymentHistory: adminProcedure
       .input(z.object({
         supplierId: z.number().optional(),
         startDate: z.string().optional(),

@@ -1046,18 +1046,20 @@ export default function Produtos() {
                       />
                     </div>
 
-                    <div className="grid gap-2">
-                      <Label htmlFor="avgCost">Custo Médio (R$)</Label>
-                      <Input
-                        id="avgCost"
-                        type="number"
-                        step="0.01"
-                        value={formData.avgCost}
-                        onChange={(e) =>
-                          setFormData({ ...formData, avgCost: e.target.value })
-                        }
-                      />
-                    </div>
+                    {isAdmin && (
+                      <div className="grid gap-2">
+                        <Label htmlFor="avgCost">Custo Médio (R$)</Label>
+                        <Input
+                          id="avgCost"
+                          type="number"
+                          step="0.01"
+                          value={formData.avgCost}
+                          onChange={(e) =>
+                            setFormData({ ...formData, avgCost: e.target.value })
+                          }
+                        />
+                      </div>
+                    )}
                   </div>
 
                   {/* Preços por Canal */}
@@ -1201,7 +1203,7 @@ export default function Produtos() {
                     <TableHead>Unidade</TableHead>
                     <TableHead className="text-right">Estoque</TableHead>
                     <TableHead className="text-right">Mínimo</TableHead>
-                    <TableHead className="text-right">Custo Médio</TableHead>
+                    {isAdmin && <TableHead className="text-right">Custo Médio</TableHead>}
                     <TableHead>Tipo</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Ativo</TableHead>
@@ -1233,9 +1235,11 @@ export default function Produtos() {
                         <TableCell className="text-right text-muted-foreground">
                           {product.minStock ?? 0}
                         </TableCell>
-                        <TableCell className="text-right text-muted-foreground">
-                          R$ {parseFloat(product.avgCost || "0").toFixed(2)}
-                        </TableCell>
+                        {isAdmin && (
+                          <TableCell className="text-right text-muted-foreground">
+                            R$ {parseFloat(product.avgCost || "0").toFixed(2)}
+                          </TableCell>
+                        )}
                         <TableCell>
                           {product.isComposite ? (
                             <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-blue-100 text-blue-700">

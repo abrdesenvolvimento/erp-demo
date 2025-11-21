@@ -22,7 +22,7 @@ import {
 import { APP_LOGO, APP_TITLE, getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
-import { LayoutDashboard, LogOut, PanelLeft, Users, Package, ShoppingCart, BarChart3, ShoppingBag, Receipt, DollarSign, CreditCard, UserCircle } from "lucide-react";
+import { LayoutDashboard, LogOut, PanelLeft, Users, Package, ShoppingCart, BarChart3, ShoppingBag, Receipt, DollarSign, CreditCard, UserCircle, Shield } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
@@ -37,6 +37,7 @@ const menuItems = [
   { icon: Receipt, label: "Despesas", path: "/despesas" },
   { icon: DollarSign, label: "Contas a Receber", path: "/contas-receber" },
   { icon: CreditCard, label: "Contas a Pagar", path: "/contas-pagar" },
+  { icon: Shield, label: "Gerenciar Usuários", path: "/usuarios" },
   { icon: BarChart3, label: "Relatórios", path: "/relatorios" },
 ];
 
@@ -219,7 +220,20 @@ function DashboardLayoutContent({
 
           <SidebarContent className="gap-0">
             <SidebarMenu className="px-2 py-1">
-              {menuItems.map(item => {
+              {menuItems.filter(item => {
+                // Usuários comuns não podem acessar:
+                if (user?.role !== 'admin') {
+                  const restrictedPaths = [
+                    '/compras',
+                    '/despesas', 
+                    '/contas-pagar',
+                    '/usuarios',
+                    '/relatorios'
+                  ];
+                  return !restrictedPaths.includes(item.path);
+                }
+                return true;
+              }).map(item => {
                 const isActive = location === item.path;
                 return (
                   <SidebarMenuItem key={item.path}>

@@ -19,14 +19,19 @@
   - Atualização em tempo real
   - Formato: R$ XX.XXX,XX
 
-- [ ] **Controle de Acesso por Perfil de Usuário**
-  - Revisar permissões antes da publicação
-  - **Admin (proprietário):** acesso total a dashboard e relatórios completos
-  - **Usuário comum:** acesso limitado (definir quais módulos)
-  - Implementar restrições no frontend (ocultar menus) e backend (validar permissões)
-  - Testar com usuário não-admin
-  - Documentar níveis de acesso no README
-  - Criar página de "Acesso Negado" para usuários sem permissão
+- [ ] **Controle de Acesso por Perfil de Usuário** (EM IMPLEMENTAÇÃO)
+  - [x] Criar tela de Gerenciamento de Usuários (backend: listar, promover, rebaixar)
+  - [x] Criar tela de Gerenciamento de Usuários (frontend)
+  - [x] Implementar restrições de menu baseadas em role
+  - [x] Ocultar campos sensíveis (custos) para usuários comuns
+    - [x] Produtos: campo custo médio (formulário + tabela)
+    - [x] Dashboard: card Valor Total em Estoque
+  - [x] Criar página de Acesso Negado
+  - [x] Adicionar verificações de autorização no backend
+    - [x] Compras: todos os endpoints protegidos com adminProcedure
+    - [x] Despesas: todos os endpoints protegidos com adminProcedure
+    - [x] Contas a Pagar: todos os endpoints protegidos com adminProcedure
+  - [ ] Testar com ambos os perfis (Admin e User)
 
 **Observações:**
 - Funcionalidades solicitadas pelo usuário para implementação antes da publicação em produção

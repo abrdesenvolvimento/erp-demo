@@ -98,6 +98,20 @@ export async function getUser(id: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
+export async function getAllUsers() {
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(users).orderBy(users.createdAt);
+}
+
+export async function updateUserRole(userId: string, role: 'admin' | 'user') {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+  await db.update(users).set({ role }).where(eq(users.id, userId));
+}
+
 // ==================== CATEGORIAS ====================
 export async function getCategories(activeOnly = true) {
   const db = await getDb();
