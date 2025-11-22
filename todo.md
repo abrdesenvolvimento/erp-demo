@@ -519,9 +519,10 @@
   - Estoque Fanta Uva 350ml: 18 unidades (-1 descontado)
   - Recebível atualizado: R$ 4,50 (PENDENTE)
 
-## 🔧 NOVA FUNCIONALIDADE - Edição de Vendas (Admin)
+## 🚀 FUNCIONALIDADES FUTURAS (Pós-Publicação)
 
-- [x] **Implementar edição de vendas para administradores**
+### Edição e Exclusão de Vendas (Admin)
+- [ ] **Implementar edição completa de vendas**
   - [x] Backend: Criar endpoint para editar venda (adminProcedure)
     - Validar permissão de admin
     - Permitir editar itens (adicionar, remover, alterar quantidade)
@@ -540,17 +541,11 @@
     - [x] Não permitir editar vendas com mais de 24 horas
     - [x] Não permitir editar se recebível já foi pago
     - [x] Ajuste automático de estoque
-  - [ ] Testes (pendente)
-    - Testar edição de item (trocar produto)
-    - Testar alteração de quantidade
-    - Testar adição/remoção de itens
-    - Validar ajuste correto de estoque
-    - Validar atualização de recebíveis
-
-## 🎨 MELHORIAS DE UX - 21/11/2025
-
-- [x] Melhorar modal de edição de vendas
-  - [x] Substituir dropdown de produtos por campo de busca com autocomplete
-  - [x] Usar mesmo padrão da tela de vendas original
-  - Exibe estoque e preço nas sugestões
-  - Botão adicionar desabilitado até selecionar produto
+  - [ ] Definir regras de precificação (custo vs preço de venda)
+  - [ ] Implementar logs de auditoria detalhados
+  - [ ] Testes completos de todos os cenários
+- [ ] **Implementar exclusão de vendas**
+  - Endpoint para excluir venda (devolução/desistência)
+  - Devolver estoque automaticamente
+  - Cancelar recebíveis associados
+  - Registrar motivo da exclusão
