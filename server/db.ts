@@ -2239,3 +2239,62 @@ export async function registerSupplierPayment(data: {
   return { success: true, appliedAmount: amount - remainingAmount };
 }
 
+
+// ==================== FUNÇÕES PARA EDIÇÃO DE VENDAS ====================
+
+export async function deleteSaleItems(saleId: number) {
+  const database = await getDb();
+  if (!database) throw new Error("Database not available");
+  
+  await database.delete(saleItems)
+    .where(eq(saleItems.saleId, saleId));
+}
+
+export async function createSaleItem(data: {
+  saleId: number;
+  productId: number;
+  quantity: number;
+  unitPrice: string;
+  totalPrice: string;
+}) {
+  const database = await getDb();
+  if (!database) throw new Error("Database not available");
+  
+  const [result] = await database.insert(saleItems).values(data);
+  return result.insertId;
+}
+
+export async function updateSale(saleId: number, data: {
+  subtotal?: string;
+  finalAmount?: string;
+}) {
+  const database = await getDb();
+  if (!database) throw new Error("Database not available");
+  
+  await database.update(sales)
+    .set(data)
+    .where(eq(sales.id, saleId));
+}
+
+export async function getReceivableBySaleId(saleId: number) {
+  const database = await getDb();
+  if (!database) return null;
+  
+  const result = await database.select()
+    .from(receivables)
+    .where(eq(receivables.saleId, saleId))
+    .limit(1);
+  
+  return result[0] || null;
+}
+
+export async function updateReceivableBySaleId(saleId: number, data: {
+  totalAmount?: string;
+}) {
+  const database = await getDb();
+  if (!database) throw new Error("Database not available");
+  
+  await database.update(receivables)
+    .set(data)
+    .where(eq(receivables.saleId, saleId));
+}

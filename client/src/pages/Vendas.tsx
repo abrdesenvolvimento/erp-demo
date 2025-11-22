@@ -32,6 +32,8 @@ import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
 import { formatSaleType, formatPaymentMethod } from "@/lib/formatters";
 import { SaleDetailsModal } from "@/components/SaleDetailsModal";
+import { EditSaleModal } from "@/components/EditSaleModal";
+import { useAuth } from "@/_core/hooks/useAuth";
 
 type SaleType = "BALCAO" | "DELIVERY" | "A_PRAZO";
 
@@ -45,9 +47,13 @@ interface SaleItem {
 }
 
 export default function Vendas() {
+  const { user } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedSaleId, setSelectedSaleId] = useState<number | null>(null);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingSaleId, setEditingSaleId] = useState<number | null>(null);
+  const [editingSaleItems, setEditingSaleItems] = useState<any[]>([]);
   const [saleType, setSaleType] = useState<SaleType | null>(null);
   const [step, setStep] = useState<"type" | "form">("type");
   const [statsPeriod, setStatsPeriod] = useState<'today' | 'week' | 'month' | 'all'>('month');
@@ -820,7 +826,41 @@ export default function Vendas() {
           setIsDetailsModalOpen(false);
           setSelectedSaleId(null);
         }}
+        onEdit={async (saleId) => {
+          if (user?.role === 'admin') {
+            // Buscar itens da venda
+            const saleData = await utils.sales.get.fetch({ id: saleId });
+            if (saleData?.items) {
+              setEditingSaleItems(saleData.items.map((item: any) => ({
+                id: item.id,
+                productId: item.productId,
+                productName: item.productName,
+                quantity: item.quantity,
+                unitPrice: item.unitPrice,
+                totalPrice: item.totalPrice,
+              })));
+            }
+            setEditingSaleId(saleId);
+            setIsEditModalOpen(true);
+            setIsDetailsModalOpen(false);
+          }
+        }}
+        canEdit={user?.role === 'admin'}
       />
+      
+      {editingSaleId && (
+        <EditSaleModal
+          open={isEditModalOpen}
+          onOpenChange={setIsEditModalOpen}
+          saleId={editingSaleId}
+          initialItems={editingSaleItems}
+          onSuccess={() => {
+            refetch();
+            setEditingSaleId(null);
+            setEditingSaleItems([]);
+          }}
+        />
+      )}
     </DashboardLayout>
   );
 }

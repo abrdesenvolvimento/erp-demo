@@ -468,6 +468,109 @@ export const appRouter = router({
       .query(async ({ input }) => {
         return await db.getSalesStats(input?.period || 'month');
       }),
+    
+    update: adminProcedure
+      .input(z.object({
+        saleId: z.number(),
+        items: z.array(z.object({
+          id: z.number().optional(), // Se tem ID, é item existente; se não, é novo
+          productId: z.number(),
+          quantity: z.number(),
+          unitPrice: z.string(),
+          totalPrice: z.string(),
+          _deleted: z.boolean().optional(), // Marca item para exclusão
+        })),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const { saleId, items } = input;
+        
+        // 1. Buscar venda existente
+        const sale = await db.getSale(saleId);
+        if (!sale) {
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'Venda não encontrada' });
+        }
+        
+        // 2. Validar limite de 24 horas
+        if (!sale.saleDate) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'Data da venda inválida' });
+        }
+        const saleDate = new Date(sale.saleDate);
+        const now = new Date();
+        const hoursDiff = (now.getTime() - saleDate.getTime()) / (1000 * 60 * 60);
+        
+        if (hoursDiff > 24) {
+          throw new TRPCError({ 
+            code: 'BAD_REQUEST', 
+            message: 'Não é possível editar vendas com mais de 24 horas' 
+          });
+        }
+        
+        // 3. Validar se recebível já foi pago (para vendas A_PRAZO)
+        if (sale.saleType === 'A_PRAZO') {
+          const receivable = await db.getReceivableBySaleId(saleId);
+          if (receivable && parseFloat(receivable.receivedAmount) > 0) {
+            throw new TRPCError({ 
+              code: 'BAD_REQUEST', 
+              message: 'Não é possível editar vendas com pagamento já recebido' 
+            });
+          }
+        }
+        
+        // 4. Buscar itens atuais da venda
+        const currentItems = await db.getSaleItems(saleId);
+        
+        // 5. Processar alterações de estoque
+        // Devolver estoque dos itens antigos
+        for (const oldItem of currentItems) {
+          await db.updateProductStock(oldItem.productId, oldItem.quantity); // Adiciona de volta
+        }
+        
+        // Descontar estoque dos novos itens
+        for (const newItem of items) {
+          if (!newItem._deleted) {
+            await db.updateProductStock(newItem.productId, -newItem.quantity); // Remove
+          }
+        }
+        
+        // 6. Deletar todos os itens antigos
+        await db.deleteSaleItems(saleId);
+        
+        // 7. Inserir novos itens (exceto os marcados como deletados)
+        const activeItems = items.filter(item => !item._deleted);
+        for (const item of activeItems) {
+          await db.createSaleItem({
+            saleId,
+            productId: item.productId,
+            quantity: item.quantity,
+            unitPrice: item.unitPrice,
+            totalPrice: item.totalPrice,
+          });
+        }
+        
+        // 8. Recalcular valores totais
+        const subtotal = activeItems.reduce((sum, item) => 
+          sum + parseFloat(item.totalPrice), 0
+        ).toFixed(2);
+        
+        const discountAmount = parseFloat(sale.discountAmount || '0');
+        const surchargeAmount = parseFloat(sale.surchargeAmount || '0');
+        const finalAmount = (parseFloat(subtotal) - discountAmount + surchargeAmount).toFixed(2);
+        
+        // 9. Atualizar venda
+        await db.updateSale(saleId, {
+          subtotal,
+          finalAmount,
+        });
+        
+        // 10. Atualizar recebível (se for venda A_PRAZO)
+        if (sale.saleType === 'A_PRAZO') {
+          await db.updateReceivableBySaleId(saleId, {
+            totalAmount: finalAmount,
+          });
+        }
+        
+        return { success: true, newTotal: finalAmount };
+      }),
   }),
 
   // ==================== COMPRAS ====================

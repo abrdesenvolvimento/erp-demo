@@ -1,16 +1,18 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Printer, X } from "lucide-react";
+import { Printer, X, Edit } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 
 interface SaleDetailsModalProps {
   saleId: number | null;
   open: boolean;
   onClose: () => void;
+  onEdit?: (saleId: number) => void;
+  canEdit?: boolean;
 }
 
-export function SaleDetailsModal({ saleId, open, onClose }: SaleDetailsModalProps) {
+export function SaleDetailsModal({ saleId, open, onClose, onEdit, canEdit }: SaleDetailsModalProps) {
   const { data: saleData, isLoading } = trpc.sales.get.useQuery(
     { id: saleId! },
     { enabled: !!saleId && open }
@@ -194,6 +196,17 @@ export function SaleDetailsModal({ saleId, open, onClose }: SaleDetailsModalProp
           <DialogTitle className="flex items-center justify-between">
             <span>Detalhes da Venda #{saleId}</span>
             <div className="flex gap-2">
+              {canEdit && onEdit && saleId && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onEdit(saleId)}
+                  disabled={isLoading || !saleData}
+                >
+                  <Edit className="w-4 h-4 mr-2" />
+                  Editar
+                </Button>
+              )}
               <Button
                 variant="outline"
                 size="sm"

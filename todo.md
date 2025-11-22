@@ -501,3 +501,48 @@
 ## 🐛 CORREÇÕES - 21/11/2025
 
 - [x] Corrigir página de Gerenciar Usuários para exibir menu lateral (DashboardLayout)
+
+## 📊 RELATÓRIOS - 21/11/2025
+
+- [x] Gerar arquivo de inventário completo (CSV) com todos os produtos cadastrados
+  - 845 produtos exportados
+  - 16.845 unidades em estoque
+  - Valor total: R$ 127.160,24
+  - 242 produtos abaixo do mínimo
+
+## 🔧 CORREÇÕES DE VENDAS - 21/11/2025
+
+- [x] Corrigir item incorreto na venda #3270005 (substituir por Fanta Uva 350ml)
+  - Item anterior: Fanta Uva 2L (R$ 11,00)
+  - Item corrigido: Fanta Uva 350ml (R$ 4,50)
+  - Estoque Fanta Uva 2L: 20 unidades (+1 devolvido)
+  - Estoque Fanta Uva 350ml: 18 unidades (-1 descontado)
+  - Recebível atualizado: R$ 4,50 (PENDENTE)
+
+## 🔧 NOVA FUNCIONALIDADE - Edição de Vendas (Admin)
+
+- [x] **Implementar edição de vendas para administradores**
+  - [x] Backend: Criar endpoint para editar venda (adminProcedure)
+    - Validar permissão de admin
+    - Permitir editar itens (adicionar, remover, alterar quantidade)
+    - Ajustar estoque automaticamente (devolver estoque antigo, descontar novo)
+    - Recalcular valores totais da venda
+    - Atualizar recebíveis se for venda a prazo
+    - Registrar log de alterações (quem editou, quando, o que mudou)
+  - [x] Frontend: Adicionar botão "Editar Venda" na página de Vendas
+    - Visível apenas para administradores
+    - Modal de edição com lista de itens editável
+    - Permitir adicionar/remover produtos
+    - Permitir alterar quantidades
+    - Mostrar resumo de valores (antes/depois)
+    - Confirmação antes de salvar alterações
+  - [x] Validações e regras de negócio
+    - [x] Não permitir editar vendas com mais de 24 horas
+    - [x] Não permitir editar se recebível já foi pago
+    - [x] Ajuste automático de estoque
+  - [ ] Testes (pendente)
+    - Testar edição de item (trocar produto)
+    - Testar alteração de quantidade
+    - Testar adição/remoção de itens
+    - Validar ajuste correto de estoque
+    - Validar atualização de recebíveis
