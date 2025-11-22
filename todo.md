@@ -546,3 +546,11 @@
     - Testar adição/remoção de itens
     - Validar ajuste correto de estoque
     - Validar atualização de recebíveis
+
+## 🎨 MELHORIAS DE UX - 21/11/2025
+
+- [x] Melhorar modal de edição de vendas
+  - [x] Substituir dropdown de produtos por campo de busca com autocomplete
+  - [x] Usar mesmo padrão da tela de vendas original
+  - Exibe estoque e preço nas sugestões
+  - Botão adicionar desabilitado até selecionar produto

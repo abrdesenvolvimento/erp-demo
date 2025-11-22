@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
 import { Trash2, Plus } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
@@ -28,9 +28,13 @@ interface EditSaleModalProps {
 
 export function EditSaleModal({ open, onOpenChange, saleId, initialItems, onSuccess }: EditSaleModalProps) {
   const [items, setItems] = useState<SaleItem[]>(initialItems);
-  const [newProductId, setNewProductId] = useState<string>("");
+  const [productSearch, setProductSearch] = useState<string>("");
+  const [selectedProduct, setSelectedProduct] = useState<any>(null);
   
-  const { data: products } = trpc.products.list.useQuery({ activeOnly: true });
+  const { data: products } = trpc.products.list.useQuery({ 
+    search: productSearch,
+    activeOnly: true 
+  });
   const updateSale = trpc.sales.update.useMutation({
     onSuccess: () => {
       toast.success("Venda atualizada com sucesso!");
@@ -81,28 +85,26 @@ export function EditSaleModal({ open, onOpenChange, saleId, initialItems, onSucc
   };
   
   const handleAddItem = () => {
-    if (!newProductId) {
+    if (!selectedProduct) {
       toast.error("Selecione um produto");
       return;
     }
     
-    const product = products?.find(p => p.id === parseInt(newProductId));
-    if (!product) return;
-    
-    const unitPrice = parseFloat(product.avgCost || '0') || 0;
+    const unitPrice = parseFloat(selectedProduct.avgCost || '0') || 0;
     
     setItems([
       ...items,
       {
-        productId: product.id,
-        productName: product.name,
+        productId: selectedProduct.id,
+        productName: selectedProduct.name,
         quantity: 1,
         unitPrice: unitPrice.toFixed(2),
         totalPrice: unitPrice.toFixed(2),
       },
     ]);
     
-    setNewProductId("");
+    setSelectedProduct(null);
+    setProductSearch("");
   };
   
   const handleSave = () => {
@@ -200,19 +202,37 @@ export function EditSaleModal({ open, onOpenChange, saleId, initialItems, onSucc
           <div className="border rounded-lg p-4 bg-muted/50">
             <Label className="mb-2 block">Adicionar Produto</Label>
             <div className="flex gap-2">
-              <Select value={newProductId} onValueChange={setNewProductId}>
-                <SelectTrigger className="flex-1">
-                  <SelectValue placeholder="Selecione um produto..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {products?.map(product => (
-                    <SelectItem key={product.id} value={product.id.toString()}>
-                      {product.name} - R$ {parseFloat(product.avgCost || '0').toFixed(2)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Button onClick={handleAddItem} size="icon">
+              <div className="flex-1 relative">
+                <Input
+                  placeholder="Digite para buscar produto..."
+                  value={selectedProduct ? selectedProduct.name : productSearch}
+                  onChange={(e) => {
+                    setProductSearch(e.target.value);
+                    setSelectedProduct(null);
+                  }}
+                  className="pr-10"
+                />
+                {productSearch && !selectedProduct && products && products.length > 0 && (
+                  <div className="absolute z-10 w-full mt-1 bg-background border rounded-md shadow-lg max-h-60 overflow-auto">
+                    {products.map((product: any) => (
+                      <div
+                        key={product.id}
+                        className="px-4 py-2 cursor-pointer hover:bg-muted transition-colors"
+                        onClick={() => {
+                          setSelectedProduct(product);
+                          setProductSearch("");
+                        }}
+                      >
+                        <div className="font-medium">{product.name}</div>
+                        <div className="text-sm text-muted-foreground">
+                          Estoque: {product.currentStock} | Preço: R$ {parseFloat(product.avgCost || '0').toFixed(2)}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <Button onClick={handleAddItem} size="icon" disabled={!selectedProduct}>
                 <Plus className="h-4 w-4" />
               </Button>
             </div>
