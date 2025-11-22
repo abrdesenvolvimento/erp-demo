@@ -2298,3 +2298,19 @@ export async function updateReceivableBySaleId(saleId: number, data: {
     .set(data)
     .where(eq(receivables.saleId, saleId));
 }
+
+export async function getPendingReceivablesByCustomer(customerId: number) {
+  const database = await getDb();
+  if (!database) return [];
+  
+  const result = await database.select()
+    .from(receivables)
+    .where(eq(receivables.customerId, customerId));
+  
+  // Filtrar apenas recebíveis com saldo pendente
+  return result.filter(rec => {
+    const total = parseFloat(rec.totalAmount);
+    const received = parseFloat(rec.receivedAmount);
+    return total > received && rec.status === 'PENDENTE';
+  });
+}

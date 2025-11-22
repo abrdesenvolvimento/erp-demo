@@ -521,7 +521,8 @@
 
 ## 🚀 FUNCIONALIDADES FUTURAS (Pós-Publicação)
 
-### Edição e Exclusão de Vendas (Admin)
+### ⚠️ PRIORIDADE: Edição e Exclusão de Vendas (Admin)
+**Motivo:** Necessário para corrigir erros operacionais e processar devoluções/desistências
 - [ ] **Implementar edição completa de vendas**
   - [x] Backend: Criar endpoint para editar venda (adminProcedure)
     - Validar permissão de admin
@@ -549,3 +550,17 @@
   - Devolver estoque automaticamente
   - Cancelar recebíveis associados
   - Registrar motivo da exclusão
+
+**Observações importantes:**
+- Definir se usa preço de venda ou custo médio ao adicionar itens
+- Implementar histórico de alterações (auditoria)
+- Considerar impacto em relatórios e métricas
+- Testar cenários: troca de produto, alteração de quantidade, devolução parcial/total
+
+## 🐛 BUGS - 21/11/2025
+
+- [x] Corrigir cálculo de limite de crédito
+  - Cliente: Vitor Hugo
+  - Problema: Campo currentBalance desatualizado (R$ 100 ao invés de R$ 93,50)
+  - Solução: Calcular saldo em tempo real somando recebíveis pendentes
+  - Agora validação sempre usa dados atualizados do banco

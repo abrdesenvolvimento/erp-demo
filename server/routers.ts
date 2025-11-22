@@ -403,12 +403,19 @@ export const appRouter = router({
         if (saleData.saleType === 'A_PRAZO' && saleData.customerId) {
           const customer = await db.getPartner(saleData.customerId);
           if (customer) {
-            const currentBalance = parseFloat(customer.currentBalance || '0');
+            // Calcular saldo devedor em tempo real (soma de recebíveis pendentes)
+            const pendingReceivables = await db.getPendingReceivablesByCustomer(saleData.customerId);
+            const currentBalance = pendingReceivables.reduce((sum: number, rec: any) => {
+              return sum + (parseFloat(rec.totalAmount) - parseFloat(rec.receivedAmount));
+            }, 0);
+            
             const creditLimit = parseFloat(customer.creditLimit || '0');
             const saleAmount = parseFloat(saleData.finalAmount);
             
             if (currentBalance + saleAmount > creditLimit) {
-              throw new Error('Limite de crédito excedido');
+              throw new Error(
+                `Limite de crédito excedido. Disponível: R$ ${(creditLimit - currentBalance).toFixed(2)}`
+              );
             }
           }
         }
