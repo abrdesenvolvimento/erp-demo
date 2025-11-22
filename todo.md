@@ -564,3 +564,11 @@
   - Problema: Campo currentBalance desatualizado (R$ 100 ao invés de R$ 93,50)
   - Solução: Calcular saldo em tempo real somando recebíveis pendentes
   - Agora validação sempre usa dados atualizados do banco
+
+## 🔧 AJUSTES - 22/11/2025
+
+- [x] Inserir códigos de pedido em vendas delivery sem código
+  - Venda #3450005 → Código: 7848 ✅
+  - Venda #3450006 → Código: 5966 ✅
+  - Venda #3660002 → Código: 5407 (anterior: 7566) ✅
+- [x] Renomear coluna "Canal" para "Pedido" na tabela de vendas

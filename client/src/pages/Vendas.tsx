@@ -453,7 +453,7 @@ export default function Vendas() {
                     <TableHead>Data/Hora</TableHead>
                     <TableHead>Tipo</TableHead>
                     <TableHead>Cliente</TableHead>
-                    <TableHead>Canal</TableHead>
+                    <TableHead>Pedido</TableHead>
                     <TableHead>Valor Total</TableHead>
                     <TableHead>Pagamento</TableHead>
                   </TableRow>
