@@ -86,6 +86,12 @@ export default function Vendas() {
     search: productSearch,
     activeOnly: true 
   });
+  
+  // Buscar crédito disponível em tempo real quando cliente é selecionado
+  const { data: creditInfo } = trpc.partners.getAvailableCredit.useQuery(
+    { customerId: selectedCustomer?.id },
+    { enabled: !!selectedCustomer && saleType === "A_PRAZO" }
+  );
 
   // Filter customers by search
   const filteredCustomers = useMemo(() => {
@@ -579,42 +585,30 @@ export default function Vendas() {
                       />
                       {customerSearch && filteredCustomers.length > 0 && !selectedCustomer && (
                         <div className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg max-h-60 overflow-y-auto">
-                          {filteredCustomers.map((customer: any) => {
-                            const creditLimit = parseFloat(customer.creditLimit || "0");
-                            const currentBalance = parseFloat(customer.currentBalance || "0");
-                            const available = creditLimit - currentBalance;
-                            
-                            return (
-                              <div
-                                key={customer.id}
-                                className="px-4 py-3 cursor-pointer hover:bg-gray-100 border-b last:border-b-0"
-                                onClick={() => {
-                                  setSelectedCustomer(customer);
-                                  setCustomerId(customer.id.toString());
-                                  setCustomerSearch(customer.name);
-                                }}
-                              >
-                                <div className="font-medium">{customer.name}</div>
-                                <div className="text-sm text-gray-600">
-                                  {customer.docNumber}
-                                </div>
-                                {saleType === "A_PRAZO" && (
-                                  <div className="text-sm text-blue-600 mt-1">
-                                    Limite: {formatCurrency(creditLimit)} | 
-                                    Disponível: {formatCurrency(available)}
-                                  </div>
-                                )}
+                          {filteredCustomers.map((customer: any) => (
+                            <div
+                              key={customer.id}
+                              className="px-4 py-3 cursor-pointer hover:bg-gray-100 border-b last:border-b-0"
+                              onClick={() => {
+                                setSelectedCustomer(customer);
+                                setCustomerId(customer.id.toString());
+                                setCustomerSearch(customer.name);
+                              }}
+                            >
+                              <div className="font-medium">{customer.name}</div>
+                              <div className="text-sm text-gray-600">
+                                {customer.docNumber}
                               </div>
-                            );
-                          })}
+                            </div>
+                          ))}
                         </div>
                       )}
                     </div>
                     {selectedCustomer && saleType === "A_PRAZO" && (
                       <div className="text-sm text-blue-600 mt-1">
                         Cliente selecionado: {selectedCustomer.name} | 
-                        Limite: {formatCurrency(parseFloat(selectedCustomer.creditLimit || "0"))} | 
-                        Disponível: {formatCurrency(parseFloat(selectedCustomer.creditLimit || "0") - parseFloat(selectedCustomer.currentBalance || "0"))}
+                        Limite: {formatCurrency(parseFloat(creditInfo?.creditLimit || selectedCustomer.creditLimit || "0"))} | 
+                        Disponível: {formatCurrency(parseFloat(creditInfo?.available || "0"))}
                       </div>
                     )}
                   </div>

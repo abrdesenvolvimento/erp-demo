@@ -348,6 +348,31 @@ export const appRouter = router({
         await db.updatePartner(id, data);
         return { success: true };
       }),
+    
+    // Retorna crédito disponível em tempo real (calcula saldo devedor atual)
+    getAvailableCredit: protectedProcedure
+      .input(z.object({ customerId: z.number() }))
+      .query(async ({ input }) => {
+        const customer = await db.getPartner(input.customerId);
+        if (!customer) {
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'Cliente não encontrado' });
+        }
+        
+        // Calcular saldo devedor em tempo real (soma de recebíveis pendentes)
+        const pendingReceivables = await db.getPendingReceivablesByCustomer(input.customerId);
+        const currentBalance = pendingReceivables.reduce((sum: number, rec: any) => {
+          return sum + (parseFloat(rec.totalAmount) - parseFloat(rec.receivedAmount));
+        }, 0);
+        
+        const creditLimit = parseFloat(customer.creditLimit || '0');
+        const available = creditLimit - currentBalance;
+        
+        return {
+          creditLimit: creditLimit.toFixed(2),
+          currentBalance: currentBalance.toFixed(2),
+          available: available.toFixed(2),
+        };
+      }),
   }),
 
   // ==================== VENDAS ====================

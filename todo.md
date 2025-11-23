@@ -572,3 +572,15 @@
   - Venda #3450006 → Código: 5966 ✅
   - Venda #3660002 → Código: 5407 (anterior: 7566) ✅
 - [x] Renomear coluna "Canal" para "Pedido" na tabela de vendas
+
+
+## 🐛 BUGS - 23/11/2025
+
+- [x] Corrigir cálculo de crédito disponível no modal de venda a prazo
+  - Cliente: Ericles Araujo
+  - Limite: R$ 500,00
+  - Saldo devedor real: R$ 87,00 (confirmado em Contas a Receber)
+  - Disponível mostrado (incorreto): R$ 493,00
+  - Disponível correto: R$ 413,00 (R$ 500 - R$ 87) ✅
+  - **SOLUÇÃO:** Criado endpoint partners.getAvailableCredit que calcula saldo devedor em tempo real
+  - Frontend agora busca crédito atualizado ao selecionar cliente ao invés de usar currentBalance desatualizado
