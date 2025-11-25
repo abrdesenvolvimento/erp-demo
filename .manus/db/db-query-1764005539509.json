@@ -1,0 +1,100 @@
+{
+  "query": "SELECT id, saleDate, saleType, finalAmount FROM sales ORDER BY id DESC LIMIT 15",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT id, saleDate, saleType, finalAmount FROM sales ORDER BY id DESC LIMIT 15",
+  "rows": [
+    {
+      "id": "5760001",
+      "saleDate": "2025-11-24 17:07:13",
+      "saleType": "BALCAO",
+      "finalAmount": "10.00"
+    },
+    {
+      "id": "5730001",
+      "saleDate": "2025-11-24 01:06:15",
+      "saleType": "BALCAO",
+      "finalAmount": "9.00"
+    },
+    {
+      "id": "5700005",
+      "saleDate": "2025-11-24 00:57:38",
+      "saleType": "BALCAO",
+      "finalAmount": "6.00"
+    },
+    {
+      "id": "5700004",
+      "saleDate": "2025-11-24 00:55:18",
+      "saleType": "BALCAO",
+      "finalAmount": "24.00"
+    },
+    {
+      "id": "5700003",
+      "saleDate": "2025-11-24 00:54:36",
+      "saleType": "DELIVERY",
+      "finalAmount": "11.99"
+    },
+    {
+      "id": "5700002",
+      "saleDate": "2025-11-24 00:53:53",
+      "saleType": "BALCAO",
+      "finalAmount": "10.50"
+    },
+    {
+      "id": "5700001",
+      "saleDate": "2025-11-24 00:53:31",
+      "saleType": "BALCAO",
+      "finalAmount": "30.00"
+    },
+    {
+      "id": "5670006",
+      "saleDate": "2025-11-24 00:34:28",
+      "saleType": "BALCAO",
+      "finalAmount": "10.50"
+    },
+    {
+      "id": "5670005",
+      "saleDate": "2025-11-24 00:30:28",
+      "saleType": "BALCAO",
+      "finalAmount": "45.00"
+    },
+    {
+      "id": "5670004",
+      "saleDate": "2025-11-24 00:29:45",
+      "saleType": "BALCAO",
+      "finalAmount": "24.00"
+    },
+    {
+      "id": "5670003",
+      "saleDate": "2025-11-24 00:26:03",
+      "saleType": "DELIVERY",
+      "finalAmount": "43.25"
+    },
+    {
+      "id": "5670002",
+      "saleDate": "2025-11-24 00:24:44",
+      "saleType": "DELIVERY",
+      "finalAmount": "27.96"
+    },
+    {
+      "id": "5670001",
+      "saleDate": "2025-11-24 00:22:21",
+      "saleType": "BALCAO",
+      "finalAmount": "6.50"
+    },
+    {
+      "id": "5640005",
+      "saleDate": "2025-11-23 23:58:17",
+      "saleType": "BALCAO",
+      "finalAmount": "21.00"
+    },
+    {
+      "id": "5640004",
+      "saleDate": "2025-11-23 23:56:03",
+      "saleType": "DELIVERY",
+      "finalAmount": "9.09"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tsaleDate\tsaleType\tfinalAmount\n5760001\t2025-11-24 17:07:13\tBALCAO\t10.00\n5730001\t2025-11-24 01:06:15\tBALCAO\t9.00\n5700005\t2025-11-24 00:57:38\tBALCAO\t6.00\n5700004\t2025-11-24 00:55:18\tBALCAO\t24.00\n5700003\t2025-11-24 00:54:36\tDELIVERY\t11.99\n5700002\t2025-11-24 00:53:53\tBALCAO\t10.50\n5700001\t2025-11-24 00:53:31\tBALCAO\t30.00\n5670006\t2025-11-24 00:34:28\tBALCAO\t10.50\n5670005\t2025-11-24 00:30:28\tBALCAO\t45.00\n5670004\t2025-11-24 00:29:45\tBALCAO\t24.00\n5670003\t2025-11-24 00:26:03\tDELIVERY\t43.25\n5670002\t2025-11-24 00:24:44\tDELIVERY\t27.96\n5670001\t2025-11-24 00:22:21\tBALCAO\t6.50\n5640005\t2025-11-23 23:58:17\tBALCAO\t21.00\n5640004\t2025-11-23 23:56:03\tDELIVERY\t9.09\n",
+  "stderr": "",
+  "execution_time_ms": 48
+}

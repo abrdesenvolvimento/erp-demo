@@ -1033,7 +1033,10 @@ export const appRouter = router({
       const recentSales = await db.getSales({ limit: 10 });
       
       // Buscar TODAS as vendas do mês atual para cálculos corretos
-      const today = new Date();
+      // Usar horário de Brasília (GMT-3) para cálculos de data
+      const todayStr = new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' });
+      const today = new Date(todayStr);
+      
       const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
       const allMonthSales = await db.getSales({ limit: 10000 }); // Buscar todas as vendas
       
@@ -1042,10 +1045,13 @@ export const appRouter = router({
         p.currentStock !== null && p.minStock !== null && p.currentStock < p.minStock
       );
       
-      // Vendas de hoje
+      // Vendas de hoje (usando horário de Brasília)
       const todaySales = allMonthSales.filter(s => {
         const saleDate = new Date(s.saleDate!);
-        return saleDate.toDateString() === today.toDateString();
+        // Comparar apenas ano, mês e dia
+        return saleDate.getFullYear() === today.getFullYear() &&
+               saleDate.getMonth() === today.getMonth() &&
+               saleDate.getDate() === today.getDate();
       });
       
       const todayRevenue = todaySales.reduce((sum, sale) => 
@@ -1176,6 +1182,7 @@ export const appRouter = router({
       };
     }),
   }),
+  
 });
 
 export type AppRouter = typeof appRouter;

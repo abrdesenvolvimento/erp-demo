@@ -576,6 +576,13 @@
 
 ## 🐛 BUGS - 23/11/2025
 
+- [x] Corrigir filtro "Hoje" na tela de Vendas (mostrando 387 vendas ao invés de 1)
+  - Problema: Servidor usando fuso horário diferente de Brasília (GMT-3)
+  - Vendas de ontem à noite sendo contadas como "hoje"
+  - **SOLUÇÃO:** Implementado parsing correto de datas em horário de Brasília (GMT-3)
+  - Filtro agora compara ano/mês/dia corretamente no timezone correto
+  - Exibição de datas no frontend também corrigida para mostrar horário de Brasília
+
 - [x] Corrigir cálculo de crédito disponível no modal de venda a prazo
   - Cliente: Ericles Araujo
   - Limite: R$ 500,00
@@ -584,3 +591,12 @@
   - Disponível correto: R$ 413,00 (R$ 500 - R$ 87) ✅
   - **SOLUÇÃO:** Criado endpoint partners.getAvailableCredit que calcula saldo devedor em tempo real
   - Frontend agora busca crédito atualizado ao selecionar cliente ao invés de usar currentBalance desatualizado
+
+
+## 🐛 BUGS - 24/11/2025
+
+- [ ] Corrigir fuso horário no filtro de vendas "Hoje"
+  - Problema: Servidor publicado usa UTC, deveria usar GMT-3 (Brasília)
+  - Sintoma: Filtro "Hoje" mostra vendas de ontem (após 21h)
+  - Exemplo: Às 14h do dia 24, mostra 10 vendas (incluindo vendas de 23/11 às 22h, 21h)
+  - Solução: Ajustar queries de data para usar timezone correto

@@ -505,26 +505,61 @@ export async function getSalesStats(period?: 'today' | 'week' | 'month' | 'all')
   // Buscar vendas com filtro de período
   let allSales = await db.select().from(sales);
   
-  // Aplicar filtro de período
+  // Aplicar filtro de período usando horário de Brasília (GMT-3)
   if (period && period !== 'all') {
+    // Obter data ATUAL em Brasília parseando corretamente
     const now = new Date();
-    let startDate: Date;
+    const nowBrasiliaStr = now.toLocaleString('en-US', { 
+      timeZone: 'America/Sao_Paulo',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    });
+    
+    // Parse: "11/24/2025, 14:52:30" -> partes
+    const [datePart, timePart] = nowBrasiliaStr.split(', ');
+    const [month, day, year] = datePart.split('/');
+    const todayBrasilia = { year: parseInt(year), month: parseInt(month), day: parseInt(day) };
     
     if (period === 'today') {
-      startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      // Filtrar vendas de hoje comparando data em Brasília
+      allSales = allSales.filter(sale => {
+        const saleDate = new Date(sale.saleDate!);
+        const saleBrasiliaStr = saleDate.toLocaleString('en-US', { 
+          timeZone: 'America/Sao_Paulo',
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour12: false
+        });
+        
+        const [saleDatePart] = saleBrasiliaStr.split(', ');
+        const [saleMonth, saleDay, saleYear] = saleDatePart.split('/');
+        
+        return parseInt(saleYear) === todayBrasilia.year &&
+               parseInt(saleMonth) === todayBrasilia.month &&
+               parseInt(saleDay) === todayBrasilia.day;
+      });
     } else if (period === 'week') {
-      startDate = new Date(now);
-      startDate.setDate(now.getDate() - 7);
+      // 7 dias atrás
+      const weekAgo = new Date(now);
+      weekAgo.setDate(now.getDate() - 7);
+      allSales = allSales.filter(sale => {
+        const saleDate = new Date(sale.saleDate!);
+        return saleDate >= weekAgo;
+      });
     } else if (period === 'month') {
-      startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-    } else {
-      startDate = new Date(0); // Todas as vendas
+      // Primeiro dia do mês atual (em Brasília)
+      const firstDayOfMonth = new Date(todayBrasilia.year, todayBrasilia.month - 1, 1);
+      allSales = allSales.filter(sale => {
+        const saleDate = new Date(sale.saleDate!);
+        return saleDate >= firstDayOfMonth;
+      });
     }
-    
-    allSales = allSales.filter(sale => {
-      const saleDate = new Date(sale.saleDate!);
-      return saleDate >= startDate;
-    });
   }
   
   const stats = {
