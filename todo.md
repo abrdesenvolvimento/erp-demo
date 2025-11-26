@@ -600,3 +600,14 @@
   - Sintoma: Filtro "Hoje" mostra vendas de ontem (após 21h)
   - Exemplo: Às 14h do dia 24, mostra 10 vendas (incluindo vendas de 23/11 às 22h, 21h)
   - Solução: Ajustar queries de data para usar timezone correto
+
+
+## 🐛 BUGS - 25/11/2025
+
+- [x] Dashboard mostrando "Venda Diária" incorreta (R$ 338,20 quando deveria ser R$ 0,00)
+  - Última venda: 24/11/2025 às 22:58 (ontem)
+  - Tela de Vendas (filtro "Hoje"): 0 vendas ✅ CORRETO
+  - Dashboard: R$ 338,20 ❌ INCORRETO
+  - Dashboard usando lógica diferente da tela de Vendas para calcular "hoje"
+  - **SOLUÇÃO:** Aplicada mesma correção de timezone no Dashboard
+  - Agora Dashboard e tela de Vendas usam a mesma lógica de conversão para Brasília
