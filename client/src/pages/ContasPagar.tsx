@@ -153,10 +153,14 @@ export default function ContasPagar() {
     
     const totalAmount = parseFloat(paymentForm.paidAmount) + (parseFloat(paymentForm.additionalAmount) || 0);
     
+    // Criar data explicitamente em horário de Brasília (meio-dia) para evitar problemas de timezone
+    const [year, month, day] = paymentForm.paidDate.split('-');
+    const paidDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day), 12, 0, 0);
+    
     payInstallment.mutate({
       installmentId: selectedInstallment.id,
       type: selectedInstallment.type || 'expense',
-      paidDate: new Date(paymentForm.paidDate),
+      paidDate,
       paidAmount: totalAmount.toFixed(2),
       paymentMethod: paymentForm.paymentMethod,
       notes: paymentForm.notes || undefined
@@ -174,7 +178,9 @@ export default function ContasPagar() {
   const formatDate = (date: Date | string | null | undefined) => {
     if (!date) return '-';
     const d = typeof date === 'string' ? new Date(date) : date;
-    return d.toLocaleDateString('pt-BR');
+    return d.toLocaleDateString('pt-BR', {
+      timeZone: 'America/Sao_Paulo'
+    });
   };
 
   // Se um cliente está selecionado, mostra o detalhamento

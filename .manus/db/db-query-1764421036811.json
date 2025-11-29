@@ -1,0 +1,70 @@
+{
+  "query": "\nSELECT id, name FROM products WHERE name LIKE '%Heineken%' ORDER BY name\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute \nSELECT id, name FROM products WHERE name LIKE '%Heineken%' ORDER BY name\n",
+  "rows": [
+    {
+      "id": "510003",
+      "name": "Heineken 250ml"
+    },
+    {
+      "id": "510004",
+      "name": "Heineken 250ml 6 Unidades"
+    },
+    {
+      "id": "510001",
+      "name": "Heineken 269ml"
+    },
+    {
+      "id": "510010",
+      "name": "Heineken 269ml 0.0% Álcool"
+    },
+    {
+      "id": "510011",
+      "name": "Heineken 269ml 0.0% Álcool 8 Unidades"
+    },
+    {
+      "id": "510002",
+      "name": "Heineken 269ml 8 Unidades"
+    },
+    {
+      "id": "510007",
+      "name": "Heineken 330ml"
+    },
+    {
+      "id": "1080002",
+      "name": "Heineken 330ml 0.0% Álcool"
+    },
+    {
+      "id": "1080003",
+      "name": "Heineken 330ml 0.0% Álcool 6 Unidades"
+    },
+    {
+      "id": "510008",
+      "name": "Heineken 330ml 6 Unidades"
+    },
+    {
+      "id": "510005",
+      "name": "Heineken 350ml"
+    },
+    {
+      "id": "510012",
+      "name": "Heineken 350ml 0.0% Álcool"
+    },
+    {
+      "id": "510013",
+      "name": "Heineken 350ml 0.0% Álcool 12 Unidades"
+    },
+    {
+      "id": "510006",
+      "name": "Heineken 350ml 12 Unidades"
+    },
+    {
+      "id": "510009",
+      "name": "Heineken 5l"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\n510003\tHeineken 250ml\n510004\tHeineken 250ml 6 Unidades\n510001\tHeineken 269ml\n510010\tHeineken 269ml 0.0% Álcool\n510011\tHeineken 269ml 0.0% Álcool 8 Unidades\n510002\tHeineken 269ml 8 Unidades\n510007\tHeineken 330ml\n1080002\tHeineken 330ml 0.0% Álcool\n1080003\tHeineken 330ml 0.0% Álcool 6 Unidades\n510008\tHeineken 330ml 6 Unidades\n510005\tHeineken 350ml\n510012\tHeineken 350ml 0.0% Álcool\n510013\tHeineken 350ml 0.0% Álcool 12 Unidades\n510006\tHeineken 350ml 12 Unidades\n510009\tHeineken 5l\n",
+  "stderr": "",
+  "execution_time_ms": 50
+}

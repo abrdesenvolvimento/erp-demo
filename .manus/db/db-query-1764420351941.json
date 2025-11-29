@@ -1,0 +1,42 @@
+{
+  "query": "\nSELECT \n  rp.id,\n  rp.paidDate as stored_utc,\n  DATE_FORMAT(rp.paidDate, '%Y-%m-%d %H:%i:%s') as formatted_utc,\n  rp.paidAmount,\n  rp.paymentMethod,\n  p.name as customer_name\nFROM receivablePayments rp\nJOIN partners p ON rp.customerId = p.id\nWHERE p.name LIKE '%Vitor Hugo%'\nORDER BY rp.paidDate DESC\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute \nSELECT \n  rp.id,\n  rp.paidDate as stored_utc,\n  DATE_FORMAT(rp.paidDate, '%Y-%m-%d %H:%i:%s') as formatted_utc,\n  rp.paidAmount,\n  rp.paymentMethod,\n  p.name as customer_name\nFROM receivablePayments rp\nJOIN partners p ON rp.customerId = p.id\nWHERE p.name LIKE '%Vitor Hugo%'\nORDER BY rp.paidDate DESC\n",
+  "rows": [
+    {
+      "id": "180004",
+      "stored_utc": "2025-11-25 00:00:00",
+      "formatted_utc": "2025-11-25 00:00:00",
+      "paidAmount": "10.00",
+      "paymentMethod": "PIX",
+      "customer_name": "Vitor Hugo Fernandes"
+    },
+    {
+      "id": "180003",
+      "stored_utc": "2025-11-25 00:00:00",
+      "formatted_utc": "2025-11-25 00:00:00",
+      "paidAmount": "11.00",
+      "paymentMethod": "PIX",
+      "customer_name": "Vitor Hugo Fernandes"
+    },
+    {
+      "id": "180002",
+      "stored_utc": "2025-11-25 00:00:00",
+      "formatted_utc": "2025-11-25 00:00:00",
+      "paidAmount": "67.00",
+      "paymentMethod": "PIX",
+      "customer_name": "Vitor Hugo Fernandes"
+    },
+    {
+      "id": "180001",
+      "stored_utc": "2025-11-25 00:00:00",
+      "formatted_utc": "2025-11-25 00:00:00",
+      "paidAmount": "12.00",
+      "paymentMethod": "PIX",
+      "customer_name": "Vitor Hugo Fernandes"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tstored_utc\tformatted_utc\tpaidAmount\tpaymentMethod\tcustomer_name\n180004\t2025-11-25 00:00:00\t2025-11-25 00:00:00\t10.00\tPIX\tVitor Hugo Fernandes\n180003\t2025-11-25 00:00:00\t2025-11-25 00:00:00\t11.00\tPIX\tVitor Hugo Fernandes\n180002\t2025-11-25 00:00:00\t2025-11-25 00:00:00\t67.00\tPIX\tVitor Hugo Fernandes\n180001\t2025-11-25 00:00:00\t2025-11-25 00:00:00\t12.00\tPIX\tVitor Hugo Fernandes\n",
+  "stderr": "",
+  "execution_time_ms": 58
+}

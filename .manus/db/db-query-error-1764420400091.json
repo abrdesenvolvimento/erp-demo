@@ -1,0 +1,8 @@
+{
+  "query": "\nSELECT \n  'receivablePayments' as tabela,\n  COUNT(*) as total_registros,\n  COUNT(paidDate) as registros_com_data,\n  MIN(paidDate) as data_mais_antiga,\n  MAX(paidDate) as data_mais_recente\nFROM receivablePayments\nUNION ALL\nSELECT \n  'receivableInstallments',\n  COUNT(*),\n  COUNT(paidDate),\n  MIN(paidDate),\n  MAX(paidDate)\nFROM receivableInstallments\nUNION ALL\nSELECT \n  'purchaseInstallments',\n  COUNT(*),\n  COUNT(paidDate),\n  MIN(paidDate),\n  MAX(paidDate)\nFROM purchaseInstallments\nUNION ALL\nSELECT \n  'expenseInstallments',\n  COUNT(*),\n  COUNT(paidDate),\n  MIN(paidDate),\n  MAX(paidDate)\nFROM expenseInstallments\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute \nSELECT \n  'receivablePayments' as tabela,\n  COUNT(*) as total_registros,\n  COUNT(paidDate) as registros_com_data,\n  MIN(paidDate) as data_mais_antiga,\n  MAX(paidDate) as data_mais_recente\nFROM receivablePayments\nUNION ALL\nSELECT \n  'receivableInstallments',\n  COUNT(*),\n  COUNT(paidDate),\n  MIN(paidDate),\n  MAX(paidDate)\nFROM receivableInstallments\nUNION ALL\nSELECT \n  'purchaseInstallments',\n  COUNT(*),\n  COUNT(paidDate),\n  MIN(paidDate),\n  MAX(paidDate)\nFROM purchaseInstallments\nUNION ALL\nSELECT \n  'expenseInstallments',\n  COUNT(*),\n  COUNT(paidDate),\n  MIN(paidDate),\n  MAX(paidDate)\nFROM expenseInstallments\n",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 2: Unknown column 'paiddate' in 'field list'"
+  ]
+}

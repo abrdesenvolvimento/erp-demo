@@ -1,0 +1,15 @@
+{
+  "query": "\nSELECT \n  COUNT(*) as total_pagamentos,\n  MIN(paidDate) as data_mais_antiga,\n  MAX(paidDate) as data_mais_recente\nFROM receivablePayments\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute \nSELECT \n  COUNT(*) as total_pagamentos,\n  MIN(paidDate) as data_mais_antiga,\n  MAX(paidDate) as data_mais_recente\nFROM receivablePayments\n",
+  "rows": [
+    {
+      "total_pagamentos": "13",
+      "data_mais_antiga": "2025-11-15 00:00:00",
+      "data_mais_recente": "2025-11-25 00:00:00"
+    }
+  ],
+  "messages": [],
+  "stdout": "total_pagamentos\tdata_mais_antiga\tdata_mais_recente\n13\t2025-11-15 00:00:00\t2025-11-25 00:00:00\n",
+  "stderr": "",
+  "execution_time_ms": 53
+}

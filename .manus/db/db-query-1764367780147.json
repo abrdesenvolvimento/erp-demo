@@ -1,0 +1,127 @@
+{
+  "query": "\nSELECT \n  rp.id,\n  p.name as customer_name,\n  rp.paidAmount,\n  rp.paidDate as stored_utc,\n  DATE_FORMAT(rp.paidDate, '%d/%m/%Y %H:%i') as formatted_utc,\n  DATE_FORMAT(CONVERT_TZ(rp.paidDate, '+00:00', '-03:00'), '%d/%m/%Y %H:%i') as brasilia_time,\n  rp.paymentMethod\nFROM receivablePayments rp\nJOIN partners p ON rp.customerId = p.id\nORDER BY rp.paidDate DESC\nLIMIT 20\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute \nSELECT \n  rp.id,\n  p.name as customer_name,\n  rp.paidAmount,\n  rp.paidDate as stored_utc,\n  DATE_FORMAT(rp.paidDate, '%d/%m/%Y %H:%i') as formatted_utc,\n  DATE_FORMAT(CONVERT_TZ(rp.paidDate, '+00:00', '-03:00'), '%d/%m/%Y %H:%i') as brasilia_time,\n  rp.paymentMethod\nFROM receivablePayments rp\nJOIN partners p ON rp.customerId = p.id\nORDER BY rp.paidDate DESC\nLIMIT 20\n",
+  "rows": [
+    {
+      "id": "180001",
+      "customer_name": "Vitor Hugo Fernandes",
+      "paidAmount": "12.00",
+      "stored_utc": "2025-11-25 00:00:00",
+      "formatted_utc": "25/11/2025 00:00",
+      "brasilia_time": "24/11/2025 21:00",
+      "paymentMethod": "PIX"
+    },
+    {
+      "id": "180002",
+      "customer_name": "Vitor Hugo Fernandes",
+      "paidAmount": "67.00",
+      "stored_utc": "2025-11-25 00:00:00",
+      "formatted_utc": "25/11/2025 00:00",
+      "brasilia_time": "24/11/2025 21:00",
+      "paymentMethod": "PIX"
+    },
+    {
+      "id": "180003",
+      "customer_name": "Vitor Hugo Fernandes",
+      "paidAmount": "11.00",
+      "stored_utc": "2025-11-25 00:00:00",
+      "formatted_utc": "25/11/2025 00:00",
+      "brasilia_time": "24/11/2025 21:00",
+      "paymentMethod": "PIX"
+    },
+    {
+      "id": "180004",
+      "customer_name": "Vitor Hugo Fernandes",
+      "paidAmount": "10.00",
+      "stored_utc": "2025-11-25 00:00:00",
+      "formatted_utc": "25/11/2025 00:00",
+      "brasilia_time": "24/11/2025 21:00",
+      "paymentMethod": "PIX"
+    },
+    {
+      "id": "150001",
+      "customer_name": "Jackson Vinicius",
+      "paidAmount": "54.00",
+      "stored_utc": "2025-11-24 00:00:00",
+      "formatted_utc": "24/11/2025 00:00",
+      "brasilia_time": "23/11/2025 21:00",
+      "paymentMethod": "PIX"
+    },
+    {
+      "id": "120002",
+      "customer_name": "Jackson Vinicius",
+      "paidAmount": "3.50",
+      "stored_utc": "2025-11-23 00:00:00",
+      "formatted_utc": "23/11/2025 00:00",
+      "brasilia_time": "22/11/2025 21:00",
+      "paymentMethod": "DINHEIRO"
+    },
+    {
+      "id": "120003",
+      "customer_name": "Jackson Vinicius",
+      "paidAmount": "12.00",
+      "stored_utc": "2025-11-23 00:00:00",
+      "formatted_utc": "23/11/2025 00:00",
+      "brasilia_time": "22/11/2025 21:00",
+      "paymentMethod": "DINHEIRO"
+    },
+    {
+      "id": "120004",
+      "customer_name": "Jackson Vinicius",
+      "paidAmount": "32.00",
+      "stored_utc": "2025-11-23 00:00:00",
+      "formatted_utc": "23/11/2025 00:00",
+      "brasilia_time": "22/11/2025 21:00",
+      "paymentMethod": "DINHEIRO"
+    },
+    {
+      "id": "120001",
+      "customer_name": "Jackson Vinicius",
+      "paidAmount": "3.00",
+      "stored_utc": "2025-11-23 00:00:00",
+      "formatted_utc": "23/11/2025 00:00",
+      "brasilia_time": "22/11/2025 21:00",
+      "paymentMethod": "DINHEIRO"
+    },
+    {
+      "id": "120005",
+      "customer_name": "Jackson Vinicius",
+      "paidAmount": "9.00",
+      "stored_utc": "2025-11-23 00:00:00",
+      "formatted_utc": "23/11/2025 00:00",
+      "brasilia_time": "22/11/2025 21:00",
+      "paymentMethod": "DINHEIRO"
+    },
+    {
+      "id": "120007",
+      "customer_name": "Jackson Vinicius",
+      "paidAmount": "3.50",
+      "stored_utc": "2025-11-23 00:00:00",
+      "formatted_utc": "23/11/2025 00:00",
+      "brasilia_time": "22/11/2025 21:00",
+      "paymentMethod": "DINHEIRO"
+    },
+    {
+      "id": "120006",
+      "customer_name": "Jackson Vinicius",
+      "paidAmount": "37.00",
+      "stored_utc": "2025-11-23 00:00:00",
+      "formatted_utc": "23/11/2025 00:00",
+      "brasilia_time": "22/11/2025 21:00",
+      "paymentMethod": "DINHEIRO"
+    },
+    {
+      "id": "90001",
+      "customer_name": "Lucas Mantovi",
+      "paidAmount": "16.00",
+      "stored_utc": "2025-11-15 00:00:00",
+      "formatted_utc": "15/11/2025 00:00",
+      "brasilia_time": "14/11/2025 21:00",
+      "paymentMethod": "PIX"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tcustomer_name\tpaidAmount\tstored_utc\tformatted_utc\tbrasilia_time\tpaymentMethod\n180001\tVitor Hugo Fernandes\t12.00\t2025-11-25 00:00:00\t25/11/2025 00:00\t24/11/2025 21:00\tPIX\n180002\tVitor Hugo Fernandes\t67.00\t2025-11-25 00:00:00\t25/11/2025 00:00\t24/11/2025 21:00\tPIX\n180003\tVitor Hugo Fernandes\t11.00\t2025-11-25 00:00:00\t25/11/2025 00:00\t24/11/2025 21:00\tPIX\n180004\tVitor Hugo Fernandes\t10.00\t2025-11-25 00:00:00\t25/11/2025 00:00\t24/11/2025 21:00\tPIX\n150001\tJackson Vinicius\t54.00\t2025-11-24 00:00:00\t24/11/2025 00:00\t23/11/2025 21:00\tPIX\n120002\tJackson Vinicius\t3.50\t2025-11-23 00:00:00\t23/11/2025 00:00\t22/11/2025 21:00\tDINHEIRO\n120003\tJackson Vinicius\t12.00\t2025-11-23 00:00:00\t23/11/2025 00:00\t22/11/2025 21:00\tDINHEIRO\n120004\tJackson Vinicius\t32.00\t2025-11-23 00:00:00\t23/11/2025 00:00\t22/11/2025 21:00\tDINHEIRO\n120001\tJackson Vinicius\t3.00\t2025-11-23 00:00:00\t23/11/2025 00:00\t22/11/2025 21:00\tDINHEIRO\n120005\tJackson Vinicius\t9.00\t2025-11-23 00:00:00\t23/11/2025 00:00\t22/11/2025 21:00\tDINHEIRO\n120007\tJackson Vinicius\t3.50\t2025-11-23 00:00:00\t23/11/2025 00:00\t22/11/2025 21:00\tDINHEIRO\n120006\tJackson Vinicius\t37.00\t2025-11-23 00:00:00\t23/11/2025 00:00\t22/11/2025 21:00\tDINHEIRO\n90001\tLucas Mantovi\t16.00\t2025-11-15 00:00:00\t15/11/2025 00:00\t14/11/2025 21:00\tPIX\n",
+  "stderr": "",
+  "execution_time_ms": 107
+}

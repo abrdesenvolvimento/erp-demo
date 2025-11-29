@@ -143,10 +143,14 @@ export default function Despesas() {
       description,
       amount: totalAmount,
       paymentMethod,
-      dueDates: dueDates.map(d => ({
-        date: new Date(d.date),
-        amount: d.amount
-      })),
+      dueDates: dueDates.map(d => {
+        // Criar data explicitamente em horário de Brasília (meio-dia) para evitar problemas de timezone
+        const [year, month, day] = d.date.split('-');
+        return {
+          date: new Date(parseInt(year), parseInt(month) - 1, parseInt(day), 12, 0, 0),
+          amount: d.amount
+        };
+      }),
       notes,
     });
   };

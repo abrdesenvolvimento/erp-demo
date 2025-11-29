@@ -1,0 +1,34 @@
+{
+  "query": "\nSELECT \n  rp.id,\n  DATE_FORMAT(rp.paidDate, '%d/%m/%Y %H:%i') as data_pagamento,\n  rp.paidAmount,\n  p.name\nFROM receivablePayments rp\nJOIN partners p ON rp.customerId = p.id\nWHERE p.name LIKE '%Vitor Hugo%'\nORDER BY rp.paidDate DESC\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute \nSELECT \n  rp.id,\n  DATE_FORMAT(rp.paidDate, '%d/%m/%Y %H:%i') as data_pagamento,\n  rp.paidAmount,\n  p.name\nFROM receivablePayments rp\nJOIN partners p ON rp.customerId = p.id\nWHERE p.name LIKE '%Vitor Hugo%'\nORDER BY rp.paidDate DESC\n",
+  "rows": [
+    {
+      "id": "180004",
+      "data_pagamento": "25/11/2025 05:00",
+      "paidAmount": "10.00",
+      "name": "Vitor Hugo Fernandes"
+    },
+    {
+      "id": "180003",
+      "data_pagamento": "25/11/2025 05:00",
+      "paidAmount": "11.00",
+      "name": "Vitor Hugo Fernandes"
+    },
+    {
+      "id": "180002",
+      "data_pagamento": "25/11/2025 05:00",
+      "paidAmount": "67.00",
+      "name": "Vitor Hugo Fernandes"
+    },
+    {
+      "id": "180001",
+      "data_pagamento": "25/11/2025 05:00",
+      "paidAmount": "12.00",
+      "name": "Vitor Hugo Fernandes"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tdata_pagamento\tpaidAmount\tname\n180004\t25/11/2025 05:00\t10.00\tVitor Hugo Fernandes\n180003\t25/11/2025 05:00\t11.00\tVitor Hugo Fernandes\n180002\t25/11/2025 05:00\t67.00\tVitor Hugo Fernandes\n180001\t25/11/2025 05:00\t12.00\tVitor Hugo Fernandes\n",
+  "stderr": "",
+  "execution_time_ms": 71
+}

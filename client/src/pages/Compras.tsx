@@ -845,7 +845,9 @@ export default function Compras() {
                         </div>
                       </td>
                       <td className="p-4">
-                        {new Date(purchase.purchaseOrder.postingDate).toLocaleDateString('pt-BR')}
+                        {new Date(purchase.purchaseOrder.postingDate).toLocaleDateString('pt-BR', {
+                          timeZone: 'America/Sao_Paulo'
+                        })}
                       </td>
                       <td className="p-4 font-medium">
                         R$ {parseFloat(purchase.purchaseOrder.totalAmount.toString()).toFixed(2)}

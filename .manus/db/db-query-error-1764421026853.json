@@ -1,0 +1,8 @@
+{
+  "query": "\nSELECT \n  s.id,\n  s.saleNumber,\n  s.saleType,\n  s.finalAmount,\n  c.name as customer_name,\n  s.createdAt\nFROM sales s\nLEFT JOIN partners c ON s.customerId = c.id\nWHERE s.saleNumber = '8130002'\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute \nSELECT \n  s.id,\n  s.saleNumber,\n  s.saleType,\n  s.finalAmount,\n  c.name as customer_name,\n  s.createdAt\nFROM sales s\nLEFT JOIN partners c ON s.customerId = c.id\nWHERE s.saleNumber = '8130002'\n",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 2: Unknown column 's.salenumber' in 'where clause'"
+  ]
+}

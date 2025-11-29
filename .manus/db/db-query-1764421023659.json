@@ -1,0 +1,20 @@
+{
+  "query": "\nSELECT \n  po.id as purchase_order_id,\n  po.docNumber,\n  po.docType,\n  poi.id as item_id,\n  poi.productId,\n  p.name as product_name,\n  poi.quantity,\n  poi.unitCost\nFROM purchaseOrders po\nJOIN purchaseOrderItems poi ON po.id = poi.purchaseOrderId\nJOIN products p ON poi.productId = p.id\nWHERE po.docNumber = '71875'\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute \nSELECT \n  po.id as purchase_order_id,\n  po.docNumber,\n  po.docType,\n  poi.id as item_id,\n  poi.productId,\n  p.name as product_name,\n  poi.quantity,\n  poi.unitCost\nFROM purchaseOrders po\nJOIN purchaseOrderItems poi ON po.id = poi.purchaseOrderId\nJOIN products p ON poi.productId = p.id\nWHERE po.docNumber = '71875'\n",
+  "rows": [
+    {
+      "purchase_order_id": "480006",
+      "docNumber": "71875",
+      "docType": "NOTA_FISCAL",
+      "item_id": "480019",
+      "productId": "510007",
+      "product_name": "Heineken 330ml",
+      "quantity": "168.000",
+      "unitCost": "4.4900"
+    }
+  ],
+  "messages": [],
+  "stdout": "purchase_order_id\tdocNumber\tdocType\titem_id\tproductId\tproduct_name\tquantity\tunitCost\n480006\t71875\tNOTA_FISCAL\t480019\t510007\tHeineken 330ml\t168.000\t4.4900\n",
+  "stderr": "",
+  "execution_time_ms": 908
+}

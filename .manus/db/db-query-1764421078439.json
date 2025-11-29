@@ -1,0 +1,18 @@
+{
+  "query": "\nSELECT \n  poi.id as item_id,\n  poi.productId,\n  p.name as product_name,\n  poi.quantity,\n  poi.unitCost,\n  (poi.quantity * poi.unitCost) as total_item\nFROM purchaseOrderItems poi\nJOIN products p ON poi.productId = p.id\nWHERE poi.purchaseOrderId = 480006\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute \nSELECT \n  poi.id as item_id,\n  poi.productId,\n  p.name as product_name,\n  poi.quantity,\n  poi.unitCost,\n  (poi.quantity * poi.unitCost) as total_item\nFROM purchaseOrderItems poi\nJOIN products p ON poi.productId = p.id\nWHERE poi.purchaseOrderId = 480006\n",
+  "rows": [
+    {
+      "item_id": "480019",
+      "productId": "510005",
+      "product_name": "Heineken 350ml",
+      "quantity": "168.000",
+      "unitCost": "4.4900",
+      "total_item": "754.3200000"
+    }
+  ],
+  "messages": [],
+  "stdout": "item_id\tproductId\tproduct_name\tquantity\tunitCost\ttotal_item\n480019\t510005\tHeineken 350ml\t168.000\t4.4900\t754.3200000\n",
+  "stderr": "",
+  "execution_time_ms": 50
+}

@@ -87,9 +87,13 @@ export default function ContasReceber() {
       return;
     }
 
+    // Criar data explicitamente em horário de Brasília (meio-dia) para evitar problemas de timezone
+    const [year, month, day] = paymentForm.paidDate.split('-');
+    const paidDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day), 12, 0, 0);
+
     registerPayment.mutate({
       customerId: selectedCustomerId,
-      paidDate: new Date(paymentForm.paidDate),
+      paidDate,
       paidAmount: paymentForm.paidAmount,
       paymentMethod: paymentForm.paymentMethod,
       notes: paymentForm.notes || undefined
@@ -107,6 +111,7 @@ export default function ContasReceber() {
   const formatDate = (date: Date | string) => {
     const d = typeof date === 'string' ? new Date(date) : date;
     return d.toLocaleString('pt-BR', {
+      timeZone: 'America/Sao_Paulo',
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
