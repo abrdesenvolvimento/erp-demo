@@ -1,0 +1,14 @@
+{
+  "query": "SELECT \n  COUNT(*) as total_vendas,\n  SUM(finalAmount) as total_valor\nFROM sales \nWHERE YEAR(createdAt) = 2025 AND MONTH(createdAt) = 12;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  COUNT(*) as total_vendas,\n  SUM(finalAmount) as total_valor\nFROM sales \nWHERE YEAR(createdAt) = 2025 AND MONTH(createdAt) = 12;",
+  "rows": [
+    {
+      "total_vendas": "55",
+      "total_valor": "1521.09"
+    }
+  ],
+  "messages": [],
+  "stdout": "total_vendas\ttotal_valor\n55\t1521.09\n",
+  "stderr": "",
+  "execution_time_ms": 55
+}
