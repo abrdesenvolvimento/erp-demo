@@ -1047,10 +1047,10 @@ export const appRouter = router({
       
       // Vendas de hoje (usando horário de Brasília)
       const todaySales = allMonthSales.filter(s => {
-        if (!s.saleDate) return false;
+        if (!s.createdAt) return false;
         
         // Converter data da venda para Brasília
-        const saleDateStr = new Date(s.saleDate).toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' });
+        const saleDateStr = new Date(s.createdAt).toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' });
         const [datePart, timePart] = saleDateStr.split(', ');
         const [month, day, year] = datePart.split('/');
         const saleDate = new Date(`${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T${timePart}`);
@@ -1076,7 +1076,7 @@ export const appRouter = router({
       
       // Faturamento do mês atual - TODAS as vendas do mês
       const monthSales = allMonthSales.filter(s => {
-        const saleDate = new Date(s.saleDate!);
+        const saleDate = new Date(s.createdAt!);
         return saleDate >= firstDayOfMonth;
       });
       
