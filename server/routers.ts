@@ -1076,7 +1076,15 @@ export const appRouter = router({
       
       // Faturamento do mês atual - TODAS as vendas do mês
       const monthSales = allMonthSales.filter(s => {
-        const saleDate = new Date(s.createdAt!);
+        if (!s.createdAt) return false;
+        
+        // Converter data da venda para Brasília
+        const saleDateStr = new Date(s.createdAt).toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' });
+        const [datePart, timePart] = saleDateStr.split(', ');
+        const [month, day, year] = datePart.split('/');
+        const saleDate = new Date(`${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T${timePart}`);
+        
+        // Comparar com primeiro dia do mês em Brasília
         return saleDate >= firstDayOfMonth;
       });
       
