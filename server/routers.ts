@@ -1035,7 +1035,16 @@ export const appRouter = router({
       // Buscar TODAS as vendas do mês atual para cálculos corretos
       // Usar horário de Brasília (GMT-3) para cálculos de data
       const todayStr = new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' });
-      const today = new Date(todayStr);
+      const [datePart, timePart] = todayStr.split(', ');
+      const [month, day, year] = datePart.split('/');
+      // Converter hora de 12h para 24h
+      const [time, period] = timePart.split(' ');
+      const [hours, minutes, seconds] = time.split(':');
+      let hours24 = parseInt(hours);
+      if (period === 'PM' && hours24 !== 12) hours24 += 12;
+      if (period === 'AM' && hours24 === 12) hours24 = 0;
+      const time24 = `${String(hours24).padStart(2, '0')}:${minutes}:${seconds}`;
+      const today = new Date(`${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T${time24}`);
       
       const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
       const allMonthSales = await db.getSales({ limit: 10000 }); // Buscar todas as vendas
@@ -1051,9 +1060,16 @@ export const appRouter = router({
         
         // Converter data da venda para Brasília
         const saleDateStr = new Date(s.createdAt).toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' });
-        const [datePart, timePart] = saleDateStr.split(', ');
-        const [month, day, year] = datePart.split('/');
-        const saleDate = new Date(`${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T${timePart}`);
+        const [saleDatePart, saleTimePart] = saleDateStr.split(', ');
+        const [saleMonth, saleDay, saleYear] = saleDatePart.split('/');
+        // Converter hora de 12h para 24h
+        const [saleTime, salePeriod] = saleTimePart.split(' ');
+        const [saleHours, saleMinutes, saleSeconds] = saleTime.split(':');
+        let saleHours24 = parseInt(saleHours);
+        if (salePeriod === 'PM' && saleHours24 !== 12) saleHours24 += 12;
+        if (salePeriod === 'AM' && saleHours24 === 12) saleHours24 = 0;
+        const saleTime24 = `${String(saleHours24).padStart(2, '0')}:${saleMinutes}:${saleSeconds}`;
+        const saleDate = new Date(`${saleYear}-${saleMonth.padStart(2, '0')}-${saleDay.padStart(2, '0')}T${saleTime24}`);
         
         // Comparar apenas ano, mês e dia
         return saleDate.getFullYear() === today.getFullYear() &&
@@ -1080,9 +1096,16 @@ export const appRouter = router({
         
         // Converter data da venda para Brasília
         const saleDateStr = new Date(s.createdAt).toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' });
-        const [datePart, timePart] = saleDateStr.split(', ');
-        const [month, day, year] = datePart.split('/');
-        const saleDate = new Date(`${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T${timePart}`);
+        const [saleDatePart, saleTimePart] = saleDateStr.split(', ');
+        const [saleMonth, saleDay, saleYear] = saleDatePart.split('/');
+        // Converter hora de 12h para 24h
+        const [saleTime, salePeriod] = saleTimePart.split(' ');
+        const [saleHours, saleMinutes, saleSeconds] = saleTime.split(':');
+        let saleHours24 = parseInt(saleHours);
+        if (salePeriod === 'PM' && saleHours24 !== 12) saleHours24 += 12;
+        if (salePeriod === 'AM' && saleHours24 === 12) saleHours24 = 0;
+        const saleTime24 = `${String(saleHours24).padStart(2, '0')}:${saleMinutes}:${saleSeconds}`;
+        const saleDate = new Date(`${saleYear}-${saleMonth.padStart(2, '0')}-${saleDay.padStart(2, '0')}T${saleTime24}`);
         
         // Comparar com primeiro dia do mês em Brasília
         return saleDate >= firstDayOfMonth;
