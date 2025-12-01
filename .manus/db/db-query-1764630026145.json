@@ -1,0 +1,20 @@
+{
+  "query": "SELECT \n  MONTH(createdAt) as mes,\n  COUNT(*) as total_vendas,\n  SUM(finalAmount) as total_valor\nFROM sales \nWHERE YEAR(createdAt) = 2025\nGROUP BY MONTH(createdAt)\nORDER BY mes DESC;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  MONTH(createdAt) as mes,\n  COUNT(*) as total_vendas,\n  SUM(finalAmount) as total_valor\nFROM sales \nWHERE YEAR(createdAt) = 2025\nGROUP BY MONTH(createdAt)\nORDER BY mes DESC;",
+  "rows": [
+    {
+      "mes": "12",
+      "total_vendas": "57",
+      "total_valor": "1555.09"
+    },
+    {
+      "mes": "11",
+      "total_vendas": "1116",
+      "total_valor": "37526.13"
+    }
+  ],
+  "messages": [],
+  "stdout": "mes\ttotal_vendas\ttotal_valor\n12\t57\t1555.09\n11\t1116\t37526.13\n",
+  "stderr": "",
+  "execution_time_ms": 54
+}

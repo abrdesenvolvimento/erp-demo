@@ -1,0 +1,60 @@
+{
+  "query": "SELECT id, createdAt, finalAmount \nFROM sales \nWHERE DATE(createdAt) = '2025-11-30'\nORDER BY createdAt DESC\nLIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT id, createdAt, finalAmount \nFROM sales \nWHERE DATE(createdAt) = '2025-11-30'\nORDER BY createdAt DESC\nLIMIT 10;",
+  "rows": [
+    {
+      "id": "11010001",
+      "createdAt": "2025-11-30 23:52:21",
+      "finalAmount": "33.00"
+    },
+    {
+      "id": "10980022",
+      "createdAt": "2025-11-30 23:38:08",
+      "finalAmount": "2.00"
+    },
+    {
+      "id": "10980021",
+      "createdAt": "2025-11-30 23:36:41",
+      "finalAmount": "33.00"
+    },
+    {
+      "id": "10980020",
+      "createdAt": "2025-11-30 23:34:41",
+      "finalAmount": "15.00"
+    },
+    {
+      "id": "10980019",
+      "createdAt": "2025-11-30 23:33:17",
+      "finalAmount": "19.38"
+    },
+    {
+      "id": "10980018",
+      "createdAt": "2025-11-30 23:31:52",
+      "finalAmount": "51.72"
+    },
+    {
+      "id": "10980017",
+      "createdAt": "2025-11-30 23:30:00",
+      "finalAmount": "61.98"
+    },
+    {
+      "id": "10980016",
+      "createdAt": "2025-11-30 23:26:23",
+      "finalAmount": "59.98"
+    },
+    {
+      "id": "10980015",
+      "createdAt": "2025-11-30 23:23:55",
+      "finalAmount": "61.74"
+    },
+    {
+      "id": "10980014",
+      "createdAt": "2025-11-30 23:22:20",
+      "finalAmount": "18.95"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tcreatedAt\tfinalAmount\n11010001\t2025-11-30 23:52:21\t33.00\n10980022\t2025-11-30 23:38:08\t2.00\n10980021\t2025-11-30 23:36:41\t33.00\n10980020\t2025-11-30 23:34:41\t15.00\n10980019\t2025-11-30 23:33:17\t19.38\n10980018\t2025-11-30 23:31:52\t51.72\n10980017\t2025-11-30 23:30:00\t61.98\n10980016\t2025-11-30 23:26:23\t59.98\n10980015\t2025-11-30 23:23:55\t61.74\n10980014\t2025-11-30 23:22:20\t18.95\n",
+  "stderr": "",
+  "execution_time_ms": 73
+}

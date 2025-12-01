@@ -502,12 +502,12 @@ export async function getSalesStats(period?: 'today' | 'week' | 'month' | 'all')
     total: { count: 0, total: "0.00" },
   };
   
-  // Buscar vendas com filtro de período
+  // Buscar todas as vendas
   let allSales = await db.select().from(sales);
   
   // Aplicar filtro de período usando horário de Brasília (GMT-3)
   if (period && period !== 'all') {
-    // Obter data ATUAL em Brasília parseando corretamente
+    // Obter data ATUAL em Brasília
     const now = new Date();
     const nowBrasiliaStr = now.toLocaleString('en-US', { 
       timeZone: 'America/Sao_Paulo',
@@ -520,7 +520,7 @@ export async function getSalesStats(period?: 'today' | 'week' | 'month' | 'all')
       hour12: false
     });
     
-    // Parse: "11/24/2025, 14:52:30" -> partes
+    // Parse: "12/01/2025, 18:03:00" -> partes
     const [datePart, timePart] = nowBrasiliaStr.split(', ');
     const [month, day, year] = datePart.split('/');
     const todayBrasilia = { year: parseInt(year), month: parseInt(month), day: parseInt(day) };
@@ -553,11 +553,22 @@ export async function getSalesStats(period?: 'today' | 'week' | 'month' | 'all')
         return saleDate >= weekAgo;
       });
     } else if (period === 'month') {
-      // Primeiro dia do mês atual (em Brasília)
-      const firstDayOfMonth = new Date(todayBrasilia.year, todayBrasilia.month - 1, 1);
+      // Mês atual comparando data em Brasília
       allSales = allSales.filter(sale => {
         const saleDate = new Date(sale.createdAt!);
-        return saleDate >= firstDayOfMonth;
+        const saleBrasiliaStr = saleDate.toLocaleString('en-US', { 
+          timeZone: 'America/Sao_Paulo',
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour12: false
+        });
+        
+        const [saleDatePart] = saleBrasiliaStr.split(', ');
+        const [saleMonth, saleDay, saleYear] = saleDatePart.split('/');
+        
+        return parseInt(saleYear) === todayBrasilia.year &&
+               parseInt(saleMonth) === todayBrasilia.month;
       });
     }
   }
