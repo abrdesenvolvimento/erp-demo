@@ -424,7 +424,7 @@ export async function getSales(filters?: { saleType?: string; customerId?: numbe
     query = query.where(and(...conditions)) as any;
   }
   
-  query = query.orderBy(desc(sales.saleDate)) as any;
+  query = query.orderBy(desc(sales.createdAt)) as any;
   
   if (filters?.limit) {
     query = query.limit(filters.limit) as any;
