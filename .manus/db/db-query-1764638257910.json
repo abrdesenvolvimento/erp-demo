@@ -1,0 +1,18 @@
+{
+  "query": "SELECT id, name FROM products WHERE id IN (1410004, 1410005);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT id, name FROM products WHERE id IN (1410004, 1410005);",
+  "rows": [
+    {
+      "id": "1410004",
+      "name": "Rothmans Red Global"
+    },
+    {
+      "id": "1410005",
+      "name": "Rothmans Blue Global"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\n1410004\tRothmans Red Global\n1410005\tRothmans Blue Global\n",
+  "stderr": "",
+  "execution_time_ms": 48
+}

@@ -635,3 +635,8 @@
   - **BUG:** Filtros de período (today, week, month) usavam saleDate (nulo) ao invés de createdAt
   - **SOLUÇÃO:** Convertida lógica para usar createdAt com timezone de Brasília (GMT-3)
   - **RESULTADO:** Dashboard e Tela de Vendas agora mostram valores consistentes (R$ 761,69 para Dezembro)
+
+
+## 🔧 CORREÇÕES CONCLUÍDAS - DEZEMBRO 2025
+
+- [x] Corrigir venda #11700003 - Substituir Rothmans Red Global por Rothmans Red Hand-Selected

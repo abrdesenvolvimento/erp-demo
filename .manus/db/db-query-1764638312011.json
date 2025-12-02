@@ -1,0 +1,13 @@
+{
+  "query": "SELECT id FROM products WHERE ean = '78944497';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT id FROM products WHERE ean = '78944497';",
+  "rows": [
+    {
+      "id": "1410002"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\n1410002\n",
+  "stderr": "",
+  "execution_time_ms": 105
+}

@@ -1,0 +1,38 @@
+{
+  "query": "SELECT id, name FROM products WHERE name LIKE '%Rothmans%' LIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT id, name FROM products WHERE name LIKE '%Rothmans%' LIMIT 20;",
+  "rows": [
+    {
+      "id": "2430001",
+      "name": "Rothmans / LM Unidade"
+    },
+    {
+      "id": "1410005",
+      "name": "Rothmans Blue Global"
+    },
+    {
+      "id": "1410003",
+      "name": "Rothmans Blue Hand-Selected"
+    },
+    {
+      "id": "1410008",
+      "name": "Rothmans Click Sense"
+    },
+    {
+      "id": "1410007",
+      "name": "Rothmans Double Click"
+    },
+    {
+      "id": "1410004",
+      "name": "Rothmans Red Global"
+    },
+    {
+      "id": "1410002",
+      "name": "Rothmans Red Hand-Selected"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\n2430001\tRothmans / LM Unidade\n1410005\tRothmans Blue Global\n1410003\tRothmans Blue Hand-Selected\n1410008\tRothmans Click Sense\n1410007\tRothmans Double Click\n1410004\tRothmans Red Global\n1410002\tRothmans Red Hand-Selected\n",
+  "stderr": "",
+  "execution_time_ms": 51
+}

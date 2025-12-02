@@ -1,0 +1,28 @@
+{
+  "query": "SELECT si.id, si.saleId, si.productId, p.name, si.quantity, si.unitPrice, si.totalPrice FROM saleItems si LEFT JOIN products p ON si.productId = p.id WHERE si.saleId = 11700003;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT si.id, si.saleId, si.productId, p.name, si.quantity, si.unitPrice, si.totalPrice FROM saleItems si LEFT JOIN products p ON si.productId = p.id WHERE si.saleId = 11700003;",
+  "rows": [
+    {
+      "id": "11580005",
+      "saleId": "11700003",
+      "productId": "2040002",
+      "name": "Gomets",
+      "quantity": "1",
+      "unitPrice": "1.00",
+      "totalPrice": "1.00"
+    },
+    {
+      "id": "11580006",
+      "saleId": "11700003",
+      "productId": "2040001",
+      "name": "Pop!",
+      "quantity": "2",
+      "unitPrice": "0.50",
+      "totalPrice": "1.00"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tsaleId\tproductId\tname\tquantity\tunitPrice\ttotalPrice\n11580005\t11700003\t2040002\tGomets\t1\t1.00\t1.00\n11580006\t11700003\t2040001\tPop!\t2\t0.50\t1.00\n",
+  "stderr": "",
+  "execution_time_ms": 77
+}

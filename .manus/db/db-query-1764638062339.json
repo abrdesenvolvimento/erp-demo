@@ -1,0 +1,43 @@
+{
+  "query": "SELECT s.id, s.saleType, s.finalAmount, si.id as itemId, si.productId, p.name as productName, si.quantity, si.unitPrice, si.totalPrice FROM sales s LEFT JOIN saleItems si ON s.id = si.saleId LEFT JOIN products p ON si.productId = p.id WHERE s.id = 11700003 ORDER BY si.id;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT s.id, s.saleType, s.finalAmount, si.id as itemId, si.productId, p.name as productName, si.quantity, si.unitPrice, si.totalPrice FROM sales s LEFT JOIN saleItems si ON s.id = si.saleId LEFT JOIN products p ON si.productId = p.id WHERE s.id = 11700003 ORDER BY si.id;",
+  "rows": [
+    {
+      "id": "11700003",
+      "saleType": "BALCAO",
+      "finalAmount": "9.50",
+      "itemId": "11580004",
+      "productId": "1410004",
+      "productName": "Rothmans Red Global",
+      "quantity": "1",
+      "unitPrice": "7.50",
+      "totalPrice": "7.50"
+    },
+    {
+      "id": "11700003",
+      "saleType": "BALCAO",
+      "finalAmount": "9.50",
+      "itemId": "11580005",
+      "productId": "2040002",
+      "productName": "Gomets",
+      "quantity": "1",
+      "unitPrice": "1.00",
+      "totalPrice": "1.00"
+    },
+    {
+      "id": "11700003",
+      "saleType": "BALCAO",
+      "finalAmount": "9.50",
+      "itemId": "11580006",
+      "productId": "2040001",
+      "productName": "Pop!",
+      "quantity": "2",
+      "unitPrice": "0.50",
+      "totalPrice": "1.00"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tsaleType\tfinalAmount\titemId\tproductId\tproductName\tquantity\tunitPrice\ttotalPrice\n11700003\tBALCAO\t9.50\t11580004\t1410004\tRothmans Red Global\t1\t7.50\t7.50\n11700003\tBALCAO\t9.50\t11580005\t2040002\tGomets\t1\t1.00\t1.00\n11700003\tBALCAO\t9.50\t11580006\t2040001\tPop!\t2\t0.50\t1.00\n",
+  "stderr": "",
+  "execution_time_ms": 62
+}

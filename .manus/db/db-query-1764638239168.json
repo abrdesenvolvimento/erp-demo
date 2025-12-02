@@ -1,0 +1,18 @@
+{
+  "query": "SELECT id, name FROM products WHERE name LIKE '%Rothmans%' AND name LIKE '%Hand%' LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT id, name FROM products WHERE name LIKE '%Rothmans%' AND name LIKE '%Hand%' LIMIT 5;",
+  "rows": [
+    {
+      "id": "1410003",
+      "name": "Rothmans Blue Hand-Selected"
+    },
+    {
+      "id": "1410002",
+      "name": "Rothmans Red Hand-Selected"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\n1410003\tRothmans Blue Hand-Selected\n1410002\tRothmans Red Hand-Selected\n",
+  "stderr": "",
+  "execution_time_ms": 51
+}
