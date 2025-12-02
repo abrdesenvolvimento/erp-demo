@@ -1,0 +1,20 @@
+{
+  "query": "SELECT id, name, ean FROM products WHERE name LIKE '%Rothmans Red%' AND (name LIKE '%Global%' OR name LIKE '%Hand-Selected%');",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT id, name, ean FROM products WHERE name LIKE '%Rothmans Red%' AND (name LIKE '%Global%' OR name LIKE '%Hand-Selected%');",
+  "rows": [
+    {
+      "id": "1410002",
+      "name": "Rothmans Red Hand-Selected",
+      "ean": "78944497"
+    },
+    {
+      "id": "1410004",
+      "name": "Rothmans Red Global",
+      "ean": "78944220"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tean\n1410002\tRothmans Red Hand-Selected\t78944497\n1410004\tRothmans Red Global\t78944220\n",
+  "stderr": "",
+  "execution_time_ms": 50
+}

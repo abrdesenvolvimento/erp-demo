@@ -1,0 +1,19 @@
+{
+  "query": "SELECT si.id, si.saleId, si.productId, si.quantity, si.unitPrice, si.totalPrice, p.name FROM saleItems si JOIN products p ON si.productId = p.id WHERE si.saleId = 11700003 AND p.name LIKE '%Hand-Selected%';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT si.id, si.saleId, si.productId, si.quantity, si.unitPrice, si.totalPrice, p.name FROM saleItems si JOIN products p ON si.productId = p.id WHERE si.saleId = 11700003 AND p.name LIKE '%Hand-Selected%';",
+  "rows": [
+    {
+      "id": "11580010",
+      "saleId": "11700003",
+      "productId": "1410002",
+      "quantity": "1",
+      "unitPrice": "7.50",
+      "totalPrice": "7.50",
+      "name": "Rothmans Red Hand-Selected"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tsaleId\tproductId\tquantity\tunitPrice\ttotalPrice\tname\n11580010\t11700003\t1410002\t1\t7.50\t7.50\tRothmans Red Hand-Selected\n",
+  "stderr": "",
+  "execution_time_ms": 86
+}
