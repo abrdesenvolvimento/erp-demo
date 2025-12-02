@@ -1,0 +1,22 @@
+{
+  "query": "SELECT \n  po.id,\n  po.docNumber,\n  po.supplierId,\n  s.name as supplierName,\n  po.totalAmount,\n  po.status,\n  po.issueDate,\n  po.postingDate,\n  po.notes,\n  po.docType\nFROM purchaseOrders po\nLEFT JOIN partners s ON po.supplierId = s.id\nWHERE po.id = 780001;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  po.id,\n  po.docNumber,\n  po.supplierId,\n  s.name as supplierName,\n  po.totalAmount,\n  po.status,\n  po.issueDate,\n  po.postingDate,\n  po.notes,\n  po.docType\nFROM purchaseOrders po\nLEFT JOIN partners s ON po.supplierId = s.id\nWHERE po.id = 780001;",
+  "rows": [
+    {
+      "id": "780001",
+      "docNumber": "293138",
+      "supplierId": "420002",
+      "supplierName": "Carrefour Autonomistas",
+      "totalAmount": "1390.46",
+      "status": "CONFIRMED",
+      "issueDate": "2025-11-27 00:00:00",
+      "postingDate": "2025-11-29 00:00:00",
+      "notes": "NULL",
+      "docType": "CUPOM"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tdocNumber\tsupplierId\tsupplierName\ttotalAmount\tstatus\tissueDate\tpostingDate\tnotes\tdocType\n780001\t293138\t420002\tCarrefour Autonomistas\t1390.46\tCONFIRMED\t2025-11-27 00:00:00\t2025-11-29 00:00:00\tNULL\tCUPOM\n",
+  "stderr": "",
+  "execution_time_ms": 50
+}

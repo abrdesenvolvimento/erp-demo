@@ -831,8 +831,13 @@ export async function getPurchaseOrderItems(purchaseOrderId: number) {
   if (!db) return [];
   
   const items = await db.select({
-    item: purchaseOrderItems,
-    product: products
+    id: purchaseOrderItems.id,
+    productId: purchaseOrderItems.productId,
+    quantity: purchaseOrderItems.quantity,
+    unitCost: purchaseOrderItems.unitCost,
+    totalCost: purchaseOrderItems.totalCost,
+    expiryDate: purchaseOrderItems.expiryDate,
+    productName: products.name,
   })
   .from(purchaseOrderItems)
   .leftJoin(products, eq(purchaseOrderItems.productId, products.id))
@@ -875,11 +880,14 @@ export async function confirmPurchaseOrder(purchaseOrderId: number) {
   const items = await getPurchaseOrderItems(purchaseOrderId);
   
   // Atualizar estoque e custo médio para cada item
-  for (const { item, product } of items) {
-    if (!product || !item) continue;
+  for (const item of items) {
+    // Buscar produto para atualizar estoque
+    const product = await db.select().from(products).where(eq(products.id, item.productId || 0)).limit(1);
+    if (product.length === 0) continue;
+    const prod = product[0];
     
-    const currentStock = parseFloat(product.currentStock?.toString() || "0");
-    const currentAvgCost = parseFloat(product.avgCost?.toString() || "0");
+    const currentStock = parseFloat(prod.currentStock?.toString() || "0");
+    const currentAvgCost = parseFloat(prod.avgCost?.toString() || "0");
     const quantityPurchased = parseFloat(item.quantity.toString());
     const unitCost = parseFloat(item.unitCost.toString());
     
@@ -903,10 +911,12 @@ export async function confirmPurchaseOrder(purchaseOrderId: number) {
     }
     
     // Atualizar produto
-    await updateProduct(product.id, updateData);
+    await updateProduct(prod.id, updateData);
     
     // Atualizar custo de produtos compostos que usam este componente
-    await updateCompositeProductsUsingComponent(product.id);
+    if (item.productId) {
+      await updateCompositeProductsUsingComponent(item.productId);
+    }
   }
   
   // Atualizar status da ordem de compra

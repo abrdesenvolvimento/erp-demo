@@ -611,3 +611,27 @@
   - Dashboard usando lógica diferente da tela de Vendas para calcular "hoje"
   - **SOLUÇÃO:** Aplicada mesma correção de timezone no Dashboard
   - Agora Dashboard e tela de Vendas usam a mesma lógica de conversão para Brasília
+
+
+## 🆕 NOVAS TAREFAS - Dezembro 2025
+
+- [ ] **Implementar visualização de detalhes de lançamentos de compra**
+  - Criar modal/página para visualizar todos os itens de uma nota de compra
+  - Listar produtos com quantidade, custo unitário, custo total, data de validade
+  - Permitir auditoria dos itens realmente lançados (vs dados de teste)
+  - Acessível a partir da tela de Compras (clique em linha ou botão de detalhes)
+  - Mostrar informações da nota: fornecedor, data, total, status
+
+## ✅ FUNCIONALIDADES IMPLEMENTADAS - DEZEMBRO 2025
+
+- [x] Visualizar detalhes de lançamentos de compra
+  - **IMPLEMENTAÇÃO:** Modal que mostra todos os itens lançados em cada compra
+  - **DADOS EXIBIDOS:** Produto, Quantidade, Custo Unitário, Custo Total, Validade
+  - **FUNCIONALIDADE:** Botão "Detalhes" em cada linha da tabela de compras abre o modal
+  - **TESTE:** Compra #780001 (Carrefour) mostra 26 itens com dados corretos
+  - **RESULTADO:** Auditoria de lançamentos agora possível, usuário consegue verificar exatamente quais produtos foram lançados
+
+- [x] Correção de timezone em getSalesStats()
+  - **BUG:** Filtros de período (today, week, month) usavam saleDate (nulo) ao invés de createdAt
+  - **SOLUÇÃO:** Convertida lógica para usar createdAt com timezone de Brasília (GMT-3)
+  - **RESULTADO:** Dashboard e Tela de Vendas agora mostram valores consistentes (R$ 761,69 para Dezembro)

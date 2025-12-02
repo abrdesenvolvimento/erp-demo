@@ -1,0 +1,8 @@
+{
+  "query": "SELECT \n  po.id,\n  po.purchaseOrderNumber,\n  po.partnerId,\n  p.name as partnerName,\n  po.totalAmount,\n  po.status,\n  po.createdAt,\n  po.notes\nFROM purchaseOrders po\nLEFT JOIN partners p ON po.partnerId = p.id\nWHERE po.purchaseOrderNumber = '780001';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  po.id,\n  po.purchaseOrderNumber,\n  po.partnerId,\n  p.name as partnerName,\n  po.totalAmount,\n  po.status,\n  po.createdAt,\n  po.notes\nFROM purchaseOrders po\nLEFT JOIN partners p ON po.partnerId = p.id\nWHERE po.purchaseOrderNumber = '780001';",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 1: Unknown column 'po.partnerid' in 'on clause'"
+  ]
+}

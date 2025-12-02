@@ -1,0 +1,244 @@
+{
+  "query": "SELECT \n  poi.id,\n  poi.productId,\n  p.name as productName,\n  p.uom,\n  poi.quantity,\n  poi.unitCost,\n  poi.totalCost\nFROM purchaseOrderItems poi\nLEFT JOIN products p ON poi.productId = p.id\nWHERE poi.purchaseOrderId = (\n  SELECT id FROM purchaseOrders WHERE docNumber = '293138'\n)\nORDER BY poi.id;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  poi.id,\n  poi.productId,\n  p.name as productName,\n  p.uom,\n  poi.quantity,\n  poi.unitCost,\n  poi.totalCost\nFROM purchaseOrderItems poi\nLEFT JOIN products p ON poi.productId = p.id\nWHERE poi.purchaseOrderId = (\n  SELECT id FROM purchaseOrders WHERE docNumber = '293138'\n)\nORDER BY poi.id;",
+  "rows": [
+    {
+      "id": "780001",
+      "productId": "1830016",
+      "productName": "Elma Chips Amendoim Sem Pele 100gr",
+      "uom": "UN",
+      "quantity": "12.000",
+      "unitCost": "4.2450",
+      "totalCost": "50.94"
+    },
+    {
+      "id": "780002",
+      "productId": "2670008",
+      "productName": "Elma Chips Japonês 145gr",
+      "uom": "UN",
+      "quantity": "12.000",
+      "unitCost": "4.2450",
+      "totalCost": "50.94"
+    },
+    {
+      "id": "780003",
+      "productId": "2670002",
+      "productName": "Lays Sensações Frango Grelhado 40gr",
+      "uom": "UN",
+      "quantity": "8.000",
+      "unitCost": "3.4450",
+      "totalCost": "27.56"
+    },
+    {
+      "id": "780004",
+      "productId": "1740008",
+      "productName": "Pringles Original 104gr",
+      "uom": "UN",
+      "quantity": "8.000",
+      "unitCost": "7.4450",
+      "totalCost": "59.56"
+    },
+    {
+      "id": "780005",
+      "productId": "2640003",
+      "productName": "Ruffles Original 68gr",
+      "uom": "UN",
+      "quantity": "16.000",
+      "unitCost": "4.4950",
+      "totalCost": "71.92"
+    },
+    {
+      "id": "780006",
+      "productId": "2640005",
+      "productName": "Ruffles Cebola e Salsa 68gr",
+      "uom": "UN",
+      "quantity": "8.000",
+      "unitCost": "4.4950",
+      "totalCost": "35.96"
+    },
+    {
+      "id": "780007",
+      "productId": "2640007",
+      "productName": "Ruffles Churrasco 68gr",
+      "uom": "UN",
+      "quantity": "7.000",
+      "unitCost": "4.4950",
+      "totalCost": "31.46"
+    },
+    {
+      "id": "780008",
+      "productId": "2640008",
+      "productName": "Lays Sour Cream 70gr",
+      "uom": "UN",
+      "quantity": "12.000",
+      "unitCost": "4.9950",
+      "totalCost": "59.94"
+    },
+    {
+      "id": "780009",
+      "productId": "2640009",
+      "productName": "Lays Classica 70gr",
+      "uom": "UN",
+      "quantity": "12.000",
+      "unitCost": "4.9950",
+      "totalCost": "59.94"
+    },
+    {
+      "id": "780010",
+      "productId": "2640013",
+      "productName": "Lays Rústica Sal Marinho 68gr",
+      "uom": "UN",
+      "quantity": "12.000",
+      "unitCost": "4.9950",
+      "totalCost": "59.94"
+    },
+    {
+      "id": "780011",
+      "productId": "2640012",
+      "productName": "Lays Salt Vinegar 70gr",
+      "uom": "UN",
+      "quantity": "11.000",
+      "unitCost": "4.9950",
+      "totalCost": "54.95"
+    },
+    {
+      "id": "780012",
+      "productId": "2640014",
+      "productName": "Lays Rústica Cream Cheese 68gr",
+      "uom": "UN",
+      "quantity": "11.000",
+      "unitCost": "4.9800",
+      "totalCost": "54.78"
+    },
+    {
+      "id": "780013",
+      "productId": "1110001",
+      "productName": "Beats Senses Lata 269ml",
+      "uom": "UN",
+      "quantity": "16.000",
+      "unitCost": "4.3300",
+      "totalCost": "69.28"
+    },
+    {
+      "id": "780014",
+      "productId": "1110004",
+      "productName": "Beats Tropical Lata 269ml",
+      "uom": "UN",
+      "quantity": "8.000",
+      "unitCost": "4.3300",
+      "totalCost": "34.64"
+    },
+    {
+      "id": "780015",
+      "productId": "2520007",
+      "productName": "Coca Cola 200ml",
+      "uom": "UN",
+      "quantity": "24.000",
+      "unitCost": "1.3900",
+      "totalCost": "33.36"
+    },
+    {
+      "id": "780016",
+      "productId": "1110003",
+      "productName": "Beats Red Mix Lata 269ml",
+      "uom": "UN",
+      "quantity": "8.000",
+      "unitCost": "4.3300",
+      "totalCost": "34.64"
+    },
+    {
+      "id": "780017",
+      "productId": "2520006",
+      "productName": "Guaraná Antarctica 200ml",
+      "uom": "UN",
+      "quantity": "12.000",
+      "unitCost": "1.1900",
+      "totalCost": "14.28"
+    },
+    {
+      "id": "780018",
+      "productId": "2700005",
+      "productName": "Cebolitos 91gr",
+      "uom": "UN",
+      "quantity": "12.000",
+      "unitCost": "4.9950",
+      "totalCost": "59.94"
+    },
+    {
+      "id": "780019",
+      "productId": "2700004",
+      "productName": "Cebolitos 36gr",
+      "uom": "UN",
+      "quantity": "8.000",
+      "unitCost": "2.4450",
+      "totalCost": "19.56"
+    },
+    {
+      "id": "780020",
+      "productId": "1740003",
+      "productName": "Doritos Queijo Nacho 75gr",
+      "uom": "UN",
+      "quantity": "24.000",
+      "unitCost": "5.7450",
+      "totalCost": "137.88"
+    },
+    {
+      "id": "780021",
+      "productId": "2670007",
+      "productName": "Doritos Sweet Chili 70gr",
+      "uom": "UN",
+      "quantity": "8.000",
+      "unitCost": "5.7500",
+      "totalCost": "46.00"
+    },
+    {
+      "id": "780022",
+      "productId": "2550005",
+      "productName": "Fofura Cebola 60gr",
+      "uom": "UN",
+      "quantity": "20.000",
+      "unitCost": "1.2900",
+      "totalCost": "25.80"
+    },
+    {
+      "id": "780023",
+      "productId": "2550007",
+      "productName": "Fofura Churrasco 60gr",
+      "uom": "UN",
+      "quantity": "20.000",
+      "unitCost": "1.2900",
+      "totalCost": "25.80"
+    },
+    {
+      "id": "780024",
+      "productId": "1230001",
+      "productName": "Smirnoff Ice Limão 269ml",
+      "uom": "UN",
+      "quantity": "12.000",
+      "unitCost": "4.4900",
+      "totalCost": "53.88"
+    },
+    {
+      "id": "780025",
+      "productId": "2400001",
+      "productName": "Doublé Black 1l",
+      "uom": "UN",
+      "quantity": "1.000",
+      "unitCost": "175.8400",
+      "totalCost": "175.84"
+    },
+    {
+      "id": "780026",
+      "productId": "2640001",
+      "productName": "Ruffles Original 115gr",
+      "uom": "UN",
+      "quantity": "6.000",
+      "unitCost": "6.9450",
+      "totalCost": "41.67"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tproductId\tproductName\tuom\tquantity\tunitCost\ttotalCost\n780001\t1830016\tElma Chips Amendoim Sem Pele 100gr\tUN\t12.000\t4.2450\t50.94\n780002\t2670008\tElma Chips Japonês 145gr\tUN\t12.000\t4.2450\t50.94\n780003\t2670002\tLays Sensações Frango Grelhado 40gr\tUN\t8.000\t3.4450\t27.56\n780004\t1740008\tPringles Original 104gr\tUN\t8.000\t7.4450\t59.56\n780005\t2640003\tRuffles Original 68gr\tUN\t16.000\t4.4950\t71.92\n780006\t2640005\tRuffles Cebola e Salsa 68gr\tUN\t8.000\t4.4950\t35.96\n780007\t2640007\tRuffles Churrasco 68gr\tUN\t7.000\t4.4950\t31.46\n780008\t2640008\tLays Sour Cream 70gr\tUN\t12.000\t4.9950\t59.94\n780009\t2640009\tLays Classica 70gr\tUN\t12.000\t4.9950\t59.94\n780010\t2640013\tLays Rústica Sal Marinho 68gr\tUN\t12.000\t4.9950\t59.94\n780011\t2640012\tLays Salt Vinegar 70gr\tUN\t11.000\t4.9950\t54.95\n780012\t2640014\tLays Rústica Cream Cheese 68gr\tUN\t11.000\t4.9800\t54.78\n780013\t1110001\tBeats Senses Lata 269ml\tUN\t16.000\t4.3300\t69.28\n780014\t1110004\tBeats Tropical Lata 269ml\tUN\t8.000\t4.3300\t34.64\n780015\t2520007\tCoca Cola 200ml\tUN\t24.000\t1.3900\t33.36\n780016\t1110003\tBeats Red Mix Lata 269ml\tUN\t8.000\t4.3300\t34.64\n780017\t2520006\tGuaraná Antarctica 200ml\tUN\t12.000\t1.1900\t14.28\n780018\t2700005\tCebolitos 91gr\tUN\t12.000\t4.9950\t59.94\n780019\t2700004\tCebolitos 36gr\tUN\t8.000\t2.4450\t19.56\n780020\t1740003\tDoritos Queijo Nacho 75gr\tUN\t24.000\t5.7450\t137.88\n780021\t2670007\tDoritos Sweet Chili 70gr\tUN\t8.000\t5.7500\t46.00\n780022\t2550005\tFofura Cebola 60gr\tUN\t20.000\t1.2900\t25.80\n780023\t2550007\tFofura Churrasco 60gr\tUN\t20.000\t1.2900\t25.80\n780024\t1230001\tSmirnoff Ice Limão 269ml\tUN\t12.000\t4.4900\t53.88\n780025\t2400001\tDoublé Black 1l\tUN\t1.000\t175.8400\t175.84\n780026\t2640001\tRuffles Original 115gr\tUN\t6.000\t6.9450\t41.67\n",
+  "stderr": "",
+  "execution_time_ms": 55
+}

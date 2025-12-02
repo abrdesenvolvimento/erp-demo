@@ -1,0 +1,80 @@
+{
+  "query": "SELECT id, docNumber, totalAmount, status, issueDate \nFROM purchaseOrders \nORDER BY id DESC \nLIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT id, docNumber, totalAmount, status, issueDate \nFROM purchaseOrders \nORDER BY id DESC \nLIMIT 10;",
+  "rows": [
+    {
+      "id": "840001",
+      "docNumber": "123",
+      "totalAmount": "629.44",
+      "status": "CONFIRMED",
+      "issueDate": "2025-11-27 00:00:00"
+    },
+    {
+      "id": "810001",
+      "docNumber": "41600",
+      "totalAmount": "1819.96",
+      "status": "CONFIRMED",
+      "issueDate": "2025-11-28 00:00:00"
+    },
+    {
+      "id": "780001",
+      "docNumber": "293138",
+      "totalAmount": "1390.46",
+      "status": "CONFIRMED",
+      "issueDate": "2025-11-27 00:00:00"
+    },
+    {
+      "id": "750001",
+      "docNumber": "128322",
+      "totalAmount": "912.21",
+      "status": "CONFIRMED",
+      "issueDate": "2025-11-26 00:00:00"
+    },
+    {
+      "id": "720001",
+      "docNumber": "242837",
+      "totalAmount": "1253.83",
+      "status": "CONFIRMED",
+      "issueDate": "2025-11-28 00:00:00"
+    },
+    {
+      "id": "690001",
+      "docNumber": "955080",
+      "totalAmount": "29.59",
+      "status": "CONFIRMED",
+      "issueDate": "2025-11-28 00:00:00"
+    },
+    {
+      "id": "660004",
+      "docNumber": "955079",
+      "totalAmount": "1305.02",
+      "status": "CONFIRMED",
+      "issueDate": "2025-11-28 00:00:00"
+    },
+    {
+      "id": "660003",
+      "docNumber": "955081",
+      "totalAmount": "54.94",
+      "status": "CONFIRMED",
+      "issueDate": "2025-11-28 00:00:00"
+    },
+    {
+      "id": "660002",
+      "docNumber": "12109",
+      "totalAmount": "1198.80",
+      "status": "CONFIRMED",
+      "issueDate": "2025-11-28 00:00:00"
+    },
+    {
+      "id": "660001",
+      "docNumber": "543472",
+      "totalAmount": "203.28",
+      "status": "CONFIRMED",
+      "issueDate": "2025-11-28 00:00:00"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tdocNumber\ttotalAmount\tstatus\tissueDate\n840001\t123\t629.44\tCONFIRMED\t2025-11-27 00:00:00\n810001\t41600\t1819.96\tCONFIRMED\t2025-11-28 00:00:00\n780001\t293138\t1390.46\tCONFIRMED\t2025-11-27 00:00:00\n750001\t128322\t912.21\tCONFIRMED\t2025-11-26 00:00:00\n720001\t242837\t1253.83\tCONFIRMED\t2025-11-28 00:00:00\n690001\t955080\t29.59\tCONFIRMED\t2025-11-28 00:00:00\n660004\t955079\t1305.02\tCONFIRMED\t2025-11-28 00:00:00\n660003\t955081\t54.94\tCONFIRMED\t2025-11-28 00:00:00\n660002\t12109\t1198.80\tCONFIRMED\t2025-11-28 00:00:00\n660001\t543472\t203.28\tCONFIRMED\t2025-11-28 00:00:00\n",
+  "stderr": "",
+  "execution_time_ms": 50
+}
