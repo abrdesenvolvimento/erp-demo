@@ -1,0 +1,28 @@
+{
+  "query": "SELECT * FROM sales WHERE id = 11700003;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT * FROM sales WHERE id = 11700003;",
+  "rows": [
+    {
+      "id": "11700003",
+      "saleType": "BALCAO",
+      "saleDate": "2025-12-02 01:09:01",
+      "customerId": "NULL",
+      "channelId": "1",
+      "platformOrderId": "NULL",
+      "subtotal": "9.50",
+      "discountAmount": "0.00",
+      "surchargeAmount": "0.00",
+      "finalAmount": "9.50",
+      "paymentMethod": "Cartão de Débito",
+      "requiresAdminApproval": "0",
+      "adminApprovedBy": "NULL",
+      "notes": "NULL",
+      "createdBy": "3sp2FmLhkenyjqMFmfLoex",
+      "createdAt": "2025-12-02 01:09:01"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tsaleType\tsaleDate\tcustomerId\tchannelId\tplatformOrderId\tsubtotal\tdiscountAmount\tsurchargeAmount\tfinalAmount\tpaymentMethod\trequiresAdminApproval\tadminApprovedBy\tnotes\tcreatedBy\tcreatedAt\n11700003\tBALCAO\t2025-12-02 01:09:01\tNULL\t1\tNULL\t9.50\t0.00\t0.00\t9.50\tCartão de Débito\t0\tNULL\tNULL\t3sp2FmLhkenyjqMFmfLoex\t2025-12-02 01:09:01\n",
+  "stderr": "",
+  "execution_time_ms": 53
+}

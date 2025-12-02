@@ -641,6 +641,6 @@
 
 - [x] Corrigir venda #11700003 - Substituir Rothmans Red Global por Rothmans Red Hand-Selected
   - Removido Rothmans Red Global, adicionado Rothmans Red Hand-Selected
-  - Preco atualizado de R$ 7,50 para R$ 8,31 (custo medio correto)
+  - Preco atualizado de R$ 7,50 para R$ 9,00 (preco de venda correto)
   - Estoque corrigido: Global +1, Hand-Selected -1
-  - Total venda: R$ 9,50
+  - Total venda: R$ 11,00 (Gomels R$ 1,00 + Pop! R$ 1,00 + Rothmans Red Hand-Selected R$ 9,00)
