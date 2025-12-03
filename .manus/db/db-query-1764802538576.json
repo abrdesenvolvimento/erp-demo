@@ -1,0 +1,9 @@
+{
+  "query": "SELECT id, saleDate, createdAt, finalAmount, saleType FROM sales WHERE finalAmount BETWEEN 790 AND 800 ORDER BY saleDate DESC LIMIT 10",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT id, saleDate, createdAt, finalAmount, saleType FROM sales WHERE finalAmount BETWEEN 790 AND 800 ORDER BY saleDate DESC LIMIT 10",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 65
+}

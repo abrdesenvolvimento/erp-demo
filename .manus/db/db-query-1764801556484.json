@@ -1,0 +1,14 @@
+{
+  "query": "SELECT \n  COUNT(*) as total_vendas,\n  SUM(finalAmount) as total_faturamento\nFROM sales\nWHERE saleDate >= '2025-11-01' AND saleDate < '2025-12-01';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  COUNT(*) as total_vendas,\n  SUM(finalAmount) as total_faturamento\nFROM sales\nWHERE saleDate >= '2025-11-01' AND saleDate < '2025-12-01';",
+  "rows": [
+    {
+      "total_vendas": "1122",
+      "total_faturamento": "37570.13"
+    }
+  ],
+  "messages": [],
+  "stdout": "total_vendas\ttotal_faturamento\n1122\t37570.13\n",
+  "stderr": "",
+  "execution_time_ms": 109
+}

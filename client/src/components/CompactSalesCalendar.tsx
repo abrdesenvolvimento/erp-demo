@@ -1,9 +1,15 @@
+import { useState } from "react";
 import { trpc } from "@/lib/trpc";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Link } from "wouter";
 
 export function CompactSalesCalendar() {
   const today = new Date();
-  const year = today.getFullYear();
-  const month = today.getMonth() + 1;
+  const [currentDate, setCurrentDate] = useState(today);
+  
+  const year = currentDate.getFullYear();
+  const month = currentDate.getMonth() + 1;
 
   const { data: calendarData, isLoading } = trpc.sales.calendar.useQuery({
     year,
@@ -14,12 +20,19 @@ export function CompactSalesCalendar() {
     return <div className="text-center py-4 text-muted-foreground text-sm">Carregando...</div>;
   }
 
-  // Pegar últimos 7 dias
-  const last7Days: number[] = [];
-  for (let i = 6; i >= 0; i--) {
-    const date = new Date();
-    date.setDate(date.getDate() - i);
-    last7Days.push(date.getDate());
+  // Calcular dias do mês
+  const firstDay = new Date(year, month - 1, 1);
+  const lastDay = new Date(year, month, 0);
+  const daysInMonth = lastDay.getDate();
+  const startingDayOfWeek = firstDay.getDay(); // 0 = Domingo
+
+  // Criar array de dias (incluindo espaços vazios no início)
+  const days: (number | null)[] = [];
+  for (let i = 0; i < startingDayOfWeek; i++) {
+    days.push(null);
+  }
+  for (let i = 1; i <= daysInMonth; i++) {
+    days.push(i);
   }
 
   // Criar mapa de dados por dia
@@ -29,47 +42,96 @@ export function CompactSalesCalendar() {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
       currency: 'BRL',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
     }).format(value);
   };
 
-  const getDayName = (dayOffset: number) => {
-    const date = new Date();
-    date.setDate(date.getDate() - (6 - dayOffset));
-    return date.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', '');
+  const handlePrevMonth = () => {
+    setCurrentDate(new Date(year, month - 2, 1));
   };
 
-  return (
-    <div className="grid grid-cols-7 gap-2">
-      {last7Days.map((day, index) => {
-        const dayData = dataByDay.get(day);
-        const hasData = dayData && dayData.total > 0;
-        const isToday = index === 6;
+  const handleNextMonth = () => {
+    setCurrentDate(new Date(year, month, 1));
+  };
 
-        return (
-          <div
-            key={day}
-            className={`
-              flex flex-col items-center p-2 rounded-lg border
-              ${isToday ? 'border-blue-500 border-2 bg-blue-50' : 'border-gray-200'}
-              ${hasData ? 'bg-gray-50' : 'bg-white'}
-            `}
-          >
-            <div className="text-xs font-semibold text-muted-foreground mb-1">
-              {getDayName(index)}
-            </div>
-            <div className="text-sm font-bold mb-1">{day}</div>
-            {hasData && dayData ? (
-              <div className="text-xs font-semibold text-green-600">
-                {formatCurrency(dayData.total)}
-              </div>
-            ) : (
-              <div className="text-xs text-muted-foreground">-</div>
-            )}
+  const monthNames = [
+    "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+    "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
+  ];
+
+  const dayNames = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+
+  const todayDay = today.getDate();
+  const todayMonth = today.getMonth() + 1;
+  const todayYear = today.getFullYear();
+  const isCurrentMonth = year === todayYear && month === todayMonth;
+
+  return (
+    <div className="space-y-4">
+      {/* Header com navegação */}
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-semibold">Faturamento Diário</h3>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="icon" onClick={handlePrevMonth}>
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <span className="text-sm font-medium min-w-[140px] text-center">
+            {monthNames[month - 1]} {year}
+          </span>
+          <Button variant="outline" size="icon" onClick={handleNextMonth}>
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+          <Link href="/relatorios">
+            <Button variant="outline" size="sm" className="ml-2">
+              Ver Detalhes →
+            </Button>
+          </Link>
+        </div>
+      </div>
+
+      {/* Cálendário */}
+      <div className="grid grid-cols-7 gap-0.5">
+        {/* Cabeçalho dos dias da semana */}
+        {dayNames.map(name => (
+          <div key={name} className="text-center text-xs font-semibold text-muted-foreground py-2">
+            {name}
           </div>
-        );
-      })}
+        ))}
+
+        {/* Dias do mês */}
+        {days.map((day, index) => {
+          if (day === null) {
+            return <div key={`empty-${index}`} className="aspect-square" />;
+          }
+
+          const dayData = dataByDay.get(day);
+          const hasData = dayData && dayData.total > 0;
+          const isToday = isCurrentMonth && day === todayDay;
+
+          return (
+            <div
+              key={day}
+              className={`
+                aspect-square flex flex-col items-center justify-center p-0.5 rounded border text-[10px]
+                ${isToday ? 'border-blue-500 border-2 bg-blue-50' : 'border-gray-200'}
+                ${hasData ? 'bg-gray-50' : 'bg-white'}
+              `}
+            >
+              <div className="font-semibold text-muted-foreground text-[9px] mb-0">
+                {String(day).padStart(2, '0')}
+              </div>
+              {hasData && dayData ? (
+                <div className="text-[8px] font-semibold text-green-600 text-center leading-tight">
+                  {formatCurrency(dayData.total)}
+                </div>
+              ) : (
+                <div className="text-[8px] text-muted-foreground">-</div>
+              )}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

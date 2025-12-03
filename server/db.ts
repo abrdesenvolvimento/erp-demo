@@ -2411,27 +2411,29 @@ export async function getSalesCalendar(year: number, month: number) {
   const db = await getDb();
   if (!db) return [];
 
-  // Calcular primeiro e último dia do mês
-  const firstDay = new Date(year, month - 1, 1);
-  const lastDay = new Date(year, month, 0);
-
-  // Buscar todas as vendas do mês
-  const salesData = await db
-    .select()
-    .from(sales)
-    .where(
-      and(
-        gte(sales.saleDate, firstDay),
-        lte(sales.saleDate, lastDay)
-      )
-    );
+  // Buscar TODAS as vendas (sem filtro de data no SQL)
+  // Vamos filtrar em JavaScript após converter para Brasília
+  const allSales = await db.select().from(sales);
 
   // Agrupar por dia e canal
   const calendar: Record<number, { day: number; balcao: number; delivery: number; aPrazo: number; total: number; count: number }> = {};
 
-  for (const sale of salesData) {
+  for (const sale of allSales) {
     const saleDate = new Date(sale.saleDate || sale.createdAt || new Date());
-    const day = saleDate.getDate();
+    
+    // Converter para horário de Brasília para obter ano/mês/dia corretos
+    const dateStr = saleDate.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' });
+    const [datePart] = dateStr.split(', ');
+    const [monthStr, dayStr, yearStr] = datePart.split('/');
+    
+    const saleYear = parseInt(yearStr, 10);
+    const saleMonth = parseInt(monthStr, 10);
+    const day = parseInt(dayStr, 10);
+    
+    // Filtrar apenas vendas do mês/ano solicitado (APÓS conversão para Brasília)
+    if (saleYear !== year || saleMonth !== month) {
+      continue;
+    }
 
     if (!calendar[day]) {
       calendar[day] = { day, balcao: 0, delivery: 0, aPrazo: 0, total: 0, count: 0 };

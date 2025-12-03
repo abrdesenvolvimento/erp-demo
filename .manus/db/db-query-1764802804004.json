@@ -1,0 +1,14 @@
+{
+  "query": "SELECT COUNT(*) as total_vendas, SUM(finalAmount) as total_valor FROM sales WHERE saleDate >= '2025-12-01' AND saleDate < '2026-01-01'",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT COUNT(*) as total_vendas, SUM(finalAmount) as total_valor FROM sales WHERE saleDate >= '2025-12-01' AND saleDate < '2026-01-01'",
+  "rows": [
+    {
+      "total_vendas": "132",
+      "total_valor": "3273.98"
+    }
+  ],
+  "messages": [],
+  "stdout": "total_vendas\ttotal_valor\n132\t3273.98\n",
+  "stderr": "",
+  "execution_time_ms": 70
+}

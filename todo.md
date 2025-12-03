@@ -851,3 +851,19 @@
   - Calendário Completo: Total atualiza automaticamente ao navegar entre meses
   - Resultado: Melhor aproveitamento de espaço, informação mais completa, layout mais limpo ✅
   - Teste: Dezembro R$ 2.338,33 (3 dias), Novembro R$ 33.324,47 (30 dias) - atualização dinâmica funciona
+
+- [ ] **Corrigir total de novembro e calendário do Dashboard**
+  - Problema 1: Total de novembro mostra R$ 33.324,47 mas deveria ser R$ 38.363,53 (diferença de ~R$ 5.000)
+  - Problema 2: Calendário do Dashboard mostra "últimos 7 dias" mas deveria mostrar mês atual completo
+  - Solução 1: Investigar por que faltam vendas no cálculo do total (verificar filtros, agregação)
+  - Solução 2: Substituir CompactSalesCalendar por calendário completo do mês com navegação
+  - Formato: Grid completo (Dom-Sáb), dias com data (01/nov, 02/nov), total por dia
+  - Impacto: Dados corretos, visão completa do mês no Dashboard
+
+- [ ] **Compactar calendário do Dashboard e corrigir divergência**
+  - Problema 1: Título "Vendas dos Últimos 7 Dias" incorreto (deveria ser "Faturamento por Dia")
+  - Problema 2: Calendário muito largo, células com muito espaço
+  - Problema 3: Divergência de R$ 793,40 entre calendário e tela de vendas (Novembro: R$ 37.570,13 vs R$ 38.363,53, Dezembro: R$ 3.253,73 vs R$ 2.460,33)
+  - Solução Dashboard: Reduzir padding, gap, fonte para compactar
+  - Solução Divergência: Investigar se há vendas sendo contadas em mês errado ou duplicadas
+  - Impacto: Calendário mais compacto, totais corretos e consistentes
