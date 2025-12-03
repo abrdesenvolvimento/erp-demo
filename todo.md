@@ -798,7 +798,7 @@
 3. Filtro de período em Vendas (últimas 24h como padrão)
 
 **P3 (Média-Alta) - Novas Funcionalidades:**
-4. Calendário de Análise de Vendas
+4. Calendário de Análise de Vendas - EM ANDAMENTO
 5. Calendário de Análise de Contas a Pagar
 6. Relatório de Análise Mensal
 
@@ -824,3 +824,13 @@
   - Desktop (>768px): Grid 2 colunas - formulário scrollável à esquerda + resumo fixo à direita
   - Mobile (<768px): Stack vertical automático - formulário acima, resumo abaixo
   - Resultado: Melhor aproveitamento de espaço horizontal, resumo sempre visível em desktop ✅
+
+- [x] **Calendário de Análise de Vendas** - CONCLUÍDO (03/12/2025)
+  - Objetivo: Visualizar faturamento diário por canal em formato calendário
+  - Backend: Endpoint sales.calendar implementado com agregação por dia e canal
+  - Frontend: Página /relatorios com grid de calendário 7 colunas (dias da semana)
+  - Visualização: Cores por canal (Balcão=azul, Delivery=roxo, A Prazo=laranja)
+  - Informações por dia: Faturamento por canal + total do dia
+  - Navegação: Botões ← → para mudar mês, destaque para dia atual (borda azul)
+  - Resultado: Identificação visual de padrões, tendências, dias de maior movimento ✅
+  - Teste: Dezembro 2025 (dias 1-2 com vendas), Novembro 2025 (30 dias com dados)

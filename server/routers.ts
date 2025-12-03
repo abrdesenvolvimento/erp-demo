@@ -611,6 +611,15 @@ export const appRouter = router({
         
         return { success: true, newTotal: finalAmount };
       }),
+    
+    calendar: protectedProcedure
+      .input(z.object({
+        year: z.number(),
+        month: z.number().min(1).max(12),
+      }))
+      .query(async ({ input }) => {
+        return await db.getSalesCalendar(input.year, input.month);
+      }),
   }),
 
   // ==================== COMPRAS ====================

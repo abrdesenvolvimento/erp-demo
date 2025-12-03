@@ -1,4 +1,4 @@
-import { eq, desc, or, like, and, sql } from "drizzle-orm";
+import { eq, desc, or, like, and, sql, gte, lte } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import { 
   InsertUser, users,
@@ -2404,4 +2404,51 @@ export async function getPendingReceivablesByCustomer(customerId: number) {
     const received = parseFloat(rec.receivedAmount);
     return total > received && rec.status === 'PENDENTE';
   });
+}
+
+
+export async function getSalesCalendar(year: number, month: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  // Calcular primeiro e último dia do mês
+  const firstDay = new Date(year, month - 1, 1);
+  const lastDay = new Date(year, month, 0);
+
+  // Buscar todas as vendas do mês
+  const salesData = await db
+    .select()
+    .from(sales)
+    .where(
+      and(
+        gte(sales.saleDate, firstDay),
+        lte(sales.saleDate, lastDay)
+      )
+    );
+
+  // Agrupar por dia e canal
+  const calendar: Record<number, { day: number; balcao: number; delivery: number; aPrazo: number; total: number; count: number }> = {};
+
+  for (const sale of salesData) {
+    const saleDate = new Date(sale.saleDate || sale.createdAt || new Date());
+    const day = saleDate.getDate();
+
+    if (!calendar[day]) {
+      calendar[day] = { day, balcao: 0, delivery: 0, aPrazo: 0, total: 0, count: 0 };
+    }
+
+    const amount = parseFloat(sale.finalAmount);
+    calendar[day].total += amount;
+    calendar[day].count += 1;
+
+    if (sale.saleType === 'BALCAO') {
+      calendar[day].balcao += amount;
+    } else if (sale.saleType === 'DELIVERY') {
+      calendar[day].delivery += amount;
+    } else if (sale.saleType === 'A_PRAZO') {
+      calendar[day].aPrazo += amount;
+    }
+  }
+
+  return Object.values(calendar);
 }
