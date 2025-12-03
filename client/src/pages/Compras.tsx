@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
@@ -66,6 +66,16 @@ export default function Compras() {
   const [newSupplierName, setNewSupplierName] = useState("");
   const [newSupplierDoc, setNewSupplierDoc] = useState("");
   const [newSupplierPhone, setNewSupplierPhone] = useState("");
+  
+  // Auto-fill single installment amount
+  useEffect(() => {
+    if (installments.length === 1 && items.length > 0) {
+      const totalAmount = items.reduce((sum, item) => sum + (item.quantity * item.unitCost), 0) + parseFloat(freightCost) + parseFloat(chargesCost);
+      if (totalAmount > 0 && installments[0].amount === 0) {
+        setInstallments([{ ...installments[0], amount: totalAmount }]);
+      }
+    }
+  }, [items, freightCost, chargesCost, installments.length]);
   
   // Queries
   const { data: purchases = [], refetch } = trpc.purchases.list.useQuery();

@@ -714,3 +714,12 @@
   - Problema: Input de Categoria usava id="subcategory" e valor de subcategorySearch
   - Solução: Alterado para id="category" e categorySearch em client/src/pages/Produtos.tsx (linhas 835-843)
   - Resultado: Campo Subcategoria permanece vazio ao digitar na Categoria (correto!)
+
+
+## ✅ BUG CORRIGIDO - Preenchimento de Parcelas em Compras (03/12/2025)
+
+- [x] **Valor da parcela preenchido automaticamente quando há apenas 1 parcela** - RESOLVIDO
+  - Problema: Campo de valor ficava vazio quando havia apenas 1 parcela
+  - Solução: Adicionado useEffect para preencher automaticamente com valor total
+  - Implementação: client/src/pages/Compras.tsx (linhas 70-78)
+  - Resultado: Parcela preenchida automaticamente (testado com R$ 10.00)
