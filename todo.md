@@ -810,3 +810,17 @@
   - Resultado: Vendas aparecem na data correta (saleDate), não na data de implantação (createdAt)
   - Teste: 6 vendas do Josivan (R$ 44,00) têm saleDate=30/11 e createdAt=03/12, aparecem em novembro ✅
   - Interface simplificada: Removidos botões de período, filtro padrão = hoje
+
+- [ ] **Implementar confirmação antes de deletar registros** - ADIADO
+  - Motivo: Sistema não possui função de exclusão física (boa prática para ERP)
+  - Próximo passo: Implementar inativação (soft delete) com campo active: boolean
+  - Módulos: Vendas, Compras, Produtos, Parceiros, Despesas, Categorias/Subcategorias
+  - UX: Botão "Inativar" com modal de confirmação
+  - Impacto: Manter histórico completo, auditoria, segurança
+
+- [x] **Corrigir layout responsivo de Vendas no mobile** - CONCLUÍDO (03/12/2025)
+  - Problema: Resumo não tinha layout responsivo adequado, tudo em scroll vertical único
+  - Solução: Grid responsivo com md:grid-cols-[1fr,400px] para desktop, stack automático em mobile
+  - Desktop (>768px): Grid 2 colunas - formulário scrollável à esquerda + resumo fixo à direita
+  - Mobile (<768px): Stack vertical automático - formulário acima, resumo abaixo
+  - Resultado: Melhor aproveitamento de espaço horizontal, resumo sempre visível em desktop ✅

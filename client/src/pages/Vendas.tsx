@@ -623,7 +623,9 @@ export default function Vendas() {
             )}
 
             {step === "form" && (
-              <div className="flex-1 overflow-y-auto space-y-4 py-2 pr-2">
+              <div className="flex-1 grid md:grid-cols-[1fr,400px] gap-6 overflow-hidden">
+                {/* Coluna Esquerda: Formulário (scrollável) */}
+                <div className="overflow-y-auto space-y-4 py-2 pr-2">
                 {/* Canal de Venda - Apenas para DELIVERY */}
                 {saleType === "DELIVERY" && (
                   <div className="space-y-2">
@@ -824,10 +826,11 @@ export default function Vendas() {
                     rows={3}
                   />
                 </div>
-
+                </div>
                 
-                {/* Resumo da Venda */}
-                  <Card>
+                {/* Coluna Direita: Resumo (fixo) */}
+                <div className="overflow-y-auto py-2">
+                  <Card className="sticky top-0">
                     <CardHeader>
                       <h3 className="font-semibold text-lg">Resumo da Venda</h3>
                     </CardHeader>
@@ -879,6 +882,7 @@ export default function Vendas() {
                       </div>
                     </CardContent>
                   </Card>
+                </div>
               </div>
             )}
           </DialogContent>
