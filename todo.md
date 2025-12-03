@@ -842,3 +842,12 @@
   - Solução Mobile: Gap reduzido (gap-1), padding menor (p-1), fonte menor (text-xs), detalhamento por canal oculto (hidden md:block)
   - Resultado: Visão rápida no Dashboard, versão completa acessível, mobile legível e compacto ✅
   - Teste: Dashboard mostra últimos 7 dias com totais, redirecionamento funciona, mobile mostra apenas dia + total
+
+- [x] **Otimizar Dashboard e Calendário** - CONCLUÍDO (03/12/2025)
+  - Dashboard: Removido card "Ações Rápidas" (menu lateral já é suficiente)
+  - Dashboard: Calendário compacto expandido para largura completa
+  - Dashboard: Vendas Recentes agora em largura completa abaixo do calendário
+  - Calendário Completo: Adicionado total do mês abaixo do título (ex: "Total: R$ 2.338,33")
+  - Calendário Completo: Total atualiza automaticamente ao navegar entre meses
+  - Resultado: Melhor aproveitamento de espaço, informação mais completa, layout mais limpo ✅
+  - Teste: Dezembro R$ 2.338,33 (3 dias), Novembro R$ 33.324,47 (30 dias) - atualização dinâmica funciona

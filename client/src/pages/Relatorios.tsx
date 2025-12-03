@@ -38,6 +38,15 @@ export default function Relatorios() {
   // Criar mapa de dados por dia
   const dataByDay = new Map(calendarData?.map(d => [d.day, d]) || []);
 
+  // Calcular total do mês
+  const monthTotal = calendarData?.reduce((sum, day) => sum + day.total, 0) || 0;
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+    }).format(value);
+  };
+
   const handlePrevMonth = () => {
     if (selectedMonth === 1) {
       setSelectedMonth(12);
@@ -56,12 +65,7 @@ export default function Relatorios() {
     }
   };
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(value);
-  };
+
 
   const isToday = (day: number | null) => {
     if (!day) return false;
@@ -91,16 +95,21 @@ export default function Relatorios() {
                 <CalendarIcon className="h-5 w-5" />
                 Calendário de Vendas
               </CardTitle>
-              <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" onClick={handlePrevMonth}>
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <span className="text-lg font-semibold min-w-[200px] text-center">
-                  {MONTHS[selectedMonth - 1]} {selectedYear}
-                </span>
-                <Button variant="outline" size="sm" onClick={handleNextMonth}>
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
+              <div className="flex flex-col items-center gap-1">
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" size="sm" onClick={handlePrevMonth}>
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <span className="text-lg font-semibold min-w-[200px] text-center">
+                    {MONTHS[selectedMonth - 1]} {selectedYear}
+                  </span>
+                  <Button variant="outline" size="sm" onClick={handleNextMonth}>
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  Total: <span className="font-semibold text-green-600">{formatCurrency(monthTotal)}</span>
+                </div>
               </div>
             </div>
           </CardHeader>
