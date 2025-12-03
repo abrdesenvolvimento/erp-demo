@@ -137,7 +137,7 @@ export default function Relatorios() {
                 </div>
 
                 {/* Grid do calendário */}
-                <div className="grid grid-cols-7 gap-1 md:gap-2">
+                <div className="grid grid-cols-7 gap-0.5 md:gap-1">
                   {/* Cabeçalho dos dias da semana */}
                   {DAYS_OF_WEEK.map(day => (
                     <div key={day} className="text-center font-semibold text-xs md:text-sm py-1 md:py-2">
@@ -158,36 +158,36 @@ export default function Relatorios() {
                       <div
                         key={day}
                         className={`
-                          min-h-[110px] md:h-[100px] border rounded-lg p-2 md:p-2 flex flex-col text-xs md:text-sm
+                          min-h-[140px] md:h-[100px] border rounded-lg p-1.5 md:p-2 flex flex-col text-xs md:text-sm overflow-hidden
                           ${isToday(day) ? 'border-blue-500 border-2' : 'border-gray-200'}
                           ${hasData ? 'bg-gray-50' : 'bg-white'}
                           hover:shadow-md transition-shadow
                         `}
                       >
-                        <div className="text-sm md:text-lg font-semibold mb-1 md:mb-2">{day}</div>
+                        <div className="text-sm md:text-lg font-semibold mb-1">{day}</div>
                         {hasData && dayData && (
-                          <div className="flex-1 flex flex-col justify-between">
-                            <div className="space-y-0.5">
+                          <div className="flex-1 flex flex-col justify-between min-h-0">
+                            <div className="space-y-0.5 overflow-hidden">
                               {dayData.balcao > 0 && (
-                                <div className="flex items-center gap-1">
-                                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                                  <span className="text-[10px] md:text-xs">{formatCurrency(dayData.balcao)}</span>
+                                <div className="flex items-center gap-1 min-w-0">
+                                  <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></div>
+                                  <span className="text-[9px] md:text-xs truncate">{formatCurrency(dayData.balcao)}</span>
                                 </div>
                               )}
                               {dayData.delivery > 0 && (
-                                <div className="flex items-center gap-1">
-                                  <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                                  <span className="text-[10px] md:text-xs">{formatCurrency(dayData.delivery)}</span>
+                                <div className="flex items-center gap-1 min-w-0">
+                                  <div className="w-2 h-2 bg-purple-500 rounded-full flex-shrink-0"></div>
+                                  <span className="text-[9px] md:text-xs truncate">{formatCurrency(dayData.delivery)}</span>
                                 </div>
                               )}
                               {dayData.aPrazo > 0 && (
-                                <div className="flex items-center gap-1">
-                                  <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                                  <span className="text-[10px] md:text-xs">{formatCurrency(dayData.aPrazo)}</span>
+                                <div className="flex items-center gap-1 min-w-0">
+                                  <div className="w-2 h-2 bg-orange-500 rounded-full flex-shrink-0"></div>
+                                  <span className="text-[9px] md:text-xs truncate">{formatCurrency(dayData.aPrazo)}</span>
                                 </div>
                               )}
                             </div>
-                            <div className="font-bold text-[10px] md:text-sm mt-1 md:mt-2 pt-1 md:pt-2 border-t">
+                            <div className="font-bold text-[9px] md:text-sm mt-1 md:mt-2 pt-1 md:pt-1.5 border-t truncate">
                               {formatCurrency(dayData.total)}
                             </div>
                           </div>

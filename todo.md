@@ -41,6 +41,9 @@
 ## 🔴 BUGS CRÍTICOS - PENDENTES (1 item)
 
 - [ ] **Layout de vendas quebrado no mobile** - Resumo não tem layout responsivo adequado, tudo em scroll vertical único
+- [x] **Espaço grande entre primeira e segunda linha no calendário Dashboard** - Gap reduzido de 1 para 0.5, layout mais compacto
+- [x] **Valores saindo dos quadros em mobile** - Dashboard: min-h aumentada para 85px, fonte reduzida para 10px, overflow-hidden + break-words
+- [x] **Valores desenquadrados no calendário Relatórios** - Mobile: min-h 140px, fontes 9px, truncate. Desktop: gap reduzido, overflow controlado
 - [x] **Remover título "Vendas dos Últimos 7 Dias" do Dashboard** - Título duplicado/desnecessário
 - [x] **Remover botão "Ver Detalhes" duplicado no calendário do Dashboard** - Dois botões de detalhes no mesmo componente
 - [x] **Aumentar tamanho dos quadros do calendário em mobile** - Gap aumentado, padding aumentado, fontes maiores (dia: 12px, valor: 10px)
