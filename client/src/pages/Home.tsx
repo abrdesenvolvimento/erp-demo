@@ -7,6 +7,7 @@ import { TrendingUp, AlertTriangle, ShoppingCart, DollarSign, Calendar, Package,
 import { Link } from "wouter";
 import { useState } from "react";
 import { SaleDetailsModal } from "@/components/SaleDetailsModal";
+import { CompactSalesCalendar } from "@/components/CompactSalesCalendar";
 import { useAuth } from "@/_core/hooks/useAuth";
 
 export default function Home() {
@@ -245,6 +246,24 @@ export default function Home() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Calendário Compacto de Vendas */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Calendar className="h-5 w-5" />
+              Vendas dos Últimos 7 Dias
+            </CardTitle>
+            <Link href="/relatorios">
+              <button className="text-sm text-primary hover:underline">
+                Ver Detalhes →
+              </button>
+            </Link>
+          </CardHeader>
+          <CardContent>
+            <CompactSalesCalendar />
+          </CardContent>
+        </Card>
 
         <div className="grid gap-4 md:grid-cols-2">
           <Card>

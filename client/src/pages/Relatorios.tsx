@@ -128,10 +128,10 @@ export default function Relatorios() {
                 </div>
 
                 {/* Grid do calendário */}
-                <div className="grid grid-cols-7 gap-2">
+                <div className="grid grid-cols-7 gap-1 md:gap-2">
                   {/* Cabeçalho dos dias da semana */}
                   {DAYS_OF_WEEK.map(day => (
-                    <div key={day} className="text-center font-semibold text-sm py-2">
+                    <div key={day} className="text-center font-semibold text-xs md:text-sm py-1 md:py-2">
                       {day}
                     </div>
                   ))}
@@ -149,16 +149,16 @@ export default function Relatorios() {
                       <div
                         key={day}
                         className={`
-                          aspect-square border rounded-lg p-2 flex flex-col
+                          aspect-square border rounded-lg p-1 md:p-2 flex flex-col text-xs md:text-sm
                           ${isToday(day) ? 'border-blue-500 border-2' : 'border-gray-200'}
                           ${hasData ? 'bg-gray-50' : 'bg-white'}
                           hover:shadow-md transition-shadow
                         `}
                       >
-                        <div className="text-sm font-semibold mb-1">{day}</div>
+                        <div className="text-xs md:text-sm font-semibold mb-0.5 md:mb-1">{day}</div>
                         {hasData && dayData && (
-                          <div className="flex-1 flex flex-col justify-between text-xs">
-                            <div className="space-y-0.5">
+                          <div className="flex-1 flex flex-col justify-between">
+                            <div className="space-y-0.5 hidden md:block">
                               {dayData.balcao > 0 && (
                                 <div className="flex items-center gap-1">
                                   <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
@@ -178,7 +178,7 @@ export default function Relatorios() {
                                 </div>
                               )}
                             </div>
-                            <div className="font-bold text-[11px] mt-1 pt-1 border-t">
+                            <div className="font-bold text-[9px] md:text-[11px] mt-0.5 md:mt-1 pt-0.5 md:pt-1 border-t">
                               {formatCurrency(dayData.total)}
                             </div>
                           </div>

@@ -834,3 +834,11 @@
   - Navegação: Botões ← → para mudar mês, destaque para dia atual (borda azul)
   - Resultado: Identificação visual de padrões, tendências, dias de maior movimento ✅
   - Teste: Dezembro 2025 (dias 1-2 com vendas), Novembro 2025 (30 dias com dados)
+
+- [x] **Melhorias no Calendário de Vendas** - CONCLUÍDO (03/12/2025)
+  - Problema 1: Calendário completo ocupava muito espaço no Dashboard
+  - Problema 2: Layout mobile quebrado, difícil visualizar
+  - Solução Dashboard: Card compacto "Vendas dos Últimos 7 Dias" com 7 colunas, totais por dia, botão "Ver Detalhes" → /relatorios
+  - Solução Mobile: Gap reduzido (gap-1), padding menor (p-1), fonte menor (text-xs), detalhamento por canal oculto (hidden md:block)
+  - Resultado: Visão rápida no Dashboard, versão completa acessível, mobile legível e compacto ✅
+  - Teste: Dashboard mostra últimos 7 dias com totais, redirecionamento funciona, mobile mostra apenas dia + total
