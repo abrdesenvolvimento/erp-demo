@@ -667,3 +667,29 @@
   - PROCESSO: Script Node.js criado para importação com validações
   - RESULTADO: Todas as vendas importadas corretamente, estoque atualizado
   - VERIFICAÇÃO: Vendas aparecem na interface com cliente, data e valores corretos
+
+
+## ✅ BUG CORRIGIDO - Importação de Vendas do Josivan (03/12/2025)
+
+- [x] **Problema:** Importação de vendas do Josivan criou duplicatas (6 vendas importadas 2 vezes)
+  - Saldo divergente: R$ 192,00 ao invés de R$ 148,00
+  - Vendas aparecendo como "hoje" ao invés de 30/11/2025
+  
+- [x] **Investigação:** 
+  - Script de importação foi executado 2 vezes acidentalmente
+  - 12 vendas no banco (6 corretas + 6 duplicadas)
+  - Recebíveis já existiam para todas as vendas
+  
+- [x] **Solução implementada:**
+  - Removidas 6 vendas duplicadas (IDs #12210001 a #12210006)
+  - Estoque restaurado aos valores corretos
+  - Saldo do Josivan corrigido para R$ 148,00
+  - Total de vendas A Prazo corrigido para 11
+  - Interface atualizada corretamente (10 vendas pendentes, R$ 148,00)
+  
+- [x] **Resultado final:**
+  - ✓ Saldo do Josivan: R$ 148,00 (correto)
+  - ✓ Vendas do Josivan: 10 (6 novas + 4 antigas)
+  - ✓ Total Pendente de Recebimento: R$ 992,50
+  - ✓ Estoque: Restaurado
+  - ✓ Dados consistentes em todas as tabelas (sales, receivables, receivableInstallments)

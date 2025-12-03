@@ -1,0 +1,138 @@
+{
+  "query": "SELECT s.id, s.saleDate, s.customerId, s.subtotal, s.finalAmount, s.createdAt FROM sales s WHERE s.customerId = 270011 ORDER BY s.id DESC LIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT s.id, s.saleDate, s.customerId, s.subtotal, s.finalAmount, s.createdAt FROM sales s WHERE s.customerId = 270011 ORDER BY s.id DESC LIMIT 20;",
+  "rows": [
+    {
+      "id": "12210012",
+      "saleDate": "2025-11-30 14:00:00",
+      "customerId": "270011",
+      "subtotal": "10.00",
+      "finalAmount": "10.00",
+      "createdAt": "2025-12-03 13:24:38"
+    },
+    {
+      "id": "12210011",
+      "saleDate": "2025-11-30 14:00:00",
+      "customerId": "270011",
+      "subtotal": "5.00",
+      "finalAmount": "5.00",
+      "createdAt": "2025-12-03 13:24:38"
+    },
+    {
+      "id": "12210010",
+      "saleDate": "2025-11-30 14:00:00",
+      "customerId": "270011",
+      "subtotal": "7.00",
+      "finalAmount": "7.00",
+      "createdAt": "2025-12-03 13:24:38"
+    },
+    {
+      "id": "12210009",
+      "saleDate": "2025-11-30 14:00:00",
+      "customerId": "270011",
+      "subtotal": "2.00",
+      "finalAmount": "2.00",
+      "createdAt": "2025-12-03 13:24:38"
+    },
+    {
+      "id": "12210008",
+      "saleDate": "2025-11-30 14:00:00",
+      "customerId": "270011",
+      "subtotal": "10.00",
+      "finalAmount": "10.00",
+      "createdAt": "2025-12-03 13:24:37"
+    },
+    {
+      "id": "12210007",
+      "saleDate": "2025-11-30 14:00:00",
+      "customerId": "270011",
+      "subtotal": "10.00",
+      "finalAmount": "10.00",
+      "createdAt": "2025-12-03 13:24:37"
+    },
+    {
+      "id": "12210006",
+      "saleDate": "2025-11-30 14:00:00",
+      "customerId": "270011",
+      "subtotal": "10.00",
+      "finalAmount": "10.00",
+      "createdAt": "2025-12-03 13:24:30"
+    },
+    {
+      "id": "12210005",
+      "saleDate": "2025-11-30 14:00:00",
+      "customerId": "270011",
+      "subtotal": "5.00",
+      "finalAmount": "5.00",
+      "createdAt": "2025-12-03 13:24:30"
+    },
+    {
+      "id": "12210004",
+      "saleDate": "2025-11-30 14:00:00",
+      "customerId": "270011",
+      "subtotal": "7.00",
+      "finalAmount": "7.00",
+      "createdAt": "2025-12-03 13:24:30"
+    },
+    {
+      "id": "12210003",
+      "saleDate": "2025-11-30 14:00:00",
+      "customerId": "270011",
+      "subtotal": "2.00",
+      "finalAmount": "2.00",
+      "createdAt": "2025-12-03 13:24:30"
+    },
+    {
+      "id": "12210002",
+      "saleDate": "2025-11-30 14:00:00",
+      "customerId": "270011",
+      "subtotal": "10.00",
+      "finalAmount": "10.00",
+      "createdAt": "2025-12-03 13:24:30"
+    },
+    {
+      "id": "12210001",
+      "saleDate": "2025-11-30 14:00:00",
+      "customerId": "270011",
+      "subtotal": "10.00",
+      "finalAmount": "10.00",
+      "createdAt": "2025-12-03 13:24:29"
+    },
+    {
+      "id": "6900005",
+      "saleDate": "2025-11-26 02:05:12",
+      "customerId": "270011",
+      "subtotal": "9.00",
+      "finalAmount": "9.00",
+      "createdAt": "2025-11-26 02:05:12"
+    },
+    {
+      "id": "4890003",
+      "saleDate": "2025-11-23 13:32:21",
+      "customerId": "270011",
+      "subtotal": "48.50",
+      "finalAmount": "48.50",
+      "createdAt": "2025-11-23 13:32:21"
+    },
+    {
+      "id": "4890002",
+      "saleDate": "2025-11-23 13:30:16",
+      "customerId": "270011",
+      "subtotal": "27.00",
+      "finalAmount": "27.00",
+      "createdAt": "2025-11-23 13:30:16"
+    },
+    {
+      "id": "2100005",
+      "saleDate": "2025-11-20 23:09:15",
+      "customerId": "270011",
+      "subtotal": "19.50",
+      "finalAmount": "19.50",
+      "createdAt": "2025-11-20 23:09:15"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tsaleDate\tcustomerId\tsubtotal\tfinalAmount\tcreatedAt\n12210012\t2025-11-30 14:00:00\t270011\t10.00\t10.00\t2025-12-03 13:24:38\n12210011\t2025-11-30 14:00:00\t270011\t5.00\t5.00\t2025-12-03 13:24:38\n12210010\t2025-11-30 14:00:00\t270011\t7.00\t7.00\t2025-12-03 13:24:38\n12210009\t2025-11-30 14:00:00\t270011\t2.00\t2.00\t2025-12-03 13:24:38\n12210008\t2025-11-30 14:00:00\t270011\t10.00\t10.00\t2025-12-03 13:24:37\n12210007\t2025-11-30 14:00:00\t270011\t10.00\t10.00\t2025-12-03 13:24:37\n12210006\t2025-11-30 14:00:00\t270011\t10.00\t10.00\t2025-12-03 13:24:30\n12210005\t2025-11-30 14:00:00\t270011\t5.00\t5.00\t2025-12-03 13:24:30\n12210004\t2025-11-30 14:00:00\t270011\t7.00\t7.00\t2025-12-03 13:24:30\n12210003\t2025-11-30 14:00:00\t270011\t2.00\t2.00\t2025-12-03 13:24:30\n12210002\t2025-11-30 14:00:00\t270011\t10.00\t10.00\t2025-12-03 13:24:30\n12210001\t2025-11-30 14:00:00\t270011\t10.00\t10.00\t2025-12-03 13:24:29\n6900005\t2025-11-26 02:05:12\t270011\t9.00\t9.00\t2025-11-26 02:05:12\n4890003\t2025-11-23 13:32:21\t270011\t48.50\t48.50\t2025-11-23 13:32:21\n4890002\t2025-11-23 13:30:16\t270011\t27.00\t27.00\t2025-11-23 13:30:16\n2100005\t2025-11-20 23:09:15\t270011\t19.50\t19.50\t2025-11-20 23:09:15\n",
+  "stderr": "",
+  "execution_time_ms": 68
+}
