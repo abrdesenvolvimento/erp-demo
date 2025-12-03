@@ -45,6 +45,8 @@
 - [x] **Remover botão "Ver Detalhes" duplicado no calendário do Dashboard** - Dois botões de detalhes no mesmo componente
 - [x] **Aumentar tamanho dos quadros do calendário em mobile** - Gap aumentado, padding aumentado, fontes maiores (dia: 12px, valor: 10px)
 - [x] **Ajustar tamanho dos quadros e fonte no calendário desktop** - Fontes aumentadas (dia: 14px, valor: 12px)
+- [x] **Reduzir tamanho dos quadros em desktop** - Dashboard: 60px (dia: 16px, valor: 14px) | Relatórios: 100px (dia: 18px, valores: 12-14px)
+- [x] **Aumentar altura dos quadros em mobile** - Dashboard: min-h 70px | Relatórios: min-h 110px + breakdown por canal visível
 
 ## 🟢 FUNCIONALIDADES IMPLEMENTADAS (Verificadas em 13/11/2025)
 

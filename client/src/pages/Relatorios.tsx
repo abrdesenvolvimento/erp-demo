@@ -158,36 +158,36 @@ export default function Relatorios() {
                       <div
                         key={day}
                         className={`
-                          aspect-square border rounded-lg p-1 md:p-2 flex flex-col text-xs md:text-sm
+                          min-h-[110px] md:h-[100px] border rounded-lg p-2 md:p-2 flex flex-col text-xs md:text-sm
                           ${isToday(day) ? 'border-blue-500 border-2' : 'border-gray-200'}
                           ${hasData ? 'bg-gray-50' : 'bg-white'}
                           hover:shadow-md transition-shadow
                         `}
                       >
-                        <div className="text-xs md:text-sm font-semibold mb-0.5 md:mb-1">{day}</div>
+                        <div className="text-sm md:text-lg font-semibold mb-1 md:mb-2">{day}</div>
                         {hasData && dayData && (
                           <div className="flex-1 flex flex-col justify-between">
-                            <div className="space-y-0.5 hidden md:block">
+                            <div className="space-y-0.5">
                               {dayData.balcao > 0 && (
                                 <div className="flex items-center gap-1">
                                   <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                                  <span className="text-[10px]">{formatCurrency(dayData.balcao)}</span>
+                                  <span className="text-[10px] md:text-xs">{formatCurrency(dayData.balcao)}</span>
                                 </div>
                               )}
                               {dayData.delivery > 0 && (
                                 <div className="flex items-center gap-1">
                                   <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                                  <span className="text-[10px]">{formatCurrency(dayData.delivery)}</span>
+                                  <span className="text-[10px] md:text-xs">{formatCurrency(dayData.delivery)}</span>
                                 </div>
                               )}
                               {dayData.aPrazo > 0 && (
                                 <div className="flex items-center gap-1">
                                   <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                                  <span className="text-[10px]">{formatCurrency(dayData.aPrazo)}</span>
+                                  <span className="text-[10px] md:text-xs">{formatCurrency(dayData.aPrazo)}</span>
                                 </div>
                               )}
                             </div>
-                            <div className="font-bold text-[9px] md:text-[11px] mt-0.5 md:mt-1 pt-0.5 md:pt-1 border-t">
+                            <div className="font-bold text-[10px] md:text-sm mt-1 md:mt-2 pt-1 md:pt-2 border-t">
                               {formatCurrency(dayData.total)}
                             </div>
                           </div>
