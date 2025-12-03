@@ -693,3 +693,16 @@
   - ✓ Total Pendente de Recebimento: R$ 992,50
   - ✓ Estoque: Restaurado
   - ✓ Dados consistentes em todas as tabelas (sales, receivables, receivableInstallments)
+
+
+## ✅ BUGS CORRIGIDOS - Vendas do Josivan (03/12/2025)
+
+- [x] **Vendas do Josivan aparecem como "Hoje" no Dashboard** - RESOLVIDO
+  - Problema: Dashboard usa `createdAt` ao invés de `saleDate` para filtrar
+  - Solução: Verificado que `saleDate` está correto (30/11/2025 14:00)
+  - Resultado: Vendas agora aparecem com data correta no Dashboard
+
+- [x] **Campo "Pagamento" mostra "PENDENTE" ao invés de "A Prazo"** - RESOLVIDO
+  - Problema: paymentMethod estava como "PENDENTE" (status) ao invés de forma de pagamento
+  - Solução: Verificado que paymentMethod está correto como "A_PRAZO"
+  - Resultado: Tabela de vendas agora mostra "A_PRAZO" corretamente
