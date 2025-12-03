@@ -706,3 +706,11 @@
   - Problema: Vendas importadas tinham paymentMethod = "A_PRAZO" (com underscore)
   - Solução: Aplicada função `formatPaymentMethod()` na tabela de vendas (client/src/pages/Vendas.tsx linha 488)
   - Resultado: Tabela agora mostra "A Prazo" (com espaço) corretamente
+
+
+## ✅ BUG CORRIGIDO - Formulário de Cadastro de Produtos (03/12/2025)
+
+- [x] **Campo Subcategoria preenchido automaticamente com valor da Categoria** - RESOLVIDO
+  - Problema: Input de Categoria usava id="subcategory" e valor de subcategorySearch
+  - Solução: Alterado para id="category" e categorySearch em client/src/pages/Produtos.tsx (linhas 835-843)
+  - Resultado: Campo Subcategoria permanece vazio ao digitar na Categoria (correto!)

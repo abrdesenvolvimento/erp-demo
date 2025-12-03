@@ -832,13 +832,13 @@ export default function Produtos() {
                     <div className="grid gap-2 relative">
                       <Label htmlFor="category">Categoria *</Label>
                            <Input
-                             id="subcategory"
-                             value={subcategorySearch}
+                             id="category"
+                             value={categorySearch}
                              onChange={(e) => {
-                               setSubcategorySearch(e.target.value);
-                               setShowSubcategorySuggestions(true);
+                               setCategorySearch(e.target.value);
+                               setShowCategorySuggestions(true);
                              }}
-                             placeholder="Selecione uma subcategoria ou crie uma nova"
+                             placeholder="Selecione uma categoria"
                              disabled={false}
                            />
                       {showCategorySuggestions && categorySearch && (
