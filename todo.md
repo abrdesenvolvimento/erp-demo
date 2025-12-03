@@ -697,12 +697,12 @@
 
 ## ✅ BUGS CORRIGIDOS - Vendas do Josivan (03/12/2025)
 
-- [x] **Vendas do Josivan aparecem como "Hoje" no Dashboard** - RESOLVIDO
-  - Problema: Dashboard usa `createdAt` ao invés de `saleDate` para filtrar
-  - Solução: Verificado que `saleDate` está correto (30/11/2025 14:00)
-  - Resultado: Vendas agora aparecem com data correta no Dashboard
+- [x] **Venda Diária incluindo vendas de 30/11** - RESOLVIDO
+  - Problema: Dashboard usava `createdAt` (data de criação) ao invés de `saleDate` (data da venda)
+  - Solução: Alterado cálculo de Venda Diária para usar `saleDate` em server/routers.ts (linhas 1054 e 1081)
+  - Resultado: Venda Diária agora mostra R$ 0,00 (correto - sem vendas de 03/12)
 
-- [x] **Campo "Pagamento" mostra "PENDENTE" ao invés de "A Prazo"** - RESOLVIDO
-  - Problema: paymentMethod estava como "PENDENTE" (status) ao invés de forma de pagamento
-  - Solução: Verificado que paymentMethod está correto como "A_PRAZO"
-  - Resultado: Tabela de vendas agora mostra "A_PRAZO" corretamente
+- [x] **Campo Pagamento mostra A_PRAZO ao invés de A Prazo** - RESOLVIDO
+  - Problema: Vendas importadas tinham paymentMethod = "A_PRAZO" (com underscore)
+  - Solução: Aplicada função `formatPaymentMethod()` na tabela de vendas (client/src/pages/Vendas.tsx linha 488)
+  - Resultado: Tabela agora mostra "A Prazo" (com espaço) corretamente

@@ -1048,10 +1048,10 @@ export const appRouter = router({
       
       // Vendas de hoje (usando horário de Brasília)
       const todaySales = allMonthSales.filter(s => {
-        if (!s.createdAt) return false;
+        if (!s.saleDate) return false;
         
         // Converter data da venda para Brasília (apenas data, sem hora)
-        const saleDateStr = new Date(s.createdAt).toLocaleDateString('en-US', { timeZone: 'America/Sao_Paulo' });
+        const saleDateStr = new Date(s.saleDate).toLocaleDateString('en-US', { timeZone: 'America/Sao_Paulo' });
         const [saleMonth, saleDay, saleYear] = saleDateStr.split('/');
         
         // Comparar apenas ano, mês e dia
@@ -1075,10 +1075,10 @@ export const appRouter = router({
       
       // Faturamento do mês atual - TODAS as vendas do mês
       const monthSales = allMonthSales.filter(s => {
-        if (!s.createdAt) return false;
+        if (!s.saleDate) return false;
         
         // Converter data da venda para Brasília (apenas data, sem hora)
-        const saleDateStr = new Date(s.createdAt).toLocaleDateString('en-US', { timeZone: 'America/Sao_Paulo' });
+        const saleDateStr = new Date(s.saleDate).toLocaleDateString('en-US', { timeZone: 'America/Sao_Paulo' });
         const [saleMonth, saleDay, saleYear] = saleDateStr.split('/');
         
         // Comparar apenas ano e mês (não precisa de hora)

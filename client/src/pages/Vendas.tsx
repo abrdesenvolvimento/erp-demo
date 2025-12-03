@@ -485,7 +485,7 @@ export default function Vendas() {
                           : (sale.channelName || "-")}
                       </TableCell>
                       <TableCell className="font-semibold">{formatCurrency(parseFloat(sale.finalAmount))}</TableCell>
-                      <TableCell>{sale.paymentMethod}</TableCell>
+                      <TableCell>{formatPaymentMethod(sale.paymentMethod)}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
