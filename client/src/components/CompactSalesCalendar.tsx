@@ -91,10 +91,10 @@ export function CompactSalesCalendar() {
       </div>
 
       {/* Cálendário */}
-      <div className="grid grid-cols-7 gap-0.5">
+      <div className="grid grid-cols-7 gap-1 md:gap-0.5">
         {/* Cabeçalho dos dias da semana */}
         {dayNames.map(name => (
-          <div key={name} className="text-center text-xs font-semibold text-muted-foreground py-2">
+          <div key={name} className="text-center text-xs md:text-xs font-semibold text-muted-foreground py-2">
             {name}
           </div>
         ))}
@@ -113,20 +113,20 @@ export function CompactSalesCalendar() {
             <div
               key={day}
               className={`
-                aspect-square flex flex-col items-center justify-center p-0.5 rounded border text-[10px]
+                aspect-square flex flex-col items-center justify-center p-1 md:p-0.5 rounded border
                 ${isToday ? 'border-blue-500 border-2 bg-blue-50' : 'border-gray-200'}
                 ${hasData ? 'bg-gray-50' : 'bg-white'}
               `}
             >
-              <div className="font-semibold text-muted-foreground text-[9px] mb-0">
+              <div className="font-semibold text-muted-foreground text-xs md:text-sm mb-0.5">
                 {String(day).padStart(2, '0')}
               </div>
               {hasData && dayData ? (
-                <div className="text-[8px] font-semibold text-green-600 text-center leading-tight">
+                <div className="text-[10px] md:text-xs font-semibold text-green-600 text-center leading-tight">
                   {formatCurrency(dayData.total)}
                 </div>
               ) : (
-                <div className="text-[8px] text-muted-foreground">-</div>
+                <div className="text-[10px] md:text-xs text-muted-foreground">-</div>
               )}
             </div>
           );

@@ -249,18 +249,7 @@ export default function Home() {
 
         {/* Calendário Compacto de Vendas */}
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <Calendar className="h-5 w-5" />
-              Vendas dos Últimos 7 Dias
-            </CardTitle>
-            <Link href="/relatorios">
-              <button className="text-sm text-primary hover:underline">
-                Ver Detalhes →
-              </button>
-            </Link>
-          </CardHeader>
-          <CardContent>
+          <CardContent className="pt-6">
             <CompactSalesCalendar />
           </CardContent>
         </Card>
