@@ -577,7 +577,22 @@ export default function Compras() {
 
                         {installments.map((inst, idx) => (
                           <div key={idx} className="space-y-2">
-                            <Label>Parcela {idx + 1}</Label>
+                            <div className="flex items-center justify-between">
+                              <Label>Parcela {idx + 1}</Label>
+                              {installments.length > 1 && (
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {
+                                    const newInst = installments.filter((_, i) => i !== idx);
+                                    setInstallments(newInst);
+                                  }}
+                                >
+                                  Remover
+                                </Button>
+                              )}
+                            </div>
                             <div className="flex gap-2">
                               <Input
                                 type="date"
@@ -602,6 +617,39 @@ export default function Compras() {
                             </div>
                           </div>
                         ))}
+
+                        <div className="flex gap-2">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => {
+                              const newInstallment = {
+                                dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                                amount: 0
+                              };
+                              setInstallments([...installments, newInstallment]);
+                            }}
+                          >
+                            + Adicionar Parcela
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => {
+                              const totalAmount = items.reduce((sum, item) => sum + (item.quantity * item.unitCost), 0) + parseFloat(freightCost) + parseFloat(chargesCost);
+                              const amountPerInstallment = totalAmount / installments.length;
+                              const newInst = installments.map((inst, idx) => ({
+                                ...inst,
+                                amount: idx === installments.length - 1 
+                                  ? totalAmount - (amountPerInstallment * (installments.length - 1))
+                                  : amountPerInstallment
+                              }));
+                              setInstallments(newInst);
+                            }}
+                          >
+                            Dividir
+                          </Button>
+                        </div>
                       </div>
                     </div>
 

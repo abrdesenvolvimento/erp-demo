@@ -644,3 +644,26 @@
   - Preco atualizado de R$ 7,50 para R$ 9,00 (preco de venda correto)
   - Estoque corrigido: Global +1, Hand-Selected -1
   - Total venda: R$ 11,00 (Gomels R$ 1,00 + Pop! R$ 1,00 + Rothmans Red Hand-Selected R$ 9,00)
+
+
+## 🐛 BUGS REPORTADOS - DEZEMBRO 2025 (Créditos Renovados)
+
+- [ ] Corrigir bug de parcelamento em Compras - Botão desapareceu e valor não preenche automático
+- [ ] Corrigir bug de subcategoria em Produtos - Campo não está clicável/editável
+- [ ] Finalizar lançamento de vendas de Josivan (30/11/2025) - 6 itens, R$ 44,00
+
+
+## ✅ BUGS CORRIGIDOS - SPRINT 03/12/2025
+
+- [x] **Botões de Parcelamento em Compras**
+  - PROBLEMA: Botões "+ Adicionar Parcela" e "Dividir" não apareciam na interface
+  - CAUSA: Variáveis incorretas na função Dividir (freight/taxes ao invés de freightCost/chargesCost)
+  - SOLUÇÃO: Corrigidas variáveis na linha 639 do Compras.tsx
+  - TESTE: Botões funcionando perfeitamente, distribuição automática de valores testada com sucesso
+  - RESULTADO: Parcelamento de compras 100% operacional
+
+- [x] **Importação de Vendas do Josivan**
+  - DADOS: 6 vendas com total de R$ 44,00 em 30/11/2025
+  - PROCESSO: Script Node.js criado para importação com validações
+  - RESULTADO: Todas as vendas importadas corretamente, estoque atualizado
+  - VERIFICAÇÃO: Vendas aparecem na interface com cliente, data e valores corretos

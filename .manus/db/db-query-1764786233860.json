@@ -1,0 +1,26 @@
+{
+  "query": "SELECT id, name FROM products WHERE name IN ('Doritos Queijo Nacho 75gr', 'Heineken 269ml', 'Frescca 510ml', 'Del Valle Kapo Laranja 200ml');",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT id, name FROM products WHERE name IN ('Doritos Queijo Nacho 75gr', 'Heineken 269ml', 'Frescca 510ml', 'Del Valle Kapo Laranja 200ml');",
+  "rows": [
+    {
+      "id": "2070041",
+      "name": "Del Valle Kapo Laranja 200ml"
+    },
+    {
+      "id": "1740003",
+      "name": "Doritos Queijo Nacho 75gr"
+    },
+    {
+      "id": "720002",
+      "name": "Frescca 510ml"
+    },
+    {
+      "id": "510001",
+      "name": "Heineken 269ml"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\n2070041\tDel Valle Kapo Laranja 200ml\n1740003\tDoritos Queijo Nacho 75gr\n720002\tFrescca 510ml\n510001\tHeineken 269ml\n",
+  "stderr": "",
+  "execution_time_ms": 59
+}

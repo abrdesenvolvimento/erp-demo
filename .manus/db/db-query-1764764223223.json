@@ -1,0 +1,16 @@
+{
+  "query": "SELECT id, name, creditLimit, currentBalance FROM partners WHERE name LIKE '%Josivan%' AND partnerType IN ('CUSTOMER', 'BOTH');",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT id, name, creditLimit, currentBalance FROM partners WHERE name LIKE '%Josivan%' AND partnerType IN ('CUSTOMER', 'BOTH');",
+  "rows": [
+    {
+      "id": "270011",
+      "name": "Josivan Oliveira",
+      "creditLimit": "600.00",
+      "currentBalance": "104.00"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tcreditLimit\tcurrentBalance\n270011\tJosivan Oliveira\t600.00\t104.00\n",
+  "stderr": "",
+  "execution_time_ms": 51
+}

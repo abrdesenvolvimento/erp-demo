@@ -831,16 +831,16 @@ export default function Produtos() {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="grid gap-2 relative">
                       <Label htmlFor="category">Categoria *</Label>
-                      <Input
-                        id="category"
-                        value={categorySearch}
-                        onChange={(e) => {
-                          setCategorySearch(e.target.value);
-                          setShowCategorySuggestions(true);
-                        }}
-                        onFocus={() => setShowCategorySuggestions(true)}
-                        placeholder="Digite para buscar ou criar categoria"
-                      />
+                           <Input
+                             id="subcategory"
+                             value={subcategorySearch}
+                             onChange={(e) => {
+                               setSubcategorySearch(e.target.value);
+                               setShowSubcategorySuggestions(true);
+                             }}
+                             placeholder="Selecione uma subcategoria ou crie uma nova"
+                             disabled={false}
+                           />
                       {showCategorySuggestions && categorySearch && (
                         <div className="absolute top-full left-0 right-0 mt-1 bg-background border rounded-md shadow-lg z-50 max-h-48 overflow-y-auto">
                           {categories
@@ -884,7 +884,7 @@ export default function Produtos() {
                             }}
                             onFocus={() => setShowSubcategorySuggestions(true)}
                             placeholder="Digite para buscar ou criar subcategoria"
-                            disabled={!formData.categoryId}
+                            disabled={false}
                           />
                           {showSubcategorySuggestions && subcategorySearch && formData.categoryId && (
                             <div className="absolute top-full left-0 right-0 mt-1 bg-background border rounded-md shadow-lg z-50 max-h-48 overflow-y-auto">
@@ -943,12 +943,13 @@ export default function Produtos() {
                             <div className="grid gap-4 py-4">
                               <div className="grid gap-2">
                                 <Label htmlFor="new-subcategory-name">Nome da Subcategoria *</Label>
-                                <Input
-                                  id="new-subcategory-name"
-                                  placeholder="Ex: Cerveja Artesanal"
-                                  value={subcategorySearch}
-                                  disabled
-                                />
+                                 <Input
+                                   id="new-subcategory-name"
+                                   placeholder="Ex: Cerveja Artesanal"
+                                   value={subcategorySearch}
+                                   onChange={(e) => setSubcategorySearch(e.target.value)}
+                                   disabled={false}
+                                 />
                                 <p className="text-sm text-muted-foreground">
                                   Confirme a criação da subcategoria "{subcategorySearch}"
                                 </p>
