@@ -751,6 +751,14 @@
   - Funcionalidade: Filtros aplicados em tempo real, botão "Limpar Filtros" restaura padrão
   - Resultado: Tela limpa, performance melhorada, filtros funcionando perfeitamente
 
+- [x] **Cards dinâmicos sincronizados com filtros de período** - CONCLUÍDO
+  - Problema: Cards mostram todas as vendas (103 vendas, R$ 2.108,83), filtro só afeta tabela
+  - Solução: Cards atualizam conforme filtro de data e canal aplicado
+  - Backend: Modificado sales.stats para aceitar parâmetros (dateFrom, dateTo, channel)
+  - Frontend: Filtros atuais enviados para query dos cards
+  - Resultado: Experiência consistente, análises personalizadas funcionando perfeitamente
+  - Teste: Filtro 24h (48 vendas, R$ 881,53) vs Todas (1.244 vendas, R$ 40.428,36) ✅
+
 ### ANÁLISE E RELATÓRIOS - Novas Funcionalidades
 
 - [ ] **Calendário de Análise de Vendas**

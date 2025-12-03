@@ -75,7 +75,12 @@ export default function Vendas() {
 
   // Queries
   const { data: sales = [], refetch } = trpc.sales.list.useQuery();
-  const { data: stats } = trpc.sales.stats.useQuery({ period: statsPeriod });
+  const { data: stats } = trpc.sales.stats.useQuery({ 
+    period: statsPeriod,
+    dateFrom: filterFromDate || undefined,
+    dateTo: filterToDate || undefined,
+    channel: filterSaleType === "" ? 'all' : (filterSaleType as 'BALCAO' | 'DELIVERY' | 'A_PRAZO')
+  });
   const { data: channels = [] } = trpc.salesChannels.list.useQuery({ activeOnly: true });
   // Buscar parceiros que sejam CUSTOMER ou BOTH (clientes e fornecedores)
   const { data: allPartners = [] } = trpc.partners.list.useQuery({ 

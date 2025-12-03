@@ -496,9 +496,17 @@ export const appRouter = router({
     stats: protectedProcedure
       .input(z.object({
         period: z.enum(['today', 'week', 'month', 'all']).optional().default('month'),
+        dateFrom: z.string().optional(), // Formato: YYYY-MM-DD
+        dateTo: z.string().optional(),   // Formato: YYYY-MM-DD
+        channel: z.enum(['BALCAO', 'DELIVERY', 'A_PRAZO', 'all']).optional().default('all'),
       }).optional())
       .query(async ({ input }) => {
-        return await db.getSalesStats(input?.period || 'month');
+        return await db.getSalesStats(
+          input?.period || 'month',
+          input?.dateFrom,
+          input?.dateTo,
+          input?.channel === 'all' ? undefined : input?.channel
+        );
       }),
     
     update: adminProcedure

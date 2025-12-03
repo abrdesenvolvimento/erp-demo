@@ -493,7 +493,12 @@ export async function createSale(saleData: InsertSale, items: Omit<InsertSaleIte
   return saleId;
 }
 
-export async function getSalesStats(period?: 'today' | 'week' | 'month' | 'all') {
+export async function getSalesStats(
+  period?: 'today' | 'week' | 'month' | 'all',
+  dateFrom?: string,
+  dateTo?: string,
+  channel?: 'BALCAO' | 'DELIVERY' | 'A_PRAZO'
+) {
   const db = await getDb();
   if (!db) return {
     balcao: { count: 0, total: "0.00" },
@@ -505,8 +510,29 @@ export async function getSalesStats(period?: 'today' | 'week' | 'month' | 'all')
   // Buscar todas as vendas
   let allSales = await db.select().from(sales);
   
+  // Aplicar filtro de data customizada (tem prioridade sobre period)
+  if (dateFrom || dateTo) {
+    allSales = allSales.filter(sale => {
+      const saleDate = new Date(sale.createdAt!);
+      const saleBrasiliaStr = saleDate.toLocaleString('en-US', { 
+        timeZone: 'America/Sao_Paulo',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour12: false
+      });
+      
+      const [saleDatePart] = saleBrasiliaStr.split(', ');
+      const [saleMonth, saleDay, saleYear] = saleDatePart.split('/');
+      const saleDateStr = `${saleYear}-${saleMonth}-${saleDay}`; // YYYY-MM-DD
+      
+      if (dateFrom && saleDateStr < dateFrom) return false;
+      if (dateTo && saleDateStr > dateTo) return false;
+      return true;
+    });
+  }
   // Aplicar filtro de período usando horário de Brasília (GMT-3)
-  if (period && period !== 'all') {
+  else if (period && period !== 'all') {
     // Obter data ATUAL em Brasília
     const now = new Date();
     const nowBrasiliaStr = now.toLocaleString('en-US', { 
@@ -571,6 +597,11 @@ export async function getSalesStats(period?: 'today' | 'week' | 'month' | 'all')
                parseInt(saleMonth) === todayBrasilia.month;
       });
     }
+  }
+  
+  // Aplicar filtro de canal se especificado
+  if (channel) {
+    allSales = allSales.filter(sale => sale.saleType === channel);
   }
   
   const stats = {
