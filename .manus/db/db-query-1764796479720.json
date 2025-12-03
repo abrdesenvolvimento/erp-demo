@@ -1,0 +1,58 @@
+{
+  "query": "SELECT id, saleDate, createdAt, saleType, finalAmount, customerId\nFROM sales \nWHERE DATE(CONVERT_TZ(createdAt, '+00:00', '-03:00')) = '2025-12-03'\nORDER BY createdAt DESC;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT id, saleDate, createdAt, saleType, finalAmount, customerId\nFROM sales \nWHERE DATE(CONVERT_TZ(createdAt, '+00:00', '-03:00')) = '2025-12-03'\nORDER BY createdAt DESC;",
+  "rows": [
+    {
+      "id": "12210009",
+      "saleDate": "2025-11-30 14:00:00",
+      "createdAt": "2025-12-03 13:24:38",
+      "saleType": "A_PRAZO",
+      "finalAmount": "2.00",
+      "customerId": "270011"
+    },
+    {
+      "id": "12210010",
+      "saleDate": "2025-11-30 14:00:00",
+      "createdAt": "2025-12-03 13:24:38",
+      "saleType": "A_PRAZO",
+      "finalAmount": "7.00",
+      "customerId": "270011"
+    },
+    {
+      "id": "12210011",
+      "saleDate": "2025-11-30 14:00:00",
+      "createdAt": "2025-12-03 13:24:38",
+      "saleType": "A_PRAZO",
+      "finalAmount": "5.00",
+      "customerId": "270011"
+    },
+    {
+      "id": "12210012",
+      "saleDate": "2025-11-30 14:00:00",
+      "createdAt": "2025-12-03 13:24:38",
+      "saleType": "A_PRAZO",
+      "finalAmount": "10.00",
+      "customerId": "270011"
+    },
+    {
+      "id": "12210007",
+      "saleDate": "2025-11-30 14:00:00",
+      "createdAt": "2025-12-03 13:24:37",
+      "saleType": "A_PRAZO",
+      "finalAmount": "10.00",
+      "customerId": "270011"
+    },
+    {
+      "id": "12210008",
+      "saleDate": "2025-11-30 14:00:00",
+      "createdAt": "2025-12-03 13:24:37",
+      "saleType": "A_PRAZO",
+      "finalAmount": "10.00",
+      "customerId": "270011"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tsaleDate\tcreatedAt\tsaleType\tfinalAmount\tcustomerId\n12210009\t2025-11-30 14:00:00\t2025-12-03 13:24:38\tA_PRAZO\t2.00\t270011\n12210010\t2025-11-30 14:00:00\t2025-12-03 13:24:38\tA_PRAZO\t7.00\t270011\n12210011\t2025-11-30 14:00:00\t2025-12-03 13:24:38\tA_PRAZO\t5.00\t270011\n12210012\t2025-11-30 14:00:00\t2025-12-03 13:24:38\tA_PRAZO\t10.00\t270011\n12210007\t2025-11-30 14:00:00\t2025-12-03 13:24:37\tA_PRAZO\t10.00\t270011\n12210008\t2025-11-30 14:00:00\t2025-12-03 13:24:37\tA_PRAZO\t10.00\t270011\n",
+  "stderr": "",
+  "execution_time_ms": 788
+}

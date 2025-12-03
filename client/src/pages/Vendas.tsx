@@ -51,7 +51,6 @@ export default function Vendas() {
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [saleType, setSaleType] = useState<SaleType | null>(null);
   const [step, setStep] = useState<"type" | "form">("type");
-  const [statsPeriod, setStatsPeriod] = useState<'today' | 'week' | 'month' | 'all'>('month');
   
   // Filter states for sales list
   const [filterFromDate, setFilterFromDate] = useState<string>("");
@@ -74,13 +73,20 @@ export default function Vendas() {
   const [notes, setNotes] = useState("");
 
   // Queries
+  const utils = trpc.useUtils();
   const { data: sales = [], refetch } = trpc.sales.list.useQuery();
   const { data: stats } = trpc.sales.stats.useQuery({ 
-    period: statsPeriod,
-    dateFrom: filterFromDate || undefined,
-    dateTo: filterToDate || undefined,
+    dateFrom: filterFromDate,
+    dateTo: filterToDate,
     channel: filterSaleType === "" ? 'all' : (filterSaleType as 'BALCAO' | 'DELIVERY' | 'A_PRAZO')
+  }, {
+    refetchOnMount: true
   });
+  
+  // Invalidate stats cache when filters change
+  useEffect(() => {
+    utils.sales.stats.invalidate();
+  }, [filterFromDate, filterToDate, filterSaleType, utils]);
   const { data: channels = [] } = trpc.salesChannels.list.useQuery({ activeOnly: true });
   // Buscar parceiros que sejam CUSTOMER ou BOTH (clientes e fornecedores)
   const { data: allPartners = [] } = trpc.partners.list.useQuery({ 
@@ -117,12 +123,24 @@ export default function Vendas() {
   const filteredSales = useMemo(() => {
     let result = sales;
     
-    // Filter by date range
+    // Filter by date range (using Brasilia timezone like backend)
     if (filterFromDate || filterToDate) {
       result = result.filter((sale: any) => {
-        const saleDate = new Date(sale.saleDate || sale.createdAt).toISOString().split('T')[0];
-        if (filterFromDate && saleDate < filterFromDate) return false;
-        if (filterToDate && saleDate > filterToDate) return false;
+        const saleDate = new Date(sale.saleDate || sale.createdAt);
+        const saleBrasiliaStr = saleDate.toLocaleString('en-US', { 
+          timeZone: 'America/Sao_Paulo',
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour12: false
+        });
+        
+        const [saleDatePart] = saleBrasiliaStr.split(', ');
+        const [saleMonth, saleDay, saleYear] = saleDatePart.split('/');
+        const saleDateStr = `${saleYear}-${saleMonth}-${saleDay}`; // YYYY-MM-DD
+        
+        if (filterFromDate && saleDateStr < filterFromDate) return false;
+        if (filterToDate && saleDateStr > filterToDate) return false;
         return true;
       });
     }
@@ -135,18 +153,15 @@ export default function Vendas() {
     return result;
   }, [sales, filterFromDate, filterToDate, filterSaleType]);
 
-  // Initialize filters with last 24 hours on mount
+  // Initialize filter to today only
   useEffect(() => {
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-    setFilterFromDate(yesterday.toISOString().split('T')[0]);
-    setFilterToDate(today.toISOString().split('T')[0]);
+    const todayStr = today.toISOString().split('T')[0];
+    setFilterFromDate(todayStr);
+    setFilterToDate(todayStr);
   }, []);
 
   // Mutations
-  const utils = trpc.useUtils();
   const createSale = trpc.sales.create.useMutation({
     onSuccess: () => {
       toast.success("Venda registrada com sucesso!");
@@ -385,40 +400,7 @@ export default function Vendas() {
           </Button>
         </div>
 
-        {/* Filtro de Período */}
-        <div className="flex items-center gap-2 mb-4">
-          <span className="text-sm text-muted-foreground">Período:</span>
-          <div className="flex gap-2">
-            <Button 
-              variant={statsPeriod === 'today' ? 'default' : 'outline'} 
-              size="sm"
-              onClick={() => setStatsPeriod('today')}
-            >
-              Hoje
-            </Button>
-            <Button 
-              variant={statsPeriod === 'week' ? 'default' : 'outline'} 
-              size="sm"
-              onClick={() => setStatsPeriod('week')}
-            >
-              7 dias
-            </Button>
-            <Button 
-              variant={statsPeriod === 'month' ? 'default' : 'outline'} 
-              size="sm"
-              onClick={() => setStatsPeriod('month')}
-            >
-              Mês
-            </Button>
-            <Button 
-              variant={statsPeriod === 'all' ? 'default' : 'outline'} 
-              size="sm"
-              onClick={() => setStatsPeriod('all')}
-            >
-              Todos
-            </Button>
-          </div>
-        </div>
+
 
         {/* Cards de Resumo */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -530,8 +512,10 @@ export default function Vendas() {
                 <Button
                   variant="outline"
                   onClick={() => {
-                    setFilterFromDate("");
-                    setFilterToDate("");
+                    const today = new Date();
+                    const todayStr = today.toISOString().split('T')[0];
+                    setFilterFromDate(todayStr);
+                    setFilterToDate(todayStr);
                     setFilterSaleType("all");
                   }}
                   className="w-full"

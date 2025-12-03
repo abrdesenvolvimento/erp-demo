@@ -759,6 +759,12 @@
   - Resultado: Experiência consistente, análises personalizadas funcionando perfeitamente
   - Teste: Filtro 24h (48 vendas, R$ 881,53) vs Todas (1.244 vendas, R$ 40.428,36) ✅
 
+- [ ] **Simplificar interface removendo botões de período**
+  - Remover botões: Hoje, 7 dias, Mês, Todos (redundantes com filtro De/Até)
+  - Padrão inicial: Filtrar automaticamente para dia atual ao abrir tela
+  - Manter: Filtros De/Até e Canal para consultas personalizadas
+  - Impacto: Interface mais limpa, foco no dia atual, flexibilidade mantida
+
 ### ANÁLISE E RELATÓRIOS - Novas Funcionalidades
 
 - [ ] **Calendário de Análise de Vendas**
@@ -795,3 +801,12 @@
 4. Calendário de Análise de Vendas
 5. Calendário de Análise de Contas a Pagar
 6. Relatório de Análise Mensal
+
+- [x] **Corrigir filtros para usar saleDate ao invés de createdAt** - CONCLUÍDO (03/12/2025)
+  - Problema 1: Tabela vazia porque filtros usavam createdAt (data de implantação)
+  - Problema 2: Vendas implantadas (Josivan) apareciam em dezembro mas eram de novembro
+  - Solução: Backend modificado para filtrar por saleDate em todos os filtros (customizado, today, week, month)
+  - Frontend: Já estava correto, priorizava saleDate
+  - Resultado: Vendas aparecem na data correta (saleDate), não na data de implantação (createdAt)
+  - Teste: 6 vendas do Josivan (R$ 44,00) têm saleDate=30/11 e createdAt=03/12, aparecem em novembro ✅
+  - Interface simplificada: Removidos botões de período, filtro padrão = hoje

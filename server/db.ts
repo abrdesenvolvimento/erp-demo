@@ -511,9 +511,10 @@ export async function getSalesStats(
   let allSales = await db.select().from(sales);
   
   // Aplicar filtro de data customizada (tem prioridade sobre period)
+  // IMPORTANTE: Usa saleDate (data real da venda) ao invés de createdAt (data de implantação)
   if (dateFrom || dateTo) {
     allSales = allSales.filter(sale => {
-      const saleDate = new Date(sale.createdAt!);
+      const saleDate = new Date(sale.saleDate!);
       const saleBrasiliaStr = saleDate.toLocaleString('en-US', { 
         timeZone: 'America/Sao_Paulo',
         year: 'numeric',
@@ -553,8 +554,9 @@ export async function getSalesStats(
     
     if (period === 'today') {
       // Filtrar vendas de hoje comparando data em Brasília
+      // IMPORTANTE: Usa saleDate (data real da venda) ao invés de createdAt
       allSales = allSales.filter(sale => {
-        const saleDate = new Date(sale.createdAt!);
+        const saleDate = new Date(sale.saleDate!);
         const saleBrasiliaStr = saleDate.toLocaleString('en-US', { 
           timeZone: 'America/Sao_Paulo',
           year: 'numeric',
@@ -572,16 +574,18 @@ export async function getSalesStats(
       });
     } else if (period === 'week') {
       // 7 dias atrás
+      // IMPORTANTE: Usa saleDate (data real da venda) ao invés de createdAt
       const weekAgo = new Date(now);
       weekAgo.setDate(now.getDate() - 7);
       allSales = allSales.filter(sale => {
-        const saleDate = new Date(sale.createdAt!);
+        const saleDate = new Date(sale.saleDate!);
         return saleDate >= weekAgo;
       });
     } else if (period === 'month') {
       // Mês atual comparando data em Brasília
+      // IMPORTANTE: Usa saleDate (data real da venda) ao invés de createdAt
       allSales = allSales.filter(sale => {
-        const saleDate = new Date(sale.createdAt!);
+        const saleDate = new Date(sale.saleDate!);
         const saleBrasiliaStr = saleDate.toLocaleString('en-US', { 
           timeZone: 'America/Sao_Paulo',
           year: 'numeric',

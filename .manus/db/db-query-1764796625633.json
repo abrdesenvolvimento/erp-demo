@@ -1,0 +1,52 @@
+{
+  "query": "SELECT id, DATE(saleDate) as sale_date, DATE(createdAt) as created_date, saleType, finalAmount \nFROM sales \nWHERE DATE(CONVERT_TZ(createdAt, '+00:00', '-03:00')) = '2025-12-03'\nORDER BY saleDate DESC;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT id, DATE(saleDate) as sale_date, DATE(createdAt) as created_date, saleType, finalAmount \nFROM sales \nWHERE DATE(CONVERT_TZ(createdAt, '+00:00', '-03:00')) = '2025-12-03'\nORDER BY saleDate DESC;",
+  "rows": [
+    {
+      "id": "12210007",
+      "sale_date": "2025-11-30",
+      "created_date": "2025-12-03",
+      "saleType": "A_PRAZO",
+      "finalAmount": "10.00"
+    },
+    {
+      "id": "12210008",
+      "sale_date": "2025-11-30",
+      "created_date": "2025-12-03",
+      "saleType": "A_PRAZO",
+      "finalAmount": "10.00"
+    },
+    {
+      "id": "12210009",
+      "sale_date": "2025-11-30",
+      "created_date": "2025-12-03",
+      "saleType": "A_PRAZO",
+      "finalAmount": "2.00"
+    },
+    {
+      "id": "12210010",
+      "sale_date": "2025-11-30",
+      "created_date": "2025-12-03",
+      "saleType": "A_PRAZO",
+      "finalAmount": "7.00"
+    },
+    {
+      "id": "12210011",
+      "sale_date": "2025-11-30",
+      "created_date": "2025-12-03",
+      "saleType": "A_PRAZO",
+      "finalAmount": "5.00"
+    },
+    {
+      "id": "12210012",
+      "sale_date": "2025-11-30",
+      "created_date": "2025-12-03",
+      "saleType": "A_PRAZO",
+      "finalAmount": "10.00"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tsale_date\tcreated_date\tsaleType\tfinalAmount\n12210007\t2025-11-30\t2025-12-03\tA_PRAZO\t10.00\n12210008\t2025-11-30\t2025-12-03\tA_PRAZO\t10.00\n12210009\t2025-11-30\t2025-12-03\tA_PRAZO\t2.00\n12210010\t2025-11-30\t2025-12-03\tA_PRAZO\t7.00\n12210011\t2025-11-30\t2025-12-03\tA_PRAZO\t5.00\n12210012\t2025-11-30\t2025-12-03\tA_PRAZO\t10.00\n",
+  "stderr": "",
+  "execution_time_ms": 64
+}
