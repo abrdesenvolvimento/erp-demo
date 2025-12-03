@@ -53,6 +53,11 @@ export default function Vendas() {
   const [step, setStep] = useState<"type" | "form">("type");
   const [statsPeriod, setStatsPeriod] = useState<'today' | 'week' | 'month' | 'all'>('month');
   
+  // Filter states for sales list
+  const [filterFromDate, setFilterFromDate] = useState<string>("");
+  const [filterToDate, setFilterToDate] = useState<string>("");
+  const [filterSaleType, setFilterSaleType] = useState<string>("");
+  
   // Form states
   const [channelId, setChannelId] = useState<string>("");
   const [customerId, setCustomerId] = useState<string>("");
@@ -102,6 +107,38 @@ export default function Vendas() {
       p.docNumber?.toLowerCase().includes(searchLower)
     );
   }, [partners, customerSearch]);
+
+  // Filter sales by date range and sale type
+  const filteredSales = useMemo(() => {
+    let result = sales;
+    
+    // Filter by date range
+    if (filterFromDate || filterToDate) {
+      result = result.filter((sale: any) => {
+        const saleDate = new Date(sale.saleDate || sale.createdAt).toISOString().split('T')[0];
+        if (filterFromDate && saleDate < filterFromDate) return false;
+        if (filterToDate && saleDate > filterToDate) return false;
+        return true;
+      });
+    }
+    
+    // Filter by sale type
+    if (filterSaleType && filterSaleType !== "all") {
+      result = result.filter((sale: any) => sale.saleType === filterSaleType);
+    }
+    
+    return result;
+  }, [sales, filterFromDate, filterToDate, filterSaleType]);
+
+  // Initialize filters with last 24 hours on mount
+  useEffect(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    setFilterFromDate(yesterday.toISOString().split('T')[0]);
+    setFilterToDate(today.toISOString().split('T')[0]);
+  }, []);
 
   // Mutations
   const utils = trpc.useUtils();
@@ -448,7 +485,57 @@ export default function Vendas() {
             </div>
           </CardHeader>
           <CardContent>
-            {sales.length === 0 ? (
+            {/* Filtros */}
+            <div className="mb-6 grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div>
+                <Label htmlFor="filter-from-date" className="text-sm">De</Label>
+                <Input
+                  id="filter-from-date"
+                  type="date"
+                  value={filterFromDate}
+                  onChange={(e) => setFilterFromDate(e.target.value)}
+                  className="mt-1"
+                />
+              </div>
+              <div>
+                <Label htmlFor="filter-to-date" className="text-sm">Ate</Label>
+                <Input
+                  id="filter-to-date"
+                  type="date"
+                  value={filterToDate}
+                  onChange={(e) => setFilterToDate(e.target.value)}
+                  className="mt-1"
+                />
+              </div>
+              <div>
+                <Label htmlFor="filter-type" className="text-sm">Canal</Label>
+                <Select value={filterSaleType} onValueChange={setFilterSaleType}>
+                  <SelectTrigger id="filter-type" className="mt-1">
+                    <SelectValue placeholder="Todos" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos</SelectItem>
+                    <SelectItem value="BALCAO">Balcao</SelectItem>
+                    <SelectItem value="DELIVERY">Delivery</SelectItem>
+                    <SelectItem value="A_PRAZO">A Prazo</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex items-end">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setFilterFromDate("");
+                    setFilterToDate("");
+                    setFilterSaleType("all");
+                  }}
+                  className="w-full"
+                >
+                  Limpar Filtros
+                </Button>
+              </div>
+            </div>
+            {filteredSales.length === 0 ? (
               <div className="text-center py-12 text-muted-foreground">
                 Nenhuma venda registrada
               </div>
@@ -466,7 +553,7 @@ export default function Vendas() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {sales.map((sale: any) => (
+                  {filteredSales.map((sale: any) => (
                     <TableRow 
                       key={sale.id} 
                       className="cursor-pointer hover:bg-muted/50 transition-colors"

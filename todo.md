@@ -745,11 +745,11 @@
 
 ### TELA DE VENDAS - Filtros e Visualização
 
-- [ ] **Implementar filtro de período padrão (últimas 24h)**
-  - Atualmente exibe TODAS as vendas do histórico
-  - Sugestão: Padrão = últimas 24 horas para manter tela limpa
-  - Adicionar filtros: Data (range) e Canal (Balcão/Delivery)
-  - Impacto: Melhor performance e visualização mais clara
+- [x] **Implementar filtro de período padrão (últimas 24h)** - CONCLUÍDO
+  - Implementação: Padrão = últimas 24 horas (inicializado via useEffect)
+  - Filtros: Data (range com campos De/Até) e Canal (Balcão/Delivery/A Prazo/Todos)
+  - Funcionalidade: Filtros aplicados em tempo real, botão "Limpar Filtros" restaura padrão
+  - Resultado: Tela limpa, performance melhorada, filtros funcionando perfeitamente
 
 ### ANÁLISE E RELATÓRIOS - Novas Funcionalidades
 
