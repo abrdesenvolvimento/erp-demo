@@ -723,3 +723,67 @@
   - Solução: Adicionado useEffect para preencher automaticamente com valor total
   - Implementação: client/src/pages/Compras.tsx (linhas 70-78)
   - Resultado: Parcela preenchida automaticamente (testado com R$ 10.00)
+
+
+---
+
+## 📋 MELHORIAS SOLICITADAS - Sprint 03/12/2025 (Análise em andamento)
+
+### TELA DE COMPRAS - Problemas de UX
+
+- [x] **Filtro de fornecedor corrigido** - RESOLVIDO
+  - Problema: Ao clicar, exibia TODOS os fornecedores; ao digitar não filtrava
+  - Solução: Implementado filtro case-insensitive com busca por nome e CNPJ
+  - Implementação: Command com shouldFilter=false + filtro manual em client/src/pages/Compras.tsx
+  - Resultado: Filtro funciona perfeitamente - digitar Carrefour mostra apenas Carrefour Autonomistas e Carrefour Super Shopping
+
+- [x] **Barra de busca de produtos reposicionada** - RESOLVIDO
+  - Problema: Campo de busca ficava no topo, forçava scroll ao adicionar itens
+  - Solução: Movida para abaixo da tabela de produtos com scroll interno (max-h-96)
+  - Implementação: Reorganizado layout em client/src/pages/Compras.tsx (linhas 428-515)
+  - Resultado: Barra de busca sempre visível, tabela com scroll interno, melhor UX
+
+### TELA DE VENDAS - Filtros e Visualização
+
+- [ ] **Implementar filtro de período padrão (últimas 24h)**
+  - Atualmente exibe TODAS as vendas do histórico
+  - Sugestão: Padrão = últimas 24 horas para manter tela limpa
+  - Adicionar filtros: Data (range) e Canal (Balcão/Delivery)
+  - Impacto: Melhor performance e visualização mais clara
+
+### ANÁLISE E RELATÓRIOS - Novas Funcionalidades
+
+- [ ] **Calendário de Análise de Vendas**
+  - Visualizar faturamento por dia em formato de calendário
+  - Separar por canal: Balcão e Delivery
+  - Permitir clicar no dia para ver detalhes das vendas
+  - Objetivo: Facilitar análise de tendências diárias
+
+- [ ] **Calendário de Análise de Contas a Pagar**
+  - Visualizar valores de pagamentos previstos por dia
+  - Destacar dias com vencimentos importantes
+  - Integrar com calendário de vendas para análise comparativa
+  - Objetivo: Melhor planejamento de fluxo de caixa
+
+- [ ] **Relatório de Análise Mensal (tipo Excel)**
+  - Faturamento mensal (total e por canal)
+  - Quantidade de produtos vendidos por mês
+  - Projeções baseadas em histórico
+  - Objetivo: Suportar decisões estratégicas e projeções futuras
+  - Nota: Será mais poderoso após importação do legado
+
+---
+
+## 🎯 PRIORIZAÇÃO RECOMENDADA
+
+**P1 (Alta) - Corrigir Bugs:**
+1. Filtro de fornecedor em Compras (funcionalidade quebrada)
+2. Posicionamento da barra de busca de produtos
+
+**P2 (Média) - Melhorar UX:**
+3. Filtro de período em Vendas (últimas 24h como padrão)
+
+**P3 (Média-Alta) - Novas Funcionalidades:**
+4. Calendário de Análise de Vendas
+5. Calendário de Análise de Contas a Pagar
+6. Relatório de Análise Mensal

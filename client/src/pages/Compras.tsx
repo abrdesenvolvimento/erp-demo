@@ -136,10 +136,6 @@ export default function Compras() {
   });
 
   const selectedSupplier = suppliers.find(s => s.id === supplierId);
-  const filteredSuppliers = suppliers.filter(s => 
-    s.name.toLowerCase().includes(supplierSearch.toLowerCase()) ||
-    (s.docNumber && s.docNumber.includes(supplierSearch))
-  );
 
   const handleAddItem = (product: any) => {
     const existingItem = items.find(i => i.productId === product.id);
@@ -312,23 +308,27 @@ export default function Compras() {
                               </Button>
                             </PopoverTrigger>
                             <PopoverContent className="w-[400px] p-0" align="start">
-                              <Command>
+                              <Command shouldFilter={false}>
                                 <CommandInput 
                                   placeholder="Buscar fornecedor..." 
-                                  value={supplierSearch}
                                   onValueChange={setSupplierSearch}
                                 />
                                 <CommandList>
                                   <CommandEmpty>Nenhum fornecedor encontrado.</CommandEmpty>
                                   <CommandGroup>
-                                    {filteredSuppliers.map((supplier) => (
+                                    {suppliers
+                                      .filter(s => 
+                                        !supplierSearch || 
+                                        s.name.toLowerCase().includes(supplierSearch.toLowerCase()) ||
+                                        (s.docNumber && s.docNumber.includes(supplierSearch))
+                                      )
+                                      .map((supplier) => (
                                       <CommandItem
                                         key={supplier.id}
                                         value={supplier.id.toString()}
                                         onSelect={() => {
                                           setSupplierId(supplier.id);
                                           setSupplierOpen(false);
-                                          setSupplierSearch("");
                                         }}
                                       >
                                         <Check
@@ -429,32 +429,8 @@ export default function Compras() {
                     <div className="bg-card border rounded-lg p-6">
                       <h3 className="text-lg font-semibold mb-4">Produtos</h3>
                       <div className="space-y-4">
-                        <div className="relative">
-                          <Input
-                            placeholder="Buscar produto..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                          />
-                          {searchTerm && searchResults.length > 0 && (
-                            <div className="absolute top-full left-0 right-0 mt-1 bg-card border rounded-lg shadow-lg z-10">
-                              {searchResults.map((product) => (
-                                <button
-                                  key={product.id}
-                                  onClick={() => handleAddItem(product)}
-                                  className="w-full text-left px-4 py-2 hover:bg-muted first:rounded-t-lg last:rounded-b-lg"
-                                >
-                                  <div className="font-medium">{product.name}</div>
-                                  <div className="text-xs text-muted-foreground">
-                                    Estoque: {product.currentStock} {product.uom}
-                                  </div>
-                                </button>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-
                         {items.length > 0 && (
-                          <div className="border rounded-lg overflow-hidden">
+                          <div className="border rounded-lg overflow-x-auto max-h-96">
                             <table className="w-full text-sm">
                               <thead className="bg-muted/50 border-b">
                                 <tr>
@@ -511,6 +487,30 @@ export default function Compras() {
                             </table>
                           </div>
                         )}
+                        
+                        <div className="relative">
+                          <Input
+                            placeholder="Buscar produto..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                          />
+                          {searchTerm && searchResults.length > 0 && (
+                            <div className="absolute top-full left-0 right-0 mt-1 bg-card border rounded-lg shadow-lg z-10 max-h-48 overflow-y-auto">
+                              {searchResults.map((product) => (
+                                <button
+                                  key={product.id}
+                                  onClick={() => handleAddItem(product)}
+                                  className="w-full text-left px-4 py-2 hover:bg-muted first:rounded-t-lg last:rounded-b-lg"
+                                >
+                                  <div className="font-medium">{product.name}</div>
+                                  <div className="text-xs text-muted-foreground">
+                                    Estoque: {product.currentStock} {product.uom}
+                                  </div>
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
