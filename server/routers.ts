@@ -20,30 +20,58 @@ export const appRouter = router({
 
   // ==================== USUÁRIOS ====================
   users: router({
-    list: protectedProcedure
-      .query(async ({ ctx }) => {
-        // Apenas admins podem listar usuários
-        if (ctx.user.role !== 'admin') {
-          throw new TRPCError({ code: 'FORBIDDEN', message: 'Apenas administradores podem listar usuários' });
-        }
+    list: adminProcedure
+      .query(async () => {
         return await db.getAllUsers();
       }),
     
-    updateRole: protectedProcedure
+    create: adminProcedure
+      .input(z.object({
+        name: z.string().min(1),
+        email: z.string().email(),
+        role: z.enum(['user', 'admin', 'operacional', 'consultor']).default('user'),
+      }))
+      .mutation(async ({ input }) => {
+        // Gerar ID único para o usuário
+        const userId = `user-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        await db.upsertUser({
+          id: userId,
+          name: input.name,
+          email: input.email,
+          role: input.role,
+          loginMethod: 'manual',
+        });
+        return { id: userId, success: true };
+      }),
+    
+    update: adminProcedure
       .input(z.object({
         userId: z.string(),
-        role: z.enum(['admin', 'user'])
+        name: z.string().min(1).optional(),
+        email: z.string().email().optional(),
+        role: z.enum(['user', 'admin', 'operacional', 'consultor']).optional(),
       }))
       .mutation(async ({ ctx, input }) => {
-        // Apenas admins podem alterar roles
-        if (ctx.user.role !== 'admin') {
-          throw new TRPCError({ code: 'FORBIDDEN', message: 'Apenas administradores podem alterar permissões' });
-        }
         // Não pode alterar o próprio role
-        if (input.userId === ctx.user.id) {
+        if (input.userId === ctx.user.id && input.role && input.role !== ctx.user.role) {
           throw new TRPCError({ code: 'BAD_REQUEST', message: 'Você não pode alterar seu próprio nível de acesso' });
         }
-        await db.updateUserRole(input.userId, input.role);
+        await db.updateUser(input.userId, {
+          name: input.name,
+          email: input.email,
+          role: input.role,
+        });
+        return { success: true };
+      }),
+    
+    delete: adminProcedure
+      .input(z.object({ userId: z.string() }))
+      .mutation(async ({ ctx, input }) => {
+        // Não pode deletar a si mesmo
+        if (input.userId === ctx.user.id) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'Você não pode deletar sua própria conta' });
+        }
+        await db.deleteUser(input.userId);
         return { success: true };
       }),
   }),

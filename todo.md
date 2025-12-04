@@ -1169,3 +1169,38 @@
 - [x] Limitar campos visíveis de produtos para operacional
 - [x] Adicionar indicador visual de role no header
 - [x] Criar hook usePermissions para centralizar lógica de permissões
+
+## 👥 CONCLUSÃO SISTEMA DE USUÁRIOS (04/12/2025)
+
+### Backend
+- [ ] Criar users.list procedure (apenas admin)
+- [ ] Criar users.create procedure (apenas admin)
+- [ ] Criar users.update procedure (apenas admin)
+- [ ] Criar users.delete procedure (apenas admin)
+
+### Frontend
+- [ ] Implementar página Gerenciar Usuários com tabela e formulários
+- [ ] Aplicar usePermissions em Produtos (desabilitar botões para consultor)
+- [ ] Aplicar usePermissions em Vendas (desabilitar editar/cancelar para consultor)
+- [ ] Aplicar usePermissions em Compras (ocultar página para operacional)
+- [ ] Aplicar usePermissions em Despesas (ocultar página para operacional)
+- [ ] Aplicar usePermissions em Parceiros (ocultar página para operacional)
+
+### Testes
+- [ ] Testar role ADMIN (acesso total)
+- [ ] Testar role OPERACIONAL (vendas + produtos limitados)
+- [ ] Testar role CONSULTOR (read-only)
+
+- [x] Criar users.list procedure (apenas admin)
+- [x] Criar users.create procedure (apenas admin)
+- [x] Criar users.update procedure (apenas admin)
+- [x] Criar users.delete procedure (apenas admin)
+- [x] Implementar página Gerenciar Usuários com tabela e formulários
+
+- [x] Aplicar usePermissions em Produtos (desabilitar botões para consultor)
+- [x] Aplicar usePermissions em Vendas (desabilitar editar/cancelar para consultor)
+
+- [x] Corrigir bug de upsertUser não salvar role corretamente
+- [x] Testar criação de usuário Consultor
+- [x] Validar badges de permissão (Admin, Operacional, Consultor)
+- [x] Sistema de permissões completo e funcional

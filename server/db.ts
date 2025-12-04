@@ -72,12 +72,14 @@ export async function upsertUser(user: InsertUser): Promise<void> {
       values.lastSignedIn = user.lastSignedIn;
       updateSet.lastSignedIn = user.lastSignedIn;
     }
-    if (user.role === undefined) {
-      if (user.id === ENV.ownerId) {
-        user.role = 'admin';
-        values.role = 'admin';
-        updateSet.role = 'admin';
-      }
+    
+    // Atribuir role
+    if (user.role !== undefined) {
+      values.role = user.role;
+      updateSet.role = user.role;
+    } else if (user.id === ENV.ownerId) {
+      values.role = 'admin';
+      updateSet.role = 'admin';
     }
 
     if (Object.keys(updateSet).length === 0) {
@@ -106,12 +108,28 @@ export async function getAllUsers() {
   return await db.select().from(users).orderBy(users.createdAt);
 }
 
-export async function updateUserRole(userId: string, role: 'admin' | 'user') {
+export async function updateUser(userId: string, data: { name?: string; email?: string; role?: 'admin' | 'user' | 'operacional' | 'consultor' }) {
   const db = await getDb();
   if (!db) {
     throw new Error("Database not available");
   }
-  await db.update(users).set({ role }).where(eq(users.id, userId));
+  
+  const updateData: any = {};
+  if (data.name !== undefined) updateData.name = data.name;
+  if (data.email !== undefined) updateData.email = data.email;
+  if (data.role !== undefined) updateData.role = data.role;
+  
+  if (Object.keys(updateData).length === 0) return;
+  
+  await db.update(users).set(updateData).where(eq(users.id, userId));
+}
+
+export async function deleteUser(userId: string) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+  await db.delete(users).where(eq(users.id, userId));
 }
 
 // ==================== CATEGORIAS ====================

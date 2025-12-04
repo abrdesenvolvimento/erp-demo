@@ -33,6 +33,8 @@ import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
 import { formatSaleType, formatPaymentMethod } from "@/lib/formatters";
 import { SaleDetailsModal } from "@/components/SaleDetailsModal";
+import { useAuth } from "@/_core/hooks/useAuth";
+import { usePermissions } from "@/hooks/usePermissions";
 
 
 type SaleType = "BALCAO" | "DELIVERY" | "A_PRAZO";
@@ -47,6 +49,8 @@ interface SaleItem {
 }
 
 export default function Vendas() {
+  const { user } = useAuth();
+  const permissions = usePermissions();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedSaleId, setSelectedSaleId] = useState<number | null>(null);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
@@ -401,7 +405,10 @@ export default function Vendas() {
               Registre e gerencie vendas do sistema
             </p>
           </div>
-          <Button onClick={() => setIsModalOpen(true)}>
+          <Button 
+            onClick={() => setIsModalOpen(true)}
+            disabled={!permissions.sales.canCreate}
+          >
             <Plus className="h-4 w-4 mr-2" />
             Nova Venda
           </Button>

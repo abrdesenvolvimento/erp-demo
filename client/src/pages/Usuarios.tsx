@@ -1,55 +1,122 @@
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import DashboardLayout from "@/components/DashboardLayout";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Shield, ShieldCheck, User, Clock } from "lucide-react";
+import { Shield, Plus, Pencil, Trash2, Clock } from "lucide-react";
 import { toast } from "sonner";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { useAuth } from "@/_core/hooks/useAuth";
 
 export default function Usuarios() {
-  const [selectedUser, setSelectedUser] = useState<{ id: string; name: string; currentRole: string } | null>(null);
-  const [actionType, setActionType] = useState<"promote" | "demote" | null>(null);
+  const { user: currentUser } = useAuth();
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<any>(null);
 
-  const { data: users, isLoading, refetch } = trpc.users.list.useQuery();
-  const updateRoleMutation = trpc.users.updateRole.useMutation({
-    onSuccess: () => {
-      toast.success(actionType === "promote" ? "Usuário promovido a administrador" : "Usuário rebaixado para usuário comum");
-      refetch();
-      setSelectedUser(null);
-      setActionType(null);
-    },
-    onError: (error) => {
-      toast.error(error.message || "Erro ao alterar permissões");
-    },
+  const { data: users = [], isLoading, refetch } = trpc.users.list.useQuery();
+  const createMutation = trpc.users.create.useMutation();
+  const updateMutation = trpc.users.update.useMutation();
+  const deleteMutation = trpc.users.delete.useMutation();
+
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    role: "user" as "user" | "admin" | "operacional" | "consultor",
   });
 
-  const handlePromote = (user: any) => {
-    setSelectedUser({ id: user.id, name: user.name || "Usuário sem nome", currentRole: user.role });
-    setActionType("promote");
+  const handleCreate = async () => {
+    try {
+      await createMutation.mutateAsync(formData);
+      toast.success("Usuário criado com sucesso!");
+      setIsCreateModalOpen(false);
+      setFormData({ name: "", email: "", role: "user" });
+      refetch();
+    } catch (error: any) {
+      toast.error(error.message || "Erro ao criar usuário");
+    }
   };
 
-  const handleDemote = (user: any) => {
-    setSelectedUser({ id: user.id, name: user.name || "Usuário sem nome", currentRole: user.role });
-    setActionType("demote");
-  };
-
-  const confirmAction = () => {
+  const handleEdit = async () => {
     if (!selectedUser) return;
-    updateRoleMutation.mutate({
-      userId: selectedUser.id,
-      role: actionType === "promote" ? "admin" : "user",
+    try {
+      await updateMutation.mutateAsync({
+        userId: selectedUser.id,
+        ...formData,
+      });
+      toast.success("Usuário atualizado com sucesso!");
+      setIsEditModalOpen(false);
+      setSelectedUser(null);
+      setFormData({ name: "", email: "", role: "user" });
+      refetch();
+    } catch (error: any) {
+      toast.error(error.message || "Erro ao atualizar usuário");
+    }
+  };
+
+  const handleDelete = async (userId: string) => {
+    if (!confirm("Tem certeza que deseja excluir este usuário?")) return;
+    try {
+      await deleteMutation.mutateAsync({ userId });
+      toast.success("Usuário excluído com sucesso!");
+      refetch();
+    } catch (error: any) {
+      toast.error(error.message || "Erro ao excluir usuário");
+    }
+  };
+
+  const openEditModal = (user: any) => {
+    setSelectedUser(user);
+    setFormData({
+      name: user.name || "",
+      email: user.email || "",
+      role: user.role,
     });
+    setIsEditModalOpen(true);
+  };
+
+  const getRoleBadge = (role: string) => {
+    const badges = {
+      admin: "bg-amber-100 text-amber-700",
+      operacional: "bg-blue-100 text-blue-700",
+      consultor: "bg-purple-100 text-purple-700",
+      user: "bg-gray-100 text-gray-700",
+    };
+    const labels = {
+      admin: "Admin",
+      operacional: "Operacional",
+      consultor: "Consultor",
+      user: "Usuário",
+    };
+    return (
+      <Badge className={badges[role as keyof typeof badges]}>
+        {labels[role as keyof typeof labels]}
+      </Badge>
+    );
   };
 
   const formatDate = (date: Date | string | null) => {
@@ -79,119 +146,211 @@ export default function Usuarios() {
 
   return (
     <DashboardLayout>
-      <div className="p-6">
-        <div className="flex items-center gap-2 mb-6">
-          <Shield className="h-6 w-6" />
-          <h1 className="text-3xl font-bold">Gerenciar Usuários</h1>
-        </div>
-        <p className="text-muted-foreground mb-6">
-          Gerencie permissões de acesso dos usuários do sistema
-        </p>
-
-        <div className="grid gap-4">
-          {users?.map((user) => (
-          <Card key={user.id}>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  {user.role === "admin" ? (
-                    <ShieldCheck className="h-8 w-8 text-blue-500" />
-                  ) : (
-                    <User className="h-8 w-8 text-gray-500" />
-                  )}
-                  <div>
-                    <CardTitle className="text-xl">{user.name || "Usuário sem nome"}</CardTitle>
-                    <CardDescription className="flex items-center gap-2 mt-1">
-                      {user.email || "Email não informado"}
-                    </CardDescription>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Badge variant={user.role === "admin" ? "default" : "secondary"}>
-                    {user.role === "admin" ? "Administrador" : "Usuário"}
-                  </Badge>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                  <div className="flex items-center gap-1">
-                    <Clock className="h-4 w-4" />
-                    <span>Último acesso: {formatDate(user.lastSignedIn)}</span>
-                  </div>
-                  <div>
-                    Cadastrado em: {formatDate(user.createdAt)}
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  {user.role === "user" ? (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handlePromote(user)}
-                      disabled={updateRoleMutation.isPending}
-                    >
-                      <ShieldCheck className="h-4 w-4 mr-2" />
-                      Promover a Admin
-                    </Button>
-                  ) : (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleDemote(user)}
-                      disabled={updateRoleMutation.isPending}
-                    >
-                      <User className="h-4 w-4 mr-2" />
-                      Rebaixar para Usuário
-                    </Button>
-                  )}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          ))}
+      <div className="p-6 space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <Shield className="h-6 w-6" />
+              <h1 className="text-3xl font-bold">Gerenciar Usuários</h1>
+            </div>
+            <p className="text-muted-foreground">
+              Gerencie usuários e permissões do sistema
+            </p>
+          </div>
+          <Button onClick={() => setIsCreateModalOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Novo Usuário
+          </Button>
         </div>
 
-        {users?.length === 0 && (
-          <Card>
-            <CardContent className="py-8 text-center text-muted-foreground">
-              Nenhum usuário cadastrado ainda
-            </CardContent>
-          </Card>
-        )}
+        <div className="rounded-lg border bg-card">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Nome</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>Permissão</TableHead>
+                <TableHead>Método de Login</TableHead>
+                <TableHead>Último Acesso</TableHead>
+                <TableHead className="text-right">Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {users.map((user) => (
+                <TableRow key={user.id}>
+                  <TableCell className="font-medium">{user.name}</TableCell>
+                  <TableCell>{user.email}</TableCell>
+                  <TableCell>{getRoleBadge(user.role)}</TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {user.loginMethod || "-"}
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {formatDate(user.lastSignedIn)}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => openEditModal(user)}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleDelete(user.id)}
+                        disabled={user.id === currentUser?.id}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
 
-        <AlertDialog open={!!selectedUser} onOpenChange={() => setSelectedUser(null)}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>
-                {actionType === "promote" ? "Promover usuário?" : "Rebaixar administrador?"}
-              </AlertDialogTitle>
-              <AlertDialogDescription>
-                {actionType === "promote" ? (
-                  <>
-                    Você está prestes a promover <strong>{selectedUser?.name}</strong> para{" "}
-                    <strong>Administrador</strong>. Este usuário terá acesso total ao sistema,
-                    incluindo visualização de custos, relatórios financeiros e gerenciamento de
-                    usuários.
-                  </>
-                ) : (
-                  <>
-                    Você está prestes a rebaixar <strong>{selectedUser?.name}</strong> para{" "}
-                    <strong>Usuário comum</strong>. Este usuário perderá acesso a funcionalidades
-                    administrativas e relatórios financeiros.
-                  </>
+        {/* Modal Criar Usuário */}
+        <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Novo Usuário</DialogTitle>
+              <DialogDescription>
+                Crie um novo usuário e atribua permissões
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="name">Nome</Label>
+                <Input
+                  id="name"
+                  value={formData.name}
+                  onChange={(e) =>
+                    setFormData({ ...formData, name: e.target.value })
+                  }
+                  placeholder="Nome completo"
+                />
+              </div>
+              <div>
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) =>
+                    setFormData({ ...formData, email: e.target.value })
+                  }
+                  placeholder="email@exemplo.com"
+                />
+              </div>
+              <div>
+                <Label htmlFor="role">Permissão</Label>
+                <Select
+                  value={formData.role}
+                  onValueChange={(value: any) =>
+                    setFormData({ ...formData, role: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="user">Usuário</SelectItem>
+                    <SelectItem value="operacional">Operacional</SelectItem>
+                    <SelectItem value="consultor">Consultor</SelectItem>
+                    <SelectItem value="admin">Admin</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setIsCreateModalOpen(false)}
+              >
+                Cancelar
+              </Button>
+              <Button onClick={handleCreate} disabled={createMutation.isPending}>
+                {createMutation.isPending ? "Criando..." : "Criar Usuário"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Modal Editar Usuário */}
+        <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Editar Usuário</DialogTitle>
+              <DialogDescription>
+                Atualize as informações e permissões do usuário
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="edit-name">Nome</Label>
+                <Input
+                  id="edit-name"
+                  value={formData.name}
+                  onChange={(e) =>
+                    setFormData({ ...formData, name: e.target.value })
+                  }
+                  placeholder="Nome completo"
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit-email">Email</Label>
+                <Input
+                  id="edit-email"
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) =>
+                    setFormData({ ...formData, email: e.target.value })
+                  }
+                  placeholder="email@exemplo.com"
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit-role">Permissão</Label>
+                <Select
+                  value={formData.role}
+                  onValueChange={(value: any) =>
+                    setFormData({ ...formData, role: value })
+                  }
+                  disabled={selectedUser?.id === currentUser?.id}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="user">Usuário</SelectItem>
+                    <SelectItem value="operacional">Operacional</SelectItem>
+                    <SelectItem value="consultor">Consultor</SelectItem>
+                    <SelectItem value="admin">Admin</SelectItem>
+                  </SelectContent>
+                </Select>
+                {selectedUser?.id === currentUser?.id && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Você não pode alterar seu próprio nível de acesso
+                  </p>
                 )}
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-              <AlertDialogAction onClick={confirmAction}>
-                Confirmar
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setIsEditModalOpen(false)}
+              >
+                Cancelar
+              </Button>
+              <Button onClick={handleEdit} disabled={updateMutation.isPending}>
+                {updateMutation.isPending ? "Salvando..." : "Salvar Alterações"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </DashboardLayout>
   );

@@ -48,6 +48,7 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/_core/hooks/useAuth";
+import { usePermissions } from "@/hooks/usePermissions";
 import { validateEAN } from "@/lib/validators";
 
 // Componente para gerenciar composições de produtos
@@ -494,7 +495,8 @@ type ProductFormData = {
 
 export default function Produtos() {
   const { user } = useAuth();
-  const isAdmin = user?.role === "admin";
+  const permissions = usePermissions();
+  const isAdmin = permissions.isAdmin;
   
   const [search, setSearch] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -784,11 +786,14 @@ export default function Produtos() {
             </p>
           </div>
 
-          <Button onClick={() => {
-            resetForm();
-            setEditingProduct(null);
-            setIsDialogOpen(true);
-          }}>
+          <Button 
+            onClick={() => {
+              resetForm();
+              setEditingProduct(null);
+              setIsDialogOpen(true);
+            }}
+            disabled={!permissions.products.canCreate}
+          >
             <Plus className="h-4 w-4 mr-2" />
             Novo Produto
           </Button>
