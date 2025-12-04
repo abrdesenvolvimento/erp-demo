@@ -40,7 +40,7 @@
 
 ## 🔴 BUGS CRÍTICOS - PENDENTES (1 item)
 
-- [x] **Cálculo incorreto da média diária em Relatórios** - Corrigido! Agora divide por dias com vendas (calendarData.length) ao invés de total de dias do mês. Ex: R$ 2.692,08 ÷ 3 = R$ 897,36 ✅
+- [x] **Média diária calculada incorretamente** - Corrigido! Agora divide pelo total de dias do mês (daysInMonth) ao invés de dias com vendas. Novembro: R$ 38.363,53 ÷ 30 dias = R$ 1.278,78 ✅ | Dezembro: R$ 2.692,08 ÷ 31 dias = R$ 86,84 ✅
 - [x] **Layout de vendas quebrado no mobile** - Resumo com grid responsivo (1 col mobile, 2 cols tablet, 4 cols desktop), layout adequado
 - [x] **Espaçamento entre linha 1 e 2 no Dashboard desktop** - Gap 0 + padding cabeçalho py-1, espaço totalmente eliminado
 - [x] **Quadros muito estreitos em mobile** - Scroll horizontal implementado (Dashboard: 600px, Relatórios: 650px), valores em uma linha

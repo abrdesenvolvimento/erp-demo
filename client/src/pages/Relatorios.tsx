@@ -113,7 +113,7 @@ export default function Relatorios() {
                     Total: <span className="font-semibold text-green-600">{formatCurrency(monthTotal)}</span>
                   </div>
                   <div>
-                    Média Diária: <span className="font-semibold text-blue-600">{daysWithSales > 0 ? formatCurrency(monthTotal / daysWithSales) : formatCurrency(0)}</span>
+                    Média Diária: <span className="font-semibold text-blue-600">{daysInMonth > 0 ? formatCurrency(monthTotal / daysInMonth) : formatCurrency(0)}</span>
                   </div>
                 </div>
               </div>
