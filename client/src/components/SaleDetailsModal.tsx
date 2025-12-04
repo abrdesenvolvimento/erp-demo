@@ -1,6 +1,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
 import { Printer, X, Edit, Ban } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
@@ -238,7 +239,14 @@ export function SaleDetailsModal({ saleId, open, onClose }: SaleDetailsModalProp
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
-            <span>Detalhes da Venda #{saleId}</span>
+            <div className="flex items-center gap-3">
+              <span>Detalhes da Venda #{saleId}</span>
+              {saleData?.status === "CANCELLED" && (
+                <Badge variant="destructive" className="text-xs">
+                  CANCELADO
+                </Badge>
+              )}
+            </div>
             <div className="flex gap-2">
               {user?.role === "admin" && canEditOrCancel() && (
                 <>

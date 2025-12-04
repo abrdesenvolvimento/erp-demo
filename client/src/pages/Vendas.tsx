@@ -622,9 +622,9 @@ export default function Vendas() {
             )}
 
             {step === "form" && (
-              <div className="flex-1 grid md:grid-cols-[1fr,400px] gap-6 overflow-hidden">
-                {/* Coluna Esquerda: Formulário (scrollável) */}
-                <div className="overflow-y-auto space-y-4 py-2 pr-2">
+              <div className="flex-1 grid md:grid-cols-[1fr,400px] gap-6">
+                {/* Coluna Esquerda: Formulário */}
+                <div className="space-y-4 py-2 pr-2">
                 {/* Canal de Venda - Apenas para DELIVERY */}
                 {saleType === "DELIVERY" && (
                   <div className="space-y-2">

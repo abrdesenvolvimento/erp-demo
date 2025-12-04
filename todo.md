@@ -1057,3 +1057,10 @@
 
 - [x] **Campo Observações não carregado ao editar compra** - Corrigido! Adicionado `setNotes(purchase.purchaseOrder.notes || "")` na função loadPurchaseForEdit ✅
 - [x] **Formulário não retorna à lista após salvar edição** - Corrigido! Adicionado `setIsCreating(false)` e `setSelectedPurchaseId(null)` no onSuccess da updateMutation ✅
+
+
+## 🐛 BUGS/MELHORIAS REPORTADOS - 04/12/2025 (Vendas)
+
+- [x] **Modal de Vendas - Scroll de produtos inviável no mobile** - Removido scroll fixo da coluna esquerda (formulário). Agora usa scroll natural do DialogContent, melhorando usabilidade no mobile. ✅
+
+- [x] **Vendas canceladas - Falta destaque visual** - Adicionado Badge "CANCELADO" em vermelho ao lado do título no SaleDetailsModal quando status = CANCELLED. ✅
