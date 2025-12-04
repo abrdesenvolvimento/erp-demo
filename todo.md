@@ -41,6 +41,8 @@
 ## 🔴 BUGS CRÍTICOS - PENDENTES (1 item)
 
 - [ ] **Layout de vendas quebrado no mobile** - Resumo não tem layout responsivo adequado, tudo em scroll vertical único
+- [x] **Espaçamento entre linha 1 e 2 no Dashboard desktop** - Gap 0 + padding cabeçalho py-1, espaço totalmente eliminado
+- [x] **Quadros muito estreitos em mobile** - Scroll horizontal implementado (Dashboard: 600px, Relatórios: 650px), valores em uma linha
 - [x] **Espaço grande entre primeira e segunda linha no calendário Dashboard** - Gap reduzido de 1 para 0.5, layout mais compacto
 - [x] **Valores saindo dos quadros em mobile** - Dashboard: min-h aumentada para 85px, fonte reduzida para 10px, overflow-hidden + break-words
 - [x] **Valores desenquadrados no calendário Relatórios** - Mobile: min-h 140px, fontes 9px, truncate. Desktop: gap reduzido, overflow controlado

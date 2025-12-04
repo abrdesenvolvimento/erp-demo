@@ -90,9 +90,10 @@ export function CompactSalesCalendar() {
         </div>
       </div>
       {/* Grid do calendário */}
-      <div className="grid grid-cols-7 gap-0.5">  {/* Cabeçalho dos dias da semana */}
+      <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
+        <div className="grid grid-cols-7 gap-0 min-w-[600px] md:min-w-0">  {/* Cabeçalho dos dias da semana */}
         {dayNames.map(name => (
-          <div key={name} className="text-center text-xs md:text-xs font-semibold text-muted-foreground py-2">
+          <div key={name} className="text-center text-xs md:text-xs font-semibold text-muted-foreground py-1">
             {name}
           </div>
         ))}
@@ -129,6 +130,7 @@ export function CompactSalesCalendar() {
             </div>
           );
         })}
+        </div>
       </div>
     </div>
   );

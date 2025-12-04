@@ -137,7 +137,8 @@ export default function Relatorios() {
                 </div>
 
                 {/* Grid do calendário */}
-                <div className="grid grid-cols-7 gap-0.5 md:gap-1">
+                <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
+                  <div className="grid grid-cols-7 gap-0.5 md:gap-1 min-w-[650px] md:min-w-0">
                   {/* Cabeçalho dos dias da semana */}
                   {DAYS_OF_WEEK.map(day => (
                     <div key={day} className="text-center font-semibold text-xs md:text-sm py-1 md:py-2">
@@ -158,7 +159,7 @@ export default function Relatorios() {
                       <div
                         key={day}
                         className={`
-                          min-h-[140px] md:h-[100px] border rounded-lg p-1.5 md:p-2 flex flex-col text-xs md:text-sm overflow-hidden
+                          min-h-[150px] md:h-[100px] border rounded-lg p-1.5 md:p-2 flex flex-col text-xs md:text-sm overflow-hidden
                           ${isToday(day) ? 'border-blue-500 border-2' : 'border-gray-200'}
                           ${hasData ? 'bg-gray-50' : 'bg-white'}
                           hover:shadow-md transition-shadow
@@ -166,28 +167,28 @@ export default function Relatorios() {
                       >
                         <div className="text-sm md:text-lg font-semibold mb-1">{day}</div>
                         {hasData && dayData && (
-                          <div className="flex-1 flex flex-col justify-between min-h-0">
-                            <div className="space-y-0.5 overflow-hidden">
+                          <div className="flex-1 flex flex-col justify-between">
+                            <div className="space-y-0.5">
                               {dayData.balcao > 0 && (
-                                <div className="flex items-center gap-1 min-w-0">
-                                  <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></div>
-                                  <span className="text-[9px] md:text-xs truncate">{formatCurrency(dayData.balcao)}</span>
+                                <div className="flex items-center gap-0.5">
+                                  <div className="w-1.5 h-1.5 bg-blue-500 rounded-full flex-shrink-0"></div>
+                                  <span className="text-[8px] md:text-xs leading-tight">{formatCurrency(dayData.balcao)}</span>
                                 </div>
                               )}
                               {dayData.delivery > 0 && (
-                                <div className="flex items-center gap-1 min-w-0">
-                                  <div className="w-2 h-2 bg-purple-500 rounded-full flex-shrink-0"></div>
-                                  <span className="text-[9px] md:text-xs truncate">{formatCurrency(dayData.delivery)}</span>
+                                <div className="flex items-center gap-0.5">
+                                  <div className="w-1.5 h-1.5 bg-purple-500 rounded-full flex-shrink-0"></div>
+                                  <span className="text-[8px] md:text-xs leading-tight">{formatCurrency(dayData.delivery)}</span>
                                 </div>
                               )}
                               {dayData.aPrazo > 0 && (
-                                <div className="flex items-center gap-1 min-w-0">
-                                  <div className="w-2 h-2 bg-orange-500 rounded-full flex-shrink-0"></div>
-                                  <span className="text-[9px] md:text-xs truncate">{formatCurrency(dayData.aPrazo)}</span>
+                                <div className="flex items-center gap-0.5">
+                                  <div className="w-1.5 h-1.5 bg-orange-500 rounded-full flex-shrink-0"></div>
+                                  <span className="text-[8px] md:text-xs leading-tight">{formatCurrency(dayData.aPrazo)}</span>
                                 </div>
                               )}
                             </div>
-                            <div className="font-bold text-[9px] md:text-sm mt-1 md:mt-2 pt-1 md:pt-1.5 border-t truncate">
+                            <div className="font-bold text-[8px] md:text-sm mt-1 md:mt-2 pt-1 md:pt-1.5 border-t leading-tight">
                               {formatCurrency(dayData.total)}
                             </div>
                           </div>
@@ -195,6 +196,7 @@ export default function Relatorios() {
                       </div>
                     );
                   })}
+                  </div>
                 </div>
               </>
             )}
