@@ -2566,6 +2566,27 @@ export async function getCustomerAccountHistory(customerId: number) {
     eq(sales.saleType, "A_PRAZO")
   ));
 
+  // Buscar produtos de cada venda
+  const salesWithItems = await Promise.all(
+    customerSales.map(async (sale) => {
+      const items = await db.select({
+        productId: saleItems.productId,
+        productName: products.name,
+        quantity: saleItems.quantity,
+        unitPrice: saleItems.unitPrice,
+        totalPrice: saleItems.totalPrice
+      })
+      .from(saleItems)
+      .leftJoin(products, eq(saleItems.productId, products.id))
+      .where(eq(saleItems.saleId, sale.id));
+      
+      return {
+        ...sale,
+        items
+      };
+    })
+  );
+
   // Buscar débitos manuais
   const debits = await db.select({
     id: customerDebits.id,
@@ -2593,7 +2614,7 @@ export async function getCustomerAccountHistory(customerId: number) {
   .where(eq(customerPayments.customerId, customerId));
 
   // Combinar e ordenar por data
-  const history = [...customerSales, ...debits, ...payments]
+  const history = [...salesWithItems, ...debits, ...payments]
     .filter(item => item.date !== null)
     .sort((a, b) => new Date(a.date!).getTime() - new Date(b.date!).getTime());
 

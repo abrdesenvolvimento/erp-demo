@@ -1,0 +1,17 @@
+{
+  "query": "SELECT \n  p.name,\n  (SELECT COALESCE(SUM(finalAmount), 0) FROM sales WHERE customerId = p.id AND saleType = 'A_PRAZO') as total_vendas,\n  (SELECT COALESCE(SUM(paidAmount), 0) FROM customerPayments WHERE customerId = p.id) as total_pagamentos,\n  (SELECT COALESCE(SUM(debitAmount), 0) FROM customerDebits WHERE customerId = p.id) as total_debitos,\n  ((SELECT COALESCE(SUM(finalAmount), 0) FROM sales WHERE customerId = p.id AND saleType = 'A_PRAZO') + \n   (SELECT COALESCE(SUM(debitAmount), 0) FROM customerDebits WHERE customerId = p.id) -\n   (SELECT COALESCE(SUM(paidAmount), 0) FROM customerPayments WHERE customerId = p.id)) as saldo_calculado\nFROM partners p\nWHERE p.name LIKE '%Jackson%';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  p.name,\n  (SELECT COALESCE(SUM(finalAmount), 0) FROM sales WHERE customerId = p.id AND saleType = 'A_PRAZO') as total_vendas,\n  (SELECT COALESCE(SUM(paidAmount), 0) FROM customerPayments WHERE customerId = p.id) as total_pagamentos,\n  (SELECT COALESCE(SUM(debitAmount), 0) FROM customerDebits WHERE customerId = p.id) as total_debitos,\n  ((SELECT COALESCE(SUM(finalAmount), 0) FROM sales WHERE customerId = p.id AND saleType = 'A_PRAZO') + \n   (SELECT COALESCE(SUM(debitAmount), 0) FROM customerDebits WHERE customerId = p.id) -\n   (SELECT COALESCE(SUM(paidAmount), 0) FROM customerPayments WHERE customerId = p.id)) as saldo_calculado\nFROM partners p\nWHERE p.name LIKE '%Jackson%';",
+  "rows": [
+    {
+      "name": "Jackson Vinicius",
+      "total_vendas": "266.00",
+      "total_pagamentos": "0",
+      "total_debitos": "0",
+      "saldo_calculado": "266.00"
+    }
+  ],
+  "messages": [],
+  "stdout": "name\ttotal_vendas\ttotal_pagamentos\ttotal_debitos\tsaldo_calculado\nJackson Vinicius\t266.00\t0\t0\t266.00\n",
+  "stderr": "",
+  "execution_time_ms": 55
+}

@@ -1,0 +1,124 @@
+{
+  "query": "SELECT \n  'VENDA' as tipo,\n  s.id,\n  s.saleDate as data,\n  s.finalAmount as valor\nFROM sales s\nJOIN partners p ON s.customerId = p.id\nWHERE p.name LIKE '%Vitor Hugo%' AND s.saleType = 'A_PRAZO'\nUNION ALL\nSELECT \n  'PAGAMENTO' as tipo,\n  cp.id,\n  cp.paidDate as data,\n  cp.paidAmount as valor\nFROM customerPayments cp\nJOIN partners p ON cp.customerId = p.id\nWHERE p.name LIKE '%Vitor Hugo%'\nUNION ALL\nSELECT \n  'DEBITO' as tipo,\n  cd.id,\n  cd.debitDate as data,\n  cd.debitAmount as valor\nFROM customerDebits cd\nJOIN partners p ON cd.customerId = p.id\nWHERE p.name LIKE '%Vitor Hugo%'\nORDER BY data;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  'VENDA' as tipo,\n  s.id,\n  s.saleDate as data,\n  s.finalAmount as valor\nFROM sales s\nJOIN partners p ON s.customerId = p.id\nWHERE p.name LIKE '%Vitor Hugo%' AND s.saleType = 'A_PRAZO'\nUNION ALL\nSELECT \n  'PAGAMENTO' as tipo,\n  cp.id,\n  cp.paidDate as data,\n  cp.paidAmount as valor\nFROM customerPayments cp\nJOIN partners p ON cp.customerId = p.id\nWHERE p.name LIKE '%Vitor Hugo%'\nUNION ALL\nSELECT \n  'DEBITO' as tipo,\n  cd.id,\n  cd.debitDate as data,\n  cd.debitAmount as valor\nFROM customerDebits cd\nJOIN partners p ON cd.customerId = p.id\nWHERE p.name LIKE '%Vitor Hugo%'\nORDER BY data;",
+  "rows": [
+    {
+      "tipo": "VENDA",
+      "id": "2310001",
+      "data": "2025-11-21 01:19:03",
+      "valor": "12.00"
+    },
+    {
+      "tipo": "VENDA",
+      "id": "3180002",
+      "data": "2025-11-21 23:51:24",
+      "valor": "67.00"
+    },
+    {
+      "tipo": "VENDA",
+      "id": "3270005",
+      "data": "2025-11-22 01:03:23",
+      "valor": "4.50"
+    },
+    {
+      "tipo": "VENDA",
+      "id": "3330012",
+      "data": "2025-11-22 02:14:20",
+      "valor": "10.00"
+    },
+    {
+      "tipo": "VENDA",
+      "id": "3330013",
+      "data": "2025-11-22 02:26:14",
+      "valor": "6.00"
+    },
+    {
+      "tipo": "VENDA",
+      "id": "6090006",
+      "data": "2025-11-25 00:13:27",
+      "valor": "2.00"
+    },
+    {
+      "tipo": "PAGAMENTO",
+      "id": "60003",
+      "data": "2025-11-25 05:00:00",
+      "valor": "67.00"
+    },
+    {
+      "tipo": "PAGAMENTO",
+      "id": "60004",
+      "data": "2025-11-25 05:00:00",
+      "valor": "11.00"
+    },
+    {
+      "tipo": "PAGAMENTO",
+      "id": "60005",
+      "data": "2025-11-25 05:00:00",
+      "valor": "10.00"
+    },
+    {
+      "tipo": "PAGAMENTO",
+      "id": "60002",
+      "data": "2025-11-25 05:00:00",
+      "valor": "12.00"
+    },
+    {
+      "tipo": "VENDA",
+      "id": "6810002",
+      "data": "2025-11-26 01:13:02",
+      "valor": "22.00"
+    },
+    {
+      "tipo": "VENDA",
+      "id": "7440001",
+      "data": "2025-11-26 23:06:00",
+      "valor": "21.50"
+    },
+    {
+      "tipo": "VENDA",
+      "id": "7740016",
+      "data": "2025-11-27 02:22:26",
+      "valor": "2.00"
+    },
+    {
+      "tipo": "VENDA",
+      "id": "8010002",
+      "data": "2025-11-27 23:09:23",
+      "valor": "7.00"
+    },
+    {
+      "tipo": "VENDA",
+      "id": "8010003",
+      "data": "2025-11-27 23:10:26",
+      "valor": "4.00"
+    },
+    {
+      "tipo": "VENDA",
+      "id": "8040001",
+      "data": "2025-11-27 23:21:58",
+      "valor": "10.00"
+    },
+    {
+      "tipo": "VENDA",
+      "id": "8190001",
+      "data": "2025-11-28 00:53:57",
+      "valor": "15.25"
+    },
+    {
+      "tipo": "VENDA",
+      "id": "10980022",
+      "data": "2025-11-30 23:38:08",
+      "valor": "2.00"
+    },
+    {
+      "tipo": "DEBITO",
+      "id": "1",
+      "data": "2025-12-04 11:50:14",
+      "valor": "50.00"
+    }
+  ],
+  "messages": [],
+  "stdout": "tipo\tid\tdata\tvalor\nVENDA\t2310001\t2025-11-21 01:19:03\t12.00\nVENDA\t3180002\t2025-11-21 23:51:24\t67.00\nVENDA\t3270005\t2025-11-22 01:03:23\t4.50\nVENDA\t3330012\t2025-11-22 02:14:20\t10.00\nVENDA\t3330013\t2025-11-22 02:26:14\t6.00\nVENDA\t6090006\t2025-11-25 00:13:27\t2.00\nPAGAMENTO\t60003\t2025-11-25 05:00:00\t67.00\nPAGAMENTO\t60004\t2025-11-25 05:00:00\t11.00\nPAGAMENTO\t60005\t2025-11-25 05:00:00\t10.00\nPAGAMENTO\t60002\t2025-11-25 05:00:00\t12.00\nVENDA\t6810002\t2025-11-26 01:13:02\t22.00\nVENDA\t7440001\t2025-11-26 23:06:00\t21.50\nVENDA\t7740016\t2025-11-27 02:22:26\t2.00\nVENDA\t8010002\t2025-11-27 23:09:23\t7.00\nVENDA\t8010003\t2025-11-27 23:10:26\t4.00\nVENDA\t8040001\t2025-11-27 23:21:58\t10.00\nVENDA\t8190001\t2025-11-28 00:53:57\t15.25\nVENDA\t10980022\t2025-11-30 23:38:08\t2.00\nDEBITO\t1\t2025-12-04 11:50:14\t50.00\n",
+  "stderr": "",
+  "execution_time_ms": 58
+}

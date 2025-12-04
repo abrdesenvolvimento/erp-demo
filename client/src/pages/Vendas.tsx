@@ -828,7 +828,7 @@ export default function Vendas() {
                 </div>
                 
                 {/* Coluna Direita: Resumo (fixo) */}
-                <div className="overflow-y-auto py-2">
+                <div className="py-2">
                   <Card className="sticky top-0">
                     <CardHeader>
                       <h3 className="font-semibold text-lg">Resumo da Venda</h3>

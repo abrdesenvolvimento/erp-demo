@@ -1,0 +1,70 @@
+{
+  "query": "SELECT \n  'VENDA' as tipo,\n  s.id,\n  s.saleDate as data,\n  s.finalAmount as valor\nFROM sales s\nJOIN partners p ON s.customerId = p.id\nWHERE p.name LIKE '%Jackson%' AND s.saleType = 'A_PRAZO'\nUNION ALL\nSELECT \n  'PAGAMENTO' as tipo,\n  cp.id,\n  cp.paidDate as data,\n  cp.paidAmount as valor\nFROM customerPayments cp\nJOIN partners p ON cp.customerId = p.id\nWHERE p.name LIKE '%Jackson%'\nUNION ALL\nSELECT \n  'DEBITO' as tipo,\n  cd.id,\n  cd.debitDate as data,\n  cd.debitAmount as valor\nFROM customerDebits cd\nJOIN partners p ON cd.customerId = p.id\nWHERE p.name LIKE '%Jackson%'\nORDER BY data;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  'VENDA' as tipo,\n  s.id,\n  s.saleDate as data,\n  s.finalAmount as valor\nFROM sales s\nJOIN partners p ON s.customerId = p.id\nWHERE p.name LIKE '%Jackson%' AND s.saleType = 'A_PRAZO'\nUNION ALL\nSELECT \n  'PAGAMENTO' as tipo,\n  cp.id,\n  cp.paidDate as data,\n  cp.paidAmount as valor\nFROM customerPayments cp\nJOIN partners p ON cp.customerId = p.id\nWHERE p.name LIKE '%Jackson%'\nUNION ALL\nSELECT \n  'DEBITO' as tipo,\n  cd.id,\n  cd.debitDate as data,\n  cd.debitAmount as valor\nFROM customerDebits cd\nJOIN partners p ON cd.customerId = p.id\nWHERE p.name LIKE '%Jackson%'\nORDER BY data;",
+  "rows": [
+    {
+      "tipo": "VENDA",
+      "id": "2640016",
+      "data": "2025-11-02 00:00:00",
+      "valor": "3.00"
+    },
+    {
+      "tipo": "VENDA",
+      "id": "2640017",
+      "data": "2025-11-05 00:00:00",
+      "valor": "3.50"
+    },
+    {
+      "tipo": "VENDA",
+      "id": "2640018",
+      "data": "2025-11-07 00:00:00",
+      "valor": "12.00"
+    },
+    {
+      "tipo": "VENDA",
+      "id": "2640019",
+      "data": "2025-11-09 00:00:00",
+      "valor": "32.00"
+    },
+    {
+      "tipo": "VENDA",
+      "id": "2640020",
+      "data": "2025-11-13 00:00:00",
+      "valor": "9.00"
+    },
+    {
+      "tipo": "VENDA",
+      "id": "2640021",
+      "data": "2025-11-16 00:00:00",
+      "valor": "37.00"
+    },
+    {
+      "tipo": "VENDA",
+      "id": "2640022",
+      "data": "2025-11-20 00:00:00",
+      "valor": "75.50"
+    },
+    {
+      "tipo": "VENDA",
+      "id": "5070001",
+      "data": "2025-11-23 17:47:01",
+      "valor": "51.00"
+    },
+    {
+      "tipo": "VENDA",
+      "id": "9630014",
+      "data": "2025-11-29 23:25:13",
+      "valor": "21.00"
+    },
+    {
+      "tipo": "VENDA",
+      "id": "12120003",
+      "data": "2025-12-03 00:21:06",
+      "valor": "22.00"
+    }
+  ],
+  "messages": [],
+  "stdout": "tipo\tid\tdata\tvalor\nVENDA\t2640016\t2025-11-02 00:00:00\t3.00\nVENDA\t2640017\t2025-11-05 00:00:00\t3.50\nVENDA\t2640018\t2025-11-07 00:00:00\t12.00\nVENDA\t2640019\t2025-11-09 00:00:00\t32.00\nVENDA\t2640020\t2025-11-13 00:00:00\t9.00\nVENDA\t2640021\t2025-11-16 00:00:00\t37.00\nVENDA\t2640022\t2025-11-20 00:00:00\t75.50\nVENDA\t5070001\t2025-11-23 17:47:01\t51.00\nVENDA\t9630014\t2025-11-29 23:25:13\t21.00\nVENDA\t12120003\t2025-12-03 00:21:06\t22.00\n",
+  "stderr": "",
+  "execution_time_ms": 59
+}

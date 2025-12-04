@@ -979,3 +979,15 @@
     - Saldo atualizado: R$ 135,25 ✅
     - Crédito disponível: R$ 0,00 (limite R$ 101,50 - saldo R$ 135,25)
   - **Resultado:** Sistema funcionando perfeitamente! Débitos manuais integrados ao modelo de conta corrente ✅
+
+## 🐛 PROBLEMAS REPORTADOS (04/12/2025 - 09:55)
+
+- [x] **Modal de Vendas - Scroll duplo** - Scroll do resumo removido, apenas coluna esquerda (formulário) tem scroll. ✅
+
+- [x] **Contas a Receber - Sem menu lateral** - DashboardLayout integrado em ambas as telas (lista e histórico). ✅
+
+- [x] **Detalhes Contas a Receber - Falta visão de produtos por venda** - Tabela detalhada implementada com rowSpan para vendas. Cada produto tem linha própria mostrando: Data | Venda | Produto | Qtd | Valor Unit. | Total | Débito | Crédito | Saldo. Pagamentos e débitos ocupam linha única com colSpan. ✅
+
+- [x] **Divergências de saldo em Contas a Receber**
+  - Vitor Hugo Fernandes: corrigido para R$ 85,25 (débito de teste R$ 50,00 removido) ✅
+  - Jackson Vinicius: R$ 266,00 confirmado matematicamente correto (soma de vendas sem pagamentos). Usuário deve verificar se há pagamentos não migrados do sistema antigo. ⚠️

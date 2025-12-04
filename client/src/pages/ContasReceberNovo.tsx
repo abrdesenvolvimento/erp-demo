@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
+import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -157,7 +158,8 @@ export default function ContasReceberNovo() {
   if (selectedCustomerId && history) {
     // Tela de histórico do cliente
     return (
-      <div className="container mx-auto p-6">
+      <DashboardLayout>
+      <div className="space-y-6">
         <Button
           variant="ghost"
           onClick={() => setSelectedCustomerId(null)}
@@ -210,32 +212,73 @@ export default function ContasReceberNovo() {
                   <thead>
                     <tr className="border-b">
                       <th className="text-left p-2">Data</th>
-                      <th className="text-left p-2">Descrição</th>
+                      <th className="text-left p-2">Venda</th>
+                      <th className="text-left p-2">Produto</th>
+                      <th className="text-right p-2">Qtd</th>
+                      <th className="text-right p-2">Valor Unit.</th>
+                      <th className="text-right p-2">Total</th>
                       <th className="text-right p-2">Débito</th>
                       <th className="text-right p-2">Crédito</th>
                       <th className="text-right p-2">Saldo</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {history.history.map((item, index) => (
-                      <tr key={index} className="border-b hover:bg-muted/50">
-                        <td className="p-2">{item.date ? formatDateTimeBR(new Date(item.date)) : '-'}</td>
-                        <td className="p-2">
-                          {item.description}
-                          {item.type === 'PAYMENT' && (item as any).notes && <span className="text-xs text-muted-foreground ml-2">({(item as any).notes})</span>}
-                          {item.type === 'DEBIT' && (item as any).notes && <span className="text-xs text-muted-foreground ml-2">({(item as any).notes})</span>}
-                        </td>
-                        <td className="p-2 text-right text-red-600">
-                          {(item.type === 'SALE' || item.type === 'DEBIT') ? formatCurrency(parseFloat(item.amount)) : '-'}
-                        </td>
-                        <td className="p-2 text-right text-green-600">
-                          {item.type === 'PAYMENT' ? formatCurrency(parseFloat(item.amount)) : '-'}
-                        </td>
-                        <td className="p-2 text-right font-semibold">
-                          {formatCurrency(parseFloat(item.balance))}
-                        </td>
-                      </tr>
-                    ))}
+                    {history.history.map((item, index) => {
+                      // Se for venda com produtos, exibir uma linha por produto
+                      if (item.type === 'SALE' && (item as any).items && (item as any).items.length > 0) {
+                        return (item as any).items.map((product: any, productIndex: number) => (
+                          <tr key={`${index}-${productIndex}`} className="border-b hover:bg-muted/50">
+                            {productIndex === 0 && (
+                              <>
+                                <td className="p-2" rowSpan={(item as any).items.length}>
+                                  {item.date ? formatDateTimeBR(new Date(item.date)) : '-'}
+                                </td>
+                                <td className="p-2" rowSpan={(item as any).items.length}>
+                                  {item.description}
+                                </td>
+                              </>
+                            )}
+                            <td className="p-2">{product.productName || '-'}</td>
+                            <td className="p-2 text-right">{product.quantity}</td>
+                            <td className="p-2 text-right">{formatCurrency(parseFloat(product.unitPrice))}</td>
+                            <td className="p-2 text-right">{formatCurrency(parseFloat(product.totalPrice))}</td>
+                            {productIndex === 0 && (
+                              <>
+                                <td className="p-2 text-right text-red-600" rowSpan={(item as any).items.length}>
+                                  {formatCurrency(parseFloat(item.amount))}
+                                </td>
+                                <td className="p-2 text-right" rowSpan={(item as any).items.length}>-</td>
+                                <td className="p-2 text-right font-semibold" rowSpan={(item as any).items.length}>
+                                  {formatCurrency(parseFloat(item.balance))}
+                                </td>
+                              </>
+                            )}
+                          </tr>
+                        ));
+                      }
+                      
+                      // Para pagamentos e débitos, exibir linha única
+                      return (
+                        <tr key={index} className="border-b hover:bg-muted/50">
+                          <td className="p-2">{item.date ? formatDateTimeBR(new Date(item.date)) : '-'}</td>
+                          <td className="p-2" colSpan={2}>
+                            {item.description}
+                            {item.type === 'PAYMENT' && (item as any).notes && <span className="text-xs text-muted-foreground ml-2">({(item as any).notes})</span>}
+                            {item.type === 'DEBIT' && (item as any).notes && <span className="text-xs text-muted-foreground ml-2">({(item as any).notes})</span>}
+                          </td>
+                          <td className="p-2 text-right" colSpan={3}>-</td>
+                          <td className="p-2 text-right text-red-600">
+                            {item.type === 'DEBIT' ? formatCurrency(parseFloat(item.amount)) : '-'}
+                          </td>
+                          <td className="p-2 text-right text-green-600">
+                            {item.type === 'PAYMENT' ? formatCurrency(parseFloat(item.amount)) : '-'}
+                          </td>
+                          <td className="p-2 text-right font-semibold">
+                            {formatCurrency(parseFloat(item.balance))}
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -359,12 +402,14 @@ export default function ContasReceberNovo() {
           </DialogContent>
         </Dialog>
       </div>
+      </DashboardLayout>
     );
   }
 
   // Tela de lista de clientes
   return (
-    <div className="container mx-auto p-6">
+    <DashboardLayout>
+    <div className="space-y-6">
       {/* Card de Total a Receber */}
       <Card className="mb-6">
         <CardContent className="pt-6">
@@ -418,5 +463,6 @@ export default function ContasReceberNovo() {
         </CardContent>
       </Card>
     </div>
+    </DashboardLayout>
   );
 }

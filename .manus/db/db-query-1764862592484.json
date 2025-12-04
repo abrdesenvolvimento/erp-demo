@@ -1,0 +1,17 @@
+{
+  "query": "SELECT \n  p.id, p.name,\n  COALESCE(SUM(CASE WHEN s.saleType = 'A_PRAZO' THEN s.finalAmount ELSE 0 END), 0) as total_vendas,\n  COALESCE(SUM(cp.paidAmount), 0) as total_pagamentos,\n  COALESCE(SUM(cd.debitAmount), 0) as total_debitos\nFROM partners p\nLEFT JOIN sales s ON p.id = s.customerId AND s.saleType = 'A_PRAZO'\nLEFT JOIN customerPayments cp ON p.id = cp.customerId\nLEFT JOIN customerDebits cd ON p.id = cd.customerId\nWHERE p.name LIKE '%Vitor Hugo%'\nGROUP BY p.id, p.name;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  p.id, p.name,\n  COALESCE(SUM(CASE WHEN s.saleType = 'A_PRAZO' THEN s.finalAmount ELSE 0 END), 0) as total_vendas,\n  COALESCE(SUM(cp.paidAmount), 0) as total_pagamentos,\n  COALESCE(SUM(cd.debitAmount), 0) as total_debitos\nFROM partners p\nLEFT JOIN sales s ON p.id = s.customerId AND s.saleType = 'A_PRAZO'\nLEFT JOIN customerPayments cp ON p.id = cp.customerId\nLEFT JOIN customerDebits cd ON p.id = cd.customerId\nWHERE p.name LIKE '%Vitor Hugo%'\nGROUP BY p.id, p.name;",
+  "rows": [
+    {
+      "id": "360009",
+      "name": "Vitor Hugo Fernandes",
+      "total_vendas": "741.00",
+      "total_pagamentos": "1400.00",
+      "total_debitos": "2800.00"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\ttotal_vendas\ttotal_pagamentos\ttotal_debitos\n360009\tVitor Hugo Fernandes\t741.00\t1400.00\t2800.00\n",
+  "stderr": "",
+  "execution_time_ms": 87
+}
