@@ -38,9 +38,36 @@ export default function Relatorios() {
   // Criar mapa de dados por dia
   const dataByDay = new Map(calendarData?.map(d => [d.day, d]) || []);
 
-  // Calcular total do mês e dias com vendas
+  // Calcular total do mês e dias corridos
   const monthTotal = calendarData?.reduce((sum, day) => sum + day.total, 0) || 0;
   const daysWithSales = calendarData?.length || 0;
+  
+  // Calcular dias corridos para média diária (usando timezone de Brasília)
+  const todayInBrazil = new Date().toLocaleString('en-US', { 
+    timeZone: 'America/Sao_Paulo',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  });
+  const [currentMonth, currentDay, currentYear] = todayInBrazil.split('/');
+  const currentDayNum = parseInt(currentDay);
+  const currentMonthNum = parseInt(currentMonth);
+  const currentYearNum = parseInt(currentYear);
+  
+  const isCurrentMonth = selectedYear === currentYearNum && selectedMonth === currentMonthNum;
+  const isPastMonth = selectedYear < currentYearNum || (selectedYear === currentYearNum && selectedMonth < currentMonthNum);
+  
+  let daysElapsed = 0;
+  if (isPastMonth) {
+    // Mês passado: usar total de dias do mês
+    daysElapsed = daysInMonth;
+  } else if (isCurrentMonth) {
+    // Mês atual: usar dia de hoje em Brasília
+    daysElapsed = currentDayNum;
+  } else {
+    // Mês futuro: não calcular média
+    daysElapsed = 0;
+  }
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
@@ -113,7 +140,7 @@ export default function Relatorios() {
                     Total: <span className="font-semibold text-green-600">{formatCurrency(monthTotal)}</span>
                   </div>
                   <div>
-                    Média Diária: <span className="font-semibold text-blue-600">{daysInMonth > 0 ? formatCurrency(monthTotal / daysInMonth) : formatCurrency(0)}</span>
+                    Média Diária: <span className="font-semibold text-blue-600">{daysElapsed > 0 ? formatCurrency(monthTotal / daysElapsed) : formatCurrency(0)}</span>
                   </div>
                 </div>
               </div>
