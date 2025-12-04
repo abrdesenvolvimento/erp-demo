@@ -40,7 +40,7 @@
 
 ## 🔴 BUGS CRÍTICOS - PENDENTES (1 item)
 
-- [ ] **Layout de vendas quebrado no mobile** - Resumo não tem layout responsivo adequado, tudo em scroll vertical único
+- [x] **Layout de vendas quebrado no mobile** - Resumo com grid responsivo (1 col mobile, 2 cols tablet, 4 cols desktop), layout adequado
 - [x] **Espaçamento entre linha 1 e 2 no Dashboard desktop** - Gap 0 + padding cabeçalho py-1, espaço totalmente eliminado
 - [x] **Quadros muito estreitos em mobile** - Scroll horizontal implementado (Dashboard: 600px, Relatórios: 650px), valores em uma linha
 - [x] **Espaço grande entre primeira e segunda linha no calendário Dashboard** - Gap reduzido de 1 para 0.5, layout mais compacto
@@ -878,3 +878,38 @@
   - Solução Dashboard: Reduzir padding, gap, fonte para compactar
   - Solução Divergência: Investigar se há vendas sendo contadas em mês errado ou duplicadas
   - Impacto: Calendário mais compacto, totais corretos e consistentes
+
+
+## 🆕 NOVAS FEATURES SOLICITADAS (03/12/2025)
+
+### Alta Prioridade
+
+- [x] **Faturamento Médio Diário na tela de Relatórios**
+  - ✅ Adicionado abaixo do "Total: R$ X.XXX,XX" no calendário de Relatórios
+  - ✅ Cálculo: Valor Total Faturado / Quantidade de Dias do Mês
+  - ✅ Formato: "Média Diária: R$ XXX,XX" (azul)
+  - ✅ Ajuda a visualizar performance média do mês
+
+- [ ] **Possibilitar Alteração e Exclusão de Registros**
+  - Vendas: permitir edição e exclusão (com validações de estoque)
+  - Compras: permitir edição e exclusão (com recalculo de custo médio)
+  - Despesas: permitir edição e exclusão
+  - Parceiros: permitir exclusão (validar se tem vendas/compras associadas)
+  - Adicionar confirmações antes de deletar
+  - Implementar log de auditoria para rastreabilidade
+
+- [ ] **Calendário de Contas a Pagar**
+  - Similar ao calendário de vendas em Relatórios
+  - Mostrar vencimentos de contas a pagar por dia
+  - Breakdown por tipo (Compras, Despesas)
+  - Indicadores visuais de vencido/a vencer
+  - Total mensal e média diária
+
+### Média Prioridade
+
+- [ ] **Rotina de Backup Automático**
+  - Backup diário do banco de dados
+  - Retenção de backups (ex: últimos 30 dias)
+  - Notificação de sucesso/falha
+  - Opção de backup manual
+  - Restauração de backup

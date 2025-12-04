@@ -107,8 +107,13 @@ export default function Relatorios() {
                     <ChevronRight className="h-4 w-4" />
                   </Button>
                 </div>
-                <div className="text-sm text-muted-foreground">
-                  Total: <span className="font-semibold text-green-600">{formatCurrency(monthTotal)}</span>
+                <div className="text-sm text-muted-foreground space-y-0.5">
+                  <div>
+                    Total: <span className="font-semibold text-green-600">{formatCurrency(monthTotal)}</span>
+                  </div>
+                  <div>
+                    Média Diária: <span className="font-semibold text-blue-600">{formatCurrency(monthTotal / daysInMonth)}</span>
+                  </div>
                 </div>
               </div>
             </div>
