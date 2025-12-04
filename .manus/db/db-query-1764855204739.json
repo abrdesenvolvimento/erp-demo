@@ -1,0 +1,45 @@
+{
+  "query": "SELECT rp.id, rp.paidDate, rp.paidAmount, rp.paymentMethod, rp.customerId\nFROM receivablePayments rp\nJOIN partners p ON rp.customerId = p.id\nWHERE p.name LIKE '%Vitor Hugo%'\nORDER BY rp.paidDate;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT rp.id, rp.paidDate, rp.paidAmount, rp.paymentMethod, rp.customerId\nFROM receivablePayments rp\nJOIN partners p ON rp.customerId = p.id\nWHERE p.name LIKE '%Vitor Hugo%'\nORDER BY rp.paidDate;",
+  "rows": [
+    {
+      "id": "180004",
+      "paidDate": "2025-11-25 05:00:00",
+      "paidAmount": "10.00",
+      "paymentMethod": "PIX",
+      "customerId": "360009"
+    },
+    {
+      "id": "180003",
+      "paidDate": "2025-11-25 05:00:00",
+      "paidAmount": "11.00",
+      "paymentMethod": "PIX",
+      "customerId": "360009"
+    },
+    {
+      "id": "180002",
+      "paidDate": "2025-11-25 05:00:00",
+      "paidAmount": "67.00",
+      "paymentMethod": "PIX",
+      "customerId": "360009"
+    },
+    {
+      "id": "180001",
+      "paidDate": "2025-11-25 05:00:00",
+      "paidAmount": "12.00",
+      "paymentMethod": "PIX",
+      "customerId": "360009"
+    },
+    {
+      "id": "210001",
+      "paidDate": "2025-12-04 15:00:00",
+      "paidAmount": "0.50",
+      "paymentMethod": "DINHEIRO",
+      "customerId": "360009"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tpaidDate\tpaidAmount\tpaymentMethod\tcustomerId\n180004\t2025-11-25 05:00:00\t10.00\tPIX\t360009\n180003\t2025-11-25 05:00:00\t11.00\tPIX\t360009\n180002\t2025-11-25 05:00:00\t67.00\tPIX\t360009\n180001\t2025-11-25 05:00:00\t12.00\tPIX\t360009\n210001\t2025-12-04 15:00:00\t0.50\tDINHEIRO\t360009\n",
+  "stderr": "",
+  "execution_time_ms": 1028
+}

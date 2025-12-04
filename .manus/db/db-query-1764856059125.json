@@ -1,0 +1,9 @@
+{
+  "query": "INSERT INTO customerPayments (customerId, paidDate, paidAmount, paymentMethod, notes, createdBy)\nSELECT \n  rp.customerId,\n  rp.paidDate,\n  rp.paidAmount,\n  rp.paymentMethod,\n  'Migrado de receivablePayments',\n  'system'\nFROM receivablePayments rp\nJOIN partners p ON rp.customerId = p.id\nWHERE p.name LIKE '%Vitor Hugo%' \n  AND rp.id IN (180001, 180002, 180003, 180004);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute INSERT INTO customerPayments (customerId, paidDate, paidAmount, paymentMethod, notes, createdBy)\nSELECT \n  rp.customerId,\n  rp.paidDate,\n  rp.paidAmount,\n  rp.paymentMethod,\n  'Migrado de receivablePayments',\n  'system'\nFROM receivablePayments rp\nJOIN partners p ON rp.customerId = p.id\nWHERE p.name LIKE '%Vitor Hugo%' \n  AND rp.id IN (180001, 180002, 180003, 180004);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 67
+}

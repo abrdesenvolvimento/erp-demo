@@ -1,0 +1,94 @@
+{
+  "query": "SELECT s.id, s.saleDate, s.finalAmount, s.saleType\nFROM sales s\nJOIN partners p ON s.customerId = p.id\nWHERE p.name LIKE '%Vitor Hugo%' AND s.saleType = 'A_PRAZO'\nORDER BY s.saleDate DESC;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT s.id, s.saleDate, s.finalAmount, s.saleType\nFROM sales s\nJOIN partners p ON s.customerId = p.id\nWHERE p.name LIKE '%Vitor Hugo%' AND s.saleType = 'A_PRAZO'\nORDER BY s.saleDate DESC;",
+  "rows": [
+    {
+      "id": "10980022",
+      "saleDate": "2025-11-30 23:38:08",
+      "finalAmount": "2.00",
+      "saleType": "A_PRAZO"
+    },
+    {
+      "id": "8190001",
+      "saleDate": "2025-11-28 00:53:57",
+      "finalAmount": "15.25",
+      "saleType": "A_PRAZO"
+    },
+    {
+      "id": "8040001",
+      "saleDate": "2025-11-27 23:21:58",
+      "finalAmount": "10.00",
+      "saleType": "A_PRAZO"
+    },
+    {
+      "id": "8010003",
+      "saleDate": "2025-11-27 23:10:26",
+      "finalAmount": "4.00",
+      "saleType": "A_PRAZO"
+    },
+    {
+      "id": "8010002",
+      "saleDate": "2025-11-27 23:09:23",
+      "finalAmount": "7.00",
+      "saleType": "A_PRAZO"
+    },
+    {
+      "id": "7740016",
+      "saleDate": "2025-11-27 02:22:26",
+      "finalAmount": "2.00",
+      "saleType": "A_PRAZO"
+    },
+    {
+      "id": "7440001",
+      "saleDate": "2025-11-26 23:06:00",
+      "finalAmount": "21.50",
+      "saleType": "A_PRAZO"
+    },
+    {
+      "id": "6810002",
+      "saleDate": "2025-11-26 01:13:02",
+      "finalAmount": "22.00",
+      "saleType": "A_PRAZO"
+    },
+    {
+      "id": "6090006",
+      "saleDate": "2025-11-25 00:13:27",
+      "finalAmount": "2.00",
+      "saleType": "A_PRAZO"
+    },
+    {
+      "id": "3330013",
+      "saleDate": "2025-11-22 02:26:14",
+      "finalAmount": "6.00",
+      "saleType": "A_PRAZO"
+    },
+    {
+      "id": "3330012",
+      "saleDate": "2025-11-22 02:14:20",
+      "finalAmount": "10.00",
+      "saleType": "A_PRAZO"
+    },
+    {
+      "id": "3270005",
+      "saleDate": "2025-11-22 01:03:23",
+      "finalAmount": "4.50",
+      "saleType": "A_PRAZO"
+    },
+    {
+      "id": "3180002",
+      "saleDate": "2025-11-21 23:51:24",
+      "finalAmount": "67.00",
+      "saleType": "A_PRAZO"
+    },
+    {
+      "id": "2310001",
+      "saleDate": "2025-11-21 01:19:03",
+      "finalAmount": "12.00",
+      "saleType": "A_PRAZO"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tsaleDate\tfinalAmount\tsaleType\n10980022\t2025-11-30 23:38:08\t2.00\tA_PRAZO\n8190001\t2025-11-28 00:53:57\t15.25\tA_PRAZO\n8040001\t2025-11-27 23:21:58\t10.00\tA_PRAZO\n8010003\t2025-11-27 23:10:26\t4.00\tA_PRAZO\n8010002\t2025-11-27 23:09:23\t7.00\tA_PRAZO\n7740016\t2025-11-27 02:22:26\t2.00\tA_PRAZO\n7440001\t2025-11-26 23:06:00\t21.50\tA_PRAZO\n6810002\t2025-11-26 01:13:02\t22.00\tA_PRAZO\n6090006\t2025-11-25 00:13:27\t2.00\tA_PRAZO\n3330013\t2025-11-22 02:26:14\t6.00\tA_PRAZO\n3330012\t2025-11-22 02:14:20\t10.00\tA_PRAZO\n3270005\t2025-11-22 01:03:23\t4.50\tA_PRAZO\n3180002\t2025-11-21 23:51:24\t67.00\tA_PRAZO\n2310001\t2025-11-21 01:19:03\t12.00\tA_PRAZO\n",
+  "stderr": "",
+  "execution_time_ms": 62
+}

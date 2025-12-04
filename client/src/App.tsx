@@ -7,7 +7,6 @@ import Vendas from "./pages/Vendas";
 import Parceiros from "./pages/Parceiros";
 import Compras from "./pages/Compras";
 import Despesas from "./pages/Despesas";
-import ContasReceber from "./pages/ContasReceber";
 import ContasReceberNovo from "./pages/ContasReceberNovo";
 import ContasPagar from "./pages/ContasPagar";
 import MinhaConta from "./pages/MinhaConta";
@@ -27,8 +26,7 @@ function Router() {
       <Route path="/vendas" component={Vendas} />
       <Route path="/parceiros" component={Parceiros} />
       <Route path="/despesas" component={Despesas} />
-      <Route path="/contas-receber" component={ContasReceber} />
-      <Route path="/contas-receber-novo" component={ContasReceberNovo} />
+      <Route path="/contas-receber" component={ContasReceberNovo} />
       <Route path="/contas-pagar" component={ContasPagar} />
       <Route path="/usuarios" component={Usuarios} />
       <Route path="/relatorios" component={Relatorios} />

@@ -943,3 +943,9 @@
 - [x] **Exibir saldo de crédito do cliente** - Implementado! Tela de histórico mostra 3 valores: Saldo Devedor (vermelho), Limite de Crédito (azul), Crédito Disponível (verde). Exemplo: Vitor Hugo R$ 134,75 devedor, R$ 101,50 limite, R$ 0,00 disponível (acima do limite) ✅
 
 - [x] **Capturar horário real do pagamento** - Corrigido! Pagamentos de hoje usam getNowInBrazil() capturando horário real (ex: 07:12). Pagamentos de datas passadas usam meio-dia. Testado e funcionando ✅
+
+## 🔧 TAREFAS CONCLUÍDAS
+
+- [x] **Investigar divergência de saldo - Vitor Hugo** - Resolvido! Problema: R$ 100 em pagamentos antigos (receivablePayments) não migrados + R$ 60,50 em pagamentos de teste. Migrados 4 pagamentos antigos, removidos 3 de teste. Saldo corrigido: R$ 85,25 ✅
+
+- [x] **Substituir rota antiga de Contas a Receber** - Concluído! Rota `/contas-receber` agora usa ContasReceberNovo.tsx (modelo conta corrente). Código antigo removido. Sistema funcionando perfeitamente ✅

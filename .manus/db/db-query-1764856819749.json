@@ -1,0 +1,16 @@
+{
+  "query": "SELECT rp.id, rp.paidDate, rp.paidAmount, rp.paymentMethod\nFROM receivablePayments rp\nJOIN partners p ON rp.customerId = p.id\nWHERE p.name LIKE '%Vitor Hugo%' AND rp.paidAmount = 0.50;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT rp.id, rp.paidDate, rp.paidAmount, rp.paymentMethod\nFROM receivablePayments rp\nJOIN partners p ON rp.customerId = p.id\nWHERE p.name LIKE '%Vitor Hugo%' AND rp.paidAmount = 0.50;",
+  "rows": [
+    {
+      "id": "210001",
+      "paidDate": "2025-12-04 15:00:00",
+      "paidAmount": "0.50",
+      "paymentMethod": "DINHEIRO"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tpaidDate\tpaidAmount\tpaymentMethod\n210001\t2025-12-04 15:00:00\t0.50\tDINHEIRO\n",
+  "stderr": "",
+  "execution_time_ms": 72
+}
