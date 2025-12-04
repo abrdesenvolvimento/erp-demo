@@ -34,6 +34,11 @@ export function SaleDetailsModal({ saleId, open, onClose }: SaleDetailsModalProp
   const [editedItems, setEditedItems] = useState<any[]>([]);
   const [editedDiscount, setEditedDiscount] = useState("0");
   const [editedSurcharge, setEditedSurcharge] = useState("0");
+  const [productSearch, setProductSearch] = useState("");
+  const [selectedProduct, setSelectedProduct] = useState<any>(null);
+  const [newItemQuantity, setNewItemQuantity] = useState(1);
+
+  const { data: products } = trpc.products.list.useQuery();
 
   const { data: saleData, isLoading } = trpc.sales.get.useQuery(
     { id: saleId! },
@@ -129,6 +134,41 @@ export function SaleDetailsModal({ saleId, open, onClose }: SaleDetailsModalProp
       i === index ? { ...item, quantity } : item
     ));
   };
+
+  const handleAddItem = () => {
+    if (!selectedProduct || newItemQuantity <= 0) return;
+
+    // Verificar se produto já existe na lista
+    const existingIndex = editedItems.findIndex(item => item.productId === selectedProduct.id);
+    
+    if (existingIndex >= 0) {
+      // Se já existe, aumentar quantidade
+      setEditedItems(prev => prev.map((item, i) => 
+        i === existingIndex ? { ...item, quantity: item.quantity + newItemQuantity } : item
+      ));
+      toast.success(`Quantidade de "${selectedProduct.name}" atualizada`);
+    } else {
+      // Se não existe, adicionar novo item
+      const newItem = {
+        productId: selectedProduct.id,
+        productName: selectedProduct.name,
+        quantity: newItemQuantity,
+        unitPrice: selectedProduct.avgCost || "0",
+      };
+      setEditedItems(prev => [...prev, newItem]);
+      toast.success(`"${selectedProduct.name}" adicionado à venda`);
+    }
+
+    // Limpar seleção
+    setProductSearch("");
+    setSelectedProduct(null);
+    setNewItemQuantity(1);
+  };
+
+  const filteredProducts = products?.filter(p => 
+    p.active && 
+    p.name.toLowerCase().includes(productSearch.toLowerCase())
+  ).slice(0, 5) || [];
 
   const formatDate = (date: string | Date | null) => {
     if (!date) return '-';
@@ -392,6 +432,64 @@ export function SaleDetailsModal({ saleId, open, onClose }: SaleDetailsModalProp
             {/* Itens */}
             <div>
               <h3 className="font-semibold mb-3">{isEditing ? "Editar Itens" : "Itens da Venda"}</h3>
+              
+              {/* Campo de busca para adicionar produtos (modo edição) */}
+              {isEditing && (
+                <div className="mb-4 p-4 bg-muted rounded-lg">
+                  <h4 className="text-sm font-medium mb-3">Adicionar Produto</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div className="md:col-span-2 relative">
+                      <input
+                        type="text"
+                        placeholder="Digite o nome do produto..."
+                        value={productSearch}
+                        onChange={(e) => {
+                          setProductSearch(e.target.value);
+                          setSelectedProduct(null);
+                        }}
+                        className="w-full px-3 py-2 border rounded-md"
+                      />
+                      {productSearch && filteredProducts.length > 0 && (
+                        <div className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg max-h-60 overflow-y-auto">
+                          {filteredProducts.map((product) => (
+                            <div
+                              key={product.id}
+                              onClick={() => {
+                                setSelectedProduct(product);
+                                setProductSearch(product.name);
+                              }}
+                              className="px-3 py-2 hover:bg-muted cursor-pointer"
+                            >
+                              <div className="font-medium">{product.name}</div>
+                              <div className="text-sm text-muted-foreground">
+                                Estoque: {product.currentStock} | Preço: {formatCurrency(product.avgCost || 0)}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex gap-2">
+                      <input
+                        type="number"
+                        min="1"
+                        value={newItemQuantity}
+                        onChange={(e) => setNewItemQuantity(parseInt(e.target.value) || 1)}
+                        placeholder="Qtd"
+                        className="w-20 px-2 py-2 border rounded-md text-center"
+                      />
+                      <Button
+                        onClick={handleAddItem}
+                        disabled={!selectedProduct}
+                        className="flex-1"
+                      >
+                        Adicionar
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
               <div className="border rounded-lg overflow-hidden">
                 <table className="w-full">
                   <thead className="bg-muted">

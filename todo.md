@@ -1089,3 +1089,13 @@
   - ✅ Botões "Salvar Alterações" e "Cancelar" no modo de edição
   - ✅ Atualiza saldo em Contas a Receber via backend (vendas a prazo)
   - ✅ Oculta botões de ação (Editar, Cancelar, Imprimir) durante edição
+
+
+## 🚀 EM DESENVOLVIMENTO - Adicionar Itens na Edição (04/12/2025)
+
+- [ ] **Permitir adicionar novos produtos ao editar venda**
+  - Adicionar campo de busca com autocomplete (mesmo padrão de criação)
+  - Permitir selecionar produto e adicionar à lista de itens
+  - Manter cálculo automático de totais
+  - Testar fluxo completo: adicionar + alterar + remover
+- [x] Adicionar funcionalidade de adicionar novos itens ao editar vendas (autocomplete de produtos)
