@@ -101,7 +101,7 @@ export function CompactSalesCalendar() {
         {/* Dias do mês */}
         {days.map((day, index) => {
           if (day === null) {
-            return <div key={`empty-${index}`} className="aspect-square" />;
+            return <div key={`empty-${index}`} className="min-h-[85px] md:h-[60px]" />;
           }
 
           const dayData = dataByDay.get(day);
