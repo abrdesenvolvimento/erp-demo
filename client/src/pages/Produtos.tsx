@@ -829,6 +829,7 @@ export default function Produtos() {
                       }
                       placeholder="Ex: Cerveja Skol 269ml"
                       required
+                      disabled={!permissions.canEdit}
                     />
                   </div>
 
@@ -844,7 +845,7 @@ export default function Produtos() {
                                setShowCategorySuggestions(true);
                              }}
                              placeholder="Selecione uma categoria"
-                             disabled={false}
+                             disabled={!permissions.canEdit}
                            />
                       {showCategorySuggestions && categorySearch && (
                         <div className="absolute top-full left-0 right-0 mt-1 bg-background border rounded-md shadow-lg z-50 max-h-48 overflow-y-auto">
@@ -889,7 +890,7 @@ export default function Produtos() {
                             }}
                             onFocus={() => setShowSubcategorySuggestions(true)}
                             placeholder="Digite para buscar ou criar subcategoria"
-                            disabled={false}
+                            disabled={!permissions.canEdit}
                           />
                           {showSubcategorySuggestions && subcategorySearch && formData.categoryId && (
                             <div className="absolute top-full left-0 right-0 mt-1 bg-background border rounded-md shadow-lg z-50 max-h-48 overflow-y-auto">
@@ -995,6 +996,7 @@ export default function Produtos() {
                         placeholder="7891234567890"
                         maxLength={14}
                         className={formData.ean && !validateEAN(formData.ean) ? "border-destructive" : ""}
+                        disabled={!permissions.canEdit}
                       />
                       {formData.ean && !validateEAN(formData.ean) && (
                         <p className="text-xs text-destructive">
@@ -1010,6 +1012,7 @@ export default function Produtos() {
                         onValueChange={(value) =>
                           setFormData({ ...formData, uom: value })
                         }
+                        disabled={!permissions.canEdit}
                       >
                         <SelectTrigger>
                           <SelectValue />
@@ -1036,6 +1039,7 @@ export default function Produtos() {
                         onChange={(e) =>
                           setFormData({ ...formData, currentStock: e.target.value })
                         }
+                        disabled={!permissions.canEdit}
                       />
                     </div>
 
@@ -1049,6 +1053,7 @@ export default function Produtos() {
                         onChange={(e) =>
                           setFormData({ ...formData, minStock: e.target.value })
                         }
+                        disabled={!permissions.canEdit}
                       />
                     </div>
 
@@ -1092,6 +1097,7 @@ export default function Produtos() {
                                 },
                               })
                             }
+                            disabled={!permissions.canEdit}
                           />
                         </div>
                       ))}
@@ -1106,6 +1112,7 @@ export default function Produtos() {
                       onCheckedChange={(checked) =>
                         setFormData({ ...formData, isComposite: checked as boolean })
                       }
+                      disabled={!permissions.canEdit}
                     />
                     <Label
                       htmlFor="isComposite"
@@ -1150,6 +1157,7 @@ export default function Produtos() {
                       }
                       placeholder="Informações adicionais sobre o produto..."
                       rows={3}
+                      disabled={!permissions.canEdit}
                     />
                   </div>
                 </div>

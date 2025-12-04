@@ -370,6 +370,7 @@ export default function Parceiros() {
                         setFormData({ ...formData, name: e.target.value })
                       }
                       required
+                      disabled={!permissions.canEdit}
                     />
                   </div>
 
@@ -383,6 +384,7 @@ export default function Parceiros() {
                         setFormData({ ...formData, tradeName: e.target.value })
                       }
                       placeholder="Nome comercial (opcional)"
+                      disabled={!permissions.canEdit}
                     />
                   </div>
 
@@ -406,6 +408,7 @@ export default function Parceiros() {
                         placeholder="000.000.000-00 ou 00.000.000/0000-00"
                         maxLength={18}
                         className={formData.docNumber && !validateCPFCNPJ(formData.docNumber) ? "border-destructive" : ""}
+                        disabled={!permissions.canEdit}
                       />
                       {formData.docNumber && !validateCPFCNPJ(formData.docNumber) && (
                         <p className="text-xs text-destructive">
@@ -421,6 +424,7 @@ export default function Parceiros() {
                         onValueChange={(value: any) =>
                           setFormData({ ...formData, partnerType: value })
                         }
+                        disabled={!permissions.canEdit}
                       >
                         <SelectTrigger>
                           <SelectValue />
@@ -445,6 +449,7 @@ export default function Parceiros() {
                           setFormData({ ...formData, phone: e.target.value })
                         }
                         placeholder="(00) 00000-0000"
+                        disabled={!permissions.canEdit}
                       />
                     </div>
 
@@ -458,6 +463,7 @@ export default function Parceiros() {
                           setFormData({ ...formData, email: e.target.value })
                         }
                         placeholder="email@exemplo.com"
+                        disabled={!permissions.canEdit}
                       />
                     </div>
                   </div>
@@ -502,6 +508,7 @@ export default function Parceiros() {
                           }}
                           placeholder="00000-000"
                           maxLength={9}
+                          disabled={!permissions.canEdit}
                         />
                         <p className="text-xs text-muted-foreground">
                           Digite o CEP e pressione Tab - os campos abaixo serão preenchidos automaticamente
@@ -533,7 +540,7 @@ export default function Parceiros() {
                               setFormData({ ...formData, street: e.target.value })
                             }
                             placeholder="Ex: Rua Américo de Campo"
-                            disabled={cepFetched}
+                            disabled={cepFetched || !permissions.canEdit}
                           />
                         </div>
                         <div className="grid gap-2">
@@ -545,6 +552,7 @@ export default function Parceiros() {
                               setFormData({ ...formData, streetNumber: e.target.value })
                             }
                             placeholder="123"
+                            disabled={!permissions.canEdit}
                           />
                         </div>
                       </div>
@@ -552,13 +560,14 @@ export default function Parceiros() {
                       {/* Complemento */}
                       <div className="grid gap-2">
                         <Label htmlFor="complement">Complemento (opcional)</Label>
-                        <Input
+                          <Input
                           id="complement"
                           value={formData.complement || ""}
                           onChange={(e) =>
                             setFormData({ ...formData, complement: e.target.value })
                           }
                           placeholder="Ex: Apto 5, Sala 201, Bloco B"
+                          disabled={!permissions.canEdit}
                         />
                       </div>
 
@@ -573,7 +582,7 @@ export default function Parceiros() {
                               setFormData({ ...formData, neighborhood: e.target.value })
                             }
                             placeholder="Ex: Centro"
-                            disabled={cepFetched}
+                            disabled={cepFetched || !permissions.canEdit}
                           />
                         </div>
                         <div className="grid gap-2">
@@ -585,7 +594,7 @@ export default function Parceiros() {
                               setFormData({ ...formData, city: e.target.value })
                             }
                             placeholder="Ex: São Paulo"
-                            disabled={cepFetched}
+                            disabled={cepFetched || !permissions.canEdit}
                           />
                         </div>
                       </div>
@@ -619,6 +628,7 @@ export default function Parceiros() {
                       }
                       placeholder="Informações complementares sobre o parceiro..."
                       rows={3}
+                      disabled={!permissions.canEdit}
                     />
                   </div>
 
@@ -637,6 +647,7 @@ export default function Parceiros() {
                             onChange={(e) =>
                               setFormData({ ...formData, creditLimit: e.target.value })
                             }
+                            disabled={!permissions.canEdit}
                           />
                         </div>
 
@@ -647,6 +658,7 @@ export default function Parceiros() {
                             onValueChange={(value: any) =>
                               setFormData({ ...formData, creditPolicy: value })
                             }
+                            disabled={!permissions.canEdit}
                           >
                             <SelectTrigger>
                               <SelectValue />

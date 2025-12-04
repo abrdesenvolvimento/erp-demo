@@ -40,6 +40,12 @@
 
 ## 🔴 BUGS CRÍTICOS - PENDENTES (0 itens)
 
+## 🔴 BUGS CRÍTICOS - RESOLVIDOS
+
+- [x] **Menu lateral do Consultor não mostrava todas as páginas** - Verificado e confirmado que já estava correto. Consultor tem acesso a Compras, Despesas, Contas a Pagar e Relatórios desde a implementação inicial do sistema de permissões.
+- [x] **Operacional e Consultor podiam editar produtos** - Corrigido! Todos os campos do formulário de produtos (nome, categoria, subcategoria, EAN, unidade, estoque, custo, preços, produto composto, observações) agora ficam desabilitados (disabled) para usuários sem permissão canEdit.
+- [x] **Operacional e Consultor podiam editar parceiros** - Corrigido! Todos os campos do formulário de parceiros (nome, nome fantasia, CPF/CNPJ, tipo, telefone, email, CEP, endereço, observações, limite de crédito, política de crédito) agora ficam desabilitados (disabled) para usuários sem permissão canEdit.
+
 - [x] **Divergência de saldo em Contas a Receber** - Corrigido! Problema: venda #3270005 tinha pagamento a maior (R$ 11,00 em venda de R$ 4,50), criando saldo negativo (-R$ 6,50). Função getCustomerReceivableDetail() agora ignora saldos negativos. Ambas as telas mostram R$ 91,75 ✅
 
 - [x] **Média diária calculada incorretamente** - Corrigido! Agora divide por dias CORRIDOS do mês usando timezone de Brasília. Mês passado: divide por total de dias do mês. Mês atual: divide por dia de hoje. Novembro: R$ 38.363,53 ÷ 30 = R$ 1.278,78 ✅ | Dezembro (dia 03): R$ 2.692,08 ÷ 3 = R$ 897,36 ✅
