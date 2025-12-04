@@ -248,9 +248,9 @@ export default function Home() {
           </Card>
         </div>
 
-        {/* Cards de Compras - Apenas para Admin */}
+        {/* Card de Compras - Apenas para Admin */}
         {isAdmin && (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <Card className="border-t-4 border-t-indigo-500">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
@@ -266,34 +266,25 @@ export default function Home() {
                     <div className="text-2xl font-bold text-indigo-600">
                       R$ {formatCurrency(purchaseStats?.totalCurrentMonth)}
                     </div>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Total de compras confirmadas
-                    </p>
+                    <div className="mt-3 space-y-1.5">
+                      {purchaseStats?.byDocType.map((item) => (
+                        <div key={item.docType} className="flex items-center justify-between text-xs">
+                          <span className="text-muted-foreground">{item.label}</span>
+                          <span className="font-medium text-indigo-600">
+                            R$ {formatCurrency(item.total)}
+                            <span className="text-muted-foreground ml-1">
+                              ({purchaseStats.totalCurrentMonth && parseFloat(purchaseStats.totalCurrentMonth) > 0
+                                ? Math.round((parseFloat(item.total) / parseFloat(purchaseStats.totalCurrentMonth)) * 100)
+                                : 0}%)
+                            </span>
+                          </span>
+                        </div>
+                      ))}
+                    </div>
                   </>
                 )}
               </CardContent>
             </Card>
-
-            {purchaseStats?.byDocType.map((item) => (
-              <Card key={item.docType} className="border-t-4 border-t-cyan-500">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    Compras - {item.label}
-                  </CardTitle>
-                  <ShoppingCart className="h-4 w-4 text-cyan-500" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-cyan-600">
-                    R$ {formatCurrency(item.total)}
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {purchaseStats.totalCurrentMonth && parseFloat(purchaseStats.totalCurrentMonth) > 0
-                      ? `${Math.round((parseFloat(item.total) / parseFloat(purchaseStats.totalCurrentMonth)) * 100)}% do total`
-                      : 'Nenhuma compra no mês'}
-                  </p>
-                </CardContent>
-              </Card>
-            ))}
           </div>
         )}
 

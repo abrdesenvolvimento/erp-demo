@@ -40,7 +40,7 @@
 
 ## 🔵 EM DESENVOLVIMENTO
 
-- [x] **Cards de compras no Dashboard** - Adicionar "Valor Total de Compra Por Mês" e "Valor Total de Compra por Tipo de Documento (Nota Fiscal/Cupom)"
+- [x] **Consolidar card de compras** - Unificar em um único card seguindo padrão: total em destaque no topo + breakdown por tipo (Nota Fiscal, Cupom) com valor e % embaixo
 
 ## 🔴 BUGS CRÍTICOS - PENDENTES (0 itens)
 
