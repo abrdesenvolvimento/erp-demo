@@ -266,7 +266,7 @@ export const purchaseInstallments = mysqlTable("purchaseInstallments", {
   dueDate: timestamp("dueDate").notNull(),
   amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
   paidDate: timestamp("paidDate"),
-  status: mysqlEnum("status", ["PENDING", "PAID", "OVERDUE"]).default("PENDING").notNull(),
+  status: mysqlEnum("status", ["PENDING", "PAID", "OVERDUE", "CANCELLED"]).default("PENDING").notNull(),
   createdAt: timestamp("createdAt").defaultNow(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow(),
 }, (table) => ({

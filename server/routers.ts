@@ -748,7 +748,42 @@ export const appRouter = router({
     cancel: adminProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ input }) => {
-        await db.updatePurchaseOrder(input.id, { status: "CANCELLED" });
+        await db.cancelPurchaseOrder(input.id);
+        return { success: true };
+      }),
+    
+    update: adminProcedure
+      .input(z.object({
+        id: z.number(),
+        docType: z.enum(["NOTA_FISCAL", "CUPOM", "SEM_DOCUMENTO"]).optional(),
+        docNumber: z.string().optional(),
+        items: z.array(z.object({
+          productId: z.number(),
+          quantity: z.string(),
+          unitCost: z.string(),
+          expiryDate: z.string().optional().nullable(),
+        })),
+      }))
+      .mutation(async ({ input }) => {
+        const { id, items, docType, docNumber } = input;
+        
+        // Atualizar dados da compra
+        const updateData: any = {};
+        if (docType) updateData.docType = docType;
+        if (docNumber !== undefined) updateData.docNumber = docNumber;
+        
+        if (Object.keys(updateData).length > 0) {
+          await db.updatePurchaseOrder(id, updateData);
+        }
+        
+        // Atualizar itens
+        const itemsWithDates = items.map(item => ({
+          ...item,
+          expiryDate: item.expiryDate ? new Date(item.expiryDate) : null
+        }));
+        
+        await db.updatePurchaseOrderItems(id, itemsWithDates);
+        
         return { success: true };
       }),
   }),

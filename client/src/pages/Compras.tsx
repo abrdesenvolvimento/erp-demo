@@ -47,6 +47,8 @@ export default function Compras() {
   const [supplierSearch, setSupplierSearch] = useState("");
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [selectedPurchaseId, setSelectedPurchaseId] = useState<number | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingPurchaseId, setEditingPurchaseId] = useState<number | null>(null);
   
   // Form state
   const [supplierId, setSupplierId] = useState<number | undefined>();
@@ -90,6 +92,19 @@ export default function Compras() {
     { enabled: selectedPurchaseId !== null }
   );
   
+  // Carregar itens no formulário ao editar
+  useEffect(() => {
+    if (isEditing && purchaseDetails.length > 0 && items.length === 0) {
+      setItems(purchaseDetails.map((item: any) => ({
+        productId: item.productId || 0,
+        productName: item.productName || "",
+        quantity: parseFloat(item.quantity?.toString() || "0"),
+        unitCost: parseFloat(item.unitCost?.toString() || "0"),
+        expiryDate: item.expiryDate ? formatDateForInput(new Date(item.expiryDate)) : undefined,
+      })));
+    }
+  }, [isEditing, purchaseDetails]);
+  
   // Mutations
   const createMutation = trpc.purchases.create.useMutation({
     onSuccess: () => {
@@ -115,11 +130,24 @@ export default function Compras() {
   
   const cancelMutation = trpc.purchases.cancel.useMutation({
     onSuccess: () => {
-      toast.success("Compra cancelada.");
+      toast.success("Compra cancelada. Estoque revertido.");
       refetch();
     },
     onError: (error) => {
       toast.error(`Erro ao cancelar compra: ${error.message}`);
+    },
+  });
+  
+  const updateMutation = trpc.purchases.update.useMutation({
+    onSuccess: () => {
+      toast.success("Compra atualizada com sucesso!");
+      refetch();
+      resetForm();
+      setIsEditing(false);
+      setEditingPurchaseId(null);
+    },
+    onError: (error) => {
+      toast.error(`Erro ao atualizar compra: ${error.message}`);
     },
   });
 
@@ -184,6 +212,21 @@ export default function Compras() {
     setItems([]);
   };
 
+  const loadPurchaseForEdit = (purchaseId: number) => {
+    const purchase = purchases.find(p => p.purchaseOrder.id === purchaseId);
+    if (!purchase) return;
+    
+    // Preencher formulário
+    setSupplierId(purchase.purchaseOrder.supplierId);
+    setDocType(purchase.purchaseOrder.docType as "NOTA_FISCAL" | "CUPOM" | "SEM_DOCUMENTO");
+    setDocNumber(purchase.purchaseOrder.docNumber || "");
+    
+    // Marcar para edição e selecionar compra (itens serão carregados via useQuery)
+    setEditingPurchaseId(purchaseId);
+    setSelectedPurchaseId(purchaseId);
+    setIsEditing(true);
+  };
+
   const handleSubmit = () => {
     if (!supplierId) {
       toast.error("Selecione um fornecedor");
@@ -193,37 +236,54 @@ export default function Compras() {
       toast.error("Adicione pelo menos um item");
       return;
     }
-    if (!paymentMethod) {
-      toast.error("Selecione a forma de pagamento");
-      return;
+
+    if (isEditing && editingPurchaseId) {
+      // Editar compra existente
+      updateMutation.mutate({
+        id: editingPurchaseId,
+        docType,
+        docNumber: docNumber || undefined,
+        items: items.map(item => ({
+          productId: item.productId,
+          quantity: item.quantity.toString(),
+          unitCost: item.unitCost.toString(),
+          expiryDate: item.expiryDate || null,
+        })),
+      });
+    } else {
+      // Criar nova compra
+      if (!paymentMethod) {
+        toast.error("Selecione a forma de pagamento");
+        return;
+      }
+
+      const totalAmount = items.reduce((sum, item) => 
+        sum + (item.quantity * item.unitCost), 0
+      ) + parseFloat(freightCost) + parseFloat(chargesCost);
+
+      createMutation.mutate({
+        supplierId,
+        docType,
+        docNumber: docNumber || undefined,
+        accessKey: accessKey || undefined,
+        issueDate: parseDateInBrazil(issueDate).toISOString(),
+        postingDate: parseDateInBrazil(postingDate).toISOString(),
+        freightCost: freightCost || "0",
+        chargesCost: chargesCost || "0",
+        paymentMethod,
+        items: items.map(item => ({
+          productId: item.productId,
+          quantity: item.quantity,
+          unitCost: item.unitCost,
+          expiryDate: item.expiryDate ? parseDateInBrazil(item.expiryDate).toISOString() : undefined,
+        })),
+        installments: installments.map(inst => ({
+          dueDate: parseDateInBrazil(inst.dueDate).toISOString(),
+          amount: inst.amount,
+        })),
+        notes: notes || undefined,
+      });
     }
-
-    const totalAmount = items.reduce((sum, item) => 
-      sum + (item.quantity * item.unitCost), 0
-    ) + parseFloat(freightCost) + parseFloat(chargesCost);
-
-    createMutation.mutate({
-      supplierId,
-      docType,
-      docNumber: docNumber || undefined,
-      accessKey: accessKey || undefined,
-      issueDate: parseDateInBrazil(issueDate).toISOString(),
-      postingDate: parseDateInBrazil(postingDate).toISOString(),
-      freightCost: freightCost || "0",
-      chargesCost: chargesCost || "0",
-      paymentMethod,
-      items: items.map(item => ({
-        productId: item.productId,
-        quantity: item.quantity,
-        unitCost: item.unitCost,
-        expiryDate: item.expiryDate ? parseDateInBrazil(item.expiryDate).toISOString() : undefined,
-      })),
-      installments: installments.map(inst => ({
-        dueDate: parseDateInBrazil(inst.dueDate).toISOString(),
-        amount: inst.amount,
-      })),
-      notes: notes || undefined,
-    });
   };
 
   if (!user) return null;
@@ -244,10 +304,16 @@ export default function Compras() {
                       if (items.length > 0 || supplierId) {
                         if (confirm("Deseja descartar as alterações?")) {
                           setIsCreating(false);
+                          setIsEditing(false);
+                          setEditingPurchaseId(null);
+                          setSelectedPurchaseId(null);
                           resetForm();
                         }
                       } else {
                         setIsCreating(false);
+                        setIsEditing(false);
+                        setEditingPurchaseId(null);
+                        setSelectedPurchaseId(null);
                         resetForm();
                       }
                     }}
@@ -255,9 +321,9 @@ export default function Compras() {
                     <ChevronLeft className="h-5 w-5" />
                   </Button>
                   <div>
-                    <h1 className="text-2xl font-bold">Nova Compra</h1>
+                    <h1 className="text-2xl font-bold">{isEditing ? "Editar Compra" : "Nova Compra"}</h1>
                     <p className="text-sm text-muted-foreground">
-                      Registre uma nova ordem de compra
+                      {isEditing ? "Edite os itens e dados da compra" : "Registre uma nova ordem de compra"}
                     </p>
                   </div>
                 </div>
@@ -785,6 +851,34 @@ export default function Compras() {
                                         variant="outline"
                                         onClick={() => {
                                           if (confirm("Deseja cancelar esta compra?")) {
+                                            cancelMutation.mutate({ id: purchase.purchaseOrder.id });
+                                          }
+                                        }}
+                                        disabled={cancelMutation.isPending}
+                                        className="text-destructive"
+                                      >
+                                        <X className="h-3 w-3 mr-1" />
+                                        Cancelar
+                                      </Button>
+                                    </>
+                                  )}
+                                  {purchase.purchaseOrder.status === "CONFIRMED" && user?.role === "admin" && (
+                                    <>
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => {
+                                          loadPurchaseForEdit(purchase.purchaseOrder.id);
+                                          setIsCreating(true);
+                                        }}
+                                      >
+                                        Editar
+                                      </Button>
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => {
+                                          if (confirm("Deseja cancelar esta compra? O estoque será revertido e as parcelas pendentes serão canceladas.")) {
                                             cancelMutation.mutate({ id: purchase.purchaseOrder.id });
                                           }
                                         }}

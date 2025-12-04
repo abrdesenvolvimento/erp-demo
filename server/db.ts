@@ -964,6 +964,189 @@ export async function confirmPurchaseOrder(purchaseOrderId: number) {
   // Despesas operacionais são para custos fixos (aluguel, energia, etc).
 }
 
+/**
+ * Cancela uma ordem de compra confirmada
+ * - Reverte entrada de estoque
+ * - Recalcula custo médio
+ * - Cancela parcelas pendentes em Contas a Pagar
+ * - Valida se não há parcelas já pagas
+ */
+export async function cancelPurchaseOrder(purchaseOrderId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  // Buscar ordem de compra
+  const po = await getPurchaseOrderById(purchaseOrderId);
+  if (!po) throw new Error("Ordem de compra não encontrada");
+  
+  // Validar se está confirmada
+  if (po.purchaseOrder.status !== "CONFIRMED") {
+    throw new Error("Apenas compras confirmadas podem ser canceladas");
+  }
+  
+  // Verificar se há parcelas já pagas
+  const installments = await getPurchaseInstallments(purchaseOrderId);
+  const hasPaidInstallments = installments.some(i => i.status === "PAID");
+  if (hasPaidInstallments) {
+    throw new Error("Não é possível cancelar compra com parcelas já pagas");
+  }
+  
+  // Buscar itens da compra
+  const items = await getPurchaseOrderItems(purchaseOrderId);
+  
+  // Reverter estoque para cada item
+  for (const item of items) {
+    const product = await db.select().from(products).where(eq(products.id, item.productId || 0)).limit(1);
+    if (product.length === 0) continue;
+    const prod = product[0];
+    
+    const currentStock = parseFloat(prod.currentStock?.toString() || "0");
+    const quantityPurchased = parseFloat(item.quantity.toString());
+    
+    // Calcular novo estoque (reverter entrada)
+    const newStock = currentStock - quantityPurchased;
+    
+    if (newStock < 0) {
+      throw new Error(`Estoque insuficiente para cancelar compra do produto ${prod.name}. Estoque atual: ${currentStock}, quantidade da compra: ${quantityPurchased}`);
+    }
+    
+    // Atualizar estoque
+    await updateProduct(prod.id, { currentStock: newStock });
+    
+    // NOTA: Não recalculamos custo médio ao cancelar, pois isso pode gerar inconsistências
+    // O custo médio reflete o histórico de compras e deve ser mantido
+  }
+  
+  // Cancelar parcelas pendentes
+  await db.update(purchaseInstallments)
+    .set({ status: "CANCELLED" })
+    .where(and(
+      eq(purchaseInstallments.purchaseOrderId, purchaseOrderId),
+      eq(purchaseInstallments.status, "PENDING")
+    ));
+  
+  // Atualizar status da ordem de compra
+  await updatePurchaseOrder(purchaseOrderId, { status: "CANCELLED" });
+}
+
+/**
+ * Atualiza itens de uma ordem de compra
+ * - Permite editar quantidade, custo unitário, data de vencimento
+ * - Recalcula estoque e custo médio
+ * - Atualiza valor total da compra
+ * - Atualiza parcelas em Contas a Pagar
+ */
+export async function updatePurchaseOrderItems(purchaseOrderId: number, items: Array<{
+  id?: number;
+  productId: number;
+  quantity: string;
+  unitCost: string;
+  expiryDate?: Date | null;
+}>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  // Buscar ordem de compra
+  const po = await getPurchaseOrderById(purchaseOrderId);
+  if (!po) throw new Error("Ordem de compra não encontrada");
+  
+  // Validar se está confirmada
+  if (po.purchaseOrder.status !== "CONFIRMED") {
+    throw new Error("Apenas compras confirmadas podem ser editadas");
+  }
+  
+  // Buscar itens atuais
+  const currentItems = await getPurchaseOrderItems(purchaseOrderId);
+  
+  // Reverter estoque dos itens atuais
+  for (const item of currentItems) {
+    const product = await db.select().from(products).where(eq(products.id, item.productId || 0)).limit(1);
+    if (product.length === 0) continue;
+    const prod = product[0];
+    
+    const currentStock = parseFloat(prod.currentStock?.toString() || "0");
+    const quantityPurchased = parseFloat(item.quantity.toString());
+    const newStock = currentStock - quantityPurchased;
+    
+    await updateProduct(prod.id, { currentStock: newStock });
+  }
+  
+  // Deletar itens atuais
+  await deletePurchaseOrderItems(purchaseOrderId);
+  
+  // Adicionar novos itens e atualizar estoque
+  let totalAmount = 0;
+  for (const item of items) {
+    const quantity = parseFloat(item.quantity);
+    const unitCost = parseFloat(item.unitCost);
+    const totalCost = quantity * unitCost;
+    totalAmount += totalCost;
+    
+    // Adicionar item
+    await addPurchaseOrderItem({
+      purchaseOrderId,
+      productId: item.productId,
+      quantity: item.quantity,
+      unitCost: item.unitCost,
+      totalCost: totalCost.toFixed(2),
+      expiryDate: item.expiryDate || null
+    });
+    
+    // Atualizar estoque
+    const product = await db.select().from(products).where(eq(products.id, item.productId)).limit(1);
+    if (product.length === 0) continue;
+    const prod = product[0];
+    
+    const currentStock = parseFloat(prod.currentStock?.toString() || "0");
+    const currentAvgCost = parseFloat(prod.avgCost?.toString() || "0");
+    const newStock = currentStock + quantity;
+    
+    // Calcular novo custo médio ponderado
+    const newAvgCost = currentStock > 0
+      ? (currentStock * currentAvgCost + quantity * unitCost) / newStock
+      : unitCost;
+    
+    const updateData: any = {
+      currentStock: newStock,
+      avgCost: newAvgCost.toFixed(4)
+    };
+    
+    if (item.expiryDate) {
+      updateData.expirationDate = item.expiryDate;
+    }
+    
+    await updateProduct(prod.id, updateData);
+    
+    // Atualizar custo de produtos compostos
+    await updateCompositeProductsUsingComponent(item.productId);
+  }
+  
+  // Adicionar frete e encargos ao total
+  const freightCost = parseFloat(po.purchaseOrder.freightCost?.toString() || "0");
+  const chargesCost = parseFloat(po.purchaseOrder.chargesCost?.toString() || "0");
+  totalAmount += freightCost + chargesCost;
+  
+  // Atualizar valor total da compra
+  await updatePurchaseOrder(purchaseOrderId, { totalAmount: totalAmount.toFixed(2) });
+  
+  // Atualizar parcelas em Contas a Pagar
+  const installments = await getPurchaseInstallments(purchaseOrderId);
+  const installmentCount = installments.length;
+  
+  if (installmentCount > 0) {
+    const installmentAmount = totalAmount / installmentCount;
+    
+    for (const installment of installments) {
+      // Apenas atualizar parcelas pendentes
+      if (installment.status === "PENDING") {
+        await db.update(purchaseInstallments)
+          .set({ amount: installmentAmount.toFixed(2) })
+          .where(eq(purchaseInstallments.id, installment.id));
+      }
+    }
+  }
+}
+
 export async function searchProducts(searchTerm: string) {
   const db = await getDb();
   if (!db) return [];

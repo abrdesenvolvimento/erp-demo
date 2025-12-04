@@ -991,3 +991,61 @@
 - [x] **Divergências de saldo em Contas a Receber**
   - Vitor Hugo Fernandes: corrigido para R$ 85,25 (débito de teste R$ 50,00 removido) ✅
   - Jackson Vinicius: R$ 266,00 confirmado matematicamente correto (soma de vendas sem pagamentos). Usuário deve verificar se há pagamentos não migrados do sistema antigo. ⚠️
+
+
+## 🚀 NOVAS FUNCIONALIDADES - ALTERAÇÃO E EXCLUSÃO DE REGISTROS (04/12/2025)
+
+### Regras Gerais
+- **Todas as operações de alteração e exclusão são restritas a usuários ADMINISTRADORES**
+- Implementar validações de permissão no backend (adminProcedure)
+- Exibir botões de edição/exclusão apenas para admins no frontend
+
+### Compras
+- [x] **Alteração de Compras (Admin Only)** ✅
+  - ✅ Backend: função `updatePurchaseOrderItems` recalcula estoque e custo médio
+  - ✅ Frontend: botão "Editar" em compras confirmadas (admin only)
+  - ✅ Permite editar: item, quantidade, valor unitário, data de vencimento, número do documento, tipo de documento
+  - ✅ Parcelas em Contas a Pagar são atualizadas automaticamente
+
+- [x] **Exclusão/Cancelamento de Compras (Admin Only)** ✅
+  - ✅ Implementado cancelamento lógico (status CANCELLED)
+  - ✅ Backend: função `cancelPurchaseOrder` reverte estoque e cancela parcelas pendentes
+  - ✅ Frontend: botão "Cancelar" em compras confirmadas (admin only)
+  - ✅ Validação: não permite cancelar se houver parcelas já pagas
+  - ✅ Migração: adicionado status CANCELLED ao enum de purchaseInstallments
+
+### Vendas
+- [ ] **Alteração de Vendas (Admin Only, 24h limit)**
+  - Permitir apenas para vendas com no máximo 24 horas de emissão
+  - Permitir editar: itens, quantidade, valor, acréscimo, desconto
+  - Permitir cancelar itens individuais
+  - Recalcular saldo em Contas a Receber (vendas a prazo)
+  - Atualizar estoque ao alterar quantidades
+
+- [ ] **Exclusão/Cancelamento de Vendas (Admin Only, 24h limit)**
+  - Permitir apenas para vendas com no máximo 24 horas de emissão
+  - Reverter baixa de estoque
+  - Cancelar saldo em Contas a Receber (vendas a prazo)
+  - Registrar log de auditoria
+
+### Despesas
+- [ ] **Alteração de Despesas (Admin Only)**
+  - Permitir editar: descrição, categoria, fornecedor, valor, data, parcelas
+  - Atualizar parcelas em Contas a Pagar se valores mudarem
+  - Validar se há parcelas já pagas antes de permitir alteração
+
+- [ ] **Exclusão/Cancelamento de Despesas (Admin Only)**
+  - Decidir entre exclusão física ou cancelamento (status CANCELADA)
+  - Cancelar parcelas pendentes em Contas a Pagar
+  - Registrar log de auditoria
+
+### Melhorias na Tela de Compras
+- [ ] **Adicionar Cards de Resumo**
+  - Definir quais cards exibir (total do mês, pendente pagamento, etc)
+  - Implementar cálculos no backend
+  - Criar layout responsivo
+
+- [ ] **Adicionar Filtros**
+  - Definir filtros necessários (data, fornecedor, status, etc)
+  - Implementar filtros no backend
+  - Criar UI de filtros no frontend
