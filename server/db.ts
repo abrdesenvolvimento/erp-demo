@@ -1167,6 +1167,142 @@ export async function searchProducts(searchTerm: string) {
   return results;
 }
 
+// Cancelar venda (admin only, 24h limit)
+export async function cancelSale(saleId: number, userId: string, reason?: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  // Buscar venda
+  const sale = await getSale(saleId);
+  if (!sale) throw new Error("Venda não encontrada");
+  if (sale.status === "CANCELLED") throw new Error("Venda já está cancelada");
+
+  // Validar limite de 24h
+  const saleDate = new Date(sale.saleDate!);
+  const now = new Date();
+  const hoursDiff = (now.getTime() - saleDate.getTime()) / (1000 * 60 * 60);
+  if (hoursDiff > 24) {
+    throw new Error("Não é possível cancelar vendas com mais de 24 horas");
+  }
+
+  // Buscar itens da venda
+  const items = await getSaleItems(saleId);
+
+  // Reverter estoque
+  for (const item of items) {
+    await updateProductStockWithCompositions(item.productId, item.quantity);
+  }
+
+  // Reverter saldo do cliente se for venda a prazo
+  if (sale.saleType === "A_PRAZO" && sale.customerId) {
+    await db.update(partners)
+      .set({ currentBalance: sql`${partners.currentBalance} - ${sale.finalAmount}` })
+      .where(eq(partners.id, sale.customerId));
+
+    // Marcar receivable como quitado (zerar débito)
+    const receivable = await getReceivableBySaleId(saleId);
+    if (receivable) {
+      await db.update(receivables)
+        .set({ status: "QUITADO", receivedAmount: receivable.totalAmount })
+        .where(eq(receivables.id, receivable.id));
+    }
+  }
+
+  // Marcar venda como cancelada
+  await db.update(sales)
+    .set({
+      status: "CANCELLED",
+      cancelledAt: new Date(),
+      cancelledBy: userId,
+      cancellationReason: reason || null,
+    })
+    .where(eq(sales.id, saleId));
+}
+
+// Editar venda (admin only, 24h limit)
+export async function updateSaleItems(saleId: number, updates: {
+  items: { productId: number; quantity: number; unitPrice: string }[];
+  discountAmount?: string;
+  surchargeAmount?: string;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  // Buscar venda
+  const sale = await getSale(saleId);
+  if (!sale) throw new Error("Venda não encontrada");
+  if (sale.status === "CANCELLED") throw new Error("Não é possível editar venda cancelada");
+
+  // Validar limite de 24h
+  const saleDate = new Date(sale.saleDate!);
+  const now = new Date();
+  const hoursDiff = (now.getTime() - saleDate.getTime()) / (1000 * 60 * 60);
+  if (hoursDiff > 24) {
+    throw new Error("Não é possível editar vendas com mais de 24 horas");
+  }
+
+  // Buscar itens atuais
+  const currentItems = await getSaleItems(saleId);
+
+  // Reverter estoque dos itens atuais
+  for (const item of currentItems) {
+    await updateProductStockWithCompositions(item.productId, item.quantity);
+  }
+
+  // Deletar itens atuais
+  await db.delete(saleItems).where(eq(saleItems.saleId, saleId));
+
+  // Inserir novos itens
+  const itemsWithSaleId = updates.items.map(item => ({
+    ...item,
+    saleId,
+    totalPrice: (parseFloat(item.unitPrice) * item.quantity).toFixed(2),
+  }));
+  await db.insert(saleItems).values(itemsWithSaleId);
+
+  // Baixar estoque dos novos itens
+  for (const item of updates.items) {
+    await updateProductStockWithCompositions(item.productId, -item.quantity);
+  }
+
+  // Recalcular valores
+  const subtotal = updates.items.reduce((sum, item) => {
+    return sum + parseFloat(item.unitPrice) * item.quantity;
+  }, 0);
+
+  const discountAmount = parseFloat(updates.discountAmount || "0");
+  const surchargeAmount = parseFloat(updates.surchargeAmount || "0");
+  const finalAmount = subtotal - discountAmount + surchargeAmount;
+
+  // Atualizar venda
+  await db.update(sales)
+    .set({
+      subtotal: subtotal.toFixed(2),
+      discountAmount: discountAmount.toFixed(2),
+      surchargeAmount: surchargeAmount.toFixed(2),
+      finalAmount: finalAmount.toFixed(2),
+    })
+    .where(eq(sales.id, saleId));
+
+  // Atualizar saldo do cliente se for venda a prazo
+  if (sale.saleType === "A_PRAZO" && sale.customerId) {
+    const oldAmount = parseFloat(sale.finalAmount as any);
+    const diff = finalAmount - oldAmount;
+
+    await db.update(partners)
+      .set({ currentBalance: sql`${partners.currentBalance} + ${diff}` })
+      .where(eq(partners.id, sale.customerId));
+
+    // Atualizar receivable se existir
+    const receivable = await getReceivableBySaleId(saleId);
+    if (receivable) {
+      await db.update(receivables)
+        .set({ totalAmount: finalAmount.toFixed(2) })
+        .where(eq(receivables.id, receivable.id));
+    }
+  }
+}
+
 // ==================== DESPESAS OPERACIONAIS ====================
 
 // Categorias de Despesas

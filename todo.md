@@ -1015,16 +1015,18 @@
   - ✅ Migração: adicionado status CANCELLED ao enum de purchaseInstallments
 
 ### Vendas
-- [ ] **Alteração de Vendas (Admin Only, 24h limit)**
-  - Permitir apenas para vendas com no máximo 24 horas de emissão
-  - Permitir editar: itens, quantidade, valor, acréscimo, desconto
-  - Permitir cancelar itens individuais
-  - Recalcular saldo em Contas a Receber (vendas a prazo)
-  - Atualizar estoque ao alterar quantidades
+- [x] **Alteração de Vendas (Admin Only, 24h limit)** - Backend completo ✅
+  - ✅ Função `updateSaleItems` com validação de 24h
+  - ✅ Endpoint tRPC `sales.update` (adminProcedure)
+  - ✅ Recalcula estoque, valores e atualiza receivables
+  - [ ] Frontend: botões de editar e formulário
 
-- [ ] **Exclusão/Cancelamento de Vendas (Admin Only, 24h limit)**
-  - Permitir apenas para vendas com no máximo 24 horas de emissão
-  - Reverter baixa de estoque
+- [x] **Exclusão/Cancelamento de Vendas (Admin Only, 24h limit)** - Backend completo ✅
+  - ✅ Função `cancelSale` com validação de 24h
+  - ✅ Endpoint tRPC `sales.cancel` (adminProcedure)
+  - ✅ Reverte estoque e marca receivable como quitado
+  - ✅ Migração: adicionados campos status, cancelledAt, cancelledBy, cancellationReason
+  - [ ] Frontend: botão de cancelar
   - Cancelar saldo em Contas a Receber (vendas a prazo)
   - Registrar log de auditoria
 

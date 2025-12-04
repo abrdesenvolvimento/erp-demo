@@ -620,6 +620,16 @@ export const appRouter = router({
       .query(async ({ input }) => {
         return await db.getSalesCalendar(input.year, input.month);
       }),
+
+    cancel: adminProcedure
+      .input(z.object({
+        id: z.number(),
+        reason: z.string().optional(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        await db.cancelSale(input.id, ctx.user.id, input.reason);
+        return { success: true };
+      }),
   }),
 
   // ==================== COMPRAS ====================

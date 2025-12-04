@@ -165,6 +165,10 @@ export const sales = mysqlTable("sales", {
   requiresAdminApproval: boolean("requiresAdminApproval").default(false),
   adminApprovedBy: varchar("adminApprovedBy", { length: 64 }),
   notes: text("notes"),
+  status: mysqlEnum("status", ["ACTIVE", "CANCELLED"]).default("ACTIVE").notNull(),
+  cancelledAt: timestamp("cancelledAt"),
+  cancelledBy: varchar("cancelledBy", { length: 64 }),
+  cancellationReason: text("cancellationReason"),
   createdBy: varchar("createdBy", { length: 64 }).notNull(),
   createdAt: timestamp("createdAt").defaultNow(),
 }, (table) => ({
