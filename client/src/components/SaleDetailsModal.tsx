@@ -2,7 +2,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { Printer, X, Edit, Ban } from "lucide-react";
+import { Printer, X, Edit, Ban, Plus } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -454,12 +454,12 @@ export function SaleDetailsModal({ saleId, open, onClose }: SaleDetailsModalProp
               {isEditing && (
                 <div className="mb-4 p-4 bg-muted rounded-lg">
                   <h4 className="text-sm font-medium mb-3">Adicionar Produto</h4>
-                  <div className="flex flex-col gap-3">
+                  <div className="flex gap-2">
                     {/* Campo de busca com autocomplete */}
-                    <div className="relative" style={{ marginBottom: productSearch && filteredProducts.length > 0 ? '200px' : '0' }}>
+                    <div className="flex-1 relative">
                       <input
                         type="text"
-                        placeholder="Digite o nome do produto..."
+                        placeholder="Buscar produto por nome ou EAN..."
                         value={productSearch}
                         onChange={(e) => {
                           setProductSearch(e.target.value);
@@ -467,7 +467,7 @@ export function SaleDetailsModal({ saleId, open, onClose }: SaleDetailsModalProp
                         }}
                         className="w-full px-3 py-2 border rounded-md"
                       />
-                      {productSearch && filteredProducts.length > 0 && (
+                      {productSearch && filteredProducts.length > 0 && !selectedProduct && (
                         <div className="absolute z-50 w-full mt-1 bg-white border rounded-md shadow-lg max-h-60 overflow-y-auto">
                           {filteredProducts.map((product) => {
                             const price = product.prices?.find((p: any) => p.channelId === saleData?.channelId);
@@ -490,8 +490,8 @@ export function SaleDetailsModal({ saleId, open, onClose }: SaleDetailsModalProp
                         </div>
                       )}
                     </div>
-                    {/* Quantidade e botão adicionar */}
-                    <div className="flex gap-2">
+                    {/* Campo de quantidade com indicador de estoque */}
+                    <div className="flex flex-col gap-1">
                       <input
                         type="number"
                         min="1"
@@ -500,14 +500,23 @@ export function SaleDetailsModal({ saleId, open, onClose }: SaleDetailsModalProp
                         placeholder="Qtd"
                         className="w-20 px-2 py-2 border rounded-md text-center"
                       />
-                      <Button
-                        onClick={handleAddItem}
-                        disabled={!selectedProduct}
-                        className="flex-1"
-                      >
-                        Adicionar
-                      </Button>
+                      {selectedProduct && (
+                        <div className="text-xs text-muted-foreground whitespace-nowrap">
+                          Disp: {selectedProduct.currentStock}
+                          {newItemQuantity > selectedProduct.currentStock && (
+                            <span className="text-destructive ml-1">⚠️</span>
+                          )}
+                        </div>
+                      )}
                     </div>
+                    {/* Botão + */}
+                    <Button
+                      onClick={handleAddItem}
+                      disabled={!selectedProduct}
+                      size="icon"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
                   </div>
                 </div>
               )}

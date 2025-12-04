@@ -1117,3 +1117,11 @@
 
 - [x] Corrigir preço no autocomplete de produtos - estava mostrando custo médio (avgCost) ao invés do preço de venda do canal
 - [x] Melhorar layout mobile do formulário de adição de produtos - autocomplete ainda sobrepõe campo de quantidade
+
+## 🎨 MELHORIAS DE UX - Padronização (04/12/2025)
+
+- [ ] Padronizar layout de adição de produtos no modo de edição (usar mesmo padrão da venda nova: campo flex-1 + qtd w-20 + botão +)
+- [ ] Padronizar autocomplete em vendas novas com formato "Estoque: X | Preço: R$ Y" (mesmo da edição)
+
+- [x] Padronizar layout de adição de produtos no modo de edição (usar mesmo padrão da venda nova: campo flex-1 + qtd w-20 + botão +)
+- [x] Padronizar autocomplete em vendas novas com formato "Estoque: X | Preço: R$ Y" (mesmo da edição)
