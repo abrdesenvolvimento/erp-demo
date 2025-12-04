@@ -40,7 +40,7 @@
 
 ## 🔵 EM DESENVOLVIMENTO
 
-- [x] **Card de Margem Bruta por Categoria** - Dashboard: mostrar faturamento e % de margem bruta de cada categoria para análise rápida
+- [x] **Melhorias no card de Margem Bruta** - Encurtar título para "Mg Bruta por Categoria" e adicionar indicador de Margem Geral no topo
 - [ ] **Página de Análise de Vendas (Futuro)** - Visão detalhada: margem por produto, ranking vendas vs lucro, mix de produtos, evolução temporal, comparativo entre canais
 
 ## 🔴 BUGS CRÍTICOS - PENDENTES (0 itens)

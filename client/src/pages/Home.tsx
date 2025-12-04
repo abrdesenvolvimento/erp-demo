@@ -291,7 +291,7 @@ export default function Home() {
           <Card className="border-t-4 border-t-emerald-500">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
               <CardTitle className="text-lg font-semibold">
-                Margem Bruta por Categoria - Mês Atual
+                Mg Bruta por Categoria
               </CardTitle>
               <TrendingDown className="h-5 w-5 text-emerald-500" />
             </CardHeader>
@@ -299,22 +299,50 @@ export default function Home() {
               {isMarginLoading ? (
                 <div className="text-sm text-muted-foreground">Carregando...</div>
               ) : marginData && marginData.length > 0 ? (
-                <div className="space-y-3">
-                  {marginData.map((category) => (
-                    <div key={category.categoryId} className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors">
-                      <div className="flex-1">
-                        <p className="font-medium text-sm">{category.categoryName}</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          Faturamento: <span className="font-semibold text-emerald-600">R$ {formatCurrency(category.totalRevenue)}</span>
+                <>
+                  {/* Margem Geral */}
+                  <div className="mb-4 p-4 rounded-lg bg-emerald-50 border border-emerald-200">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-emerald-900">Margem Geral</p>
+                        <p className="text-xs text-emerald-700 mt-0.5">
+                          Faturamento Total: <span className="font-semibold">R$ {formatCurrency(
+                            marginData.reduce((sum, cat) => sum + parseFloat(cat.totalRevenue), 0)
+                          )}</span>
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="text-2xl font-bold text-emerald-600">{category.marginPercent}%</p>
-                        <p className="text-xs text-muted-foreground">margem</p>
+                        <p className="text-3xl font-bold text-emerald-600">
+                          {(() => {
+                            const totalRevenue = marginData.reduce((sum, cat) => sum + parseFloat(cat.totalRevenue), 0);
+                            const totalCost = marginData.reduce((sum, cat) => sum + parseFloat(cat.totalCost), 0);
+                            const overallMargin = totalRevenue > 0 ? (1 - (totalCost / totalRevenue)) * 100 : 0;
+                            return overallMargin.toFixed(1);
+                          })()}%
+                        </p>
+                        <p className="text-xs text-emerald-700">margem média</p>
                       </div>
                     </div>
-                  ))}
-                </div>
+                  </div>
+
+                  {/* Margem por Categoria */}
+                  <div className="space-y-3">
+                    {marginData.map((category) => (
+                      <div key={category.categoryId} className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors">
+                        <div className="flex-1">
+                          <p className="font-medium text-sm">{category.categoryName}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            Faturamento: <span className="font-semibold text-emerald-600">R$ {formatCurrency(category.totalRevenue)}</span>
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-2xl font-bold text-emerald-600">{category.marginPercent}%</p>
+                          <p className="text-xs text-muted-foreground">margem</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </>
               ) : (
                 <p className="text-sm text-muted-foreground">Nenhuma venda no mês atual</p>
               )}
