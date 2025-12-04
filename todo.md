@@ -1204,3 +1204,18 @@
 - [x] Testar criação de usuário Consultor
 - [x] Validar badges de permissão (Admin, Operacional, Consultor)
 - [x] Sistema de permissões completo e funcional
+
+## 🔧 AJUSTES DE PERMISSÕES
+
+- [ ] Adicionar Contas a Pagar, Despesas, Compras e Relatórios no menu do Consultor
+- [ ] Desabilitar botões de criar/editar/excluir em Produtos para Operacional e Consultor
+- [ ] Desabilitar botões de criar/editar/excluir em Parceiros para Operacional e Consultor
+- [ ] Habilitar Registrar Pagamento (Contas a Receber) para Operacional
+- [ ] Habilitar Lançar Débito (Contas a Receber) para Operacional
+
+- [x] Adicionar Contas a Pagar, Despesas, Compras e Relatórios no menu do Consultor
+- [x] Desabilitar botões de criar/editar/excluir em Produtos para Operacional e Consultor
+- [x] Desabilitar botões de criar/editar/excluir em Parceiros para Operacional e Consultor
+- [x] Habilitar Registrar Pagamento (Contas a Receber) para Operacional
+- [x] Habilitar Lançar Débito (Contas a Receber) para Operacional
+- [x] Adicionar Parceiros e Contas a Receber no menu do Operacional

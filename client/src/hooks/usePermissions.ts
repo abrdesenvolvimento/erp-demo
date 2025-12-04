@@ -51,14 +51,16 @@ export function usePermissions() {
       canCreate: role === "admin",
       canEdit: role === "admin",
       canDelete: role === "admin",
-      canView: role === "admin" || role === "consultor",
+      canView: true, // Todos podem visualizar
     },
 
     receivables: {
       canCreate: role === "admin",
       canEdit: role === "admin",
       canDelete: role === "admin",
-      canView: role === "admin" || role === "consultor",
+      canView: true, // Todos podem visualizar
+      canRegisterPayment: role === "admin" || role === "operacional", // Operacional pode registrar pagamentos
+      canAddDebit: role === "admin" || role === "operacional", // Operacional pode lançar débitos
     },
 
     payables: {

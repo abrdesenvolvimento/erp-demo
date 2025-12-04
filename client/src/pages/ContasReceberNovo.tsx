@@ -11,6 +11,7 @@ import { ArrowLeft, DollarSign, Plus } from "lucide-react";
 
 import { getTodayInBrazil, getNowInBrazil, formatDateBR, formatDateTimeBR } from "@shared/dateUtils";
 import { toast } from "sonner";
+import { usePermissions } from "@/hooks/usePermissions";
 
 const formatCurrency = (value: number) => {
   return new Intl.NumberFormat('pt-BR', {
@@ -20,6 +21,7 @@ const formatCurrency = (value: number) => {
 };
 
 export default function ContasReceberNovo() {
+  const permissions = usePermissions();
   const [selectedCustomerId, setSelectedCustomerId] = useState<number | null>(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showDebitModal, setShowDebitModal] = useState(false);
@@ -194,11 +196,18 @@ export default function ContasReceberNovo() {
                 </div>
               </div>
               <div className="flex gap-2">
-                <Button onClick={() => setShowPaymentModal(true)}>
+                <Button 
+                  onClick={() => setShowPaymentModal(true)}
+                  disabled={!permissions.receivables.canRegisterPayment}
+                >
                   <DollarSign className="mr-2 h-4 w-4" />
                   Registrar Pagamento
                 </Button>
-                <Button variant="outline" onClick={() => setShowDebitModal(true)}>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowDebitModal(true)}
+                  disabled={!permissions.receivables.canAddDebit}
+                >
                   <Plus className="mr-2 h-4 w-4" />
                   Lançar Débito
                 </Button>

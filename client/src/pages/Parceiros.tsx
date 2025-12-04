@@ -38,9 +38,11 @@ import { toast } from "sonner";
 import { formatCPFCNPJ, validateCPFCNPJ } from "@/lib/validators";
 import { fetchCEP, formatCEP } from "@/lib/cep";
 import { useAuth } from "@/_core/hooks/useAuth";
+import { usePermissions } from "@/hooks/usePermissions";
 
 export default function Parceiros() {
   const { user } = useAuth();
+  const permissions = usePermissions();
   const isAdmin = user?.role === "admin";
   
   const [search, setSearch] = useState("");
@@ -305,6 +307,7 @@ export default function Parceiros() {
                   <Switch
                     checked={partner.active}
                     onCheckedChange={() => handleToggleActive(partner)}
+                    disabled={!permissions.partners.canEdit}
                   />
                   {!partner.active && (
                     <span className="text-xs text-muted-foreground">Inativo</span>
@@ -314,6 +317,7 @@ export default function Parceiros() {
                   variant="ghost"
                   size="sm"
                   onClick={() => handleEdit(partner)}
+                  disabled={!permissions.partners.canEdit}
                 >
                   <Pencil className="h-4 w-4" />
                 </Button>
@@ -338,7 +342,7 @@ export default function Parceiros() {
 
           <Dialog open={isDialogOpen} onOpenChange={handleDialogClose}>
             <DialogTrigger asChild>
-              <Button>
+              <Button disabled={!permissions.partners.canCreate}>
                 <Plus className="h-4 w-4 mr-2" />
                 Novo Parceiro
               </Button>
