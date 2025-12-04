@@ -3110,3 +3110,102 @@ export async function getPurchaseTotalByDocType() {
   
   return result;
 }
+
+/**
+ * Retorna margem bruta por categoria (mês atual)
+ * Margem% = (1 - Custo/Venda) × 100
+ */
+export async function getGrossMarginByCategory() {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const now = new Date();
+  const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+  
+  // Buscar todas as vendas do mês (exceto canceladas)
+  const monthSales = await db.select({
+    saleId: sales.id,
+    saleDate: sales.saleDate,
+    finalAmount: sales.finalAmount,
+  })
+  .from(sales)
+  .where(
+    and(
+      ne(sales.status, "CANCELLED"),
+      gte(sales.saleDate, firstDayOfMonth),
+      lte(sales.saleDate, lastDayOfMonth)
+    )
+  );
+  
+  // Buscar itens de todas as vendas do mês com informações do produto
+  const saleIds = monthSales.map(s => s.saleId);
+  if (saleIds.length === 0) return [];
+  
+  const items = await db.select({
+    saleItemId: saleItems.id,
+    saleId: saleItems.saleId,
+    productId: saleItems.productId,
+    quantity: saleItems.quantity,
+    unitPrice: saleItems.unitPrice,
+    productName: products.name,
+    categoryId: products.categoryId,
+    avgCost: products.avgCost,
+    categoryName: categories.name,
+  })
+  .from(saleItems)
+  .innerJoin(products, eq(saleItems.productId, products.id))
+  .innerJoin(categories, eq(products.categoryId, categories.id))
+  .where(sql`${saleItems.saleId} IN (${sql.join(saleIds.map(id => sql`${id}`), sql`, `)})`);
+  
+  // Agrupar por categoria
+  const categoryMap = new Map<number, {
+    categoryId: number;
+    categoryName: string;
+    totalRevenue: number;
+    totalCost: number;
+  }>();
+  
+  for (const item of items) {
+    const categoryId = item.categoryId;
+    const categoryName = item.categoryName;
+    const quantity = parseFloat(item.quantity.toString());
+    const unitPrice = parseFloat(item.unitPrice.toString());
+    const avgCost = parseFloat(item.avgCost?.toString() || "0");
+    
+    const revenue = quantity * unitPrice;
+    const cost = quantity * avgCost;
+    
+    if (!categoryMap.has(categoryId)) {
+      categoryMap.set(categoryId, {
+        categoryId,
+        categoryName,
+        totalRevenue: 0,
+        totalCost: 0,
+      });
+    }
+    
+    const category = categoryMap.get(categoryId)!;
+    category.totalRevenue += revenue;
+    category.totalCost += cost;
+  }
+  
+  // Calcular margem e ordenar por faturamento (maior para menor)
+  const result = Array.from(categoryMap.values())
+    .map(cat => {
+      const marginPercent = cat.totalRevenue > 0 
+        ? (1 - (cat.totalCost / cat.totalRevenue)) * 100 
+        : 0;
+      
+      return {
+        categoryId: cat.categoryId,
+        categoryName: cat.categoryName,
+        totalRevenue: cat.totalRevenue.toFixed(2),
+        totalCost: cat.totalCost.toFixed(2),
+        marginPercent: marginPercent.toFixed(1),
+      };
+    })
+    .sort((a, b) => parseFloat(b.totalRevenue) - parseFloat(a.totalRevenue));
+  
+  return result;
+}

@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { trpc } from "@/lib/trpc";
-import { TrendingUp, AlertTriangle, ShoppingCart, DollarSign, Calendar, Package, Clock, ChevronDown, ChevronRight } from "lucide-react";
+import { TrendingUp, TrendingDown, AlertTriangle, ShoppingCart, DollarSign, Calendar, Package, Clock, ChevronDown, ChevronRight } from "lucide-react";
 import { Link } from "wouter";
 import { useState } from "react";
 import { SaleDetailsModal } from "@/components/SaleDetailsModal";
@@ -15,6 +15,7 @@ export default function Home() {
   const isAdmin = user?.role === "admin";
   const { data: stats, isLoading } = trpc.dashboard.stats.useQuery();
   const { data: purchaseStats, isLoading: isPurchaseLoading } = trpc.dashboard.purchaseStats.useQuery();
+  const { data: marginData, isLoading: isMarginLoading } = trpc.dashboard.grossMarginByCategory.useQuery();
   const [showLowStockModal, setShowLowStockModal] = useState(false);
   const [showExpiringModal, setShowExpiringModal] = useState(false);
   const [showStockValueModal, setShowStockValueModal] = useState(false);
@@ -284,6 +285,42 @@ export default function Home() {
             </Card>
           )}
         </div>
+
+        {/* Card de Margem Bruta por Categoria - Apenas para Admin */}
+        {isAdmin && (
+          <Card className="border-t-4 border-t-emerald-500">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+              <CardTitle className="text-lg font-semibold">
+                Margem Bruta por Categoria - Mês Atual
+              </CardTitle>
+              <TrendingDown className="h-5 w-5 text-emerald-500" />
+            </CardHeader>
+            <CardContent>
+              {isMarginLoading ? (
+                <div className="text-sm text-muted-foreground">Carregando...</div>
+              ) : marginData && marginData.length > 0 ? (
+                <div className="space-y-3">
+                  {marginData.map((category) => (
+                    <div key={category.categoryId} className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors">
+                      <div className="flex-1">
+                        <p className="font-medium text-sm">{category.categoryName}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          Faturamento: <span className="font-semibold text-emerald-600">R$ {formatCurrency(category.totalRevenue)}</span>
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-2xl font-bold text-emerald-600">{category.marginPercent}%</p>
+                        <p className="text-xs text-muted-foreground">margem</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">Nenhuma venda no mês atual</p>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         {/* Calendário Compacto de Vendas */}
         <Card>

@@ -40,7 +40,8 @@
 
 ## 🔵 EM DESENVOLVIMENTO
 
-- [x] **Reposicionar card de Compras** - Mover para a segunda linha junto com Valor Total em Estoque e Produtos Vencendo
+- [x] **Card de Margem Bruta por Categoria** - Dashboard: mostrar faturamento e % de margem bruta de cada categoria para análise rápida
+- [ ] **Página de Análise de Vendas (Futuro)** - Visão detalhada: margem por produto, ranking vendas vs lucro, mix de produtos, evolução temporal, comparativo entre canais
 
 ## 🔴 BUGS CRÍTICOS - PENDENTES (0 itens)
 

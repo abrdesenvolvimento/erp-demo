@@ -1383,8 +1383,13 @@ export const appRouter = router({
         byDocType,
       };
     }),
+    
+    // Margem bruta por categoria
+    grossMarginByCategory: protectedProcedure.query(async () => {
+      const margins = await db.getGrossMarginByCategory();
+      return margins;
+    }),
   }),
-  
 });
 
 export type AppRouter = typeof appRouter;
