@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, DollarSign } from "lucide-react";
 
-import { getTodayInBrazil, formatDateBR, formatDateTimeBR } from "@shared/dateUtils";
+import { getTodayInBrazil, getNowInBrazil, formatDateBR, formatDateTimeBR } from "@shared/dateUtils";
 import { toast } from "sonner";
 
 const formatCurrency = (value: number) => {
@@ -73,9 +73,14 @@ export default function ContasReceberNovo() {
       return;
     }
 
+    // Se a data selecionada é hoje, usar horário atual; senão usar meio-dia
+    const selectedDate = new Date(formData.paidDate + "T00:00:00");
+    const today = getTodayInBrazil();
+    const isToday = selectedDate.toDateString() === today.toDateString();
+    
     registerPayment.mutate({
       customerId: selectedCustomerId,
-      paidDate: new Date(formData.paidDate + "T12:00:00"),
+      paidDate: isToday ? getNowInBrazil() : new Date(formData.paidDate + "T12:00:00"),
       paidAmount: formData.paidAmount,
       paymentMethod: formData.paymentMethod,
       notes: formData.notes || undefined
@@ -86,6 +91,9 @@ export default function ContasReceberNovo() {
   const filteredCustomers = customers?.filter(c => 
     c.customerName?.toLowerCase().includes(searchTerm.toLowerCase())
   ) || [];
+
+  // Calcular total a receber
+  const totalReceivable = customers?.reduce((sum, c) => sum + parseFloat(c.totalPending || "0"), 0) || 0;
 
   if (selectedCustomerId && history) {
     // Tela de histórico do cliente
@@ -104,11 +112,25 @@ export default function ContasReceberNovo() {
           <CardHeader>
             <CardTitle>Conta Corrente - {history.customer.name}</CardTitle>
             <div className="flex justify-between items-center mt-4">
-              <div>
-                <p className="text-sm text-muted-foreground">Saldo Devedor</p>
-                <p className="text-2xl font-bold text-red-600">
-                  {formatCurrency(parseFloat(history.currentBalance))}
-                </p>
+              <div className="flex gap-8">
+                <div>
+                  <p className="text-sm text-muted-foreground">Saldo Devedor</p>
+                  <p className="text-2xl font-bold text-red-600">
+                    {formatCurrency(parseFloat(history.currentBalance))}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Limite de Crédito</p>
+                  <p className="text-2xl font-bold text-blue-600">
+                    {formatCurrency(parseFloat(history.customer.creditLimit || "0"))}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Crédito Disponível</p>
+                  <p className="text-2xl font-bold text-green-600">
+                    {formatCurrency(Math.max(0, parseFloat(history.customer.creditLimit || "0") - parseFloat(history.currentBalance)))}
+                  </p>
+                </div>
               </div>
               <Button onClick={() => setShowPaymentModal(true)}>
                 <DollarSign className="mr-2 h-4 w-4" />
@@ -224,6 +246,22 @@ export default function ContasReceberNovo() {
   // Tela de lista de clientes
   return (
     <div className="container mx-auto p-6">
+      {/* Card de Total a Receber */}
+      <Card className="mb-6">
+        <CardContent className="pt-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-muted-foreground">Total Pendente a Receber</p>
+              <p className="text-3xl font-bold text-orange-600">{formatCurrency(totalReceivable)}</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                {customers?.length || 0} cliente(s) com saldo devedor
+              </p>
+            </div>
+            <DollarSign className="h-12 w-12 text-orange-600 opacity-20" />
+          </div>
+        </CardContent>
+      </Card>
+
       <Card>
         <CardHeader>
           <CardTitle>Contas a Receber - Conta Corrente</CardTitle>

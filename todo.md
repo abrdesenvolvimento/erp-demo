@@ -935,3 +935,11 @@
     - [ ] Tela Conta Corrente: histórico cronológico (vendas + pagamentos) com saldo acumulado
     - [ ] Simplificar registro de pagamento (apenas valor, data, método)
     - [ ] Atualizar lista de Contas a Receber com saldo calculado
+
+## 🔧 MELHORIAS CONCLUÍDAS - Contas a Receber (Novo Modelo)
+
+- [x] **Adicionar card de total a receber** - Implementado! Card no topo mostra R$ 1.263,50 total e 10 clientes com saldo devedor ✅
+
+- [x] **Exibir saldo de crédito do cliente** - Implementado! Tela de histórico mostra 3 valores: Saldo Devedor (vermelho), Limite de Crédito (azul), Crédito Disponível (verde). Exemplo: Vitor Hugo R$ 134,75 devedor, R$ 101,50 limite, R$ 0,00 disponível (acima do limite) ✅
+
+- [x] **Capturar horário real do pagamento** - Corrigido! Pagamentos de hoje usam getNowInBrazil() capturando horário real (ex: 07:12). Pagamentos de datas passadas usam meio-dia. Testado e funcionando ✅
