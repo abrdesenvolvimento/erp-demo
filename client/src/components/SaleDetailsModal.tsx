@@ -1,8 +1,22 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Printer, X } from "lucide-react";
+import { Printer, X, Edit, Ban } from "lucide-react";
 import { trpc } from "@/lib/trpc";
+import { toast } from "sonner";
+import { useAuth } from "@/_core/hooks/useAuth";
+import { useState } from "react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Textarea } from "@/components/ui/textarea";
 
 interface SaleDetailsModalProps {
   saleId: number | null;
@@ -11,12 +25,44 @@ interface SaleDetailsModalProps {
 }
 
 export function SaleDetailsModal({ saleId, open, onClose }: SaleDetailsModalProps) {
+  const { user } = useAuth();
+  const utils = trpc.useUtils();
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const [cancellationReason, setCancellationReason] = useState("");
+
   const { data: saleData, isLoading } = trpc.sales.get.useQuery(
     { id: saleId! },
     { enabled: !!saleId && open }
   );
 
+  const cancelMutation = trpc.sales.cancel.useMutation({
+    onSuccess: () => {
+      toast.success("Venda cancelada com sucesso!");
+      utils.sales.list.invalidate();
+      utils.sales.stats.invalidate();
+      setShowCancelDialog(false);
+      onClose();
+    },
+    onError: (error) => {
+      toast.error(error.message || "Erro ao cancelar venda");
+    },
+  });
+
   if (!saleId) return null;
+
+  // Verificar se venda tem menos de 24h
+  const canEditOrCancel = () => {
+    if (!saleData?.saleDate) return false;
+    const saleDate = new Date(saleData.saleDate);
+    const now = new Date();
+    const hoursDiff = (now.getTime() - saleDate.getTime()) / (1000 * 60 * 60);
+    return hoursDiff <= 24 && saleData.status !== "CANCELLED";
+  };
+
+  const handleCancelSale = () => {
+    if (!saleId) return;
+    cancelMutation.mutate({ id: saleId, reason: cancellationReason || undefined });
+  };
 
   const formatDate = (date: string | Date | null) => {
     if (!date) return '-';
@@ -194,6 +240,28 @@ export function SaleDetailsModal({ saleId, open, onClose }: SaleDetailsModalProp
           <DialogTitle className="flex items-center justify-between">
             <span>Detalhes da Venda #{saleId}</span>
             <div className="flex gap-2">
+              {user?.role === "admin" && canEditOrCancel() && (
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => toast.info("Função de edição em desenvolvimento")}
+                    disabled={isLoading || !saleData}
+                  >
+                    <Edit className="w-4 h-4 mr-2" />
+                    Editar
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => setShowCancelDialog(true)}
+                    disabled={isLoading || !saleData || cancelMutation.isPending}
+                  >
+                    <Ban className="w-4 h-4 mr-2" />
+                    Cancelar
+                  </Button>
+                </>
+              )}
               <Button
                 variant="outline"
                 size="sm"
@@ -331,6 +399,37 @@ export function SaleDetailsModal({ saleId, open, onClose }: SaleDetailsModalProp
           </div>
         )}
       </DialogContent>
+
+      {/* Dialog de confirmação de cancelamento */}
+      <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancelar Venda #{saleId}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação irá cancelar a venda e reverter o estoque dos produtos. Esta operação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="my-4">
+            <label className="text-sm font-medium mb-2 block">Motivo do Cancelamento (opcional)</label>
+            <Textarea
+              placeholder="Descreva o motivo do cancelamento..."
+              value={cancellationReason}
+              onChange={(e) => setCancellationReason(e.target.value)}
+              rows={3}
+            />
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setCancellationReason("")}>Voltar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleCancelSale}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={cancelMutation.isPending}
+            >
+              {cancelMutation.isPending ? "Cancelando..." : "Confirmar Cancelamento"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 }

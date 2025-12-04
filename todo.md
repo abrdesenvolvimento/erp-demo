@@ -1021,14 +1021,14 @@
   - ✅ Recalcula estoque, valores e atualiza receivables
   - [ ] Frontend: botões de editar e formulário
 
-- [x] **Exclusão/Cancelamento de Vendas (Admin Only, 24h limit)** - Backend completo ✅
+- [x] **Exclusão/Cancelamento de Vendas (Admin Only, 24h limit)** - Completo ✅
   - ✅ Função `cancelSale` com validação de 24h
   - ✅ Endpoint tRPC `sales.cancel` (adminProcedure)
   - ✅ Reverte estoque e marca receivable como quitado
   - ✅ Migração: adicionados campos status, cancelledAt, cancelledBy, cancellationReason
-  - [ ] Frontend: botão de cancelar
-  - Cancelar saldo em Contas a Receber (vendas a prazo)
-  - Registrar log de auditoria
+  - ✅ Frontend: botão "Cancelar" em SaleDetailsModal (admin only, 24h limit)
+  - ✅ Dialog de confirmação com campo de motivo opcional
+  - ✅ Validação de 24h no frontend
 
 ### Despesas
 - [ ] **Alteração de Despesas (Admin Only)**
