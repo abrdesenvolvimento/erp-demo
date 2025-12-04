@@ -246,11 +246,8 @@ export default function Home() {
               </p>
             </CardContent>
           </Card>
-        </div>
 
-        {/* Card de Compras - Apenas para Admin */}
-        {isAdmin && (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {isAdmin && (
             <Card className="border-t-4 border-t-indigo-500">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
@@ -285,8 +282,8 @@ export default function Home() {
                 )}
               </CardContent>
             </Card>
-          </div>
-        )}
+          )}
+        </div>
 
         {/* Calendário Compacto de Vendas */}
         <Card>

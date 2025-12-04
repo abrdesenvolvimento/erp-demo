@@ -40,7 +40,7 @@
 
 ## 🔵 EM DESENVOLVIMENTO
 
-- [x] **Consolidar card de compras** - Unificar em um único card seguindo padrão: total em destaque no topo + breakdown por tipo (Nota Fiscal, Cupom) com valor e % embaixo
+- [x] **Reposicionar card de Compras** - Mover para a segunda linha junto com Valor Total em Estoque e Produtos Vencendo
 
 ## 🔴 BUGS CRÍTICOS - PENDENTES (0 itens)
 
