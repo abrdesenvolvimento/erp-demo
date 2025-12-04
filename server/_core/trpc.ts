@@ -43,3 +43,41 @@ export const adminProcedure = t.procedure.use(
     });
   }),
 );
+
+// Middleware para usuários operacionais (vendedores)
+// Permite acesso a vendas e produtos limitados
+export const operationalProcedure = t.procedure.use(
+  t.middleware(async opts => {
+    const { ctx, next } = opts;
+
+    if (!ctx.user || (ctx.user.role !== 'operacional' && ctx.user.role !== 'admin')) {
+      throw new TRPCError({ code: "FORBIDDEN", message: "Acesso negado. Apenas usuários operacionais ou administradores." });
+    }
+
+    return next({
+      ctx: {
+        ...ctx,
+        user: ctx.user,
+      },
+    });
+  }),
+);
+
+// Middleware para consultores (read-only)
+// Permite visualizar tudo mas não modificar
+export const consultorProcedure = t.procedure.use(
+  t.middleware(async opts => {
+    const { ctx, next } = opts;
+
+    if (!ctx.user || (ctx.user.role !== 'consultor' && ctx.user.role !== 'admin')) {
+      throw new TRPCError({ code: "FORBIDDEN", message: "Acesso negado. Apenas consultores ou administradores." });
+    }
+
+    return next({
+      ctx: {
+        ...ctx,
+        user: ctx.user,
+      },
+    });
+  }),
+);

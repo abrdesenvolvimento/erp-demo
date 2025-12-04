@@ -1238,7 +1238,7 @@ export default function Produtos() {
                         </TableCell>
                         {isAdmin && (
                           <TableCell className="text-right text-muted-foreground">
-                            R$ {parseFloat(product.avgCost || "0").toFixed(2)}
+                            R$ {parseFloat((product as any).avgCost || "0").toFixed(2)}
                           </TableCell>
                         )}
                         <TableCell>

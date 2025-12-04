@@ -115,8 +115,25 @@ export const appRouter = router({
         categoryId: z.number().optional(),
         activeOnly: z.boolean().optional().default(true),
       }).optional())
-      .query(async ({ input }) => {
-        return await db.getProducts(input);
+      .query(async ({ input, ctx }) => {
+        const products = await db.getProducts(input);
+        
+        // Se for operacional, retornar apenas campos permitidos
+        if (ctx.user?.role === 'operacional') {
+          return products.map(p => ({
+            id: p.id,
+            name: p.name,
+            ean: p.ean,
+            uom: p.uom,
+            currentStock: p.currentStock,
+            minStock: p.minStock,
+            active: p.active,
+            isComposite: p.isComposite,
+            prices: p.prices, // Preços por canal
+          }));
+        }
+        
+        return products;
       }),
     
     get: protectedProcedure
@@ -1142,7 +1159,7 @@ export const appRouter = router({
 
   // ==================== DASHBOARD ====================
   dashboard: router({
-    stats: protectedProcedure.query(async () => {
+    stats: protectedProcedure.query(async ({ ctx }) => {
       const products = await db.getProducts({ activeOnly: false });
       const recentSales = await db.getSales({ limit: 10 });
       
@@ -1163,6 +1180,9 @@ export const appRouter = router({
       // Vendas de hoje (usando horário de Brasília)
       const todaySales = allMonthSales.filter(s => {
         if (!s.saleDate || s.status === 'CANCELLED') return false;
+        
+        // Filtrar por usuário se for operacional
+        if (ctx.user?.role === 'operacional' && s.createdBy !== ctx.user.id) return false;
         
         // Converter data da venda para Brasília (apenas data, sem hora)
         const saleDateStr = new Date(s.saleDate).toLocaleDateString('en-US', { timeZone: 'America/Sao_Paulo' });
@@ -1190,6 +1210,9 @@ export const appRouter = router({
       // Faturamento do mês atual - TODAS as vendas do mês
       const monthSales = allMonthSales.filter(s => {
         if (!s.saleDate || s.status === 'CANCELLED') return false;
+        
+        // Filtrar por usuário se for operacional
+        if (ctx.user?.role === 'operacional' && s.createdBy !== ctx.user.id) return false;
         
         // Converter data da venda para Brasília (apenas data, sem hora)
         const saleDateStr = new Date(s.saleDate).toLocaleDateString('en-US', { timeZone: 'America/Sao_Paulo' });

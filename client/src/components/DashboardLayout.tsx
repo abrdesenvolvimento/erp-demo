@@ -28,18 +28,23 @@ import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import { Button } from "./ui/button";
 
-const menuItems = [
-  { icon: LayoutDashboard, label: "Dashboard", path: "/" },
-  { icon: Package, label: "Produtos", path: "/produtos" },
-  { icon: ShoppingBag, label: "Compras", path: "/compras" },
-  { icon: ShoppingCart, label: "Vendas", path: "/vendas" },
-  { icon: Users, label: "Parceiros", path: "/parceiros" },
-  { icon: Receipt, label: "Despesas", path: "/despesas" },
-  { icon: DollarSign, label: "Contas a Receber", path: "/contas-receber" },
-  { icon: CreditCard, label: "Contas a Pagar", path: "/contas-pagar" },
-  { icon: Shield, label: "Gerenciar Usuários", path: "/usuarios" },
-  { icon: BarChart3, label: "Relatórios", path: "/relatorios" },
+const allMenuItems = [
+  { icon: LayoutDashboard, label: "Dashboard", path: "/", roles: ["admin", "operacional", "consultor"] },
+  { icon: Package, label: "Produtos", path: "/produtos", roles: ["admin", "operacional", "consultor"] },
+  { icon: ShoppingBag, label: "Compras", path: "/compras", roles: ["admin", "consultor"] },
+  { icon: ShoppingCart, label: "Vendas", path: "/vendas", roles: ["admin", "operacional", "consultor"] },
+  { icon: Users, label: "Parceiros", path: "/parceiros", roles: ["admin", "consultor"] },
+  { icon: Receipt, label: "Despesas", path: "/despesas", roles: ["admin", "consultor"] },
+  { icon: DollarSign, label: "Contas a Receber", path: "/contas-receber", roles: ["admin", "consultor"] },
+  { icon: CreditCard, label: "Contas a Pagar", path: "/contas-pagar", roles: ["admin", "consultor"] },
+  { icon: Shield, label: "Gerenciar Usuários", path: "/usuarios", roles: ["admin"] },
+  { icon: BarChart3, label: "Relatórios", path: "/relatorios", roles: ["admin", "consultor"] },
 ];
+
+const getMenuItemsForRole = (role?: string) => {
+  if (!role) return [];
+  return allMenuItems.filter(item => item.roles.includes(role));
+};
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";
 const DEFAULT_WIDTH = 280;
@@ -132,6 +137,7 @@ function DashboardLayoutContent({
   const isCollapsed = state === "collapsed";
   const [isResizing, setIsResizing] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
+  const menuItems = getMenuItemsForRole(user?.role);
   const activeMenuItem = menuItems.find(item => item.path === location);
   const isMobile = useIsMobile();
 
@@ -264,9 +270,20 @@ function DashboardLayoutContent({
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0 group-data-[collapsible=icon]:hidden">
-                    <p className="text-sm font-medium truncate leading-none">
-                      {user?.name || "-"}
-                    </p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-medium truncate leading-none">
+                        {user?.name || "-"}
+                      </p>
+                      {user?.role === 'admin' && (
+                        <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-amber-100 text-amber-700">Admin</span>
+                      )}
+                      {user?.role === 'operacional' && (
+                        <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-700">Operacional</span>
+                      )}
+                      {user?.role === 'consultor' && (
+                        <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-purple-100 text-purple-700">Consultor</span>
+                      )}
+                    </div>
                     <p className="text-xs text-muted-foreground truncate mt-1.5">
                       {user?.email || "-"}
                     </p>

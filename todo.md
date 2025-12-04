@@ -1143,3 +1143,29 @@
 - [ ] Corrigir query de stats do dashboard para excluir vendas com status CANCELLED
 
 - [x] Corrigir query de stats do dashboard para excluir vendas com status CANCELLED
+
+## 🔐 SISTEMA DE PERMISSÕES - 3 Roles (04/12/2025)
+
+### Backend
+- [ ] Atualizar schema do banco: adicionar roles OPERACIONAL e CONSULTOR ao enum
+- [ ] Criar operationalProcedure middleware (acesso a vendas e produtos limitados)
+- [ ] Criar consultorProcedure middleware (read-only em tudo)
+- [ ] Ajustar dashboard.stats para filtrar vendas por usuário (operacional)
+- [ ] Criar products.listForOperational (apenas campos permitidos)
+
+### Frontend
+- [ ] Ocultar menu lateral para operacional (apenas Vendas e Produtos)
+- [ ] Limitar campos visíveis de produtos para operacional
+- [ ] Desabilitar botões de criar/editar/excluir para consultor
+- [ ] Filtrar dashboard por usuário (operacional)
+- [ ] Adicionar indicador visual de role no header
+
+- [x] Atualizar schema do banco: adicionar roles OPERACIONAL e CONSULTOR ao enum
+- [x] Criar operationalProcedure middleware (acesso a vendas e produtos limitados)
+- [x] Criar consultorProcedure middleware (read-only em tudo)
+- [x] Ajustar dashboard.stats para filtrar vendas por usuário (operacional)
+- [x] Criar products.listForOperational (apenas campos permitidos)
+- [x] Ocultar menu lateral para operacional (apenas Vendas e Produtos)
+- [x] Limitar campos visíveis de produtos para operacional
+- [x] Adicionar indicador visual de role no header
+- [x] Criar hook usePermissions para centralizar lógica de permissões
