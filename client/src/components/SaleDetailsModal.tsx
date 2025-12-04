@@ -30,6 +30,10 @@ export function SaleDetailsModal({ saleId, open, onClose }: SaleDetailsModalProp
   const utils = trpc.useUtils();
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [cancellationReason, setCancellationReason] = useState("");
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedItems, setEditedItems] = useState<any[]>([]);
+  const [editedDiscount, setEditedDiscount] = useState("0");
+  const [editedSurcharge, setEditedSurcharge] = useState("0");
 
   const { data: saleData, isLoading } = trpc.sales.get.useQuery(
     { id: saleId! },
@@ -49,6 +53,19 @@ export function SaleDetailsModal({ saleId, open, onClose }: SaleDetailsModalProp
     },
   });
 
+  const updateMutation = trpc.sales.update.useMutation({
+    onSuccess: () => {
+      toast.success("Venda atualizada com sucesso!");
+      utils.sales.list.invalidate();
+      utils.sales.stats.invalidate();
+      utils.sales.get.invalidate({ id: saleId! });
+      setIsEditing(false);
+    },
+    onError: (error) => {
+      toast.error(error.message || "Erro ao atualizar venda");
+    },
+  });
+
   if (!saleId) return null;
 
   // Verificar se venda tem menos de 24h
@@ -63,6 +80,54 @@ export function SaleDetailsModal({ saleId, open, onClose }: SaleDetailsModalProp
   const handleCancelSale = () => {
     if (!saleId) return;
     cancelMutation.mutate({ id: saleId, reason: cancellationReason || undefined });
+  };
+
+  const handleStartEdit = () => {
+    if (!saleData) return;
+    setEditedItems(saleData.items || []);
+    setEditedDiscount(saleData.discountAmount?.toString() || "0");
+    setEditedSurcharge(saleData.surchargeAmount?.toString() || "0");
+    setIsEditing(true);
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    setEditedItems([]);
+    setEditedDiscount("0");
+    setEditedSurcharge("0");
+  };
+
+  const handleSaveEdit = () => {
+    if (!saleId || editedItems.length === 0) {
+      toast.error("A venda deve ter pelo menos um item");
+      return;
+    }
+
+    updateMutation.mutate({
+      saleId: saleId,
+      items: editedItems.map(item => {
+        const unitPrice = parseFloat(item.unitPrice);
+        const totalPrice = unitPrice * item.quantity;
+        return {
+          id: item.id,
+          productId: item.productId,
+          quantity: item.quantity,
+          unitPrice: unitPrice.toFixed(2),
+          totalPrice: totalPrice.toFixed(2),
+        };
+      }),
+    });
+  };
+
+  const handleRemoveItem = (index: number) => {
+    setEditedItems(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleUpdateItemQuantity = (index: number, quantity: number) => {
+    if (quantity <= 0) return;
+    setEditedItems(prev => prev.map((item, i) => 
+      i === index ? { ...item, quantity } : item
+    ));
   };
 
   const formatDate = (date: string | Date | null) => {
@@ -248,12 +313,12 @@ export function SaleDetailsModal({ saleId, open, onClose }: SaleDetailsModalProp
               )}
             </div>
             <div className="flex gap-2">
-              {user?.role === "admin" && canEditOrCancel() && (
+              {user?.role === "admin" && canEditOrCancel() && !isEditing && (
                 <>
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => toast.info("Função de edição em desenvolvimento")}
+                    onClick={handleStartEdit}
                     disabled={isLoading || !saleData}
                   >
                     <Edit className="w-4 h-4 mr-2" />
@@ -270,15 +335,17 @@ export function SaleDetailsModal({ saleId, open, onClose }: SaleDetailsModalProp
                   </Button>
                 </>
               )}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handlePrint}
-                disabled={isLoading || !saleData}
-              >
-                <Printer className="w-4 h-4 mr-2" />
-                Imprimir
-              </Button>
+              {!isEditing && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handlePrint}
+                  disabled={isLoading || !saleData}
+                >
+                  <Printer className="w-4 h-4 mr-2" />
+                  Imprimir
+                </Button>
+              )}
               <Button
                 variant="ghost"
                 size="sm"
@@ -324,7 +391,7 @@ export function SaleDetailsModal({ saleId, open, onClose }: SaleDetailsModalProp
 
             {/* Itens */}
             <div>
-              <h3 className="font-semibold mb-3">Itens da Venda</h3>
+              <h3 className="font-semibold mb-3">{isEditing ? "Editar Itens" : "Itens da Venda"}</h3>
               <div className="border rounded-lg overflow-hidden">
                 <table className="w-full">
                   <thead className="bg-muted">
@@ -333,20 +400,47 @@ export function SaleDetailsModal({ saleId, open, onClose }: SaleDetailsModalProp
                       <th className="text-center p-3">Qtd</th>
                       <th className="text-right p-3">Preço Unit.</th>
                       <th className="text-right p-3">Subtotal</th>
+                      {isEditing && <th className="text-center p-3">Ações</th>}
                     </tr>
                   </thead>
                   <tbody>
-                    {saleData.items?.map((item: any) => (
-                      <tr key={item.id} className="border-t">
+                    {(isEditing ? editedItems : saleData.items)?.map((item: any, index: number) => (
+                      <tr key={item.id || index} className="border-t">
                         <td className="p-3">
                           <div>
                             <p className="font-medium">{item.productName || 'Produto'}</p>
                             <p className="text-sm text-muted-foreground">ID: {item.productId}</p>
                           </div>
                         </td>
-                        <td className="text-center p-3">{item.quantity}</td>
+                        <td className="text-center p-3">
+                          {isEditing ? (
+                            <input
+                              type="number"
+                              min="1"
+                              value={item.quantity}
+                              onChange={(e) => handleUpdateItemQuantity(index, parseInt(e.target.value) || 1)}
+                              className="w-16 px-2 py-1 text-center border rounded"
+                            />
+                          ) : (
+                            item.quantity
+                          )}
+                        </td>
                         <td className="text-right p-3">{formatCurrency(item.unitPrice)}</td>
-                        <td className="text-right p-3 font-semibold">{formatCurrency(item.totalPrice)}</td>
+                        <td className="text-right p-3 font-semibold">
+                          {formatCurrency(parseFloat(item.unitPrice) * item.quantity)}
+                        </td>
+                        {isEditing && (
+                          <td className="text-center p-3">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleRemoveItem(index)}
+                              disabled={editedItems.length === 1}
+                            >
+                              <X className="w-4 h-4 text-destructive" />
+                            </Button>
+                          </td>
+                        )}
                       </tr>
                     ))}
                   </tbody>
@@ -381,11 +475,33 @@ export function SaleDetailsModal({ saleId, open, onClose }: SaleDetailsModalProp
               
               <div className="flex justify-between text-lg font-bold">
                 <span>TOTAL:</span>
-                <span className="text-primary">{formatCurrency(saleData.finalAmount)}</span>
+                <span className="text-primary">
+                  {isEditing 
+                    ? formatCurrency(editedItems.reduce((sum, item) => sum + (parseFloat(item.unitPrice) * item.quantity), 0))
+                    : formatCurrency(saleData.finalAmount)
+                  }
+                </span>
               </div>
-              
-
             </div>
+
+            {/* Botões de edição */}
+            {isEditing && (
+              <div className="flex gap-3 justify-end pt-4 border-t">
+                <Button
+                  variant="outline"
+                  onClick={handleCancelEdit}
+                  disabled={updateMutation.isPending}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  onClick={handleSaveEdit}
+                  disabled={updateMutation.isPending || editedItems.length === 0}
+                >
+                  {updateMutation.isPending ? "Salvando..." : "Salvar Alterações"}
+                </Button>
+              </div>
+            )}
 
             {saleData.notes && (
               <>

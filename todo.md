@@ -1075,3 +1075,17 @@
 - [x] **Vendas canceladas contam no faturamento** - Corrigido! Função `getSalesStats` agora filtra vendas com `ne(sales.status, "CANCELLED")`. ✅
 
 - [x] **Produtos vencendo de compras canceladas aparecem no card** - Corrigido! Função `cancelPurchaseOrder` agora atualiza `expirationDate` do produto para a data de vencimento mais recente de compras CONFIRMED (ou null se não houver). ✅
+
+
+## ✅ CONCLUÍDO - Edição de Vendas (04/12/2025)
+
+- [x] **Frontend de Edição de Vendas (Admin Only, 24h limit)** ✅
+  - ✅ Botão "Editar" no SaleDetailsModal (ao lado de "Cancelar")
+  - ✅ Modo de edição inline na tabela de itens
+  - ✅ Remover itens existentes (botão X, desabilitado se for único item)
+  - ✅ Alterar quantidade de itens (input numérico)
+  - ✅ Cálculo automático do total ao editar
+  - ✅ Validação de limite de 24h (botão Editar só aparece se < 24h)
+  - ✅ Botões "Salvar Alterações" e "Cancelar" no modo de edição
+  - ✅ Atualiza saldo em Contas a Receber via backend (vendas a prazo)
+  - ✅ Oculta botões de ação (Editar, Cancelar, Imprimir) durante edição
