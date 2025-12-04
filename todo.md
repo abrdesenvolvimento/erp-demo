@@ -1125,3 +1125,21 @@
 
 - [x] Padronizar layout de adição de produtos no modo de edição (usar mesmo padrão da venda nova: campo flex-1 + qtd w-20 + botão +)
 - [x] Padronizar autocomplete em vendas novas com formato "Estoque: X | Preço: R$ Y" (mesmo da edição)
+
+## 🔒 CONTROLE DE ACESSO - Role Admin (04/12/2025)
+
+- [ ] Adicionar validação de role admin nos procedures sales.update e sales.cancel (backend)
+- [ ] Ocultar botões Editar e Cancelar no frontend para usuários não-admin (frontend)
+
+- [x] Adicionar validação de role admin nos procedures sales.update e sales.cancel (backend) - JÁ IMPLEMENTADO com adminProcedure
+- [x] Ocultar botões Editar e Cancelar no frontend para usuários não-admin (frontend) - JÁ IMPLEMENTADO com user?.role === "admin"
+
+## 🐛 BUG - Vendas não aparecem na lista (04/12/2025)
+
+- [ ] Investigar por que vendas não estão aparecendo na página de vendas
+
+## 🐛 BUG - Dashboard incluindo vendas canceladas (04/12/2025)
+
+- [ ] Corrigir query de stats do dashboard para excluir vendas com status CANCELLED
+
+- [x] Corrigir query de stats do dashboard para excluir vendas com status CANCELLED

@@ -1,0 +1,35 @@
+{
+  "query": "SELECT id, DATE_FORMAT(saleDate, '%Y-%m-%d') as sale_date, DATE_FORMAT(saleDate, '%Y-%m-%d %H:%i:%s') as sale_datetime FROM sales ORDER BY saleDate DESC LIMIT 5",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT id, DATE_FORMAT(saleDate, '%Y-%m-%d') as sale_date, DATE_FORMAT(saleDate, '%Y-%m-%d %H:%i:%s') as sale_datetime FROM sales ORDER BY saleDate DESC LIMIT 5",
+  "rows": [
+    {
+      "id": "12660001",
+      "sale_date": "2025-12-04",
+      "sale_datetime": "2025-12-04 17:19:28"
+    },
+    {
+      "id": "12630001",
+      "sale_date": "2025-12-04",
+      "sale_datetime": "2025-12-04 17:02:10"
+    },
+    {
+      "id": "12600001",
+      "sale_date": "2025-12-04",
+      "sale_datetime": "2025-12-04 16:39:37"
+    },
+    {
+      "id": "12570001",
+      "sale_date": "2025-12-04",
+      "sale_datetime": "2025-12-04 03:02:43"
+    },
+    {
+      "id": "12540002",
+      "sale_date": "2025-12-04",
+      "sale_datetime": "2025-12-04 02:53:11"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tsale_date\tsale_datetime\n12660001\t2025-12-04\t2025-12-04 17:19:28\n12630001\t2025-12-04\t2025-12-04 17:02:10\n12600001\t2025-12-04\t2025-12-04 16:39:37\n12570001\t2025-12-04\t2025-12-04 03:02:43\n12540002\t2025-12-04\t2025-12-04 02:53:11\n",
+  "stderr": "",
+  "execution_time_ms": 55
+}

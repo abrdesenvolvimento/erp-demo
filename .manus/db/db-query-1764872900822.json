@@ -1,0 +1,80 @@
+{
+  "query": "SELECT id, saleDate, saleType, finalAmount, status FROM sales ORDER BY saleDate DESC LIMIT 10",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT id, saleDate, saleType, finalAmount, status FROM sales ORDER BY saleDate DESC LIMIT 10",
+  "rows": [
+    {
+      "id": "12660001",
+      "saleDate": "2025-12-04 17:19:28",
+      "saleType": "BALCAO",
+      "finalAmount": "0.30",
+      "status": "CANCELLED"
+    },
+    {
+      "id": "12630001",
+      "saleDate": "2025-12-04 17:02:10",
+      "saleType": "BALCAO",
+      "finalAmount": "0.25",
+      "status": "CANCELLED"
+    },
+    {
+      "id": "12600001",
+      "saleDate": "2025-12-04 16:39:37",
+      "saleType": "BALCAO",
+      "finalAmount": "8.50",
+      "status": "CANCELLED"
+    },
+    {
+      "id": "12570001",
+      "saleDate": "2025-12-04 03:02:43",
+      "saleType": "A_PRAZO",
+      "finalAmount": "25.00",
+      "status": "ACTIVE"
+    },
+    {
+      "id": "12540002",
+      "saleDate": "2025-12-04 02:53:11",
+      "saleType": "BALCAO",
+      "finalAmount": "108.98",
+      "status": "ACTIVE"
+    },
+    {
+      "id": "12540001",
+      "saleDate": "2025-12-04 02:51:40",
+      "saleType": "BALCAO",
+      "finalAmount": "18.00",
+      "status": "ACTIVE"
+    },
+    {
+      "id": "12510006",
+      "saleDate": "2025-12-04 02:45:47",
+      "saleType": "DELIVERY",
+      "finalAmount": "10.59",
+      "status": "ACTIVE"
+    },
+    {
+      "id": "12510005",
+      "saleDate": "2025-12-04 02:45:01",
+      "saleType": "DELIVERY",
+      "finalAmount": "46.68",
+      "status": "ACTIVE"
+    },
+    {
+      "id": "12510004",
+      "saleDate": "2025-12-04 02:44:14",
+      "saleType": "BALCAO",
+      "finalAmount": "5.00",
+      "status": "ACTIVE"
+    },
+    {
+      "id": "12510003",
+      "saleDate": "2025-12-04 02:42:33",
+      "saleType": "DELIVERY",
+      "finalAmount": "22.28",
+      "status": "ACTIVE"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tsaleDate\tsaleType\tfinalAmount\tstatus\n12660001\t2025-12-04 17:19:28\tBALCAO\t0.30\tCANCELLED\n12630001\t2025-12-04 17:02:10\tBALCAO\t0.25\tCANCELLED\n12600001\t2025-12-04 16:39:37\tBALCAO\t8.50\tCANCELLED\n12570001\t2025-12-04 03:02:43\tA_PRAZO\t25.00\tACTIVE\n12540002\t2025-12-04 02:53:11\tBALCAO\t108.98\tACTIVE\n12540001\t2025-12-04 02:51:40\tBALCAO\t18.00\tACTIVE\n12510006\t2025-12-04 02:45:47\tDELIVERY\t10.59\tACTIVE\n12510005\t2025-12-04 02:45:01\tDELIVERY\t46.68\tACTIVE\n12510004\t2025-12-04 02:44:14\tBALCAO\t5.00\tACTIVE\n12510003\t2025-12-04 02:42:33\tDELIVERY\t22.28\tACTIVE\n",
+  "stderr": "",
+  "execution_time_ms": 59
+}
