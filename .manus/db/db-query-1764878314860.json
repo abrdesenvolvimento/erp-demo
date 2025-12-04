@@ -1,0 +1,52 @@
+{
+  "query": "SELECT id, name, email, role, lastSignedIn FROM users ORDER BY lastSignedIn DESC LIMIT 10",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT id, name, email, role, lastSignedIn FROM users ORDER BY lastSignedIn DESC LIMIT 10",
+  "rows": [
+    {
+      "id": "3sp2FmLhkenyjqMFmfLoex",
+      "name": "Gabriel Morais",
+      "email": "comercial@adegabeirario.com.br",
+      "role": "admin",
+      "lastSignedIn": "2025-12-04 19:58:28"
+    },
+    {
+      "id": "j8R68T3wPMAkij5Kb9Zef8",
+      "name": "Gabriel Morais",
+      "email": "gmsantos.96@gmail.com",
+      "role": "consultor",
+      "lastSignedIn": "2025-12-04 19:57:09"
+    },
+    {
+      "id": "6DBTSksJmdeiQvgXMcJBYh",
+      "name": "Ricardo Pereira",
+      "email": "ricardoalphaunico@gmail.com",
+      "role": "user",
+      "lastSignedIn": "2025-12-04 18:24:58"
+    },
+    {
+      "id": "DZpNu9HuYKL7kLiTubyNnA",
+      "name": "Gabriel Morais Santos",
+      "email": "gabriel_m.s@hotmail.com",
+      "role": "user",
+      "lastSignedIn": "2025-12-04 15:00:07"
+    },
+    {
+      "id": "mdZxeWwJzye9f6CgRM9DTf",
+      "name": "Gabriel Morais Santos",
+      "email": "encantaredocesesalgados@gmail.com",
+      "role": "consultor",
+      "lastSignedIn": "2025-12-04 13:24:31"
+    },
+    {
+      "id": "nJQ5MEcvMtTycyPAzY3UzD",
+      "name": "Adega Beira Rio Osasco",
+      "email": "beirarioadega1@gmail.com",
+      "role": "user",
+      "lastSignedIn": "2025-12-02 01:07:41"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\temail\trole\tlastSignedIn\n3sp2FmLhkenyjqMFmfLoex\tGabriel Morais\tcomercial@adegabeirario.com.br\tadmin\t2025-12-04 19:58:28\nj8R68T3wPMAkij5Kb9Zef8\tGabriel Morais\tgmsantos.96@gmail.com\tconsultor\t2025-12-04 19:57:09\n6DBTSksJmdeiQvgXMcJBYh\tRicardo Pereira\tricardoalphaunico@gmail.com\tuser\t2025-12-04 18:24:58\nDZpNu9HuYKL7kLiTubyNnA\tGabriel Morais Santos\tgabriel_m.s@hotmail.com\tuser\t2025-12-04 15:00:07\nmdZxeWwJzye9f6CgRM9DTf\tGabriel Morais Santos\tencantaredocesesalgados@gmail.com\tconsultor\t2025-12-04 13:24:31\nnJQ5MEcvMtTycyPAzY3UzD\tAdega Beira Rio Osasco\tbeirarioadega1@gmail.com\tuser\t2025-12-02 01:07:41\n",
+  "stderr": "",
+  "execution_time_ms": 191
+}

@@ -14,6 +14,7 @@ export default function Home() {
   const { user } = useAuth();
   const isAdmin = user?.role === "admin";
   const { data: stats, isLoading } = trpc.dashboard.stats.useQuery();
+  const { data: purchaseStats, isLoading: isPurchaseLoading } = trpc.dashboard.purchaseStats.useQuery();
   const [showLowStockModal, setShowLowStockModal] = useState(false);
   const [showExpiringModal, setShowExpiringModal] = useState(false);
   const [showStockValueModal, setShowStockValueModal] = useState(false);
@@ -246,6 +247,55 @@ export default function Home() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Cards de Compras - Apenas para Admin */}
+        {isAdmin && (
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <Card className="border-t-4 border-t-indigo-500">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Compras do Mês
+                </CardTitle>
+                <ShoppingCart className="h-4 w-4 text-indigo-500" />
+              </CardHeader>
+              <CardContent>
+                {isPurchaseLoading ? (
+                  <div className="text-sm text-muted-foreground">Carregando...</div>
+                ) : (
+                  <>
+                    <div className="text-2xl font-bold text-indigo-600">
+                      R$ {formatCurrency(purchaseStats?.totalCurrentMonth)}
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Total de compras confirmadas
+                    </p>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+
+            {purchaseStats?.byDocType.map((item) => (
+              <Card key={item.docType} className="border-t-4 border-t-cyan-500">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">
+                    Compras - {item.label}
+                  </CardTitle>
+                  <ShoppingCart className="h-4 w-4 text-cyan-500" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-cyan-600">
+                    R$ {formatCurrency(item.total)}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {purchaseStats.totalCurrentMonth && parseFloat(purchaseStats.totalCurrentMonth) > 0
+                      ? `${Math.round((parseFloat(item.total) / parseFloat(purchaseStats.totalCurrentMonth)) * 100)}% do total`
+                      : 'Nenhuma compra no mês'}
+                  </p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
 
         {/* Calendário Compacto de Vendas */}
         <Card>

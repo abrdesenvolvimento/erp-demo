@@ -3052,3 +3052,61 @@ export async function registerManualDebit(data: {
 
   return { success: true };
 }
+
+// ============================================
+// ESTATÍSTICAS DE COMPRAS PARA DASHBOARD
+// ============================================
+
+/**
+ * Retorna o valor total de compras do mês atual
+ */
+export async function getPurchaseTotalCurrentMonth() {
+  const db = await getDb();
+  if (!db) return "0.00";
+  
+  const now = new Date();
+  const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+  
+  const result = await db.select({
+    total: sql<string>`COALESCE(SUM(${purchaseOrders.totalAmount}), 0)`
+  })
+  .from(purchaseOrders)
+  .where(
+    and(
+      eq(purchaseOrders.status, "CONFIRMED"),
+      gte(purchaseOrders.postingDate, firstDayOfMonth),
+      lte(purchaseOrders.postingDate, lastDayOfMonth)
+    )
+  );
+  
+  return result[0]?.total || "0.00";
+}
+
+/**
+ * Retorna o valor total de compras por tipo de documento (mês atual)
+ */
+export async function getPurchaseTotalByDocType() {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const now = new Date();
+  const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+  
+  const result = await db.select({
+    docType: purchaseOrders.docType,
+    total: sql<string>`COALESCE(SUM(${purchaseOrders.totalAmount}), 0)`
+  })
+  .from(purchaseOrders)
+  .where(
+    and(
+      eq(purchaseOrders.status, "CONFIRMED"),
+      gte(purchaseOrders.postingDate, firstDayOfMonth),
+      lte(purchaseOrders.postingDate, lastDayOfMonth)
+    )
+  )
+  .groupBy(purchaseOrders.docType);
+  
+  return result;
+}

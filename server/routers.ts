@@ -1359,6 +1359,30 @@ export const appRouter = router({
         recentSales: recentSalesWithDetails,
       };
     }),
+    
+    // Estatísticas de compras
+    purchaseStats: protectedProcedure.query(async () => {
+      const totalCurrentMonth = await db.getPurchaseTotalCurrentMonth();
+      const totalByDocType = await db.getPurchaseTotalByDocType();
+      
+      // Mapear tipos de documento para labels amigáveis
+      const docTypeLabels: Record<string, string> = {
+        'NOTA_FISCAL': 'Nota Fiscal',
+        'CUPOM': 'Cupom',
+        'SEM_DOCUMENTO': 'Sem Documento',
+      };
+      
+      const byDocType = totalByDocType.map(item => ({
+        docType: item.docType,
+        label: docTypeLabels[item.docType] || item.docType,
+        total: item.total,
+      }));
+      
+      return {
+        totalCurrentMonth,
+        byDocType,
+      };
+    }),
   }),
   
 });

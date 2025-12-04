@@ -38,6 +38,10 @@
 - Prioridade: implementar após conclusão do inventário físico (atualmente 86.1% completo)
 - Usuário quer dashboard e relatórios completos para admin, mas limitado para outros usuários
 
+## 🔵 EM DESENVOLVIMENTO
+
+- [x] **Cards de compras no Dashboard** - Adicionar "Valor Total de Compra Por Mês" e "Valor Total de Compra por Tipo de Documento (Nota Fiscal/Cupom)"
+
 ## 🔴 BUGS CRÍTICOS - PENDENTES (0 itens)
 
 ## 🔴 BUGS CRÍTICOS - RESOLVIDOS
@@ -70,7 +74,9 @@
 - [x] Cadastro rápido de fornecedor em Compras (implementado e funcional)
 - [x] Histórico de pagamentos mostra compras E despesas (query getPaymentHistory)
 
-## 🟡 MELHORIAS DE UX - Baixa Prioridade (2 itens)
+## 🟡 MELHORIAS DE UX - Baixa Prioridade (3 itens)
+
+- [ ] **Sistema de permissões para Consultor** - Menu lateral não mostra Compras, Despesas, Contas a Pagar e Relatórios para role "consultor". Investigar problema de cache/HMR. PRIORIDADE: Baixa (sistema não será aberto para novos usuários por enquanto)
 
 - [ ] Tooltips explicativos nos formulários
 - [ ] Confirmação antes de deletar registros

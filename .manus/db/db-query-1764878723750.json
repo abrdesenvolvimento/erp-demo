@@ -1,0 +1,42 @@
+{
+  "query": "SELECT id, name, email, role, CHAR_LENGTH(role) as role_length, HEX(role) as role_hex FROM users WHERE name LIKE '%Gabriel%'",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT id, name, email, role, CHAR_LENGTH(role) as role_length, HEX(role) as role_hex FROM users WHERE name LIKE '%Gabriel%'",
+  "rows": [
+    {
+      "id": "3sp2FmLhkenyjqMFmfLoex",
+      "name": "Gabriel Morais",
+      "email": "comercial@adegabeirario.com.br",
+      "role": "admin",
+      "role_length": "5",
+      "role_hex": "61646D696E"
+    },
+    {
+      "id": "DZpNu9HuYKL7kLiTubyNnA",
+      "name": "Gabriel Morais Santos",
+      "email": "gabriel_m.s@hotmail.com",
+      "role": "user",
+      "role_length": "4",
+      "role_hex": "75736572"
+    },
+    {
+      "id": "j8R68T3wPMAkij5Kb9Zef8",
+      "name": "Gabriel Morais",
+      "email": "gmsantos.96@gmail.com",
+      "role": "consultor",
+      "role_length": "9",
+      "role_hex": "636F6E73756C746F72"
+    },
+    {
+      "id": "mdZxeWwJzye9f6CgRM9DTf",
+      "name": "Gabriel Morais Santos",
+      "email": "encantaredocesesalgados@gmail.com",
+      "role": "consultor",
+      "role_length": "9",
+      "role_hex": "636F6E73756C746F72"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\temail\trole\trole_length\trole_hex\n3sp2FmLhkenyjqMFmfLoex\tGabriel Morais\tcomercial@adegabeirario.com.br\tadmin\t5\t61646D696E\nDZpNu9HuYKL7kLiTubyNnA\tGabriel Morais Santos\tgabriel_m.s@hotmail.com\tuser\t4\t75736572\nj8R68T3wPMAkij5Kb9Zef8\tGabriel Morais\tgmsantos.96@gmail.com\tconsultor\t9\t636F6E73756C746F72\nmdZxeWwJzye9f6CgRM9DTf\tGabriel Morais Santos\tencantaredocesesalgados@gmail.com\tconsultor\t9\t636F6E73756C746F72\n",
+  "stderr": "",
+  "execution_time_ms": 94
+}
