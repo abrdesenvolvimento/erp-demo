@@ -38,8 +38,9 @@ export default function Relatorios() {
   // Criar mapa de dados por dia
   const dataByDay = new Map(calendarData?.map(d => [d.day, d]) || []);
 
-  // Calcular total do mês
+  // Calcular total do mês e dias com vendas
   const monthTotal = calendarData?.reduce((sum, day) => sum + day.total, 0) || 0;
+  const daysWithSales = calendarData?.length || 0;
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
@@ -112,7 +113,7 @@ export default function Relatorios() {
                     Total: <span className="font-semibold text-green-600">{formatCurrency(monthTotal)}</span>
                   </div>
                   <div>
-                    Média Diária: <span className="font-semibold text-blue-600">{formatCurrency(monthTotal / daysInMonth)}</span>
+                    Média Diária: <span className="font-semibold text-blue-600">{daysWithSales > 0 ? formatCurrency(monthTotal / daysWithSales) : formatCurrency(0)}</span>
                   </div>
                 </div>
               </div>
