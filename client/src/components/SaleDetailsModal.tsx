@@ -143,6 +143,18 @@ export function SaleDetailsModal({ saleId, open, onClose }: SaleDetailsModalProp
   const handleAddItem = () => {
     if (!selectedProduct || newItemQuantity <= 0) return;
 
+    // Buscar preço do produto para o canal da venda
+    if (!saleData?.channelId) {
+      toast.error("Canal da venda não identificado");
+      return;
+    }
+
+    const price = selectedProduct.prices?.find((p: any) => p.channelId === saleData.channelId);
+    if (!price) {
+      toast.error(`Produto "${selectedProduct.name}" não tem preço configurado para este canal`);
+      return;
+    }
+
     // Verificar se produto já existe na lista
     const existingIndex = editedItems.findIndex(item => item.productId === selectedProduct.id);
     
@@ -158,7 +170,7 @@ export function SaleDetailsModal({ saleId, open, onClose }: SaleDetailsModalProp
         productId: selectedProduct.id,
         productName: selectedProduct.name,
         quantity: newItemQuantity,
-        unitPrice: selectedProduct.avgCost || "0",
+        unitPrice: price.price,
       };
       setEditedItems(prev => [...prev, newItem]);
       toast.success(`"${selectedProduct.name}" adicionado à venda`);
@@ -442,8 +454,9 @@ export function SaleDetailsModal({ saleId, open, onClose }: SaleDetailsModalProp
               {isEditing && (
                 <div className="mb-4 p-4 bg-muted rounded-lg">
                   <h4 className="text-sm font-medium mb-3">Adicionar Produto</h4>
-                  <div className="flex flex-col md:flex-row gap-3">
-                    <div className="flex-1 relative">
+                  <div className="flex flex-col gap-3">
+                    {/* Campo de busca com autocomplete */}
+                    <div className="relative" style={{ marginBottom: productSearch && filteredProducts.length > 0 ? '200px' : '0' }}>
                       <input
                         type="text"
                         placeholder="Digite o nome do produto..."
@@ -456,24 +469,28 @@ export function SaleDetailsModal({ saleId, open, onClose }: SaleDetailsModalProp
                       />
                       {productSearch && filteredProducts.length > 0 && (
                         <div className="absolute z-50 w-full mt-1 bg-white border rounded-md shadow-lg max-h-60 overflow-y-auto">
-                          {filteredProducts.map((product) => (
-                            <div
-                              key={product.id}
-                              onClick={() => {
-                                setSelectedProduct(product);
-                                setProductSearch(product.name);
-                              }}
-                              className="px-3 py-2 hover:bg-muted cursor-pointer"
-                            >
-                              <div className="font-medium">{product.name}</div>
-                              <div className="text-sm text-muted-foreground">
-                                Estoque: {product.currentStock} | Preço: {formatCurrency(product.avgCost || 0)}
+                          {filteredProducts.map((product) => {
+                            const price = product.prices?.find((p: any) => p.channelId === saleData?.channelId);
+                            return (
+                              <div
+                                key={product.id}
+                                onClick={() => {
+                                  setSelectedProduct(product);
+                                  setProductSearch(product.name);
+                                }}
+                                className="px-3 py-2 hover:bg-muted cursor-pointer"
+                              >
+                                <div className="font-medium">{product.name}</div>
+                                <div className="text-sm text-muted-foreground">
+                                  Estoque: {product.currentStock} | Preço: {price ? formatCurrency(price.price) : 'N/D'}
+                                </div>
                               </div>
-                            </div>
-                          ))}
+                            );
+                          })}
                         </div>
                       )}
                     </div>
+                    {/* Quantidade e botão adicionar */}
                     <div className="flex gap-2">
                       <input
                         type="number"

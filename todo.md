@@ -1109,3 +1109,11 @@
 - [x] Adicionar campos de Desconto e Acréscimo editáveis no modo de edição de vendas
 - [x] Corrigir layout mobile do formulário de adição de produtos (autocomplete sobrepondo campo de quantidade)
 - [x] Melhorar z-index do autocomplete para não sobrepor outros elementos
+
+## 🐛 BUGS REPORTADOS - Edição de Vendas (04/12/2025)
+
+- [ ] Corrigir preço no autocomplete de produtos - está mostrando custo médio (avgCost) ao invés do preço de venda do canal
+- [ ] Melhorar layout mobile do formulário de adição de produtos - autocomplete ainda sobrepõe campo de quantidade
+
+- [x] Corrigir preço no autocomplete de produtos - estava mostrando custo médio (avgCost) ao invés do preço de venda do canal
+- [x] Melhorar layout mobile do formulário de adição de produtos - autocomplete ainda sobrepõe campo de quantidade
