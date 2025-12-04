@@ -1049,3 +1049,9 @@
   - Definir filtros necessários (data, fornecedor, status, etc)
   - Implementar filtros no backend
   - Criar UI de filtros no frontend
+
+
+## 🐛 BUGS REPORTADOS - Edição de Compras (04/12/2025)
+
+- [x] **Campo Observações não carregado ao editar compra** - Corrigido! Adicionado `setNotes(purchase.purchaseOrder.notes || "")` na função loadPurchaseForEdit ✅
+- [x] **Formulário não retorna à lista após salvar edição** - Corrigido! Adicionado `setIsCreating(false)` e `setSelectedPurchaseId(null)` no onSuccess da updateMutation ✅

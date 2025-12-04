@@ -145,6 +145,8 @@ export default function Compras() {
       resetForm();
       setIsEditing(false);
       setEditingPurchaseId(null);
+      setSelectedPurchaseId(null);
+      setIsCreating(false);
     },
     onError: (error) => {
       toast.error(`Erro ao atualizar compra: ${error.message}`);
@@ -220,6 +222,7 @@ export default function Compras() {
     setSupplierId(purchase.purchaseOrder.supplierId);
     setDocType(purchase.purchaseOrder.docType as "NOTA_FISCAL" | "CUPOM" | "SEM_DOCUMENTO");
     setDocNumber(purchase.purchaseOrder.docNumber || "");
+    setNotes(purchase.purchaseOrder.notes || "");
     
     // Marcar para edição e selecionar compra (itens serão carregados via useQuery)
     setEditingPurchaseId(purchaseId);
