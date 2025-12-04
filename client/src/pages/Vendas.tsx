@@ -367,17 +367,24 @@ export default function Vendas() {
     });
   };
 
-  const getSaleTypeBadge = (type: string) => {
+  const getSaleTypeBadge = (type: string, status?: string) => {
     const formatted = formatSaleType(type);
+    const isCancelled = status === "CANCELLED";
+    const label = isCancelled ? `${formatted}-CANCELADO` : formatted;
+    
+    if (isCancelled) {
+      return <Badge variant="destructive">{label}</Badge>;
+    }
+    
     switch (type) {
       case "BALCAO":
-        return <Badge className="bg-blue-500">{formatted}</Badge>;
+        return <Badge className="bg-blue-500">{label}</Badge>;
       case "DELIVERY":
-        return <Badge className="bg-purple-500">{formatted}</Badge>;
+        return <Badge className="bg-purple-500">{label}</Badge>;
       case "A_PRAZO":
-        return <Badge className="bg-orange-500">{formatted}</Badge>;
+        return <Badge className="bg-orange-500">{label}</Badge>;
       default:
-        return <Badge>{formatted}</Badge>;
+        return <Badge>{label}</Badge>;
     }
   };
 
@@ -552,7 +559,7 @@ export default function Vendas() {
                     >
                       <TableCell>#{sale.id}</TableCell>
                       <TableCell>{formatDateTime(sale.saleDate || sale.createdAt)}</TableCell>
-                      <TableCell>{getSaleTypeBadge(sale.saleType)}</TableCell>
+                      <TableCell>{getSaleTypeBadge(sale.saleType, sale.status)}</TableCell>
                       <TableCell>{sale.customerName || "Venda Avulsa"}</TableCell>
                       <TableCell>
                         {sale.saleType === "DELIVERY" && sale.platformOrderId 
@@ -571,7 +578,7 @@ export default function Vendas() {
 
         {/* Modal de Nova Venda */}
         <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-          <DialogContent className="max-w-5xl h-[85vh] overflow-hidden flex flex-col p-4">
+          <DialogContent className="max-w-5xl h-[85vh] overflow-y-auto flex flex-col p-4">
             <DialogHeader>
               <DialogTitle>
                 {step === "type" ? "Nova Venda - Selecione o Tipo" : `Nova Venda - ${saleType?.replace("_", " ")}`}

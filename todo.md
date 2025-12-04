@@ -1064,3 +1064,14 @@
 - [x] **Modal de Vendas - Scroll de produtos inviável no mobile** - Removido scroll fixo da coluna esquerda (formulário). Agora usa scroll natural do DialogContent, melhorando usabilidade no mobile. ✅
 
 - [x] **Vendas canceladas - Falta destaque visual** - Adicionado Badge "CANCELADO" em vermelho ao lado do título no SaleDetailsModal quando status = CANCELLED. ✅
+
+
+## 🚨 BUGS CRÍTICOS - 04/12/2025
+
+- [x] **Modal de Vendas - Botão "Finalizar Venda" não visível no mobile** - Corrigido! Alterado `overflow-hidden` para `overflow-y-auto` no DialogContent. ✅
+
+- [x] **Vendas canceladas - Sem indicador visual na listagem** - Corrigido! Função `getSaleTypeBadge` agora adiciona sufixo "-CANCELADO" em Badge vermelho quando status = CANCELLED. ✅
+
+- [x] **Vendas canceladas contam no faturamento** - Corrigido! Função `getSalesStats` agora filtra vendas com `ne(sales.status, "CANCELLED")`. ✅
+
+- [x] **Produtos vencendo de compras canceladas aparecem no card** - Corrigido! Função `cancelPurchaseOrder` agora atualiza `expirationDate` do produto para a data de vencimento mais recente de compras CONFIRMED (ou null se não houver). ✅

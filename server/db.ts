@@ -1,4 +1,4 @@
-import { eq, desc, or, like, and, sql, gte, lte } from "drizzle-orm";
+import { eq, desc, or, like, and, sql, gte, lte, ne } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import { 
   InsertUser, users,
@@ -509,8 +509,8 @@ export async function getSalesStats(
     total: { count: 0, total: "0.00" },
   };
   
-  // Buscar todas as vendas
-  let allSales = await db.select().from(sales);
+  // Buscar todas as vendas (excluindo canceladas)
+  let allSales = await db.select().from(sales).where(ne(sales.status, "CANCELLED"));
   
   // Aplicar filtro de data customizada (tem prioridade sobre period)
   // IMPORTANTE: Usa saleDate (data real da venda) ao invés de createdAt (data de implantação)
@@ -1011,7 +1011,26 @@ export async function cancelPurchaseOrder(purchaseOrderId: number) {
     }
     
     // Atualizar estoque
-    await updateProduct(prod.id, { currentStock: newStock });
+    const updateData: any = { currentStock: newStock };
+    
+    // Buscar data de vencimento mais recente de compras CONFIRMED (excluindo a atual)
+    const confirmedPurchases = await db.select()
+      .from(purchaseOrderItems)
+      .innerJoin(purchaseOrders, eq(purchaseOrderItems.purchaseOrderId, purchaseOrders.id))
+      .where(and(
+        eq(purchaseOrderItems.productId, item.productId),
+        eq(purchaseOrders.status, "CONFIRMED"),
+        ne(purchaseOrders.id, purchaseOrderId)
+      ))
+      .orderBy(desc(purchaseOrderItems.expiryDate));
+    
+    if (confirmedPurchases.length > 0 && confirmedPurchases[0].purchaseOrderItems.expiryDate) {
+      updateData.expirationDate = confirmedPurchases[0].purchaseOrderItems.expiryDate;
+    } else {
+      updateData.expirationDate = null; // Sem compras confirmadas, limpar vencimento
+    }
+    
+    await updateProduct(prod.id, updateData);
     
     // NOTA: Não recalculamos custo médio ao cancelar, pois isso pode gerar inconsistências
     // O custo médio reflete o histórico de compras e deve ser mantido
