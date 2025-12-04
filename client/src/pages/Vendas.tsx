@@ -1,4 +1,5 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
+import { formatDateForInput, getTodayInBrazil } from "@shared/dateUtils";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -153,10 +154,9 @@ export default function Vendas() {
     return result;
   }, [sales, filterFromDate, filterToDate, filterSaleType]);
 
-  // Initialize filter to today only
+  // Initialize filter to today only (using Brazil timezone)
   useEffect(() => {
-    const today = new Date();
-    const todayStr = today.toISOString().split('T')[0];
+    const todayStr = formatDateForInput(getTodayInBrazil());
     setFilterFromDate(todayStr);
     setFilterToDate(todayStr);
   }, []);
@@ -512,8 +512,7 @@ export default function Vendas() {
                 <Button
                   variant="outline"
                   onClick={() => {
-                    const today = new Date();
-                    const todayStr = today.toISOString().split('T')[0];
+                    const todayStr = formatDateForInput(getTodayInBrazil());
                     setFilterFromDate(todayStr);
                     setFilterToDate(todayStr);
                     setFilterSaleType("all");

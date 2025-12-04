@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { formatDateForInput, getTodayInBrazil, parseDateInBrazil, addDays } from "@shared/dateUtils";
 import { useAuth } from "@/_core/hooks/useAuth";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
@@ -52,11 +53,11 @@ export default function Compras() {
   const [docType, setDocType] = useState<"NOTA_FISCAL" | "CUPOM" | "SEM_DOCUMENTO">("NOTA_FISCAL");
   const [docNumber, setDocNumber] = useState("");
   const [accessKey, setAccessKey] = useState(""); // Código de acesso da NF
-  const [issueDate, setIssueDate] = useState(new Date().toISOString().split('T')[0]);
-  const [postingDate, setPostingDate] = useState(new Date().toISOString().split('T')[0]);
+  const [issueDate, setIssueDate] = useState(formatDateForInput(getTodayInBrazil()));
+  const [postingDate, setPostingDate] = useState(formatDateForInput(getTodayInBrazil()));
   const [paymentMethod, setPaymentMethod] = useState("");
   const [installments, setInstallments] = useState<PaymentInstallment[]>([
-    { dueDate: new Date(Date.now() + 30*24*60*60*1000).toISOString().split('T')[0], amount: 0 }
+    { dueDate: formatDateForInput(addDays(getTodayInBrazil(), 30)), amount: 0 }
   ]);
   const [freightCost, setFreightCost] = useState("0");
   const [chargesCost, setChargesCost] = useState("0");
@@ -173,10 +174,10 @@ export default function Compras() {
     setDocType("NOTA_FISCAL");
     setDocNumber("");
     setAccessKey("");
-    setIssueDate(new Date().toISOString().split('T')[0]);
-    setPostingDate(new Date().toISOString().split('T')[0]);
+    setIssueDate(formatDateForInput(getTodayInBrazil()));
+    setPostingDate(formatDateForInput(getTodayInBrazil()));
     setPaymentMethod("");
-    setInstallments([{ dueDate: new Date(Date.now() + 30*24*60*60*1000).toISOString().split('T')[0], amount: 0 }]);
+    setInstallments([{ dueDate: formatDateForInput(addDays(getTodayInBrazil(), 30)), amount: 0 }]);
     setFreightCost("0");
     setChargesCost("0");
     setNotes("");
@@ -206,8 +207,8 @@ export default function Compras() {
       docType,
       docNumber: docNumber || undefined,
       accessKey: accessKey || undefined,
-      issueDate: new Date(issueDate).toISOString(),
-      postingDate: new Date(postingDate).toISOString(),
+      issueDate: parseDateInBrazil(issueDate).toISOString(),
+      postingDate: parseDateInBrazil(postingDate).toISOString(),
       freightCost: freightCost || "0",
       chargesCost: chargesCost || "0",
       paymentMethod,
@@ -215,10 +216,10 @@ export default function Compras() {
         productId: item.productId,
         quantity: item.quantity,
         unitCost: item.unitCost,
-        expiryDate: item.expiryDate ? new Date(item.expiryDate).toISOString() : undefined,
+        expiryDate: item.expiryDate ? parseDateInBrazil(item.expiryDate).toISOString() : undefined,
       })),
       installments: installments.map(inst => ({
-        dueDate: new Date(inst.dueDate).toISOString(),
+        dueDate: parseDateInBrazil(inst.dueDate).toISOString(),
         amount: inst.amount,
       })),
       notes: notes || undefined,
@@ -634,7 +635,7 @@ export default function Compras() {
                             variant="outline"
                             onClick={() => {
                               const newInstallment = {
-                                dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                                dueDate: formatDateForInput(addDays(getTodayInBrazil(), 30)),
                                 amount: 0
                               };
                               setInstallments([...installments, newInstallment]);

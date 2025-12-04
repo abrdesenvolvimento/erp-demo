@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from "lucide-react";
 import { trpc } from "@/lib/trpc";
+import { getCurrentBrazilDateInfo } from "@shared/dateUtils";
 
 const MONTHS = [
   "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
@@ -13,9 +14,9 @@ const MONTHS = [
 const DAYS_OF_WEEK = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 
 export default function Relatorios() {
-  const today = new Date();
-  const [selectedYear, setSelectedYear] = useState(today.getFullYear());
-  const [selectedMonth, setSelectedMonth] = useState(today.getMonth() + 1); // 1-12
+  const todayInfo = getCurrentBrazilDateInfo();
+  const [selectedYear, setSelectedYear] = useState(todayInfo.year);
+  const [selectedMonth, setSelectedMonth] = useState(todayInfo.month);
 
   const { data: calendarData, isLoading } = trpc.sales.calendar.useQuery({
     year: selectedYear,
@@ -43,19 +44,10 @@ export default function Relatorios() {
   const daysWithSales = calendarData?.length || 0;
   
   // Calcular dias corridos para média diária (usando timezone de Brasília)
-  const todayInBrazil = new Date().toLocaleString('en-US', { 
-    timeZone: 'America/Sao_Paulo',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit'
-  });
-  const [currentMonth, currentDay, currentYear] = todayInBrazil.split('/');
-  const currentDayNum = parseInt(currentDay);
-  const currentMonthNum = parseInt(currentMonth);
-  const currentYearNum = parseInt(currentYear);
+  const currentInfo = getCurrentBrazilDateInfo();
   
-  const isCurrentMonth = selectedYear === currentYearNum && selectedMonth === currentMonthNum;
-  const isPastMonth = selectedYear < currentYearNum || (selectedYear === currentYearNum && selectedMonth < currentMonthNum);
+  const isCurrentMonth = selectedYear === currentInfo.year && selectedMonth === currentInfo.month;
+  const isPastMonth = selectedYear < currentInfo.year || (selectedYear === currentInfo.year && selectedMonth < currentInfo.month);
   
   let daysElapsed = 0;
   if (isPastMonth) {
@@ -63,7 +55,7 @@ export default function Relatorios() {
     daysElapsed = daysInMonth;
   } else if (isCurrentMonth) {
     // Mês atual: usar dia de hoje em Brasília
-    daysElapsed = currentDayNum;
+    daysElapsed = currentInfo.day;
   } else {
     // Mês futuro: não calcular média
     daysElapsed = 0;
@@ -95,13 +87,12 @@ export default function Relatorios() {
 
 
 
-  const isToday = (day: number | null) => {
+  const isTodayDay = (day: number | null) => {
     if (!day) return false;
-    const todayDate = new Date();
     return (
-      day === todayDate.getDate() &&
-      selectedMonth === todayDate.getMonth() + 1 &&
-      selectedYear === todayDate.getFullYear()
+      day === currentInfo.day &&
+      selectedMonth === currentInfo.month &&
+      selectedYear === currentInfo.year
     );
   };
 
@@ -193,7 +184,7 @@ export default function Relatorios() {
                         key={day}
                         className={`
                           min-h-[150px] md:h-[100px] border rounded-lg p-1.5 md:p-2 flex flex-col text-xs md:text-sm overflow-hidden
-                          ${isToday(day) ? 'border-blue-500 border-2' : 'border-gray-200'}
+                          ${isTodayDay(day) ? 'border-blue-500 border-2' : 'border-gray-200'}
                           ${hasData ? 'bg-gray-50' : 'bg-white'}
                           hover:shadow-md transition-shadow
                         `}

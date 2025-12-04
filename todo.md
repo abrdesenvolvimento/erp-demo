@@ -914,3 +914,5 @@
   - Notificação de sucesso/falha
   - Opção de backup manual
   - Restauração de backup
+
+- [x] **Auditoria e padronização de timezone** - Corrigido! Criado módulo `/shared/dateUtils.ts` com funções padronizadas. Corrigidos: Relatorios.tsx (calendário + média), Vendas.tsx (filtros), Compras.tsx (datas). Tudo usa America/Sao_Paulo. Documentação em TIMEZONE_FIX.md ✅
