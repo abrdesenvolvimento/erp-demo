@@ -428,3 +428,18 @@ export const customerPayments = mysqlTable("customerPayments", {
 
 export type CustomerPayment = typeof customerPayments.$inferSelect;
 export type InsertCustomerPayment = typeof customerPayments.$inferInsert;
+
+// Débitos manuais (valores avulsos adicionados à conta do cliente)
+export const customerDebits = mysqlTable("customerDebits", {
+  id: int("id").primaryKey().autoincrement(),
+  customerId: int("customerId").notNull().references(() => partners.id),
+  debitDate: timestamp("debitDate").notNull(),
+  debitAmount: decimal("debitAmount", { precision: 10, scale: 2 }).notNull(),
+  description: text("description").notNull(), // Ex: "Empréstimo em dinheiro", "Taxa de serviço"
+  notes: text("notes"),
+  createdBy: varchar("createdBy", { length: 64 }),
+  createdAt: timestamp("createdAt").defaultNow(),
+});
+
+export type CustomerDebit = typeof customerDebits.$inferSelect;
+export type InsertCustomerDebit = typeof customerDebits.$inferInsert;

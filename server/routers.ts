@@ -1073,6 +1073,22 @@ export const appRouter = router({
           createdBy: ctx.user.id
         });
       }),
+    
+    // Registrar débito manual
+    registerManualDebit: protectedProcedure
+      .input(z.object({
+        customerId: z.number(),
+        debitDate: z.date(),
+        debitAmount: z.string(),
+        description: z.string(),
+        notes: z.string().optional(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        return await db.registerManualDebit({
+          ...input,
+          createdBy: ctx.user.id
+        });
+      }),
   }),
 
   // ==================== DASHBOARD ====================

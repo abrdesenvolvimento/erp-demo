@@ -949,3 +949,33 @@
 - [x] **Investigar divergência de saldo - Vitor Hugo** - Resolvido! Problema: R$ 100 em pagamentos antigos (receivablePayments) não migrados + R$ 60,50 em pagamentos de teste. Migrados 4 pagamentos antigos, removidos 3 de teste. Saldo corrigido: R$ 85,25 ✅
 
 - [x] **Substituir rota antiga de Contas a Receber** - Concluído! Rota `/contas-receber` agora usa ContasReceberNovo.tsx (modelo conta corrente). Código antigo removido. Sistema funcionando perfeitamente ✅
+
+## 🔧 MELHORIAS EM ANDAMENTO - Contas a Receber
+
+- [ ] **Remover "X vendas pendentes" da lista** - Simplificar interface mostrando apenas nome do cliente e saldo devedor
+
+- [ ] **Adicionar lançamento de débitos manuais** - Permitir adicionar valores avulsos à conta do cliente (ex: empréstimo em dinheiro, taxas, ajustes) sem vínculo a produtos/vendas
+
+- [ ] **Validar limite de crédito em vendas A_PRAZO** - Bloquear ou alertar ao registrar venda quando cliente ultrapassar limite disponível
+
+## ✅ FUNCIONALIDADE IMPLEMENTADA - Débitos Manuais (04/12/2025)
+
+- [x] **Lançamento de débitos manuais em Contas a Receber**
+  - **Objetivo:** Permitir lançar débitos que não são vendas (empréstimos, taxas, etc)
+  - **Backend:** 
+    - Criado endpoint `accountReceivable.registerDebit` (tRPC)
+    - Função `registerDebitToBalance()` em server/db.ts
+    - Nova tabela `customerDebits` para armazenar débitos manuais
+    - Débitos aparecem no histórico com type='DEBIT'
+  - **Frontend:**
+    - Botão "Lançar Débito" ao lado de "Registrar Pagamento"
+    - Modal com campos: Data, Valor, Descrição (obrigatória), Observações
+    - Validações: valor > 0, descrição obrigatória
+    - Débitos aparecem em vermelho no histórico (coluna Débito)
+  - **Teste realizado:**
+    - Cliente: Vitor Hugo Fernandes
+    - Saldo anterior: R$ 85,25
+    - Débito lançado: R$ 50,00 (Empréstimo em dinheiro)
+    - Saldo atualizado: R$ 135,25 ✅
+    - Crédito disponível: R$ 0,00 (limite R$ 101,50 - saldo R$ 135,25)
+  - **Resultado:** Sistema funcionando perfeitamente! Débitos manuais integrados ao modelo de conta corrente ✅

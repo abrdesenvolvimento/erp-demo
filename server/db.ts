@@ -21,7 +21,8 @@ import {
   receivables, Receivable, InsertReceivable,
   receivableInstallments, ReceivableInstallment, InsertReceivableInstallment,
   receivablePayments, ReceivablePayment, InsertReceivablePayment,
-  customerPayments, CustomerPayment, InsertCustomerPayment
+  customerPayments, CustomerPayment, InsertCustomerPayment,
+  customerDebits, CustomerDebit, InsertCustomerDebit
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -2462,7 +2463,7 @@ export async function getSalesCalendar(year: number, month: number) {
 
 /**
  * Calcula o saldo devedor de um cliente
- * Saldo = Σ(vendas A_PRAZO) - Σ(pagamentos)
+ * Saldo = Σ(vendas A_PRAZO) + Σ(débitos manuais) - Σ(pagamentos)
  */
 export async function getCustomerBalance(customerId: number): Promise<number> {
   const db = await getDb();
@@ -2478,6 +2479,13 @@ export async function getCustomerBalance(customerId: number): Promise<number> {
     eq(sales.saleType, "A_PRAZO")
   ));
 
+  // Soma total de débitos manuais
+  const [debitsResult] = await db.select({
+    total: sql<string>`COALESCE(SUM(CAST(${customerDebits.debitAmount} AS DECIMAL(10,2))), 0)`
+  })
+  .from(customerDebits)
+  .where(eq(customerDebits.customerId, customerId));
+
   // Soma total de pagamentos
   const [paymentsResult] = await db.select({
     total: sql<string>`COALESCE(SUM(CAST(${customerPayments.paidAmount} AS DECIMAL(10,2))), 0)`
@@ -2486,9 +2494,10 @@ export async function getCustomerBalance(customerId: number): Promise<number> {
   .where(eq(customerPayments.customerId, customerId));
 
   const totalSales = parseFloat(salesResult.total || "0");
+  const totalDebits = parseFloat(debitsResult.total || "0");
   const totalPayments = parseFloat(paymentsResult.total || "0");
   
-  return totalSales - totalPayments;
+  return totalSales + totalDebits - totalPayments;
 }
 
 /**
@@ -2531,7 +2540,7 @@ export async function getCustomersWithBalance() {
 }
 
 /**
- * Busca histórico completo de um cliente (vendas + pagamentos)
+ * Busca histórico completo de um cliente (vendas + pagamentos + débitos manuais)
  * Retorna lista ordenada cronologicamente com saldo acumulado
  */
 export async function getCustomerAccountHistory(customerId: number) {
@@ -2557,6 +2566,19 @@ export async function getCustomerAccountHistory(customerId: number) {
     eq(sales.saleType, "A_PRAZO")
   ));
 
+  // Buscar débitos manuais
+  const debits = await db.select({
+    id: customerDebits.id,
+    date: customerDebits.debitDate,
+    amount: customerDebits.debitAmount,
+    type: sql<string>`'DEBIT'`,
+    description: customerDebits.description,
+    paymentMethod: sql<string>`NULL`,
+    notes: customerDebits.notes
+  })
+  .from(customerDebits)
+  .where(eq(customerDebits.customerId, customerId));
+
   // Buscar todos os pagamentos
   const payments = await db.select({
     id: customerPayments.id,
@@ -2571,7 +2593,7 @@ export async function getCustomerAccountHistory(customerId: number) {
   .where(eq(customerPayments.customerId, customerId));
 
   // Combinar e ordenar por data
-  const history = [...customerSales, ...payments]
+  const history = [...customerSales, ...debits, ...payments]
     .filter(item => item.date !== null)
     .sort((a, b) => new Date(a.date!).getTime() - new Date(b.date!).getTime());
 
@@ -2579,7 +2601,7 @@ export async function getCustomerAccountHistory(customerId: number) {
   let balance = 0;
   const historyWithBalance = history.map(item => {
     const amount = parseFloat(item.amount);
-    if (item.type === 'SALE') {
+    if (item.type === 'SALE' || item.type === 'DEBIT') {
       balance += amount;
     } else {
       balance -= amount;
@@ -2618,6 +2640,33 @@ export async function registerPaymentToBalance(data: {
     paidDate: data.paidDate,
     paidAmount: data.paidAmount,
     paymentMethod: data.paymentMethod,
+    notes: data.notes ?? null,
+    createdBy: data.createdBy
+  });
+
+  return { success: true };
+}
+
+/**
+ * Registra um débito manual na conta corrente do cliente
+ * Usado para lançar valores avulsos (empréstimos, taxas, ajustes)
+ */
+export async function registerManualDebit(data: {
+  customerId: number;
+  debitDate: Date;
+  debitAmount: string;
+  description: string;
+  notes?: string;
+  createdBy: string;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db.insert(customerDebits).values({
+    customerId: data.customerId,
+    debitDate: data.debitDate,
+    debitAmount: data.debitAmount,
+    description: data.description,
     notes: data.notes ?? null,
     createdBy: data.createdBy
   });

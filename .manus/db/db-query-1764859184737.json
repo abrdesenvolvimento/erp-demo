@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE IF NOT EXISTS customerDebits (\n  id INT AUTO_INCREMENT PRIMARY KEY,\n  customerId INT NOT NULL,\n  debitDate TIMESTAMP NOT NULL,\n  debitAmount DECIMAL(10,2) NOT NULL,\n  description TEXT NOT NULL,\n  notes TEXT,\n  createdBy VARCHAR(64),\n  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\n  FOREIGN KEY (customerId) REFERENCES partners(id)\n)",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute CREATE TABLE IF NOT EXISTS customerDebits (\n  id INT AUTO_INCREMENT PRIMARY KEY,\n  customerId INT NOT NULL,\n  debitDate TIMESTAMP NOT NULL,\n  debitAmount DECIMAL(10,2) NOT NULL,\n  description TEXT NOT NULL,\n  notes TEXT,\n  createdBy VARCHAR(64),\n  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\n  FOREIGN KEY (customerId) REFERENCES partners(id)\n)",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 371
+}

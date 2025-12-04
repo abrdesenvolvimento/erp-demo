@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, DollarSign } from "lucide-react";
+import { ArrowLeft, DollarSign, Plus } from "lucide-react";
 
 import { getTodayInBrazil, getNowInBrazil, formatDateBR, formatDateTimeBR } from "@shared/dateUtils";
 import { toast } from "sonner";
@@ -21,6 +21,7 @@ const formatCurrency = (value: number) => {
 export default function ContasReceberNovo() {
   const [selectedCustomerId, setSelectedCustomerId] = useState<number | null>(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [showDebitModal, setShowDebitModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
 
   // Buscar lista de clientes com saldo
@@ -41,23 +42,37 @@ export default function ContasReceberNovo() {
       setShowPaymentModal(false);
       refetchCustomers();
       refetchHistory();
-      resetForm();
+      resetPaymentForm();
     },
     onError: (error) => {
       toast.error(`Erro ao registrar pagamento: ${error.message}`);
     }
   });
 
-  // Form state
-  const [formData, setFormData] = useState({
+  // Mutation para registrar débito manual
+  const registerDebit = trpc.accountReceivable.registerManualDebit.useMutation({
+    onSuccess: () => {
+      toast.success("Débito lançado com sucesso!");
+      setShowDebitModal(false);
+      refetchCustomers();
+      refetchHistory();
+      resetDebitForm();
+    },
+    onError: (error) => {
+      toast.error(`Erro ao lançar débito: ${error.message}`);
+    }
+  });
+
+  // Form state - Pagamento
+  const [paymentForm, setPaymentForm] = useState({
     paidDate: getTodayInBrazil().toISOString().split('T')[0],
     paidAmount: "",
     paymentMethod: "DINHEIRO",
     notes: ""
   });
 
-  const resetForm = () => {
-    setFormData({
+  const resetPaymentForm = () => {
+    setPaymentForm({
       paidDate: getTodayInBrazil().toISOString().split('T')[0],
       paidAmount: "",
       paymentMethod: "DINHEIRO",
@@ -65,25 +80,69 @@ export default function ContasReceberNovo() {
     });
   };
 
-  const handleSubmit = () => {
+  // Form state - Débito Manual
+  const [debitForm, setDebitForm] = useState({
+    debitDate: getTodayInBrazil().toISOString().split('T')[0],
+    debitAmount: "",
+    description: "",
+    notes: ""
+  });
+
+  const resetDebitForm = () => {
+    setDebitForm({
+      debitDate: getTodayInBrazil().toISOString().split('T')[0],
+      debitAmount: "",
+      description: "",
+      notes: ""
+    });
+  };
+
+  const handlePaymentSubmit = () => {
     if (!selectedCustomerId) return;
     
-    if (!formData.paidAmount || parseFloat(formData.paidAmount) <= 0) {
+    if (!paymentForm.paidAmount || parseFloat(paymentForm.paidAmount) <= 0) {
       toast.error("Valor do pagamento deve ser maior que zero");
       return;
     }
 
     // Se a data selecionada é hoje, usar horário atual; senão usar meio-dia
-    const selectedDate = new Date(formData.paidDate + "T00:00:00");
+    const selectedDate = new Date(paymentForm.paidDate + "T00:00:00");
     const today = getTodayInBrazil();
     const isToday = selectedDate.toDateString() === today.toDateString();
     
     registerPayment.mutate({
       customerId: selectedCustomerId,
-      paidDate: isToday ? getNowInBrazil() : new Date(formData.paidDate + "T12:00:00"),
-      paidAmount: formData.paidAmount,
-      paymentMethod: formData.paymentMethod,
-      notes: formData.notes || undefined
+      paidDate: isToday ? getNowInBrazil() : new Date(paymentForm.paidDate + "T12:00:00"),
+      paidAmount: paymentForm.paidAmount,
+      paymentMethod: paymentForm.paymentMethod,
+      notes: paymentForm.notes || undefined
+    });
+  };
+
+  const handleDebitSubmit = () => {
+    if (!selectedCustomerId) return;
+    
+    if (!debitForm.debitAmount || parseFloat(debitForm.debitAmount) <= 0) {
+      toast.error("Valor do débito deve ser maior que zero");
+      return;
+    }
+
+    if (!debitForm.description || debitForm.description.trim() === "") {
+      toast.error("Descrição do débito é obrigatória");
+      return;
+    }
+
+    // Se a data selecionada é hoje, usar horário atual; senão usar meio-dia
+    const selectedDate = new Date(debitForm.debitDate + "T00:00:00");
+    const today = getTodayInBrazil();
+    const isToday = selectedDate.toDateString() === today.toDateString();
+    
+    registerDebit.mutate({
+      customerId: selectedCustomerId,
+      debitDate: isToday ? getNowInBrazil() : new Date(debitForm.debitDate + "T12:00:00"),
+      debitAmount: debitForm.debitAmount,
+      description: debitForm.description,
+      notes: debitForm.notes || undefined
     });
   };
 
@@ -132,10 +191,16 @@ export default function ContasReceberNovo() {
                   </p>
                 </div>
               </div>
-              <Button onClick={() => setShowPaymentModal(true)}>
-                <DollarSign className="mr-2 h-4 w-4" />
-                Registrar Pagamento
-              </Button>
+              <div className="flex gap-2">
+                <Button onClick={() => setShowPaymentModal(true)}>
+                  <DollarSign className="mr-2 h-4 w-4" />
+                  Registrar Pagamento
+                </Button>
+                <Button variant="outline" onClick={() => setShowDebitModal(true)}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Lançar Débito
+                </Button>
+              </div>
             </div>
           </CardHeader>
           <CardContent>
@@ -158,9 +223,10 @@ export default function ContasReceberNovo() {
                         <td className="p-2">
                           {item.description}
                           {item.type === 'PAYMENT' && (item as any).notes && <span className="text-xs text-muted-foreground ml-2">({(item as any).notes})</span>}
+                          {item.type === 'DEBIT' && (item as any).notes && <span className="text-xs text-muted-foreground ml-2">({(item as any).notes})</span>}
                         </td>
                         <td className="p-2 text-right text-red-600">
-                          {item.type === 'SALE' ? formatCurrency(parseFloat(item.amount)) : '-'}
+                          {(item.type === 'SALE' || item.type === 'DEBIT') ? formatCurrency(parseFloat(item.amount)) : '-'}
                         </td>
                         <td className="p-2 text-right text-green-600">
                           {item.type === 'PAYMENT' ? formatCurrency(parseFloat(item.amount)) : '-'}
@@ -188,8 +254,8 @@ export default function ContasReceberNovo() {
                 <Label>Data do Pagamento</Label>
                 <Input
                   type="date"
-                  value={formData.paidDate}
-                  onChange={(e) => setFormData({ ...formData, paidDate: e.target.value })}
+                  value={paymentForm.paidDate}
+                  onChange={(e) => setPaymentForm({ ...paymentForm, paidDate: e.target.value })}
                 />
               </div>
               <div>
@@ -198,15 +264,15 @@ export default function ContasReceberNovo() {
                   type="number"
                   step="0.01"
                   placeholder="0.00"
-                  value={formData.paidAmount}
-                  onChange={(e) => setFormData({ ...formData, paidAmount: e.target.value })}
+                  value={paymentForm.paidAmount}
+                  onChange={(e) => setPaymentForm({ ...paymentForm, paidAmount: e.target.value })}
                 />
               </div>
               <div>
                 <Label>Forma de Pagamento</Label>
                 <Select
-                  value={formData.paymentMethod}
-                  onValueChange={(value) => setFormData({ ...formData, paymentMethod: value })}
+                  value={paymentForm.paymentMethod}
+                  onValueChange={(value) => setPaymentForm({ ...paymentForm, paymentMethod: value })}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -224,16 +290,69 @@ export default function ContasReceberNovo() {
                 <Label>Observações (opcional)</Label>
                 <Input
                   placeholder="Ex: Pagamento parcial, referente à venda X..."
-                  value={formData.notes}
-                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                  value={paymentForm.notes}
+                  onChange={(e) => setPaymentForm({ ...paymentForm, notes: e.target.value })}
                 />
               </div>
               <div className="flex justify-end gap-2">
                 <Button variant="outline" onClick={() => setShowPaymentModal(false)}>
                   Cancelar
                 </Button>
-                <Button onClick={handleSubmit} disabled={registerPayment.isPending}>
+                <Button onClick={handlePaymentSubmit} disabled={registerPayment.isPending}>
                   {registerPayment.isPending ? "Salvando..." : "Confirmar"}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Modal de Débito Manual */}
+        <Dialog open={showDebitModal} onOpenChange={setShowDebitModal}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Lançar Débito Manual - {history.customer.name}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label>Data do Débito</Label>
+                <Input
+                  type="date"
+                  value={debitForm.debitDate}
+                  onChange={(e) => setDebitForm({ ...debitForm, debitDate: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label>Valor *</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  placeholder="0.00"
+                  value={debitForm.debitAmount}
+                  onChange={(e) => setDebitForm({ ...debitForm, debitAmount: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label>Descrição *</Label>
+                <Input
+                  placeholder="Ex: Empréstimo, Taxa de serviço, etc."
+                  value={debitForm.description}
+                  onChange={(e) => setDebitForm({ ...debitForm, description: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label>Observações (opcional)</Label>
+                <Input
+                  placeholder="Informações adicionais..."
+                  value={debitForm.notes}
+                  onChange={(e) => setDebitForm({ ...debitForm, notes: e.target.value })}
+                />
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setShowDebitModal(false)}>
+                  Cancelar
+                </Button>
+                <Button onClick={handleDebitSubmit} disabled={registerDebit.isPending}>
+                  {registerDebit.isPending ? "Salvando..." : "Confirmar"}
                 </Button>
               </div>
             </div>
@@ -288,9 +407,6 @@ export default function ContasReceberNovo() {
                 >
                   <div>
                     <p className="font-semibold">{customer.customerName}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {customer.salesCount} {customer.salesCount === 1 ? 'venda pendente' : 'vendas pendentes'}
-                    </p>
                   </div>
                   <p className="text-xl font-bold text-red-600">
                     {formatCurrency(parseFloat(customer.totalPending))}
