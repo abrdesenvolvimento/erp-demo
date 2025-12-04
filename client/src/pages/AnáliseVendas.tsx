@@ -21,9 +21,11 @@ export default function AnáliseVendas() {
   const { user } = useAuth();
   const isAdmin = user?.role === "admin";
 
-  const [dateRange, setDateRange] = useState<{ from: Date; to: Date }>({
-    from: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
-    to: new Date(),
+  const [dateRange, setDateRange] = useState<{ from: Date; to: Date }>(() => {
+    // Usar novembro de 2025 como período padrão (quando o sistema começou)
+    const firstDay = new Date(2025, 10, 1); // 01/11/2025
+    const lastDay = new Date(2025, 10, 30); // 30/11/2025
+    return { from: firstDay, to: lastDay };
   });
 
   // Queries

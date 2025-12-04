@@ -40,12 +40,15 @@
 
 ## 🔵 EM DESENVOLVIMENTO
 
-- [x] **Criar categoria Mercearia** - Criar nova categoria e mover 16 produtos da categoria "Outros" para "Mercearia"
-- [x] **Página de Análise de Vendas** - Visão detalhada dividida em três abas: Análise de Valores (faturamento, margem, lucro), Análise de Quantidades (unidades vendidas, mix de produtos) e Por Categoria (desempenho agregado)
+- [ ] **Agrupamento temporal na Análise** - Adicionar opções de visualização por Dia, Semana e Mês
+- [ ] **Destaque de feriados** - Marcar dias de feriado na análise diária (vendas sobem significativamente em feriados)
+- [ ] **Filtros avançados** - Adicionar filtros por Produto específico e Subcategoria (ex: filtrar subcategoria Cerveja e depois marcas específicas)
 
 ## 🔴 BUGS CRÍTICOS - PENDENTES (0 itens)
 
 ## 🔴 BUGS CRÍTICOS - RESOLVIDOS
+
+- [x] **Análise de Vendas não carregava dados** - Corrigido! Problemas identificados: (1) Usando `postingDate` ao invés de `saleDate` na tabela sales, (2) Usando `finalAmount` ao invés de `totalPrice` na tabela saleItems, (3) Período padrão em 2024 quando vendas estão em 2025. Todas as queries SQL corrigidas (getSalesAnalysisByValue, getSalesAnalysisByQuantity, getSalesAnalysisByCategoryValue) e página funcionando perfeitamente com dados de novembro/2025.
 
 - [x] **Menu lateral do Consultor não mostrava todas as páginas** - Verificado e confirmado que já estava correto. Consultor tem acesso a Compras, Despesas, Contas a Pagar e Relatórios desde a implementação inicial do sistema de permissões.
 - [x] **Operacional e Consultor podiam editar produtos** - Corrigido! Todos os campos do formulário de produtos (nome, categoria, subcategoria, EAN, unidade, estoque, custo, preços, produto composto, observações) agora ficam desabilitados (disabled) para usuários sem permissão canEdit.

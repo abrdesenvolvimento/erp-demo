@@ -1,0 +1,70 @@
+{
+  "query": "\nSELECT id, DATE(saleDate) as data_venda, finalAmount, status\nFROM sales\nORDER BY saleDate DESC\nLIMIT 10\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute \nSELECT id, DATE(saleDate) as data_venda, finalAmount, status\nFROM sales\nORDER BY saleDate DESC\nLIMIT 10\n",
+  "rows": [
+    {
+      "id": "12750001",
+      "data_venda": "2025-12-04",
+      "finalAmount": "17.00",
+      "status": "ACTIVE"
+    },
+    {
+      "id": "12720006",
+      "data_venda": "2025-12-04",
+      "finalAmount": "16.00",
+      "status": "ACTIVE"
+    },
+    {
+      "id": "12720005",
+      "data_venda": "2025-12-04",
+      "finalAmount": "14.00",
+      "status": "ACTIVE"
+    },
+    {
+      "id": "12720004",
+      "data_venda": "2025-12-04",
+      "finalAmount": "30.00",
+      "status": "ACTIVE"
+    },
+    {
+      "id": "12720003",
+      "data_venda": "2025-12-04",
+      "finalAmount": "8.50",
+      "status": "ACTIVE"
+    },
+    {
+      "id": "12720002",
+      "data_venda": "2025-12-04",
+      "finalAmount": "12.00",
+      "status": "ACTIVE"
+    },
+    {
+      "id": "12720001",
+      "data_venda": "2025-12-04",
+      "finalAmount": "20.00",
+      "status": "ACTIVE"
+    },
+    {
+      "id": "12690017",
+      "data_venda": "2025-12-04",
+      "finalAmount": "140.00",
+      "status": "ACTIVE"
+    },
+    {
+      "id": "12690016",
+      "data_venda": "2025-12-04",
+      "finalAmount": "49.98",
+      "status": "ACTIVE"
+    },
+    {
+      "id": "12690015",
+      "data_venda": "2025-12-04",
+      "finalAmount": "62.24",
+      "status": "ACTIVE"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tdata_venda\tfinalAmount\tstatus\n12750001\t2025-12-04\t17.00\tACTIVE\n12720006\t2025-12-04\t16.00\tACTIVE\n12720005\t2025-12-04\t14.00\tACTIVE\n12720004\t2025-12-04\t30.00\tACTIVE\n12720003\t2025-12-04\t8.50\tACTIVE\n12720002\t2025-12-04\t12.00\tACTIVE\n12720001\t2025-12-04\t20.00\tACTIVE\n12690017\t2025-12-04\t140.00\tACTIVE\n12690016\t2025-12-04\t49.98\tACTIVE\n12690015\t2025-12-04\t62.24\tACTIVE\n",
+  "stderr": "",
+  "execution_time_ms": 51
+}

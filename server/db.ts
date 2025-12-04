@@ -3218,23 +3218,27 @@ export async function getSalesAnalysisByValue(startDate: Date, endDate: Date) {
   const db = await getDb();
   if (!db) return [];
 
+  // Formatar datas para MySQL
+  const startStr = startDate.toISOString().split('T')[0];
+  const endStr = endDate.toISOString().split('T')[0];
+
   const result = await db.execute(sql`
     SELECT 
       p.id as productId,
       p.name as productName,
       c.name as categoryName,
       SUM(si.quantity) as totalQuantity,
-      SUM(si.finalAmount) as totalRevenue,
+      SUM(si.totalPrice) as totalRevenue,
       SUM(si.quantity * p.avgCost) as totalCost,
-      SUM(si.finalAmount) - SUM(si.quantity * p.avgCost) as totalProfit,
-      ROUND((1 - (SUM(si.quantity * p.avgCost) / NULLIF(SUM(si.finalAmount), 0))) * 100, 1) as marginPercent
+      SUM(si.totalPrice) - SUM(si.quantity * p.avgCost) as totalProfit,
+      ROUND((1 - (SUM(si.quantity * p.avgCost) / NULLIF(SUM(si.totalPrice), 0))) * 100, 1) as marginPercent
     FROM saleItems si
     INNER JOIN sales s ON si.saleId = s.id
     INNER JOIN products p ON si.productId = p.id
     INNER JOIN categories c ON p.categoryId = c.id
     WHERE s.status != 'CANCELLED'
-      AND s.postingDate >= ${startDate}
-      AND s.postingDate <= ${endDate}
+      AND DATE(s.saleDate) >= ${startStr}
+      AND DATE(s.saleDate) <= ${endStr}
     GROUP BY p.id, p.name, c.name
     ORDER BY totalRevenue DESC
   `);
@@ -3259,6 +3263,10 @@ export async function getSalesAnalysisByQuantity(startDate: Date, endDate: Date)
   const db = await getDb();
   if (!db) return [];
 
+  // Formatar datas para MySQL
+  const startStr = startDate.toISOString().split('T')[0];
+  const endStr = endDate.toISOString().split('T')[0];
+
   const result = await db.execute(sql`
     SELECT 
       p.id as productId,
@@ -3266,22 +3274,22 @@ export async function getSalesAnalysisByQuantity(startDate: Date, endDate: Date)
       c.name as categoryName,
       p.uom as unit,
       SUM(si.quantity) as totalQuantity,
-      SUM(si.finalAmount) as totalRevenue,
+      SUM(si.totalPrice) as totalRevenue,
       ROUND((SUM(si.quantity) / (
         SELECT SUM(si2.quantity)
         FROM saleItems si2
         INNER JOIN sales s2 ON si2.saleId = s2.id
         WHERE s2.status != 'CANCELLED'
-          AND s2.postingDate >= ${startDate}
-          AND s2.postingDate <= ${endDate}
+          AND DATE(s2.saleDate) >= ${startStr}
+          AND DATE(s2.saleDate) <= ${endStr}
       )) * 100, 2) as quantityMixPercent
     FROM saleItems si
     INNER JOIN sales s ON si.saleId = s.id
     INNER JOIN products p ON si.productId = p.id
     INNER JOIN categories c ON p.categoryId = c.id
     WHERE s.status != 'CANCELLED'
-      AND s.postingDate >= ${startDate}
-      AND s.postingDate <= ${endDate}
+      AND DATE(s.saleDate) >= ${startStr}
+      AND DATE(s.saleDate) <= ${endStr}
     GROUP BY p.id, p.name, c.name, p.uom
     ORDER BY totalQuantity DESC
   `);
@@ -3304,22 +3312,26 @@ export async function getSalesAnalysisByCategoryValue(startDate: Date, endDate: 
   const db = await getDb();
   if (!db) return [];
 
+  // Formatar datas para MySQL
+  const startStr = startDate.toISOString().split('T')[0];
+  const endStr = endDate.toISOString().split('T')[0];
+
   const result = await db.execute(sql`
     SELECT 
       c.id as categoryId,
       c.name as categoryName,
       SUM(si.quantity) as totalQuantity,
-      SUM(si.finalAmount) as totalRevenue,
+      SUM(si.totalPrice) as totalRevenue,
       SUM(si.quantity * p.avgCost) as totalCost,
-      SUM(si.finalAmount) - SUM(si.quantity * p.avgCost) as totalProfit,
-      ROUND((1 - (SUM(si.quantity * p.avgCost) / NULLIF(SUM(si.finalAmount), 0))) * 100, 1) as marginPercent
+      SUM(si.totalPrice) - SUM(si.quantity * p.avgCost) as totalProfit,
+      ROUND((1 - (SUM(si.quantity * p.avgCost) / NULLIF(SUM(si.totalPrice), 0))) * 100, 1) as marginPercent
     FROM saleItems si
     INNER JOIN sales s ON si.saleId = s.id
     INNER JOIN products p ON si.productId = p.id
     INNER JOIN categories c ON p.categoryId = c.id
     WHERE s.status != 'CANCELLED'
-      AND s.postingDate >= ${startDate}
-      AND s.postingDate <= ${endDate}
+      AND DATE(s.saleDate) >= ${startStr}
+      AND DATE(s.saleDate) <= ${endStr}
     GROUP BY c.id, c.name
     ORDER BY totalRevenue DESC
   `);
