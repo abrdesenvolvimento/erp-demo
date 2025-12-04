@@ -411,3 +411,20 @@ export const receivablePayments = mysqlTable("receivablePayments", {
 export type ReceivablePayment = typeof receivablePayments.$inferSelect;
 export type InsertReceivablePayment = typeof receivablePayments.$inferInsert;
 
+// Pagamentos de Clientes (Conta Corrente - não vinculados a vendas específicas)
+export const customerPayments = mysqlTable("customerPayments", {
+  id: int("id").primaryKey().autoincrement(),
+  customerId: int("customerId").notNull(), // Cliente que pagou
+  paidDate: timestamp("paidDate").notNull(), // Data do pagamento
+  paidAmount: decimal("paidAmount", { precision: 10, scale: 2 }).notNull(), // Valor pago
+  paymentMethod: varchar("paymentMethod", { length: 50 }).notNull(), // Forma de pagamento (Dinheiro, PIX, Cartão, etc)
+  notes: text("notes"), // Observações
+  createdBy: varchar("createdBy", { length: 64 }).notNull(), // Usuário que registrou
+  createdAt: timestamp("createdAt").defaultNow(),
+}, (table) => ({
+  customerIdx: index("customer_idx").on(table.customerId),
+  paidDateIdx: index("paid_date_idx").on(table.paidDate),
+}));
+
+export type CustomerPayment = typeof customerPayments.$inferSelect;
+export type InsertCustomerPayment = typeof customerPayments.$inferInsert;

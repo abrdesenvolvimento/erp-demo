@@ -919,4 +919,19 @@
 
 - [x] **Auditoria e padronização de timezone** - Corrigido! Criado módulo `/shared/dateUtils.ts` com funções padronizadas. Corrigidos: Relatorios.tsx (calendário + média), Vendas.tsx (filtros), Compras.tsx (datas). Tudo usa America/Sao_Paulo. Documentação em TIMEZONE_FIX.md ✅
 
+- [x] **Refatorar Contas a Receber para modelo de conta corrente** - Implementado! Nova tabela customerPayments, funções de cálculo de saldo (getCustomerBalance, getCustomersWithBalance, getCustomerAccountHistory, registerPaymentToBalance), router accountReceivable, página ContasReceberNovo.tsx (/contas-receber-novo). Sistema agora funciona como conta corrente real: pagamentos reduzem saldo geral, vendas A_PRAZO aumentam. Histórico cronológico com saldo acumulado. Testado: Vitor Hugo R$ 185,25 - pagamento R$ 50 = R$ 135,25 ✅
+
 - [ ] **Divergência de saldo em Contas a Receber** - Lista mostra R$ 91,75 mas conta corrente mostra R$ 85,25 para cliente Vitor Hugo Fernandes. Diferença de R$ 6,50 indica cálculo inconsistente entre as duas telas.
+
+## 🔄 REFATORAÇÃO EM ANDAMENTO - Contas a Receber como Conta Corrente
+
+- [ ] **Refatorar sistema de Contas a Receber para funcionar como conta corrente real**
+  - **Problema atual:** Pagamentos vinculados a vendas específicas, não reflete operação real
+  - **Modelo correto:** Cliente tem saldo devedor geral (vendas A_PRAZO - pagamentos recebidos)
+  - **Exemplo:** Cliente com R$ 200 de saldo paga R$ 20 (fica R$ 180), compra mais R$ 30 (fica R$ 210), paga R$ 10 (fica R$ 200)
+  - **Mudanças:**
+    - [ ] Remover vínculo obrigatório entre pagamento e venda
+    - [ ] Calcular saldo como: Σ(vendas A_PRAZO) - Σ(pagamentos)
+    - [ ] Tela Conta Corrente: histórico cronológico (vendas + pagamentos) com saldo acumulado
+    - [ ] Simplificar registro de pagamento (apenas valor, data, método)
+    - [ ] Atualizar lista de Contas a Receber com saldo calculado

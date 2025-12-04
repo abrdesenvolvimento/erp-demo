@@ -1043,6 +1043,38 @@ export const appRouter = router({
       }),
   }),
 
+  // ==================== CONTA CORRENTE (NOVO MODELO) ====================
+  accountReceivable: router({
+    // Listar clientes com saldo devedor
+    customers: protectedProcedure
+      .query(async () => {
+        return await db.getCustomersWithBalance();
+      }),
+    
+    // Buscar histórico de um cliente (vendas + pagamentos)
+    history: protectedProcedure
+      .input(z.object({ customerId: z.number() }))
+      .query(async ({ input }) => {
+        return await db.getCustomerAccountHistory(input.customerId);
+      }),
+    
+    // Registrar pagamento
+    registerPayment: protectedProcedure
+      .input(z.object({
+        customerId: z.number(),
+        paidDate: z.date(),
+        paidAmount: z.string(),
+        paymentMethod: z.string(),
+        notes: z.string().optional(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        return await db.registerPaymentToBalance({
+          ...input,
+          createdBy: ctx.user.id
+        });
+      }),
+  }),
+
   // ==================== DASHBOARD ====================
   dashboard: router({
     stats: protectedProcedure.query(async () => {

@@ -20,7 +20,8 @@ import {
   expenseInstallments, ExpenseInstallment, InsertExpenseInstallment,
   receivables, Receivable, InsertReceivable,
   receivableInstallments, ReceivableInstallment, InsertReceivableInstallment,
-  receivablePayments, ReceivablePayment, InsertReceivablePayment
+  receivablePayments, ReceivablePayment, InsertReceivablePayment,
+  customerPayments, CustomerPayment, InsertCustomerPayment
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -2454,4 +2455,172 @@ export async function getSalesCalendar(year: number, month: number) {
   }
 
   return Object.values(calendar);
+}
+
+
+// ==================== CONTA CORRENTE (NOVO MODELO) ====================
+
+/**
+ * Calcula o saldo devedor de um cliente
+ * Saldo = Σ(vendas A_PRAZO) - Σ(pagamentos)
+ */
+export async function getCustomerBalance(customerId: number): Promise<number> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  // Soma total de vendas A_PRAZO
+  const [salesResult] = await db.select({
+    total: sql<string>`COALESCE(SUM(CAST(${sales.finalAmount} AS DECIMAL(10,2))), 0)`
+  })
+  .from(sales)
+  .where(and(
+    eq(sales.customerId, customerId),
+    eq(sales.saleType, "A_PRAZO")
+  ));
+
+  // Soma total de pagamentos
+  const [paymentsResult] = await db.select({
+    total: sql<string>`COALESCE(SUM(CAST(${customerPayments.paidAmount} AS DECIMAL(10,2))), 0)`
+  })
+  .from(customerPayments)
+  .where(eq(customerPayments.customerId, customerId));
+
+  const totalSales = parseFloat(salesResult.total || "0");
+  const totalPayments = parseFloat(paymentsResult.total || "0");
+  
+  return totalSales - totalPayments;
+}
+
+/**
+ * Lista todos os clientes com saldo devedor > 0
+ */
+export async function getCustomersWithBalance() {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  // Buscar todos os clientes que têm vendas A_PRAZO
+  const customersWithSales = await db.select({
+    customerId: sales.customerId,
+    customerName: partners.name,
+    totalSales: sql<string>`SUM(CAST(${sales.finalAmount} AS DECIMAL(10,2)))`,
+    salesCount: sql<number>`COUNT(${sales.id})`
+  })
+  .from(sales)
+  .leftJoin(partners, eq(sales.customerId, partners.id))
+  .where(eq(sales.saleType, "A_PRAZO"))
+  .groupBy(sales.customerId, partners.name);
+
+  // Para cada cliente, calcular saldo (vendas - pagamentos)
+  const customersWithBalances = await Promise.all(
+    customersWithSales.map(async (customer) => {
+      if (!customer.customerId) return null;
+      const balance = await getCustomerBalance(customer.customerId);
+      return {
+        customerId: customer.customerId,
+        customerName: customer.customerName,
+        totalPending: balance.toFixed(2),
+        salesCount: customer.salesCount
+      };
+    })
+  );
+
+  // Filtrar apenas clientes com saldo > 0 e ordenar por saldo decrescente
+  return customersWithBalances
+    .filter((c): c is NonNullable<typeof c> => c !== null && parseFloat(c.totalPending) > 0)
+    .sort((a, b) => parseFloat(b.totalPending) - parseFloat(a.totalPending));
+}
+
+/**
+ * Busca histórico completo de um cliente (vendas + pagamentos)
+ * Retorna lista ordenada cronologicamente com saldo acumulado
+ */
+export async function getCustomerAccountHistory(customerId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  // Buscar informações do cliente
+  const customer = await db.select().from(partners).where(eq(partners.id, customerId)).limit(1);
+  if (!customer[0]) throw new Error("Cliente não encontrado");
+
+  // Buscar todas as vendas A_PRAZO
+  const customerSales = await db.select({
+    id: sales.id,
+    date: sales.saleDate,
+    amount: sales.finalAmount,
+    type: sql<string>`'SALE'`,
+    description: sql<string>`CONCAT('Venda #', ${sales.id})`,
+    paymentMethod: sales.paymentMethod
+  })
+  .from(sales)
+  .where(and(
+    eq(sales.customerId, customerId),
+    eq(sales.saleType, "A_PRAZO")
+  ));
+
+  // Buscar todos os pagamentos
+  const payments = await db.select({
+    id: customerPayments.id,
+    date: customerPayments.paidDate,
+    amount: customerPayments.paidAmount,
+    type: sql<string>`'PAYMENT'`,
+    description: sql<string>`'Pagamento'`,
+    paymentMethod: customerPayments.paymentMethod,
+    notes: customerPayments.notes
+  })
+  .from(customerPayments)
+  .where(eq(customerPayments.customerId, customerId));
+
+  // Combinar e ordenar por data
+  const history = [...customerSales, ...payments]
+    .filter(item => item.date !== null)
+    .sort((a, b) => new Date(a.date!).getTime() - new Date(b.date!).getTime());
+
+  // Calcular saldo acumulado
+  let balance = 0;
+  const historyWithBalance = history.map(item => {
+    const amount = parseFloat(item.amount);
+    if (item.type === 'SALE') {
+      balance += amount;
+    } else {
+      balance -= amount;
+    }
+    
+    return {
+      ...item,
+      amount: amount.toFixed(2),
+      balance: balance.toFixed(2)
+    };
+  });
+
+  return {
+    customer: customer[0],
+    history: historyWithBalance,
+    currentBalance: balance.toFixed(2)
+  };
+}
+
+/**
+ * Registra um pagamento na conta corrente do cliente (novo modelo)
+ */
+export async function registerPaymentToBalance(data: {
+  customerId: number;
+  paidDate: Date;
+  paidAmount: string;
+  paymentMethod: string;
+  notes?: string;
+  createdBy: string;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db.insert(customerPayments).values({
+    customerId: data.customerId,
+    paidDate: data.paidDate,
+    paidAmount: data.paidAmount,
+    paymentMethod: data.paymentMethod,
+    notes: data.notes ?? null,
+    createdBy: data.createdBy
+  });
+
+  return { success: true };
 }
