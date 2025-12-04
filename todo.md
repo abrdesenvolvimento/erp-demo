@@ -40,8 +40,8 @@
 
 ## 🔵 EM DESENVOLVIMENTO
 
-- [x] **Melhorias no card de Margem Bruta** - Encurtar título para "Mg Bruta por Categoria" e adicionar indicador de Margem Geral no topo
-- [ ] **Página de Análise de Vendas (Futuro)** - Visão detalhada: margem por produto, ranking vendas vs lucro, mix de produtos, evolução temporal, comparativo entre canais
+- [x] **Criar categoria Mercearia** - Criar nova categoria e mover 16 produtos da categoria "Outros" para "Mercearia"
+- [x] **Página de Análise de Vendas** - Visão detalhada dividida em três abas: Análise de Valores (faturamento, margem, lucro), Análise de Quantidades (unidades vendidas, mix de produtos) e Por Categoria (desempenho agregado)
 
 ## 🔴 BUGS CRÍTICOS - PENDENTES (0 itens)
 

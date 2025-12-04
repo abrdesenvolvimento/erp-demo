@@ -1390,6 +1390,39 @@ export const appRouter = router({
       return margins;
     }),
   }),
+
+  // ==================== ANÁLISE DE VENDAS ====================
+  salesAnalysis: router({
+    // Análise por valores (faturamento, margem, lucro)
+    byValue: adminProcedure
+      .input(z.object({
+        startDate: z.date(),
+        endDate: z.date(),
+      }))
+      .query(async ({ input }) => {
+        return await db.getSalesAnalysisByValue(input.startDate, input.endDate);
+      }),
+
+    // Análise por quantidades (unidades vendidas, mix)
+    byQuantity: adminProcedure
+      .input(z.object({
+        startDate: z.date(),
+        endDate: z.date(),
+      }))
+      .query(async ({ input }) => {
+        return await db.getSalesAnalysisByQuantity(input.startDate, input.endDate);
+      }),
+
+    // Análise por categoria (valores)
+    byCategoryValue: adminProcedure
+      .input(z.object({
+        startDate: z.date(),
+        endDate: z.date(),
+      }))
+      .query(async ({ input }) => {
+        return await db.getSalesAnalysisByCategoryValue(input.startDate, input.endDate);
+      }),
+  }),
 });
 
 export type AppRouter = typeof appRouter;

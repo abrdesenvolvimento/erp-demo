@@ -3209,3 +3209,128 @@ export async function getGrossMarginByCategory() {
   
   return result;
 }
+
+/**
+ * Análise de Vendas - Por Valores
+ * Retorna faturamento, custo, margem e lucro por produto
+ */
+export async function getSalesAnalysisByValue(startDate: Date, endDate: Date) {
+  const db = await getDb();
+  if (!db) return [];
+
+  const result = await db.execute(sql`
+    SELECT 
+      p.id as productId,
+      p.name as productName,
+      c.name as categoryName,
+      SUM(si.quantity) as totalQuantity,
+      SUM(si.finalAmount) as totalRevenue,
+      SUM(si.quantity * p.avgCost) as totalCost,
+      SUM(si.finalAmount) - SUM(si.quantity * p.avgCost) as totalProfit,
+      ROUND((1 - (SUM(si.quantity * p.avgCost) / NULLIF(SUM(si.finalAmount), 0))) * 100, 1) as marginPercent
+    FROM saleItems si
+    INNER JOIN sales s ON si.saleId = s.id
+    INNER JOIN products p ON si.productId = p.id
+    INNER JOIN categories c ON p.categoryId = c.id
+    WHERE s.status != 'CANCELLED'
+      AND s.postingDate >= ${startDate}
+      AND s.postingDate <= ${endDate}
+    GROUP BY p.id, p.name, c.name
+    ORDER BY totalRevenue DESC
+  `);
+
+  return result[0] as any as Array<{
+    productId: number;
+    productName: string;
+    categoryName: string;
+    totalQuantity: string;
+    totalRevenue: string;
+    totalCost: string;
+    totalProfit: string;
+    marginPercent: string;
+  }>;
+}
+
+/**
+ * Análise de Vendas - Por Quantidades
+ * Retorna unidades vendidas e mix de produtos
+ */
+export async function getSalesAnalysisByQuantity(startDate: Date, endDate: Date) {
+  const db = await getDb();
+  if (!db) return [];
+
+  const result = await db.execute(sql`
+    SELECT 
+      p.id as productId,
+      p.name as productName,
+      c.name as categoryName,
+      p.uom as unit,
+      SUM(si.quantity) as totalQuantity,
+      SUM(si.finalAmount) as totalRevenue,
+      ROUND((SUM(si.quantity) / (
+        SELECT SUM(si2.quantity)
+        FROM saleItems si2
+        INNER JOIN sales s2 ON si2.saleId = s2.id
+        WHERE s2.status != 'CANCELLED'
+          AND s2.postingDate >= ${startDate}
+          AND s2.postingDate <= ${endDate}
+      )) * 100, 2) as quantityMixPercent
+    FROM saleItems si
+    INNER JOIN sales s ON si.saleId = s.id
+    INNER JOIN products p ON si.productId = p.id
+    INNER JOIN categories c ON p.categoryId = c.id
+    WHERE s.status != 'CANCELLED'
+      AND s.postingDate >= ${startDate}
+      AND s.postingDate <= ${endDate}
+    GROUP BY p.id, p.name, c.name, p.uom
+    ORDER BY totalQuantity DESC
+  `);
+
+  return result[0] as any as Array<{
+    productId: number;
+    productName: string;
+    categoryName: string;
+    unit: string;
+    totalQuantity: string;
+    totalRevenue: string;
+    quantityMixPercent: string;
+  }>;
+}
+
+/**
+ * Análise de Vendas - Por Categoria (Valores)
+ */
+export async function getSalesAnalysisByCategoryValue(startDate: Date, endDate: Date) {
+  const db = await getDb();
+  if (!db) return [];
+
+  const result = await db.execute(sql`
+    SELECT 
+      c.id as categoryId,
+      c.name as categoryName,
+      SUM(si.quantity) as totalQuantity,
+      SUM(si.finalAmount) as totalRevenue,
+      SUM(si.quantity * p.avgCost) as totalCost,
+      SUM(si.finalAmount) - SUM(si.quantity * p.avgCost) as totalProfit,
+      ROUND((1 - (SUM(si.quantity * p.avgCost) / NULLIF(SUM(si.finalAmount), 0))) * 100, 1) as marginPercent
+    FROM saleItems si
+    INNER JOIN sales s ON si.saleId = s.id
+    INNER JOIN products p ON si.productId = p.id
+    INNER JOIN categories c ON p.categoryId = c.id
+    WHERE s.status != 'CANCELLED'
+      AND s.postingDate >= ${startDate}
+      AND s.postingDate <= ${endDate}
+    GROUP BY c.id, c.name
+    ORDER BY totalRevenue DESC
+  `);
+
+  return result[0] as any as Array<{
+    categoryId: number;
+    categoryName: string;
+    totalQuantity: string;
+    totalRevenue: string;
+    totalCost: string;
+    totalProfit: string;
+    marginPercent: string;
+  }>;
+}

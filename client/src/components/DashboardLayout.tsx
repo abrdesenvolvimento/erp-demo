@@ -22,7 +22,7 @@ import {
 import { APP_LOGO, APP_TITLE, getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
-import { LayoutDashboard, LogOut, PanelLeft, Users, Package, ShoppingCart, BarChart3, ShoppingBag, Receipt, DollarSign, CreditCard, UserCircle, Shield } from "lucide-react";
+import { LayoutDashboard, LogOut, PanelLeft, Users, Package, ShoppingCart, BarChart3, ShoppingBag, Receipt, DollarSign, CreditCard, UserCircle, Shield, TrendingUp } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
@@ -38,6 +38,7 @@ const allMenuItems = [
   { icon: DollarSign, label: "Contas a Receber", path: "/contas-receber", roles: ["admin", "operacional", "consultor"] },
   { icon: CreditCard, label: "Contas a Pagar", path: "/contas-pagar", roles: ["admin", "consultor"] },
   { icon: Shield, label: "Gerenciar Usuários", path: "/usuarios", roles: ["admin"] },
+  { icon: TrendingUp, label: "Análise de Vendas", path: "/analise-vendas", roles: ["admin"] },
   { icon: BarChart3, label: "Relatórios", path: "/relatorios", roles: ["admin", "consultor"] },
 ];
 
