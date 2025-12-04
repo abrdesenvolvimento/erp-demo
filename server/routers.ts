@@ -520,9 +520,11 @@ export const appRouter = router({
           totalPrice: z.string(),
           _deleted: z.boolean().optional(), // Marca item para exclusão
         })),
+        discountAmount: z.string().optional(),
+        surchargeAmount: z.string().optional(),
       }))
       .mutation(async ({ input, ctx }) => {
-        const { saleId, items } = input;
+        const { saleId, items, discountAmount, surchargeAmount } = input;
         
         // 1. Buscar venda existente
         const sale = await db.getSale(saleId);
@@ -592,13 +594,15 @@ export const appRouter = router({
           sum + parseFloat(item.totalPrice), 0
         ).toFixed(2);
         
-        const discountAmount = parseFloat(sale.discountAmount || '0');
-        const surchargeAmount = parseFloat(sale.surchargeAmount || '0');
-        const finalAmount = (parseFloat(subtotal) - discountAmount + surchargeAmount).toFixed(2);
+        const discount = parseFloat(discountAmount || sale.discountAmount || '0');
+        const surcharge = parseFloat(surchargeAmount || sale.surchargeAmount || '0');
+        const finalAmount = (parseFloat(subtotal) - discount + surcharge).toFixed(2);
         
         // 9. Atualizar venda
         await db.updateSale(saleId, {
           subtotal,
+          discountAmount: discount.toFixed(2),
+          surchargeAmount: surcharge.toFixed(2),
           finalAmount,
         });
         

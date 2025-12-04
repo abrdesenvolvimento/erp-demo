@@ -1099,3 +1099,13 @@
   - Manter cálculo automático de totais
   - Testar fluxo completo: adicionar + alterar + remover
 - [x] Adicionar funcionalidade de adicionar novos itens ao editar vendas (autocomplete de produtos)
+
+## 🚀 EM DESENVOLVIMENTO - Melhorias Modo de Edição de Vendas (04/12/2025)
+
+- [ ] Adicionar campos de Desconto e Acréscimo editáveis no modo de edição de vendas
+- [ ] Corrigir layout mobile do formulário de adição de produtos (autocomplete sobrepondo campo de quantidade)
+- [ ] Melhorar z-index do autocomplete para não sobrepor outros elementos
+
+- [x] Adicionar campos de Desconto e Acréscimo editáveis no modo de edição de vendas
+- [x] Corrigir layout mobile do formulário de adição de produtos (autocomplete sobrepondo campo de quantidade)
+- [x] Melhorar z-index do autocomplete para não sobrepor outros elementos

@@ -2698,6 +2698,8 @@ export async function createSaleItem(data: {
 
 export async function updateSale(saleId: number, data: {
   subtotal?: string;
+  discountAmount?: string;
+  surchargeAmount?: string;
   finalAmount?: string;
 }) {
   const database = await getDb();

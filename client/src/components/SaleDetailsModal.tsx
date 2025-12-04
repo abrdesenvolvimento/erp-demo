@@ -108,6 +108,9 @@ export function SaleDetailsModal({ saleId, open, onClose }: SaleDetailsModalProp
       return;
     }
 
+    const discount = parseFloat(editedDiscount || '0');
+    const surcharge = parseFloat(editedSurcharge || '0');
+
     updateMutation.mutate({
       saleId: saleId,
       items: editedItems.map(item => {
@@ -121,6 +124,8 @@ export function SaleDetailsModal({ saleId, open, onClose }: SaleDetailsModalProp
           totalPrice: totalPrice.toFixed(2),
         };
       }),
+      discountAmount: discount > 0 ? discount.toFixed(2) : undefined,
+      surchargeAmount: surcharge > 0 ? surcharge.toFixed(2) : undefined,
     });
   };
 
@@ -437,8 +442,8 @@ export function SaleDetailsModal({ saleId, open, onClose }: SaleDetailsModalProp
               {isEditing && (
                 <div className="mb-4 p-4 bg-muted rounded-lg">
                   <h4 className="text-sm font-medium mb-3">Adicionar Produto</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    <div className="md:col-span-2 relative">
+                  <div className="flex flex-col md:flex-row gap-3">
+                    <div className="flex-1 relative">
                       <input
                         type="text"
                         placeholder="Digite o nome do produto..."
@@ -450,7 +455,7 @@ export function SaleDetailsModal({ saleId, open, onClose }: SaleDetailsModalProp
                         className="w-full px-3 py-2 border rounded-md"
                       />
                       {productSearch && filteredProducts.length > 0 && (
-                        <div className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg max-h-60 overflow-y-auto">
+                        <div className="absolute z-50 w-full mt-1 bg-white border rounded-md shadow-lg max-h-60 overflow-y-auto">
                           {filteredProducts.map((product) => (
                             <div
                               key={product.id}
@@ -552,21 +557,69 @@ export function SaleDetailsModal({ saleId, open, onClose }: SaleDetailsModalProp
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Subtotal:</span>
-                <span>{formatCurrency(saleData.subtotal)}</span>
+                <span>
+                  {isEditing
+                    ? formatCurrency(editedItems.reduce((sum, item) => sum + (parseFloat(item.unitPrice) * item.quantity), 0))
+                    : formatCurrency(saleData.subtotal)
+                  }
+                </span>
               </div>
               
-              {parseFloat(saleData.discountAmount || '0') > 0 && (
-                <div className="flex justify-between text-sm text-red-600">
-                  <span>Desconto:</span>
-                  <span>- {formatCurrency(saleData.discountAmount)}</span>
-                </div>
-              )}
-              
-              {parseFloat(saleData.surchargeAmount || '0') > 0 && (
-                <div className="flex justify-between text-sm text-green-600">
-                  <span>Acréscimo:</span>
-                  <span>+ {formatCurrency(saleData.surchargeAmount)}</span>
-                </div>
+              {/* Campos de Desconto e Acréscimo (editáveis no modo edição) */}
+              {isEditing ? (
+                <>
+                  <div className="space-y-2">
+                    <label className="text-sm text-muted-foreground">Desconto:</label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={editedDiscount}
+                      onChange={(e) => setEditedDiscount(e.target.value)}
+                      className="w-full px-3 py-2 border rounded-md text-right"
+                      placeholder="0,00"
+                    />
+                    {parseFloat(editedDiscount) > 0 && (
+                      <div className="text-sm text-red-600 text-right">
+                        - {formatCurrency(editedDiscount)}
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <label className="text-sm text-muted-foreground">Acréscimo:</label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={editedSurcharge}
+                      onChange={(e) => setEditedSurcharge(e.target.value)}
+                      className="w-full px-3 py-2 border rounded-md text-right"
+                      placeholder="0,00"
+                    />
+                    {parseFloat(editedSurcharge) > 0 && (
+                      <div className="text-sm text-green-600 text-right">
+                        + {formatCurrency(editedSurcharge)}
+                      </div>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <>
+                  {parseFloat(saleData.discountAmount || '0') > 0 && (
+                    <div className="flex justify-between text-sm text-red-600">
+                      <span>Desconto:</span>
+                      <span>- {formatCurrency(saleData.discountAmount)}</span>
+                    </div>
+                  )}
+                  
+                  {parseFloat(saleData.surchargeAmount || '0') > 0 && (
+                    <div className="flex justify-between text-sm text-green-600">
+                      <span>Acréscimo:</span>
+                      <span>+ {formatCurrency(saleData.surchargeAmount)}</span>
+                    </div>
+                  )}
+                </>
               )}
               
               <Separator />
@@ -575,7 +628,11 @@ export function SaleDetailsModal({ saleId, open, onClose }: SaleDetailsModalProp
                 <span>TOTAL:</span>
                 <span className="text-primary">
                   {isEditing 
-                    ? formatCurrency(editedItems.reduce((sum, item) => sum + (parseFloat(item.unitPrice) * item.quantity), 0))
+                    ? formatCurrency(
+                        editedItems.reduce((sum, item) => sum + (parseFloat(item.unitPrice) * item.quantity), 0)
+                        - parseFloat(editedDiscount || '0')
+                        + parseFloat(editedSurcharge || '0')
+                      )
                     : formatCurrency(saleData.finalAmount)
                   }
                 </span>
