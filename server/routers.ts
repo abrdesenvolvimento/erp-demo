@@ -1398,9 +1398,14 @@ export const appRouter = router({
       .input(z.object({
         startDate: z.date(),
         endDate: z.date(),
+        productId: z.number().optional(),
+        subcategoryId: z.number().optional(),
       }))
       .query(async ({ input }) => {
-        return await db.getSalesAnalysisByValue(input.startDate, input.endDate);
+        return await db.getSalesAnalysisByValue(input.startDate, input.endDate, {
+          productId: input.productId,
+          subcategoryId: input.subcategoryId,
+        });
       }),
 
     // Análise por quantidades (unidades vendidas, mix)
@@ -1408,9 +1413,14 @@ export const appRouter = router({
       .input(z.object({
         startDate: z.date(),
         endDate: z.date(),
+        productId: z.number().optional(),
+        subcategoryId: z.number().optional(),
       }))
       .query(async ({ input }) => {
-        return await db.getSalesAnalysisByQuantity(input.startDate, input.endDate);
+        return await db.getSalesAnalysisByQuantity(input.startDate, input.endDate, {
+          productId: input.productId,
+          subcategoryId: input.subcategoryId,
+        });
       }),
 
     // Análise por categoria (valores)
@@ -1418,9 +1428,59 @@ export const appRouter = router({
       .input(z.object({
         startDate: z.date(),
         endDate: z.date(),
+        productId: z.number().optional(),
+        subcategoryId: z.number().optional(),
       }))
       .query(async ({ input }) => {
-        return await db.getSalesAnalysisByCategoryValue(input.startDate, input.endDate);
+        return await db.getSalesAnalysisByCategoryValue(input.startDate, input.endDate, {
+          productId: input.productId,
+          subcategoryId: input.subcategoryId,
+        });
+      }),
+
+    // Análise por dia
+    byDay: adminProcedure
+      .input(z.object({
+        startDate: z.date(),
+        endDate: z.date(),
+        productId: z.number().optional(),
+        subcategoryId: z.number().optional(),
+      }))
+      .query(async ({ input }) => {
+        return await db.getSalesAnalysisByDay(input.startDate, input.endDate, {
+          productId: input.productId,
+          subcategoryId: input.subcategoryId,
+        });
+      }),
+
+    // Análise por semana
+    byWeek: adminProcedure
+      .input(z.object({
+        startDate: z.date(),
+        endDate: z.date(),
+        productId: z.number().optional(),
+        subcategoryId: z.number().optional(),
+      }))
+      .query(async ({ input }) => {
+        return await db.getSalesAnalysisByWeek(input.startDate, input.endDate, {
+          productId: input.productId,
+          subcategoryId: input.subcategoryId,
+        });
+      }),
+
+    // Análise por mês
+    byMonth: adminProcedure
+      .input(z.object({
+        startDate: z.date(),
+        endDate: z.date(),
+        productId: z.number().optional(),
+        subcategoryId: z.number().optional(),
+      }))
+      .query(async ({ input }) => {
+        return await db.getSalesAnalysisByMonth(input.startDate, input.endDate, {
+          productId: input.productId,
+          subcategoryId: input.subcategoryId,
+        });
       }),
   }),
 });

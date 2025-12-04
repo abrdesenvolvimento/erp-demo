@@ -3214,7 +3214,11 @@ export async function getGrossMarginByCategory() {
  * Análise de Vendas - Por Valores
  * Retorna faturamento, custo, margem e lucro por produto
  */
-export async function getSalesAnalysisByValue(startDate: Date, endDate: Date) {
+export async function getSalesAnalysisByValue(
+  startDate: Date, 
+  endDate: Date,
+  filters?: { productId?: number; subcategoryId?: number }
+) {
   const db = await getDb();
   if (!db) return [];
 
@@ -3222,7 +3226,17 @@ export async function getSalesAnalysisByValue(startDate: Date, endDate: Date) {
   const startStr = startDate.toISOString().split('T')[0];
   const endStr = endDate.toISOString().split('T')[0];
 
-  const result = await db.execute(sql`
+  // Construir condições WHERE dinâmicas
+  let whereConditions = `s.status != 'CANCELLED' AND DATE(s.saleDate) >= '${startStr}' AND DATE(s.saleDate) <= '${endStr}'`;
+  
+  if (filters?.productId) {
+    whereConditions += ` AND p.id = ${filters.productId}`;
+  }
+  if (filters?.subcategoryId) {
+    whereConditions += ` AND p.subcategoryId = ${filters.subcategoryId}`;
+  }
+
+  const result = await db.execute(sql.raw(`
     SELECT 
       p.id as productId,
       p.name as productName,
@@ -3236,14 +3250,12 @@ export async function getSalesAnalysisByValue(startDate: Date, endDate: Date) {
     INNER JOIN sales s ON si.saleId = s.id
     INNER JOIN products p ON si.productId = p.id
     INNER JOIN categories c ON p.categoryId = c.id
-    WHERE s.status != 'CANCELLED'
-      AND DATE(s.saleDate) >= ${startStr}
-      AND DATE(s.saleDate) <= ${endStr}
+    WHERE ${whereConditions}
     GROUP BY p.id, p.name, c.name
     ORDER BY totalRevenue DESC
-  `);
+  `));
 
-  return result[0] as any as Array<{
+  return (result[0] || []) as any as Array<{
     productId: number;
     productName: string;
     categoryName: string;
@@ -3259,7 +3271,11 @@ export async function getSalesAnalysisByValue(startDate: Date, endDate: Date) {
  * Análise de Vendas - Por Quantidades
  * Retorna unidades vendidas e mix de produtos
  */
-export async function getSalesAnalysisByQuantity(startDate: Date, endDate: Date) {
+export async function getSalesAnalysisByQuantity(
+  startDate: Date, 
+  endDate: Date,
+  filters?: { productId?: number; subcategoryId?: number }
+) {
   const db = await getDb();
   if (!db) return [];
 
@@ -3267,7 +3283,20 @@ export async function getSalesAnalysisByQuantity(startDate: Date, endDate: Date)
   const startStr = startDate.toISOString().split('T')[0];
   const endStr = endDate.toISOString().split('T')[0];
 
-  const result = await db.execute(sql`
+  // Construir condições WHERE dinâmicas
+  let whereConditions = `s.status != 'CANCELLED' AND DATE(s.saleDate) >= '${startStr}' AND DATE(s.saleDate) <= '${endStr}'`;
+  let subqueryWhere = `s2.status != 'CANCELLED' AND DATE(s2.saleDate) >= '${startStr}' AND DATE(s2.saleDate) <= '${endStr}'`;
+  
+  if (filters?.productId) {
+    whereConditions += ` AND p.id = ${filters.productId}`;
+    subqueryWhere += ` AND p2.id = ${filters.productId}`;
+  }
+  if (filters?.subcategoryId) {
+    whereConditions += ` AND p.subcategoryId = ${filters.subcategoryId}`;
+    subqueryWhere += ` AND p2.subcategoryId = ${filters.subcategoryId}`;
+  }
+
+  const result = await db.execute(sql.raw(`
     SELECT 
       p.id as productId,
       p.name as productName,
@@ -3279,20 +3308,17 @@ export async function getSalesAnalysisByQuantity(startDate: Date, endDate: Date)
         SELECT SUM(si2.quantity)
         FROM saleItems si2
         INNER JOIN sales s2 ON si2.saleId = s2.id
-        WHERE s2.status != 'CANCELLED'
-          AND DATE(s2.saleDate) >= ${startStr}
-          AND DATE(s2.saleDate) <= ${endStr}
+        INNER JOIN products p2 ON si2.productId = p2.id
+        WHERE ${subqueryWhere}
       )) * 100, 2) as quantityMixPercent
     FROM saleItems si
     INNER JOIN sales s ON si.saleId = s.id
     INNER JOIN products p ON si.productId = p.id
     INNER JOIN categories c ON p.categoryId = c.id
-    WHERE s.status != 'CANCELLED'
-      AND DATE(s.saleDate) >= ${startStr}
-      AND DATE(s.saleDate) <= ${endStr}
+    WHERE ${whereConditions}
     GROUP BY p.id, p.name, c.name, p.uom
     ORDER BY totalQuantity DESC
-  `);
+  `));
 
   return result[0] as any as Array<{
     productId: number;
@@ -3308,7 +3334,11 @@ export async function getSalesAnalysisByQuantity(startDate: Date, endDate: Date)
 /**
  * Análise de Vendas - Por Categoria (Valores)
  */
-export async function getSalesAnalysisByCategoryValue(startDate: Date, endDate: Date) {
+export async function getSalesAnalysisByCategoryValue(
+  startDate: Date, 
+  endDate: Date,
+  filters?: { productId?: number; subcategoryId?: number }
+) {
   const db = await getDb();
   if (!db) return [];
 
@@ -3316,7 +3346,17 @@ export async function getSalesAnalysisByCategoryValue(startDate: Date, endDate: 
   const startStr = startDate.toISOString().split('T')[0];
   const endStr = endDate.toISOString().split('T')[0];
 
-  const result = await db.execute(sql`
+  // Construir condições WHERE dinâmicas
+  let whereConditions = `s.status != 'CANCELLED' AND DATE(s.saleDate) >= '${startStr}' AND DATE(s.saleDate) <= '${endStr}'`;
+  
+  if (filters?.productId) {
+    whereConditions += ` AND p.id = ${filters.productId}`;
+  }
+  if (filters?.subcategoryId) {
+    whereConditions += ` AND p.subcategoryId = ${filters.subcategoryId}`;
+  }
+
+  const result = await db.execute(sql.raw(`
     SELECT 
       c.id as categoryId,
       c.name as categoryName,
@@ -3329,16 +3369,180 @@ export async function getSalesAnalysisByCategoryValue(startDate: Date, endDate: 
     INNER JOIN sales s ON si.saleId = s.id
     INNER JOIN products p ON si.productId = p.id
     INNER JOIN categories c ON p.categoryId = c.id
-    WHERE s.status != 'CANCELLED'
-      AND DATE(s.saleDate) >= ${startStr}
-      AND DATE(s.saleDate) <= ${endStr}
+    WHERE ${whereConditions}
     GROUP BY c.id, c.name
     ORDER BY totalRevenue DESC
-  `);
+  `));
 
   return result[0] as any as Array<{
     categoryId: number;
     categoryName: string;
+    totalQuantity: string;
+    totalRevenue: string;
+    totalCost: string;
+    totalProfit: string;
+    marginPercent: string;
+  }>;
+}
+
+/**
+ * Análise de Vendas - Por Dia
+ * Agrupa vendas por dia com faturamento, custo, lucro e margem
+ */
+export async function getSalesAnalysisByDay(
+  startDate: Date, 
+  endDate: Date,
+  filters?: { productId?: number; subcategoryId?: number }
+) {
+  const db = await getDb();
+  if (!db) return [];
+
+  // Formatar datas para MySQL
+  const startStr = startDate.toISOString().split('T')[0];
+  const endStr = endDate.toISOString().split('T')[0];
+
+  // Construir condições WHERE dinâmicas
+  let whereConditions = `s.status != 'CANCELLED' AND DATE(s.saleDate) >= '${startStr}' AND DATE(s.saleDate) <= '${endStr}'`;
+  
+  if (filters?.productId) {
+    whereConditions += ` AND p.id = ${filters.productId}`;
+  }
+  if (filters?.subcategoryId) {
+    whereConditions += ` AND p.subcategoryId = ${filters.subcategoryId}`;
+  }
+
+  const result = await db.execute(sql.raw(`
+    SELECT 
+      DATE(s.saleDate) as saleDate,
+      DAYOFWEEK(s.saleDate) as dayOfWeek,
+      SUM(si.quantity) as totalQuantity,
+      SUM(si.totalPrice) as totalRevenue,
+      SUM(si.quantity * p.avgCost) as totalCost,
+      SUM(si.totalPrice) - SUM(si.quantity * p.avgCost) as totalProfit,
+      ROUND((1 - (SUM(si.quantity * p.avgCost) / NULLIF(SUM(si.totalPrice), 0))) * 100, 1) as marginPercent
+    FROM saleItems si
+    INNER JOIN sales s ON si.saleId = s.id
+    INNER JOIN products p ON si.productId = p.id
+    WHERE ${whereConditions}
+    GROUP BY DATE(s.saleDate), DAYOFWEEK(s.saleDate)
+    ORDER BY saleDate ASC
+  `));
+
+  return (result[0] || []) as any as Array<{
+    saleDate: string;
+    dayOfWeek: number;
+    totalQuantity: string;
+    totalRevenue: string;
+    totalCost: string;
+    totalProfit: string;
+    marginPercent: string;
+  }>;
+}
+
+/**
+ * Análise de Vendas - Por Semana
+ * Agrupa vendas por semana com faturamento, custo, lucro e margem
+ */
+export async function getSalesAnalysisByWeek(
+  startDate: Date, 
+  endDate: Date,
+  filters?: { productId?: number; subcategoryId?: number }
+) {
+  const db = await getDb();
+  if (!db) return [];
+
+  // Formatar datas para MySQL
+  const startStr = startDate.toISOString().split('T')[0];
+  const endStr = endDate.toISOString().split('T')[0];
+
+  // Construir condições WHERE dinâmicas
+  let whereConditions = `s.status != 'CANCELLED' AND DATE(s.saleDate) >= '${startStr}' AND DATE(s.saleDate) <= '${endStr}'`;
+  
+  if (filters?.productId) {
+    whereConditions += ` AND p.id = ${filters.productId}`;
+  }
+  if (filters?.subcategoryId) {
+    whereConditions += ` AND p.subcategoryId = ${filters.subcategoryId}`;
+  }
+
+  const result = await db.execute(sql.raw(`
+    SELECT 
+      YEARWEEK(s.saleDate, 1) as yearWeek,
+      MIN(DATE(s.saleDate)) as weekStart,
+      MAX(DATE(s.saleDate)) as weekEnd,
+      SUM(si.quantity) as totalQuantity,
+      SUM(si.totalPrice) as totalRevenue,
+      SUM(si.quantity * p.avgCost) as totalCost,
+      SUM(si.totalPrice) - SUM(si.quantity * p.avgCost) as totalProfit,
+      ROUND((1 - (SUM(si.quantity * p.avgCost) / NULLIF(SUM(si.totalPrice), 0))) * 100, 1) as marginPercent
+    FROM saleItems si
+    INNER JOIN sales s ON si.saleId = s.id
+    INNER JOIN products p ON si.productId = p.id
+    WHERE ${whereConditions}
+    GROUP BY YEARWEEK(s.saleDate, 1)
+    ORDER BY yearWeek ASC
+  `));
+
+  return (result[0] || []) as any as Array<{
+    yearWeek: string;
+    weekStart: string;
+    weekEnd: string;
+    totalQuantity: string;
+    totalRevenue: string;
+    totalCost: string;
+    totalProfit: string;
+    marginPercent: string;
+  }>;
+}
+
+/**
+ * Análise de Vendas - Por Mês
+ * Agrupa vendas por mês com faturamento, custo, lucro e margem
+ */
+export async function getSalesAnalysisByMonth(
+  startDate: Date, 
+  endDate: Date,
+  filters?: { productId?: number; subcategoryId?: number }
+) {
+  const db = await getDb();
+  if (!db) return [];
+
+  // Formatar datas para MySQL
+  const startStr = startDate.toISOString().split('T')[0];
+  const endStr = endDate.toISOString().split('T')[0];
+
+  // Construir condições WHERE dinâmicas
+  let whereConditions = `s.status != 'CANCELLED' AND DATE(s.saleDate) >= '${startStr}' AND DATE(s.saleDate) <= '${endStr}'`;
+  
+  if (filters?.productId) {
+    whereConditions += ` AND p.id = ${filters.productId}`;
+  }
+  if (filters?.subcategoryId) {
+    whereConditions += ` AND p.subcategoryId = ${filters.subcategoryId}`;
+  }
+
+  const result = await db.execute(sql.raw(`
+    SELECT 
+      DATE_FORMAT(s.saleDate, '%Y-%m') as yearMonth,
+      YEAR(s.saleDate) as year,
+      MONTH(s.saleDate) as month,
+      SUM(si.quantity) as totalQuantity,
+      SUM(si.totalPrice) as totalRevenue,
+      SUM(si.quantity * p.avgCost) as totalCost,
+      SUM(si.totalPrice) - SUM(si.quantity * p.avgCost) as totalProfit,
+      ROUND((1 - (SUM(si.quantity * p.avgCost) / NULLIF(SUM(si.totalPrice), 0))) * 100, 1) as marginPercent
+    FROM saleItems si
+    INNER JOIN sales s ON si.saleId = s.id
+    INNER JOIN products p ON si.productId = p.id
+    WHERE ${whereConditions}
+    GROUP BY DATE_FORMAT(s.saleDate, '%Y-%m'), YEAR(s.saleDate), MONTH(s.saleDate)
+    ORDER BY yearMonth ASC
+  `));
+
+  return (result[0] || []) as any as Array<{
+    yearMonth: string;
+    year: number;
+    month: number;
     totalQuantity: string;
     totalRevenue: string;
     totalCost: string;

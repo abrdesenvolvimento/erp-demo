@@ -40,9 +40,7 @@
 
 ## 🔵 EM DESENVOLVIMENTO
 
-- [ ] **Agrupamento temporal na Análise** - Adicionar opções de visualização por Dia, Semana e Mês
-- [ ] **Destaque de feriados** - Marcar dias de feriado na análise diária (vendas sobem significativamente em feriados)
-- [ ] **Filtros avançados** - Adicionar filtros por Produto específico e Subcategoria (ex: filtrar subcategoria Cerveja e depois marcas específicas)
+(Nenhum item em desenvolvimento no momento)
 
 ## 🔴 BUGS CRÍTICOS - PENDENTES (0 itens)
 
@@ -89,9 +87,22 @@
 
 - [ ] Implementar filtro por subcategoria em Produtos
 
-## ✅ CONCLUÍDO RECENTEMENTE (13/11/2025)
+## ✅ CONCLUÍDO RECENTEMENTE (04/12/2025)
 
-### Sprint Manhã/Tarde
+### Melhorias em Análise de Vendas
+- [x] **Otimização de layout** - Removidas colunas Categoria e Subcategoria das tabelas (agora são apenas filtros)
+- [x] **Otimização de layout** - Removida coluna Unidade da aba Quantidade (descrição do produto já é clara)
+- [x] **Filtros avançados** - Implementado filtro por Produto específico com autocomplete
+- [x] **Filtros avançados** - Implementado filtro por Subcategoria com autocomplete
+- [x] **Agrupamento temporal** - Implementada visualização por Dia com data + dia da semana
+- [x] **Agrupamento temporal** - Implementada visualização por Semana com período (data início - data fim)
+- [x] **Agrupamento temporal** - Implementada visualização por Mês com formato Mês/Ano
+- [x] **Destaque de feriados** - Feriados nacionais brasileiros 2025 destacados em amarelo na análise diária
+- [x] **Resumo unificado** - Cards de resumo (Faturamento, Custo, Lucro, Margem) funcionam para todos os agrupamentos
+- [x] **Backend** - 3 novas funções: getSalesAnalysisByDay, getSalesAnalysisByWeek, getSalesAnalysisByMonth
+- [x] **Backend** - Filtros opcionais (productId, subcategoryId) em todas as funções de análise
+
+### Sprint Manhã/Tarde (13/11/2025)
 - [x] Corrigir subcategorias duplicadas (VInho → Vinho, Ess → Essência)
 - [x] Gerar arquivo CSV de produtos para inventário
 - [x] Implementar campo "Nome Fantasia" em Parceiros
