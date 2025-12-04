@@ -1712,7 +1712,7 @@ export async function getCustomersWithPendingReceivables() {
   const results = await db.select({
     customerId: receivables.customerId,
     customerName: partners.name,
-    totalPending: sql<string>`SUM(CAST(${receivables.totalAmount} AS DECIMAL(10,2)) - CAST(${receivables.receivedAmount} AS DECIMAL(10,2)))`,
+    totalPending: sql<string>`SUM(GREATEST(0, CAST(${receivables.totalAmount} AS DECIMAL(10,2)) - CAST(${receivables.receivedAmount} AS DECIMAL(10,2))))`,
     salesCount: sql<number>`COUNT(DISTINCT ${receivables.saleId})`
   })
   .from(receivables)
@@ -1731,7 +1731,7 @@ export async function getTotalPendingReceivables() {
   if (!db) throw new Error("Database not available");
   
   const result = await db.select({
-    total: sql<string>`COALESCE(SUM(CAST(${receivables.totalAmount} AS DECIMAL(10,2)) - CAST(${receivables.receivedAmount} AS DECIMAL(10,2))), 0)`
+    total: sql<string>`COALESCE(SUM(GREATEST(0, CAST(${receivables.totalAmount} AS DECIMAL(10,2)) - CAST(${receivables.receivedAmount} AS DECIMAL(10,2)))), 0)`
   })
   .from(receivables)
   .where(sql`${receivables.status} IN ('PENDENTE', 'PARCIAL', 'VENCIDO')`);
@@ -1799,10 +1799,11 @@ export async function getCustomerReceivableDetail(customerId: number) {
     })
   );
   
-  // Calcular total pendente
-  const totalPending = salesWithDetails.reduce((sum, sale) => 
-    sum + parseFloat(sale.pendingAmount), 0
-  );
+  // Calcular total pendente (ignorar saldos negativos de pagamentos a maior)
+  const totalPending = salesWithDetails.reduce((sum, sale) => {
+    const pending = parseFloat(sale.pendingAmount);
+    return sum + (pending > 0 ? pending : 0);
+  }, 0);
   
   // Buscar histórico de pagamentos da nova tabela receivablePayments
   const payments = await db.select({

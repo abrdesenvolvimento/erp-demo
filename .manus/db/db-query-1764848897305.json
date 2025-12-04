@@ -1,0 +1,18 @@
+{
+  "query": "SELECT id, name FROM partners WHERE name LIKE '%Vitor%' OR name LIKE '%Hugo%' ORDER BY name;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT id, name FROM partners WHERE name LIKE '%Vitor%' OR name LIKE '%Hugo%' ORDER BY name;",
+  "rows": [
+    {
+      "id": "360008",
+      "name": "Vitor Ferreira"
+    },
+    {
+      "id": "360009",
+      "name": "Vitor Hugo Fernandes"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\n360008\tVitor Ferreira\n360009\tVitor Hugo Fernandes\n",
+  "stderr": "",
+  "execution_time_ms": 49
+}

@@ -1,0 +1,14 @@
+{
+  "query": "SELECT \n  customerId,\n  SUM(GREATEST(0, CAST(totalAmount AS DECIMAL(10,2)) - CAST(receivedAmount AS DECIMAL(10,2)))) as total_pending\nFROM receivables\nWHERE customerId = 360009\n  AND status IN ('PENDENTE', 'PARCIAL', 'VENCIDO')\nGROUP BY customerId;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  customerId,\n  SUM(GREATEST(0, CAST(totalAmount AS DECIMAL(10,2)) - CAST(receivedAmount AS DECIMAL(10,2)))) as total_pending\nFROM receivables\nWHERE customerId = 360009\n  AND status IN ('PENDENTE', 'PARCIAL', 'VENCIDO')\nGROUP BY customerId;",
+  "rows": [
+    {
+      "customerId": "360009",
+      "total_pending": "91.75"
+    }
+  ],
+  "messages": [],
+  "stdout": "customerId\ttotal_pending\n360009\t91.75\n",
+  "stderr": "",
+  "execution_time_ms": 69
+}

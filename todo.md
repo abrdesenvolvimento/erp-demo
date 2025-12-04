@@ -38,7 +38,9 @@
 - Prioridade: implementar após conclusão do inventário físico (atualmente 86.1% completo)
 - Usuário quer dashboard e relatórios completos para admin, mas limitado para outros usuários
 
-## 🔴 BUGS CRÍTICOS - PENDENTES (1 item)
+## 🔴 BUGS CRÍTICOS - PENDENTES (0 itens)
+
+- [x] **Divergência de saldo em Contas a Receber** - Corrigido! Problema: venda #3270005 tinha pagamento a maior (R$ 11,00 em venda de R$ 4,50), criando saldo negativo (-R$ 6,50). Função getCustomerReceivableDetail() agora ignora saldos negativos. Ambas as telas mostram R$ 91,75 ✅
 
 - [x] **Média diária calculada incorretamente** - Corrigido! Agora divide por dias CORRIDOS do mês usando timezone de Brasília. Mês passado: divide por total de dias do mês. Mês atual: divide por dia de hoje. Novembro: R$ 38.363,53 ÷ 30 = R$ 1.278,78 ✅ | Dezembro (dia 03): R$ 2.692,08 ÷ 3 = R$ 897,36 ✅
 - [x] **Layout de vendas quebrado no mobile** - Resumo com grid responsivo (1 col mobile, 2 cols tablet, 4 cols desktop), layout adequado
@@ -916,3 +918,5 @@
   - Restauração de backup
 
 - [x] **Auditoria e padronização de timezone** - Corrigido! Criado módulo `/shared/dateUtils.ts` com funções padronizadas. Corrigidos: Relatorios.tsx (calendário + média), Vendas.tsx (filtros), Compras.tsx (datas). Tudo usa America/Sao_Paulo. Documentação em TIMEZONE_FIX.md ✅
+
+- [ ] **Divergência de saldo em Contas a Receber** - Lista mostra R$ 91,75 mas conta corrente mostra R$ 85,25 para cliente Vitor Hugo Fernandes. Diferença de R$ 6,50 indica cálculo inconsistente entre as duas telas.

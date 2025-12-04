@@ -1,0 +1,21 @@
+{
+  "query": "SELECT \n  rp.id,\n  rp.receivableId,\n  rp.paidDate,\n  rp.paidAmount,\n  rp.paymentMethod,\n  rp.notes,\n  r.saleId,\n  r.totalAmount as receivable_total,\n  r.receivedAmount as receivable_received\nFROM receivablePayments rp\nLEFT JOIN receivables r ON rp.receivableId = r.id\nWHERE r.saleId = 3270005\nORDER BY rp.paidDate;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  rp.id,\n  rp.receivableId,\n  rp.paidDate,\n  rp.paidAmount,\n  rp.paymentMethod,\n  rp.notes,\n  r.saleId,\n  r.totalAmount as receivable_total,\n  r.receivedAmount as receivable_received\nFROM receivablePayments rp\nLEFT JOIN receivables r ON rp.receivableId = r.id\nWHERE r.saleId = 3270005\nORDER BY rp.paidDate;",
+  "rows": [
+    {
+      "id": "180003",
+      "receivableId": "870001",
+      "paidDate": "2025-11-25 05:00:00",
+      "paidAmount": "11.00",
+      "paymentMethod": "PIX",
+      "notes": "NULL",
+      "saleId": "3270005",
+      "receivable_total": "4.50",
+      "receivable_received": "11.00"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\treceivableId\tpaidDate\tpaidAmount\tpaymentMethod\tnotes\tsaleId\treceivable_total\treceivable_received\n180003\t870001\t2025-11-25 05:00:00\t11.00\tPIX\tNULL\t3270005\t4.50\t11.00\n",
+  "stderr": "",
+  "execution_time_ms": 58
+}
