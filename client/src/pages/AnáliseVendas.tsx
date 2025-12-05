@@ -62,7 +62,7 @@ export default function AnáliseVendas() {
   // Novos filtros de período
   const [selectedMonths, setSelectedMonths] = useState<number[]>([11]); // Novembro como padrão
   const [selectedYears] = useState<number[]>([2025]); // 2025 fixo até migração de dados históricos
-  const [dayRange, setDayRange] = useState<[number, number]>([1, 31]); // Todos os dias
+  const [selectedDays, setSelectedDays] = useState<number[]>(Array.from({ length: 31 }, (_, i) => i + 1)); // Todos os dias selecionados por padrão
   const [filtersExpanded, setFiltersExpanded] = useState(true); // Controle de expansão dos filtros
 
   // Estados de filtros de segmentação
@@ -88,15 +88,18 @@ export default function AnáliseVendas() {
       return { from: new Date(2025, 10, 1), to: new Date(2025, 10, 30) };
     }
 
-    // Gerar todas as combinações de ano/mês selecionadas
+    // Gerar todas as combinações de ano/mês/dia selecionadas
     const dates: Date[] = [];
     for (const year of selectedYears) {
       for (const month of selectedMonths) {
-        // Adicionar data inicial (primeiro dia do range)
-        dates.push(new Date(year, month - 1, dayRange[0]));
-        // Adicionar data final (último dia do range)
-        dates.push(new Date(year, month - 1, dayRange[1]));
+        for (const day of selectedDays) {
+          dates.push(new Date(year, month - 1, day));
+        }
       }
+    }
+
+    if (dates.length === 0) {
+      return { from: new Date(2025, 10, 1), to: new Date(2025, 10, 30) };
     }
 
     // Encontrar menor e maior data
@@ -104,7 +107,7 @@ export default function AnáliseVendas() {
     const to = new Date(Math.max(...dates.map(d => d.getTime())));
 
     return { from, to };
-  }, [selectedMonths, selectedYears, dayRange]);
+  }, [selectedMonths, selectedYears, selectedDays]);
 
   // Filtrar produtos e subcategorias baseado na busca
   const filteredProducts = products?.filter(p => 
@@ -230,7 +233,7 @@ export default function AnáliseVendas() {
 
           {/* Novos Filtros de Período */}
           <div className="text-sm text-muted-foreground">
-            Período selecionado: {selectedMonths.length} mês(es), {selectedYears.length} ano(s), dias {dayRange[0]}-{dayRange[1]}
+            Período selecionado: {selectedMonths.length} mês(es), {selectedYears.length} ano(s), {selectedDays.length} dia(s)
           </div>
         </div>
 
@@ -325,40 +328,47 @@ export default function AnáliseVendas() {
                 </div>
               </div>
 
-              {/* Filtro de Dia do Mês */}
+              {/* Filtro de Dia do Mês com checkboxes */}
               <div className="mt-3">
-                <Label className="text-sm">Dia do Mês: {dayRange[0]} a {dayRange[1]}</Label>
-                <div className="flex gap-2 mt-2 items-end">
-                  <div className="w-20">
-                    <Label className="text-xs">De</Label>
-                    <Input
-                      type="number"
-                      min="1"
-                      max="31"
-                      value={dayRange[0]}
-                      onChange={(e) => setDayRange([parseInt(e.target.value) || 1, dayRange[1]])}
-                      className="mt-1"
-                    />
+                <div className="flex items-center justify-between mb-2">
+                  <Label className="text-sm">Dias do Mês ({selectedDays.length} selecionados)</Label>
+                  <div className="flex gap-1">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setSelectedDays(Array.from({ length: 31 }, (_, i) => i + 1))}
+                      className="h-7 text-xs"
+                    >
+                      Todos
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setSelectedDays([])}
+                      className="h-7 text-xs"
+                    >
+                      Nenhum
+                    </Button>
                   </div>
-                  <div className="w-20">
-                    <Label className="text-xs">Até</Label>
-                    <Input
-                      type="number"
-                      min="1"
-                      max="31"
-                      value={dayRange[1]}
-                      onChange={(e) => setDayRange([dayRange[0], parseInt(e.target.value) || 31])}
-                      className="mt-1"
-                    />
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setDayRange([1, 31])}
-                    className="h-9"
-                  >
-                    Todos
-                  </Button>
+                </div>
+                <div className="grid grid-cols-7 gap-1 mt-2">
+                  {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
+                    <Button
+                      key={day}
+                      variant={selectedDays.includes(day) ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => {
+                        if (selectedDays.includes(day)) {
+                          setSelectedDays(selectedDays.filter(d => d !== day));
+                        } else {
+                          setSelectedDays([...selectedDays, day].sort((a, b) => a - b));
+                        }
+                      }}
+                      className="h-8 text-xs p-0"
+                    >
+                      {day}
+                    </Button>
+                  ))}
                 </div>
               </div>
             </div>
@@ -852,7 +862,7 @@ export default function AnáliseVendas() {
                           <TableHead className="text-right">Qtd Vendida</TableHead>
                           <TableHead className="text-right">Faturamento</TableHead>
                           <TableHead className="text-right">Custo Total</TableHead>
-
+                          <TableHead className="text-right">Lucro Bruto</TableHead>
                           <TableHead className="text-right">Margem %</TableHead>
                         </TableRow>
                       </TableHeader>
@@ -864,8 +874,10 @@ export default function AnáliseVendas() {
                             <TableCell className="text-right text-emerald-600 font-semibold">
                               R$ {formatCurrency(item.totalRevenue)}
                             </TableCell>
-                            <TableCell className="text-right">R$ {formatCurrency(item.totalCost)}</TableCell>
-
+                            <TableCell className="text-right text-red-600">R$ {formatCurrency(item.totalCost)}</TableCell>
+                            <TableCell className="text-right text-blue-600 font-semibold">
+                              R$ {formatCurrency(parseFloat(item.totalRevenue) - parseFloat(item.totalCost))}
+                            </TableCell>
                             <TableCell className="text-right font-bold">{item.marginPercent}%</TableCell>
                           </TableRow>
                         ))}
@@ -882,7 +894,7 @@ export default function AnáliseVendas() {
                           <TableHead className="text-right">Qtd Vendida</TableHead>
                           <TableHead className="text-right">Faturamento</TableHead>
                           <TableHead className="text-right">Custo Total</TableHead>
-
+                          <TableHead className="text-right">Lucro Bruto</TableHead>
                           <TableHead className="text-right">Margem %</TableHead>
                         </TableRow>
                       </TableHeader>
@@ -900,7 +912,10 @@ export default function AnáliseVendas() {
                               <TableCell className="text-right text-emerald-600 font-semibold">
                                 R$ {formatCurrency(item.totalRevenue)}
                               </TableCell>
-                              <TableCell className="text-right">R$ {formatCurrency(item.totalCost)}</TableCell>
+                              <TableCell className="text-right text-red-600">R$ {formatCurrency(item.totalCost)}</TableCell>
+                              <TableCell className="text-right text-blue-600 font-semibold">
+                                R$ {formatCurrency(parseFloat(item.totalRevenue) - parseFloat(item.totalCost))}
+                              </TableCell>
                               <TableCell className="text-right font-bold">{item.marginPercent}%</TableCell>
                             </TableRow>
                           );
@@ -917,7 +932,7 @@ export default function AnáliseVendas() {
                           <TableHead className="text-right">Qtd Vendida</TableHead>
                           <TableHead className="text-right">Faturamento</TableHead>
                           <TableHead className="text-right">Custo Total</TableHead>
-
+                          <TableHead className="text-right">Lucro Bruto</TableHead>
                           <TableHead className="text-right">Margem %</TableHead>
                         </TableRow>
                       </TableHeader>
@@ -931,8 +946,10 @@ export default function AnáliseVendas() {
                             <TableCell className="text-right text-emerald-600 font-semibold">
                               R$ {formatCurrency(item.totalRevenue)}
                             </TableCell>
-                            <TableCell className="text-right">R$ {formatCurrency(item.totalCost)}</TableCell>
-
+                            <TableCell className="text-right text-red-600">R$ {formatCurrency(item.totalCost)}</TableCell>
+                            <TableCell className="text-right text-blue-600 font-semibold">
+                              R$ {formatCurrency(parseFloat(item.totalRevenue) - parseFloat(item.totalCost))}
+                            </TableCell>
                             <TableCell className="text-right font-bold">{item.marginPercent}%</TableCell>
                           </TableRow>
                         ))}
@@ -948,7 +965,7 @@ export default function AnáliseVendas() {
                           <TableHead className="text-right">Qtd Vendida</TableHead>
                           <TableHead className="text-right">Faturamento</TableHead>
                           <TableHead className="text-right">Custo Total</TableHead>
-
+                          <TableHead className="text-right">Lucro Bruto</TableHead>
                           <TableHead className="text-right">Margem %</TableHead>
                         </TableRow>
                       </TableHeader>
@@ -960,8 +977,10 @@ export default function AnáliseVendas() {
                             <TableCell className="text-right text-emerald-600 font-semibold">
                               R$ {formatCurrency(item.totalRevenue)}
                             </TableCell>
-                            <TableCell className="text-right">R$ {formatCurrency(item.totalCost)}</TableCell>
-
+                            <TableCell className="text-right text-red-600">R$ {formatCurrency(item.totalCost)}</TableCell>
+                            <TableCell className="text-right text-blue-600 font-semibold">
+                              R$ {formatCurrency(parseFloat(item.totalRevenue) - parseFloat(item.totalCost))}
+                            </TableCell>
                             <TableCell className="text-right font-bold">{item.marginPercent}%</TableCell>
                           </TableRow>
                         ))}
@@ -1054,7 +1073,7 @@ export default function AnáliseVendas() {
                           <TableHead className="text-right">Qtd Vendida</TableHead>
                           <TableHead className="text-right">Faturamento</TableHead>
                           <TableHead className="text-right">Custo Total</TableHead>
-
+                          <TableHead className="text-right">Lucro Bruto</TableHead>
                           <TableHead className="text-right">Margem %</TableHead>
                         </TableRow>
                       </TableHeader>
@@ -1066,8 +1085,10 @@ export default function AnáliseVendas() {
                             <TableCell className="text-right text-emerald-600 font-semibold">
                               R$ {formatCurrency(item.totalRevenue)}
                             </TableCell>
-                            <TableCell className="text-right">R$ {formatCurrency(item.totalCost)}</TableCell>
-
+                            <TableCell className="text-right text-red-600">R$ {formatCurrency(item.totalCost)}</TableCell>
+                            <TableCell className="text-right text-blue-600 font-semibold">
+                              R$ {formatCurrency(parseFloat(item.totalRevenue) - parseFloat(item.totalCost))}
+                            </TableCell>
                             <TableCell className="text-right font-bold">{item.marginPercent}%</TableCell>
                           </TableRow>
                         ))}

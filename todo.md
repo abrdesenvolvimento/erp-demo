@@ -1382,3 +1382,13 @@
 - [x] **Cards de resumo coloridos** - Faturamento (verde emerald), Custo (vermelho), Margem (azul) com bordas laterais e fundos suaves
 - [x] **Chips de produtos com azul forte** - bg-blue-500 com texto branco e sombra para destacar seleção
 - [x] **Heatmap azul na matriz** - Escala de cores mudada de verde para azul (blue-100 → blue-500) para dados financeiros
+
+## 🎯 NOVAS MELHORIAS - ANÁLISE DE VENDAS (04/12/2025 - 22:47)
+
+- [ ] **Filtro de dias com seleção múltipla** - Substituir campos De/Até por checkboxes para selecionar dias específicos (1, 3, 5, 6) excluindo outros (2, 4)
+- [ ] **Coluna Lucro Bruto** - Adicionar coluna "Lucro Bruto (R$)" = Faturamento - Custo nas tabelas de Análise de Valores e Por Categoria
+
+## ✅ MELHORIAS CONCLUÍDAS (04/12/2025 - 22:25)
+
+- [x] **Filtro de dias com seleção múltipla** - Grid 7x5 com 31 botões para selecionar/desselecionar dias específicos + botões "Todos" e "Nenhum"
+- [x] **Coluna Lucro Bruto** - Adicionada em todas as tabelas (Produto, Dia, Semana, Mês, Categoria) com cor azul e cálculo Faturamento - Custo
