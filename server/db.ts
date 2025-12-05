@@ -3217,7 +3217,12 @@ export async function getGrossMarginByCategory() {
 export async function getSalesAnalysisByValue(
   startDate: Date, 
   endDate: Date,
-  filters?: { productId?: number; subcategoryId?: number }
+  filters?: { 
+    productIds?: number[]; 
+    subcategoryId?: number;
+    channel?: string;
+    paymentMethod?: string;
+  }
 ) {
   const db = await getDb();
   if (!db) return [];
@@ -3229,11 +3234,17 @@ export async function getSalesAnalysisByValue(
   // Construir condições WHERE dinâmicas
   let whereConditions = `s.status != 'CANCELLED' AND DATE(s.saleDate) >= '${startStr}' AND DATE(s.saleDate) <= '${endStr}'`;
   
-  if (filters?.productId) {
-    whereConditions += ` AND p.id = ${filters.productId}`;
+  if (filters?.productIds && filters.productIds.length > 0) {
+    whereConditions += ` AND p.id IN (${filters.productIds.join(',')})`;
   }
   if (filters?.subcategoryId) {
     whereConditions += ` AND p.subcategoryId = ${filters.subcategoryId}`;
+  }
+  if (filters?.channel) {
+    whereConditions += ` AND s.saleType = '${filters.channel}'`;
+  }
+  if (filters?.paymentMethod) {
+    whereConditions += ` AND s.paymentMethod = '${filters.paymentMethod}'`;
   }
 
   const result = await db.execute(sql.raw(`
@@ -3274,7 +3285,12 @@ export async function getSalesAnalysisByValue(
 export async function getSalesAnalysisByQuantity(
   startDate: Date, 
   endDate: Date,
-  filters?: { productId?: number; subcategoryId?: number }
+  filters?: { 
+    productIds?: number[]; 
+    subcategoryId?: number;
+    channel?: string;
+    paymentMethod?: string;
+  }
 ) {
   const db = await getDb();
   if (!db) return [];
@@ -3287,13 +3303,21 @@ export async function getSalesAnalysisByQuantity(
   let whereConditions = `s.status != 'CANCELLED' AND DATE(s.saleDate) >= '${startStr}' AND DATE(s.saleDate) <= '${endStr}'`;
   let subqueryWhere = `s2.status != 'CANCELLED' AND DATE(s2.saleDate) >= '${startStr}' AND DATE(s2.saleDate) <= '${endStr}'`;
   
-  if (filters?.productId) {
-    whereConditions += ` AND p.id = ${filters.productId}`;
-    subqueryWhere += ` AND p2.id = ${filters.productId}`;
+  if (filters?.productIds && filters.productIds.length > 0) {
+    whereConditions += ` AND p.id IN (${filters.productIds.join(',')})`;
+    subqueryWhere += ` AND p2.id IN (${filters.productIds.join(',')})`;
   }
   if (filters?.subcategoryId) {
     whereConditions += ` AND p.subcategoryId = ${filters.subcategoryId}`;
     subqueryWhere += ` AND p2.subcategoryId = ${filters.subcategoryId}`;
+  }
+  if (filters?.channel) {
+    whereConditions += ` AND s.saleType = '${filters.channel}'`;
+    subqueryWhere += ` AND s2.saleType = '${filters.channel}'`;
+  }
+  if (filters?.paymentMethod) {
+    whereConditions += ` AND s.paymentMethod = '${filters.paymentMethod}'`;
+    subqueryWhere += ` AND s2.paymentMethod = '${filters.paymentMethod}'`;
   }
 
   const result = await db.execute(sql.raw(`
@@ -3337,7 +3361,12 @@ export async function getSalesAnalysisByQuantity(
 export async function getSalesAnalysisByCategoryValue(
   startDate: Date, 
   endDate: Date,
-  filters?: { productId?: number; subcategoryId?: number }
+  filters?: { 
+    productIds?: number[]; 
+    subcategoryId?: number;
+    channel?: string;
+    paymentMethod?: string;
+  }
 ) {
   const db = await getDb();
   if (!db) return [];
@@ -3349,11 +3378,17 @@ export async function getSalesAnalysisByCategoryValue(
   // Construir condições WHERE dinâmicas
   let whereConditions = `s.status != 'CANCELLED' AND DATE(s.saleDate) >= '${startStr}' AND DATE(s.saleDate) <= '${endStr}'`;
   
-  if (filters?.productId) {
-    whereConditions += ` AND p.id = ${filters.productId}`;
+  if (filters?.productIds && filters.productIds.length > 0) {
+    whereConditions += ` AND p.id IN (${filters.productIds.join(',')})`;
   }
   if (filters?.subcategoryId) {
     whereConditions += ` AND p.subcategoryId = ${filters.subcategoryId}`;
+  }
+  if (filters?.channel) {
+    whereConditions += ` AND s.saleType = '${filters.channel}'`;
+  }
+  if (filters?.paymentMethod) {
+    whereConditions += ` AND s.paymentMethod = '${filters.paymentMethod}'`;
   }
 
   const result = await db.execute(sql.raw(`
@@ -3392,7 +3427,12 @@ export async function getSalesAnalysisByCategoryValue(
 export async function getSalesAnalysisByDay(
   startDate: Date, 
   endDate: Date,
-  filters?: { productId?: number; subcategoryId?: number }
+  filters?: { 
+    productIds?: number[]; 
+    subcategoryId?: number;
+    channel?: string;
+    paymentMethod?: string;
+  }
 ) {
   const db = await getDb();
   if (!db) return [];
@@ -3404,11 +3444,17 @@ export async function getSalesAnalysisByDay(
   // Construir condições WHERE dinâmicas
   let whereConditions = `s.status != 'CANCELLED' AND DATE(s.saleDate) >= '${startStr}' AND DATE(s.saleDate) <= '${endStr}'`;
   
-  if (filters?.productId) {
-    whereConditions += ` AND p.id = ${filters.productId}`;
+  if (filters?.productIds && filters.productIds.length > 0) {
+    whereConditions += ` AND p.id IN (${filters.productIds.join(',')})`;
   }
   if (filters?.subcategoryId) {
     whereConditions += ` AND p.subcategoryId = ${filters.subcategoryId}`;
+  }
+  if (filters?.channel) {
+    whereConditions += ` AND s.saleType = '${filters.channel}'`;
+  }
+  if (filters?.paymentMethod) {
+    whereConditions += ` AND s.paymentMethod = '${filters.paymentMethod}'`;
   }
 
   const result = await db.execute(sql.raw(`
@@ -3446,7 +3492,12 @@ export async function getSalesAnalysisByDay(
 export async function getSalesAnalysisByWeek(
   startDate: Date, 
   endDate: Date,
-  filters?: { productId?: number; subcategoryId?: number }
+  filters?: { 
+    productIds?: number[]; 
+    subcategoryId?: number;
+    channel?: string;
+    paymentMethod?: string;
+  }
 ) {
   const db = await getDb();
   if (!db) return [];
@@ -3458,11 +3509,17 @@ export async function getSalesAnalysisByWeek(
   // Construir condições WHERE dinâmicas
   let whereConditions = `s.status != 'CANCELLED' AND DATE(s.saleDate) >= '${startStr}' AND DATE(s.saleDate) <= '${endStr}'`;
   
-  if (filters?.productId) {
-    whereConditions += ` AND p.id = ${filters.productId}`;
+  if (filters?.productIds && filters.productIds.length > 0) {
+    whereConditions += ` AND p.id IN (${filters.productIds.join(',')})`;
   }
   if (filters?.subcategoryId) {
     whereConditions += ` AND p.subcategoryId = ${filters.subcategoryId}`;
+  }
+  if (filters?.channel) {
+    whereConditions += ` AND s.saleType = '${filters.channel}'`;
+  }
+  if (filters?.paymentMethod) {
+    whereConditions += ` AND s.paymentMethod = '${filters.paymentMethod}'`;
   }
 
   const result = await db.execute(sql.raw(`
@@ -3502,7 +3559,12 @@ export async function getSalesAnalysisByWeek(
 export async function getSalesAnalysisByMonth(
   startDate: Date, 
   endDate: Date,
-  filters?: { productId?: number; subcategoryId?: number }
+  filters?: { 
+    productIds?: number[]; 
+    subcategoryId?: number;
+    channel?: string;
+    paymentMethod?: string;
+  }
 ) {
   const db = await getDb();
   if (!db) return [];
@@ -3514,11 +3576,17 @@ export async function getSalesAnalysisByMonth(
   // Construir condições WHERE dinâmicas
   let whereConditions = `s.status != 'CANCELLED' AND DATE(s.saleDate) >= '${startStr}' AND DATE(s.saleDate) <= '${endStr}'`;
   
-  if (filters?.productId) {
-    whereConditions += ` AND p.id = ${filters.productId}`;
+  if (filters?.productIds && filters.productIds.length > 0) {
+    whereConditions += ` AND p.id IN (${filters.productIds.join(',')})`;
   }
   if (filters?.subcategoryId) {
     whereConditions += ` AND p.subcategoryId = ${filters.subcategoryId}`;
+  }
+  if (filters?.channel) {
+    whereConditions += ` AND s.saleType = '${filters.channel}'`;
+  }
+  if (filters?.paymentMethod) {
+    whereConditions += ` AND s.paymentMethod = '${filters.paymentMethod}'`;
   }
 
   const result = await db.execute(sql.raw(`
@@ -3548,5 +3616,66 @@ export async function getSalesAnalysisByMonth(
     totalCost: string;
     totalProfit: string;
     marginPercent: string;
+  }>;
+}
+
+/**
+ * Análise de Vendas - Matriz Produto × Dia
+ * Retorna vendas diárias agrupadas por produto (para visualização em matriz)
+ */
+export async function getSalesByProductAndDate(
+  startDate: Date, 
+  endDate: Date,
+  filters?: { 
+    productIds?: number[]; 
+    subcategoryId?: number;
+    channel?: string;
+    paymentMethod?: string;
+  }
+) {
+  const db = await getDb();
+  if (!db) return [];
+
+  // Formatar datas para MySQL
+  const startStr = startDate.toISOString().split('T')[0];
+  const endStr = endDate.toISOString().split('T')[0];
+
+  // Construir condições WHERE dinâmicas
+  let whereConditions = `s.status != 'CANCELLED' AND DATE(s.saleDate) >= '${startStr}' AND DATE(s.saleDate) <= '${endStr}'`;
+  
+  if (filters?.productIds && filters.productIds.length > 0) {
+    whereConditions += ` AND p.id IN (${filters.productIds.join(',')})`;
+  }
+  if (filters?.subcategoryId) {
+    whereConditions += ` AND p.subcategoryId = ${filters.subcategoryId}`;
+  }
+  if (filters?.channel) {
+    whereConditions += ` AND s.saleType = '${filters.channel}'`;
+  }
+  if (filters?.paymentMethod) {
+    whereConditions += ` AND s.paymentMethod = '${filters.paymentMethod}'`;
+  }
+
+  const result = await db.execute(sql.raw(`
+    SELECT 
+      p.id as productId,
+      p.name as productName,
+      DATE(s.saleDate) as saleDate,
+      SUM(si.quantity) as quantity,
+      SUM(si.totalPrice) as revenue
+    FROM saleItems si
+    INNER JOIN sales s ON si.saleId = s.id
+    INNER JOIN products p ON si.productId = p.id
+    WHERE ${whereConditions}
+    GROUP BY p.id, p.name, DATE(s.saleDate)
+    ORDER BY p.name, DATE(s.saleDate)
+  `));
+
+  return (result[0] || []) as any as Array<{
+    productId: number;
+    productName: string;
+    saleDate: string;
+    quantity: string;
+    revenue: string;
   }>;
 }

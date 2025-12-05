@@ -89,6 +89,19 @@
 
 ## ✅ CONCLUÍDO RECENTEMENTE (04/12/2025)
 
+### Melhorias Avançadas em Análise de Vendas
+- [x] **Seleção múltipla de produtos** - Chips visuais com autocomplete, permite comparar vários produtos simultaneamente
+- [x] **Filtro de Canal de Venda** - Dropdown com opções: Balcão, Delivery, A Prazo
+- [x] **Filtro de Forma de Pagamento** - Dropdown com opções: Pix, Cartão Crédito/Débito, Dinheiro
+- [x] **Nova aba Evolução Diária** - Matriz produto×dia com scroll horizontal
+- [x] **Heatmap de cores** - 5 níveis de intensidade (cinza → verde claro → verde escuro)
+- [x] **Cabeçalho duplo na matriz** - Dia da semana + número do dia
+- [x] **Feriados destacados na matriz** - Fundo amarelo + emoji 🎉 + tooltip com nome do feriado
+- [x] **Coluna de produto fixa** - Sticky left para scroll horizontal sem perder referência
+- [x] **Tooltips informativos** - Mostram quantidade + faturamento ao passar mouse nas células
+- [x] **Backend** - Nova função getSalesByProductAndDate() com filtros de canal e pagamento
+- [x] **Backend** - Todas as 6 funções de análise aceitam productIds[] (múltiplos), channel e paymentMethod
+
 ### Melhorias em Análise de Vendas
 - [x] **Otimização de layout** - Removidas colunas Categoria e Subcategoria das tabelas (agora são apenas filtros)
 - [x] **Otimização de layout** - Removida coluna Unidade da aba Quantidade (descrição do produto já é clara)
@@ -1246,3 +1259,28 @@
 - [x] Habilitar Registrar Pagamento (Contas a Receber) para Operacional
 - [x] Habilitar Lançar Débito (Contas a Receber) para Operacional
 - [x] Adicionar Parceiros e Contas a Receber no menu do Operacional
+
+## 🔧 CORREÇÕES SOLICITADAS (04/12/2025)
+
+- [x] Corrigir datas de 5 vendas para 02/12/2025 (IDs: 12870001, 12870002, 12870003, 12870004, 12870005)
+
+## 🚀 MELHORIAS AVANÇADAS - ANÁLISE DE VENDAS (04/12/2025)
+
+### Prioridade Alta - Em Implementação
+- [ ] **Seleção múltipla de produtos** - Permitir selecionar vários produtos para comparação
+- [ ] **Período customizado** - Date range picker para selecionar qualquer período
+- [ ] **Filtro por Canal de Venda** - Balcão, Delivery, A Prazo
+- [ ] **Filtro por Forma de Pagamento** - Pix, Cartão Crédito, Débito, Dinheiro
+- [ ] **Nova aba "Evolução Diária"** - Matriz produto×dia com heatmap de vendas
+- [ ] **Destaque de feriados melhorado** - Tooltip com nome do feriado
+- [ ] **Backend** - Nova função getSalesByProductAndDate() para matriz diária
+- [ ] **Backend** - Adicionar filtros de canal e pagamento em todas as queries
+
+### Prioridade Média - Próxima Sprint
+- [ ] **Comparação de períodos** - Semana atual vs anterior, mês atual vs anterior
+- [ ] **Análise ABC** - Classificar produtos em A/B/C por faturamento (80/15/5)
+- [ ] **Relatório por Canal** - Ticket médio, mix de produtos, margem por canal
+
+### Prioridade Baixa - Futuro
+- [ ] **Forecast de vendas** - Previsão usando histórico (requer IA)
+- [ ] **Market Basket Analysis** - Produtos que vendem juntos (requer algoritmo)

@@ -67,8 +67,10 @@ export default function AnáliseVendas() {
   });
 
   // Estados de filtros
-  const [selectedProductId, setSelectedProductId] = useState<number | undefined>();
+  const [selectedProductIds, setSelectedProductIds] = useState<number[]>([]);
   const [selectedSubcategoryId, setSelectedSubcategoryId] = useState<number | undefined>();
+  const [selectedChannel, setSelectedChannel] = useState<string | undefined>();
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string | undefined>();
   const [productSearch, setProductSearch] = useState("");
   const [subcategorySearch, setSubcategorySearch] = useState("");
   const [groupBy, setGroupBy] = useState<"product" | "day" | "week" | "month">("product");
@@ -91,8 +93,10 @@ export default function AnáliseVendas() {
     { 
       startDate: dateRange.from, 
       endDate: dateRange.to,
-      productId: selectedProductId,
+      productIds: selectedProductIds.length > 0 ? selectedProductIds : undefined,
       subcategoryId: selectedSubcategoryId,
+      channel: selectedChannel,
+      paymentMethod: selectedPaymentMethod,
     },
     { enabled: isAdmin && groupBy === "product" }
   );
@@ -101,8 +105,10 @@ export default function AnáliseVendas() {
     { 
       startDate: dateRange.from, 
       endDate: dateRange.to,
-      productId: selectedProductId,
+      productIds: selectedProductIds.length > 0 ? selectedProductIds : undefined,
       subcategoryId: selectedSubcategoryId,
+      channel: selectedChannel,
+      paymentMethod: selectedPaymentMethod,
     },
     { enabled: isAdmin && groupBy === "product" }
   );
@@ -111,8 +117,10 @@ export default function AnáliseVendas() {
     { 
       startDate: dateRange.from, 
       endDate: dateRange.to,
-      productId: selectedProductId,
+      productIds: selectedProductIds.length > 0 ? selectedProductIds : undefined,
       subcategoryId: selectedSubcategoryId,
+      channel: selectedChannel,
+      paymentMethod: selectedPaymentMethod,
     },
     { enabled: isAdmin && groupBy === "product" }
   );
@@ -122,8 +130,10 @@ export default function AnáliseVendas() {
     { 
       startDate: dateRange.from, 
       endDate: dateRange.to,
-      productId: selectedProductId,
+      productIds: selectedProductIds.length > 0 ? selectedProductIds : undefined,
       subcategoryId: selectedSubcategoryId,
+      channel: selectedChannel,
+      paymentMethod: selectedPaymentMethod,
     },
     { enabled: isAdmin && groupBy === "day" }
   );
@@ -132,8 +142,10 @@ export default function AnáliseVendas() {
     { 
       startDate: dateRange.from, 
       endDate: dateRange.to,
-      productId: selectedProductId,
+      productIds: selectedProductIds.length > 0 ? selectedProductIds : undefined,
       subcategoryId: selectedSubcategoryId,
+      channel: selectedChannel,
+      paymentMethod: selectedPaymentMethod,
     },
     { enabled: isAdmin && groupBy === "week" }
   );
@@ -142,10 +154,25 @@ export default function AnáliseVendas() {
     { 
       startDate: dateRange.from, 
       endDate: dateRange.to,
-      productId: selectedProductId,
+      productIds: selectedProductIds.length > 0 ? selectedProductIds : undefined,
       subcategoryId: selectedSubcategoryId,
+      channel: selectedChannel,
+      paymentMethod: selectedPaymentMethod,
     },
     { enabled: isAdmin && groupBy === "month" }
+  );
+
+  // Query para matriz produto×dia (Evolução Diária)
+  const { data: matrixData, isLoading: isMatrixLoading } = trpc.salesAnalysis.byProductAndDate.useQuery(
+    { 
+      startDate: dateRange.from, 
+      endDate: dateRange.to,
+      productIds: selectedProductIds.length > 0 ? selectedProductIds : undefined,
+      subcategoryId: selectedSubcategoryId,
+      channel: selectedChannel,
+      paymentMethod: selectedPaymentMethod,
+    },
+    { enabled: isAdmin }
   );
 
   // Redirecionar se não for admin
@@ -290,29 +317,15 @@ export default function AnáliseVendas() {
                 )}
               </div>
 
-              {/* Filtro de Produto */}
+              {/* Filtro de Produtos (Múltipla Seleção) */}
               <div className="space-y-2">
-                <Label>Produto</Label>
+                <Label>Produtos</Label>
                 <div className="relative">
                   <Input
-                    placeholder="Digite para buscar produto..."
+                    placeholder="Digite para buscar produtos..."
                     value={productSearch}
                     onChange={(e) => setProductSearch(e.target.value)}
-                    onFocus={() => setProductSearch("")}
                   />
-                  {selectedProductId && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 p-0"
-                      onClick={() => {
-                        setSelectedProductId(undefined);
-                        setProductSearch("");
-                      }}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  )}
                   {productSearch && filteredProducts.length > 0 && (
                     <div className="absolute z-50 w-full mt-1 bg-white border rounded-md shadow-lg max-h-60 overflow-auto">
                       {filteredProducts.map((prod) => (
@@ -320,8 +333,10 @@ export default function AnáliseVendas() {
                           key={prod.id}
                           className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
                           onClick={() => {
-                            setSelectedProductId(prod.id);
-                            setProductSearch(prod.name);
+                            if (!selectedProductIds.includes(prod.id)) {
+                              setSelectedProductIds([...selectedProductIds, prod.id]);
+                            }
+                            setProductSearch("");
                           }}
                         >
                           {prod.name}
@@ -330,37 +345,88 @@ export default function AnáliseVendas() {
                     </div>
                   )}
                 </div>
-                {selectedProductId && (
-                  <p className="text-sm text-muted-foreground">
-                    Filtrando por: {products?.find(p => p.id === selectedProductId)?.name}
-                  </p>
+                {/* Chips de produtos selecionados */}
+                {selectedProductIds.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {selectedProductIds.map(id => {
+                      const product = products?.find(p => p.id === id);
+                      return (
+                        <div key={id} className="flex items-center gap-1 bg-blue-100 text-blue-800 px-2 py-1 rounded-md text-sm">
+                          <span>{product?.name}</span>
+                          <button
+                            onClick={() => setSelectedProductIds(selectedProductIds.filter(pid => pid !== id))}
+                            className="hover:bg-blue-200 rounded-full p-0.5"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
                 )}
+              </div>
+
+              {/* Filtro de Canal de Venda */}
+              <div className="space-y-2">
+                <Label>Canal de Venda</Label>
+                <select
+                  className="w-full border rounded-md px-3 py-2 text-sm"
+                  value={selectedChannel || ""}
+                  onChange={(e) => setSelectedChannel(e.target.value || undefined)}
+                >
+                  <option value="">Todos os canais</option>
+                  <option value="BALCAO">Balcão</option>
+                  <option value="DELIVERY">Delivery</option>
+                  <option value="A_PRAZO">A Prazo</option>
+                </select>
+              </div>
+
+              {/* Filtro de Forma de Pagamento */}
+              <div className="space-y-2">
+                <Label>Forma de Pagamento</Label>
+                <select
+                  className="w-full border rounded-md px-3 py-2 text-sm"
+                  value={selectedPaymentMethod || ""}
+                  onChange={(e) => setSelectedPaymentMethod(e.target.value || undefined)}
+                >
+                  <option value="">Todas as formas</option>
+                  <option value="PIX">Pix</option>
+                  <option value="CARTAO_CREDITO">Cartão de Crédito</option>
+                  <option value="CARTAO_DEBITO">Cartão de Débito</option>
+                  <option value="DINHEIRO">Dinheiro</option>
+                </select>
               </div>
             </div>
 
             {/* Botão Limpar Filtros */}
-            {(selectedProductId || selectedSubcategoryId) && (
+            {(selectedProductIds.length > 0 || selectedSubcategoryId || selectedChannel || selectedPaymentMethod) && (
               <div className="mt-4">
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => {
-                    setSelectedProductId(undefined);
+                    setSelectedProductIds([]);
                     setSelectedSubcategoryId(undefined);
+                    setSelectedChannel(undefined);
+                    setSelectedPaymentMethod(undefined);
                     setProductSearch("");
                     setSubcategorySearch("");
                   }}
                 >
                   <X className="h-4 w-4 mr-2" />
-                  Limpar Filtros
+                  Limpar Todos os Filtros
                 </Button>
               </div>
             )}
           </CardContent>
         </Card>
 
-        <Tabs defaultValue="valores" className="space-y-4">
+        <Tabs defaultValue="evolucao" className="space-y-4">
           <TabsList>
+            <TabsTrigger value="evolucao" className="flex items-center gap-2">
+              <CalendarIcon className="h-4 w-4" />
+              Evolução Diária
+            </TabsTrigger>
             <TabsTrigger value="valores" className="flex items-center gap-2">
               <TrendingUp className="h-4 w-4" />
               Análise de Valores
@@ -374,6 +440,148 @@ export default function AnáliseVendas() {
               Por Categoria
             </TabsTrigger>
           </TabsList>
+
+          {/* NOVA ABA: Evolução Diária */}
+          <TabsContent value="evolucao" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Evolução Diária de Vendas por Produto</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {isMatrixLoading ? (
+                  <div className="flex items-center justify-center h-64">
+                    <p className="text-muted-foreground">Carregando dados...</p>
+                  </div>
+                ) : !matrixData || matrixData.length === 0 ? (
+                  <div className="flex items-center justify-center h-64">
+                    <p className="text-muted-foreground">Nenhum dado disponível para o período selecionado</p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    {(() => {
+                      // Gerar array de datas do período
+                      const dates: string[] = [];
+                      const current = new Date(dateRange.from);
+                      const end = new Date(dateRange.to);
+                      while (current <= end) {
+                        dates.push(current.toISOString().split('T')[0]);
+                        current.setDate(current.getDate() + 1);
+                      }
+
+                      // Agrupar dados por produto
+                      const productMap = new Map<number, { name: string; sales: Map<string, { quantity: number; revenue: number }> }>();
+                      
+                      matrixData.forEach(row => {
+                        if (!productMap.has(row.productId)) {
+                          productMap.set(row.productId, {
+                            name: row.productName,
+                            sales: new Map()
+                          });
+                        }
+                        const product = productMap.get(row.productId)!;
+                        product.sales.set(row.saleDate, {
+                          quantity: parseFloat(row.quantity),
+                          revenue: parseFloat(row.revenue)
+                        });
+                      });
+
+                      // Calcular máximo para heatmap
+                      let maxQuantity = 0;
+                      productMap.forEach(product => {
+                        product.sales.forEach(sale => {
+                          if (sale.quantity > maxQuantity) maxQuantity = sale.quantity;
+                        });
+                      });
+
+                      // Função para calcular cor do heatmap
+                      const getHeatmapColor = (quantity: number) => {
+                        if (quantity === 0) return "bg-gray-50";
+                        const intensity = Math.min(quantity / maxQuantity, 1);
+                        if (intensity < 0.2) return "bg-green-100";
+                        if (intensity < 0.4) return "bg-green-200";
+                        if (intensity < 0.6) return "bg-green-300";
+                        if (intensity < 0.8) return "bg-green-400";
+                        return "bg-green-500 text-white";
+                      };
+
+                      // Mapa de feriados com nomes
+                      const holidayNames: Record<string, string> = {
+                        "2025-01-01": "Ano Novo",
+                        "2025-02-24": "Carnaval",
+                        "2025-02-25": "Carnaval",
+                        "2025-04-18": "Paixão de Cristo",
+                        "2025-04-21": "Tiradentes",
+                        "2025-05-01": "Dia do Trabalho",
+                        "2025-06-19": "Corpus Christi",
+                        "2025-09-07": "Independência",
+                        "2025-10-12": "N. Sra. Aparecida",
+                        "2025-11-02": "Finados",
+                        "2025-11-15": "Proclamação da República",
+                        "2025-11-20": "Consciência Negra",
+                        "2025-12-25": "Natal",
+                      };
+
+                      return (
+                        <table className="min-w-full border-collapse text-sm">
+                          <thead>
+                            <tr>
+                              <th className="sticky left-0 z-10 bg-white border px-3 py-2 text-left font-semibold">Produto</th>
+                              {dates.map(date => {
+                                const d = new Date(date + 'T00:00:00');
+                                const dayOfWeek = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'][d.getDay()];
+                                const dayNum = d.getDate();
+                                const isHoliday = holidayNames[date];
+                                return (
+                                  <th 
+                                    key={date} 
+                                    className={`border px-2 py-2 text-center min-w-[60px] ${
+                                      isHoliday ? 'bg-amber-100' : ''
+                                    }`}
+                                    title={isHoliday || undefined}
+                                  >
+                                    <div className="text-xs text-muted-foreground">{dayOfWeek}</div>
+                                    <div className="font-semibold">{dayNum}</div>
+                                    {isHoliday && <div className="text-xs text-amber-600">🎉</div>}
+                                  </th>
+                                );
+                              })}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {Array.from(productMap.entries()).map(([productId, product]) => (
+                              <tr key={productId}>
+                                <td className="sticky left-0 z-10 bg-white border px-3 py-2 font-medium">
+                                  {product.name}
+                                </td>
+                                {dates.map(date => {
+                                  const sale = product.sales.get(date);
+                                  const quantity = sale?.quantity || 0;
+                                  const isHoliday = holidayNames[date];
+                                  return (
+                                    <td 
+                                      key={date} 
+                                      className={`border px-2 py-2 text-center ${
+                                        getHeatmapColor(quantity)
+                                      } ${
+                                        isHoliday ? 'border-amber-400 border-2' : ''
+                                      }`}
+                                      title={sale ? `${quantity} unidades\nR$ ${formatCurrency(sale.revenue)}${isHoliday ? `\n🎉 ${isHoliday}` : ''}` : (isHoliday ? `🎉 ${isHoliday}` : undefined)}
+                                    >
+                                      {quantity > 0 ? quantity : '-'}
+                                    </td>
+                                  );
+                                })}
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      );
+                    })()}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
 
           {/* Análise de Valores */}
           <TabsContent value="valores" className="space-y-4">

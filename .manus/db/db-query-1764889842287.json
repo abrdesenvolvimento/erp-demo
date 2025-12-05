@@ -1,0 +1,35 @@
+{
+  "query": "SELECT id, saleDate, finalAmount \nFROM sales \nWHERE id IN (12870001, 12870002, 12870003, 12870004, 12870005)\nORDER BY id",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT id, saleDate, finalAmount \nFROM sales \nWHERE id IN (12870001, 12870002, 12870003, 12870004, 12870005)\nORDER BY id",
+  "rows": [
+    {
+      "id": "12870001",
+      "saleDate": "2025-12-02 00:00:00",
+      "finalAmount": "11.99"
+    },
+    {
+      "id": "12870002",
+      "saleDate": "2025-12-02 00:00:00",
+      "finalAmount": "38.32"
+    },
+    {
+      "id": "12870003",
+      "saleDate": "2025-12-02 00:00:00",
+      "finalAmount": "22.27"
+    },
+    {
+      "id": "12870004",
+      "saleDate": "2025-12-02 00:00:00",
+      "finalAmount": "42.86"
+    },
+    {
+      "id": "12870005",
+      "saleDate": "2025-12-02 00:00:00",
+      "finalAmount": "23.66"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tsaleDate\tfinalAmount\n12870001\t2025-12-02 00:00:00\t11.99\n12870002\t2025-12-02 00:00:00\t38.32\n12870003\t2025-12-02 00:00:00\t22.27\n12870004\t2025-12-02 00:00:00\t42.86\n12870005\t2025-12-02 00:00:00\t23.66\n",
+  "stderr": "",
+  "execution_time_ms": 64
+}
