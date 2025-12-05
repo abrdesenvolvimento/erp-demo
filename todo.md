@@ -1356,3 +1356,22 @@
 - [x] **Matriz semanal** - Quando agrupamento for "Semana", a matriz agrupa colunas por semanas (Domingo-Sábado) ao invés de dias individuais, mostrando períodos como "Semana 1: 1-1/11", "Semana 2: 2-8/11", etc.
 - [x] **Botão Ocultar Filtros** - Implementado botão no header do card "Filtros e Agrupamento" para colapsar/expandir filtros e melhorar visualização da matriz
 
+
+## 🎨 MELHORIAS DE DESIGN - ANÁLISE DE VENDAS (04/12/2025 - 21:00)
+
+- [ ] **Sidebar de filtros com fundo diferenciado** - Aplicar bg-gray-50 na seção de filtros para destacar da área de conteúdo
+- [ ] **Cards de resumo coloridos** - Adicionar cores características: Faturamento (verde), Custo (vermelho), Margem (azul)
+- [ ] **Botões de filtro mais destacados** - Melhorar visual dos botões de mês, canal, agrupamento quando selecionados (azul vibrante)
+- [ ] **Chips de produtos mais visíveis** - Usar azul forte nos chips de produtos selecionados
+- [ ] **Heatmap azul ao invés de verde** - Trocar escala de cores da matriz de verde para azul (mais profissional para dados financeiros)
+
+**Objetivo:** Facilitar identificação visual de filtros ativos e melhorar hierarquia de informações
+
+
+## ✅ MELHORIAS CONCLUÍDAS (04/12/2025 - 21:22)
+
+- [x] **Sidebar de filtros com fundo diferenciado** - bg-gray-50 aplicado no CardContent de filtros
+- [x] **Cards de resumo coloridos** - Faturamento (verde emerald), Custo (vermelho red), Margem (azul blue) com bordas laterais e fundos coloridos
+- [x] **Chips de produtos mais visíveis** - bg-blue-500 com texto branco e sombra
+- [x] **Heatmap azul** - Escala de cores trocada de verde para azul (blue-100 → blue-500)
+

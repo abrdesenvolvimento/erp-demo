@@ -249,7 +249,7 @@ export default function AnáliseVendas() {
             </div>
           </CardHeader>
           {filtersExpanded && (
-          <CardContent>
+          <CardContent className="bg-gray-50">
             {/* Seletor de Agrupamento */}
             <div className="mb-4">
               <Label>Agrupar por</Label>
@@ -494,11 +494,11 @@ export default function AnáliseVendas() {
                     {selectedProductIds.map(id => {
                       const product = products?.find(p => p.id === id);
                       return (
-                        <div key={id} className="flex items-center gap-1 bg-blue-100 text-blue-800 px-2 py-1 rounded-md text-sm">
+                        <div key={id} className="flex items-center gap-1 bg-blue-500 text-white px-3 py-1.5 rounded-md text-sm font-medium shadow-sm">
                           <span>{product?.name}</span>
                           <button
                             onClick={() => setSelectedProductIds(selectedProductIds.filter(pid => pid !== id))}
-                            className="hover:bg-blue-200 rounded-full p-0.5"
+                            className="hover:bg-blue-600 rounded-full p-0.5 transition-colors"
                           >
                             <X className="h-3 w-3" />
                           </button>
@@ -674,15 +674,15 @@ export default function AnáliseVendas() {
                         });
                       });
 
-                      // Função para calcular cor do heatmap
+                      // Função para calcular cor do heatmap (azul)
                       const getHeatmapColor = (quantity: number) => {
                         if (quantity === 0) return "bg-gray-50";
                         const intensity = Math.min(quantity / maxQuantity, 1);
-                        if (intensity < 0.2) return "bg-green-100";
-                        if (intensity < 0.4) return "bg-green-200";
-                        if (intensity < 0.6) return "bg-green-300";
-                        if (intensity < 0.8) return "bg-green-400";
-                        return "bg-green-500 text-white";
+                        if (intensity < 0.2) return "bg-blue-100";
+                        if (intensity < 0.4) return "bg-blue-200";
+                        if (intensity < 0.6) return "bg-blue-300";
+                        if (intensity < 0.8) return "bg-blue-400";
+                        return "bg-blue-500 text-white";
                       };
 
                       // Mapa de feriados com nomes
@@ -990,9 +990,10 @@ export default function AnáliseVendas() {
 
               return (
                 <div className="grid gap-4 md:grid-cols-3">
-                  <Card>
+                  {/* Card Faturamento - Verde */}
+                  <Card className="border-l-4 border-l-emerald-500 bg-emerald-50">
                     <CardHeader className="pb-3">
-                      <CardTitle className="text-sm font-medium">Faturamento Total</CardTitle>
+                      <CardTitle className="text-sm font-medium text-emerald-700">Faturamento Total</CardTitle>
                     </CardHeader>
                     <CardContent>
                       <div className="text-2xl font-bold text-emerald-600">
@@ -1001,23 +1002,25 @@ export default function AnáliseVendas() {
                     </CardContent>
                   </Card>
 
-                  <Card>
+                  {/* Card Custo - Vermelho */}
+                  <Card className="border-l-4 border-l-red-500 bg-red-50">
                     <CardHeader className="pb-3">
-                      <CardTitle className="text-sm font-medium">Custo Total</CardTitle>
+                      <CardTitle className="text-sm font-medium text-red-700">Custo Total</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="text-2xl font-bold">
+                      <div className="text-2xl font-bold text-red-600">
                         R$ {formatCurrency(totalCost)}
                       </div>
                     </CardContent>
                   </Card>
 
-                  <Card>
+                  {/* Card Margem - Azul */}
+                  <Card className="border-l-4 border-l-blue-500 bg-blue-50">
                     <CardHeader className="pb-3">
-                      <CardTitle className="text-sm font-medium">Margem Média</CardTitle>
+                      <CardTitle className="text-sm font-medium text-blue-700">Margem Média</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="text-2xl font-bold">
+                      <div className="text-2xl font-bold text-blue-600">
                         {margin}%
                       </div>
                     </CardContent>
