@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -82,7 +82,7 @@ export default function AnáliseVendas() {
   const { data: categories } = trpc.categories.list.useQuery(undefined, { enabled: isAdmin });
 
   // Calcular dateRange baseado nos filtros de mês/ano/dia
-  const getDateRange = () => {
+  const dateRange = useMemo(() => {
     if (selectedMonths.length === 0 || selectedYears.length === 0) {
       // Fallback: novembro 2025
       return { from: new Date(2025, 10, 1), to: new Date(2025, 10, 30) };
@@ -104,9 +104,7 @@ export default function AnáliseVendas() {
     const to = new Date(Math.max(...dates.map(d => d.getTime())));
 
     return { from, to };
-  };
-
-  const dateRange = getDateRange();
+  }, [selectedMonths, selectedYears, dayRange]);
 
   // Filtrar produtos e subcategorias baseado na busca
   const filteredProducts = products?.filter(p => 
@@ -614,13 +612,41 @@ export default function AnáliseVendas() {
                 ) : (
                   <div className="overflow-x-auto">
                     {(() => {
-                      // Gerar array de datas do período
+                      // Gerar array de datas ou semanas do período
                       const dates: string[] = [];
+                      const weeks: { start: string; end: string; dates: string[] }[] = [];
+                      
                       const current = new Date(dateRange.from);
                       const end = new Date(dateRange.to);
-                      while (current <= end) {
-                        dates.push(current.toISOString().split('T')[0]);
-                        current.setDate(current.getDate() + 1);
+                      
+                      if (groupBy === 'week') {
+                        // Agrupar por semanas
+                        let weekStart = new Date(current);
+                        let weekDates: string[] = [];
+                        
+                        while (current <= end) {
+                          weekDates.push(current.toISOString().split('T')[0]);
+                          
+                          // Se é sábado ou último dia do período, fechar a semana
+                          if (current.getDay() === 6 || current.getTime() === end.getTime()) {
+                            weeks.push({
+                              start: weekStart.toISOString().split('T')[0],
+                              end: current.toISOString().split('T')[0],
+                              dates: [...weekDates]
+                            });
+                            weekDates = [];
+                            current.setDate(current.getDate() + 1);
+                            weekStart = new Date(current);
+                          } else {
+                            current.setDate(current.getDate() + 1);
+                          }
+                        }
+                      } else {
+                        // Agrupar por dias (padrão)
+                        while (current <= end) {
+                          dates.push(current.toISOString().split('T')[0]);
+                          current.setDate(current.getDate() + 1);
+                        }
                       }
 
                       // Agrupar dados por produto
@@ -681,25 +707,52 @@ export default function AnáliseVendas() {
                           <thead>
                             <tr>
                               <th className="sticky left-0 z-10 bg-white border px-3 py-2 text-left font-semibold">Produto</th>
-                              {dates.map(date => {
-                                const d = new Date(date + 'T00:00:00');
-                                const dayOfWeek = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'][d.getDay()];
-                                const dayNum = d.getDate();
-                                const isHoliday = holidayNames[date];
-                                return (
-                                  <th 
-                                    key={date} 
-                                    className={`border px-2 py-2 text-center min-w-[60px] ${
-                                      isHoliday ? 'bg-amber-100' : ''
-                                    }`}
-                                    title={isHoliday || undefined}
-                                  >
-                                    <div className="text-xs text-muted-foreground">{dayOfWeek}</div>
-                                    <div className="font-semibold">{dayNum}</div>
-                                    {isHoliday && <div className="text-xs text-amber-600">🎉</div>}
-                                  </th>
-                                );
-                              })}
+                              {groupBy === 'week' ? (
+                                weeks.map((week, idx) => {
+                                  const startDate = new Date(week.start + 'T00:00:00');
+                                  const endDate = new Date(week.end + 'T00:00:00');
+                                  const startDay = startDate.getDate();
+                                  const endDay = endDate.getDate();
+                                  const startMonth = startDate.getMonth() + 1;
+                                  const endMonth = endDate.getMonth() + 1;
+                                  
+                                  return (
+                                    <th 
+                                      key={`week-${idx}`} 
+                                      className="border px-2 py-2 text-center min-w-[80px]"
+                                    >
+                                      <div className="text-xs text-muted-foreground">Semana {idx + 1}</div>
+                                      <div className="font-semibold text-xs">
+                                        {startMonth === endMonth 
+                                          ? `${startDay}-${endDay}/${startMonth}` 
+                                          : `${startDay}/${startMonth}-${endDay}/${endMonth}`
+                                        }
+                                      </div>
+                                    </th>
+                                  );
+                                })
+                              ) : (
+                                dates.map(date => {
+                                  const d = new Date(date + 'T00:00:00');
+                                  const dayOfWeek = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'][d.getDay()];
+                                  const dayNum = d.getDate();
+                                  const isHoliday = holidayNames[date];
+                                  return (
+                                    <th 
+                                      key={date} 
+                                      className={`border px-2 py-2 text-center min-w-[60px] ${
+                                        isHoliday ? 'bg-amber-100' : ''
+                                      }`}
+                                      title={isHoliday || undefined}
+                                    >
+                                      <div className="text-xs text-muted-foreground">{dayOfWeek}</div>
+                                      <div className="font-semibold">{dayNum}</div>
+                                      {isHoliday && <div className="text-xs text-amber-600">🎉</div>}
+                                    </th>
+                                  );
+                                })
+                              )}
+                              <th className="border px-3 py-2 text-center font-semibold bg-blue-50">Total</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -708,24 +761,55 @@ export default function AnáliseVendas() {
                                 <td className="sticky left-0 z-10 bg-white border px-3 py-2 font-medium">
                                   {product.name}
                                 </td>
-                                {dates.map(date => {
-                                  const sale = product.sales.get(date);
-                                  const quantity = sale?.quantity || 0;
-                                  const isHoliday = holidayNames[date];
-                                  return (
-                                    <td 
-                                      key={date} 
-                                      className={`border px-2 py-2 text-center ${
-                                        getHeatmapColor(quantity)
-                                      } ${
-                                        isHoliday ? 'border-amber-400 border-2' : ''
-                                      }`}
-                                      title={sale ? `${quantity} unidades\nR$ ${formatCurrency(sale.revenue)}${isHoliday ? `\n🎉 ${isHoliday}` : ''}` : (isHoliday ? `🎉 ${isHoliday}` : undefined)}
-                                    >
-                                      {quantity > 0 ? quantity : '-'}
-                                    </td>
-                                  );
-                                })}
+                                {groupBy === 'week' ? (
+                                  weeks.map((week, idx) => {
+                                    // Somar quantidades de todos os dias da semana
+                                    let weekQuantity = 0;
+                                    let weekRevenue = 0;
+                                    week.dates.forEach(date => {
+                                      const sale = product.sales.get(date);
+                                      if (sale) {
+                                        weekQuantity += sale.quantity;
+                                        weekRevenue += sale.revenue;
+                                      }
+                                    });
+                                    
+                                    return (
+                                      <td 
+                                        key={`week-${idx}`} 
+                                        className={`border px-2 py-2 text-center ${
+                                          getHeatmapColor(weekQuantity)
+                                        }`}
+                                        title={weekQuantity > 0 ? `${weekQuantity} unidades\nR$ ${formatCurrency(weekRevenue)}` : undefined}
+                                      >
+                                        {weekQuantity > 0 ? weekQuantity : '-'}
+                                      </td>
+                                    );
+                                  })
+                                ) : (
+                                  dates.map(date => {
+                                    const sale = product.sales.get(date);
+                                    const quantity = sale?.quantity || 0;
+                                    const isHoliday = holidayNames[date];
+                                    return (
+                                      <td 
+                                        key={date} 
+                                        className={`border px-2 py-2 text-center ${
+                                          getHeatmapColor(quantity)
+                                        } ${
+                                          isHoliday ? 'border-amber-400 border-2' : ''
+                                        }`}
+                                        title={sale ? `${quantity} unidades\nR$ ${formatCurrency(sale.revenue)}${isHoliday ? `\n🎉 ${isHoliday}` : ''}` : (isHoliday ? `🎉 ${isHoliday}` : undefined)}
+                                      >
+                                        {quantity > 0 ? quantity : '-'}
+                                      </td>
+                                    );
+                                  })
+                                )}
+                                {/* Coluna Total */}
+                                <td className="border px-3 py-2 text-center font-semibold bg-blue-50">
+                                  {Array.from(product.sales.values()).reduce((sum, sale) => sum + sale.quantity, 0)}
+                                </td>
                               </tr>
                             ))}
                           </tbody>

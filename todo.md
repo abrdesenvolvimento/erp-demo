@@ -1342,3 +1342,17 @@
 - [x] **Simplificar filtro de ano** - Botão 2025 fixo e desabilitado com texto explicativo sobre dados históricos
 - [x] **Reduzir espaçamento dos campos De/Até** - Campos agora com w-20 (80px) + botão "Todos" para resetar
 - [x] **Adicionar botão ocultar filtros** - Botão "Ocultar Filtros"/"Expandir Filtros" implementado no header do card
+
+## 🔴 NOVOS BUGS - ANÁLISE DE VENDAS (04/12/2025 - Parte 2)
+
+- [ ] **Filtro de dias não funciona em novembro** - Selecionando dias 15-20 ainda mostra dias 4-21 na matriz (funciona em dezembro mas não em novembro)
+- [ ] **Falta coluna Total** - Adicionar última coluna "Total" somando quantidades do período filtrado
+- [ ] **Implementar matriz semanal** - Quando agrupamento for "Semana", a aba Evolução Diária deveria mostrar matriz produto×semana ao invés de produto×dia
+
+## 🟢 MELHORIAS ANÁLISE DE VENDAS - CONCLUÍDAS (04/12/2025 - 20:45)
+
+- [x] **Filtro de dias com useMemo** - Implementado useMemo() no cálculo de dateRange para garantir que o filtro seja recalculado quando dayRange, selectedMonths ou selectedYears mudarem
+- [x] **Coluna Total na matriz** - Adicionada última coluna "Total" com fundo azul claro (bg-blue-50) somando todas as quantidades do período filtrado
+- [x] **Matriz semanal** - Quando agrupamento for "Semana", a matriz agrupa colunas por semanas (Domingo-Sábado) ao invés de dias individuais, mostrando períodos como "Semana 1: 1-1/11", "Semana 2: 2-8/11", etc.
+- [x] **Botão Ocultar Filtros** - Implementado botão no header do card "Filtros e Agrupamento" para colapsar/expandir filtros e melhorar visualização da matriz
+
