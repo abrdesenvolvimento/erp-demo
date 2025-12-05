@@ -1392,3 +1392,7 @@
 
 - [x] **Filtro de dias com seleção múltipla** - Grid 7x5 com 31 botões para selecionar/desselecionar dias específicos + botões "Todos" e "Nenhum"
 - [x] **Coluna Lucro Bruto** - Adicionada em todas as tabelas (Produto, Dia, Semana, Mês, Categoria) com cor azul e cálculo Faturamento - Custo
+
+## ✅ MELHORIAS CONCLUÍDAS (04/12/2025 - 22:45)
+
+- [x] **Contraste dos filtros melhorado** - Botões selecionados (meses, dias, canais) agora usam bg-blue-600 com texto branco ao invés de variant="default", criando contraste forte contra o fundo cinza claro. Facilita identificação visual de filtros ativos.

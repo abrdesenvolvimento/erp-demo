@@ -299,7 +299,7 @@ export default function AnáliseVendas() {
                   {["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"].map((month, idx) => (
                     <Button
                       key={idx}
-                      variant={selectedMonths.includes(idx + 1) ? "default" : "outline"}
+                      variant="outline"
                       size="sm"
                       onClick={() => {
                         if (selectedMonths.includes(idx + 1)) {
@@ -308,6 +308,7 @@ export default function AnáliseVendas() {
                           setSelectedMonths([...selectedMonths, idx + 1]);
                         }
                       }}
+                      className={selectedMonths.includes(idx + 1) ? "bg-blue-600 text-white hover:bg-blue-700" : ""}
                     >
                       {month}
                     </Button>
@@ -355,7 +356,7 @@ export default function AnáliseVendas() {
                   {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
                     <Button
                       key={day}
-                      variant={selectedDays.includes(day) ? "default" : "outline"}
+                      variant="outline"
                       size="sm"
                       onClick={() => {
                         if (selectedDays.includes(day)) {
@@ -364,7 +365,7 @@ export default function AnáliseVendas() {
                           setSelectedDays([...selectedDays, day].sort((a, b) => a - b));
                         }
                       }}
-                      className="h-8 text-xs p-0"
+                      className={`h-8 text-xs p-0 ${selectedDays.includes(day) ? "bg-blue-600 text-white hover:bg-blue-700" : ""}`}
                     >
                       {day}
                     </Button>
@@ -530,7 +531,7 @@ export default function AnáliseVendas() {
                   ].map((channel) => (
                     <Button
                       key={channel.value}
-                      variant={selectedChannels.includes(channel.value) ? "default" : "outline"}
+                      variant="outline"
                       size="sm"
                       onClick={() => {
                         if (selectedChannels.includes(channel.value)) {
@@ -539,6 +540,7 @@ export default function AnáliseVendas() {
                           setSelectedChannels([...selectedChannels, channel.value]);
                         }
                       }}
+                      className={selectedChannels.includes(channel.value) ? "bg-blue-600 text-white hover:bg-blue-700" : ""}
                     >
                       {channel.label}
                     </Button>
