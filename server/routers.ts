@@ -1400,14 +1400,14 @@ export const appRouter = router({
         endDate: z.date(),
         productIds: z.array(z.number()).optional(),
         subcategoryId: z.number().optional(),
-        channel: z.string().optional(),
+        channels: z.array(z.string()).optional(),
         paymentMethod: z.string().optional(),
       }))
       .query(async ({ input }) => {
         return await db.getSalesAnalysisByValue(input.startDate, input.endDate, {
           productIds: input.productIds,
           subcategoryId: input.subcategoryId,
-          channel: input.channel,
+          channels: input.channels,
           paymentMethod: input.paymentMethod,
         });
       }),
@@ -1419,14 +1419,14 @@ export const appRouter = router({
         endDate: z.date(),
         productIds: z.array(z.number()).optional(),
         subcategoryId: z.number().optional(),
-        channel: z.string().optional(),
+        channels: z.array(z.string()).optional(),
         paymentMethod: z.string().optional(),
       }))
       .query(async ({ input }) => {
         return await db.getSalesAnalysisByQuantity(input.startDate, input.endDate, {
           productIds: input.productIds,
           subcategoryId: input.subcategoryId,
-          channel: input.channel,
+          channels: input.channels,
           paymentMethod: input.paymentMethod,
         });
       }),
@@ -1438,14 +1438,14 @@ export const appRouter = router({
         endDate: z.date(),
         productIds: z.array(z.number()).optional(),
         subcategoryId: z.number().optional(),
-        channel: z.string().optional(),
+        channels: z.array(z.string()).optional(),
         paymentMethod: z.string().optional(),
       }))
       .query(async ({ input }) => {
         return await db.getSalesAnalysisByCategoryValue(input.startDate, input.endDate, {
           productIds: input.productIds,
           subcategoryId: input.subcategoryId,
-          channel: input.channel,
+          channels: input.channels,
           paymentMethod: input.paymentMethod,
         });
       }),
@@ -1457,14 +1457,14 @@ export const appRouter = router({
         endDate: z.date(),
         productIds: z.array(z.number()).optional(),
         subcategoryId: z.number().optional(),
-        channel: z.string().optional(),
+        channels: z.array(z.string()).optional(),
         paymentMethod: z.string().optional(),
       }))
       .query(async ({ input }) => {
         return await db.getSalesAnalysisByDay(input.startDate, input.endDate, {
           productIds: input.productIds,
           subcategoryId: input.subcategoryId,
-          channel: input.channel,
+          channels: input.channels,
           paymentMethod: input.paymentMethod,
         });
       }),
@@ -1476,14 +1476,14 @@ export const appRouter = router({
         endDate: z.date(),
         productIds: z.array(z.number()).optional(),
         subcategoryId: z.number().optional(),
-        channel: z.string().optional(),
+        channels: z.array(z.string()).optional(),
         paymentMethod: z.string().optional(),
       }))
       .query(async ({ input }) => {
         return await db.getSalesAnalysisByWeek(input.startDate, input.endDate, {
           productIds: input.productIds,
           subcategoryId: input.subcategoryId,
-          channel: input.channel,
+          channels: input.channels,
           paymentMethod: input.paymentMethod,
         });
       }),
@@ -1495,14 +1495,14 @@ export const appRouter = router({
         endDate: z.date(),
         productIds: z.array(z.number()).optional(),
         subcategoryId: z.number().optional(),
-        channel: z.string().optional(),
+        channels: z.array(z.string()).optional(),
         paymentMethod: z.string().optional(),
       }))
       .query(async ({ input }) => {
         return await db.getSalesAnalysisByMonth(input.startDate, input.endDate, {
           productIds: input.productIds,
           subcategoryId: input.subcategoryId,
-          channel: input.channel,
+          channels: input.channels,
           paymentMethod: input.paymentMethod,
         });
       }),
@@ -1514,14 +1514,14 @@ export const appRouter = router({
         endDate: z.date(),
         productIds: z.array(z.number()).optional(),
         subcategoryId: z.number().optional(),
-        channel: z.string().optional(),
+        channels: z.array(z.string()).optional(),
         paymentMethod: z.string().optional(),
       }))
       .query(async ({ input }) => {
         return await db.getSalesByProductAndDate(input.startDate, input.endDate, {
           productIds: input.productIds,
           subcategoryId: input.subcategoryId,
-          channel: input.channel,
+          channels: input.channels,
           paymentMethod: input.paymentMethod,
         });
       }),

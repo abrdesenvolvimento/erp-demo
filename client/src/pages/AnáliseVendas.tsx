@@ -129,7 +129,7 @@ export default function AnáliseVendas() {
       endDate: dateRange.to,
       productIds: selectedProductIds.length > 0 ? selectedProductIds : undefined,
       subcategoryId: selectedSubcategoryId,
-      channel: selectedChannels.length > 0 ? selectedChannels[0] : undefined,
+      channels: selectedChannels.length > 0 ? selectedChannels : undefined,
       paymentMethod: selectedPaymentMethod,
     },
     { enabled: isAdmin && groupBy === "product" }
@@ -141,7 +141,7 @@ export default function AnáliseVendas() {
       endDate: dateRange.to,
       productIds: selectedProductIds.length > 0 ? selectedProductIds : undefined,
       subcategoryId: selectedSubcategoryId,
-      channel: selectedChannels.length > 0 ? selectedChannels[0] : undefined,
+      channels: selectedChannels.length > 0 ? selectedChannels : undefined,
       paymentMethod: selectedPaymentMethod,
     },
     { enabled: isAdmin && groupBy === "product" }
@@ -153,7 +153,7 @@ export default function AnáliseVendas() {
       endDate: dateRange.to,
       productIds: selectedProductIds.length > 0 ? selectedProductIds : undefined,
       subcategoryId: selectedSubcategoryId,
-      channel: selectedChannels.length > 0 ? selectedChannels[0] : undefined,
+      channels: selectedChannels.length > 0 ? selectedChannels : undefined,
       paymentMethod: selectedPaymentMethod,
     },
     { enabled: isAdmin && groupBy === "product" }
@@ -166,7 +166,7 @@ export default function AnáliseVendas() {
       endDate: dateRange.to,
       productIds: selectedProductIds.length > 0 ? selectedProductIds : undefined,
       subcategoryId: selectedSubcategoryId,
-      channel: selectedChannels.length > 0 ? selectedChannels[0] : undefined,
+      channels: selectedChannels.length > 0 ? selectedChannels : undefined,
       paymentMethod: selectedPaymentMethod,
     },
     { enabled: isAdmin && groupBy === "day" }
@@ -178,7 +178,7 @@ export default function AnáliseVendas() {
       endDate: dateRange.to,
       productIds: selectedProductIds.length > 0 ? selectedProductIds : undefined,
       subcategoryId: selectedSubcategoryId,
-      channel: selectedChannels.length > 0 ? selectedChannels[0] : undefined,
+      channels: selectedChannels.length > 0 ? selectedChannels : undefined,
       paymentMethod: selectedPaymentMethod,
     },
     { enabled: isAdmin && groupBy === "week" }
@@ -190,7 +190,7 @@ export default function AnáliseVendas() {
       endDate: dateRange.to,
       productIds: selectedProductIds.length > 0 ? selectedProductIds : undefined,
       subcategoryId: selectedSubcategoryId,
-      channel: selectedChannels.length > 0 ? selectedChannels[0] : undefined,
+      channels: selectedChannels.length > 0 ? selectedChannels : undefined,
       paymentMethod: selectedPaymentMethod,
     },
     { enabled: isAdmin && groupBy === "month" }
@@ -203,7 +203,7 @@ export default function AnáliseVendas() {
       endDate: dateRange.to,
       productIds: selectedProductIds.length > 0 ? selectedProductIds : undefined,
       subcategoryId: selectedSubcategoryId,
-      channel: selectedChannels.length > 0 ? selectedChannels[0] : undefined,
+      channels: selectedChannels.length > 0 ? selectedChannels : undefined,
       paymentMethod: selectedPaymentMethod,
     },
     { enabled: isAdmin }

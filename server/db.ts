@@ -3220,7 +3220,7 @@ export async function getSalesAnalysisByValue(
   filters?: { 
     productIds?: number[]; 
     subcategoryId?: number;
-    channel?: string;
+    channels?: string[];
     paymentMethod?: string;
   }
 ) {
@@ -3240,8 +3240,9 @@ export async function getSalesAnalysisByValue(
   if (filters?.subcategoryId) {
     whereConditions += ` AND p.subcategoryId = ${filters.subcategoryId}`;
   }
-  if (filters?.channel) {
-    whereConditions += ` AND s.saleType = '${filters.channel}'`;
+  if (filters?.channels && filters.channels.length > 0) {
+    const channelList = filters.channels.map(ch => `'${ch}'`).join(',');
+    whereConditions += ` AND s.saleType IN (${channelList})`;
   }
   if (filters?.paymentMethod) {
     whereConditions += ` AND s.paymentMethod = '${filters.paymentMethod}'`;
@@ -3288,7 +3289,7 @@ export async function getSalesAnalysisByQuantity(
   filters?: { 
     productIds?: number[]; 
     subcategoryId?: number;
-    channel?: string;
+    channels?: string[];
     paymentMethod?: string;
   }
 ) {
@@ -3311,9 +3312,10 @@ export async function getSalesAnalysisByQuantity(
     whereConditions += ` AND p.subcategoryId = ${filters.subcategoryId}`;
     subqueryWhere += ` AND p2.subcategoryId = ${filters.subcategoryId}`;
   }
-  if (filters?.channel) {
-    whereConditions += ` AND s.saleType = '${filters.channel}'`;
-    subqueryWhere += ` AND s2.saleType = '${filters.channel}'`;
+  if (filters?.channels && filters.channels.length > 0) {
+    const channelList = filters.channels.map(ch => `'${ch}'`).join(',');
+    whereConditions += ` AND s.saleType IN (${channelList})`;
+    subqueryWhere += ` AND s2.saleType IN (${channelList})`;
   }
   if (filters?.paymentMethod) {
     whereConditions += ` AND s.paymentMethod = '${filters.paymentMethod}'`;
@@ -3364,7 +3366,7 @@ export async function getSalesAnalysisByCategoryValue(
   filters?: { 
     productIds?: number[]; 
     subcategoryId?: number;
-    channel?: string;
+    channels?: string[];
     paymentMethod?: string;
   }
 ) {
@@ -3384,8 +3386,9 @@ export async function getSalesAnalysisByCategoryValue(
   if (filters?.subcategoryId) {
     whereConditions += ` AND p.subcategoryId = ${filters.subcategoryId}`;
   }
-  if (filters?.channel) {
-    whereConditions += ` AND s.saleType = '${filters.channel}'`;
+  if (filters?.channels && filters.channels.length > 0) {
+    const channelList = filters.channels.map(ch => `'${ch}'`).join(',');
+    whereConditions += ` AND s.saleType IN (${channelList})`;
   }
   if (filters?.paymentMethod) {
     whereConditions += ` AND s.paymentMethod = '${filters.paymentMethod}'`;
@@ -3430,7 +3433,7 @@ export async function getSalesAnalysisByDay(
   filters?: { 
     productIds?: number[]; 
     subcategoryId?: number;
-    channel?: string;
+    channels?: string[];
     paymentMethod?: string;
   }
 ) {
@@ -3450,8 +3453,9 @@ export async function getSalesAnalysisByDay(
   if (filters?.subcategoryId) {
     whereConditions += ` AND p.subcategoryId = ${filters.subcategoryId}`;
   }
-  if (filters?.channel) {
-    whereConditions += ` AND s.saleType = '${filters.channel}'`;
+  if (filters?.channels && filters.channels.length > 0) {
+    const channelList = filters.channels.map(ch => `'${ch}'`).join(',');
+    whereConditions += ` AND s.saleType IN (${channelList})`;
   }
   if (filters?.paymentMethod) {
     whereConditions += ` AND s.paymentMethod = '${filters.paymentMethod}'`;
@@ -3495,7 +3499,7 @@ export async function getSalesAnalysisByWeek(
   filters?: { 
     productIds?: number[]; 
     subcategoryId?: number;
-    channel?: string;
+    channels?: string[];
     paymentMethod?: string;
   }
 ) {
@@ -3515,8 +3519,9 @@ export async function getSalesAnalysisByWeek(
   if (filters?.subcategoryId) {
     whereConditions += ` AND p.subcategoryId = ${filters.subcategoryId}`;
   }
-  if (filters?.channel) {
-    whereConditions += ` AND s.saleType = '${filters.channel}'`;
+  if (filters?.channels && filters.channels.length > 0) {
+    const channelList = filters.channels.map(ch => `'${ch}'`).join(',');
+    whereConditions += ` AND s.saleType IN (${channelList})`;
   }
   if (filters?.paymentMethod) {
     whereConditions += ` AND s.paymentMethod = '${filters.paymentMethod}'`;
@@ -3562,7 +3567,7 @@ export async function getSalesAnalysisByMonth(
   filters?: { 
     productIds?: number[]; 
     subcategoryId?: number;
-    channel?: string;
+    channels?: string[];
     paymentMethod?: string;
   }
 ) {
@@ -3582,8 +3587,9 @@ export async function getSalesAnalysisByMonth(
   if (filters?.subcategoryId) {
     whereConditions += ` AND p.subcategoryId = ${filters.subcategoryId}`;
   }
-  if (filters?.channel) {
-    whereConditions += ` AND s.saleType = '${filters.channel}'`;
+  if (filters?.channels && filters.channels.length > 0) {
+    const channelList = filters.channels.map(ch => `'${ch}'`).join(',');
+    whereConditions += ` AND s.saleType IN (${channelList})`;
   }
   if (filters?.paymentMethod) {
     whereConditions += ` AND s.paymentMethod = '${filters.paymentMethod}'`;
@@ -3629,7 +3635,7 @@ export async function getSalesByProductAndDate(
   filters?: { 
     productIds?: number[]; 
     subcategoryId?: number;
-    channel?: string;
+    channels?: string[];
     paymentMethod?: string;
   }
 ) {
@@ -3649,8 +3655,9 @@ export async function getSalesByProductAndDate(
   if (filters?.subcategoryId) {
     whereConditions += ` AND p.subcategoryId = ${filters.subcategoryId}`;
   }
-  if (filters?.channel) {
-    whereConditions += ` AND s.saleType = '${filters.channel}'`;
+  if (filters?.channels && filters.channels.length > 0) {
+    const channelList = filters.channels.map(ch => `'${ch}'`).join(',');
+    whereConditions += ` AND s.saleType IN (${channelList})`;
   }
   if (filters?.paymentMethod) {
     whereConditions += ` AND s.paymentMethod = '${filters.paymentMethod}'`;

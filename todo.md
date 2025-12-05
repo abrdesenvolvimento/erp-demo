@@ -46,6 +46,8 @@
 
 ## 🔴 BUGS CRÍTICOS - RESOLVIDOS
 
+- [x] **Filtro de múltiplos canais não soma dados corretamente** - CORRIGIDO! Problema: frontend enviava apenas `channel: selectedChannels[0]` (primeiro canal) ao invés do array completo. Solução: (1) Backend alterado para aceitar `channels: string[]` ao invés de `channel: string`, (2) Queries SQL modificadas para usar `IN (...)` ao invés de `=`, (3) Frontend corrigido para enviar `channels: selectedChannels`. Agora selecionar Balcão + Delivery soma corretamente os dados de ambos os canais.
+
 - [x] **Análise de Vendas não carregava dados** - Corrigido! Problemas identificados: (1) Usando `postingDate` ao invés de `saleDate` na tabela sales, (2) Usando `finalAmount` ao invés de `totalPrice` na tabela saleItems, (3) Período padrão em 2024 quando vendas estão em 2025. Todas as queries SQL corrigidas (getSalesAnalysisByValue, getSalesAnalysisByQuantity, getSalesAnalysisByCategoryValue) e página funcionando perfeitamente com dados de novembro/2025.
 
 - [x] **Menu lateral do Consultor não mostrava todas as páginas** - Verificado e confirmado que já estava correto. Consultor tem acesso a Compras, Despesas, Contas a Pagar e Relatórios desde a implementação inicial do sistema de permissões.
