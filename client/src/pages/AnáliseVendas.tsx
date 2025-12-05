@@ -59,25 +59,47 @@ export default function AnáliseVendas() {
   const { user } = useAuth();
   const isAdmin = user?.role === "admin";
 
-  const [dateRange, setDateRange] = useState<{ from: Date; to: Date }>(() => {
-    // Usar novembro de 2025 como período padrão (quando o sistema começou)
-    const firstDay = new Date(2025, 10, 1); // 01/11/2025
-    const lastDay = new Date(2025, 10, 30); // 30/11/2025
-    return { from: firstDay, to: lastDay };
-  });
+  // Novos filtros de período
+  const [selectedMonths, setSelectedMonths] = useState<number[]>([11]); // Novembro como padrão
+  const [selectedYears, setSelectedYears] = useState<number[]>([2025]); // 2025 como padrão
+  const [dayRange, setDayRange] = useState<[number, number]>([1, 31]); // Todos os dias
 
-  // Estados de filtros
+  // Estados de filtros de segmentação
   const [selectedProductIds, setSelectedProductIds] = useState<number[]>([]);
   const [selectedSubcategoryId, setSelectedSubcategoryId] = useState<number | undefined>();
-  const [selectedChannel, setSelectedChannel] = useState<string | undefined>();
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<number[]>([]);
+  const [selectedChannels, setSelectedChannels] = useState<string[]>([]);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string | undefined>();
   const [productSearch, setProductSearch] = useState("");
   const [subcategorySearch, setSubcategorySearch] = useState("");
+  const [categorySearch, setCategorySearch] = useState("");
   const [groupBy, setGroupBy] = useState<"product" | "day" | "week" | "month">("product");
 
-  // Buscar produtos e subcategorias para filtros
+  // Buscar produtos, subcategorias e categorias para filtros
   const { data: products } = trpc.products.list.useQuery(undefined, { enabled: isAdmin });
   const { data: subcategories } = trpc.subcategories.list.useQuery(undefined, { enabled: isAdmin });
+  const { data: categories } = trpc.categories.list.useQuery(undefined, { enabled: isAdmin });
+
+  // Calcular dateRange baseado nos filtros de mês/ano/dia
+  const getDateRange = () => {
+    if (selectedMonths.length === 0 || selectedYears.length === 0) {
+      // Fallback: novembro 2025
+      return { from: new Date(2025, 10, 1), to: new Date(2025, 10, 30) };
+    }
+
+    // Encontrar menor e maior data possível
+    const minYear = Math.min(...selectedYears);
+    const maxYear = Math.max(...selectedYears);
+    const minMonth = Math.min(...selectedMonths) - 1; // Date usa 0-11
+    const maxMonth = Math.max(...selectedMonths) - 1;
+
+    const from = new Date(minYear, minMonth, dayRange[0]);
+    const to = new Date(maxYear, maxMonth, dayRange[1]);
+
+    return { from, to };
+  };
+
+  const dateRange = getDateRange();
 
   // Filtrar produtos e subcategorias baseado na busca
   const filteredProducts = products?.filter(p => 
@@ -88,6 +110,10 @@ export default function AnáliseVendas() {
     s.name.toLowerCase().includes(subcategorySearch.toLowerCase())
   ).slice(0, 10) || [];
 
+  const filteredCategories = categories?.filter(c => 
+    c.name.toLowerCase().includes(categorySearch.toLowerCase())
+  ).slice(0, 10) || [];
+
   // Queries com filtros (por produto)
   const { data: valueData, isLoading: isValueLoading } = trpc.salesAnalysis.byValue.useQuery(
     { 
@@ -95,7 +121,7 @@ export default function AnáliseVendas() {
       endDate: dateRange.to,
       productIds: selectedProductIds.length > 0 ? selectedProductIds : undefined,
       subcategoryId: selectedSubcategoryId,
-      channel: selectedChannel,
+      channel: selectedChannels.length > 0 ? selectedChannels[0] : undefined,
       paymentMethod: selectedPaymentMethod,
     },
     { enabled: isAdmin && groupBy === "product" }
@@ -107,7 +133,7 @@ export default function AnáliseVendas() {
       endDate: dateRange.to,
       productIds: selectedProductIds.length > 0 ? selectedProductIds : undefined,
       subcategoryId: selectedSubcategoryId,
-      channel: selectedChannel,
+      channel: selectedChannels.length > 0 ? selectedChannels[0] : undefined,
       paymentMethod: selectedPaymentMethod,
     },
     { enabled: isAdmin && groupBy === "product" }
@@ -119,7 +145,7 @@ export default function AnáliseVendas() {
       endDate: dateRange.to,
       productIds: selectedProductIds.length > 0 ? selectedProductIds : undefined,
       subcategoryId: selectedSubcategoryId,
-      channel: selectedChannel,
+      channel: selectedChannels.length > 0 ? selectedChannels[0] : undefined,
       paymentMethod: selectedPaymentMethod,
     },
     { enabled: isAdmin && groupBy === "product" }
@@ -132,7 +158,7 @@ export default function AnáliseVendas() {
       endDate: dateRange.to,
       productIds: selectedProductIds.length > 0 ? selectedProductIds : undefined,
       subcategoryId: selectedSubcategoryId,
-      channel: selectedChannel,
+      channel: selectedChannels.length > 0 ? selectedChannels[0] : undefined,
       paymentMethod: selectedPaymentMethod,
     },
     { enabled: isAdmin && groupBy === "day" }
@@ -144,7 +170,7 @@ export default function AnáliseVendas() {
       endDate: dateRange.to,
       productIds: selectedProductIds.length > 0 ? selectedProductIds : undefined,
       subcategoryId: selectedSubcategoryId,
-      channel: selectedChannel,
+      channel: selectedChannels.length > 0 ? selectedChannels[0] : undefined,
       paymentMethod: selectedPaymentMethod,
     },
     { enabled: isAdmin && groupBy === "week" }
@@ -156,7 +182,7 @@ export default function AnáliseVendas() {
       endDate: dateRange.to,
       productIds: selectedProductIds.length > 0 ? selectedProductIds : undefined,
       subcategoryId: selectedSubcategoryId,
-      channel: selectedChannel,
+      channel: selectedChannels.length > 0 ? selectedChannels[0] : undefined,
       paymentMethod: selectedPaymentMethod,
     },
     { enabled: isAdmin && groupBy === "month" }
@@ -169,7 +195,7 @@ export default function AnáliseVendas() {
       endDate: dateRange.to,
       productIds: selectedProductIds.length > 0 ? selectedProductIds : undefined,
       subcategoryId: selectedSubcategoryId,
-      channel: selectedChannel,
+      channel: selectedChannels.length > 0 ? selectedChannels[0] : undefined,
       paymentMethod: selectedPaymentMethod,
     },
     { enabled: isAdmin }
@@ -197,35 +223,10 @@ export default function AnáliseVendas() {
             </p>
           </div>
 
-          {/* Filtro de Período */}
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline" className="w-[280px] justify-start text-left font-normal">
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {dateRange.from && dateRange.to ? (
-                  <>
-                    {format(dateRange.from, "dd/MM/yyyy", { locale: ptBR })} -{" "}
-                    {format(dateRange.to, "dd/MM/yyyy", { locale: ptBR })}
-                  </>
-                ) : (
-                  <span>Selecione o período</span>
-                )}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="end">
-              <Calendar
-                mode="range"
-                selected={{ from: dateRange.from, to: dateRange.to }}
-                onSelect={(range) => {
-                  if (range?.from && range?.to) {
-                    setDateRange({ from: range.from, to: range.to });
-                  }
-                }}
-                locale={ptBR}
-                numberOfMonths={2}
-              />
-            </PopoverContent>
-          </Popover>
+          {/* Novos Filtros de Período */}
+          <div className="text-sm text-muted-foreground">
+            Período selecionado: {selectedMonths.length} mês(es), {selectedYears.length} ano(s), dias {dayRange[0]}-{dayRange[1]}
+          </div>
         </div>
 
         {/* Filtros Avançados */}
@@ -269,7 +270,136 @@ export default function AnáliseVendas() {
               </div>
             </div>
 
+            {/* Filtros de Período */}
+            <div className="mb-4 p-4 border rounded-md bg-muted/30">
+              <Label className="text-base font-semibold">Período</Label>
+              
+              {/* Filtro de Mês */}
+              <div className="mt-3">
+                <Label className="text-sm">Mês(es)</Label>
+                <div className="grid grid-cols-6 gap-2 mt-2">
+                  {["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"].map((month, idx) => (
+                    <Button
+                      key={idx}
+                      variant={selectedMonths.includes(idx + 1) ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => {
+                        if (selectedMonths.includes(idx + 1)) {
+                          setSelectedMonths(selectedMonths.filter(m => m !== idx + 1));
+                        } else {
+                          setSelectedMonths([...selectedMonths, idx + 1]);
+                        }
+                      }}
+                    >
+                      {month}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Filtro de Ano */}
+              <div className="mt-3">
+                <Label className="text-sm">Ano(s)</Label>
+                <div className="flex gap-2 mt-2">
+                  {[2025, 2024, 2023, 2022, 2021, 2020].map((year) => (
+                    <Button
+                      key={year}
+                      variant={selectedYears.includes(year) ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => {
+                        if (selectedYears.includes(year)) {
+                          setSelectedYears(selectedYears.filter(y => y !== year));
+                        } else {
+                          setSelectedYears([...selectedYears, year]);
+                        }
+                      }}
+                    >
+                      {year}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Filtro de Dia do Mês */}
+              <div className="mt-3">
+                <Label className="text-sm">Dia do Mês: {dayRange[0]} a {dayRange[1]}</Label>
+                <div className="flex gap-4 mt-2">
+                  <div className="flex-1">
+                    <Label className="text-xs">Início</Label>
+                    <Input
+                      type="number"
+                      min="1"
+                      max="31"
+                      value={dayRange[0]}
+                      onChange={(e) => setDayRange([parseInt(e.target.value) || 1, dayRange[1]])}
+                      className="mt-1"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <Label className="text-xs">Fim</Label>
+                    <Input
+                      type="number"
+                      min="1"
+                      max="31"
+                      value={dayRange[1]}
+                      onChange={(e) => setDayRange([dayRange[0], parseInt(e.target.value) || 31])}
+                      className="mt-1"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <div className="grid gap-4 md:grid-cols-2">
+              {/* Filtro de Categoria */}
+              <div className="space-y-2">
+                <Label>Categoria</Label>
+                <div className="relative">
+                  <Input
+                    placeholder="Digite para buscar categoria..."
+                    value={categorySearch}
+                    onChange={(e) => setCategorySearch(e.target.value)}
+                    onFocus={() => setCategorySearch("")}
+                  />
+                  {categorySearch && filteredCategories.length > 0 && (
+                    <div className="absolute z-50 w-full mt-1 bg-white border rounded-md shadow-lg max-h-60 overflow-auto">
+                      {filteredCategories.map((cat) => (
+                        <div
+                          key={cat.id}
+                          className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
+                          onClick={() => {
+                            if (!selectedCategoryIds.includes(cat.id)) {
+                              setSelectedCategoryIds([...selectedCategoryIds, cat.id]);
+                            }
+                            setCategorySearch("");
+                          }}
+                        >
+                          {cat.name}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                {selectedCategoryIds.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {selectedCategoryIds.map(id => {
+                      const cat = categories?.find(c => c.id === id);
+                      return cat ? (
+                        <div key={id} className="flex items-center gap-1 bg-primary/10 text-primary px-2 py-1 rounded-md text-sm">
+                          <span>{cat.name}</span>
+                          <button
+                            onClick={() => setSelectedCategoryIds(selectedCategoryIds.filter(cid => cid !== id))}
+                            className="hover:bg-primary/20 rounded-full p-0.5"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </div>
+                      ) : null;
+                    })}
+                  </div>
+                )}
+              </div>
+
               {/* Filtro de Subcategoria */}
               <div className="space-y-2">
                 <Label>Subcategoria</Label>
@@ -369,16 +499,28 @@ export default function AnáliseVendas() {
               {/* Filtro de Canal de Venda */}
               <div className="space-y-2">
                 <Label>Canal de Venda</Label>
-                <select
-                  className="w-full border rounded-md px-3 py-2 text-sm"
-                  value={selectedChannel || ""}
-                  onChange={(e) => setSelectedChannel(e.target.value || undefined)}
-                >
-                  <option value="">Todos os canais</option>
-                  <option value="BALCAO">Balcão</option>
-                  <option value="DELIVERY">Delivery</option>
-                  <option value="A_PRAZO">A Prazo</option>
-                </select>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {[
+                    { value: "BALCAO", label: "Balcão" },
+                    { value: "DELIVERY", label: "Delivery" },
+                    { value: "A_PRAZO", label: "A Prazo" },
+                  ].map((channel) => (
+                    <Button
+                      key={channel.value}
+                      variant={selectedChannels.includes(channel.value) ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => {
+                        if (selectedChannels.includes(channel.value)) {
+                          setSelectedChannels(selectedChannels.filter(c => c !== channel.value));
+                        } else {
+                          setSelectedChannels([...selectedChannels, channel.value]);
+                        }
+                      }}
+                    >
+                      {channel.label}
+                    </Button>
+                  ))}
+                </div>
               </div>
 
               {/* Filtro de Forma de Pagamento */}
@@ -399,7 +541,7 @@ export default function AnáliseVendas() {
             </div>
 
             {/* Botão Limpar Filtros */}
-            {(selectedProductIds.length > 0 || selectedSubcategoryId || selectedChannel || selectedPaymentMethod) && (
+            {(selectedProductIds.length > 0 || selectedSubcategoryId || selectedChannels.length > 0 || selectedPaymentMethod) && (
               <div className="mt-4">
                 <Button
                   variant="outline"
@@ -407,7 +549,7 @@ export default function AnáliseVendas() {
                   onClick={() => {
                     setSelectedProductIds([]);
                     setSelectedSubcategoryId(undefined);
-                    setSelectedChannel(undefined);
+                    setSelectedChannels([]);
                     setSelectedPaymentMethod(undefined);
                     setProductSearch("");
                     setSubcategorySearch("");
@@ -431,10 +573,7 @@ export default function AnáliseVendas() {
               <TrendingUp className="h-4 w-4" />
               Análise de Valores
             </TabsTrigger>
-            <TabsTrigger value="quantidades" className="flex items-center gap-2">
-              <Package className="h-4 w-4" />
-              Análise de Quantidades
-            </TabsTrigger>
+
             <TabsTrigger value="categorias" className="flex items-center gap-2">
               <TrendingUp className="h-4 w-4" />
               Por Categoria
@@ -613,7 +752,7 @@ export default function AnáliseVendas() {
                           <TableHead className="text-right">Qtd Vendida</TableHead>
                           <TableHead className="text-right">Faturamento</TableHead>
                           <TableHead className="text-right">Custo Total</TableHead>
-                          <TableHead className="text-right">Lucro</TableHead>
+
                           <TableHead className="text-right">Margem %</TableHead>
                         </TableRow>
                       </TableHeader>
@@ -626,9 +765,7 @@ export default function AnáliseVendas() {
                               R$ {formatCurrency(item.totalRevenue)}
                             </TableCell>
                             <TableCell className="text-right">R$ {formatCurrency(item.totalCost)}</TableCell>
-                            <TableCell className="text-right text-blue-600 font-semibold">
-                              R$ {formatCurrency(item.totalProfit)}
-                            </TableCell>
+
                             <TableCell className="text-right font-bold">{item.marginPercent}%</TableCell>
                           </TableRow>
                         ))}
@@ -645,7 +782,7 @@ export default function AnáliseVendas() {
                           <TableHead className="text-right">Qtd Vendida</TableHead>
                           <TableHead className="text-right">Faturamento</TableHead>
                           <TableHead className="text-right">Custo Total</TableHead>
-                          <TableHead className="text-right">Lucro</TableHead>
+
                           <TableHead className="text-right">Margem %</TableHead>
                         </TableRow>
                       </TableHeader>
@@ -664,9 +801,6 @@ export default function AnáliseVendas() {
                                 R$ {formatCurrency(item.totalRevenue)}
                               </TableCell>
                               <TableCell className="text-right">R$ {formatCurrency(item.totalCost)}</TableCell>
-                              <TableCell className="text-right text-blue-600 font-semibold">
-                                R$ {formatCurrency(item.totalProfit)}
-                              </TableCell>
                               <TableCell className="text-right font-bold">{item.marginPercent}%</TableCell>
                             </TableRow>
                           );
@@ -683,7 +817,7 @@ export default function AnáliseVendas() {
                           <TableHead className="text-right">Qtd Vendida</TableHead>
                           <TableHead className="text-right">Faturamento</TableHead>
                           <TableHead className="text-right">Custo Total</TableHead>
-                          <TableHead className="text-right">Lucro</TableHead>
+
                           <TableHead className="text-right">Margem %</TableHead>
                         </TableRow>
                       </TableHeader>
@@ -698,9 +832,7 @@ export default function AnáliseVendas() {
                               R$ {formatCurrency(item.totalRevenue)}
                             </TableCell>
                             <TableCell className="text-right">R$ {formatCurrency(item.totalCost)}</TableCell>
-                            <TableCell className="text-right text-blue-600 font-semibold">
-                              R$ {formatCurrency(item.totalProfit)}
-                            </TableCell>
+
                             <TableCell className="text-right font-bold">{item.marginPercent}%</TableCell>
                           </TableRow>
                         ))}
@@ -716,7 +848,7 @@ export default function AnáliseVendas() {
                           <TableHead className="text-right">Qtd Vendida</TableHead>
                           <TableHead className="text-right">Faturamento</TableHead>
                           <TableHead className="text-right">Custo Total</TableHead>
-                          <TableHead className="text-right">Lucro</TableHead>
+
                           <TableHead className="text-right">Margem %</TableHead>
                         </TableRow>
                       </TableHeader>
@@ -729,9 +861,7 @@ export default function AnáliseVendas() {
                               R$ {formatCurrency(item.totalRevenue)}
                             </TableCell>
                             <TableCell className="text-right">R$ {formatCurrency(item.totalCost)}</TableCell>
-                            <TableCell className="text-right text-blue-600 font-semibold">
-                              R$ {formatCurrency(item.totalProfit)}
-                            </TableCell>
+
                             <TableCell className="text-right font-bold">{item.marginPercent}%</TableCell>
                           </TableRow>
                         ))}
@@ -756,11 +886,10 @@ export default function AnáliseVendas() {
 
               const totalRevenue = currentData.reduce((sum, item) => sum + parseFloat(item.totalRevenue), 0);
               const totalCost = currentData.reduce((sum, item) => sum + parseFloat(item.totalCost), 0);
-              const totalProfit = currentData.reduce((sum, item) => sum + parseFloat(item.totalProfit), 0);
               const margin = totalRevenue > 0 ? ((1 - (totalCost / totalRevenue)) * 100).toFixed(1) : "0.0";
 
               return (
-                <div className="grid gap-4 md:grid-cols-4">
+                <div className="grid gap-4 md:grid-cols-3">
                   <Card>
                     <CardHeader className="pb-3">
                       <CardTitle className="text-sm font-medium">Faturamento Total</CardTitle>
@@ -785,17 +914,6 @@ export default function AnáliseVendas() {
 
                   <Card>
                     <CardHeader className="pb-3">
-                      <CardTitle className="text-sm font-medium">Lucro Total</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold text-blue-600">
-                        R$ {formatCurrency(totalProfit)}
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card>
-                    <CardHeader className="pb-3">
                       <CardTitle className="text-sm font-medium">Margem Média</CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -809,89 +927,7 @@ export default function AnáliseVendas() {
             })()}
           </TabsContent>
 
-          {/* Análise de Quantidades */}
-          <TabsContent value="quantidades" className="space-y-4">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle>Unidades Vendidas por Produto</CardTitle>
-                <Button variant="outline" size="sm">
-                  <Download className="h-4 w-4 mr-2" />
-                  Exportar
-                </Button>
-              </CardHeader>
-              <CardContent>
-                {isQuantityLoading ? (
-                  <p className="text-sm text-muted-foreground">Carregando...</p>
-                ) : quantityData && quantityData.length > 0 ? (
-                  <div className="rounded-md border">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Produto</TableHead>
-                          <TableHead className="text-right">Qtd Vendida</TableHead>
-                          <TableHead className="text-right">Mix %</TableHead>
-                          <TableHead className="text-right">Faturamento</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {quantityData.map((item) => (
-                          <TableRow key={item.productId}>
-                            <TableCell className="font-medium">{item.productName}</TableCell>
-                            <TableCell className="text-right font-semibold">{formatCurrency(item.totalQuantity)}</TableCell>
-                            <TableCell className="text-right text-blue-600 font-bold">{item.quantityMixPercent}%</TableCell>
-                            <TableCell className="text-right text-emerald-600">
-                              R$ {formatCurrency(item.totalRevenue)}
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground">Nenhuma venda no período selecionado</p>
-                )}
-              </CardContent>
-            </Card>
 
-            {/* Resumo de Quantidades */}
-            {quantityData && quantityData.length > 0 && (
-              <div className="grid gap-4 md:grid-cols-3">
-                <Card>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-sm font-medium">Total de Unidades</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">
-                      {formatCurrency(quantityData.reduce((sum, item) => sum + parseFloat(item.totalQuantity), 0))}
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-sm font-medium">Produtos Diferentes</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">{quantityData.length}</div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-sm font-medium">Ticket Médio</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold text-emerald-600">
-                      R$ {formatCurrency(
-                        quantityData.reduce((sum, item) => sum + parseFloat(item.totalRevenue), 0) /
-                        quantityData.reduce((sum, item) => sum + parseFloat(item.totalQuantity), 0)
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            )}
-          </TabsContent>
 
           {/* Análise por Categoria */}
           <TabsContent value="categorias" className="space-y-4">
@@ -915,7 +951,7 @@ export default function AnáliseVendas() {
                           <TableHead className="text-right">Qtd Vendida</TableHead>
                           <TableHead className="text-right">Faturamento</TableHead>
                           <TableHead className="text-right">Custo Total</TableHead>
-                          <TableHead className="text-right">Lucro</TableHead>
+
                           <TableHead className="text-right">Margem %</TableHead>
                         </TableRow>
                       </TableHeader>
@@ -928,9 +964,7 @@ export default function AnáliseVendas() {
                               R$ {formatCurrency(item.totalRevenue)}
                             </TableCell>
                             <TableCell className="text-right">R$ {formatCurrency(item.totalCost)}</TableCell>
-                            <TableCell className="text-right text-blue-600 font-semibold">
-                              R$ {formatCurrency(item.totalProfit)}
-                            </TableCell>
+
                             <TableCell className="text-right font-bold">{item.marginPercent}%</TableCell>
                           </TableRow>
                         ))}

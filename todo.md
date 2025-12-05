@@ -1284,3 +1284,53 @@
 ### Prioridade Baixa - Futuro
 - [ ] **Forecast de vendas** - Previsão usando histórico (requer IA)
 - [ ] **Market Basket Analysis** - Produtos que vendem juntos (requer algoritmo)
+
+## 🔄 REFATORAÇÃO COMPLETA - ANÁLISE DE VENDAS (04/12/2025)
+
+### Novos Filtros de Período
+- [ ] Substituir date range picker por filtros granulares
+- [ ] Multi-select de Mês (Jan, Fev, Mar... Dez) com checkboxes
+- [ ] Multi-select de Ano (2025, 2024, 2023... 2020) com checkboxes
+- [ ] Range de Dia do Mês (1-31) para filtrar dias específicos
+
+### Filtros de Segmentação Aprimorados
+- [ ] Categoria: Converter para multi-select com checkboxes
+- [ ] Canal: Converter dropdown para multi-select com checkboxes
+- [ ] Manter Subcategoria e Produto multi-select (já implementados)
+
+### Backend para Períodos Múltiplos
+- [ ] Atualizar queries SQL para aceitar arrays de meses e anos
+- [ ] Implementar lógica de formatação de datas com mês/ano visível
+- [ ] Ajustar agrupamento semanal para mostrar "Sem 1 - Nov/2025"
+- [ ] Ajustar agrupamento mensal para mostrar "Novembro/2025"
+
+### Simplificação de Tipo de Análise
+- [ ] Remover aba "Análise de Quantidades" (mesclar com Evolução Diária)
+- [ ] Remover campo "Lucro" de todas as tabelas
+- [ ] Manter apenas: Faturamento, Custo Total, % Margem Bruta, Valor Margem Bruta
+- [ ] Manter 3 abas: Evolução Diária, Análise de Valores, Por Categoria
+
+## 🔄 REFATORAÇÃO COMPLETA - ANÁLISE DE VENDAS (04/12/2025)
+
+### Etapa 1: Novos Filtros de Período
+- [x] Multi-select de Mês (Jan-Dez) com botões
+- [x] Multi-select de Ano (2020-2025) com botões
+- [x] Range de Dia do Mês (inputs numéricos 1-31)
+- [x] Remover date picker antigo
+
+### Etapa 2: Filtros de Segmentação Aprimorados
+- [x] Filtro de Categoria multi-select com chips
+- [x] Filtro de Canal multi-select com botões (substituir dropdown)
+- [x] Manter Subcategoria e Produto multi-select
+
+### Etapa 3: Backend para Períodos Múltiplos
+- [x] Função getDateRange() para converter filtros em startDate/endDate
+- [x] Suporte a múltiplos meses/anos não consecutivos
+
+### Etapa 4: Simplificar Tipo de Análise
+- [x] Remover aba "Análise de Quantidades"
+- [x] Remover campo "Lucro" de todas as tabelas
+- [x] Manter apenas: Faturamento, Custo Total, Margem Bruta %
+- [x] 3 abas finais: Evolução Diária, Análise de Valores, Por Categoria
+
+**RESULTADO:** Sistema de análise completamente refatorado com filtros granulares e interface simplificada!
