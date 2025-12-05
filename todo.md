@@ -46,6 +46,8 @@
 
 ## 🔴 BUGS CRÍTICOS - RESOLVIDOS
 
+- [x] **Tabela de relatório sobrepõe menu lateral ao rolar horizontalmente** - CORRIGIDO! Problema: ao rolar a tabela horizontalmente na Análise de Vendas, ela sobrepunha o menu lateral. Solução: adicionado `z-50` ao container do Sidebar no DashboardLayout. Agora o menu lateral sempre fica acima do conteúdo, mesmo com scroll horizontal.
+
 - [x] **Filtro de múltiplos canais não soma dados corretamente** - CORRIGIDO! Problema: frontend enviava apenas `channel: selectedChannels[0]` (primeiro canal) ao invés do array completo. Solução: (1) Backend alterado para aceitar `channels: string[]` ao invés de `channel: string`, (2) Queries SQL modificadas para usar `IN (...)` ao invés de `=`, (3) Frontend corrigido para enviar `channels: selectedChannels`. Agora selecionar Balcão + Delivery soma corretamente os dados de ambos os canais.
 
 - [x] **Análise de Vendas não carregava dados** - Corrigido! Problemas identificados: (1) Usando `postingDate` ao invés de `saleDate` na tabela sales, (2) Usando `finalAmount` ao invés de `totalPrice` na tabela saleItems, (3) Período padrão em 2024 quando vendas estão em 2025. Todas as queries SQL corrigidas (getSalesAnalysisByValue, getSalesAnalysisByQuantity, getSalesAnalysisByCategoryValue) e página funcionando perfeitamente com dados de novembro/2025.
@@ -1398,3 +1400,6 @@
 ## ✅ MELHORIAS CONCLUÍDAS (04/12/2025 - 22:45)
 
 - [x] **Contraste dos filtros melhorado** - Botões selecionados (meses, dias, canais) agora usam bg-blue-600 com texto branco ao invés de variant="default", criando contraste forte contra o fundo cinza claro. Facilita identificação visual de filtros ativos.
+
+
+## 🔴 BUGS CRÍTICOS - PENDENTES (0 itens)

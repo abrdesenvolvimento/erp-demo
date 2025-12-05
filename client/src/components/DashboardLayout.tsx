@@ -180,7 +180,7 @@ function DashboardLayoutContent({
 
   return (
     <>
-      <div className="relative" ref={sidebarRef}>
+      <div className="relative z-50" ref={sidebarRef}>
         <Sidebar
           collapsible="icon"
           className="border-r-0"
