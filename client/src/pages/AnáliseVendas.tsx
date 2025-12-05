@@ -235,7 +235,7 @@ export default function AnáliseVendas() {
         </div>
 
         {/* Filtros Avançados */}
-        <Card>
+        <Card className="!bg-gray-100">
           <CardHeader>
             <div className="flex flex-row items-center justify-between">
               <CardTitle className="text-lg">Filtros e Agrupamento</CardTitle>
@@ -249,7 +249,7 @@ export default function AnáliseVendas() {
             </div>
           </CardHeader>
           {filtersExpanded && (
-          <CardContent className="bg-gray-50">
+          <CardContent>
             {/* Seletor de Agrupamento */}
             <div className="mb-4">
               <Label>Agrupar por</Label>
