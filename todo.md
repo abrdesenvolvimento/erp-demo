@@ -1408,3 +1408,14 @@
 
 - [x] **Comparação de Períodos na Análise de Vendas** - IMPLEMENTADO! Nova aba "Comparar Períodos" permite selecionar dois períodos diferentes e visualizar tabela comparativa lado a lado. Inclui: (1) Backend endpoint `salesAnalysis.comparePeriods` que busca dados de ambos períodos em paralelo, (2) Interface com seletores de data para Período 1 e Período 2, (3) Tabela comparativa mostrando faturamento de cada período, variação absoluta em R$ (verde/vermelho), crescimento percentual com indicadores visuais (🔺 crescimento / 🔻 queda), (4) Produtos ordenados por maior crescimento. Testado com Novembro vs Outubro 2025.
 
+
+## ✅ CONCLUÍDO RECENTEMENTE (05/12/2025)
+
+### Comparação de Períodos na Análise de Vendas
+- [x] **Comparação de Períodos** - Nova aba "Comparar Períodos" permite selecionar dois períodos (ex: Novembro vs Outubro) e visualizar tabela comparativa lado a lado com faturamento de cada período, variação absoluta em R$, crescimento percentual e indicadores visuais (🔺/🔻). Backend busca dados em paralelo, produtos ordenados por maior crescimento.
+- [x] **Comparação por Quantidade** - Toggle para alternar entre "Valores (R$)" e "Quantidade (unidades)" na comparação de períodos. Backend adaptado para buscar dados de quantidade (totalQuantity) ao invés de valores (totalRevenue). Tabela mostra unidades vendidas com variação em unidades e crescimento percentual.
+
+### Melhorias de UX/UI
+- [x] **Contraste dos filtros melhorado** - Botões selecionados (meses, dias, canais) agora usam azul forte (bg-blue-600) com texto branco ao invés do azul claro padrão, criando contraste excelente contra o fundo cinza claro.
+- [x] **Filtro de múltiplos canais corrigido** - Backend alterado para aceitar `channels: string[]` ao invés de `channel: string`. Queries SQL modificadas para usar `IN (...)` ao invés de `=`. Frontend corrigido para enviar `channels: selectedChannels`. Agora selecionar Balcão + Delivery soma corretamente os dados de ambos os canais.
+- [x] **Z-index do menu lateral corrigido** - Adicionado `z-50` ao container do Sidebar no DashboardLayout. Menu lateral sempre fica acima do conteúdo, mesmo com scroll horizontal na tabela de relatórios.

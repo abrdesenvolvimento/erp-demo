@@ -92,6 +92,7 @@ export default function AnáliseVendas() {
     };
   });
   const [enableComparison, setEnableComparison] = useState(false);
+  const [comparisonType, setComparisonType] = useState<"value" | "quantity">("value");
 
   // Buscar produtos, subcategorias e categorias para filtros
   const { data: products } = trpc.products.list.useQuery(undefined, { enabled: isAdmin });
@@ -237,6 +238,7 @@ export default function AnáliseVendas() {
         startDate: comparisonPeriod2.from,
         endDate: comparisonPeriod2.to,
       },
+      comparisonType: comparisonType,
       productIds: selectedProductIds.length > 0 ? selectedProductIds : undefined,
       subcategoryId: selectedSubcategoryId,
       channels: selectedChannels.length > 0 ? selectedChannels : undefined,
@@ -1234,6 +1236,24 @@ export default function AnáliseVendas() {
                   </div>
                 </div>
 
+                {/* Toggle Tipo de Comparação */}
+                <div className="flex justify-center gap-2 mb-4">
+                  <Button
+                    variant={comparisonType === "value" ? "default" : "outline"}
+                    onClick={() => setComparisonType("value")}
+                    size="sm"
+                  >
+                    Valores (R$)
+                  </Button>
+                  <Button
+                    variant={comparisonType === "quantity" ? "default" : "outline"}
+                    onClick={() => setComparisonType("quantity")}
+                    size="sm"
+                  >
+                    Quantidade (unidades)
+                  </Button>
+                </div>
+
                 {/* Botão Comparar */}
                 <div className="flex justify-center">
                   <Button 
@@ -1271,11 +1291,14 @@ export default function AnáliseVendas() {
                           </TableHeader>
                           <TableBody>
                             {(() => {
+                              // Determinar qual campo usar baseado no tipo de comparação
+                              const valueField = comparisonType === "quantity" ? "totalQuantity" : "totalRevenue";
+                              
                               // Criar mapa de produtos do período 1
                               const period1Map = new Map(
                                 comparisonData.period1.map(item => [
                                   item.productId,
-                                  { name: item.productName, revenue: parseFloat(item.totalRevenue) }
+                                  { name: item.productName, value: parseFloat(item[valueField]) }
                                 ])
                               );
 
@@ -1283,7 +1306,7 @@ export default function AnáliseVendas() {
                               const period2Map = new Map(
                                 comparisonData.period2.map(item => [
                                   item.productId,
-                                  { name: item.productName, revenue: parseFloat(item.totalRevenue) }
+                                  { name: item.productName, value: parseFloat(item[valueField]) }
                                 ])
                               );
 
@@ -1297,16 +1320,16 @@ export default function AnáliseVendas() {
                               const comparison = Array.from(allProductIds).map(productId => {
                                 const p1 = period1Map.get(productId);
                                 const p2 = period2Map.get(productId);
-                                const revenue1 = p1?.revenue || 0;
-                                const revenue2 = p2?.revenue || 0;
-                                const variation = revenue1 - revenue2;
-                                const growth = revenue2 > 0 ? ((revenue1 - revenue2) / revenue2) * 100 : (revenue1 > 0 ? 100 : 0);
+                                const value1 = p1?.value || 0;
+                                const value2 = p2?.value || 0;
+                                const variation = value1 - value2;
+                                const growth = value2 > 0 ? ((value1 - value2) / value2) * 100 : (value1 > 0 ? 100 : 0);
 
                                 return {
                                   productId,
                                   productName: p1?.name || p2?.name || "Produto Desconhecido",
-                                  revenue1,
-                                  revenue2,
+                                  value1,
+                                  value2,
                                   variation,
                                   growth
                                 };
@@ -1318,11 +1341,22 @@ export default function AnáliseVendas() {
                               return comparison.map(item => (
                                 <TableRow key={item.productId}>
                                   <TableCell className="font-medium">{item.productName}</TableCell>
-                                  <TableCell className="text-right">R$ {formatCurrency(item.revenue1)}</TableCell>
-                                  <TableCell className="text-right">R$ {formatCurrency(item.revenue2)}</TableCell>
+                                  <TableCell className="text-right">
+                                    {comparisonType === "quantity" 
+                                      ? `${item.value1.toFixed(0)} un` 
+                                      : `R$ ${formatCurrency(item.value1)}`}
+                                  </TableCell>
+                                  <TableCell className="text-right">
+                                    {comparisonType === "quantity" 
+                                      ? `${item.value2.toFixed(0)} un` 
+                                      : `R$ ${formatCurrency(item.value2)}`}
+                                  </TableCell>
                                   <TableCell className="text-right">
                                     <span className={item.variation >= 0 ? "text-green-600" : "text-red-600"}>
-                                      {item.variation >= 0 ? "+" : ""}R$ {formatCurrency(Math.abs(item.variation))}
+                                      {item.variation >= 0 ? "+" : ""}
+                                      {comparisonType === "quantity" 
+                                        ? `${Math.abs(item.variation).toFixed(0)} un` 
+                                        : `R$ ${formatCurrency(Math.abs(item.variation))}`}
                                     </span>
                                   </TableCell>
                                   <TableCell className="text-right">

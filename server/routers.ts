@@ -1537,6 +1537,7 @@ export const appRouter = router({
           startDate: z.date(),
           endDate: z.date(),
         }),
+        comparisonType: z.enum(["value", "quantity"]).default("value"),
         productIds: z.array(z.number()).optional(),
         subcategoryId: z.number().optional(),
         channels: z.array(z.string()).optional(),
@@ -1550,10 +1551,15 @@ export const appRouter = router({
           paymentMethod: input.paymentMethod,
         };
 
+        // Escolher função de busca baseado no tipo de comparação
+        const fetchFunction = input.comparisonType === "quantity" 
+          ? db.getSalesAnalysisByQuantity 
+          : db.getSalesAnalysisByValue;
+
         // Buscar dados dos dois períodos em paralelo
         const [period1Data, period2Data] = await Promise.all([
-          db.getSalesAnalysisByValue(input.period1.startDate, input.period1.endDate, filters),
-          db.getSalesAnalysisByValue(input.period2.startDate, input.period2.endDate, filters),
+          fetchFunction(input.period1.startDate, input.period1.endDate, filters),
+          fetchFunction(input.period2.startDate, input.period2.endDate, filters),
         ]);
 
         return {
