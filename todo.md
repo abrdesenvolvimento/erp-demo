@@ -1403,3 +1403,8 @@
 
 
 ## 🔴 BUGS CRÍTICOS - PENDENTES (0 itens)
+
+## ✅ FEATURES IMPLEMENTADAS (Dezembro 2025)
+
+- [x] **Comparação de Períodos na Análise de Vendas** - IMPLEMENTADO! Nova aba "Comparar Períodos" permite selecionar dois períodos diferentes e visualizar tabela comparativa lado a lado. Inclui: (1) Backend endpoint `salesAnalysis.comparePeriods` que busca dados de ambos períodos em paralelo, (2) Interface com seletores de data para Período 1 e Período 2, (3) Tabela comparativa mostrando faturamento de cada período, variação absoluta em R$ (verde/vermelho), crescimento percentual com indicadores visuais (🔺 crescimento / 🔻 queda), (4) Produtos ordenados por maior crescimento. Testado com Novembro vs Outubro 2025.
+

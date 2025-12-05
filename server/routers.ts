@@ -1525,6 +1525,42 @@ export const appRouter = router({
           paymentMethod: input.paymentMethod,
         });
       }),
+
+    // Comparação de Períodos
+    comparePeriods: adminProcedure
+      .input(z.object({
+        period1: z.object({
+          startDate: z.date(),
+          endDate: z.date(),
+        }),
+        period2: z.object({
+          startDate: z.date(),
+          endDate: z.date(),
+        }),
+        productIds: z.array(z.number()).optional(),
+        subcategoryId: z.number().optional(),
+        channels: z.array(z.string()).optional(),
+        paymentMethod: z.string().optional(),
+      }))
+      .query(async ({ input }) => {
+        const filters = {
+          productIds: input.productIds,
+          subcategoryId: input.subcategoryId,
+          channels: input.channels,
+          paymentMethod: input.paymentMethod,
+        };
+
+        // Buscar dados dos dois períodos em paralelo
+        const [period1Data, period2Data] = await Promise.all([
+          db.getSalesAnalysisByValue(input.period1.startDate, input.period1.endDate, filters),
+          db.getSalesAnalysisByValue(input.period2.startDate, input.period2.endDate, filters),
+        ]);
+
+        return {
+          period1: period1Data,
+          period2: period2Data,
+        };
+      }),
   }),
 });
 

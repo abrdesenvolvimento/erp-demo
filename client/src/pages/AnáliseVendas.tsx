@@ -76,6 +76,23 @@ export default function AnáliseVendas() {
   const [categorySearch, setCategorySearch] = useState("");
   const [groupBy, setGroupBy] = useState<"product" | "day" | "week" | "month">("product");
 
+  // Estados para comparação de períodos
+  const [comparisonPeriod1, setComparisonPeriod1] = useState<{ from: Date; to: Date }>(() => {
+    // Período 1: Novembro 2025 (padrão)
+    return {
+      from: new Date(2025, 10, 1), // 1º de novembro
+      to: new Date(2025, 10, 30), // 30 de novembro
+    };
+  });
+  const [comparisonPeriod2, setComparisonPeriod2] = useState<{ from: Date; to: Date }>(() => {
+    // Período 2: Outubro 2025 (padrão)
+    return {
+      from: new Date(2025, 9, 1), // 1º de outubro
+      to: new Date(2025, 9, 31), // 31 de outubro
+    };
+  });
+  const [enableComparison, setEnableComparison] = useState(false);
+
   // Buscar produtos, subcategorias e categorias para filtros
   const { data: products } = trpc.products.list.useQuery(undefined, { enabled: isAdmin });
   const { data: subcategories } = trpc.subcategories.list.useQuery(undefined, { enabled: isAdmin });
@@ -207,6 +224,25 @@ export default function AnáliseVendas() {
       paymentMethod: selectedPaymentMethod,
     },
     { enabled: isAdmin }
+  );
+
+  // Query para comparação de períodos
+  const { data: comparisonData, isLoading: isComparisonLoading } = trpc.salesAnalysis.comparePeriods.useQuery(
+    {
+      period1: {
+        startDate: comparisonPeriod1.from,
+        endDate: comparisonPeriod1.to,
+      },
+      period2: {
+        startDate: comparisonPeriod2.from,
+        endDate: comparisonPeriod2.to,
+      },
+      productIds: selectedProductIds.length > 0 ? selectedProductIds : undefined,
+      subcategoryId: selectedSubcategoryId,
+      channels: selectedChannels.length > 0 ? selectedChannels : undefined,
+      paymentMethod: selectedPaymentMethod,
+    },
+    { enabled: isAdmin && enableComparison }
   );
 
   // Redirecionar se não for admin
@@ -603,6 +639,10 @@ export default function AnáliseVendas() {
             <TabsTrigger value="categorias" className="flex items-center gap-2">
               <TrendingUp className="h-4 w-4" />
               Por Categoria
+            </TabsTrigger>
+            <TabsTrigger value="comparacao" className="flex items-center gap-2">
+              <TrendingUp className="h-4 w-4" />
+              Comparar Períodos
             </TabsTrigger>
           </TabsList>
 
@@ -1099,6 +1139,205 @@ export default function AnáliseVendas() {
                   </div>
                 ) : (
                   <p className="text-sm text-muted-foreground">Nenhuma venda no período selecionado</p>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Comparação de Períodos */}
+          <TabsContent value="comparacao" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Comparar Períodos</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Seletores de Período */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Período 1 */}
+                  <div className="space-y-3">
+                    <Label className="text-base font-semibold">Período 1</Label>
+                    <div className="flex gap-2">
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button variant="outline" className="flex-1 justify-start text-left font-normal">
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {format(comparisonPeriod1.from, "dd/MM/yyyy", { locale: ptBR })}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={comparisonPeriod1.from}
+                            onSelect={(date) => date && setComparisonPeriod1(prev => ({ ...prev, from: date }))}
+                            locale={ptBR}
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      <span className="flex items-center px-2">até</span>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button variant="outline" className="flex-1 justify-start text-left font-normal">
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {format(comparisonPeriod1.to, "dd/MM/yyyy", { locale: ptBR })}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={comparisonPeriod1.to}
+                            onSelect={(date) => date && setComparisonPeriod1(prev => ({ ...prev, to: date }))}
+                            locale={ptBR}
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                  </div>
+
+                  {/* Período 2 */}
+                  <div className="space-y-3">
+                    <Label className="text-base font-semibold">Período 2</Label>
+                    <div className="flex gap-2">
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button variant="outline" className="flex-1 justify-start text-left font-normal">
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {format(comparisonPeriod2.from, "dd/MM/yyyy", { locale: ptBR })}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={comparisonPeriod2.from}
+                            onSelect={(date) => date && setComparisonPeriod2(prev => ({ ...prev, from: date }))}
+                            locale={ptBR}
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      <span className="flex items-center px-2">até</span>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button variant="outline" className="flex-1 justify-start text-left font-normal">
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {format(comparisonPeriod2.to, "dd/MM/yyyy", { locale: ptBR })}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={comparisonPeriod2.to}
+                            onSelect={(date) => date && setComparisonPeriod2(prev => ({ ...prev, to: date }))}
+                            locale={ptBR}
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Botão Comparar */}
+                <div className="flex justify-center">
+                  <Button 
+                    onClick={() => setEnableComparison(true)}
+                    size="lg"
+                    className="px-8"
+                  >
+                    <TrendingUp className="mr-2 h-4 w-4" />
+                    Comparar Períodos
+                  </Button>
+                </div>
+
+                {/* Tabela Comparativa */}
+                {enableComparison && (
+                  <div className="mt-6">
+                    {isComparisonLoading ? (
+                      <div className="flex items-center justify-center h-64">
+                        <p className="text-muted-foreground">Carregando comparação...</p>
+                      </div>
+                    ) : !comparisonData || (!comparisonData.period1.length && !comparisonData.period2.length) ? (
+                      <div className="flex items-center justify-center h-64">
+                        <p className="text-muted-foreground">Nenhum dado disponível para os períodos selecionados</p>
+                      </div>
+                    ) : (
+                      <div className="overflow-x-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead className="w-[200px]">Produto</TableHead>
+                              <TableHead className="text-right">Período 1<br/><span className="text-xs text-muted-foreground">{format(comparisonPeriod1.from, "dd/MM", { locale: ptBR })} - {format(comparisonPeriod1.to, "dd/MM", { locale: ptBR })}</span></TableHead>
+                              <TableHead className="text-right">Período 2<br/><span className="text-xs text-muted-foreground">{format(comparisonPeriod2.from, "dd/MM", { locale: ptBR })} - {format(comparisonPeriod2.to, "dd/MM", { locale: ptBR })}</span></TableHead>
+                              <TableHead className="text-right">Variação</TableHead>
+                              <TableHead className="text-right">Crescimento</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {(() => {
+                              // Criar mapa de produtos do período 1
+                              const period1Map = new Map(
+                                comparisonData.period1.map(item => [
+                                  item.productId,
+                                  { name: item.productName, revenue: parseFloat(item.totalRevenue) }
+                                ])
+                              );
+
+                              // Criar mapa de produtos do período 2
+                              const period2Map = new Map(
+                                comparisonData.period2.map(item => [
+                                  item.productId,
+                                  { name: item.productName, revenue: parseFloat(item.totalRevenue) }
+                                ])
+                              );
+
+                              // Unir todos os produtos
+                              const allProductIds = new Set([
+                                ...period1Map.keys(),
+                                ...period2Map.keys()
+                              ]);
+
+                              // Criar array de comparação
+                              const comparison = Array.from(allProductIds).map(productId => {
+                                const p1 = period1Map.get(productId);
+                                const p2 = period2Map.get(productId);
+                                const revenue1 = p1?.revenue || 0;
+                                const revenue2 = p2?.revenue || 0;
+                                const variation = revenue1 - revenue2;
+                                const growth = revenue2 > 0 ? ((revenue1 - revenue2) / revenue2) * 100 : (revenue1 > 0 ? 100 : 0);
+
+                                return {
+                                  productId,
+                                  productName: p1?.name || p2?.name || "Produto Desconhecido",
+                                  revenue1,
+                                  revenue2,
+                                  variation,
+                                  growth
+                                };
+                              });
+
+                              // Ordenar por variação (maior crescimento primeiro)
+                              comparison.sort((a, b) => b.variation - a.variation);
+
+                              return comparison.map(item => (
+                                <TableRow key={item.productId}>
+                                  <TableCell className="font-medium">{item.productName}</TableCell>
+                                  <TableCell className="text-right">R$ {formatCurrency(item.revenue1)}</TableCell>
+                                  <TableCell className="text-right">R$ {formatCurrency(item.revenue2)}</TableCell>
+                                  <TableCell className="text-right">
+                                    <span className={item.variation >= 0 ? "text-green-600" : "text-red-600"}>
+                                      {item.variation >= 0 ? "+" : ""}R$ {formatCurrency(Math.abs(item.variation))}
+                                    </span>
+                                  </TableCell>
+                                  <TableCell className="text-right">
+                                    <span className={item.growth >= 0 ? "text-green-600 font-semibold" : "text-red-600 font-semibold"}>
+                                      {item.growth >= 0 ? "🔺" : "🔻"} {item.growth >= 0 ? "+" : ""}{item.growth.toFixed(1)}%
+                                    </span>
+                                  </TableCell>
+                                </TableRow>
+                              ));
+                            })()}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    )}
+                  </div>
                 )}
               </CardContent>
             </Card>
