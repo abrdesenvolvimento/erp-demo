@@ -61,8 +61,9 @@ export default function AnáliseVendas() {
 
   // Novos filtros de período
   const [selectedMonths, setSelectedMonths] = useState<number[]>([11]); // Novembro como padrão
-  const [selectedYears, setSelectedYears] = useState<number[]>([2025]); // 2025 como padrão
+  const [selectedYears] = useState<number[]>([2025]); // 2025 fixo até migração de dados históricos
   const [dayRange, setDayRange] = useState<[number, number]>([1, 31]); // Todos os dias
+  const [filtersExpanded, setFiltersExpanded] = useState(true); // Controle de expansão dos filtros
 
   // Estados de filtros de segmentação
   const [selectedProductIds, setSelectedProductIds] = useState<number[]>([]);
@@ -87,14 +88,20 @@ export default function AnáliseVendas() {
       return { from: new Date(2025, 10, 1), to: new Date(2025, 10, 30) };
     }
 
-    // Encontrar menor e maior data possível
-    const minYear = Math.min(...selectedYears);
-    const maxYear = Math.max(...selectedYears);
-    const minMonth = Math.min(...selectedMonths) - 1; // Date usa 0-11
-    const maxMonth = Math.max(...selectedMonths) - 1;
+    // Gerar todas as combinações de ano/mês selecionadas
+    const dates: Date[] = [];
+    for (const year of selectedYears) {
+      for (const month of selectedMonths) {
+        // Adicionar data inicial (primeiro dia do range)
+        dates.push(new Date(year, month - 1, dayRange[0]));
+        // Adicionar data final (último dia do range)
+        dates.push(new Date(year, month - 1, dayRange[1]));
+      }
+    }
 
-    const from = new Date(minYear, minMonth, dayRange[0]);
-    const to = new Date(maxYear, maxMonth, dayRange[1]);
+    // Encontrar menor e maior data
+    const from = new Date(Math.min(...dates.map(d => d.getTime())));
+    const to = new Date(Math.max(...dates.map(d => d.getTime())));
 
     return { from, to };
   };
@@ -232,8 +239,18 @@ export default function AnáliseVendas() {
         {/* Filtros Avançados */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Filtros e Agrupamento</CardTitle>
+            <div className="flex flex-row items-center justify-between">
+              <CardTitle className="text-lg">Filtros e Agrupamento</CardTitle>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setFiltersExpanded(!filtersExpanded)}
+              >
+                {filtersExpanded ? "Ocultar Filtros" : "Expandir Filtros"}
+              </Button>
+            </div>
           </CardHeader>
+          {filtersExpanded && (
           <CardContent>
             {/* Seletor de Agrupamento */}
             <div className="mb-4">
@@ -297,35 +314,25 @@ export default function AnáliseVendas() {
                 </div>
               </div>
 
-              {/* Filtro de Ano */}
+              {/* Filtro de Ano - Fixo em 2025 */}
               <div className="mt-3">
-                <Label className="text-sm">Ano(s)</Label>
+                <Label className="text-sm">Ano</Label>
                 <div className="flex gap-2 mt-2">
-                  {[2025, 2024, 2023, 2022, 2021, 2020].map((year) => (
-                    <Button
-                      key={year}
-                      variant={selectedYears.includes(year) ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => {
-                        if (selectedYears.includes(year)) {
-                          setSelectedYears(selectedYears.filter(y => y !== year));
-                        } else {
-                          setSelectedYears([...selectedYears, year]);
-                        }
-                      }}
-                    >
-                      {year}
-                    </Button>
-                  ))}
+                  <Button variant="default" size="sm" disabled>
+                    2025
+                  </Button>
+                  <span className="text-xs text-muted-foreground flex items-center">
+                    (Outros anos disponíveis após migração de dados históricos)
+                  </span>
                 </div>
               </div>
 
               {/* Filtro de Dia do Mês */}
               <div className="mt-3">
                 <Label className="text-sm">Dia do Mês: {dayRange[0]} a {dayRange[1]}</Label>
-                <div className="flex gap-4 mt-2">
-                  <div className="flex-1">
-                    <Label className="text-xs">Início</Label>
+                <div className="flex gap-2 mt-2 items-end">
+                  <div className="w-20">
+                    <Label className="text-xs">De</Label>
                     <Input
                       type="number"
                       min="1"
@@ -335,8 +342,8 @@ export default function AnáliseVendas() {
                       className="mt-1"
                     />
                   </div>
-                  <div className="flex-1">
-                    <Label className="text-xs">Fim</Label>
+                  <div className="w-20">
+                    <Label className="text-xs">Até</Label>
                     <Input
                       type="number"
                       min="1"
@@ -346,6 +353,14 @@ export default function AnáliseVendas() {
                       className="mt-1"
                     />
                   </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setDayRange([1, 31])}
+                    className="h-9"
+                  >
+                    Todos
+                  </Button>
                 </div>
               </div>
             </div>
@@ -561,6 +576,7 @@ export default function AnáliseVendas() {
               </div>
             )}
           </CardContent>
+          )}
         </Card>
 
         <Tabs defaultValue="evolucao" className="space-y-4">

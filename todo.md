@@ -1334,3 +1334,11 @@
 - [x] 3 abas finais: Evolução Diária, Análise de Valores, Por Categoria
 
 **RESULTADO:** Sistema de análise completamente refatorado com filtros granulares e interface simplificada!
+
+## 🔴 BUGS CRÍTICOS - ANÁLISE DE VENDAS (04/12/2025)
+
+- [x] **Filtro de dias não funciona** - Corrigido! Função getDateRange() agora gera todas as combinações de ano/mês e respeita dayRange[0] e dayRange[1]
+- [x] **Agrupamento Semanal não muda visualização** - NÃO É BUG! Comportamento correto: aba "Evolução Diária" sempre mostra matriz produto×dia, agrupamento controla as abas "Análise de Valores" e "Por Categoria" (testado e funcionando perfeitamente)
+- [x] **Simplificar filtro de ano** - Botão 2025 fixo e desabilitado com texto explicativo sobre dados históricos
+- [x] **Reduzir espaçamento dos campos De/Até** - Campos agora com w-20 (80px) + botão "Todos" para resetar
+- [x] **Adicionar botão ocultar filtros** - Botão "Ocultar Filtros"/"Expandir Filtros" implementado no header do card
