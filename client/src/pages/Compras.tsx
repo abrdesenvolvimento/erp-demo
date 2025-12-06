@@ -50,6 +50,17 @@ export default function Compras() {
   const [isEditing, setIsEditing] = useState(false);
   const [editingPurchaseId, setEditingPurchaseId] = useState<number | null>(null);
   
+  // Filter state
+  const today = formatDateForInput(getTodayInBrazil());
+  const [filterStartDate, setFilterStartDate] = useState(today);
+  const [filterEndDate, setFilterEndDate] = useState(today);
+  const [filterSupplierId, setFilterSupplierId] = useState<number | undefined>();
+  const [filterSupplierOpen, setFilterSupplierOpen] = useState(false);
+  const [filterSupplierSearch, setFilterSupplierSearch] = useState("");
+  const [filterDocNumber, setFilterDocNumber] = useState("");
+  const [filterMinValue, setFilterMinValue] = useState("");
+  const [filterMaxValue, setFilterMaxValue] = useState("");
+  
   // Form state
   const [supplierId, setSupplierId] = useState<number | undefined>();
   const [docType, setDocType] = useState<"NOTA_FISCAL" | "CUPOM" | "SEM_DOCUMENTO">("NOTA_FISCAL");
@@ -81,7 +92,11 @@ export default function Compras() {
   }, [items, freightCost, chargesCost, installments.length]);
   
   // Queries
-  const { data: purchases = [], refetch } = trpc.purchases.list.useQuery();
+  const { data: purchases = [], refetch } = trpc.purchases.list.useQuery({
+    startDate: filterStartDate ? parseDateInBrazil(filterStartDate) : undefined,
+    endDate: filterEndDate ? parseDateInBrazil(filterEndDate) : undefined,
+    supplierId: filterSupplierId,
+  });
   const { data: suppliers = [] } = trpc.partners.list.useQuery({ partnerType: "SUPPLIER" });
   const { data: searchResults = [] } = trpc.purchases.searchProducts.useQuery(
     { search: searchTerm },
@@ -769,6 +784,125 @@ export default function Compras() {
             {/* Content */}
             <div className="flex-1 overflow-auto">
               <div className="container py-6">
+                {/* Filtros */}
+                <div className="bg-card border rounded-lg p-6 mb-6">
+                  <h2 className="text-lg font-semibold mb-4">Filtros</h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div>
+                      <Label>Data Inicial</Label>
+                      <Input
+                        type="date"
+                        value={filterStartDate}
+                        onChange={(e) => setFilterStartDate(e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <Label>Data Final</Label>
+                      <Input
+                        type="date"
+                        value={filterEndDate}
+                        onChange={(e) => setFilterEndDate(e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <Label>Fornecedor</Label>
+                      <Popover open={filterSupplierOpen} onOpenChange={setFilterSupplierOpen}>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            role="combobox"
+                            className="w-full justify-between"
+                          >
+                            {filterSupplierId
+                              ? suppliers.find((s) => s.id === filterSupplierId)?.name
+                              : "Todos"}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-full p-0">
+                          <Command shouldFilter={false}>
+                            <CommandInput
+                              placeholder="Buscar fornecedor..."
+                              value={filterSupplierSearch}
+                              onValueChange={setFilterSupplierSearch}
+                            />
+                            <CommandList>
+                              <CommandEmpty>Nenhum fornecedor encontrado.</CommandEmpty>
+                              <CommandGroup>
+                                <CommandItem
+                                  onSelect={() => {
+                                    setFilterSupplierId(undefined);
+                                    setFilterSupplierOpen(false);
+                                  }}
+                                >
+                                  <Check className={cn("mr-2 h-4 w-4", !filterSupplierId ? "opacity-100" : "opacity-0")} />
+                                  Todos
+                                </CommandItem>
+                                {suppliers
+                                  .filter(s => s.name.toLowerCase().includes(filterSupplierSearch.toLowerCase()))
+                                  .map((supplier) => (
+                                    <CommandItem
+                                      key={supplier.id}
+                                      value={supplier.name}
+                                      onSelect={() => {
+                                        setFilterSupplierId(supplier.id);
+                                        setFilterSupplierOpen(false);
+                                      }}
+                                    >
+                                      <Check className={cn("mr-2 h-4 w-4", filterSupplierId === supplier.id ? "opacity-100" : "opacity-0")} />
+                                      {supplier.name}
+                                    </CommandItem>
+                                  ))}
+                              </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                    <div>
+                      <Label>Número de Nota</Label>
+                      <Input
+                        placeholder="Ex: 123456"
+                        value={filterDocNumber}
+                        onChange={(e) => setFilterDocNumber(e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <Label>Valor Mínimo</Label>
+                      <Input
+                        type="number"
+                        placeholder="R$ 0,00"
+                        value={filterMinValue}
+                        onChange={(e) => setFilterMinValue(e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <Label>Valor Máximo</Label>
+                      <Input
+                        type="number"
+                        placeholder="R$ 9999,99"
+                        value={filterMaxValue}
+                        onChange={(e) => setFilterMaxValue(e.target.value)}
+                      />
+                    </div>
+                    <div className="flex items-end">
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setFilterStartDate(today);
+                          setFilterEndDate(today);
+                          setFilterSupplierId(undefined);
+                          setFilterDocNumber("");
+                          setFilterMinValue("");
+                          setFilterMaxValue("");
+                        }}
+                        className="w-full"
+                      >
+                        Limpar Filtros
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
                 <div className="bg-card border rounded-lg">
                   <div className="overflow-x-auto">
                     <table className="w-full">
@@ -791,7 +925,23 @@ export default function Compras() {
                             </td>
                           </tr>
                         ) : (
-                          purchases.map((purchase) => (
+                          purchases
+                            .filter(purchase => {
+                              // Filtro de número de nota
+                              if (filterDocNumber && !purchase.purchaseOrder.docNumber?.includes(filterDocNumber)) {
+                                return false;
+                              }
+                              // Filtro de valor mínimo
+                              if (filterMinValue && parseFloat(purchase.purchaseOrder.totalAmount) < parseFloat(filterMinValue)) {
+                                return false;
+                              }
+                              // Filtro de valor máximo
+                              if (filterMaxValue && parseFloat(purchase.purchaseOrder.totalAmount) > parseFloat(filterMaxValue)) {
+                                return false;
+                              }
+                              return true;
+                            })
+                            .map((purchase) => (
                             <tr key={purchase.purchaseOrder.id} className="border-b hover:bg-muted/50">
                               <td className="p-4">#{purchase.purchaseOrder.id}</td>
                               <td className="p-4">{purchase.supplier?.name || "N/A"}</td>

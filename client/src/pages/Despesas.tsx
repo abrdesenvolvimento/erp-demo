@@ -33,6 +33,17 @@ export default function Despesas() {
   const [isEditing, setIsEditing] = useState(false);
   const [editingExpenseId, setEditingExpenseId] = useState<number | null>(null);
   
+  // Filter state
+  const today = new Date().toISOString().split('T')[0];
+  const [filterStartDate, setFilterStartDate] = useState(today);
+  const [filterEndDate, setFilterEndDate] = useState(today);
+  const [filterSupplierId, setFilterSupplierId] = useState<number | undefined>();
+  const [filterSupplierOpen, setFilterSupplierOpen] = useState(false);
+  const [filterSupplierSearch, setFilterSupplierSearch] = useState("");
+  const [filterDocNumber, setFilterDocNumber] = useState("");
+  const [filterMinValue, setFilterMinValue] = useState("");
+  const [filterMaxValue, setFilterMaxValue] = useState("");
+  
   // Form state
   const [supplierOpen, setSupplierOpen] = useState(false);
   const [supplierSearch, setSupplierSearch] = useState("");
@@ -51,7 +62,11 @@ export default function Despesas() {
   const [notes, setNotes] = useState("");
   
   // Queries
-  const { data: expenses = [], refetch } = trpc.expenses.list.useQuery();
+  const { data: expenses = [], refetch } = trpc.expenses.list.useQuery({
+    startDate: filterStartDate ? new Date(filterStartDate + 'T00:00:00') : undefined,
+    endDate: filterEndDate ? new Date(filterEndDate + 'T23:59:59') : undefined,
+    supplierId: filterSupplierId,
+  });
   const { data: suppliers = [] } = trpc.partners.list.useQuery({ partnerType: "SUPPLIER" });
   const { data: categories = [] } = trpc.expenses.categories.list.useQuery({ activeOnly: true });
   const { data: expenseDetails = [] } = trpc.expenses.getDetails.useQuery(
@@ -569,6 +584,125 @@ export default function Despesas() {
           </Button>
         </div>
 
+        {/* Filtros */}
+        <div className="bg-card border rounded-lg p-6 mb-6">
+          <h2 className="text-lg font-semibold mb-4">Filtros</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div>
+              <Label>Data Inicial</Label>
+              <Input
+                type="date"
+                value={filterStartDate}
+                onChange={(e) => setFilterStartDate(e.target.value)}
+              />
+            </div>
+            <div>
+              <Label>Data Final</Label>
+              <Input
+                type="date"
+                value={filterEndDate}
+                onChange={(e) => setFilterEndDate(e.target.value)}
+              />
+            </div>
+            <div>
+              <Label>Fornecedor</Label>
+              <Popover open={filterSupplierOpen} onOpenChange={setFilterSupplierOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    className="w-full justify-between"
+                  >
+                    {filterSupplierId
+                      ? suppliers.find((s) => s.id === filterSupplierId)?.name
+                      : "Todos"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-full p-0">
+                  <Command shouldFilter={false}>
+                    <CommandInput
+                      placeholder="Buscar fornecedor..."
+                      value={filterSupplierSearch}
+                      onValueChange={setFilterSupplierSearch}
+                    />
+                    <CommandList>
+                      <CommandEmpty>Nenhum fornecedor encontrado.</CommandEmpty>
+                      <CommandGroup>
+                        <CommandItem
+                          onSelect={() => {
+                            setFilterSupplierId(undefined);
+                            setFilterSupplierOpen(false);
+                          }}
+                        >
+                          <Check className={cn("mr-2 h-4 w-4", !filterSupplierId ? "opacity-100" : "opacity-0")} />
+                          Todos
+                        </CommandItem>
+                        {suppliers
+                          .filter(s => s.name.toLowerCase().includes(filterSupplierSearch.toLowerCase()))
+                          .map((supplier) => (
+                            <CommandItem
+                              key={supplier.id}
+                              value={supplier.name}
+                              onSelect={() => {
+                                setFilterSupplierId(supplier.id);
+                                setFilterSupplierOpen(false);
+                              }}
+                            >
+                              <Check className={cn("mr-2 h-4 w-4", filterSupplierId === supplier.id ? "opacity-100" : "opacity-0")} />
+                              {supplier.name}
+                            </CommandItem>
+                          ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+            </div>
+            <div>
+              <Label>Número de Nota</Label>
+              <Input
+                placeholder="Ex: 123456"
+                value={filterDocNumber}
+                onChange={(e) => setFilterDocNumber(e.target.value)}
+              />
+            </div>
+            <div>
+              <Label>Valor Mínimo</Label>
+              <Input
+                type="number"
+                placeholder="R$ 0,00"
+                value={filterMinValue}
+                onChange={(e) => setFilterMinValue(e.target.value)}
+              />
+            </div>
+            <div>
+              <Label>Valor Máximo</Label>
+              <Input
+                type="number"
+                placeholder="R$ 9999,99"
+                value={filterMaxValue}
+                onChange={(e) => setFilterMaxValue(e.target.value)}
+              />
+            </div>
+            <div className="flex items-end">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setFilterStartDate(today);
+                  setFilterEndDate(today);
+                  setFilterSupplierId(undefined);
+                  setFilterDocNumber("");
+                  setFilterMinValue("");
+                  setFilterMaxValue("");
+                }}
+                className="w-full"
+              >
+                Limpar Filtros
+              </Button>
+            </div>
+          </div>
+        </div>
+
         {/* Lista de despesas */}
         <div className="bg-card border rounded-lg">
           <div className="p-6">
@@ -579,7 +713,23 @@ export default function Despesas() {
               </div>
             ) : (
               <div className="space-y-4">
-                {expenses.map((item) => (
+                {expenses
+                  .filter(item => {
+                    // Filtro de número de nota
+                    if (filterDocNumber && !item.expense.docNumber?.includes(filterDocNumber)) {
+                      return false;
+                    }
+                    // Filtro de valor mínimo
+                    if (filterMinValue && parseFloat(item.expense.amount) < parseFloat(filterMinValue)) {
+                      return false;
+                    }
+                    // Filtro de valor máximo
+                    if (filterMaxValue && parseFloat(item.expense.amount) > parseFloat(filterMaxValue)) {
+                      return false;
+                    }
+                    return true;
+                  })
+                  .map((item) => (
                   <div
                     key={item.expense.id}
                     className="border rounded-lg p-4 hover:bg-accent/50 transition-colors"

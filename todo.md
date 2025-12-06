@@ -45,10 +45,10 @@
 - [x] **Corrigir autocomplete de Categoria** - Ao digitar no campo de categoria, não carrega resultados.
 - [x] **Habilitar edição de despesas** - Adicionar botão de editar na listagem, igual em Compras.
 - [x] **Habilitar cancelamento de despesas** - Adicionar botão de cancelar na listagem, igual em Compras.
-- [ ] **Adicionar filtros na listagem** - Filtros de data (padrão: dia atual), fornecedor, número de nota e valor. Evitar sobrecarga de dados na tela.
+- [x] **Adicionar filtros na listagem** - Filtros de data (padrão: dia atual), fornecedor, número de nota e valor. Evitar sobrecarga de dados na tela.
 
 ### Compras - Melhorias
-- [ ] **Adicionar filtros na listagem** - Filtros de data (padrão: dia atual), fornecedor, número de nota e valor. Evitar sobrecarga de dados na tela.
+- [x] **Adicionar filtros na listagem** - Filtros de data (padrão: dia atual), fornecedor, número de nota e valor. Evitar sobrecarga de dados na tela.
 
 ### Análise de Vendas - Comparação entre Canais
 - [ ] **Comparar quantidade entre canais** - Permitir comparar quantidade vendida entre Balcão vs Delivery vs A Prazo para identificar desempenho por canal.
@@ -1433,3 +1433,27 @@
 
 ### Padronização Visual de Filtros (05/12/2025)
 - [x] **Padronização visual de todos os botões de filtro** - Aplicado bg-blue-600 (azul forte) com texto branco em todos os botões quando selecionados para manter consistência visual em toda a interface. Aplicado em: (1) Botões de Agrupar por (Produto, Dia, Semana, Mês), (2) Botões de tipo de comparação (Valores/Quantidade). Agora todos os filtros seguem o mesmo padrão visual, facilitando identificação de itens selecionados.
+
+## ✅ CONCLUÍDO (05/12/2025) - Despesas e Compras: Filtros e Melhorias
+
+### Despesas - Melhorias Completas
+- [x] **Autocomplete de Fornecedor corrigido** - Adicionado `shouldFilter={false}` ao componente Command para desabilitar filtragem automática que escondia resultados ao digitar
+- [x] **Autocomplete de Categoria corrigido** - Adicionado `shouldFilter={false}` ao componente Command
+- [x] **Edição de despesas implementada** - Botão "Editar" na listagem (apenas admin, status ATIVA), carrega dados do backend, permite atualizar descrição/valor/parcelas
+- [x] **Cancelamento de despesas implementado** - Botão "Cancelar" na listagem (apenas admin, status ATIVA), altera status para CANCELADA
+- [x] **Filtros de listagem implementados** - Data inicial/final (padrão: dia atual), fornecedor (autocomplete), número de nota, valor mín/máx, botão "Limpar Filtros"
+- [x] **Backend completo** - Endpoints `update`, `getDetails`, `deleteExpenseInstallments` implementados
+
+### Compras - Filtros Implementados
+- [x] **Filtros de listagem implementados** - Data inicial/final (padrão: dia atual), fornecedor (autocomplete), número de nota, valor mín/máx, botão "Limpar Filtros"
+- [x] **UI consistente com Despesas** - Mesma estrutura visual e comportamento de filtros
+
+### Padronização Visual Completa
+- [x] **Filtros em azul forte** - Todos os botões de filtro (Agrupar por, Tipo de Comparação, Meses, Dias, Canais) usam bg-blue-600 quando selecionados para consistência visual
+
+### Comparação de Períodos - Análise de Vendas
+- [x] **Comparação por Valores** - Comparar faturamento entre dois períodos com variação absoluta e crescimento percentual
+- [x] **Comparação por Quantidade** - Toggle para alternar entre valores (R$) e quantidade (unidades)
+- [x] **Indicadores visuais** - 🔺 para crescimento, cores verde/vermelho para variação
+- [x] **Backend** - Endpoint `comparePeriods` com parâmetro `comparisonType` (value/quantity)
+
