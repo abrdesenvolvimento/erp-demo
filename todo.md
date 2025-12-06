@@ -40,7 +40,18 @@
 
 ## 🔵 EM DESENVOLVIMENTO
 
-(Nenhum item em desenvolvimento no momento)
+### Despesas - Melhorias
+- [x] **Corrigir autocomplete de Fornecedor** - Ao digitar no campo de fornecedor, não carrega resultados. Mesmo problema que havia em Compras.
+- [x] **Corrigir autocomplete de Categoria** - Ao digitar no campo de categoria, não carrega resultados.
+- [x] **Habilitar edição de despesas** - Adicionar botão de editar na listagem, igual em Compras.
+- [x] **Habilitar cancelamento de despesas** - Adicionar botão de cancelar na listagem, igual em Compras.
+- [ ] **Adicionar filtros na listagem** - Filtros de data (padrão: dia atual), fornecedor, número de nota e valor. Evitar sobrecarga de dados na tela.
+
+### Compras - Melhorias
+- [ ] **Adicionar filtros na listagem** - Filtros de data (padrão: dia atual), fornecedor, número de nota e valor. Evitar sobrecarga de dados na tela.
+
+### Análise de Vendas - Comparação entre Canais
+- [ ] **Comparar quantidade entre canais** - Permitir comparar quantidade vendida entre Balcão vs Delivery vs A Prazo para identificar desempenho por canal.
 
 ## 🔴 BUGS CRÍTICOS - PENDENTES (0 itens)
 

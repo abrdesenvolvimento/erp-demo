@@ -1478,6 +1478,30 @@ export async function cancelExpense(id: number) {
     ));
 }
 
+export async function deleteExpenseInstallments(expenseId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  // Deletar apenas parcelas pendentes
+  await db.delete(expenseInstallments)
+    .where(and(
+      eq(expenseInstallments.expenseId, expenseId),
+      eq(expenseInstallments.status, "PENDENTE")
+    ));
+}
+
+export async function getExpenseDetails(expenseId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  // Buscar parcelas da despesa
+  const installments = await db.select()
+    .from(expenseInstallments)
+    .where(eq(expenseInstallments.expenseId, expenseId));
+  
+  return installments;
+}
+
 // Parcelas de Despesas
 export async function getExpenseInstallments(expenseId: number) {
   const db = await getDb();

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { trpc } from "@/lib/trpc";
-import { Plus, Search, Check, ChevronLeft, Trash2 } from "lucide-react";
+import { Plus, Search, Check, ChevronLeft, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -30,6 +30,8 @@ const PAYMENT_METHODS = [
 export default function Despesas() {
   const { user } = useAuth();
   const [isCreating, setIsCreating] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingExpenseId, setEditingExpenseId] = useState<number | null>(null);
   
   // Form state
   const [supplierOpen, setSupplierOpen] = useState(false);
@@ -52,6 +54,10 @@ export default function Despesas() {
   const { data: expenses = [], refetch } = trpc.expenses.list.useQuery();
   const { data: suppliers = [] } = trpc.partners.list.useQuery({ partnerType: "SUPPLIER" });
   const { data: categories = [] } = trpc.expenses.categories.list.useQuery({ activeOnly: true });
+  const { data: expenseDetails = [] } = trpc.expenses.getDetails.useQuery(
+    { id: editingExpenseId! },
+    { enabled: editingExpenseId !== null }
+  );
   
   // Mutations
   const createMutation = trpc.expenses.create.useMutation({
@@ -63,6 +69,20 @@ export default function Despesas() {
     },
     onError: (error) => {
       toast.error(`Erro ao registrar despesa: ${error.message}`);
+    },
+  });
+  
+  const updateMutation = trpc.expenses.update.useMutation({
+    onSuccess: () => {
+      toast.success("Despesa atualizada com sucesso!");
+      refetch();
+      resetForm();
+      setIsCreating(false);
+      setIsEditing(false);
+      setEditingExpenseId(null);
+    },
+    onError: (error) => {
+      toast.error(`Erro ao atualizar despesa: ${error.message}`);
     },
   });
   
@@ -103,6 +123,28 @@ export default function Despesas() {
     }
   };
   
+  // Carregar dados ao editar
+  useEffect(() => {
+    if (isEditing && editingExpenseId && expenseDetails.length > 0) {
+      const expense = expenses.find(e => e.expense.id === editingExpenseId);
+      if (expense) {
+        setSupplierId(expense.expense.supplierId || undefined);
+        setDocType(expense.expense.docType as "NOTA_FISCAL" | "CUPOM");
+        setDocNumber(expense.expense.docNumber || "");
+        setCategoryId(expense.expense.categoryId);
+        setDescription(expense.expense.description);
+        setPaymentMethod(expense.expense.paymentMethod);
+        setNotes(expense.expense.notes || "");
+        
+        // Carregar parcelas
+        setDueDates(expenseDetails.map((inst: any) => ({
+          date: new Date(inst.dueDate).toISOString().split('T')[0],
+          amount: inst.amount
+        })));
+      }
+    }
+  }, [isEditing, editingExpenseId, expenseDetails, expenses]);
+  
   const updateDueDate = (index: number, field: 'date' | 'amount', value: string) => {
     const newDueDates = [...dueDates];
     newDueDates[index] = { ...newDueDates[index], [field]: value };
@@ -135,7 +177,7 @@ export default function Despesas() {
     // Calcular valor total somando as parcelas
     const totalAmount = dueDates.reduce((sum, d) => sum + parseFloat(d.amount), 0).toFixed(2);
     
-    createMutation.mutate({
+    const payload = {
       supplierId,
       docType,
       docNumber,
@@ -152,7 +194,13 @@ export default function Despesas() {
         };
       }),
       notes,
-    });
+    };
+    
+    if (isEditing && editingExpenseId) {
+      updateMutation.mutate({ id: editingExpenseId, ...payload });
+    } else {
+      createMutation.mutate(payload);
+    }
   };
   
   const selectedSupplier = suppliers.find(s => s.id === supplierId);
@@ -194,9 +242,9 @@ export default function Despesas() {
                     <ChevronLeft className="h-5 w-5" />
                   </Button>
                   <div>
-                    <h1 className="text-2xl font-bold">Nova Despesa Operacional</h1>
+                    <h1 className="text-2xl font-bold">{isEditing ? "Editar Despesa Operacional" : "Nova Despesa Operacional"}</h1>
                     <p className="text-sm text-muted-foreground">
-                      Registre uma nova despesa da empresa
+                      {isEditing ? "Edite os dados da despesa" : "Registre uma nova despesa da empresa"}
                     </p>
                   </div>
                 </div>
@@ -207,18 +255,22 @@ export default function Despesas() {
                       if (categoryId || description || amount) {
                         if (confirm("Deseja descartar as alterações?")) {
                           setIsCreating(false);
+                          setIsEditing(false);
+                          setEditingExpenseId(null);
                           resetForm();
                         }
                       } else {
                         setIsCreating(false);
+                        setIsEditing(false);
+                        setEditingExpenseId(null);
                         resetForm();
                       }
                     }}
                   >
                     Cancelar
                   </Button>
-                  <Button onClick={handleSubmit} disabled={createMutation.isPending}>
-                    {createMutation.isPending ? "Salvando..." : "Salvar Despesa"}
+                  <Button onClick={handleSubmit} disabled={createMutation.isPending || updateMutation.isPending}>
+                    {(createMutation.isPending || updateMutation.isPending) ? "Salvando..." : (isEditing ? "Atualizar Despesa" : "Salvar Despesa")}
                   </Button>
                 </div>
               </div>
@@ -245,7 +297,7 @@ export default function Despesas() {
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-[400px] p-0" align="start">
-                      <Command>
+                      <Command shouldFilter={false}>
                         <CommandInput 
                           placeholder="Buscar fornecedor..." 
                           value={supplierSearch}
@@ -330,7 +382,7 @@ export default function Despesas() {
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-[400px] p-0" align="start">
-                      <Command>
+                      <Command shouldFilter={false}>
                         <CommandInput 
                           placeholder="Buscar categoria..." 
                           value={categorySearch}
@@ -556,19 +608,34 @@ export default function Despesas() {
                         <div className="text-xl font-bold">
                           R$ {parseFloat(item.expense.amount).toFixed(2)}
                         </div>
-                        {item.expense.status === "ATIVA" && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="mt-2"
-                            onClick={() => {
-                              if (confirm("Deseja cancelar esta despesa?")) {
-                                cancelMutation.mutate({ id: item.expense.id });
-                              }
-                            }}
-                          >
-                            Cancelar
-                          </Button>
+                        {item.expense.status === "ATIVA" && user?.role === "admin" && (
+                          <div className="flex gap-2 mt-2 justify-end">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setEditingExpenseId(item.expense.id);
+                                setIsEditing(true);
+                                setIsCreating(true);
+                              }}
+                            >
+                              Editar
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="text-destructive"
+                              onClick={() => {
+                                if (confirm("Deseja cancelar esta despesa?")) {
+                                  cancelMutation.mutate({ id: item.expense.id });
+                                }
+                              }}
+                              disabled={cancelMutation.isPending}
+                            >
+                              <X className="h-3 w-3 mr-1" />
+                              Cancelar
+                            </Button>
+                          </div>
                         )}
                       </div>
                     </div>

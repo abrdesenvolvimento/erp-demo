@@ -952,6 +952,55 @@ export const appRouter = router({
         return { success: true };
       }),
     
+    update: adminProcedure
+      .input(z.object({
+        id: z.number(),
+        supplierId: z.number().optional(),
+        docType: z.enum(["NOTA_FISCAL", "CUPOM"]),
+        docNumber: z.string().optional(),
+        categoryId: z.number(),
+        description: z.string().min(3),
+        amount: z.string(),
+        paymentMethod: z.string(),
+        dueDates: z.array(z.object({
+          date: z.date(),
+          amount: z.string()
+        })).min(1),
+        notes: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        await db.updateExpense(input.id, {
+          supplierId: input.supplierId,
+          docType: input.docType,
+          docNumber: input.docNumber,
+          categoryId: input.categoryId,
+          description: input.description,
+          amount: input.amount,
+          paymentMethod: input.paymentMethod,
+          notes: input.notes,
+        });
+        
+        // Atualizar parcelas: deletar antigas e criar novas
+        await db.deleteExpenseInstallments(input.id);
+        for (let i = 0; i < input.dueDates.length; i++) {
+          await db.createExpenseInstallment({
+            expenseId: input.id,
+            installmentNumber: i + 1,
+            amount: input.dueDates[i].amount,
+            dueDate: input.dueDates[i].date,
+            status: "PENDENTE",
+          });
+        }
+        
+        return { success: true };
+      }),
+    
+    getDetails: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .query(async ({ input }) => {
+        return await db.getExpenseDetails(input.id);
+      }),
+    
     // Parcelas
     installments: router({
       pending: protectedProcedure
