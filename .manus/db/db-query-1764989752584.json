@@ -1,0 +1,37 @@
+{
+  "query": "SELECT \n  s.id, \n  DATE(s.saleDate) as saleDate,\n  s.status,\n  si.productId,\n  p.name as productName,\n  si.quantity,\n  si.totalPrice\nFROM sales s\nINNER JOIN saleItems si ON s.id = si.saleId\nINNER JOIN products p ON si.productId = p.id\nWHERE s.id IN (13620026, 13620024, 13620015)\n  AND p.name LIKE '%Baly%Maça%Verde%'\nORDER BY s.saleDate, s.id;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  s.id, \n  DATE(s.saleDate) as saleDate,\n  s.status,\n  si.productId,\n  p.name as productName,\n  si.quantity,\n  si.totalPrice\nFROM sales s\nINNER JOIN saleItems si ON s.id = si.saleId\nINNER JOIN products p ON si.productId = p.id\nWHERE s.id IN (13620026, 13620024, 13620015)\n  AND p.name LIKE '%Baly%Maça%Verde%'\nORDER BY s.saleDate, s.id;",
+  "rows": [
+    {
+      "id": "13620015",
+      "saleDate": "2025-12-06",
+      "status": "ACTIVE",
+      "productId": "660012",
+      "productName": "Baly Maça Verde 2l",
+      "quantity": "1",
+      "totalPrice": "14.39"
+    },
+    {
+      "id": "13620024",
+      "saleDate": "2025-12-06",
+      "status": "ACTIVE",
+      "productId": "660012",
+      "productName": "Baly Maça Verde 2l",
+      "quantity": "1",
+      "totalPrice": "14.39"
+    },
+    {
+      "id": "13620026",
+      "saleDate": "2025-12-06",
+      "status": "ACTIVE",
+      "productId": "660012",
+      "productName": "Baly Maça Verde 2l",
+      "quantity": "1",
+      "totalPrice": "14.39"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tsaleDate\tstatus\tproductId\tproductName\tquantity\ttotalPrice\n13620015\t2025-12-06\tACTIVE\t660012\tBaly Maça Verde 2l\t1\t14.39\n13620024\t2025-12-06\tACTIVE\t660012\tBaly Maça Verde 2l\t1\t14.39\n13620026\t2025-12-06\tACTIVE\t660012\tBaly Maça Verde 2l\t1\t14.39\n",
+  "stderr": "",
+  "execution_time_ms": 57
+}

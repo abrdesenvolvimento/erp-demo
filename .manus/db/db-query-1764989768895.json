@@ -1,0 +1,24 @@
+{
+  "query": "SELECT \n  p.id as productId,\n  p.name as productName,\n  DATE(s.saleDate) as saleDate,\n  SUM(si.quantity) as quantity,\n  SUM(si.totalPrice) as revenue\nFROM saleItems si\nINNER JOIN sales s ON si.saleId = s.id\nINNER JOIN products p ON si.productId = p.id\nWHERE s.status != 'CANCELLED' \n  AND DATE(s.saleDate) >= '2025-12-01' \n  AND DATE(s.saleDate) <= '2025-12-31'\n  AND p.name LIKE '%Baly%Maça%Verde%'\nGROUP BY p.id, p.name, DATE(s.saleDate)\nORDER BY p.name, DATE(s.saleDate);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  p.id as productId,\n  p.name as productName,\n  DATE(s.saleDate) as saleDate,\n  SUM(si.quantity) as quantity,\n  SUM(si.totalPrice) as revenue\nFROM saleItems si\nINNER JOIN sales s ON si.saleId = s.id\nINNER JOIN products p ON si.productId = p.id\nWHERE s.status != 'CANCELLED' \n  AND DATE(s.saleDate) >= '2025-12-01' \n  AND DATE(s.saleDate) <= '2025-12-31'\n  AND p.name LIKE '%Baly%Maça%Verde%'\nGROUP BY p.id, p.name, DATE(s.saleDate)\nORDER BY p.name, DATE(s.saleDate);",
+  "rows": [
+    {
+      "productId": "660012",
+      "productName": "Baly Maça Verde 2l",
+      "saleDate": "2025-12-02",
+      "quantity": "1",
+      "revenue": "14.39"
+    },
+    {
+      "productId": "660012",
+      "productName": "Baly Maça Verde 2l",
+      "saleDate": "2025-12-06",
+      "quantity": "3",
+      "revenue": "43.17"
+    }
+  ],
+  "messages": [],
+  "stdout": "productId\tproductName\tsaleDate\tquantity\trevenue\n660012\tBaly Maça Verde 2l\t2025-12-02\t1\t14.39\n660012\tBaly Maça Verde 2l\t2025-12-06\t3\t43.17\n",
+  "stderr": "",
+  "execution_time_ms": 60
+}

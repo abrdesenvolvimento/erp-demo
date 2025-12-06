@@ -60,7 +60,7 @@ export default function AnáliseVendas() {
   const isAdmin = user?.role === "admin";
 
   // Novos filtros de período
-  const [selectedMonths, setSelectedMonths] = useState<number[]>([11]); // Novembro como padrão
+  const [selectedMonths, setSelectedMonths] = useState<number[]>([12]); // Dezembro como padrão
   const [selectedYears] = useState<number[]>([2025]); // 2025 fixo até migração de dados históricos
   const [selectedDays, setSelectedDays] = useState<number[]>(Array.from({ length: 31 }, (_, i) => i + 1)); // Todos os dias selecionados por padrão
   const [filtersExpanded, setFiltersExpanded] = useState(true); // Controle de expansão dos filtros
@@ -78,17 +78,17 @@ export default function AnáliseVendas() {
 
   // Estados para comparação de períodos
   const [comparisonPeriod1, setComparisonPeriod1] = useState<{ from: Date; to: Date }>(() => {
-    // Período 1: Novembro 2025 (padrão)
+    // Período 1: Dezembro 2025 (padrão)
     return {
-      from: new Date(2025, 10, 1), // 1º de novembro
-      to: new Date(2025, 10, 30), // 30 de novembro
+      from: new Date(2025, 11, 1), // 1º de dezembro
+      to: new Date(2025, 11, 31), // 31 de dezembro
     };
   });
   const [comparisonPeriod2, setComparisonPeriod2] = useState<{ from: Date; to: Date }>(() => {
-    // Período 2: Outubro 2025 (padrão)
+    // Período 2: Novembro 2025 (padrão)
     return {
-      from: new Date(2025, 9, 1), // 1º de outubro
-      to: new Date(2025, 9, 31), // 31 de outubro
+      from: new Date(2025, 10, 1), // 1º de novembro
+      to: new Date(2025, 10, 30), // 30 de novembro
     };
   });
   const [enableComparison, setEnableComparison] = useState(false);
@@ -102,8 +102,8 @@ export default function AnáliseVendas() {
   // Calcular dateRange baseado nos filtros de mês/ano/dia
   const dateRange = useMemo(() => {
     if (selectedMonths.length === 0 || selectedYears.length === 0) {
-      // Fallback: novembro 2025
-      return { from: new Date(2025, 10, 1), to: new Date(2025, 10, 30) };
+      // Fallback: dezembro 2025
+      return { from: new Date(2025, 11, 1), to: new Date(2025, 11, 31) };
     }
 
     // Gerar todas as combinações de ano/mês/dia selecionadas
@@ -117,7 +117,7 @@ export default function AnáliseVendas() {
     }
 
     if (dates.length === 0) {
-      return { from: new Date(2025, 10, 1), to: new Date(2025, 10, 30) };
+      return { from: new Date(2025, 11, 1), to: new Date(2025, 11, 31) };
     }
 
     // Encontrar menor e maior data

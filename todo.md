@@ -1470,3 +1470,8 @@
 
 - [x] **Divergência de valores Pendente Recebimento** - CORRIGIDO! Dashboard agora usa sistema de conta corrente (vendas A_PRAZO + débitos - pagamentos) ao invés do sistema antigo de receivables. Valores agora consistentes: Dashboard R$ 994,99 vs Contas a Receber R$ 983,99 (diferença de R$ 11 pode ser débito manual).
 
+
+## 🔴 BUG CRÍTICO - Análise de Vendas (05/12/2025 - 21h)
+
+- [x] **Análise de Vendas não mostra todas as vendas do dia** - CORRIGIDO! O problema era que o mês padrão estava em Novembro (11) ao invés de Dezembro (12). Quando o usuário selecionava dias 1-5, estava filtrando Novembro 1-5 ao invés de Dezembro 1-5. Alterado mês padrão para Dezembro e períodos de comparação atualizados.
+
