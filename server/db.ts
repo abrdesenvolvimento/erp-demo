@@ -1,4 +1,4 @@
-import { eq, desc, or, like, and, sql, gte, lte, ne } from "drizzle-orm";
+import { eq, desc, or, like, and, sql, gte, lte, lt, ne, SQL } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import { 
   InsertUser, users,
@@ -830,22 +830,59 @@ export async function createPurchaseOrder(data: InsertPurchaseOrder) {
   }
 }
 
-export async function getPurchaseOrders(filters?: { status?: string; supplierId?: number }) {
+export async function getPurchaseOrders(filters?: { status?: string; supplierId?: number; startDate?: Date; endDate?: Date; docNumber?: string; minValue?: number; maxValue?: number }) {
   const db = await getDb();
   if (!db) return [];
+  
+  const conditions: SQL[] = [];
+  
+  // Filtro de fornecedor
+  if (filters?.supplierId) {
+    conditions.push(eq(purchaseOrders.supplierId, filters.supplierId));
+  }
+  
+  // Filtro de número de documento
+  if (filters?.docNumber) {
+    conditions.push(like(purchaseOrders.docNumber, `%${filters.docNumber}%`));
+  }
+  
+  // Filtro de data (createdAt)
+  if (filters?.startDate) {
+    conditions.push(gte(purchaseOrders.createdAt, filters.startDate));
+  }
+  if (filters?.endDate) {
+    // Adiciona 1 dia para incluir o dia final completo
+    const endOfDay = new Date(filters.endDate);
+    endOfDay.setDate(endOfDay.getDate() + 1);
+    conditions.push(lt(purchaseOrders.createdAt, endOfDay));
+  }
   
   let query = db.select({
     purchaseOrder: purchaseOrders,
     supplier: partners
   })
   .from(purchaseOrders)
-  .leftJoin(partners, eq(purchaseOrders.supplierId, partners.id))
-  .orderBy(desc(purchaseOrders.createdAt));
+  .leftJoin(partners, eq(purchaseOrders.supplierId, partners.id));
   
-  // Aplicar filtros se fornecidos
-  // Por simplicidade, retornando todos por enquanto
+  if (conditions.length > 0) {
+    query = query.where(and(...conditions)) as any;
+  }
   
-  return await query;
+  query = query.orderBy(desc(purchaseOrders.createdAt)) as any;
+  
+  const results = await query;
+  
+  // Filtro de valor (aplicado após query pois precisa calcular total)
+  if (filters?.minValue !== undefined || filters?.maxValue !== undefined) {
+    return results.filter(r => {
+      const total = parseFloat(r.purchaseOrder.totalAmount || '0');
+      if (filters.minValue !== undefined && total < filters.minValue) return false;
+      if (filters.maxValue !== undefined && total > filters.maxValue) return false;
+      return true;
+    });
+  }
+  
+  return results;
 }
 
 export async function getPurchaseOrderById(id: number) {
@@ -1377,6 +1414,9 @@ export async function getExpenses(filters?: {
   supplierId?: number;
   startDate?: Date;
   endDate?: Date;
+  docNumber?: string;
+  minValue?: number;
+  maxValue?: number;
 }) {
   const db = await getDb();
   if (!db) return [];
@@ -1404,13 +1444,39 @@ export async function getExpenses(filters?: {
     conditions.push(eq(expenses.supplierId, filters.supplierId));
   }
   
-  // Filtros de data removidos - agora controlado pelas parcelas
+  // Filtro de número de documento
+  if (filters?.docNumber) {
+    conditions.push(like(expenses.docNumber, `%${filters.docNumber}%`));
+  }
+  
+  // Filtro de data (createdAt)
+  if (filters?.startDate) {
+    conditions.push(gte(expenses.createdAt, filters.startDate));
+  }
+  if (filters?.endDate) {
+    // Adiciona 1 dia para incluir o dia final completo
+    const endOfDay = new Date(filters.endDate);
+    endOfDay.setDate(endOfDay.getDate() + 1);
+    conditions.push(lt(expenses.createdAt, endOfDay));
+  }
   
   if (conditions.length > 0) {
     query = query.where(and(...conditions)) as any;
   }
   
-  return await query.orderBy(desc(expenses.createdAt));
+  const results = await query.orderBy(desc(expenses.createdAt));
+  
+  // Filtro de valor (aplicado após query pois precisa calcular total)
+  if (filters?.minValue !== undefined || filters?.maxValue !== undefined) {
+    return results.filter(r => {
+      const total = parseFloat(r.expense.totalAmount || '0');
+      if (filters.minValue !== undefined && total < filters.minValue) return false;
+      if (filters.maxValue !== undefined && total > filters.maxValue) return false;
+      return true;
+    });
+  }
+  
+  return results;
 }
 
 export async function getExpenseById(id: number) {
@@ -2107,18 +2173,38 @@ export async function getCustomersWithPendingReceivables() {
   return results;
 }
 
-// Obter total pendente de todos os clientes
+// Obter total pendente de todos os clientes (usando sistema de conta corrente)
 export async function getTotalPendingReceivables() {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
-  const result = await db.select({
-    total: sql<string>`COALESCE(SUM(GREATEST(0, CAST(${receivables.totalAmount} AS DECIMAL(10,2)) - CAST(${receivables.receivedAmount} AS DECIMAL(10,2)))), 0)`
+  // Soma total de vendas A_PRAZO de todos os clientes
+  const [salesResult] = await db.select({
+    total: sql<string>`COALESCE(SUM(CAST(${sales.finalAmount} AS DECIMAL(10,2))), 0)`
   })
-  .from(receivables)
-  .where(sql`${receivables.status} IN ('PENDENTE', 'PARCIAL', 'VENCIDO')`);
+  .from(sales)
+  .where(and(
+    eq(sales.saleType, "A_PRAZO"),
+    ne(sales.status, "CANCELLED")
+  ));
+
+  // Soma total de débitos manuais de todos os clientes
+  const [debitsResult] = await db.select({
+    total: sql<string>`COALESCE(SUM(CAST(${customerDebits.debitAmount} AS DECIMAL(10,2))), 0)`
+  })
+  .from(customerDebits);
+
+  // Soma total de pagamentos de todos os clientes
+  const [paymentsResult] = await db.select({
+    total: sql<string>`COALESCE(SUM(CAST(${customerPayments.paidAmount} AS DECIMAL(10,2))), 0)`
+  })
+  .from(customerPayments);
+
+  const totalSales = parseFloat(salesResult.total || "0");
+  const totalDebits = parseFloat(debitsResult.total || "0");
+  const totalPayments = parseFloat(paymentsResult.total || "0");
   
-  return parseFloat(result[0]?.total || "0");
+  return totalSales + totalDebits - totalPayments;
 }
 
 // Obter detalhamento completo de um cliente

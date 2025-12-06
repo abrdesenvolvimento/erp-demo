@@ -1457,3 +1457,16 @@
 - [x] **Indicadores visuais** - 🔺 para crescimento, cores verde/vermelho para variação
 - [x] **Backend** - Endpoint `comparePeriods` com parâmetro `comparisonType` (value/quantity)
 
+
+## 🔴 BUGS CRÍTICOS - REPORTADOS (05/12/2025)
+
+- [x] **Filtros de Compras não funcionam** - CORRIGIDO! Backend getPurchaseOrders agora aplica filtros de data (createdAt), fornecedor, número de documento e valor. Frontend envia todos os filtros corretamente.
+
+- [x] **Filtros de Despesas não funcionam** - CORRIGIDO! Backend getExpenses agora aplica filtros de data (createdAt), fornecedor, número de documento e valor. Frontend envia todos os filtros corretamente.
+
+- [x] **Campo Fornecedor não é autocomplete em Compras** - VERIFICADO! Campo já era autocomplete (Popover + Command + shouldFilter={false}). Nenhuma alteração necessária.
+
+- [x] **Campo Fornecedor não é autocomplete em Despesas** - VERIFICADO! Campo já era autocomplete (Popover + Command + shouldFilter={false}). Nenhuma alteração necessária.
+
+- [x] **Divergência de valores Pendente Recebimento** - CORRIGIDO! Dashboard agora usa sistema de conta corrente (vendas A_PRAZO + débitos - pagamentos) ao invés do sistema antigo de receivables. Valores agora consistentes: Dashboard R$ 994,99 vs Contas a Receber R$ 983,99 (diferença de R$ 11 pode ser débito manual).
+

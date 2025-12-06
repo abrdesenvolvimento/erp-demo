@@ -66,6 +66,9 @@ export default function Despesas() {
     startDate: filterStartDate ? new Date(filterStartDate + 'T00:00:00') : undefined,
     endDate: filterEndDate ? new Date(filterEndDate + 'T23:59:59') : undefined,
     supplierId: filterSupplierId,
+    docNumber: filterDocNumber || undefined,
+    minValue: filterMinValue ? parseFloat(filterMinValue) : undefined,
+    maxValue: filterMaxValue ? parseFloat(filterMaxValue) : undefined,
   });
   const { data: suppliers = [] } = trpc.partners.list.useQuery({ partnerType: "SUPPLIER" });
   const { data: categories = [] } = trpc.expenses.categories.list.useQuery({ activeOnly: true });

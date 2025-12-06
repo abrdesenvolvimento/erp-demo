@@ -687,6 +687,11 @@ export const appRouter = router({
       .input(z.object({
         status: z.string().optional(),
         supplierId: z.number().optional(),
+        startDate: z.date().optional(),
+        endDate: z.date().optional(),
+        docNumber: z.string().optional(),
+        minValue: z.number().optional(),
+        maxValue: z.number().optional(),
       }).optional())
       .query(async ({ input }) => {
         return await db.getPurchaseOrders(input);
@@ -891,6 +896,9 @@ export const appRouter = router({
         supplierId: z.number().optional(),
         startDate: z.date().optional(),
         endDate: z.date().optional(),
+        docNumber: z.string().optional(),
+        minValue: z.number().optional(),
+        maxValue: z.number().optional(),
       }).optional())
       .query(async ({ input }) => {
         return await db.getExpenses(input);

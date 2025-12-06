@@ -96,6 +96,9 @@ export default function Compras() {
     startDate: filterStartDate ? parseDateInBrazil(filterStartDate) : undefined,
     endDate: filterEndDate ? parseDateInBrazil(filterEndDate) : undefined,
     supplierId: filterSupplierId,
+    docNumber: filterDocNumber || undefined,
+    minValue: filterMinValue ? parseFloat(filterMinValue) : undefined,
+    maxValue: filterMaxValue ? parseFloat(filterMaxValue) : undefined,
   });
   const { data: suppliers = [] } = trpc.partners.list.useQuery({ partnerType: "SUPPLIER" });
   const { data: searchResults = [] } = trpc.purchases.searchProducts.useQuery(
