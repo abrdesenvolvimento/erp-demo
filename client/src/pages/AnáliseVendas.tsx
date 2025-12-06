@@ -296,6 +296,7 @@ export default function AnáliseVendas() {
               <Label>Agrupar por</Label>
               <div className="flex gap-2 mt-2">
                 <Button
+                  className={groupBy === "product" ? "bg-blue-600 text-white hover:bg-blue-700" : ""}
                   variant={groupBy === "product" ? "default" : "outline"}
                   size="sm"
                   onClick={() => setGroupBy("product")}
@@ -303,6 +304,7 @@ export default function AnáliseVendas() {
                   Produto
                 </Button>
                 <Button
+                  className={groupBy === "day" ? "bg-blue-600 text-white hover:bg-blue-700" : ""}
                   variant={groupBy === "day" ? "default" : "outline"}
                   size="sm"
                   onClick={() => setGroupBy("day")}
@@ -310,6 +312,7 @@ export default function AnáliseVendas() {
                   Dia
                 </Button>
                 <Button
+                  className={groupBy === "week" ? "bg-blue-600 text-white hover:bg-blue-700" : ""}
                   variant={groupBy === "week" ? "default" : "outline"}
                   size="sm"
                   onClick={() => setGroupBy("week")}
@@ -317,6 +320,7 @@ export default function AnáliseVendas() {
                   Semana
                 </Button>
                 <Button
+                  className={groupBy === "month" ? "bg-blue-600 text-white hover:bg-blue-700" : ""}
                   variant={groupBy === "month" ? "default" : "outline"}
                   size="sm"
                   onClick={() => setGroupBy("month")}
@@ -1239,6 +1243,7 @@ export default function AnáliseVendas() {
                 {/* Toggle Tipo de Comparação */}
                 <div className="flex justify-center gap-2 mb-4">
                   <Button
+                    className={comparisonType === "value" ? "bg-blue-600 text-white hover:bg-blue-700" : ""}
                     variant={comparisonType === "value" ? "default" : "outline"}
                     onClick={() => setComparisonType("value")}
                     size="sm"
@@ -1246,6 +1251,7 @@ export default function AnáliseVendas() {
                     Valores (R$)
                   </Button>
                   <Button
+                    className={comparisonType === "quantity" ? "bg-blue-600 text-white hover:bg-blue-700" : ""}
                     variant={comparisonType === "quantity" ? "default" : "outline"}
                     onClick={() => setComparisonType("quantity")}
                     size="sm"

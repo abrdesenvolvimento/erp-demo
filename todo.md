@@ -1419,3 +1419,6 @@
 - [x] **Contraste dos filtros melhorado** - Botões selecionados (meses, dias, canais) agora usam azul forte (bg-blue-600) com texto branco ao invés do azul claro padrão, criando contraste excelente contra o fundo cinza claro.
 - [x] **Filtro de múltiplos canais corrigido** - Backend alterado para aceitar `channels: string[]` ao invés de `channel: string`. Queries SQL modificadas para usar `IN (...)` ao invés de `=`. Frontend corrigido para enviar `channels: selectedChannels`. Agora selecionar Balcão + Delivery soma corretamente os dados de ambos os canais.
 - [x] **Z-index do menu lateral corrigido** - Adicionado `z-50` ao container do Sidebar no DashboardLayout. Menu lateral sempre fica acima do conteúdo, mesmo com scroll horizontal na tabela de relatórios.
+
+### Padronização Visual de Filtros (05/12/2025)
+- [x] **Padronização visual de todos os botões de filtro** - Aplicado bg-blue-600 (azul forte) com texto branco em todos os botões quando selecionados para manter consistência visual em toda a interface. Aplicado em: (1) Botões de Agrupar por (Produto, Dia, Semana, Mês), (2) Botões de tipo de comparação (Valores/Quantidade). Agora todos os filtros seguem o mesmo padrão visual, facilitando identificação de itens selecionados.
