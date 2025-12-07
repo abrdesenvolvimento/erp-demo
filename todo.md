@@ -1475,3 +1475,15 @@
 
 - [x] **Análise de Vendas não mostra todas as vendas do dia** - RESOLVIDO! O problema era TIMEZONE. O banco armazena datas em UTC, mas a query usava DATE(saleDate) sem conversão. Vendas feitas às 23:48 de um dia eram agrupadas no dia seguinte. Solução: usar CONVERT_TZ(s.saleDate, '+00:00', '-03:00') para converter UTC para horário do Brasil (GMT-3) antes de aplicar DATE(). Query agora retorna datas corretas separadas por dia.
 
+
+## 🔴 TAREFA CRÍTICA - Levantamento de Timezone (06/12/2025)
+
+- [x] **Identificar todas as queries com DATE() no backend** - Encontradas 16 ocorrências de DATE() em 9 funções diferentes.
+
+- [x] **Corrigir queries de Análise de Vendas** - Aplicado CONVERT_TZ em 8 funções: getSalesByValue, getSalesByCategory (+ subquery), getSalesBySubcategory, getSalesByChannel, getSalesByDayOfWeek, getSalesByWeek, getSalesComparison, getSalesByProductAndDate.
+
+- [x] **Corrigir queries de Dashboard** - Corrigida query de receivedToday que comparava DATE(paidDate) sem conversão de timezone.
+
+- [x] **Corrigir filtros de listagem** - Verificado que getSales, getPurchaseOrders e getExpenses usam comparação de timestamp completo (gte/lt), não precisam correção.
+
+- [x] **Padronizar timezone em todo o sistema** - Todas as queries que usam DATE() agora aplicam CONVERT_TZ(campo, '+00:00', '-03:00') para converter UTC para GMT-3 (horário do Brasil).

@@ -1,0 +1,17 @@
+{
+  "query": "\nSELECT \n  p.id as productId,\n  p.name as productName,\n  c.name as categoryName,\n  SUM(si.quantity) as totalQuantity,\n  SUM(si.totalPrice) as totalRevenue\nFROM saleItems si\nINNER JOIN sales s ON si.saleId = s.id\nINNER JOIN products p ON si.productId = p.id\nINNER JOIN categories c ON p.categoryId = c.id\nWHERE s.status != 'CANCELLED' \n  AND DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) >= '2025-12-06' \n  AND DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) <= '2025-12-07'\n  AND p.id = 2490006\nGROUP BY p.id, p.name, c.name\nORDER BY totalRevenue DESC\nLIMIT 5\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute \nSELECT \n  p.id as productId,\n  p.name as productName,\n  c.name as categoryName,\n  SUM(si.quantity) as totalQuantity,\n  SUM(si.totalPrice) as totalRevenue\nFROM saleItems si\nINNER JOIN sales s ON si.saleId = s.id\nINNER JOIN products p ON si.productId = p.id\nINNER JOIN categories c ON p.categoryId = c.id\nWHERE s.status != 'CANCELLED' \n  AND DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) >= '2025-12-06' \n  AND DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) <= '2025-12-07'\n  AND p.id = 2490006\nGROUP BY p.id, p.name, c.name\nORDER BY totalRevenue DESC\nLIMIT 5\n",
+  "rows": [
+    {
+      "productId": "2490006",
+      "productName": "Funchal 2Kg",
+      "categoryName": "Carvão",
+      "totalQuantity": "2",
+      "totalRevenue": "33.80"
+    }
+  ],
+  "messages": [],
+  "stdout": "productId\tproductName\tcategoryName\ttotalQuantity\ttotalRevenue\n2490006\tFunchal 2Kg\tCarvão\t2\t33.80\n",
+  "stderr": "",
+  "execution_time_ms": 1124
+}

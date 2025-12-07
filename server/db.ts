@@ -2139,7 +2139,7 @@ export async function getReceivablesSummary() {
   .from(receivableInstallments)
   .where(and(
     eq(receivableInstallments.status, "PAGO"),
-    sql`DATE(${receivableInstallments.paidDate}) = DATE(${today})`
+    sql`DATE(CONVERT_TZ(${receivableInstallments.paidDate}, '+00:00', '-03:00')) = DATE(CONVERT_TZ(${today}, '+00:00', '-03:00'))`
   ));
   
   return {
@@ -3342,7 +3342,8 @@ export async function getSalesAnalysisByValue(
   const endStr = endDate.toISOString().split('T')[0];
 
   // Construir condições WHERE dinâmicas
-  let whereConditions = `s.status != 'CANCELLED' AND DATE(s.saleDate) >= '${startStr}' AND DATE(s.saleDate) <= '${endStr}'`;
+  // Usar CONVERT_TZ para converter UTC para horário local do Brasil (GMT-3)
+  let whereConditions = `s.status != 'CANCELLED' AND DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) >= '${startStr}' AND DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) <= '${endStr}'`;
   
   if (filters?.productIds && filters.productIds.length > 0) {
     whereConditions += ` AND p.id IN (${filters.productIds.join(',')})`;
@@ -3411,8 +3412,9 @@ export async function getSalesAnalysisByQuantity(
   const endStr = endDate.toISOString().split('T')[0];
 
   // Construir condições WHERE dinâmicas
-  let whereConditions = `s.status != 'CANCELLED' AND DATE(s.saleDate) >= '${startStr}' AND DATE(s.saleDate) <= '${endStr}'`;
-  let subqueryWhere = `s2.status != 'CANCELLED' AND DATE(s2.saleDate) >= '${startStr}' AND DATE(s2.saleDate) <= '${endStr}'`;
+  // Usar CONVERT_TZ para converter UTC para horário local do Brasil (GMT-3)
+  let whereConditions = `s.status != 'CANCELLED' AND DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) >= '${startStr}' AND DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) <= '${endStr}'`;
+  let subqueryWhere = `s2.status != 'CANCELLED' AND DATE(CONVERT_TZ(s2.saleDate, '+00:00', '-03:00')) >= '${startStr}' AND DATE(CONVERT_TZ(s2.saleDate, '+00:00', '-03:00')) <= '${endStr}'`;
   
   if (filters?.productIds && filters.productIds.length > 0) {
     whereConditions += ` AND p.id IN (${filters.productIds.join(',')})`;
@@ -3488,7 +3490,8 @@ export async function getSalesAnalysisByCategoryValue(
   const endStr = endDate.toISOString().split('T')[0];
 
   // Construir condições WHERE dinâmicas
-  let whereConditions = `s.status != 'CANCELLED' AND DATE(s.saleDate) >= '${startStr}' AND DATE(s.saleDate) <= '${endStr}'`;
+  // Usar CONVERT_TZ para converter UTC para horário local do Brasil (GMT-3)
+  let whereConditions = `s.status != 'CANCELLED' AND DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) >= '${startStr}' AND DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) <= '${endStr}'`;
   
   if (filters?.productIds && filters.productIds.length > 0) {
     whereConditions += ` AND p.id IN (${filters.productIds.join(',')})`;
@@ -3555,7 +3558,8 @@ export async function getSalesAnalysisByDay(
   const endStr = endDate.toISOString().split('T')[0];
 
   // Construir condições WHERE dinâmicas
-  let whereConditions = `s.status != 'CANCELLED' AND DATE(s.saleDate) >= '${startStr}' AND DATE(s.saleDate) <= '${endStr}'`;
+  // Usar CONVERT_TZ para converter UTC para horário local do Brasil (GMT-3)
+  let whereConditions = `s.status != 'CANCELLED' AND DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) >= '${startStr}' AND DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) <= '${endStr}'`;
   
   if (filters?.productIds && filters.productIds.length > 0) {
     whereConditions += ` AND p.id IN (${filters.productIds.join(',')})`;
@@ -3573,8 +3577,8 @@ export async function getSalesAnalysisByDay(
 
   const result = await db.execute(sql.raw(`
     SELECT 
-      DATE(s.saleDate) as saleDate,
-      DAYOFWEEK(s.saleDate) as dayOfWeek,
+      DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) as saleDate,
+      DAYOFWEEK(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) as dayOfWeek,
       SUM(si.quantity) as totalQuantity,
       SUM(si.totalPrice) as totalRevenue,
       SUM(si.quantity * p.avgCost) as totalCost,
@@ -3584,7 +3588,7 @@ export async function getSalesAnalysisByDay(
     INNER JOIN sales s ON si.saleId = s.id
     INNER JOIN products p ON si.productId = p.id
     WHERE ${whereConditions}
-    GROUP BY DATE(s.saleDate), DAYOFWEEK(s.saleDate)
+    GROUP BY DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')), DAYOFWEEK(CONVERT_TZ(s.saleDate, '+00:00', '-03:00'))
     ORDER BY saleDate ASC
   `));
 
@@ -3621,7 +3625,8 @@ export async function getSalesAnalysisByWeek(
   const endStr = endDate.toISOString().split('T')[0];
 
   // Construir condições WHERE dinâmicas
-  let whereConditions = `s.status != 'CANCELLED' AND DATE(s.saleDate) >= '${startStr}' AND DATE(s.saleDate) <= '${endStr}'`;
+  // Usar CONVERT_TZ para converter UTC para horário local do Brasil (GMT-3)
+  let whereConditions = `s.status != 'CANCELLED' AND DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) >= '${startStr}' AND DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) <= '${endStr}'`;
   
   if (filters?.productIds && filters.productIds.length > 0) {
     whereConditions += ` AND p.id IN (${filters.productIds.join(',')})`;
@@ -3639,9 +3644,9 @@ export async function getSalesAnalysisByWeek(
 
   const result = await db.execute(sql.raw(`
     SELECT 
-      YEARWEEK(s.saleDate, 1) as yearWeek,
-      MIN(DATE(s.saleDate)) as weekStart,
-      MAX(DATE(s.saleDate)) as weekEnd,
+      YEARWEEK(CONVERT_TZ(s.saleDate, '+00:00', '-03:00'), 1) as yearWeek,
+      MIN(DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00'))) as weekStart,
+      MAX(DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00'))) as weekEnd,
       SUM(si.quantity) as totalQuantity,
       SUM(si.totalPrice) as totalRevenue,
       SUM(si.quantity * p.avgCost) as totalCost,
@@ -3651,7 +3656,7 @@ export async function getSalesAnalysisByWeek(
     INNER JOIN sales s ON si.saleId = s.id
     INNER JOIN products p ON si.productId = p.id
     WHERE ${whereConditions}
-    GROUP BY YEARWEEK(s.saleDate, 1)
+    GROUP BY YEARWEEK(CONVERT_TZ(s.saleDate, '+00:00', '-03:00'), 1)
     ORDER BY yearWeek ASC
   `));
 
@@ -3689,7 +3694,8 @@ export async function getSalesAnalysisByMonth(
   const endStr = endDate.toISOString().split('T')[0];
 
   // Construir condições WHERE dinâmicas
-  let whereConditions = `s.status != 'CANCELLED' AND DATE(s.saleDate) >= '${startStr}' AND DATE(s.saleDate) <= '${endStr}'`;
+  // Usar CONVERT_TZ para converter UTC para horário local do Brasil (GMT-3)
+  let whereConditions = `s.status != 'CANCELLED' AND DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) >= '${startStr}' AND DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) <= '${endStr}'`;
   
   if (filters?.productIds && filters.productIds.length > 0) {
     whereConditions += ` AND p.id IN (${filters.productIds.join(',')})`;
