@@ -1,0 +1,8 @@
+{
+  "query": "SELECT \n  p.id as productId,\n  p.name as productName,\n  DATE(s.saleDate) as saleDate,\n  s.saleDate as saleDateFull,\n  SUM(si.quantity) as quantity,\n  SUM(si.totalPrice) as revenue,\n  COUNT(DISTINCT s.id) as numSales\nFROM saleItems si\nINNER JOIN sales s ON si.saleId = s.id\nINNER JOIN products p ON si.productId = p.id\nWHERE s.status != 'CANCELLED' \n  AND DATE(s.saleDate) >= '2025-12-01' \n  AND DATE(s.saleDate) <= '2025-12-31'\n  AND p.name = 'Baly Maça Verde 2l'\nGROUP BY p.id, p.name, DATE(s.saleDate)\nORDER BY DATE(s.saleDate);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  p.id as productId,\n  p.name as productName,\n  DATE(s.saleDate) as saleDate,\n  s.saleDate as saleDateFull,\n  SUM(si.quantity) as quantity,\n  SUM(si.totalPrice) as revenue,\n  COUNT(DISTINCT s.id) as numSales\nFROM saleItems si\nINNER JOIN sales s ON si.saleId = s.id\nINNER JOIN products p ON si.productId = p.id\nWHERE s.status != 'CANCELLED' \n  AND DATE(s.saleDate) >= '2025-12-01' \n  AND DATE(s.saleDate) <= '2025-12-31'\n  AND p.name = 'Baly Maça Verde 2l'\nGROUP BY p.id, p.name, DATE(s.saleDate)\nORDER BY DATE(s.saleDate);",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1055 (42000) at line 1: Expression #4 of SELECT list is not in GROUP BY clause and contains nonaggregated column '7RkrCeS5KipYf8hkuNqrCk.s.saleDate' which is not functionally dependent on columns in GROUP BY clause; this is incompatible with sql_mode=only_full_group_by"
+  ]
+}

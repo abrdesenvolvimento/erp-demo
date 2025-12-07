@@ -1,0 +1,42 @@
+{
+  "query": "SELECT id, name FROM products WHERE name LIKE '%Baly%' ORDER BY name;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT id, name FROM products WHERE name LIKE '%Baly%' ORDER BY name;",
+  "rows": [
+    {
+      "id": "4050002",
+      "name": "Baly 2l (Migração de Dados)"
+    },
+    {
+      "id": "690008",
+      "name": "Baly Abacaxi com Hortelã 2l"
+    },
+    {
+      "id": "660013",
+      "name": "Baly Coco e Açai 2l"
+    },
+    {
+      "id": "660012",
+      "name": "Baly Maça Verde 2l"
+    },
+    {
+      "id": "660010",
+      "name": "Baly Melancia 2l"
+    },
+    {
+      "id": "660011",
+      "name": "Baly Morango e Pêssego 2l"
+    },
+    {
+      "id": "660008",
+      "name": "Baly Tradicional 2l"
+    },
+    {
+      "id": "660009",
+      "name": "Baly Tropical 2l"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\n4050002\tBaly 2l (Migração de Dados)\n690008\tBaly Abacaxi com Hortelã 2l\n660013\tBaly Coco e Açai 2l\n660012\tBaly Maça Verde 2l\n660010\tBaly Melancia 2l\n660011\tBaly Morango e Pêssego 2l\n660008\tBaly Tradicional 2l\n660009\tBaly Tropical 2l\n",
+  "stderr": "",
+  "execution_time_ms": 49
+}

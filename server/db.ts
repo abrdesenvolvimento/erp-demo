@@ -3757,7 +3757,8 @@ export async function getSalesByProductAndDate(
   const endStr = endDate.toISOString().split('T')[0];
 
   // Construir condições WHERE dinâmicas
-  let whereConditions = `s.status != 'CANCELLED' AND DATE(s.saleDate) >= '${startStr}' AND DATE(s.saleDate) <= '${endStr}'`;
+  // Usar CONVERT_TZ para converter UTC para horário local do Brasil (GMT-3)
+  let whereConditions = `s.status != 'CANCELLED' AND DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) >= '${startStr}' AND DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) <= '${endStr}'`;
   
   if (filters?.productIds && filters.productIds.length > 0) {
     whereConditions += ` AND p.id IN (${filters.productIds.join(',')})`;
@@ -3777,15 +3778,15 @@ export async function getSalesByProductAndDate(
     SELECT 
       p.id as productId,
       p.name as productName,
-      DATE(s.saleDate) as saleDate,
+      DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) as saleDate,
       SUM(si.quantity) as quantity,
       SUM(si.totalPrice) as revenue
     FROM saleItems si
     INNER JOIN sales s ON si.saleId = s.id
     INNER JOIN products p ON si.productId = p.id
     WHERE ${whereConditions}
-    GROUP BY p.id, p.name, DATE(s.saleDate)
-    ORDER BY p.name, DATE(s.saleDate)
+    GROUP BY p.id, p.name, DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00'))
+    ORDER BY p.name, DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00'))
   `));
 
   return (result[0] || []) as any as Array<{

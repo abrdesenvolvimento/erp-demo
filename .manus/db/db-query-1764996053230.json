@@ -1,0 +1,31 @@
+{
+  "query": "SELECT \n  s.id,\n  s.saleDate,\n  DATE(s.saleDate) as dateOnly,\n  DAYOFMONTH(s.saleDate) as dayNumber,\n  s.createdAt\nFROM sales s\nWHERE s.id IN (13620026, 13620024, 13620015)\nORDER BY s.id;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  s.id,\n  s.saleDate,\n  DATE(s.saleDate) as dateOnly,\n  DAYOFMONTH(s.saleDate) as dayNumber,\n  s.createdAt\nFROM sales s\nWHERE s.id IN (13620026, 13620024, 13620015)\nORDER BY s.id;",
+  "rows": [
+    {
+      "id": "13620015",
+      "saleDate": "2025-12-06 01:40:44",
+      "dateOnly": "2025-12-06",
+      "dayNumber": "6",
+      "createdAt": "2025-12-06 01:40:44"
+    },
+    {
+      "id": "13620024",
+      "saleDate": "2025-12-06 01:45:50",
+      "dateOnly": "2025-12-06",
+      "dayNumber": "6",
+      "createdAt": "2025-12-06 01:45:50"
+    },
+    {
+      "id": "13620026",
+      "saleDate": "2025-12-06 01:46:44",
+      "dateOnly": "2025-12-06",
+      "dayNumber": "6",
+      "createdAt": "2025-12-06 01:46:44"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tsaleDate\tdateOnly\tdayNumber\tcreatedAt\n13620015\t2025-12-06 01:40:44\t2025-12-06\t6\t2025-12-06 01:40:44\n13620024\t2025-12-06 01:45:50\t2025-12-06\t6\t2025-12-06 01:45:50\n13620026\t2025-12-06 01:46:44\t2025-12-06\t6\t2025-12-06 01:46:44\n",
+  "stderr": "",
+  "execution_time_ms": 63
+}

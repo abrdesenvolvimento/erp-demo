@@ -1,0 +1,30 @@
+{
+  "query": "SELECT \n  s.id,\n  s.saleDate,\n  DATE(s.saleDate) as dateOnly\nFROM sales s\nINNER JOIN saleItems si ON s.id = si.saleId\nINNER JOIN products p ON si.productId = p.id\nWHERE p.name = 'Baly Maça Verde 2l'\n  AND s.saleDate >= '2025-12-01'\n  AND s.status != 'CANCELLED'\nGROUP BY s.id, s.saleDate\nORDER BY s.saleDate;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  s.id,\n  s.saleDate,\n  DATE(s.saleDate) as dateOnly\nFROM sales s\nINNER JOIN saleItems si ON s.id = si.saleId\nINNER JOIN products p ON si.productId = p.id\nWHERE p.name = 'Baly Maça Verde 2l'\n  AND s.saleDate >= '2025-12-01'\n  AND s.status != 'CANCELLED'\nGROUP BY s.id, s.saleDate\nORDER BY s.saleDate;",
+  "rows": [
+    {
+      "id": "11760004",
+      "saleDate": "2025-12-02 02:02:05",
+      "dateOnly": "2025-12-02"
+    },
+    {
+      "id": "13620015",
+      "saleDate": "2025-12-06 01:40:44",
+      "dateOnly": "2025-12-06"
+    },
+    {
+      "id": "13620024",
+      "saleDate": "2025-12-06 01:45:50",
+      "dateOnly": "2025-12-06"
+    },
+    {
+      "id": "13620026",
+      "saleDate": "2025-12-06 01:46:44",
+      "dateOnly": "2025-12-06"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tsaleDate\tdateOnly\n11760004\t2025-12-02 02:02:05\t2025-12-02\n13620015\t2025-12-06 01:40:44\t2025-12-06\n13620024\t2025-12-06 01:45:50\t2025-12-06\n13620026\t2025-12-06 01:46:44\t2025-12-06\n",
+  "stderr": "",
+  "execution_time_ms": 55
+}

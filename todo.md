@@ -1473,5 +1473,5 @@
 
 ## 🔴 BUG CRÍTICO - Análise de Vendas (05/12/2025 - 21h)
 
-- [x] **Análise de Vendas não mostra todas as vendas do dia** - CORRIGIDO! O problema era que o mês padrão estava em Novembro (11) ao invés de Dezembro (12). Quando o usuário selecionava dias 1-5, estava filtrando Novembro 1-5 ao invés de Dezembro 1-5. Alterado mês padrão para Dezembro e períodos de comparação atualizados.
+- [x] **Análise de Vendas não mostra todas as vendas do dia** - RESOLVIDO! O problema era TIMEZONE. O banco armazena datas em UTC, mas a query usava DATE(saleDate) sem conversão. Vendas feitas às 23:48 de um dia eram agrupadas no dia seguinte. Solução: usar CONVERT_TZ(s.saleDate, '+00:00', '-03:00') para converter UTC para horário do Brasil (GMT-3) antes de aplicar DATE(). Query agora retorna datas corretas separadas por dia.
 

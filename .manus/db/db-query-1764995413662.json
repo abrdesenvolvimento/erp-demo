@@ -1,0 +1,80 @@
+{
+  "query": "SELECT \n  s.id as saleId,\n  s.saleDate,\n  DATE(s.saleDate) as saleDateOnly,\n  s.status,\n  p.id as productId,\n  p.name as productName,\n  si.quantity,\n  si.totalPrice\nFROM sales s\nINNER JOIN saleItems si ON s.id = si.saleId\nINNER JOIN products p ON si.productId = p.id\nWHERE s.id IN (13620026, 13620024, 13620015)\nORDER BY s.saleDate, p.name;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  s.id as saleId,\n  s.saleDate,\n  DATE(s.saleDate) as saleDateOnly,\n  s.status,\n  p.id as productId,\n  p.name as productName,\n  si.quantity,\n  si.totalPrice\nFROM sales s\nINNER JOIN saleItems si ON s.id = si.saleId\nINNER JOIN products p ON si.productId = p.id\nWHERE s.id IN (13620026, 13620024, 13620015)\nORDER BY s.saleDate, p.name;",
+  "rows": [
+    {
+      "saleId": "13620015",
+      "saleDate": "2025-12-06 01:40:44",
+      "saleDateOnly": "2025-12-06",
+      "status": "ACTIVE",
+      "productId": "660012",
+      "productName": "Baly Maça Verde 2l",
+      "quantity": "1",
+      "totalPrice": "14.39"
+    },
+    {
+      "saleId": "13620015",
+      "saleDate": "2025-12-06 01:40:44",
+      "saleDateOnly": "2025-12-06",
+      "status": "ACTIVE",
+      "productId": "660010",
+      "productName": "Baly Melancia 2l",
+      "quantity": "1",
+      "totalPrice": "14.39"
+    },
+    {
+      "saleId": "13620015",
+      "saleDate": "2025-12-06 01:40:44",
+      "saleDateOnly": "2025-12-06",
+      "status": "ACTIVE",
+      "productId": "660009",
+      "productName": "Baly Tropical 2l",
+      "quantity": "1",
+      "totalPrice": "14.39"
+    },
+    {
+      "saleId": "13620015",
+      "saleDate": "2025-12-06 01:40:44",
+      "saleDateOnly": "2025-12-06",
+      "status": "ACTIVE",
+      "productId": "630009",
+      "productName": "Coca Cola 1l Zero Açucar",
+      "quantity": "1",
+      "totalPrice": "6.69"
+    },
+    {
+      "saleId": "13620024",
+      "saleDate": "2025-12-06 01:45:50",
+      "saleDateOnly": "2025-12-06",
+      "status": "ACTIVE",
+      "productId": "660012",
+      "productName": "Baly Maça Verde 2l",
+      "quantity": "1",
+      "totalPrice": "14.39"
+    },
+    {
+      "saleId": "13620024",
+      "saleDate": "2025-12-06 01:45:50",
+      "saleDateOnly": "2025-12-06",
+      "status": "ACTIVE",
+      "productId": "2910004",
+      "productName": "Coco Leve Limão 190gr",
+      "quantity": "2",
+      "totalPrice": "8.78"
+    },
+    {
+      "saleId": "13620026",
+      "saleDate": "2025-12-06 01:46:44",
+      "saleDateOnly": "2025-12-06",
+      "status": "ACTIVE",
+      "productId": "660012",
+      "productName": "Baly Maça Verde 2l",
+      "quantity": "1",
+      "totalPrice": "14.39"
+    }
+  ],
+  "messages": [],
+  "stdout": "saleId\tsaleDate\tsaleDateOnly\tstatus\tproductId\tproductName\tquantity\ttotalPrice\n13620015\t2025-12-06 01:40:44\t2025-12-06\tACTIVE\t660012\tBaly Maça Verde 2l\t1\t14.39\n13620015\t2025-12-06 01:40:44\t2025-12-06\tACTIVE\t660010\tBaly Melancia 2l\t1\t14.39\n13620015\t2025-12-06 01:40:44\t2025-12-06\tACTIVE\t660009\tBaly Tropical 2l\t1\t14.39\n13620015\t2025-12-06 01:40:44\t2025-12-06\tACTIVE\t630009\tCoca Cola 1l Zero Açucar\t1\t6.69\n13620024\t2025-12-06 01:45:50\t2025-12-06\tACTIVE\t660012\tBaly Maça Verde 2l\t1\t14.39\n13620024\t2025-12-06 01:45:50\t2025-12-06\tACTIVE\t2910004\tCoco Leve Limão 190gr\t2\t8.78\n13620026\t2025-12-06 01:46:44\t2025-12-06\tACTIVE\t660012\tBaly Maça Verde 2l\t1\t14.39\n",
+  "stderr": "",
+  "execution_time_ms": 66
+}

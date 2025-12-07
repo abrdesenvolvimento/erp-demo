@@ -1,0 +1,26 @@
+{
+  "query": "SELECT \n  p.id as productId,\n  p.name as productName,\n  DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) as saleDate,\n  SUM(si.quantity) as quantity,\n  SUM(si.totalPrice) as revenue,\n  COUNT(DISTINCT s.id) as numSales\nFROM saleItems si\nINNER JOIN sales s ON si.saleId = s.id\nINNER JOIN products p ON si.productId = p.id\nWHERE s.status != 'CANCELLED' \n  AND DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) >= '2025-12-06' \n  AND DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) <= '2025-12-07'\n  AND p.id = 2490006\nGROUP BY p.id, p.name, DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00'))\nORDER BY DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00'));",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  p.id as productId,\n  p.name as productName,\n  DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) as saleDate,\n  SUM(si.quantity) as quantity,\n  SUM(si.totalPrice) as revenue,\n  COUNT(DISTINCT s.id) as numSales\nFROM saleItems si\nINNER JOIN sales s ON si.saleId = s.id\nINNER JOIN products p ON si.productId = p.id\nWHERE s.status != 'CANCELLED' \n  AND DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) >= '2025-12-06' \n  AND DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) <= '2025-12-07'\n  AND p.id = 2490006\nGROUP BY p.id, p.name, DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00'))\nORDER BY DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00'));",
+  "rows": [
+    {
+      "productId": "2490006",
+      "productName": "Funchal 2Kg",
+      "saleDate": "2025-12-06",
+      "quantity": "1",
+      "revenue": "16.90",
+      "numSales": "1"
+    },
+    {
+      "productId": "2490006",
+      "productName": "Funchal 2Kg",
+      "saleDate": "2025-12-07",
+      "quantity": "1",
+      "revenue": "16.90",
+      "numSales": "1"
+    }
+  ],
+  "messages": [],
+  "stdout": "productId\tproductName\tsaleDate\tquantity\trevenue\tnumSales\n2490006\tFunchal 2Kg\t2025-12-06\t1\t16.90\t1\n2490006\tFunchal 2Kg\t2025-12-07\t1\t16.90\t1\n",
+  "stderr": "",
+  "execution_time_ms": 638
+}

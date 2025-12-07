@@ -1,0 +1,35 @@
+{
+  "query": "SELECT DISTINCT\n  p.id,\n  p.name,\n  COUNT(*) as occurrences\nFROM sales s\nINNER JOIN saleItems si ON s.id = si.saleId\nINNER JOIN products p ON si.productId = p.id\nWHERE s.id IN (13620026, 13620024, 13620015)\nGROUP BY p.id, p.name\nORDER BY p.name;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT DISTINCT\n  p.id,\n  p.name,\n  COUNT(*) as occurrences\nFROM sales s\nINNER JOIN saleItems si ON s.id = si.saleId\nINNER JOIN products p ON si.productId = p.id\nWHERE s.id IN (13620026, 13620024, 13620015)\nGROUP BY p.id, p.name\nORDER BY p.name;",
+  "rows": [
+    {
+      "id": "660012",
+      "name": "Baly Maça Verde 2l",
+      "occurrences": "3"
+    },
+    {
+      "id": "660010",
+      "name": "Baly Melancia 2l",
+      "occurrences": "1"
+    },
+    {
+      "id": "660009",
+      "name": "Baly Tropical 2l",
+      "occurrences": "1"
+    },
+    {
+      "id": "630009",
+      "name": "Coca Cola 1l Zero Açucar",
+      "occurrences": "1"
+    },
+    {
+      "id": "2910004",
+      "name": "Coco Leve Limão 190gr",
+      "occurrences": "1"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\toccurrences\n660012\tBaly Maça Verde 2l\t3\n660010\tBaly Melancia 2l\t1\n660009\tBaly Tropical 2l\t1\n630009\tCoca Cola 1l Zero Açucar\t1\n2910004\tCoco Leve Limão 190gr\t1\n",
+  "stderr": "",
+  "execution_time_ms": 53
+}
