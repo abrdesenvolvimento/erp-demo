@@ -92,6 +92,16 @@ export default function Vendas() {
   useEffect(() => {
     utils.sales.stats.invalidate();
   }, [filterFromDate, filterToDate, filterSaleType, utils]);
+
+  // Query de exportação
+  const exportSales = trpc.sales.exportSales.useQuery(
+    {
+      startDate: filterFromDate ? new Date(filterFromDate) : undefined,
+      endDate: filterToDate ? new Date(filterToDate) : undefined,
+      saleType: filterSaleType ? (filterSaleType as "BALCAO" | "DELIVERY" | "A_PRAZO") : undefined,
+    },
+    { enabled: false } // Não executar automaticamente
+  );
   const { data: channels = [] } = trpc.salesChannels.list.useQuery({ activeOnly: true });
   // Buscar parceiros que sejam CUSTOMER ou BOTH (clientes e fornecedores)
   const { data: allPartners = [] } = trpc.partners.list.useQuery({ 
@@ -195,6 +205,69 @@ export default function Vendas() {
     setSurchargeAmount("0");
     setPaymentMethod("");
     setNotes("");
+  };
+
+  const handleExportSales = async () => {
+    try {
+      toast.info("Preparando exportação...");
+      
+      // Refetch para obter os dados
+      const result = await exportSales.refetch();
+      
+      if (!result.data || result.data.length === 0) {
+        toast.warning("Nenhuma venda encontrada para exportar");
+        return;
+      }
+
+      // Importar biblioteca xlsx dinamicamente
+      const XLSX = await import('xlsx');
+      
+      // Formatar dados para Excel
+      const excelData = result.data.map((row: any) => ({
+        'ID da Venda': row.saleId,
+        'Canal': row.channel === 'BALCAO' ? 'Balcão' : row.channel === 'DELIVERY' ? 'Delivery' : 'A Prazo',
+        'Número do Pedido': row.orderNumber || '-',
+        'Cliente': row.customerName,
+        'Produto': row.productName,
+        'Quantidade': row.quantity,
+        'Data/Hora': new Date(row.saleDate).toLocaleString('pt-BR'),
+        'Valor Unitário': `R$ ${parseFloat(row.unitPrice).toFixed(2).replace('.', ',')}`,
+        'Valor Total': `R$ ${parseFloat(row.totalPrice).toFixed(2).replace('.', ',')}`,
+        'Forma de Pagamento': row.paymentMethod || '-',
+      }));
+
+      // Criar workbook e worksheet
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.json_to_sheet(excelData);
+      
+      // Ajustar largura das colunas
+      ws['!cols'] = [
+        { wch: 12 }, // ID da Venda
+        { wch: 12 }, // Canal
+        { wch: 20 }, // Número do Pedido
+        { wch: 30 }, // Cliente
+        { wch: 40 }, // Produto
+        { wch: 12 }, // Quantidade
+        { wch: 20 }, // Data/Hora
+        { wch: 15 }, // Valor Unitário
+        { wch: 15 }, // Valor Total
+        { wch: 20 }, // Forma de Pagamento
+      ];
+      
+      XLSX.utils.book_append_sheet(wb, ws, 'Vendas');
+      
+      // Gerar nome do arquivo com data
+      const hoje = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-');
+      const nomeArquivo = `vendas_${hoje}.xlsx`;
+      
+      // Download
+      XLSX.writeFile(wb, nomeArquivo);
+      
+      toast.success(`Exportado ${result.data.length} registros com sucesso!`);
+    } catch (error: any) {
+      console.error('Erro ao exportar:', error);
+      toast.error("Erro ao exportar vendas: " + error.message);
+    }
   };
 
   const handleSelectType = (type: SaleType) => {
@@ -483,6 +556,13 @@ export default function Vendas() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-semibold">Vendas Registradas</h2>
+              <Button
+                variant="outline"
+                onClick={handleExportSales}
+                disabled={exportSales.isLoading}
+              >
+                {exportSales.isLoading ? "Exportando..." : "Exportar para Excel"}
+              </Button>
             </div>
           </CardHeader>
           <CardContent>

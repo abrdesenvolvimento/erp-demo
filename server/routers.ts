@@ -679,6 +679,18 @@ export const appRouter = router({
         await db.cancelSale(input.id, ctx.user.id, input.reason);
         return { success: true };
       }),
+
+    exportSales: protectedProcedure
+      .input(z.object({
+        startDate: z.date().optional(),
+        endDate: z.date().optional(),
+        saleType: z.enum(["BALCAO", "DELIVERY", "A_PRAZO"]).optional(),
+        customerId: z.number().optional(),
+        paymentMethod: z.string().optional(),
+      }).optional())
+      .query(async ({ input }) => {
+        return await db.getSalesForExport(input);
+      }),
   }),
 
   // ==================== COMPRAS ====================

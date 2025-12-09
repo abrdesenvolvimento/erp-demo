@@ -1487,3 +1487,60 @@
 - [x] **Corrigir filtros de listagem** - Verificado que getSales, getPurchaseOrders e getExpenses usam comparação de timestamp completo (gte/lt), não precisam correção.
 
 - [x] **Padronizar timezone em todo o sistema** - Todas as queries que usam DATE() agora aplicam CONVERT_TZ(campo, '+00:00', '-03:00') para converter UTC para GMT-3 (horário do Brasil).
+
+
+## 📊 MELHORIAS - Análise de Vendas
+
+- [ ] **Criar constante de timezone** - Extrair '-03:00' para constante BRAZIL_TIMEZONE no topo do db.ts para facilitar manutenção futura
+
+- [ ] **Filtros rápidos de período** - Adicionar botões "Última semana", "Último mês", "Últimos 3 meses", "Ano atual" para facilitar seleção de período
+
+- [ ] **Relatório de vendas por horário** - Criar gráfico mostrando distribuição de vendas por hora do dia (0-23h) para identificar horários de pico
+
+- [ ] **Comparação com período anterior** - Adicionar indicador de crescimento/queda comparando com mesmo período anterior (ex: esta semana vs semana passada)
+
+- [ ] **Exportação de relatórios** - Permitir exportar análises para Excel/PDF com gráficos e tabelas
+
+- [ ] **Filtro por vendedor** - Adicionar filtro para analisar performance individual de cada vendedor/atendente
+
+## 📤 NOVA FUNCIONALIDADE - Exportação de Vendas
+
+- [x] **Exportar vendas para Excel/CSV** - Botão "Exportar para Excel" criado na tela de Vendas. Exporta dados com campos: ID da Venda, Canal, Número do Pedido, Cliente, Produto, Quantidade, Data/Hora, Valor Unitário, Valor Total, Forma de Pagamento. Arquivo gerado com nome vendas_DD-MM-YYYY.xlsx.
+
+- [x] **Filtros na exportação** - Exportação respeita filtros aplicados na tela (período, canal). Backend aplica CONVERT_TZ para garantir datas corretas no horário do Brasil.
+
+- [ ] **Formato de data configurável** - Permitir escolher formato de data na exportação (DD/MM/YYYY HH:MM, YYYY-MM-DD, etc.) - Atualmente usa formato brasileiro padrão.
+
+## 🗑️ NOVA FUNCIONALIDADE - Categoria Perdas (Despesas)
+
+- [ ] **Criar categoria "Perdas" em Despesas** - Categoria especial que ao ser selecionada abre campos adicionais para registrar perda de estoque
+
+- [ ] **Seletor de produto na Perda** - Campo autocomplete para selecionar produto do estoque que foi perdido
+
+- [ ] **Campo de quantidade** - Input para informar quantidade perdida (validar se há estoque suficiente)
+
+- [ ] **Cálculo automático de valor** - Ao selecionar produto e quantidade, calcular automaticamente valor da despesa usando custo médio (avgCost) do produto
+
+- [ ] **Baixa automática de estoque** - Ao confirmar despesa de Perda, reduzir quantidade do produto no estoque automaticamente
+
+- [ ] **Motivo da perda** - Campo opcional para registrar motivo (vencimento, quebra, roubo, etc.)
+
+- [ ] **Relatório de Perdas** - Criar relatório específico mostrando perdas por produto, categoria e período para análise de desperdício
+
+## 🔧 MELHORIAS TÉCNICAS
+
+- [ ] **Padronizar timezone em constante** - Criar BRAZIL_TIMEZONE = '-03:00' e usar em todas as queries
+
+- [ ] **Adicionar índices de data** - Criar índices em sales.saleDate, expenses.createdAt, purchaseOrders.createdAt para melhorar performance de queries com filtro de data
+
+- [ ] **Cache de análises** - Implementar cache para análises de vendas de períodos fechados (ex: meses anteriores) para reduzir carga no banco
+
+## 🎨 MELHORIAS DE UX
+
+- [ ] **Indicador de período selecionado** - Mostrar de forma mais clara qual período está sendo visualizado nas análises
+
+- [ ] **Loading states** - Adicionar skeletons e spinners durante carregamento de análises pesadas
+
+- [ ] **Mensagens de erro amigáveis** - Melhorar mensagens de erro quando queries falham ou não retornam dados
+
+- [ ] **Tooltips explicativos** - Adicionar tooltips em métricas complexas (margem bruta, mix de produtos, etc.) explicando o cálculo

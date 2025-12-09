@@ -313,6 +313,8 @@ export const expenses = mysqlTable("expenses", {
   paymentMethod: varchar("paymentMethod", { length: 50 }).notNull(), // Forma de pagamento (igual Compras)
   notes: text("notes"),
   status: mysqlEnum("status", ["ATIVA", "PAGA", "CANCELADA"]).default("ATIVA").notNull(),
+  productId: int("productId"), // FK para produto (apenas para categoria Perdas)
+  lossQuantity: int("lossQuantity"), // Quantidade perdida (apenas para categoria Perdas)
   createdBy: varchar("createdBy", { length: 64 }).notNull(),
   createdAt: timestamp("createdAt").defaultNow(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow(),

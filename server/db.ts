@@ -1469,7 +1469,7 @@ export async function getExpenses(filters?: {
   // Filtro de valor (aplicado após query pois precisa calcular total)
   if (filters?.minValue !== undefined || filters?.maxValue !== undefined) {
     return results.filter(r => {
-      const total = parseFloat(r.expense.totalAmount || '0');
+      const total = parseFloat(r.expense.amount || '0');
       if (filters.minValue !== undefined && total < filters.minValue) return false;
       if (filters.maxValue !== undefined && total > filters.maxValue) return false;
       return true;
@@ -1508,6 +1508,46 @@ export async function getExpenseById(id: number) {
 export async function createExpense(data: InsertExpense) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
+  
+  // Se for categoria Perdas, validar e calcular valor automaticamente
+  if (data.categoryId) {
+    const category = await db.select().from(expenseCategories).where(eq(expenseCategories.id, data.categoryId)).limit(1);
+    
+    if (category[0]?.name === 'Perdas') {
+      // Validar campos obrigatórios para Perdas
+      if (!data.productId || !data.lossQuantity) {
+        throw new Error("Para categoria Perdas, é necessário informar o produto e a quantidade perdida");
+      }
+      
+      // Buscar produto e calcular valor da perda (custo médio × quantidade)
+      const product = await db.select().from(products).where(eq(products.id, data.productId)).limit(1);
+      
+      if (!product[0]) {
+        throw new Error("Produto não encontrado");
+      }
+      
+      // Verificar se há estoque suficiente
+      const currentStock = product[0].currentStock || 0;
+      if (currentStock < data.lossQuantity) {
+        throw new Error(`Estoque insuficiente. Disponível: ${currentStock}, Solicitado: ${data.lossQuantity}`);
+      }
+      
+      // Calcular valor da perda
+      const avgCost = parseFloat(product[0].avgCost || '0');
+      const lossValue = avgCost * data.lossQuantity;
+      
+      // Atualizar valor da despesa
+      data.amount = lossValue.toFixed(2);
+      
+      // Baixar estoque
+      await db.update(products)
+        .set({ 
+          currentStock: currentStock - data.lossQuantity,
+          updatedAt: new Date()
+        })
+        .where(eq(products.id, data.productId));
+    }
+  }
   
   const result = await db.insert(expenses).values(data);
   const insertId = (result as any)[0]?.insertId || (result as any).insertId;
@@ -3801,5 +3841,78 @@ export async function getSalesByProductAndDate(
     saleDate: string;
     quantity: string;
     revenue: string;
+  }>;
+}
+
+
+// ==================== EXPORTAÇÃO DE VENDAS ====================
+export async function getSalesForExport(filters?: { 
+  startDate?: Date; 
+  endDate?: Date; 
+  saleType?: string; 
+  customerId?: number;
+  paymentMethod?: string;
+}) {
+  const db = await getDb();
+  if (!db) return [];
+
+  let whereConditions = `s.status != 'CANCELLED'`;
+
+  // Filtro de data (saleDate com timezone)
+  if (filters?.startDate) {
+    const startStr = filters.startDate.toISOString().split('T')[0];
+    whereConditions += ` AND DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) >= '${startStr}'`;
+  }
+  if (filters?.endDate) {
+    const endStr = filters.endDate.toISOString().split('T')[0];
+    whereConditions += ` AND DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) <= '${endStr}'`;
+  }
+
+  // Filtro de tipo de venda
+  if (filters?.saleType) {
+    whereConditions += ` AND s.saleType = '${filters.saleType}'`;
+  }
+
+  // Filtro de cliente
+  if (filters?.customerId) {
+    whereConditions += ` AND s.customerId = ${filters.customerId}`;
+  }
+
+  // Filtro de forma de pagamento
+  if (filters?.paymentMethod) {
+    whereConditions += ` AND s.paymentMethod = '${filters.paymentMethod}'`;
+  }
+
+  const result = await db.execute(sql.raw(`
+    SELECT 
+      s.id as saleId,
+      s.saleType as channel,
+      s.platformOrderId as orderNumber,
+      p.name as productName,
+      si.quantity,
+      CONVERT_TZ(s.saleDate, '+00:00', '-03:00') as saleDate,
+      si.unitPrice,
+      si.totalPrice,
+      s.paymentMethod,
+      COALESCE(pa.name, 'Consumidor Final') as customerName
+    FROM saleItems si
+    INNER JOIN sales s ON si.saleId = s.id
+    INNER JOIN products p ON si.productId = p.id
+    LEFT JOIN partners pa ON s.customerId = pa.id
+    WHERE ${whereConditions}
+    ORDER BY s.saleDate DESC, s.id DESC, si.id ASC
+  `));
+
+  return (result[0] || []) as any as Array<{
+    saleId: number;
+    channel: string;
+    orderNumber: string | null;
+    productName: string;
+    quantity: number;
+    saleDate: Date;
+    unitPrice: string;
+    totalPrice: string;
+    paymentMethod: string | null;
+    customerName: string;
   }>;
 }

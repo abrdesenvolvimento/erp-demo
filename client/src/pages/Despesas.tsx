@@ -61,6 +61,10 @@ export default function Despesas() {
   ]);
   const [notes, setNotes] = useState("");
   
+  // Estados para Perdas
+  const [productId, setProductId] = useState<number | undefined>();
+  const [lossQuantity, setLossQuantity] = useState("");
+  
   // Queries
   const { data: expenses = [], refetch } = trpc.expenses.list.useQuery({
     startDate: filterStartDate ? new Date(filterStartDate + 'T00:00:00') : undefined,
@@ -72,6 +76,7 @@ export default function Despesas() {
   });
   const { data: suppliers = [] } = trpc.partners.list.useQuery({ partnerType: "SUPPLIER" });
   const { data: categories = [] } = trpc.expenses.categories.list.useQuery({ activeOnly: true });
+  const { data: products = [] } = trpc.products.list.useQuery();
   const { data: expenseDetails = [] } = trpc.expenses.getDetails.useQuery(
     { id: editingExpenseId! },
     { enabled: editingExpenseId !== null }
@@ -116,16 +121,18 @@ export default function Despesas() {
   
   const resetForm = () => {
     setSupplierId(undefined);
+    setSupplierSearch("");
     setDocType("CUPOM");
     setDocNumber("");
     setCategoryId(undefined);
+    setCategorySearch("");
     setDescription("");
     setAmount("");
     setPaymentMethod("");
     setDueDates([{ date: new Date(Date.now() + 30*24*60*60*1000).toISOString().split('T')[0], amount: "" }]);
     setNotes("");
-    setSupplierSearch("");
-    setCategorySearch("");
+    setProductId(undefined);
+    setLossQuantity("");
   };
   
   const addDueDate = () => {
@@ -212,6 +219,9 @@ export default function Despesas() {
         };
       }),
       notes,
+      // Campos específicos para categoria Perdas
+      productId: selectedCategory?.name === 'Perdas' ? productId : undefined,
+      lossQuantity: selectedCategory?.name === 'Perdas' && lossQuantity ? parseFloat(lossQuantity) : undefined,
     };
     
     if (isEditing && editingExpenseId) {
@@ -441,6 +451,58 @@ export default function Despesas() {
                     </PopoverContent>
                   </Popover>
                 </div>
+
+                {/* Produto e Quantidade (apenas para categoria Perdas) */}
+                {selectedCategory?.name === 'Perdas' && (
+                  <div className="bg-card border rounded-lg p-6">
+                    <h3 className="text-lg font-semibold mb-4">Produto e Quantidade Perdida *</h3>
+                    <div className="space-y-4">
+                      <div>
+                        <Label>Produto *</Label>
+                        <Select 
+                          value={productId?.toString()} 
+                          onValueChange={(v) => setProductId(parseInt(v))}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione o produto..." />
+                          </SelectTrigger>
+                          <SelectContent position="popper">
+                            {products
+                              .filter(p => p.active && !p.isComposite)
+                              .sort((a, b) => a.name.localeCompare(b.name))
+                              .map((product) => (
+                                <SelectItem key={product.id} value={product.id.toString()}>
+                                  {product.name} (Estoque: {product.currentStock || 0})
+                                </SelectItem>
+                              ))
+                            }
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label>Quantidade Perdida *</Label>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          min="0.01"
+                          value={lossQuantity}
+                          onChange={(e) => setLossQuantity(e.target.value)}
+                          placeholder="Ex: 5"
+                        />
+                        {productId && lossQuantity && (() => {
+                          const selectedProduct = products.find(p => p.id === productId) as any;
+                          const avgCost = selectedProduct?.avgCost || '0';
+                          const calculatedValue = parseFloat(avgCost) * parseFloat(lossQuantity);
+                          return (
+                            <p className="text-sm text-muted-foreground mt-2">
+                              Valor calculado automaticamente: R$ {calculatedValue.toFixed(2)}
+                            </p>
+                          );
+                        })()}
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {/* Informações da Despesa */}
                 <div className="bg-card border rounded-lg p-6">

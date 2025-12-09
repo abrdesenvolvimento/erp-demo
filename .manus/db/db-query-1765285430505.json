@@ -1,0 +1,9 @@
+{
+  "query": "INSERT INTO expenseCategories (name, description, createdAt, updatedAt) \nVALUES ('Perdas', 'Perdas de estoque por vencimento, avaria ou outros motivos', NOW(), NOW())",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute INSERT INTO expenseCategories (name, description, createdAt, updatedAt) \nVALUES ('Perdas', 'Perdas de estoque por vencimento, avaria ou outros motivos', NOW(), NOW())",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 72
+}
