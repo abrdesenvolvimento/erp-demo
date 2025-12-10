@@ -63,6 +63,7 @@ export default function Despesas() {
   
   // Estados para Perdas
   const [productId, setProductId] = useState<number | undefined>();
+  const [productSearch, setProductSearch] = useState("");
   const [lossQuantity, setLossQuantity] = useState("");
   
   // Queries
@@ -132,6 +133,7 @@ export default function Despesas() {
     setDueDates([{ date: new Date(Date.now() + 30*24*60*60*1000).toISOString().split('T')[0], amount: "" }]);
     setNotes("");
     setProductId(undefined);
+    setProductSearch("");
     setLossQuantity("");
   };
   
@@ -459,25 +461,82 @@ export default function Despesas() {
                     <div className="space-y-4">
                       <div>
                         <Label>Produto *</Label>
-                        <Select 
-                          value={productId?.toString()} 
-                          onValueChange={(v) => setProductId(parseInt(v))}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione o produto..." />
-                          </SelectTrigger>
-                          <SelectContent position="popper">
-                            {products
-                              .filter(p => p.active && !p.isComposite)
-                              .sort((a, b) => a.name.localeCompare(b.name))
-                              .map((product) => (
-                                <SelectItem key={product.id} value={product.id.toString()}>
-                                  {product.name} (Estoque: {product.currentStock || 0})
-                                </SelectItem>
-                              ))
-                            }
-                          </SelectContent>
-                        </Select>
+                        <div className="relative">
+                          <Input
+                            value={productSearch}
+                            onChange={(e) => {
+                              setProductSearch(e.target.value);
+                              setProductId(undefined);
+                            }}
+                            placeholder="Digite para buscar o produto..."
+                            className="pr-10"
+                          />
+                          {productSearch && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setProductSearch("");
+                                setProductId(undefined);
+                              }}
+                              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          )}
+                        </div>
+                        {productSearch && !productId && (() => {
+                          const filtered = products
+                            .filter(p => 
+                              p.active && 
+                              !p.isComposite &&
+                              p.name.toLowerCase().includes(productSearch.toLowerCase())
+                            )
+                            .sort((a, b) => a.name.localeCompare(b.name))
+                            .slice(0, 10);
+                          
+                          if (filtered.length === 0) {
+                            return (
+                              <div className="mt-2 p-2 border rounded bg-muted text-sm text-muted-foreground">
+                                Nenhum produto encontrado
+                              </div>
+                            );
+                          }
+                          
+                          return (
+                            <div className="mt-2 border rounded max-h-60 overflow-y-auto">
+                              {filtered.map((product) => (
+                                <button
+                                  key={product.id}
+                                  type="button"
+                                  onClick={() => {
+                                    setProductId(product.id);
+                                    setProductSearch(product.name);
+                                  }}
+                                  className="w-full text-left px-3 py-2 hover:bg-accent transition-colors border-b last:border-b-0"
+                                >
+                                  <div className="font-medium">{product.name}</div>
+                                  <div className="text-xs text-muted-foreground">
+                                    Estoque: {product.currentStock || 0} | Custo: R$ {parseFloat((product as any).avgCost || '0').toFixed(2)}
+                                  </div>
+                                </button>
+                              ))}
+                            </div>
+                          );
+                        })()}
+                        {productId && (() => {
+                          const selected = products.find(p => p.id === productId);
+                          if (!selected) return null;
+                          return (
+                            <div className="mt-2 p-2 border rounded bg-green-50 dark:bg-green-950 text-sm">
+                              <div className="font-medium text-green-900 dark:text-green-100">
+                                ✓ {selected.name}
+                              </div>
+                              <div className="text-xs text-green-700 dark:text-green-300">
+                                Estoque: {selected.currentStock || 0} | Custo: R$ {parseFloat((selected as any).avgCost || '0').toFixed(2)}
+                              </div>
+                            </div>
+                          );
+                        })()}
                       </div>
                       <div>
                         <Label>Quantidade Perdida *</Label>

@@ -117,3 +117,7 @@
 ### Nova Tela de Login
 - [x] Não aplicável - Sistema usa autenticação OAuth externa
 
+
+## Melhorias Solicitadas (09/12/2025)
+
+- [x] Substituir Select por autocomplete na busca de produtos em Perdas (Despesas)
