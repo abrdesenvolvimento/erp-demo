@@ -121,3 +121,7 @@
 ## Melhorias Solicitadas (09/12/2025)
 
 - [x] Substituir Select por autocomplete na busca de produtos em Perdas (Despesas)
+
+## Bugs Corrigidos (12/12/2025)
+
+- [x] Cálculo de crédito disponível incorreto em nova venda a prazo - agora usa mesma lógica de getCustomerBalance

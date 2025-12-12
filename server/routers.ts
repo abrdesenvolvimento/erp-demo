@@ -403,11 +403,9 @@ export const appRouter = router({
           throw new TRPCError({ code: 'NOT_FOUND', message: 'Cliente não encontrado' });
         }
         
-        // Calcular saldo devedor em tempo real (soma de recebíveis pendentes)
-        const pendingReceivables = await db.getPendingReceivablesByCustomer(input.customerId);
-        const currentBalance = pendingReceivables.reduce((sum: number, rec: any) => {
-          return sum + (parseFloat(rec.totalAmount) - parseFloat(rec.receivedAmount));
-        }, 0);
+        // Calcular saldo devedor usando a mesma lógica de getCustomerBalance
+        // Saldo = Σ(vendas A_PRAZO) + Σ(débitos manuais) - Σ(pagamentos)
+        const currentBalance = await db.getCustomerBalance(input.customerId);
         
         const creditLimit = parseFloat(customer.creditLimit || '0');
         const available = creditLimit - currentBalance;
@@ -473,11 +471,8 @@ export const appRouter = router({
         if (saleData.saleType === 'A_PRAZO' && saleData.customerId) {
           const customer = await db.getPartner(saleData.customerId);
           if (customer) {
-            // Calcular saldo devedor em tempo real (soma de recebíveis pendentes)
-            const pendingReceivables = await db.getPendingReceivablesByCustomer(saleData.customerId);
-            const currentBalance = pendingReceivables.reduce((sum: number, rec: any) => {
-              return sum + (parseFloat(rec.totalAmount) - parseFloat(rec.receivedAmount));
-            }, 0);
+            // Calcular saldo devedor usando a mesma lógica de getCustomerBalance
+            const currentBalance = await db.getCustomerBalance(saleData.customerId);
             
             const creditLimit = parseFloat(customer.creditLimit || '0');
             const saleAmount = parseFloat(saleData.finalAmount);
