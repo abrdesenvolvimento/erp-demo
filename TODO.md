@@ -125,3 +125,7 @@
 ## Bugs Corrigidos (12/12/2025)
 
 - [x] Cálculo de crédito disponível incorreto em nova venda a prazo - agora usa mesma lógica de getCustomerBalance
+
+## Bugs Reportados (12/12/2025 - Tarde)
+
+- [x] Cálculo de parcelas em Compras está incorreto - usa custo unitário ao invés do total (subtotal + frete + taxas) e não atualiza ao adicionar novos produtos

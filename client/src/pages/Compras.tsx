@@ -85,7 +85,7 @@ export default function Compras() {
   useEffect(() => {
     if (installments.length === 1 && items.length > 0) {
       const totalAmount = items.reduce((sum, item) => sum + (item.quantity * item.unitCost), 0) + parseFloat(freightCost) + parseFloat(chargesCost);
-      if (totalAmount > 0 && installments[0].amount === 0) {
+      if (totalAmount > 0) {
         setInstallments([{ ...installments[0], amount: totalAmount }]);
       }
     }
