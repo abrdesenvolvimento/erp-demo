@@ -3916,3 +3916,74 @@ export async function getSalesForExport(filters?: {
     customerName: string;
   }>;
 }
+
+
+// ==================== CALENDÁRIO DE CONTAS A PAGAR ====================
+export async function getPayablesCalendar(year: number, month: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  // Buscar todas as parcelas pendentes do mês
+  const startDate = new Date(year, month - 1, 1);
+  const endDate = new Date(year, month, 0); // Último dia do mês
+
+  const result = await db.execute(sql.raw(`
+    SELECT 
+      DAY(pi.dueDate) as day,
+      pi.id as installmentId,
+      pi.amount,
+      pi.dueDate,
+      pi.status,
+      po.id as purchaseOrderId,
+      po.docNumber,
+      p.id as supplierId,
+      p.name as supplierName
+    FROM purchaseInstallments pi
+    INNER JOIN purchaseOrders po ON pi.purchaseOrderId = po.id
+    INNER JOIN partners p ON po.supplierId = p.id
+    WHERE pi.dueDate >= '${startDate.toISOString().split('T')[0]}'
+      AND pi.dueDate <= '${endDate.toISOString().split('T')[0]}'
+      AND pi.status IN ('PENDING', 'OVERDUE')
+    ORDER BY pi.dueDate ASC, p.name ASC
+  `));
+
+  const rows = ((result as any)[0] || []) as any[];
+
+  // Agrupar por dia
+  const calendar: Record<number, {
+    day: number;
+    total: number;
+    count: number;
+    items: Array<{
+      installmentId: number;
+      amount: string;
+      dueDate: Date;
+      status: string;
+      purchaseOrderId: number;
+      docNumber: string | null;
+      supplierId: number;
+      supplierName: string;
+    }>;
+  }> = {};
+
+  for (const row of rows) {
+    const day = row.day;
+    if (!calendar[day]) {
+      calendar[day] = { day, total: 0, count: 0, items: [] };
+    }
+    calendar[day].total += parseFloat(row.amount);
+    calendar[day].count += 1;
+    calendar[day].items.push({
+      installmentId: row.installmentId,
+      amount: row.amount,
+      dueDate: row.dueDate,
+      status: row.status,
+      purchaseOrderId: row.purchaseOrderId,
+      docNumber: row.docNumber,
+      supplierId: row.supplierId,
+      supplierName: row.supplierName,
+    });
+  }
+
+  return Object.values(calendar);
+}

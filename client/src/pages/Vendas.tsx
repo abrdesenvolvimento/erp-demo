@@ -665,7 +665,7 @@ export default function Vendas() {
 
         {/* Modal de Nova Venda */}
         <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-          <DialogContent className="max-w-5xl h-[85vh] overflow-y-auto flex flex-col p-4">
+          <DialogContent className="max-w-5xl h-[92vh] overflow-y-auto flex flex-col p-4">
             <DialogHeader>
               <DialogTitle>
                 {step === "type" ? "Nova Venda - Selecione o Tipo" : `Nova Venda - ${saleType?.replace("_", " ")}`}
@@ -802,8 +802,8 @@ export default function Vendas() {
                 {/* Produtos */}
                 <div className="space-y-4">
                   <Label>Produtos</Label>
-                  <div className="flex gap-2">
-                    <div className="flex-1 relative">
+                  <div className="flex gap-2 items-start">
+                    <div className="flex-1 relative min-w-0">
                       <Input
                         placeholder="Buscar produto por nome ou EAN..."
                         value={productSearch}

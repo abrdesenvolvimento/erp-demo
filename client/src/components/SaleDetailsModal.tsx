@@ -34,6 +34,7 @@ export function SaleDetailsModal({ saleId, open, onClose }: SaleDetailsModalProp
   const [editedItems, setEditedItems] = useState<any[]>([]);
   const [editedDiscount, setEditedDiscount] = useState("0");
   const [editedSurcharge, setEditedSurcharge] = useState("0");
+  const [editedOrderNumber, setEditedOrderNumber] = useState("");
   const [productSearch, setProductSearch] = useState("");
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [newItemQuantity, setNewItemQuantity] = useState(1);
@@ -92,6 +93,7 @@ export function SaleDetailsModal({ saleId, open, onClose }: SaleDetailsModalProp
     setEditedItems(saleData.items || []);
     setEditedDiscount(saleData.discountAmount?.toString() || "0");
     setEditedSurcharge(saleData.surchargeAmount?.toString() || "0");
+    setEditedOrderNumber((saleData as any).orderNumber || "");
     setIsEditing(true);
   };
 
@@ -100,6 +102,7 @@ export function SaleDetailsModal({ saleId, open, onClose }: SaleDetailsModalProp
     setEditedItems([]);
     setEditedDiscount("0");
     setEditedSurcharge("0");
+    setEditedOrderNumber("");
   };
 
   const handleSaveEdit = () => {
@@ -126,6 +129,7 @@ export function SaleDetailsModal({ saleId, open, onClose }: SaleDetailsModalProp
       }),
       discountAmount: discount > 0 ? discount.toFixed(2) : undefined,
       surchargeAmount: surcharge > 0 ? surcharge.toFixed(2) : undefined,
+      ...(saleData?.saleType === 'DELIVERY' && { orderNumber: editedOrderNumber }),
     });
   };
 
@@ -449,6 +453,20 @@ export function SaleDetailsModal({ saleId, open, onClose }: SaleDetailsModalProp
             {/* Itens */}
             <div>
               <h3 className="font-semibold mb-3">{isEditing ? "Editar Itens" : "Itens da Venda"}</h3>
+              
+              {/* Campo de número do pedido (modo edição - apenas Delivery) */}
+              {isEditing && saleData?.saleType === 'DELIVERY' && (
+                <div className="mb-4 p-4 bg-muted rounded-lg">
+                  <h4 className="text-sm font-medium mb-2">Número do Pedido (Delivery)</h4>
+                  <input
+                    type="text"
+                    placeholder="Ex: 12345"
+                    value={editedOrderNumber}
+                    onChange={(e) => setEditedOrderNumber(e.target.value)}
+                    className="w-full px-3 py-2 border rounded-md"
+                  />
+                </div>
+              )}
               
               {/* Campo de busca para adicionar produtos (modo edição) */}
               {isEditing && (

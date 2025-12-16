@@ -24,12 +24,15 @@ interface EditSaleModalProps {
   saleId: number;
   initialItems: SaleItem[];
   onSuccess: () => void;
+  saleType?: string;
+  initialOrderNumber?: string;
 }
 
-export function EditSaleModal({ open, onOpenChange, saleId, initialItems, onSuccess }: EditSaleModalProps) {
+export function EditSaleModal({ open, onOpenChange, saleId, initialItems, onSuccess, saleType, initialOrderNumber }: EditSaleModalProps) {
   const [items, setItems] = useState<SaleItem[]>(initialItems);
   const [productSearch, setProductSearch] = useState<string>("");
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
+  const [orderNumber, setOrderNumber] = useState<string>(initialOrderNumber || "");
   
   const { data: products } = trpc.products.list.useQuery({ 
     search: productSearch,
@@ -48,7 +51,8 @@ export function EditSaleModal({ open, onOpenChange, saleId, initialItems, onSucc
   
   useEffect(() => {
     setItems(initialItems);
-  }, [initialItems, open]);
+    setOrderNumber(initialOrderNumber || "");
+  }, [initialItems, initialOrderNumber, open]);
   
   const handleQuantityChange = (index: number, quantity: number) => {
     const newItems = [...items];
@@ -125,6 +129,7 @@ export function EditSaleModal({ open, onOpenChange, saleId, initialItems, onSucc
         totalPrice: item.totalPrice,
         _deleted: item._deleted,
       })),
+      ...(saleType === 'DELIVERY' && { orderNumber }),
     });
   };
   
@@ -142,6 +147,19 @@ export function EditSaleModal({ open, onOpenChange, saleId, initialItems, onSucc
         </DialogHeader>
         
         <div className="space-y-4">
+          {/* Número do Pedido (apenas para Delivery) */}
+          {saleType === 'DELIVERY' && (
+            <div className="space-y-2">
+              <Label htmlFor="orderNumber">Número do Pedido (Delivery)</Label>
+              <Input
+                id="orderNumber"
+                placeholder="Ex: 12345"
+                value={orderNumber}
+                onChange={(e) => setOrderNumber(e.target.value)}
+              />
+            </div>
+          )}
+          
           {/* Lista de itens */}
           <div className="space-y-2">
             <Label>Itens da Venda</Label>

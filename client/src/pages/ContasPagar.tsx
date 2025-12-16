@@ -10,7 +10,7 @@ import { Textarea } from "../components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table";
 import { Badge } from "../components/ui/badge";
 import { toast } from "sonner";
-import { DollarSign, User, ChevronRight, ArrowLeft } from "lucide-react";
+import { DollarSign, User, ChevronRight, ArrowLeft, ChevronLeft, Calendar } from "lucide-react";
 import DashboardLayout from "../components/DashboardLayout";
 
 // Função para determinar cor baseado no vencimento
@@ -36,6 +36,11 @@ export default function ContasPagar() {
   const [showPaymentDetailsModal, setShowPaymentDetailsModal] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [searchSupplier, setSearchSupplier] = useState("");
+  
+  // Estados do calendário
+  const [calendarYear, setCalendarYear] = useState(new Date().getFullYear());
+  const [calendarMonth, setCalendarMonth] = useState(new Date().getMonth() + 1);
+  const [selectedCalendarDay, setSelectedCalendarDay] = useState<number | null>(null);
   const [sortBy, setSortBy] = useState<"name" | "amount">("amount");
   const [historyFilters, setHistoryFilters] = useState({
     supplierId: "",
@@ -68,6 +73,12 @@ export default function ContasPagar() {
     { supplierId: selectedSupplierId! },
     { enabled: !!selectedSupplierId }
   );
+
+  // Query para calendário de contas a pagar
+  const { data: calendarData } = trpc.payables.calendar.useQuery({
+    year: calendarYear,
+    month: calendarMonth,
+  });
 
   // Query para histórico de pagamentos
   const { data: paymentHistory, refetch: refetchHistory } = trpc.payables.paymentHistory.useQuery(
@@ -497,6 +508,151 @@ export default function ContasPagar() {
           <p className="text-xs text-muted-foreground mt-1">
             Soma de todas as compras pendentes de pagamento
           </p>
+        </CardContent>
+      </Card>
+
+      {/* Calendário de Vencimentos */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Calendar className="h-5 w-5 text-muted-foreground" />
+              <CardTitle>Calendário de Vencimentos</CardTitle>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => {
+                  if (calendarMonth === 1) {
+                    setCalendarMonth(12);
+                    setCalendarYear(calendarYear - 1);
+                  } else {
+                    setCalendarMonth(calendarMonth - 1);
+                  }
+                  setSelectedCalendarDay(null);
+                }}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <span className="font-medium min-w-[140px] text-center">
+                {new Date(calendarYear, calendarMonth - 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
+              </span>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => {
+                  if (calendarMonth === 12) {
+                    setCalendarMonth(1);
+                    setCalendarYear(calendarYear + 1);
+                  } else {
+                    setCalendarMonth(calendarMonth + 1);
+                  }
+                  setSelectedCalendarDay(null);
+                }}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {/* Grid do calendário */}
+          <div className="grid grid-cols-7 gap-1 mb-4">
+            {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map(day => (
+              <div key={day} className="text-center text-sm font-medium text-muted-foreground py-2">
+                {day}
+              </div>
+            ))}
+            {(() => {
+              const firstDay = new Date(calendarYear, calendarMonth - 1, 1).getDay();
+              const daysInMonth = new Date(calendarYear, calendarMonth, 0).getDate();
+              const today = new Date();
+              const isCurrentMonth = today.getFullYear() === calendarYear && today.getMonth() + 1 === calendarMonth;
+              const todayDay = today.getDate();
+              
+              const cells = [];
+              
+              // Dias vazios antes do primeiro dia
+              for (let i = 0; i < firstDay; i++) {
+                cells.push(<div key={`empty-${i}`} className="h-16" />);
+              }
+              
+              // Dias do mês
+              for (let day = 1; day <= daysInMonth; day++) {
+                const dayData = calendarData?.find(d => d.day === day);
+                const isToday = isCurrentMonth && day === todayDay;
+                const isSelected = selectedCalendarDay === day;
+                const hasPayables = dayData && dayData.count > 0;
+                
+                cells.push(
+                  <div
+                    key={day}
+                    onClick={() => hasPayables && setSelectedCalendarDay(isSelected ? null : day)}
+                    className={`h-16 p-1 border rounded-md transition-colors ${
+                      isToday ? 'border-primary' : 'border-border'
+                    } ${
+                      isSelected ? 'bg-primary/10 border-primary' : ''
+                    } ${
+                      hasPayables ? 'cursor-pointer hover:bg-muted' : ''
+                    }`}
+                  >
+                    <div className={`text-sm ${isToday ? 'font-bold text-primary' : ''}`}>
+                      {day}
+                    </div>
+                    {hasPayables && (
+                      <div className="mt-1">
+                        <div className="text-xs font-semibold text-red-600 truncate">
+                          {formatCurrency(dayData.total)}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {dayData.count} {dayData.count === 1 ? 'título' : 'títulos'}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              }
+              
+              return cells;
+            })()}
+          </div>
+          
+          {/* Detalhes do dia selecionado */}
+          {selectedCalendarDay && calendarData && (() => {
+            const dayData = calendarData.find(d => d.day === selectedCalendarDay);
+            if (!dayData) return null;
+            
+            return (
+              <div className="border-t pt-4">
+                <h4 className="font-semibold mb-3">
+                  Vencimentos em {selectedCalendarDay}/{calendarMonth}/{calendarYear}
+                </h4>
+                <div className="space-y-2">
+                  {dayData.items.map((item: any) => (
+                    <div
+                      key={item.installmentId}
+                      className="flex items-center justify-between p-3 bg-muted rounded-md hover:bg-muted/80 cursor-pointer"
+                      onClick={() => setSelectedSupplierId(item.supplierId)}
+                    >
+                      <div>
+                        <p className="font-medium">{item.supplierName}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {item.docNumber ? `Doc: ${item.docNumber}` : `Compra #${item.purchaseOrderId}`}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-semibold text-red-600">{formatCurrency(item.amount)}</p>
+                        <Badge variant={item.status === 'OVERDUE' ? 'destructive' : 'secondary'}>
+                          {item.status === 'OVERDUE' ? 'Vencido' : 'Pendente'}
+                        </Badge>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
         </CardContent>
       </Card>
 

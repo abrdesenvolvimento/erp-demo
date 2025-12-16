@@ -129,3 +129,31 @@
 ## Bugs Reportados (12/12/2025 - Tarde)
 
 - [x] Cálculo de parcelas em Compras está incorreto - usa custo unitário ao invés do total (subtotal + frete + taxas) e não atualiza ao adicionar novos produtos
+
+
+## Sprint Dezembro/2025 - Melhorias Priorizadas
+
+### Bugs de UX (Prioridade 1)
+- [x] Formulário de Vendas - Aumentar para evitar scroll quando nome do produto é grande (problema também no mobile)
+- [x] Edição de Venda - Permitir editar número do pedido delivery em vendas com até 24h
+
+### Melhorias de UX (Prioridade 2)
+- [x] Calendário Contas a Pagar - Visão visual de valores a pagar por dia, ao clicar lista fornecedores/títulos
+- [x] Análise de Vendas - Iniciar sem datas selecionadas (usuário escolhe o período)
+- [x] Análise de Vendas - Adicionar totalizador de coluna (Total Produtos + % por produto)
+- [ ] Tela de Compras - Auto-scroll para linha do novo produto ao adicionar
+- [ ] Tela de Compras - Exibir subtotal (Qtd × Preço Unit.) em cada linha de produto
+
+### Documentação e Impressão (Prioridade 3)
+- [ ] Documento de Venda - Incluir Razão Social, Endereço, CNPJ e Inscrição Estadual da empresa
+- [ ] Documento de Venda - Mostrar nome do usuário que gerou a venda (tela + impressão)
+
+### Relatórios e Análises (Prioridade 4)
+- [ ] Margem Líquida Delivery - Card com margem considerando dedução de 7% do iFood
+- [ ] Módulo de Metas - Definir metas mensais e acompanhar evolução (Meta × Realizado)
+- [ ] Fechamento Mensal - Tela com receita, despesa e resultado (R$ e %)
+
+### Infraestrutura (Prioridade 5)
+- [ ] Backup - Definir estratégia de backup automático dos dados
+- [ ] Contingência - Plano para indisponibilidade do servidor de produção
+- [ ] Migração de Legado - Aguardando De/Para para importar dados históricos

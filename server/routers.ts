@@ -562,9 +562,10 @@ export const appRouter = router({
         })),
         discountAmount: z.string().optional(),
         surchargeAmount: z.string().optional(),
+        orderNumber: z.string().optional(), // Número do pedido delivery
       }))
       .mutation(async ({ input, ctx }) => {
-        const { saleId, items, discountAmount, surchargeAmount } = input;
+        const { saleId, items, discountAmount, surchargeAmount, orderNumber } = input;
         
         // 1. Buscar venda existente
         const sale = await db.getSale(saleId);
@@ -644,6 +645,7 @@ export const appRouter = router({
           discountAmount: discount.toFixed(2),
           surchargeAmount: surcharge.toFixed(2),
           finalAmount,
+          ...(orderNumber !== undefined && { orderNumber }),
         });
         
         // 10. Atualizar recebível (se for venda A_PRAZO)
@@ -1195,9 +1197,19 @@ export const appRouter = router({
         endDate: z.string().optional(),
         docNumber: z.string().optional(),
         paymentMethod: z.string().optional(),
+      }).optional())
+      .query(async ({ input }) => {
+        return await db.getPaymentHistory(input || {});
+      }),
+    
+    // Calendário de contas a pagar
+    calendar: adminProcedure
+      .input(z.object({
+        year: z.number(),
+        month: z.number().min(1).max(12),
       }))
       .query(async ({ input }) => {
-        return await db.getPaymentHistory(input);
+        return await db.getPayablesCalendar(input.year, input.month);
       }),
   }),
 

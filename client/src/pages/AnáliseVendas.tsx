@@ -60,7 +60,7 @@ export default function AnáliseVendas() {
   const isAdmin = user?.role === "admin";
 
   // Novos filtros de período
-  const [selectedMonths, setSelectedMonths] = useState<number[]>([12]); // Dezembro como padrão
+  const [selectedMonths, setSelectedMonths] = useState<number[]>([]); // Vazio - usuário escolhe o período
   const [selectedYears] = useState<number[]>([2025]); // 2025 fixo até migração de dados históricos
   const [selectedDays, setSelectedDays] = useState<number[]>(Array.from({ length: 31 }, (_, i) => i + 1)); // Todos os dias selecionados por padrão
   const [filtersExpanded, setFiltersExpanded] = useState(true); // Controle de expansão dos filtros
@@ -116,8 +116,8 @@ export default function AnáliseVendas() {
       }
     }
 
-    if (dates.length === 0) {
-      return { from: new Date(2025, 11, 1), to: new Date(2025, 11, 31) };
+    if (dates.length === 0 || selectedMonths.length === 0) {
+      return null; // Retorna null quando não há período selecionado
     }
 
     // Encontrar menor e maior data
@@ -143,88 +143,88 @@ export default function AnáliseVendas() {
   // Queries com filtros (por produto)
   const { data: valueData, isLoading: isValueLoading } = trpc.salesAnalysis.byValue.useQuery(
     { 
-      startDate: dateRange.from, 
-      endDate: dateRange.to,
+      startDate: dateRange?.from ?? new Date(), 
+      endDate: dateRange?.to ?? new Date(),
       productIds: selectedProductIds.length > 0 ? selectedProductIds : undefined,
       subcategoryId: selectedSubcategoryId,
       channels: selectedChannels.length > 0 ? selectedChannels : undefined,
       paymentMethod: selectedPaymentMethod,
     },
-    { enabled: isAdmin && groupBy === "product" }
+    { enabled: isAdmin && groupBy === "product" && !!dateRange }
   );
 
   const { data: quantityData, isLoading: isQuantityLoading } = trpc.salesAnalysis.byQuantity.useQuery(
     { 
-      startDate: dateRange.from, 
-      endDate: dateRange.to,
+      startDate: dateRange?.from ?? new Date(), 
+      endDate: dateRange?.to ?? new Date(),
       productIds: selectedProductIds.length > 0 ? selectedProductIds : undefined,
       subcategoryId: selectedSubcategoryId,
       channels: selectedChannels.length > 0 ? selectedChannels : undefined,
       paymentMethod: selectedPaymentMethod,
     },
-    { enabled: isAdmin && groupBy === "product" }
+    { enabled: isAdmin && groupBy === "product" && !!dateRange }
   );
 
   const { data: categoryData, isLoading: isCategoryLoading } = trpc.salesAnalysis.byCategoryValue.useQuery(
     { 
-      startDate: dateRange.from, 
-      endDate: dateRange.to,
+      startDate: dateRange?.from ?? new Date(), 
+      endDate: dateRange?.to ?? new Date(),
       productIds: selectedProductIds.length > 0 ? selectedProductIds : undefined,
       subcategoryId: selectedSubcategoryId,
       channels: selectedChannels.length > 0 ? selectedChannels : undefined,
       paymentMethod: selectedPaymentMethod,
     },
-    { enabled: isAdmin && groupBy === "product" }
+    { enabled: isAdmin && groupBy === "product" && !!dateRange }
   );
 
   // Queries temporais
   const { data: dayData, isLoading: isDayLoading } = trpc.salesAnalysis.byDay.useQuery(
     { 
-      startDate: dateRange.from, 
-      endDate: dateRange.to,
+      startDate: dateRange?.from ?? new Date(), 
+      endDate: dateRange?.to ?? new Date(),
       productIds: selectedProductIds.length > 0 ? selectedProductIds : undefined,
       subcategoryId: selectedSubcategoryId,
       channels: selectedChannels.length > 0 ? selectedChannels : undefined,
       paymentMethod: selectedPaymentMethod,
     },
-    { enabled: isAdmin && groupBy === "day" }
+    { enabled: isAdmin && groupBy === "day" && !!dateRange }
   );
 
   const { data: weekData, isLoading: isWeekLoading } = trpc.salesAnalysis.byWeek.useQuery(
     { 
-      startDate: dateRange.from, 
-      endDate: dateRange.to,
+      startDate: dateRange?.from ?? new Date(), 
+      endDate: dateRange?.to ?? new Date(),
       productIds: selectedProductIds.length > 0 ? selectedProductIds : undefined,
       subcategoryId: selectedSubcategoryId,
       channels: selectedChannels.length > 0 ? selectedChannels : undefined,
       paymentMethod: selectedPaymentMethod,
     },
-    { enabled: isAdmin && groupBy === "week" }
+    { enabled: isAdmin && groupBy === "week" && !!dateRange }
   );
 
   const { data: monthData, isLoading: isMonthLoading } = trpc.salesAnalysis.byMonth.useQuery(
     { 
-      startDate: dateRange.from, 
-      endDate: dateRange.to,
+      startDate: dateRange?.from ?? new Date(), 
+      endDate: dateRange?.to ?? new Date(),
       productIds: selectedProductIds.length > 0 ? selectedProductIds : undefined,
       subcategoryId: selectedSubcategoryId,
       channels: selectedChannels.length > 0 ? selectedChannels : undefined,
       paymentMethod: selectedPaymentMethod,
     },
-    { enabled: isAdmin && groupBy === "month" }
+    { enabled: isAdmin && groupBy === "month" && !!dateRange }
   );
 
   // Query para matriz produto×dia (Evolução Diária)
   const { data: matrixData, isLoading: isMatrixLoading } = trpc.salesAnalysis.byProductAndDate.useQuery(
     { 
-      startDate: dateRange.from, 
-      endDate: dateRange.to,
+      startDate: dateRange?.from ?? new Date(), 
+      endDate: dateRange?.to ?? new Date(),
       productIds: selectedProductIds.length > 0 ? selectedProductIds : undefined,
       subcategoryId: selectedSubcategoryId,
       channels: selectedChannels.length > 0 ? selectedChannels : undefined,
       paymentMethod: selectedPaymentMethod,
     },
-    { enabled: isAdmin }
+    { enabled: isAdmin && !!dateRange }
   );
 
   // Query para comparação de períodos
@@ -674,8 +674,8 @@ export default function AnáliseVendas() {
                       const dates: string[] = [];
                       const weeks: { start: string; end: string; dates: string[] }[] = [];
                       
-                      const current = new Date(dateRange.from);
-                      const end = new Date(dateRange.to);
+                      const current = new Date(dateRange?.from ?? new Date());
+                      const end = new Date(dateRange?.to ?? new Date());
                       
                       if (groupBy === 'week') {
                         // Agrupar por semanas
@@ -896,7 +896,12 @@ export default function AnáliseVendas() {
                 </Button>
               </CardHeader>
               <CardContent>
-                {(groupBy === "product" && isValueLoading) || 
+                {!dateRange ? (
+                  <div className="text-center py-8">
+                    <p className="text-lg font-medium text-muted-foreground">Selecione um período para visualizar os dados</p>
+                    <p className="text-sm text-muted-foreground mt-2">Use os filtros de Mês acima para escolher o período de análise</p>
+                  </div>
+                ) : (groupBy === "product" && isValueLoading) || 
                  (groupBy === "day" && isDayLoading) ||
                  (groupBy === "week" && isWeekLoading) ||
                  (groupBy === "month" && isMonthLoading) ? (
@@ -915,20 +920,47 @@ export default function AnáliseVendas() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {valueData.map((item) => (
-                          <TableRow key={item.productId}>
-                            <TableCell className="font-medium">{item.productName}</TableCell>
-                            <TableCell className="text-right">{formatCurrency(item.totalQuantity)}</TableCell>
-                            <TableCell className="text-right text-emerald-600 font-semibold">
-                              R$ {formatCurrency(item.totalRevenue)}
-                            </TableCell>
-                            <TableCell className="text-right text-red-600">R$ {formatCurrency(item.totalCost)}</TableCell>
-                            <TableCell className="text-right text-blue-600 font-semibold">
-                              R$ {formatCurrency(parseFloat(item.totalRevenue) - parseFloat(item.totalCost))}
-                            </TableCell>
-                            <TableCell className="text-right font-bold">{item.marginPercent}%</TableCell>
-                          </TableRow>
-                        ))}
+                        {valueData.map((item) => {
+                          const totalQty = valueData.reduce((sum, i) => sum + parseFloat(i.totalQuantity), 0);
+                          const itemPercent = totalQty > 0 ? ((parseFloat(item.totalQuantity) / totalQty) * 100).toFixed(1) : '0.0';
+                          return (
+                            <TableRow key={item.productId}>
+                              <TableCell className="font-medium">{item.productName}</TableCell>
+                              <TableCell className="text-right">
+                                {formatCurrency(item.totalQuantity)}
+                                <span className="text-xs text-muted-foreground ml-1">({itemPercent}%)</span>
+                              </TableCell>
+                              <TableCell className="text-right text-emerald-600 font-semibold">
+                                R$ {formatCurrency(item.totalRevenue)}
+                              </TableCell>
+                              <TableCell className="text-right text-red-600">R$ {formatCurrency(item.totalCost)}</TableCell>
+                              <TableCell className="text-right text-blue-600 font-semibold">
+                                R$ {formatCurrency(parseFloat(item.totalRevenue) - parseFloat(item.totalCost))}
+                              </TableCell>
+                              <TableCell className="text-right font-bold">{item.marginPercent}%</TableCell>
+                            </TableRow>
+                          );
+                        })}
+                        {/* Linha de Totais */}
+                        {(() => {
+                          const totals = valueData.reduce((acc, item) => ({
+                            qty: acc.qty + parseFloat(item.totalQuantity),
+                            revenue: acc.revenue + parseFloat(item.totalRevenue),
+                            cost: acc.cost + parseFloat(item.totalCost),
+                          }), { qty: 0, revenue: 0, cost: 0 });
+                          const profit = totals.revenue - totals.cost;
+                          const margin = totals.revenue > 0 ? ((profit / totals.revenue) * 100).toFixed(1) : '0.0';
+                          return (
+                            <TableRow className="bg-muted/50 font-bold border-t-2">
+                              <TableCell>TOTAL ({valueData.length} produtos)</TableCell>
+                              <TableCell className="text-right">{formatCurrency(totals.qty)}</TableCell>
+                              <TableCell className="text-right text-emerald-600">R$ {formatCurrency(totals.revenue)}</TableCell>
+                              <TableCell className="text-right text-red-600">R$ {formatCurrency(totals.cost)}</TableCell>
+                              <TableCell className="text-right text-blue-600">R$ {formatCurrency(profit)}</TableCell>
+                              <TableCell className="text-right">{margin}%</TableCell>
+                            </TableRow>
+                          );
+                        })()}
                       </TableBody>
                     </Table>
                   </div>
@@ -1318,8 +1350,8 @@ export default function AnáliseVendas() {
 
                               // Unir todos os produtos
                               const allProductIds = new Set([
-                                ...period1Map.keys(),
-                                ...period2Map.keys()
+                                ...Array.from(period1Map.keys()),
+                                ...Array.from(period2Map.keys())
                               ]);
 
                               // Criar array de comparação
