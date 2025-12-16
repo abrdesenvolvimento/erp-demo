@@ -633,7 +633,26 @@ export default function ContasPagar() {
                     <div
                       key={item.installmentId}
                       className="flex items-center justify-between p-3 bg-muted rounded-md hover:bg-muted/80 cursor-pointer"
-                      onClick={() => setSelectedSupplierId(item.supplierId)}
+                      onClick={() => {
+                        // Abrir modal de pagamento direto para este título
+                        setSelectedInstallment({
+                          id: item.installmentId,
+                          amount: item.amount,
+                          dueDate: item.dueDate,
+                          supplierName: item.supplierName,
+                          docNumber: item.docNumber,
+                          purchaseOrderId: item.purchaseOrderId,
+                          paymentMethod: item.paymentMethod,
+                        });
+                        setPaymentForm({
+                          paidDate: new Date().toISOString().split('T')[0],
+                          paidAmount: item.amount,
+                          additionalAmount: "",
+                          paymentMethod: "",
+                          notes: ""
+                        });
+                        setShowPaymentModal(true);
+                      }}
                     >
                       <div className="flex-1">
                         <p className="font-medium">{item.supplierName}</p>

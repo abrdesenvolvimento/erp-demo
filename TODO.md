@@ -164,3 +164,9 @@
 - [x] Compras - Chave de acesso não carrega ao editar compra existente
 - [x] Contas a Pagar Calendário - Mostrar forma de pagamento (destacar pagamentos com cartão de crédito pessoal ex: "Crédito G")
 - [x] Análise de Vendas - Totalizador já estava implementado corretamente na aba "Análise de Valores"
+
+### Bugs Reportados (16/12/2025 - Tarde)
+- [x] Análise de Vendas - Iniciar sem período selecionado (selectedDays agora inicia vazio)
+- [x] Análise de Vendas - Adicionar % de participação na coluna "Total" da tabela de produtos (100% em todas as colunas do totalizador)
+- [x] Contas a Pagar Calendário - Ao clicar no item do dia, agora abre modal de pagamento direto (não vai mais para detalhes do fornecedor)
+- [x] Divergência de faturamento - Corrigido: getSalesCalendar agora exclui vendas canceladas (consistente com dashboard.stats)

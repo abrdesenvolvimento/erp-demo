@@ -62,7 +62,7 @@ export default function AnáliseVendas() {
   // Novos filtros de período
   const [selectedMonths, setSelectedMonths] = useState<number[]>([]); // Vazio - usuário escolhe o período
   const [selectedYears] = useState<number[]>([2025]); // 2025 fixo até migração de dados históricos
-  const [selectedDays, setSelectedDays] = useState<number[]>(Array.from({ length: 31 }, (_, i) => i + 1)); // Todos os dias selecionados por padrão
+  const [selectedDays, setSelectedDays] = useState<number[]>([]); // Vazio - usuário escolhe os dias
   const [filtersExpanded, setFiltersExpanded] = useState(true); // Controle de expansão dos filtros
 
   // Estados de filtros de segmentação
@@ -953,10 +953,22 @@ export default function AnáliseVendas() {
                           return (
                             <TableRow className="bg-muted/50 font-bold border-t-2">
                               <TableCell>TOTAL ({valueData.length} produtos)</TableCell>
-                              <TableCell className="text-right">{formatCurrency(totals.qty)}</TableCell>
-                              <TableCell className="text-right text-emerald-600">R$ {formatCurrency(totals.revenue)}</TableCell>
-                              <TableCell className="text-right text-red-600">R$ {formatCurrency(totals.cost)}</TableCell>
-                              <TableCell className="text-right text-blue-600">R$ {formatCurrency(profit)}</TableCell>
+                              <TableCell className="text-right">
+                                {formatCurrency(totals.qty)}
+                                <span className="text-xs text-muted-foreground ml-1">(100%)</span>
+                              </TableCell>
+                              <TableCell className="text-right text-emerald-600">
+                                R$ {formatCurrency(totals.revenue)}
+                                <span className="text-xs text-muted-foreground ml-1">(100%)</span>
+                              </TableCell>
+                              <TableCell className="text-right text-red-600">
+                                R$ {formatCurrency(totals.cost)}
+                                <span className="text-xs text-muted-foreground ml-1">(100%)</span>
+                              </TableCell>
+                              <TableCell className="text-right text-blue-600">
+                                R$ {formatCurrency(profit)}
+                                <span className="text-xs text-muted-foreground ml-1">(100%)</span>
+                              </TableCell>
                               <TableCell className="text-right">{margin}%</TableCell>
                             </TableRow>
                           );

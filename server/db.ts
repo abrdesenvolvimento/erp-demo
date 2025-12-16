@@ -2930,6 +2930,11 @@ export async function getSalesCalendar(year: number, month: number) {
   const calendar: Record<number, { day: number; balcao: number; delivery: number; aPrazo: number; total: number; count: number }> = {};
 
   for (const sale of allSales) {
+    // Excluir vendas canceladas (consistente com dashboard.stats)
+    if (sale.status === 'CANCELLED') {
+      continue;
+    }
+    
     const saleDate = new Date(sale.saleDate || sale.createdAt || new Date());
     
     // Converter para horário de Brasília para obter ano/mês/dia corretos
