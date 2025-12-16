@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { formatDateForInput, getTodayInBrazil } from "@shared/dateUtils";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
@@ -56,6 +56,7 @@ export default function Vendas() {
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [saleType, setSaleType] = useState<SaleType | null>(null);
   const [step, setStep] = useState<"type" | "form">("type");
+  const lastItemRef = useRef<HTMLTableRowElement>(null);
   
   // Filter states for sales list
   const [filterFromDate, setFilterFromDate] = useState<string>("");
@@ -320,6 +321,11 @@ export default function Vendas() {
     setProductSearch("");
     setSelectedProduct(null);
     setQuantity("1");
+    
+    // Auto-scroll para o último item adicionado
+    setTimeout(() => {
+      lastItemRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }, 100);
   };
 
   const handleRemoveItem = (index: number) => {
@@ -870,7 +876,10 @@ export default function Vendas() {
                       </TableHeader>
                       <TableBody>
                         {saleItems.map((item, index) => (
-                          <TableRow key={index}>
+                          <TableRow 
+                            key={index}
+                            ref={index === saleItems.length - 1 ? lastItemRef : null}
+                          >
                             <TableCell>{item.productName}</TableCell>
                             <TableCell>{item.quantity}</TableCell>
                             <TableCell>{formatCurrency(parseFloat(item.unitPrice))}</TableCell>

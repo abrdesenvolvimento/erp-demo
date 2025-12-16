@@ -157,3 +157,10 @@
 - [ ] Backup - Definir estratégia de backup automático dos dados
 - [ ] Contingência - Plano para indisponibilidade do servidor de produção
 - [ ] Migração de Legado - Aguardando De/Para para importar dados históricos
+
+### Bugs Reportados (16/12/2025)
+- [x] Vendas - Auto-scroll para linha do novo produto ao adicionar (scroll sobe em vez de descer)
+- [x] Compras - Auto-scroll para linha do novo produto ao adicionar
+- [x] Compras - Chave de acesso não carrega ao editar compra existente
+- [x] Contas a Pagar Calendário - Mostrar forma de pagamento (destacar pagamentos com cartão de crédito pessoal ex: "Crédito G")
+- [x] Análise de Vendas - Totalizador já estava implementado corretamente na aba "Análise de Valores"

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { formatDateForInput, getTodayInBrazil, parseDateInBrazil, addDays } from "@shared/dateUtils";
 import { useAuth } from "@/_core/hooks/useAuth";
 import DashboardLayout from "@/components/DashboardLayout";
@@ -40,6 +40,7 @@ const PAYMENT_METHODS = [
 export default function Compras() {
   const { user } = useAuth();
   const [isCreating, setIsCreating] = useState(false);
+  const lastItemRef = useRef<HTMLTableRowElement>(null);
   const [supplierDialogOpen, setSupplierDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [items, setItems] = useState<PurchaseItem[]>([]);
@@ -203,6 +204,11 @@ export default function Compras() {
       }]);
     }
     setSearchTerm("");
+    
+    // Auto-scroll para o último item adicionado
+    setTimeout(() => {
+      lastItemRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }, 100);
   };
 
   const handleRemoveItem = (productId: number) => {
@@ -240,6 +246,7 @@ export default function Compras() {
     setSupplierId(purchase.purchaseOrder.supplierId);
     setDocType(purchase.purchaseOrder.docType as "NOTA_FISCAL" | "CUPOM" | "SEM_DOCUMENTO");
     setDocNumber(purchase.purchaseOrder.docNumber || "");
+    setAccessKey(purchase.purchaseOrder.accessKey || ""); // Carregar chave de acesso
     setNotes(purchase.purchaseOrder.notes || "");
     
     // Marcar para edição e selecionar compra (itens serão carregados via useQuery)
@@ -530,8 +537,12 @@ export default function Compras() {
                                 </tr>
                               </thead>
                               <tbody>
-                                {items.map((item) => (
-                                  <tr key={item.productId} className="border-b">
+                                {items.map((item, index) => (
+                                  <tr 
+                                    key={item.productId} 
+                                    className="border-b"
+                                    ref={index === items.length - 1 ? lastItemRef : null}
+                                  >
                                     <td className="p-3">{item.productName}</td>
                                     <td className="p-3">
                                       <Input

@@ -3936,6 +3936,7 @@ export async function getPayablesCalendar(year: number, month: number) {
       pi.status,
       po.id as purchaseOrderId,
       po.docNumber,
+      po.paymentMethod,
       p.id as supplierId,
       p.name as supplierName
     FROM purchaseInstallments pi
@@ -3961,6 +3962,7 @@ export async function getPayablesCalendar(year: number, month: number) {
       status: string;
       purchaseOrderId: number;
       docNumber: string | null;
+      paymentMethod: string;
       supplierId: number;
       supplierName: string;
     }>;
@@ -3980,6 +3982,7 @@ export async function getPayablesCalendar(year: number, month: number) {
       status: row.status,
       purchaseOrderId: row.purchaseOrderId,
       docNumber: row.docNumber,
+      paymentMethod: row.paymentMethod,
       supplierId: row.supplierId,
       supplierName: row.supplierName,
     });

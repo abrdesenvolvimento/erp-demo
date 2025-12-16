@@ -635,11 +635,20 @@ export default function ContasPagar() {
                       className="flex items-center justify-between p-3 bg-muted rounded-md hover:bg-muted/80 cursor-pointer"
                       onClick={() => setSelectedSupplierId(item.supplierId)}
                     >
-                      <div>
+                      <div className="flex-1">
                         <p className="font-medium">{item.supplierName}</p>
                         <p className="text-sm text-muted-foreground">
                           {item.docNumber ? `Doc: ${item.docNumber}` : `Compra #${item.purchaseOrderId}`}
                         </p>
+                        {item.paymentMethod && (
+                          <p className={`text-xs font-medium mt-1 ${
+                            item.paymentMethod.toLowerCase().includes('crédito') 
+                              ? 'text-orange-600' 
+                              : 'text-muted-foreground'
+                          }`}>
+                            {item.paymentMethod}
+                          </p>
+                        )}
                       </div>
                       <div className="text-right">
                         <p className="font-semibold text-red-600">{formatCurrency(item.amount)}</p>
