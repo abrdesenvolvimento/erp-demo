@@ -193,3 +193,6 @@
 - [x] Contas a Pagar - Renomear "Fornecedores com Saldo a Pagar" para "Histórico de Fornecedores"
 - [x] Contas a Pagar - Mostrar todos os fornecedores (com ou sem saldo pendente) no histórico
 - [x] Contas a Pagar - Manter mesma tela de detalhes ao clicar no fornecedor
+- [x] Contas a Pagar - Histórico de Fornecedores: exibir resultados apenas após confirmar pesquisa
+- [x] Contas a Pagar - Histórico de Fornecedores: adicionar filtro por status (todos, com saldo, sem saldo)
+- [x] Contas a Pagar - Histórico de Fornecedores: tela mais limpa com filtros no topo

@@ -135,6 +135,8 @@ export default function ContasPagar() {
     setShowPaymentModal(true);
   };
   const [sortBy, setSortBy] = useState<"name" | "amount">("amount");
+  const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "paid">("all");
+  const [showSupplierResults, setShowSupplierResults] = useState(false);
   const [historyFilters, setHistoryFilters] = useState({
     supplierId: "",
     startDate: "",
@@ -763,25 +765,40 @@ export default function ContasPagar() {
         </CardContent>
       </Card>
 
-      {/* Lista de Fornecedores */}
+      {/* Histórico de Fornecedores */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <CardTitle>Histórico de Fornecedores</CardTitle>
+          <CardDescription>Consulte o histórico de compras e despesas por fornecedor</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Filtros */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
-              <CardTitle>Histórico de Fornecedores</CardTitle>
-              <CardDescription>
-                Clique em um fornecedor para ver detalhes de compras e despesas
-              </CardDescription>
-            </div>
-            <div className="flex gap-2">
+              <Label>Buscar Fornecedor</Label>
               <Input
-                placeholder="Buscar fornecedor..."
+                placeholder="Nome do fornecedor..."
                 value={searchSupplier}
                 onChange={(e) => setSearchSupplier(e.target.value)}
-                className="w-64"
               />
+            </div>
+            <div>
+              <Label>Status</Label>
+              <Select value={statusFilter} onValueChange={(v: any) => setStatusFilter(v)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
+                  <SelectItem value="pending">Com saldo pendente</SelectItem>
+                  <SelectItem value="paid">Sem saldo</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Ordenar por</Label>
               <Select value={sortBy} onValueChange={(v: any) => setSortBy(v)}>
-                <SelectTrigger className="w-48">
+                <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -790,20 +807,41 @@ export default function ContasPagar() {
                 </SelectContent>
               </Select>
             </div>
+            <div className="flex items-end">
+              <Button 
+                onClick={() => setShowSupplierResults(true)}
+                className="w-full"
+              >
+                Buscar Fornecedores
+              </Button>
+            </div>
           </div>
-        </CardHeader>
-        <CardContent>
-          {!suppliers || suppliers.length === 0 ? (
+          
+          {/* Resultados */}
+          {!showSupplierResults ? (
+            <p className="text-center text-muted-foreground py-8">
+              Use os filtros acima e clique em "Buscar Fornecedores" para consultar o histórico
+            </p>
+          ) : !suppliers || suppliers.length === 0 ? (
             <p className="text-center text-muted-foreground py-8">
               Nenhum fornecedor cadastrado
             </p>
           ) : (
             <div className="space-y-2">
               {suppliers
-                .filter((s) => 
-                  !searchSupplier || 
-                  s.supplierName.toLowerCase().includes(searchSupplier.toLowerCase())
-                )
+                .filter((s) => {
+                  // Filtro por nome
+                  const matchesName = !searchSupplier || 
+                    s.supplierName.toLowerCase().includes(searchSupplier.toLowerCase());
+                  
+                  // Filtro por status
+                  const hasPending = parseFloat(s.totalPending) > 0;
+                  const matchesStatus = statusFilter === "all" ||
+                    (statusFilter === "pending" && hasPending) ||
+                    (statusFilter === "paid" && !hasPending);
+                  
+                  return matchesName && matchesStatus;
+                })
                 .sort((a, b) => {
                   if (sortBy === "amount") {
                     return parseFloat(b.totalPending) - parseFloat(a.totalPending);
