@@ -184,3 +184,7 @@
 ### Bugs Reportados (17/12/2025 - Manhã)
 - [x] Contas a Pagar Calendário - Adicionado botão "Pagar" explícito em cada título do dia (mais claro para o usuário)
 - [x] Dashboard Margem Bruta - Corrigido para usar mesma lógica de timezone do Dashboard (America/Sao_Paulo)
+
+### Bugs Reportados (17/12/2025 - Manhã - Parte 2)
+- [x] Contas a Pagar - Botão "Pagar" agora abre o modal corretamente (criado componente CalendarPayButton separado)
+- [ ] Dashboard Margem Bruta - Valor ainda diverge do card Faturamento Mês (investigar mais)

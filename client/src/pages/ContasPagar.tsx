@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
+import { CalendarPayButton } from "../components/CalendarPayButton";
 import { trpc } from "../lib/trpc";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
 import { Button } from "../components/ui/button";
@@ -41,6 +42,98 @@ export default function ContasPagar() {
   const [calendarYear, setCalendarYear] = useState(new Date().getFullYear());
   const [calendarMonth, setCalendarMonth] = useState(new Date().getMonth() + 1);
   const [selectedCalendarDay, setSelectedCalendarDay] = useState<number | null>(null);
+  const [calendarPayItem, setCalendarPayItem] = useState<any>(null);
+  
+  // Ref para armazenar o item do calendário a ser pago
+  const calendarPayItemRef = useRef<any>(null);
+  
+  // useEffect para abrir modal quando calendarPayItem mudar
+  useEffect(() => {
+    if (calendarPayItem) {
+      console.log('calendarPayItem mudou:', calendarPayItem);
+      setSelectedInstallment({
+        id: calendarPayItem.installmentId,
+        pendingAmount: calendarPayItem.amount,
+        dueDate: calendarPayItem.dueDate,
+        supplierName: calendarPayItem.supplierName,
+        docNumber: calendarPayItem.docNumber,
+        purchaseOrderId: calendarPayItem.purchaseOrderId,
+        paymentMethod: calendarPayItem.paymentMethod,
+      });
+      setPaymentForm({
+        paidDate: new Date().toISOString().split('T')[0],
+        paidAmount: calendarPayItem.amount.toString(),
+        additionalAmount: "",
+        paymentMethod: calendarPayItem.paymentMethod || "",
+        notes: "",
+      });
+      setShowPaymentModal(true);
+      setCalendarPayItem(null); // Limpar para permitir novo clique
+    }
+  }, [calendarPayItem]);
+  
+  // useEffect para event delegation no botão Pagar do calendário
+  useEffect(() => {
+    const handlePayButtonClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      const payButton = target.closest('[data-pay-item]');
+      if (payButton) {
+        e.preventDefault();
+        e.stopPropagation();
+        const itemData = payButton.getAttribute('data-pay-item');
+        if (itemData) {
+          try {
+            const item = JSON.parse(itemData);
+            console.log('Event delegation - item:', item);
+            setSelectedInstallment({
+              id: item.installmentId,
+              pendingAmount: item.amount,
+              dueDate: item.dueDate,
+              supplierName: item.supplierName,
+              docNumber: item.docNumber,
+              purchaseOrderId: item.purchaseOrderId,
+              paymentMethod: item.paymentMethod,
+            });
+            setPaymentForm({
+              paidDate: new Date().toISOString().split('T')[0],
+              paidAmount: item.amount.toString(),
+              additionalAmount: "",
+              paymentMethod: item.paymentMethod || "",
+              notes: "",
+            });
+            setShowPaymentModal(true);
+          } catch (err) {
+            console.error('Erro ao parsear item:', err);
+          }
+        }
+      }
+    };
+    
+    document.addEventListener('click', handlePayButtonClick, true);
+    return () => document.removeEventListener('click', handlePayButtonClick, true);
+  }, []);
+  
+  // Handler para abrir modal de pagamento do calendário
+  const handleCalendarPayClick = (item: any) => {
+    console.log('handleCalendarPayClick chamado com:', item);
+    setSelectedInstallment({
+      id: item.installmentId,
+      pendingAmount: item.amount,
+      dueDate: item.dueDate,
+      supplierName: item.supplierName,
+      docNumber: item.docNumber,
+      purchaseOrderId: item.purchaseOrderId,
+      paymentMethod: item.paymentMethod,
+    });
+    setPaymentForm({
+      paidDate: new Date().toISOString().split('T')[0],
+      paidAmount: item.amount.toString(),
+      additionalAmount: "",
+      paymentMethod: "",
+      notes: ""
+    });
+    setShowPaymentModal(true);
+  };
   const [sortBy, setSortBy] = useState<"name" | "amount">("amount");
   const [historyFilters, setHistoryFilters] = useState({
     supplierId: "",
@@ -625,77 +718,48 @@ export default function ContasPagar() {
           </div>
           
           {/* Detalhes do dia selecionado */}
-          {selectedCalendarDay && calendarData && (() => {
-            const dayData = calendarData.find(d => d.day === selectedCalendarDay);
-            if (!dayData) return null;
-            
-            return (
-              <div className="border-t pt-4">
-                <h4 className="font-semibold mb-3">
-                  Vencimentos em {selectedCalendarDay}/{calendarMonth}/{calendarYear}
-                </h4>
-                <div className="space-y-2">
-                  {dayData.items.map((item: any) => (
-                    <div
-                      key={item.installmentId}
-                      className="flex items-center justify-between p-3 bg-muted rounded-md"
-                    >
-                      <div className="flex-1">
-                        <p className="font-medium">{item.supplierName}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {item.docNumber ? `Doc: ${item.docNumber}` : `Compra #${item.purchaseOrderId}`}
-                        </p>
-                        {item.paymentMethod && (
-                          <span className={`inline-block text-xs font-medium mt-1 px-2 py-0.5 rounded ${
-                            item.paymentMethod.toLowerCase().includes('crédito') 
-                              ? 'bg-orange-100 text-orange-700' 
-                              : 'bg-gray-100 text-gray-600'
-                          }`}>
-                            {item.paymentMethod}
-                          </span>
-                        )}
-                      </div>
-                      <div className="text-right flex items-center gap-3">
-                        <div>
-                          <p className="font-semibold text-red-600">{formatCurrency(item.amount)}</p>
-                          <Badge variant={item.status === 'OVERDUE' ? 'destructive' : 'secondary'}>
-                            {item.status === 'OVERDUE' ? 'Vencido' : 'Pendente'}
-                          </Badge>
-                        </div>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="ml-2"
-                          onClick={() => {
-                            console.log('Botão Pagar clicado:', item);
-                            setSelectedInstallment({
-                              id: item.installmentId,
-                              pendingAmount: item.amount,
-                              dueDate: item.dueDate,
-                              supplierName: item.supplierName,
-                              docNumber: item.docNumber,
-                              purchaseOrderId: item.purchaseOrderId,
-                              paymentMethod: item.paymentMethod,
-                            });
-                            setPaymentForm({
-                              paidDate: new Date().toISOString().split('T')[0],
-                              paidAmount: item.amount.toString(),
-                              additionalAmount: "",
-                              paymentMethod: "",
-                              notes: ""
-                            });
-                            setShowPaymentModal(true);
-                          }}
-                        >
-                          Pagar
-                        </Button>
-                      </div>
+          {selectedCalendarDay && calendarData && calendarData.find(d => d.day === selectedCalendarDay) && (
+            <div className="border-t pt-4">
+              <h4 className="font-semibold mb-3">
+                Vencimentos em {selectedCalendarDay.toString().padStart(2, '0')}/{calendarMonth.toString().padStart(2, '0')}/{calendarYear}
+              </h4>
+              <div className="space-y-2">
+                {calendarData.find(d => d.day === selectedCalendarDay)!.items.map((item: any) => (
+                  <div
+                    key={item.installmentId}
+                    className="flex items-center justify-between p-3 bg-muted rounded-md"
+                  >
+                    <div className="flex-1">
+                      <p className="font-medium">{item.supplierName}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {item.docNumber ? `Doc: ${item.docNumber}` : `Compra #${item.purchaseOrderId}`}
+                      </p>
+                      {item.paymentMethod && (
+                        <span className={`inline-block text-xs font-medium mt-1 px-2 py-0.5 rounded ${
+                          item.paymentMethod.toLowerCase().includes('crédito') 
+                            ? 'bg-orange-100 text-orange-700' 
+                            : 'bg-gray-100 text-gray-600'
+                        }`}>
+                          {item.paymentMethod}
+                        </span>
+                      )}
                     </div>
-                  ))}
-                </div>
+                    <div className="text-right flex items-center gap-3">
+                      <div>
+                        <p className="font-semibold text-red-600">{formatCurrency(item.amount)}</p>
+                        <Badge variant={item.status === 'OVERDUE' ? 'destructive' : 'secondary'}>
+                          {item.status === 'OVERDUE' ? 'Vencido' : 'Pendente'}
+                        </Badge>
+                      </div>
+                      <CalendarPayButton
+                        item={item}
+                      />
+                    </div>
+                  </div>
+                ))}
               </div>
-            );
-          })()}
+            </div>
+          )}
         </CardContent>
       </Card>
 
