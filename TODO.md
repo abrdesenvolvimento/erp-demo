@@ -178,5 +178,5 @@
 - [x] Análise de Vendas - Produtos já selecionados agora são ocultados no filtro de busca
 
 ### Bugs Reportados (16/12/2025 - Noite - Parte 2)
-- [x] Análise de Vendas - % agora aparece nas colunas (servidor reiniciado para aplicar mudanças)
-- [x] Contas a Pagar - Modal de pagamento corrigido (ajustado DialogDescription para usar campos corretos: supplierName, docNumber, pendingAmount)
+- [x] Análise de Vendas - % adicionado na coluna Total da aba "Evolução Diária" (calcula % de participação de cada produto)
+- [x] Contas a Pagar - Modal de pagamento simplificado (chama setShowPaymentModal diretamente sem usar handleOpenPaymentModal)

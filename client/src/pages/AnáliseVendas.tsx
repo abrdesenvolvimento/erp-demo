@@ -826,62 +826,76 @@ export default function AnáliseVendas() {
                             </tr>
                           </thead>
                           <tbody>
-                            {Array.from(productMap.entries()).map(([productId, product]) => (
-                              <tr key={productId}>
-                                <td className="sticky left-0 z-10 bg-white border px-3 py-2 font-medium">
-                                  {product.name}
-                                </td>
-                                {groupBy === 'week' ? (
-                                  weeks.map((week, idx) => {
-                                    // Somar quantidades de todos os dias da semana
-                                    let weekQuantity = 0;
-                                    let weekRevenue = 0;
-                                    week.dates.forEach(date => {
-                                      const sale = product.sales.get(date);
-                                      if (sale) {
-                                        weekQuantity += sale.quantity;
-                                        weekRevenue += sale.revenue;
-                                      }
-                                    });
-                                    
-                                    return (
-                                      <td 
-                                        key={`week-${idx}`} 
-                                        className={`border px-2 py-2 text-center ${
-                                          getHeatmapColor(weekQuantity)
-                                        }`}
-                                        title={weekQuantity > 0 ? `${weekQuantity} unidades\nR$ ${formatCurrency(weekRevenue)}` : undefined}
-                                      >
-                                        {weekQuantity > 0 ? weekQuantity : '-'}
-                                      </td>
-                                    );
-                                  })
-                                ) : (
-                                  dates.map(date => {
-                                    const sale = product.sales.get(date);
-                                    const quantity = sale?.quantity || 0;
-                                    const isHoliday = holidayNames[date];
-                                    return (
-                                      <td 
-                                        key={date} 
-                                        className={`border px-2 py-2 text-center ${
-                                          getHeatmapColor(quantity)
-                                        } ${
-                                          isHoliday ? 'border-amber-400 border-2' : ''
-                                        }`}
-                                        title={sale ? `${quantity} unidades\nR$ ${formatCurrency(sale.revenue)}${isHoliday ? `\n🎉 ${isHoliday}` : ''}` : (isHoliday ? `🎉 ${isHoliday}` : undefined)}
-                                      >
-                                        {quantity > 0 ? quantity : '-'}
-                                      </td>
-                                    );
-                                  })
-                                )}
-                                {/* Coluna Total */}
-                                <td className="border px-3 py-2 text-center font-semibold bg-blue-50">
-                                  {Array.from(product.sales.values()).reduce((sum, sale) => sum + sale.quantity, 0)}
-                                </td>
-                              </tr>
-                            ))}
+                            {(() => {
+                              // Calcular total geral de todas as vendas
+                              const grandTotal = Array.from(productMap.values()).reduce(
+                                (sum, product) => sum + Array.from(product.sales.values()).reduce((s, sale) => s + sale.quantity, 0),
+                                0
+                              );
+                              
+                              return Array.from(productMap.entries()).map(([productId, product]) => {
+                                const productTotal = Array.from(product.sales.values()).reduce((sum, sale) => sum + sale.quantity, 0);
+                                const productPercent = grandTotal > 0 ? ((productTotal / grandTotal) * 100).toFixed(1) : '0.0';
+                                
+                                return (
+                                  <tr key={productId}>
+                                    <td className="sticky left-0 z-10 bg-white border px-3 py-2 font-medium">
+                                      {product.name}
+                                    </td>
+                                    {groupBy === 'week' ? (
+                                      weeks.map((week, idx) => {
+                                        // Somar quantidades de todos os dias da semana
+                                        let weekQuantity = 0;
+                                        let weekRevenue = 0;
+                                        week.dates.forEach(date => {
+                                          const sale = product.sales.get(date);
+                                          if (sale) {
+                                            weekQuantity += sale.quantity;
+                                            weekRevenue += sale.revenue;
+                                          }
+                                        });
+                                        
+                                        return (
+                                          <td 
+                                            key={`week-${idx}`} 
+                                            className={`border px-2 py-2 text-center ${
+                                              getHeatmapColor(weekQuantity)
+                                            }`}
+                                            title={weekQuantity > 0 ? `${weekQuantity} unidades\nR$ ${formatCurrency(weekRevenue)}` : undefined}
+                                          >
+                                            {weekQuantity > 0 ? weekQuantity : '-'}
+                                          </td>
+                                        );
+                                      })
+                                    ) : (
+                                      dates.map(date => {
+                                        const sale = product.sales.get(date);
+                                        const quantity = sale?.quantity || 0;
+                                        const isHoliday = holidayNames[date];
+                                        return (
+                                          <td 
+                                            key={date} 
+                                            className={`border px-2 py-2 text-center ${
+                                              getHeatmapColor(quantity)
+                                            } ${
+                                              isHoliday ? 'border-amber-400 border-2' : ''
+                                            }`}
+                                            title={sale ? `${quantity} unidades\nR$ ${formatCurrency(sale.revenue)}${isHoliday ? `\n🎉 ${isHoliday}` : ''}` : (isHoliday ? `🎉 ${isHoliday}` : undefined)}
+                                          >
+                                            {quantity > 0 ? quantity : '-'}
+                                          </td>
+                                        );
+                                      })
+                                    )}
+                                    {/* Coluna Total com % */}
+                                    <td className="border px-3 py-2 text-center font-semibold bg-blue-50">
+                                      {productTotal}
+                                      <span className="text-xs text-muted-foreground ml-1">({productPercent}%)</span>
+                                    </td>
+                                  </tr>
+                                );
+                              });
+                            })()}
                           </tbody>
                         </table>
                       );

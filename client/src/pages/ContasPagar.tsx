@@ -639,11 +639,12 @@ export default function ContasPagar() {
                     <div
                       key={item.installmentId}
                       className="flex items-center justify-between p-3 bg-muted rounded-md hover:bg-muted/80 cursor-pointer"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        console.log('Clicou no título:', item);
-                        // Abrir modal de pagamento direto para este título
-                        const installmentData = {
+                      onClick={() => {
+                        console.log('=== CLIQUE NO TÍTULO ===');
+                        console.log('Item:', item);
+                        
+                        // Abrir modal de pagamento direto
+                        setSelectedInstallment({
                           id: item.installmentId,
                           pendingAmount: item.amount,
                           dueDate: item.dueDate,
@@ -651,9 +652,19 @@ export default function ContasPagar() {
                           docNumber: item.docNumber,
                           purchaseOrderId: item.purchaseOrderId,
                           paymentMethod: item.paymentMethod,
-                        };
-                        console.log('Abrindo modal com:', installmentData);
-                        handleOpenPaymentModal(installmentData);
+                        });
+                        
+                        setPaymentForm({
+                          paidDate: new Date().toISOString().split('T')[0],
+                          paidAmount: item.amount.toString(),
+                          additionalAmount: "",
+                          paymentMethod: "",
+                          notes: ""
+                        });
+                        
+                        console.log('Abrindo modal...');
+                        setShowPaymentModal(true);
+                        console.log('Modal aberto!');
                       }}
                     >
                       <div className="flex-1">
