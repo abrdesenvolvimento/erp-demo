@@ -170,3 +170,9 @@
 - [x] Análise de Vendas - Adicionar % de participação na coluna "Total" da tabela de produtos (100% em todas as colunas do totalizador)
 - [x] Contas a Pagar Calendário - Ao clicar no item do dia, agora abre modal de pagamento direto (não vai mais para detalhes do fornecedor)
 - [x] Divergência de faturamento - Corrigido: getSalesCalendar agora exclui vendas canceladas (consistente com dashboard.stats)
+
+### Bugs Reportados (16/12/2025 - Noite)
+- [x] Contas a Pagar - Modal de pagamento agora abre corretamente ao clicar no título do calendário (corrigido handleOpenPaymentModal)
+- [x] Análise de Vendas - Filtro de dias agora funciona (adicionado useMemo para filtrar dayData por dias selecionados)
+- [x] Análise de Vendas - % real adicionado em todas as colunas (Qtd, Faturamento, Custo, Lucro) mostrando participação de cada produto
+- [x] Análise de Vendas - Produtos já selecionados agora são ocultados no filtro de busca

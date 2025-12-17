@@ -129,7 +129,8 @@ export default function AnáliseVendas() {
 
   // Filtrar produtos e subcategorias baseado na busca
   const filteredProducts = products?.filter(p => 
-    p.name.toLowerCase().includes(productSearch.toLowerCase())
+    p.name.toLowerCase().includes(productSearch.toLowerCase()) &&
+    !selectedProductIds.includes(p.id) // Ocultar produtos já selecionados
   ).slice(0, 10) || [];
 
   const filteredSubcategories = subcategories?.filter(s => 
@@ -178,7 +179,7 @@ export default function AnáliseVendas() {
   );
 
   // Queries temporais
-  const { data: dayData, isLoading: isDayLoading } = trpc.salesAnalysis.byDay.useQuery(
+  const { data: dayDataRaw, isLoading: isDayLoading } = trpc.salesAnalysis.byDay.useQuery(
     { 
       startDate: dateRange?.from ?? new Date(), 
       endDate: dateRange?.to ?? new Date(),
@@ -189,6 +190,17 @@ export default function AnáliseVendas() {
     },
     { enabled: isAdmin && groupBy === "day" && !!dateRange }
   );
+
+  // Filtrar dayData considerando apenas os dias selecionados
+  const dayData = useMemo(() => {
+    if (!dayDataRaw || selectedDays.length === 0) return dayDataRaw;
+    
+    return dayDataRaw.filter((item: any) => {
+      const saleDate = new Date(item.saleDate);
+      const day = saleDate.getDate();
+      return selectedDays.includes(day);
+    });
+  }, [dayDataRaw, selectedDays]);
 
   const { data: weekData, isLoading: isWeekLoading } = trpc.salesAnalysis.byWeek.useQuery(
     { 
@@ -922,20 +934,34 @@ export default function AnáliseVendas() {
                       <TableBody>
                         {valueData.map((item) => {
                           const totalQty = valueData.reduce((sum, i) => sum + parseFloat(i.totalQuantity), 0);
-                          const itemPercent = totalQty > 0 ? ((parseFloat(item.totalQuantity) / totalQty) * 100).toFixed(1) : '0.0';
+                          const totalRevenue = valueData.reduce((sum, i) => sum + parseFloat(i.totalRevenue), 0);
+                          const totalCost = valueData.reduce((sum, i) => sum + parseFloat(i.totalCost), 0);
+                          const totalProfit = totalRevenue - totalCost;
+                          
+                          const qtyPercent = totalQty > 0 ? ((parseFloat(item.totalQuantity) / totalQty) * 100).toFixed(1) : '0.0';
+                          const revenuePercent = totalRevenue > 0 ? ((parseFloat(item.totalRevenue) / totalRevenue) * 100).toFixed(1) : '0.0';
+                          const costPercent = totalCost > 0 ? ((parseFloat(item.totalCost) / totalCost) * 100).toFixed(1) : '0.0';
+                          const itemProfit = parseFloat(item.totalRevenue) - parseFloat(item.totalCost);
+                          const profitPercent = totalProfit > 0 ? ((itemProfit / totalProfit) * 100).toFixed(1) : '0.0';
+                          
                           return (
                             <TableRow key={item.productId}>
                               <TableCell className="font-medium">{item.productName}</TableCell>
                               <TableCell className="text-right">
                                 {formatCurrency(item.totalQuantity)}
-                                <span className="text-xs text-muted-foreground ml-1">({itemPercent}%)</span>
+                                <span className="text-xs text-muted-foreground ml-1">({qtyPercent}%)</span>
                               </TableCell>
                               <TableCell className="text-right text-emerald-600 font-semibold">
                                 R$ {formatCurrency(item.totalRevenue)}
+                                <span className="text-xs text-muted-foreground ml-1">({revenuePercent}%)</span>
                               </TableCell>
-                              <TableCell className="text-right text-red-600">R$ {formatCurrency(item.totalCost)}</TableCell>
+                              <TableCell className="text-right text-red-600">
+                                R$ {formatCurrency(item.totalCost)}
+                                <span className="text-xs text-muted-foreground ml-1">({costPercent}%)</span>
+                              </TableCell>
                               <TableCell className="text-right text-blue-600 font-semibold">
-                                R$ {formatCurrency(parseFloat(item.totalRevenue) - parseFloat(item.totalCost))}
+                                R$ {formatCurrency(itemProfit)}
+                                <span className="text-xs text-muted-foreground ml-1">({profitPercent}%)</span>
                               </TableCell>
                               <TableCell className="text-right font-bold">{item.marginPercent}%</TableCell>
                             </TableRow>
