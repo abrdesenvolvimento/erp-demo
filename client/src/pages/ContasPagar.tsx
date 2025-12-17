@@ -161,7 +161,7 @@ export default function ContasPagar() {
 
   // Queries
   const { data: totalPending, refetch: refetchTotal } = trpc.payables.totalPending.useQuery();
-  const { data: suppliers, refetch: refetchSuppliers } = trpc.payables.bySupplier.useQuery();
+  const { data: suppliers, refetch: refetchSuppliers } = trpc.payables.allSuppliers.useQuery();
   const { data: supplierDetail, refetch: refetchDetail } = trpc.payables.supplierDetail.useQuery(
     { supplierId: selectedSupplierId! },
     { enabled: !!selectedSupplierId }
@@ -768,9 +768,9 @@ export default function ContasPagar() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Fornecedores com Saldo a Pagar</CardTitle>
+              <CardTitle>Histórico de Fornecedores</CardTitle>
               <CardDescription>
-                Clique em um fornecedor para ver detalhes
+                Clique em um fornecedor para ver detalhes de compras e despesas
               </CardDescription>
             </div>
             <div className="flex gap-2">
@@ -795,7 +795,7 @@ export default function ContasPagar() {
         <CardContent>
           {!suppliers || suppliers.length === 0 ? (
             <p className="text-center text-muted-foreground py-8">
-              Nenhum fornecedor com saldo devedor
+              Nenhum fornecedor cadastrado
             </p>
           ) : (
             <div className="space-y-2">
@@ -821,14 +821,20 @@ export default function ContasPagar() {
                     <div>
                       <p className="font-medium">{supplier.supplierName}</p>
                       <p className="text-sm text-muted-foreground">
-                        {supplier.expensesCount} {supplier.expensesCount === 1 ? 'despesa' : 'despesas'} pendente{supplier.expensesCount !== 1 ? 's' : ''}
+                        {supplier.transactionCount || 0} {(supplier.transactionCount || 0) === 1 ? 'transação' : 'transações'}
                       </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-lg font-bold text-red-600">
-                      {formatCurrency(supplier.totalPending)}
-                    </span>
+                    {parseFloat(supplier.totalPending) > 0 ? (
+                      <span className="text-lg font-bold text-red-600">
+                        {formatCurrency(supplier.totalPending)}
+                      </span>
+                    ) : (
+                      <span className="text-sm text-green-600 font-medium">
+                        Sem saldo
+                      </span>
+                    )}
                     <ChevronRight className="h-5 w-5 text-muted-foreground" />
                   </div>
                 </div>

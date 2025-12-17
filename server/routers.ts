@@ -1137,10 +1137,16 @@ export const appRouter = router({
 
   // ==================== CONTAS A PAGAR ====================
   payables: router({
-    // Listar fornecedores com saldo devedor
+    // Listar fornecedores com saldo devedor (legado)
     bySupplier: adminProcedure
       .query(async () => {
         return await db.getSuppliersWithPendingPayables();
+      }),
+    
+    // Listar TODOS os fornecedores com histórico (com ou sem saldo pendente)
+    allSuppliers: adminProcedure
+      .query(async () => {
+        return await db.getAllSuppliersWithHistory();
       }),
     
     // Total pendente de pagamento

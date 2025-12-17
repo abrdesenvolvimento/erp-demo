@@ -2488,7 +2488,121 @@ export async function registerCustomerPayment(data: {
 
 // ==================== CONTAS A PAGAR ====================
 
-// Listar fornecedores com saldo devedor (contas a pagar pendentes)
+// Listar TODOS os fornecedores com histórico (com ou sem saldo pendente)
+export async function getAllSuppliersWithHistory() {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  // Buscar todos os fornecedores (tipo SUPPLIER ou BOTH)
+  const allSuppliers = await db.select()
+    .from(partners)
+    .where(or(
+      eq(partners.partnerType, 'SUPPLIER'),
+      eq(partners.partnerType, 'BOTH')
+    ))
+    .orderBy(partners.name);
+  
+  // Buscar pendências de COMPRAS (purchaseInstallments)
+  const purchasePendings = await db.select({
+    supplierId: purchaseOrders.supplierId,
+    totalPending: sql<string>`SUM(CAST(${purchaseInstallments.amount} AS DECIMAL(10,2)))`
+  })
+  .from(purchaseInstallments)
+  .leftJoin(purchaseOrders, eq(purchaseInstallments.purchaseOrderId, purchaseOrders.id))
+  .where(eq(purchaseInstallments.status, 'PENDING'))
+  .groupBy(purchaseOrders.supplierId);
+  
+  // Buscar pendências de DESPESAS (expenseInstallments)
+  const expensePendings = await db.select({
+    supplierId: expenses.supplierId,
+    totalPending: sql<string>`SUM(CAST(${expenseInstallments.amount} AS DECIMAL(10,2)))`
+  })
+  .from(expenseInstallments)
+  .leftJoin(expenses, eq(expenseInstallments.expenseId, expenses.id))
+  .where(eq(expenseInstallments.status, 'PENDENTE'))
+  .groupBy(expenses.supplierId);
+  
+  // Buscar contagem total de transações por fornecedor (compras + despesas)
+  const purchaseCounts = await db.select({
+    supplierId: purchaseOrders.supplierId,
+    count: sql<number>`COUNT(*)`
+  })
+  .from(purchaseOrders)
+  .groupBy(purchaseOrders.supplierId);
+  
+  const expenseCounts = await db.select({
+    supplierId: expenses.supplierId,
+    count: sql<number>`COUNT(*)`
+  })
+  .from(expenses)
+  .groupBy(expenses.supplierId);
+  
+  // Consolidar dados por fornecedor
+  const supplierMap = new Map<number, { totalPending: number; transactionCount: number }>();
+  
+  // Inicializar todos os fornecedores com zero
+  for (const supplier of allSuppliers) {
+    supplierMap.set(supplier.id, { totalPending: 0, transactionCount: 0 });
+  }
+  
+  // Adicionar pendências de compras
+  for (const p of purchasePendings) {
+    if (!p.supplierId) continue;
+    const current = supplierMap.get(p.supplierId) || { totalPending: 0, transactionCount: 0 };
+    current.totalPending += parseFloat(p.totalPending || "0");
+    supplierMap.set(p.supplierId, current);
+  }
+  
+  // Adicionar pendências de despesas
+  for (const e of expensePendings) {
+    if (!e.supplierId) continue;
+    const current = supplierMap.get(e.supplierId) || { totalPending: 0, transactionCount: 0 };
+    current.totalPending += parseFloat(e.totalPending || "0");
+    supplierMap.set(e.supplierId, current);
+  }
+  
+  // Adicionar contagem de compras
+  for (const p of purchaseCounts) {
+    if (!p.supplierId) continue;
+    const current = supplierMap.get(p.supplierId) || { totalPending: 0, transactionCount: 0 };
+    current.transactionCount += Number(p.count);
+    supplierMap.set(p.supplierId, current);
+  }
+  
+  // Adicionar contagem de despesas
+  for (const e of expenseCounts) {
+    if (!e.supplierId) continue;
+    const current = supplierMap.get(e.supplierId) || { totalPending: 0, transactionCount: 0 };
+    current.transactionCount += Number(e.count);
+    supplierMap.set(e.supplierId, current);
+  }
+  
+  // Montar resultado
+  const results = allSuppliers.map(supplier => {
+    const data = supplierMap.get(supplier.id) || { totalPending: 0, transactionCount: 0 };
+    return {
+      supplierId: supplier.id,
+      supplierName: supplier.name,
+      totalPending: data.totalPending.toFixed(2),
+      transactionCount: data.transactionCount,
+      hasPendingPayables: data.totalPending > 0
+    };
+  });
+  
+  // Ordenar: primeiro os com saldo pendente (maior primeiro), depois os sem saldo (alfabético)
+  results.sort((a, b) => {
+    if (a.hasPendingPayables && !b.hasPendingPayables) return -1;
+    if (!a.hasPendingPayables && b.hasPendingPayables) return 1;
+    if (a.hasPendingPayables && b.hasPendingPayables) {
+      return parseFloat(b.totalPending) - parseFloat(a.totalPending);
+    }
+    return a.supplierName.localeCompare(b.supplierName);
+  });
+  
+  return results;
+}
+
+// Listar fornecedores com saldo devedor (contas a pagar pendentes) - LEGADO
 export async function getSuppliersWithPendingPayables() {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
