@@ -180,3 +180,7 @@
 ### Bugs Reportados (16/12/2025 - Noite - Parte 2)
 - [x] Análise de Vendas - % adicionado na coluna Total da aba "Evolução Diária" (calcula % de participação de cada produto)
 - [x] Contas a Pagar - Modal de pagamento simplificado (chama setShowPaymentModal diretamente sem usar handleOpenPaymentModal)
+
+### Bugs Reportados (17/12/2025 - Manhã)
+- [x] Contas a Pagar Calendário - Adicionado botão "Pagar" explícito em cada título do dia (mais claro para o usuário)
+- [x] Dashboard Margem Bruta - Corrigido para usar mesma lógica de timezone do Dashboard (America/Sao_Paulo)

@@ -638,34 +638,7 @@ export default function ContasPagar() {
                   {dayData.items.map((item: any) => (
                     <div
                       key={item.installmentId}
-                      className="flex items-center justify-between p-3 bg-muted rounded-md hover:bg-muted/80 cursor-pointer"
-                      onClick={() => {
-                        console.log('=== CLIQUE NO TÍTULO ===');
-                        console.log('Item:', item);
-                        
-                        // Abrir modal de pagamento direto
-                        setSelectedInstallment({
-                          id: item.installmentId,
-                          pendingAmount: item.amount,
-                          dueDate: item.dueDate,
-                          supplierName: item.supplierName,
-                          docNumber: item.docNumber,
-                          purchaseOrderId: item.purchaseOrderId,
-                          paymentMethod: item.paymentMethod,
-                        });
-                        
-                        setPaymentForm({
-                          paidDate: new Date().toISOString().split('T')[0],
-                          paidAmount: item.amount.toString(),
-                          additionalAmount: "",
-                          paymentMethod: "",
-                          notes: ""
-                        });
-                        
-                        console.log('Abrindo modal...');
-                        setShowPaymentModal(true);
-                        console.log('Modal aberto!');
-                      }}
+                      className="flex items-center justify-between p-3 bg-muted rounded-md"
                     >
                       <div className="flex-1">
                         <p className="font-medium">{item.supplierName}</p>
@@ -673,20 +646,49 @@ export default function ContasPagar() {
                           {item.docNumber ? `Doc: ${item.docNumber}` : `Compra #${item.purchaseOrderId}`}
                         </p>
                         {item.paymentMethod && (
-                          <p className={`text-xs font-medium mt-1 ${
+                          <span className={`inline-block text-xs font-medium mt-1 px-2 py-0.5 rounded ${
                             item.paymentMethod.toLowerCase().includes('crédito') 
-                              ? 'text-orange-600' 
-                              : 'text-muted-foreground'
+                              ? 'bg-orange-100 text-orange-700' 
+                              : 'bg-gray-100 text-gray-600'
                           }`}>
                             {item.paymentMethod}
-                          </p>
+                          </span>
                         )}
                       </div>
-                      <div className="text-right">
-                        <p className="font-semibold text-red-600">{formatCurrency(item.amount)}</p>
-                        <Badge variant={item.status === 'OVERDUE' ? 'destructive' : 'secondary'}>
-                          {item.status === 'OVERDUE' ? 'Vencido' : 'Pendente'}
-                        </Badge>
+                      <div className="text-right flex items-center gap-3">
+                        <div>
+                          <p className="font-semibold text-red-600">{formatCurrency(item.amount)}</p>
+                          <Badge variant={item.status === 'OVERDUE' ? 'destructive' : 'secondary'}>
+                            {item.status === 'OVERDUE' ? 'Vencido' : 'Pendente'}
+                          </Badge>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="ml-2"
+                          onClick={() => {
+                            console.log('Botão Pagar clicado:', item);
+                            setSelectedInstallment({
+                              id: item.installmentId,
+                              pendingAmount: item.amount,
+                              dueDate: item.dueDate,
+                              supplierName: item.supplierName,
+                              docNumber: item.docNumber,
+                              purchaseOrderId: item.purchaseOrderId,
+                              paymentMethod: item.paymentMethod,
+                            });
+                            setPaymentForm({
+                              paidDate: new Date().toISOString().split('T')[0],
+                              paidAmount: item.amount.toString(),
+                              additionalAmount: "",
+                              paymentMethod: "",
+                              notes: ""
+                            });
+                            setShowPaymentModal(true);
+                          }}
+                        >
+                          Pagar
+                        </Button>
                       </div>
                     </div>
                   ))}

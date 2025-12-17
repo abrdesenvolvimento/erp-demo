@@ -3274,24 +3274,39 @@ export async function getGrossMarginByCategory() {
   const db = await getDb();
   if (!db) return [];
   
-  const now = new Date();
-  const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-  const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+  // Usar timezone de Brasília para consistencia com Dashboard
+  const today = new Date();
+  const todayBrasilia = new Date(today.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
+  const currentYear = todayBrasilia.getFullYear();
+  const currentMonth = todayBrasilia.getMonth() + 1;
   
   // Buscar todas as vendas do mês (exceto canceladas)
-  const monthSales = await db.select({
+  // Usar range amplo e filtrar por timezone depois
+  const firstDayOfMonth = new Date(currentYear, currentMonth - 1, 1);
+  const lastDayOfMonth = new Date(currentYear, currentMonth, 0, 23, 59, 59);
+  
+  const allSales = await db.select({
     saleId: sales.id,
     saleDate: sales.saleDate,
     finalAmount: sales.finalAmount,
+    status: sales.status,
   })
   .from(sales)
   .where(
     and(
       ne(sales.status, "CANCELLED"),
-      gte(sales.saleDate, firstDayOfMonth),
-      lte(sales.saleDate, lastDayOfMonth)
+      gte(sales.saleDate, new Date(currentYear, currentMonth - 2, 1)), // Mês anterior para margem de segurança
+      lte(sales.saleDate, new Date(currentYear, currentMonth, 31, 23, 59, 59)) // Próximo mês para margem
     )
   );
+  
+  // Filtrar por timezone de Brasília (mesma lógica do Dashboard)
+  const monthSales = allSales.filter(s => {
+    if (!s.saleDate) return false;
+    const saleDateStr = new Date(s.saleDate).toLocaleDateString('en-US', { timeZone: 'America/Sao_Paulo' });
+    const [saleMonth, saleDay, saleYear] = saleDateStr.split('/');
+    return parseInt(saleYear) === currentYear && parseInt(saleMonth) === currentMonth;
+  });
   
   // Buscar itens de todas as vendas do mês com informações do produto
   const saleIds = monthSales.map(s => s.saleId);
