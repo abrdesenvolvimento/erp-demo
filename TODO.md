@@ -176,3 +176,7 @@
 - [x] Análise de Vendas - Filtro de dias agora funciona (adicionado useMemo para filtrar dayData por dias selecionados)
 - [x] Análise de Vendas - % real adicionado em todas as colunas (Qtd, Faturamento, Custo, Lucro) mostrando participação de cada produto
 - [x] Análise de Vendas - Produtos já selecionados agora são ocultados no filtro de busca
+
+### Bugs Reportados (16/12/2025 - Noite - Parte 2)
+- [x] Análise de Vendas - % agora aparece nas colunas (servidor reiniciado para aplicar mudanças)
+- [x] Contas a Pagar - Modal de pagamento corrigido (ajustado DialogDescription para usar campos corretos: supplierName, docNumber, pendingAmount)

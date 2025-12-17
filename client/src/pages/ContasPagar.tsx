@@ -321,7 +321,13 @@ export default function ContasPagar() {
             <DialogHeader>
               <DialogTitle>Registrar Pagamento da Parcela</DialogTitle>
               <DialogDescription>
-                {selectedInstallment && `${selectedInstallment.description} - Valor: ${formatCurrency(selectedInstallment.totalAmount)}`}
+                {selectedInstallment && (
+                  <span>
+                    {selectedInstallment.supplierName} - 
+                    {selectedInstallment.docNumber ? `Doc: ${selectedInstallment.docNumber}` : `Compra #${selectedInstallment.purchaseOrderId}`} - 
+                    Valor: {formatCurrency(selectedInstallment.pendingAmount || selectedInstallment.totalAmount || 0)}
+                  </span>
+                )}
               </DialogDescription>
             </DialogHeader>
 
@@ -633,9 +639,11 @@ export default function ContasPagar() {
                     <div
                       key={item.installmentId}
                       className="flex items-center justify-between p-3 bg-muted rounded-md hover:bg-muted/80 cursor-pointer"
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        console.log('Clicou no título:', item);
                         // Abrir modal de pagamento direto para este título
-                        handleOpenPaymentModal({
+                        const installmentData = {
                           id: item.installmentId,
                           pendingAmount: item.amount,
                           dueDate: item.dueDate,
@@ -643,7 +651,9 @@ export default function ContasPagar() {
                           docNumber: item.docNumber,
                           purchaseOrderId: item.purchaseOrderId,
                           paymentMethod: item.paymentMethod,
-                        });
+                        };
+                        console.log('Abrindo modal com:', installmentData);
+                        handleOpenPaymentModal(installmentData);
                       }}
                     >
                       <div className="flex-1">
