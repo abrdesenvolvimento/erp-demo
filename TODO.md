@@ -199,3 +199,9 @@
 
 ### Bugs Reportados (17/12/2025 - Tarde)
 - [x] Mg Bruta - Faturamento Total agora usa finalAmount proporcionalizado (consistente com outras telas)
+
+### Melhorias de Data de Vencimento (17/12/2025)
+- [x] Compras/Despesas - Data de vencimento padrão: data do lançamento (não mais +30 dias)
+- [x] Compras/Despesas - Crédito G/R/ABR parcelado: 1ª parcela manual, demais +30 dias automático (editável)
+- [x] Compras/Despesas - Boleto parcelado: todas as datas manuais (pode ser 7/14/21 dias)
+- [x] Compras/Despesas - À Vista/Débito Automático: data padrão = data do lançamento (editável)

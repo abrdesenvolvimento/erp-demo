@@ -57,7 +57,7 @@ export default function Despesas() {
   const [amount, setAmount] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("");
   const [dueDates, setDueDates] = useState<DueDate[]>([
-    { date: new Date(Date.now() + 30*24*60*60*1000).toISOString().split('T')[0], amount: "" }
+    { date: new Date().toISOString().split('T')[0], amount: "" }
   ]);
   const [notes, setNotes] = useState("");
   
@@ -130,7 +130,7 @@ export default function Despesas() {
     setDescription("");
     setAmount("");
     setPaymentMethod("");
-    setDueDates([{ date: new Date(Date.now() + 30*24*60*60*1000).toISOString().split('T')[0], amount: "" }]);
+    setDueDates([{ date: new Date().toISOString().split('T')[0], amount: "" }]);
     setNotes("");
     setProductId(undefined);
     setProductSearch("");
@@ -139,8 +139,18 @@ export default function Despesas() {
   
   const addDueDate = () => {
     const lastDate = dueDates[dueDates.length - 1]?.date || new Date().toISOString().split('T')[0];
-    const nextDate = new Date(lastDate);
-    nextDate.setMonth(nextDate.getMonth() + 1);
+    const isCredit = paymentMethod === "Crédito G" || paymentMethod === "Crédito R" || paymentMethod === "Crédito ABR";
+    
+    let nextDate: Date;
+    if (isCredit) {
+      // Crédito: +30 dias a partir da última parcela
+      nextDate = new Date(lastDate + "T12:00:00");
+      nextDate.setDate(nextDate.getDate() + 30);
+    } else {
+      // Boleto/outros: data do lançamento (manual)
+      nextDate = new Date();
+    }
+    
     setDueDates([...dueDates, { date: nextDate.toISOString().split('T')[0], amount: "" }]);
   };
   

@@ -71,7 +71,7 @@ export default function Compras() {
   const [postingDate, setPostingDate] = useState(formatDateForInput(getTodayInBrazil()));
   const [paymentMethod, setPaymentMethod] = useState("");
   const [installments, setInstallments] = useState<PaymentInstallment[]>([
-    { dueDate: formatDateForInput(addDays(getTodayInBrazil(), 30)), amount: 0 }
+    { dueDate: formatDateForInput(getTodayInBrazil()), amount: 0 }
   ]);
   const [freightCost, setFreightCost] = useState("0");
   const [chargesCost, setChargesCost] = useState("0");
@@ -231,7 +231,7 @@ export default function Compras() {
     setIssueDate(formatDateForInput(getTodayInBrazil()));
     setPostingDate(formatDateForInput(getTodayInBrazil()));
     setPaymentMethod("");
-    setInstallments([{ dueDate: formatDateForInput(addDays(getTodayInBrazil(), 30)), amount: 0 }]);
+    setInstallments([{ dueDate: formatDateForInput(getTodayInBrazil()), amount: 0 }]);
     setFreightCost("0");
     setChargesCost("0");
     setNotes("");
@@ -732,8 +732,23 @@ export default function Compras() {
                             type="button"
                             variant="outline"
                             onClick={() => {
+                              // Lógica de data baseada na forma de pagamento
+                              let newDueDate: string;
+                              const isCredit = paymentMethod === "Crédito G" || paymentMethod === "Crédito R" || paymentMethod === "Crédito ABR";
+                              
+                              if (isCredit && installments.length > 0) {
+                                // Crédito: +30 dias a partir da última parcela
+                                const lastDueDate = new Date(installments[installments.length - 1].dueDate + "T12:00:00");
+                                const nextDueDate = new Date(lastDueDate);
+                                nextDueDate.setDate(nextDueDate.getDate() + 30);
+                                newDueDate = formatDateForInput(nextDueDate);
+                              } else {
+                                // Boleto/outros: data do lançamento (manual)
+                                newDueDate = formatDateForInput(getTodayInBrazil());
+                              }
+                              
                               const newInstallment = {
-                                dueDate: formatDateForInput(addDays(getTodayInBrazil(), 30)),
+                                dueDate: newDueDate,
                                 amount: 0
                               };
                               setInstallments([...installments, newInstallment]);
