@@ -1,0 +1,14 @@
+{
+  "query": "SELECT \n  SUM(CAST(s.finalAmount AS DECIMAL(10,2))) as total_final_amount,\n  (SELECT SUM(si.quantity * si.unitPrice) \n   FROM saleItems si \n   JOIN sales s2 ON si.saleId = s2.id \n   WHERE MONTH(CONVERT_TZ(s2.saleDate, '+00:00', '-03:00')) = 12 \n     AND YEAR(CONVERT_TZ(s2.saleDate, '+00:00', '-03:00')) = 2025\n     AND s2.status != 'CANCELLED') as total_items_value\nFROM sales s\nWHERE MONTH(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) = 12 \n  AND YEAR(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) = 2025\n  AND s.status != 'CANCELLED';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  SUM(CAST(s.finalAmount AS DECIMAL(10,2))) as total_final_amount,\n  (SELECT SUM(si.quantity * si.unitPrice) \n   FROM saleItems si \n   JOIN sales s2 ON si.saleId = s2.id \n   WHERE MONTH(CONVERT_TZ(s2.saleDate, '+00:00', '-03:00')) = 12 \n     AND YEAR(CONVERT_TZ(s2.saleDate, '+00:00', '-03:00')) = 2025\n     AND s2.status != 'CANCELLED') as total_items_value\nFROM sales s\nWHERE MONTH(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) = 12 \n  AND YEAR(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) = 2025\n  AND s.status != 'CANCELLED';",
+  "rows": [
+    {
+      "total_final_amount": "67541.03",
+      "total_items_value": "67846.34"
+    }
+  ],
+  "messages": [],
+  "stdout": "total_final_amount\ttotal_items_value\n67541.03\t67846.34\n",
+  "stderr": "",
+  "execution_time_ms": 87
+}

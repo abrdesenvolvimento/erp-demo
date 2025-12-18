@@ -1,0 +1,8 @@
+{
+  "query": "SELECT \n  s.id,\n  s.finalAmount,\n  SUM(si.quantity * si.unitPrice) as items_total,\n  s.finalAmount - SUM(si.quantity * si.unitPrice) as difference\nFROM sales s\nJOIN sale_items si ON s.id = si.saleId\nWHERE MONTH(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) = 12 \n  AND YEAR(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) = 2025\n  AND s.status != 'CANCELLED'\nGROUP BY s.id, s.finalAmount\nHAVING ABS(s.finalAmount - SUM(si.quantity * si.unitPrice)) > 0.01\nORDER BY difference DESC\nLIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  s.id,\n  s.finalAmount,\n  SUM(si.quantity * si.unitPrice) as items_total,\n  s.finalAmount - SUM(si.quantity * si.unitPrice) as difference\nFROM sales s\nJOIN sale_items si ON s.id = si.saleId\nWHERE MONTH(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) = 12 \n  AND YEAR(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) = 2025\n  AND s.status != 'CANCELLED'\nGROUP BY s.id, s.finalAmount\nHAVING ABS(s.finalAmount - SUM(si.quantity * si.unitPrice)) > 0.01\nORDER BY difference DESC\nLIMIT 20;",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1146 (42S02) at line 1: Table '7rkrces5kipyf8hkunqrck.sale_items' doesn't exist"
+  ]
+}

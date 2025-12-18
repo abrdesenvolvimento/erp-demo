@@ -1,0 +1,14 @@
+{
+  "query": "SELECT \n  SUM(CAST(finalAmount AS DECIMAL(10,2))) as total_revenue,\n  COUNT(*) as num_sales\nFROM sales \nWHERE MONTH(CONVERT_TZ(saleDate, '+00:00', '-03:00')) = 12 \n  AND YEAR(CONVERT_TZ(saleDate, '+00:00', '-03:00')) = 2025\n  AND status != 'CANCELLED';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  SUM(CAST(finalAmount AS DECIMAL(10,2))) as total_revenue,\n  COUNT(*) as num_sales\nFROM sales \nWHERE MONTH(CONVERT_TZ(saleDate, '+00:00', '-03:00')) = 12 \n  AND YEAR(CONVERT_TZ(saleDate, '+00:00', '-03:00')) = 2025\n  AND status != 'CANCELLED';",
+  "rows": [
+    {
+      "total_revenue": "67541.03",
+      "num_sales": "1892"
+    }
+  ],
+  "messages": [],
+  "stdout": "total_revenue\tnum_sales\n67541.03\t1892\n",
+  "stderr": "",
+  "execution_time_ms": 65
+}

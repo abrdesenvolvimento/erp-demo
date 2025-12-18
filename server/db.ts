@@ -3442,7 +3442,19 @@ export async function getGrossMarginByCategory() {
   .innerJoin(categories, eq(products.categoryId, categories.id))
   .where(sql`${saleItems.saleId} IN (${sql.join(saleIds.map(id => sql`${id}`), sql`, `)})`);
   
-  // Agrupar por categoria
+  // Criar mapa de vendas para acessar finalAmount
+  const salesMap = new Map(monthSales.map(s => [s.saleId, parseFloat(s.finalAmount?.toString() || "0")]));
+  
+  // Calcular total de itens por venda para proporcionalizar
+  const saleItemTotals = new Map<number, number>();
+  for (const item of items) {
+    const quantity = parseFloat(item.quantity.toString());
+    const unitPrice = parseFloat(item.unitPrice.toString());
+    const itemTotal = quantity * unitPrice;
+    saleItemTotals.set(item.saleId, (saleItemTotals.get(item.saleId) || 0) + itemTotal);
+  }
+  
+  // Agrupar por categoria usando finalAmount proporcionalizado
   const categoryMap = new Map<number, {
     categoryId: number;
     categoryName: string;
@@ -3457,7 +3469,14 @@ export async function getGrossMarginByCategory() {
     const unitPrice = parseFloat(item.unitPrice.toString());
     const avgCost = parseFloat(item.avgCost?.toString() || "0");
     
-    const revenue = quantity * unitPrice;
+    const itemTotal = quantity * unitPrice;
+    const saleTotal = saleItemTotals.get(item.saleId) || itemTotal;
+    const saleFinalAmount = salesMap.get(item.saleId) || itemTotal;
+    
+    // Proporcionalizar o finalAmount da venda para este item
+    // Se a venda teve desconto, cada item recebe sua parte proporcional
+    const proportion = saleTotal > 0 ? itemTotal / saleTotal : 0;
+    const revenue = saleFinalAmount * proportion;
     const cost = quantity * avgCost;
     
     if (!categoryMap.has(categoryId)) {

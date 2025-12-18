@@ -1,0 +1,130 @@
+{
+  "query": "SELECT \n  DATE(CONVERT_TZ(saleDate, '+00:00', '-03:00')) as sale_date_br,\n  COUNT(*) as num_sales,\n  SUM(CAST(finalAmount AS DECIMAL(10,2))) as total_revenue,\n  status\nFROM sales \nWHERE MONTH(CONVERT_TZ(saleDate, '+00:00', '-03:00')) = 12 \n  AND YEAR(CONVERT_TZ(saleDate, '+00:00', '-03:00')) = 2025\nGROUP BY DATE(CONVERT_TZ(saleDate, '+00:00', '-03:00')), status\nORDER BY sale_date_br DESC\nLIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  DATE(CONVERT_TZ(saleDate, '+00:00', '-03:00')) as sale_date_br,\n  COUNT(*) as num_sales,\n  SUM(CAST(finalAmount AS DECIMAL(10,2))) as total_revenue,\n  status\nFROM sales \nWHERE MONTH(CONVERT_TZ(saleDate, '+00:00', '-03:00')) = 12 \n  AND YEAR(CONVERT_TZ(saleDate, '+00:00', '-03:00')) = 2025\nGROUP BY DATE(CONVERT_TZ(saleDate, '+00:00', '-03:00')), status\nORDER BY sale_date_br DESC\nLIMIT 20;",
+  "rows": [
+    {
+      "sale_date_br": "2025-12-17",
+      "num_sales": "49",
+      "total_revenue": "7471.36",
+      "status": "ACTIVE"
+    },
+    {
+      "sale_date_br": "2025-12-17",
+      "num_sales": "1",
+      "total_revenue": "8.50",
+      "status": "CANCELLED"
+    },
+    {
+      "sale_date_br": "2025-12-16",
+      "num_sales": "82",
+      "total_revenue": "1796.62",
+      "status": "ACTIVE"
+    },
+    {
+      "sale_date_br": "2025-12-15",
+      "num_sales": "1",
+      "total_revenue": "38.32",
+      "status": "CANCELLED"
+    },
+    {
+      "sale_date_br": "2025-12-15",
+      "num_sales": "124",
+      "total_revenue": "2916.32",
+      "status": "ACTIVE"
+    },
+    {
+      "sale_date_br": "2025-12-14",
+      "num_sales": "255",
+      "total_revenue": "8618.46",
+      "status": "ACTIVE"
+    },
+    {
+      "sale_date_br": "2025-12-13",
+      "num_sales": "233",
+      "total_revenue": "10936.99",
+      "status": "ACTIVE"
+    },
+    {
+      "sale_date_br": "2025-12-12",
+      "num_sales": "145",
+      "total_revenue": "4145.36",
+      "status": "ACTIVE"
+    },
+    {
+      "sale_date_br": "2025-12-11",
+      "num_sales": "121",
+      "total_revenue": "2953.30",
+      "status": "ACTIVE"
+    },
+    {
+      "sale_date_br": "2025-12-10",
+      "num_sales": "99",
+      "total_revenue": "1945.74",
+      "status": "ACTIVE"
+    },
+    {
+      "sale_date_br": "2025-12-09",
+      "num_sales": "55",
+      "total_revenue": "1260.25",
+      "status": "ACTIVE"
+    },
+    {
+      "sale_date_br": "2025-12-08",
+      "num_sales": "71",
+      "total_revenue": "1486.71",
+      "status": "ACTIVE"
+    },
+    {
+      "sale_date_br": "2025-12-07",
+      "num_sales": "158",
+      "total_revenue": "5727.58",
+      "status": "ACTIVE"
+    },
+    {
+      "sale_date_br": "2025-12-07",
+      "num_sales": "2",
+      "total_revenue": "165.57",
+      "status": "CANCELLED"
+    },
+    {
+      "sale_date_br": "2025-12-06",
+      "num_sales": "199",
+      "total_revenue": "9362.43",
+      "status": "ACTIVE"
+    },
+    {
+      "sale_date_br": "2025-12-06",
+      "num_sales": "3",
+      "total_revenue": "66.31",
+      "status": "CANCELLED"
+    },
+    {
+      "sale_date_br": "2025-12-05",
+      "num_sales": "98",
+      "total_revenue": "3648.14",
+      "status": "ACTIVE"
+    },
+    {
+      "sale_date_br": "2025-12-04",
+      "num_sales": "3",
+      "total_revenue": "9.05",
+      "status": "CANCELLED"
+    },
+    {
+      "sale_date_br": "2025-12-04",
+      "num_sales": "61",
+      "total_revenue": "1783.90",
+      "status": "ACTIVE"
+    },
+    {
+      "sale_date_br": "2025-12-03",
+      "num_sales": "40",
+      "total_revenue": "1283.94",
+      "status": "ACTIVE"
+    }
+  ],
+  "messages": [],
+  "stdout": "sale_date_br\tnum_sales\ttotal_revenue\tstatus\n2025-12-17\t49\t7471.36\tACTIVE\n2025-12-17\t1\t8.50\tCANCELLED\n2025-12-16\t82\t1796.62\tACTIVE\n2025-12-15\t1\t38.32\tCANCELLED\n2025-12-15\t124\t2916.32\tACTIVE\n2025-12-14\t255\t8618.46\tACTIVE\n2025-12-13\t233\t10936.99\tACTIVE\n2025-12-12\t145\t4145.36\tACTIVE\n2025-12-11\t121\t2953.30\tACTIVE\n2025-12-10\t99\t1945.74\tACTIVE\n2025-12-09\t55\t1260.25\tACTIVE\n2025-12-08\t71\t1486.71\tACTIVE\n2025-12-07\t158\t5727.58\tACTIVE\n2025-12-07\t2\t165.57\tCANCELLED\n2025-12-06\t199\t9362.43\tACTIVE\n2025-12-06\t3\t66.31\tCANCELLED\n2025-12-05\t98\t3648.14\tACTIVE\n2025-12-04\t3\t9.05\tCANCELLED\n2025-12-04\t61\t1783.90\tACTIVE\n2025-12-03\t40\t1283.94\tACTIVE\n",
+  "stderr": "",
+  "execution_time_ms": 141
+}

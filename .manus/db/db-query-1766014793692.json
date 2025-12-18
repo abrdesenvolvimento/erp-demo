@@ -1,0 +1,130 @@
+{
+  "query": "SELECT \n  s.id,\n  s.finalAmount,\n  SUM(si.quantity * si.unitPrice) as items_total,\n  CAST(s.finalAmount AS DECIMAL(10,2)) - SUM(si.quantity * si.unitPrice) as difference\nFROM sales s\nJOIN saleItems si ON s.id = si.saleId\nWHERE MONTH(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) = 12 \n  AND YEAR(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) = 2025\n  AND s.status != 'CANCELLED'\nGROUP BY s.id, s.finalAmount\nHAVING ABS(CAST(s.finalAmount AS DECIMAL(10,2)) - SUM(si.quantity * si.unitPrice)) > 0.01\nORDER BY difference DESC\nLIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  s.id,\n  s.finalAmount,\n  SUM(si.quantity * si.unitPrice) as items_total,\n  CAST(s.finalAmount AS DECIMAL(10,2)) - SUM(si.quantity * si.unitPrice) as difference\nFROM sales s\nJOIN saleItems si ON s.id = si.saleId\nWHERE MONTH(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) = 12 \n  AND YEAR(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) = 2025\n  AND s.status != 'CANCELLED'\nGROUP BY s.id, s.finalAmount\nHAVING ABS(CAST(s.finalAmount AS DECIMAL(10,2)) - SUM(si.quantity * si.unitPrice)) > 0.01\nORDER BY difference DESC\nLIMIT 20;",
+  "rows": [
+    {
+      "id": "12240001",
+      "finalAmount": "135.00",
+      "items_total": "115.00",
+      "difference": "20.00"
+    },
+    {
+      "id": "13020001",
+      "finalAmount": "42.00",
+      "items_total": "40.00",
+      "difference": "2.00"
+    },
+    {
+      "id": "16710002",
+      "finalAmount": "88.52",
+      "items_total": "86.52",
+      "difference": "2.00"
+    },
+    {
+      "id": "12720003",
+      "finalAmount": "8.50",
+      "items_total": "7.50",
+      "difference": "1.00"
+    },
+    {
+      "id": "11580003",
+      "finalAmount": "20.50",
+      "items_total": "19.50",
+      "difference": "1.00"
+    },
+    {
+      "id": "12060009",
+      "finalAmount": "16.00",
+      "items_total": "15.00",
+      "difference": "1.00"
+    },
+    {
+      "id": "12720006",
+      "finalAmount": "16.00",
+      "items_total": "15.00",
+      "difference": "1.00"
+    },
+    {
+      "id": "13410001",
+      "finalAmount": "59.00",
+      "items_total": "58.00",
+      "difference": "1.00"
+    },
+    {
+      "id": "12120003",
+      "finalAmount": "22.00",
+      "items_total": "21.50",
+      "difference": "0.50"
+    },
+    {
+      "id": "16710003",
+      "finalAmount": "33.67",
+      "items_total": "33.17",
+      "difference": "0.50"
+    },
+    {
+      "id": "12720001",
+      "finalAmount": "20.00",
+      "items_total": "20.25",
+      "difference": "-0.25"
+    },
+    {
+      "id": "11940001",
+      "finalAmount": "24.56",
+      "items_total": "24.96",
+      "difference": "-0.40"
+    },
+    {
+      "id": "24090008",
+      "finalAmount": "35.52",
+      "items_total": "36.32",
+      "difference": "-0.80"
+    },
+    {
+      "id": "24780011",
+      "finalAmount": "4.00",
+      "items_total": "5.00",
+      "difference": "-1.00"
+    },
+    {
+      "id": "14610004",
+      "finalAmount": "11.50",
+      "items_total": "12.50",
+      "difference": "-1.00"
+    },
+    {
+      "id": "16380017",
+      "finalAmount": "25.14",
+      "items_total": "26.14",
+      "difference": "-1.00"
+    },
+    {
+      "id": "21540004",
+      "finalAmount": "43.31",
+      "items_total": "44.31",
+      "difference": "-1.00"
+    },
+    {
+      "id": "11880001",
+      "finalAmount": "6.00",
+      "items_total": "7.00",
+      "difference": "-1.00"
+    },
+    {
+      "id": "11640004",
+      "finalAmount": "11.95",
+      "items_total": "12.95",
+      "difference": "-1.00"
+    },
+    {
+      "id": "11700003",
+      "finalAmount": "9.50",
+      "items_total": "11.00",
+      "difference": "-1.50"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tfinalAmount\titems_total\tdifference\n12240001\t135.00\t115.00\t20.00\n13020001\t42.00\t40.00\t2.00\n16710002\t88.52\t86.52\t2.00\n12720003\t8.50\t7.50\t1.00\n11580003\t20.50\t19.50\t1.00\n12060009\t16.00\t15.00\t1.00\n12720006\t16.00\t15.00\t1.00\n13410001\t59.00\t58.00\t1.00\n12120003\t22.00\t21.50\t0.50\n16710003\t33.67\t33.17\t0.50\n12720001\t20.00\t20.25\t-0.25\n11940001\t24.56\t24.96\t-0.40\n24090008\t35.52\t36.32\t-0.80\n24780011\t4.00\t5.00\t-1.00\n14610004\t11.50\t12.50\t-1.00\n16380017\t25.14\t26.14\t-1.00\n21540004\t43.31\t44.31\t-1.00\n11880001\t6.00\t7.00\t-1.00\n11640004\t11.95\t12.95\t-1.00\n11700003\t9.50\t11.00\t-1.50\n",
+  "stderr": "",
+  "execution_time_ms": 69
+}

@@ -187,7 +187,7 @@
 
 ### Bugs Reportados (17/12/2025 - Manhã - Parte 2)
 - [x] Contas a Pagar - Botão "Pagar" agora abre o modal corretamente (criado componente CalendarPayButton separado)
-- [ ] Dashboard Margem Bruta - Valor ainda diverge do card Faturamento Mês (investigar mais)
+- [x] Dashboard Margem Bruta - Valor agora usa o mesmo faturamento do card principal (corrigido)
 
 ### Melhorias Solicitadas (17/12/2025)
 - [x] Contas a Pagar - Renomear "Fornecedores com Saldo a Pagar" para "Histórico de Fornecedores"
@@ -196,3 +196,6 @@
 - [x] Contas a Pagar - Histórico de Fornecedores: exibir resultados apenas após confirmar pesquisa
 - [x] Contas a Pagar - Histórico de Fornecedores: adicionar filtro por status (todos, com saldo, sem saldo)
 - [x] Contas a Pagar - Histórico de Fornecedores: tela mais limpa com filtros no topo
+
+### Bugs Reportados (17/12/2025 - Tarde)
+- [x] Mg Bruta - Faturamento Total agora usa finalAmount proporcionalizado (consistente com outras telas)

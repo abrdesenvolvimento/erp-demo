@@ -307,7 +307,7 @@ export default function Home() {
                         <p className="text-sm font-medium text-emerald-900">Margem Geral</p>
                         <p className="text-xs text-emerald-700 mt-0.5">
                           Faturamento Total: <span className="font-semibold">R$ {formatCurrency(
-                            marginData.reduce((sum, cat) => sum + parseFloat(cat.totalRevenue), 0)
+                            stats?.monthRevenue || 0
                           )}</span>
                         </p>
                       </div>
