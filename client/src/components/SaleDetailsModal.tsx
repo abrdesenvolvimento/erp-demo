@@ -250,7 +250,7 @@ export function SaleDetailsModal({ saleId, open, onClose }: SaleDetailsModalProp
             font-family: 'Courier New', monospace; 
             width: 56mm; 
             margin: 0; 
-            padding: 2mm;
+            padding: 3mm;
             font-size: 9pt;
             line-height: 1.3;
           }
@@ -338,7 +338,7 @@ export function SaleDetailsModal({ saleId, open, onClose }: SaleDetailsModalProp
           }
           @media print {
             body { 
-              padding: 2mm;
+              padding: 3mm;
               margin: 0;
             }
             @page {

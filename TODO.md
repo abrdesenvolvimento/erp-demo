@@ -234,3 +234,6 @@
 - [x] Remover botão "Imprimir" da impressão (display: none !important)
 - [x] Logo reduzido para 20mm (ao invés de remover completamente)
 - [x] Otimizar espaçamentos e alinhamento de valores
+
+### Ajuste Fino de Margem (28/12/2025)
+- [x] Aumentar margem de 2mm para 3mm para evitar corte da primeira letra dos produtos
