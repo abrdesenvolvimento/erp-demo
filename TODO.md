@@ -228,3 +228,9 @@
 
 ### Ajuste de Impressão (28/12/2025)
 - [x] Adaptar comprovante de venda para impressora térmica 56mm (layout otimizado para largura reduzida)
+
+### Correções de Impressão Térmica (28/12/2025)
+- [x] Ajustar margens do comprovante para evitar corte de informações (reduzido de 5mm para 2mm)
+- [x] Remover botão "Imprimir" da impressão (display: none !important)
+- [x] Logo reduzido para 20mm (ao invés de remover completamente)
+- [x] Otimizar espaçamentos e alinhamento de valores

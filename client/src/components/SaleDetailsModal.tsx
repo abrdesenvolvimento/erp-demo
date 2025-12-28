@@ -250,7 +250,7 @@ export function SaleDetailsModal({ saleId, open, onClose }: SaleDetailsModalProp
             font-family: 'Courier New', monospace; 
             width: 56mm; 
             margin: 0; 
-            padding: 5mm;
+            padding: 2mm;
             font-size: 9pt;
             line-height: 1.3;
           }
@@ -261,8 +261,8 @@ export function SaleDetailsModal({ saleId, open, onClose }: SaleDetailsModalProp
             padding-bottom: 8px; 
           }
           .header img { 
-            max-width: 35mm; 
-            margin: 0 auto 5px; 
+            max-width: 20mm; 
+            margin: 0 auto 3px; 
             display: block; 
           }
           .header h1 { 
@@ -327,14 +327,26 @@ export function SaleDetailsModal({ saleId, open, onClose }: SaleDetailsModalProp
             padding-top: 8px; 
             font-size: 7pt;
           }
+          button { 
+            margin-top: 10px;
+            padding: 8px 16px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+          }
           @media print {
             body { 
-              padding: 0;
+              padding: 2mm;
               margin: 0;
             }
             @page {
               size: 56mm auto;
               margin: 0;
+            }
+            button {
+              display: none !important;
             }
           }
         </style>
