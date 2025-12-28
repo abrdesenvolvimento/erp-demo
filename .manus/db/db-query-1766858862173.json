@@ -1,0 +1,60 @@
+{
+  "query": "SELECT saleDate, COUNT(*) as qtd, SUM(finalAmount) as total\nFROM sales \nWHERE saleType = 'DELIVERY'\nGROUP BY saleDate\nORDER BY saleDate DESC\nLIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT saleDate, COUNT(*) as qtd, SUM(finalAmount) as total\nFROM sales \nWHERE saleType = 'DELIVERY'\nGROUP BY saleDate\nORDER BY saleDate DESC\nLIMIT 10;",
+  "rows": [
+    {
+      "saleDate": "2025-12-24 02:27:48",
+      "qtd": "1",
+      "total": "27.12"
+    },
+    {
+      "saleDate": "2025-12-24 02:27:21",
+      "qtd": "1",
+      "total": "43.75"
+    },
+    {
+      "saleDate": "2025-12-24 02:26:44",
+      "qtd": "1",
+      "total": "9.79"
+    },
+    {
+      "saleDate": "2025-12-24 02:10:59",
+      "qtd": "1",
+      "total": "40.68"
+    },
+    {
+      "saleDate": "2025-12-24 02:08:42",
+      "qtd": "1",
+      "total": "34.93"
+    },
+    {
+      "saleDate": "2025-12-24 01:24:56",
+      "qtd": "1",
+      "total": "18.37"
+    },
+    {
+      "saleDate": "2025-12-24 01:24:16",
+      "qtd": "1",
+      "total": "24.99"
+    },
+    {
+      "saleDate": "2025-12-24 00:18:50",
+      "qtd": "1",
+      "total": "20.95"
+    },
+    {
+      "saleDate": "2025-12-24 00:18:21",
+      "qtd": "1",
+      "total": "29.99"
+    },
+    {
+      "saleDate": "2025-12-24 00:17:58",
+      "qtd": "1",
+      "total": "112.88"
+    }
+  ],
+  "messages": [],
+  "stdout": "saleDate\tqtd\ttotal\n2025-12-24 02:27:48\t1\t27.12\n2025-12-24 02:27:21\t1\t43.75\n2025-12-24 02:26:44\t1\t9.79\n2025-12-24 02:10:59\t1\t40.68\n2025-12-24 02:08:42\t1\t34.93\n2025-12-24 01:24:56\t1\t18.37\n2025-12-24 01:24:16\t1\t24.99\n2025-12-24 00:18:50\t1\t20.95\n2025-12-24 00:18:21\t1\t29.99\n2025-12-24 00:17:58\t1\t112.88\n",
+  "stderr": "",
+  "execution_time_ms": 69
+}

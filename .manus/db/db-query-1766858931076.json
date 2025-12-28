@@ -1,0 +1,80 @@
+{
+  "query": "SELECT \n  id, \n  saleType, \n  DATE_FORMAT(saleDate, '%Y-%m-%d') as saleDate_formatted,\n  DATE_FORMAT(createdAt, '%Y-%m-%d %H:%i:%s') as createdAt_formatted,\n  finalAmount\nFROM sales \nWHERE saleType = 'DELIVERY'\nORDER BY id DESC\nLIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  id, \n  saleType, \n  DATE_FORMAT(saleDate, '%Y-%m-%d') as saleDate_formatted,\n  DATE_FORMAT(createdAt, '%Y-%m-%d %H:%i:%s') as createdAt_formatted,\n  finalAmount\nFROM sales \nWHERE saleType = 'DELIVERY'\nORDER BY id DESC\nLIMIT 10;",
+  "rows": [
+    {
+      "id": "34530138",
+      "saleType": "DELIVERY",
+      "saleDate_formatted": "2025-12-24",
+      "createdAt_formatted": "2025-12-27 17:49:39",
+      "finalAmount": "57.48"
+    },
+    {
+      "id": "34530137",
+      "saleType": "DELIVERY",
+      "saleDate_formatted": "2025-12-24",
+      "createdAt_formatted": "2025-12-27 17:44:02",
+      "finalAmount": "38.84"
+    },
+    {
+      "id": "34530136",
+      "saleType": "DELIVERY",
+      "saleDate_formatted": "2025-12-24",
+      "createdAt_formatted": "2025-12-27 17:42:18",
+      "finalAmount": "125.89"
+    },
+    {
+      "id": "34530134",
+      "saleType": "DELIVERY",
+      "saleDate_formatted": "2025-12-24",
+      "createdAt_formatted": "2025-12-27 17:40:27",
+      "finalAmount": "29.99"
+    },
+    {
+      "id": "34530133",
+      "saleType": "DELIVERY",
+      "saleDate_formatted": "2025-12-24",
+      "createdAt_formatted": "2025-12-27 17:40:05",
+      "finalAmount": "27.12"
+    },
+    {
+      "id": "34530132",
+      "saleType": "DELIVERY",
+      "saleDate_formatted": "2025-12-24",
+      "createdAt_formatted": "2025-12-27 17:39:04",
+      "finalAmount": "52.27"
+    },
+    {
+      "id": "34530131",
+      "saleType": "DELIVERY",
+      "saleDate_formatted": "2025-12-24",
+      "createdAt_formatted": "2025-12-27 17:38:18",
+      "finalAmount": "42.54"
+    },
+    {
+      "id": "34530130",
+      "saleType": "DELIVERY",
+      "saleDate_formatted": "2025-12-24",
+      "createdAt_formatted": "2025-12-27 17:37:39",
+      "finalAmount": "140.04"
+    },
+    {
+      "id": "34530129",
+      "saleType": "DELIVERY",
+      "saleDate_formatted": "2025-12-24",
+      "createdAt_formatted": "2025-12-27 17:37:05",
+      "finalAmount": "44.34"
+    },
+    {
+      "id": "34530128",
+      "saleType": "DELIVERY",
+      "saleDate_formatted": "2025-12-24",
+      "createdAt_formatted": "2025-12-27 17:36:42",
+      "finalAmount": "21.54"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tsaleType\tsaleDate_formatted\tcreatedAt_formatted\tfinalAmount\n34530138\tDELIVERY\t2025-12-24\t2025-12-27 17:49:39\t57.48\n34530137\tDELIVERY\t2025-12-24\t2025-12-27 17:44:02\t38.84\n34530136\tDELIVERY\t2025-12-24\t2025-12-27 17:42:18\t125.89\n34530134\tDELIVERY\t2025-12-24\t2025-12-27 17:40:27\t29.99\n34530133\tDELIVERY\t2025-12-24\t2025-12-27 17:40:05\t27.12\n34530132\tDELIVERY\t2025-12-24\t2025-12-27 17:39:04\t52.27\n34530131\tDELIVERY\t2025-12-24\t2025-12-27 17:38:18\t42.54\n34530130\tDELIVERY\t2025-12-24\t2025-12-27 17:37:39\t140.04\n34530129\tDELIVERY\t2025-12-24\t2025-12-27 17:37:05\t44.34\n34530128\tDELIVERY\t2025-12-24\t2025-12-27 17:36:42\t21.54\n",
+  "stderr": "",
+  "execution_time_ms": 56
+}

@@ -1,0 +1,15 @@
+{
+  "query": "SELECT \n  saleDate,\n  COUNT(*) as quantidade,\n  SUM(finalAmount) as valor_total\nFROM sales \nWHERE saleType = 'DELIVERY' \nAND saleDate = '2025-12-24'\nGROUP BY saleDate;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  saleDate,\n  COUNT(*) as quantidade,\n  SUM(finalAmount) as valor_total\nFROM sales \nWHERE saleType = 'DELIVERY' \nAND saleDate = '2025-12-24'\nGROUP BY saleDate;",
+  "rows": [
+    {
+      "saleDate": "2025-12-24 00:00:00",
+      "quantidade": "120",
+      "valor_total": "7147.52"
+    }
+  ],
+  "messages": [],
+  "stdout": "saleDate\tquantidade\tvalor_total\n2025-12-24 00:00:00\t120\t7147.52\n",
+  "stderr": "",
+  "execution_time_ms": 54
+}

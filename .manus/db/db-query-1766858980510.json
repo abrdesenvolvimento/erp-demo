@@ -1,0 +1,40 @@
+{
+  "query": "SELECT \n  id,\n  saleDate,\n  CONVERT_TZ(saleDate, '+00:00', '-03:00') as saleDate_brasilia,\n  finalAmount\nFROM sales \nWHERE saleType = 'DELIVERY'\nORDER BY id DESC\nLIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  id,\n  saleDate,\n  CONVERT_TZ(saleDate, '+00:00', '-03:00') as saleDate_brasilia,\n  finalAmount\nFROM sales \nWHERE saleType = 'DELIVERY'\nORDER BY id DESC\nLIMIT 5;",
+  "rows": [
+    {
+      "id": "34530138",
+      "saleDate": "2025-12-24 00:00:00",
+      "saleDate_brasilia": "2025-12-23 21:00:00.000000",
+      "finalAmount": "57.48"
+    },
+    {
+      "id": "34530137",
+      "saleDate": "2025-12-24 00:00:00",
+      "saleDate_brasilia": "2025-12-23 21:00:00.000000",
+      "finalAmount": "38.84"
+    },
+    {
+      "id": "34530136",
+      "saleDate": "2025-12-24 00:00:00",
+      "saleDate_brasilia": "2025-12-23 21:00:00.000000",
+      "finalAmount": "125.89"
+    },
+    {
+      "id": "34530134",
+      "saleDate": "2025-12-24 00:00:00",
+      "saleDate_brasilia": "2025-12-23 21:00:00.000000",
+      "finalAmount": "29.99"
+    },
+    {
+      "id": "34530133",
+      "saleDate": "2025-12-24 00:00:00",
+      "saleDate_brasilia": "2025-12-23 21:00:00.000000",
+      "finalAmount": "27.12"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tsaleDate\tsaleDate_brasilia\tfinalAmount\n34530138\t2025-12-24 00:00:00\t2025-12-23 21:00:00.000000\t57.48\n34530137\t2025-12-24 00:00:00\t2025-12-23 21:00:00.000000\t38.84\n34530136\t2025-12-24 00:00:00\t2025-12-23 21:00:00.000000\t125.89\n34530134\t2025-12-24 00:00:00\t2025-12-23 21:00:00.000000\t29.99\n34530133\t2025-12-24 00:00:00\t2025-12-23 21:00:00.000000\t27.12\n",
+  "stderr": "",
+  "execution_time_ms": 53
+}

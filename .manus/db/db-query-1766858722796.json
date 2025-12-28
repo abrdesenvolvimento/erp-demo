@@ -1,0 +1,40 @@
+{
+  "query": "SELECT id, saleDate, finalAmount, createdAt \nFROM sales \nWHERE saleType = 'DELIVERY' \nAND DATE(CONVERT_TZ(createdAt, '+00:00', '-03:00')) = '2025-12-27'\nORDER BY id\nLIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT id, saleDate, finalAmount, createdAt \nFROM sales \nWHERE saleType = 'DELIVERY' \nAND DATE(CONVERT_TZ(createdAt, '+00:00', '-03:00')) = '2025-12-27'\nORDER BY id\nLIMIT 5;",
+  "rows": [
+    {
+      "id": "34530002",
+      "saleDate": "2025-12-27 15:29:55",
+      "finalAmount": "79.02",
+      "createdAt": "2025-12-27 15:29:55"
+    },
+    {
+      "id": "34530003",
+      "saleDate": "2025-12-27 15:31:54",
+      "finalAmount": "65.93",
+      "createdAt": "2025-12-27 15:31:54"
+    },
+    {
+      "id": "34530005",
+      "saleDate": "2025-12-27 15:34:20",
+      "finalAmount": "30.00",
+      "createdAt": "2025-12-27 15:34:20"
+    },
+    {
+      "id": "34530006",
+      "saleDate": "2025-12-27 15:34:44",
+      "finalAmount": "175.89",
+      "createdAt": "2025-12-27 15:34:44"
+    },
+    {
+      "id": "34530007",
+      "saleDate": "2025-12-27 15:35:37",
+      "finalAmount": "59.94",
+      "createdAt": "2025-12-27 15:35:37"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tsaleDate\tfinalAmount\tcreatedAt\n34530002\t2025-12-27 15:29:55\t79.02\t2025-12-27 15:29:55\n34530003\t2025-12-27 15:31:54\t65.93\t2025-12-27 15:31:54\n34530005\t2025-12-27 15:34:20\t30.00\t2025-12-27 15:34:20\n34530006\t2025-12-27 15:34:44\t175.89\t2025-12-27 15:34:44\n34530007\t2025-12-27 15:35:37\t59.94\t2025-12-27 15:35:37\n",
+  "stderr": "",
+  "execution_time_ms": 59
+}

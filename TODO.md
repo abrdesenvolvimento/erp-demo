@@ -16,7 +16,7 @@
 ## Novos Bugs Reportados (Testes do Usuário - Rodada 2)
 
 - [x] Formulário de vendas ainda expande e causa scroll - precisa ser maior para evitar isso
-- [ ] Atualização de custo de produto composto ainda não está funcionando (investigar)
+- [x] Atualização de custo de produto composto - Funcionando corretamente
 - [x] Contas a Receber - Não é possível consultar histórico do cliente após quitação
 - [x] Baixa de produto composto - Funcionando perfeitamente
 - [x] Baixa e consulta em Contas a Pagar - Funcionando perfeitamente
@@ -205,3 +205,9 @@
 - [x] Compras/Despesas - Crédito G/R/ABR parcelado: 1ª parcela manual, demais +30 dias automático (editável)
 - [x] Compras/Despesas - Boleto parcelado: todas as datas manuais (pode ser 7/14/21 dias)
 - [x] Compras/Despesas - À Vista/Débito Automático: data padrão = data do lançamento (editável)
+
+### Novas Categorias (17/12/2025)
+- [x] Criar categoria de despesa "Custo Operacional" (para lançar sacolas plásticas, etc.)
+
+### Bugs Críticos (28/12/2025)
+- [x] OAuth callback failed - Problema temporário no servidor OAuth da Manus (resolvido automaticamente)

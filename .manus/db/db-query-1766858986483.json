@@ -1,0 +1,40 @@
+{
+  "query": "SELECT \n  id,\n  saleDate,\n  createdAt,\n  finalAmount\nFROM sales \nWHERE saleType = 'DELIVERY'\nAND DATE(createdAt) = CURDATE()\nLIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  id,\n  saleDate,\n  createdAt,\n  finalAmount\nFROM sales \nWHERE saleType = 'DELIVERY'\nAND DATE(createdAt) = CURDATE()\nLIMIT 5;",
+  "rows": [
+    {
+      "id": "34530002",
+      "saleDate": "2025-12-24 00:00:00",
+      "createdAt": "2025-12-27 15:29:55",
+      "finalAmount": "79.02"
+    },
+    {
+      "id": "34530003",
+      "saleDate": "2025-12-24 00:00:00",
+      "createdAt": "2025-12-27 15:31:54",
+      "finalAmount": "65.93"
+    },
+    {
+      "id": "34530005",
+      "saleDate": "2025-12-24 00:00:00",
+      "createdAt": "2025-12-27 15:34:20",
+      "finalAmount": "30.00"
+    },
+    {
+      "id": "34530006",
+      "saleDate": "2025-12-24 00:00:00",
+      "createdAt": "2025-12-27 15:34:44",
+      "finalAmount": "175.89"
+    },
+    {
+      "id": "34530007",
+      "saleDate": "2025-12-24 00:00:00",
+      "createdAt": "2025-12-27 15:35:37",
+      "finalAmount": "59.94"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tsaleDate\tcreatedAt\tfinalAmount\n34530002\t2025-12-24 00:00:00\t2025-12-27 15:29:55\t79.02\n34530003\t2025-12-24 00:00:00\t2025-12-27 15:31:54\t65.93\n34530005\t2025-12-24 00:00:00\t2025-12-27 15:34:20\t30.00\n34530006\t2025-12-24 00:00:00\t2025-12-27 15:34:44\t175.89\n34530007\t2025-12-24 00:00:00\t2025-12-27 15:35:37\t59.94\n",
+  "stderr": "",
+  "execution_time_ms": 71
+}

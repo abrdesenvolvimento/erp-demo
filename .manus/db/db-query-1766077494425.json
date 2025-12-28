@@ -1,0 +1,130 @@
+{
+  "query": "SELECT * FROM expenseCategories ORDER BY name;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT * FROM expenseCategories ORDER BY name;",
+  "rows": [
+    {
+      "id": "1",
+      "name": "Aluguel",
+      "description": "Aluguel do imóvel comercial",
+      "active": "1",
+      "createdAt": "2025-10-21 18:36:39",
+      "updatedAt": "2025-10-21 18:36:39"
+    },
+    {
+      "id": "6",
+      "name": "Contador",
+      "description": "Serviços contábeis",
+      "active": "1",
+      "createdAt": "2025-10-21 18:36:39",
+      "updatedAt": "2025-10-21 18:36:39"
+    },
+    {
+      "id": "2",
+      "name": "Energia Elétrica",
+      "description": "Conta de luz",
+      "active": "1",
+      "createdAt": "2025-10-21 18:36:39",
+      "updatedAt": "2025-10-21 18:36:39"
+    },
+    {
+      "id": "8",
+      "name": "Limpeza",
+      "description": "Serviços de limpeza e materiais",
+      "active": "1",
+      "createdAt": "2025-10-21 18:36:39",
+      "updatedAt": "2025-10-21 18:36:39"
+    },
+    {
+      "id": "7",
+      "name": "Manutenção",
+      "description": "Manutenção predial e equipamentos",
+      "active": "1",
+      "createdAt": "2025-10-21 18:36:39",
+      "updatedAt": "2025-10-21 18:36:39"
+    },
+    {
+      "id": "10",
+      "name": "Marketing e Publicidade",
+      "description": "Propaganda, redes sociais, anúncios",
+      "active": "1",
+      "createdAt": "2025-10-21 18:36:39",
+      "updatedAt": "2025-10-21 18:36:39"
+    },
+    {
+      "id": "12",
+      "name": "Material de Escritório",
+      "description": "Papelaria, materiais administrativos",
+      "active": "1",
+      "createdAt": "2025-10-21 18:36:39",
+      "updatedAt": "2025-10-21 18:36:39"
+    },
+    {
+      "id": "14",
+      "name": "Outras Despesas",
+      "description": "Despesas diversas não categorizadas",
+      "active": "1",
+      "createdAt": "2025-10-21 18:36:39",
+      "updatedAt": "2025-10-21 18:36:39"
+    },
+    {
+      "id": "30001",
+      "name": "Perdas",
+      "description": "Perdas de estoque por vencimento, avaria ou outros motivos",
+      "active": "1",
+      "createdAt": "2025-12-09 13:03:50",
+      "updatedAt": "2025-12-09 13:03:50"
+    },
+    {
+      "id": "5",
+      "name": "Salários e Encargos",
+      "description": "Folha de pagamento e encargos trabalhistas",
+      "active": "1",
+      "createdAt": "2025-10-21 18:36:39",
+      "updatedAt": "2025-10-21 18:36:39"
+    },
+    {
+      "id": "9",
+      "name": "Segurança",
+      "description": "Serviços de segurança",
+      "active": "1",
+      "createdAt": "2025-10-21 18:36:39",
+      "updatedAt": "2025-10-21 18:36:39"
+    },
+    {
+      "id": "11",
+      "name": "Taxas e Impostos",
+      "description": "Impostos diversos, taxas municipais",
+      "active": "1",
+      "createdAt": "2025-10-21 18:36:39",
+      "updatedAt": "2025-10-21 18:36:39"
+    },
+    {
+      "id": "4",
+      "name": "Telefone/Internet",
+      "description": "Serviços de telecomunicações",
+      "active": "1",
+      "createdAt": "2025-10-21 18:36:39",
+      "updatedAt": "2025-10-21 18:36:39"
+    },
+    {
+      "id": "13",
+      "name": "Transporte/Combustível",
+      "description": "Combustível, manutenção de veículos",
+      "active": "1",
+      "createdAt": "2025-10-21 18:36:39",
+      "updatedAt": "2025-10-21 18:36:39"
+    },
+    {
+      "id": "3",
+      "name": "Água",
+      "description": "Conta de água",
+      "active": "1",
+      "createdAt": "2025-10-21 18:36:39",
+      "updatedAt": "2025-10-21 18:36:39"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tdescription\tactive\tcreatedAt\tupdatedAt\n1\tAluguel\tAluguel do imóvel comercial\t1\t2025-10-21 18:36:39\t2025-10-21 18:36:39\n6\tContador\tServiços contábeis\t1\t2025-10-21 18:36:39\t2025-10-21 18:36:39\n2\tEnergia Elétrica\tConta de luz\t1\t2025-10-21 18:36:39\t2025-10-21 18:36:39\n8\tLimpeza\tServiços de limpeza e materiais\t1\t2025-10-21 18:36:39\t2025-10-21 18:36:39\n7\tManutenção\tManutenção predial e equipamentos\t1\t2025-10-21 18:36:39\t2025-10-21 18:36:39\n10\tMarketing e Publicidade\tPropaganda, redes sociais, anúncios\t1\t2025-10-21 18:36:39\t2025-10-21 18:36:39\n12\tMaterial de Escritório\tPapelaria, materiais administrativos\t1\t2025-10-21 18:36:39\t2025-10-21 18:36:39\n14\tOutras Despesas\tDespesas diversas não categorizadas\t1\t2025-10-21 18:36:39\t2025-10-21 18:36:39\n30001\tPerdas\tPerdas de estoque por vencimento, avaria ou outros motivos\t1\t2025-12-09 13:03:50\t2025-12-09 13:03:50\n5\tSalários e Encargos\tFolha de pagamento e encargos trabalhistas\t1\t2025-10-21 18:36:39\t2025-10-21 18:36:39\n9\tSegurança\tServiços de segurança\t1\t2025-10-21 18:36:39\t2025-10-21 18:36:39\n11\tTaxas e Impostos\tImpostos diversos, taxas municipais\t1\t2025-10-21 18:36:39\t2025-10-21 18:36:39\n4\tTelefone/Internet\tServiços de telecomunicações\t1\t2025-10-21 18:36:39\t2025-10-21 18:36:39\n13\tTransporte/Combustível\tCombustível, manutenção de veículos\t1\t2025-10-21 18:36:39\t2025-10-21 18:36:39\n3\tÁgua\tConta de água\t1\t2025-10-21 18:36:39\t2025-10-21 18:36:39\n",
+  "stderr": "",
+  "execution_time_ms": 295
+}
