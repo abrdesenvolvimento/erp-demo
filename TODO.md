@@ -225,3 +225,6 @@
 - [x] Documento de Venda - Mostrar nome do usuário que gerou a venda
 - [x] Tela de Compras - Auto-scroll para linha do novo produto ao adicionar (já estava implementado)
 - [x] Tela de Compras - Exibir subtotal (Qtd × Preço Unit.) em cada linha de produto
+
+### Ajuste de Impressão (28/12/2025)
+- [x] Adaptar comprovante de venda para impressora térmica 56mm (layout otimizado para largura reduzida)

@@ -246,68 +246,134 @@ export function SaleDetailsModal({ saleId, open, onClose }: SaleDetailsModalProp
         <title>Comprovante de Venda #${saleData.id}</title>
         <style>
           * { margin: 0; padding: 0; box-sizing: border-box; }
-          body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 40px; }
-          .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #333; padding-bottom: 20px; }
-          .header h1 { font-size: 24px; margin-bottom: 5px; }
-          .header p { font-size: 14px; color: #666; }
-          .info { margin-bottom: 30px; }
-          .info-row { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 14px; }
-          .items { margin-bottom: 30px; }
-          .items table { width: 100%; border-collapse: collapse; }
-          .items th { text-align: left; border-bottom: 2px solid #333; padding: 10px; font-size: 14px; }
-          .items td { padding: 10px; border-bottom: 1px solid #ddd; }
-          .totals { border-top: 2px solid #333; padding-top: 20px; }
-          .totals-row { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 16px; }
-          .totals-row.final { font-weight: bold; font-size: 20px; margin-top: 15px; }
-          .footer { text-align: center; margin-top: 40px; border-top: 1px solid #ddd; padding-top: 20px; font-size: 12px; color: #666; }
+          body { 
+            font-family: 'Courier New', monospace; 
+            width: 56mm; 
+            margin: 0; 
+            padding: 5mm;
+            font-size: 9pt;
+            line-height: 1.3;
+          }
+          .header { 
+            text-align: center; 
+            margin-bottom: 8px; 
+            border-bottom: 1px dashed #000; 
+            padding-bottom: 8px; 
+          }
+          .header img { 
+            max-width: 35mm; 
+            margin: 0 auto 5px; 
+            display: block; 
+          }
+          .header h1 { 
+            font-size: 10pt; 
+            margin-bottom: 3px; 
+            font-weight: bold;
+          }
+          .header p { 
+            font-size: 8pt; 
+            margin: 2px 0;
+          }
+          .info { 
+            margin-bottom: 8px; 
+            font-size: 8pt;
+          }
+          .info-row { 
+            margin-bottom: 3px; 
+          }
+          .info-label {
+            font-weight: bold;
+          }
+          .items { 
+            margin-bottom: 8px; 
+            border-top: 1px dashed #000;
+            padding-top: 5px;
+          }
+          .item-row {
+            margin-bottom: 5px;
+            padding-bottom: 5px;
+            border-bottom: 1px dotted #ccc;
+          }
+          .item-name {
+            font-weight: bold;
+            margin-bottom: 2px;
+          }
+          .item-details {
+            display: flex;
+            justify-content: space-between;
+            font-size: 8pt;
+          }
+          .totals { 
+            border-top: 1px dashed #000; 
+            padding-top: 8px;
+            font-size: 9pt;
+          }
+          .totals-row { 
+            display: flex; 
+            justify-content: space-between; 
+            margin-bottom: 3px;
+          }
+          .totals-row.final { 
+            font-weight: bold; 
+            font-size: 11pt; 
+            margin-top: 5px;
+            padding-top: 5px;
+            border-top: 1px solid #000;
+          }
+          .footer { 
+            text-align: center; 
+            margin-top: 10px; 
+            border-top: 1px dashed #000; 
+            padding-top: 8px; 
+            font-size: 7pt;
+          }
           @media print {
-            body { padding: 20px; }
-            button { display: none; }
+            body { 
+              padding: 0;
+              margin: 0;
+            }
+            @page {
+              size: 56mm auto;
+              margin: 0;
+            }
           }
         </style>
       </head>
       <body>
         <div class="header">
-          <img src="/logo-adega.png" alt="Adega Beira Rio" style="max-width: 150px; margin: 0 auto 10px; display: block;">
-          <h1>Adega Beira Rio Comércio de Bebidas Ltda</h1>
-          <p style="margin: 5px 0;">Rua Israel, 286 - Rochdale, Osasco/SP CEP 06220-053</p>
-          <p style="margin: 5px 0;">CNPJ: 50.887.052/0001-08</p>
-          <p style="margin-top: 15px; font-weight: bold;">Comprovante de Venda</p>
+          <img src="/logo-adega.png" alt="Adega Beira Rio">
+          <h1>Adega Beira Rio</h1>
+          <p>Comércio de Bebidas Ltda</p>
+          <p>Rua Israel, 286</p>
+          <p>Rochdale, Osasco/SP</p>
+          <p>CEP 06220-053</p>
+          <p>CNPJ: 50.887.052/0001-08</p>
         </div>
         
         <div class="info">
           <div class="info-row">
-            <span><strong>Venda:</strong> #${saleData.id}</span>
-            <span><strong>Tipo:</strong> ${getSaleTypeLabel(saleData.saleType)}</span>
+            <span class="info-label">Venda:</span> #${saleData.id}
           </div>
           <div class="info-row">
-            <span><strong>Data:</strong> ${formatDate(saleData.saleDate)}</span>
+            <span class="info-label">Tipo:</span> ${getSaleTypeLabel(saleData.saleType)}
           </div>
-          ${saleData.customerId ? `<div class="info-row"><span><strong>Cliente ID:</strong> ${saleData.customerId}</span></div>` : ''}
-          ${user?.name ? `<div class="info-row"><span><strong>Vendedor:</strong> ${user.name}</span></div>` : ''}
+          <div class="info-row">
+            <span class="info-label">Data:</span> ${formatDate(saleData.saleDate)}
+          </div>
+          ${saleData.customerId ? `<div class="info-row"><span class="info-label">Cliente:</span> ${saleData.customerId}</div>` : ''}
+          ${user?.name ? `<div class="info-row"><span class="info-label">Vendedor:</span> ${user.name}</div>` : ''}
         </div>
         
         <div class="items">
-          <table>
-            <thead>
-              <tr>
-                <th>Produto</th>
-                <th style="text-align: center;">Qtd</th>
-                <th style="text-align: right;">Unit.</th>
-                <th style="text-align: right;">Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${saleData.items?.map((item: any) => `
-                <tr>
-                  <td>${item.productName || 'Produto'}</td>
-                  <td style="text-align: center;">${item.quantity}</td>
-                  <td style="text-align: right;">${formatCurrency(item.unitPrice)}</td>
-                  <td style="text-align: right;">${formatCurrency(item.totalPrice)}</td>
-                </tr>
-              `).join('') || ''}
-            </tbody>
-          </table>
+          ${saleData.items?.map((item: any) => `
+            <div class="item-row">
+              <div class="item-name">${item.productName || 'Produto'}</div>
+              <div class="item-details">
+                <span>${item.quantity} x ${formatCurrency(item.unitPrice)}</span>
+                <span>${formatCurrency(item.totalPrice)}</span>
+              </div>
+            </div>
+          `).join('') || ''}
         </div>
         
         <div class="totals">
