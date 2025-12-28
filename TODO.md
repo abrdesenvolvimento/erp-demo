@@ -211,3 +211,17 @@
 
 ### Bugs Críticos (28/12/2025)
 - [x] OAuth callback failed - Problema temporário no servidor OAuth da Manus (resolvido automaticamente)
+
+### Sprint 28/12/2025 - Melhorias Simples e Práticas
+
+#### Dados da Empresa (Corrigidos)
+- Razão Social: Adega Beira Rio Comércio de Bebidas Ltda
+- Endereço: Rua Israel, 286 - Rochdale, Osasco/SP CEP 06220-053
+- CNPJ: 50.887.052/0001-08
+
+#### Tarefas
+- [x] Contas a Pagar - Remover seção "Histórico de Pagamentos" (redundante com "Histórico de Fornecedores")
+- [x] Documento de Venda - Incluir dados da empresa (Razão Social, Endereço, CNPJ)
+- [x] Documento de Venda - Mostrar nome do usuário que gerou a venda
+- [x] Tela de Compras - Auto-scroll para linha do novo produto ao adicionar (já estava implementado)
+- [x] Tela de Compras - Exibir subtotal (Qtd × Preço Unit.) em cada linha de produto

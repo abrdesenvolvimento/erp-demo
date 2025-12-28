@@ -35,7 +35,7 @@ export default function ContasPagar() {
   const [selectedInstallment, setSelectedInstallment] = useState<any | null>(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showPaymentDetailsModal, setShowPaymentDetailsModal] = useState(false);
-  const [showHistory, setShowHistory] = useState(false);
+
   const [searchSupplier, setSearchSupplier] = useState("");
   
   // Estados do calendário
@@ -137,13 +137,7 @@ export default function ContasPagar() {
   const [sortBy, setSortBy] = useState<"name" | "amount">("amount");
   const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "paid">("all");
   const [showSupplierResults, setShowSupplierResults] = useState(false);
-  const [historyFilters, setHistoryFilters] = useState({
-    supplierId: "",
-    startDate: "",
-    endDate: "",
-    docNumber: "",
-    paymentMethod: ""
-  });
+
   const [paymentForm, setPaymentForm] = useState({
     paidDate: new Date().toISOString().split('T')[0],
     paidAmount: "",
@@ -175,17 +169,7 @@ export default function ContasPagar() {
     month: calendarMonth,
   });
 
-  // Query para histórico de pagamentos
-  const { data: paymentHistory, refetch: refetchHistory } = trpc.payables.paymentHistory.useQuery(
-    {
-      supplierId: historyFilters.supplierId && historyFilters.supplierId !== "0" ? parseInt(historyFilters.supplierId) : undefined,
-      startDate: historyFilters.startDate || undefined,
-      endDate: historyFilters.endDate || undefined,
-      docNumber: historyFilters.docNumber || undefined,
-      paymentMethod: historyFilters.paymentMethod && historyFilters.paymentMethod !== "all" ? historyFilters.paymentMethod : undefined,
-    },
-    { enabled: showHistory }
-  );
+
 
   // Mutation para pagamento individual de parcela
   const payInstallment = trpc.payables.payInstallment.useMutation({
@@ -882,157 +866,7 @@ export default function ContasPagar() {
         </CardContent>
       </Card>
       
-      {/* Histórico de Pagamentos */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Histórico de Pagamentos</CardTitle>
-          <CardDescription>Consulte pagamentos já realizados de todos os fornecedores</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Filtros */}
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-            <div>
-              <Label htmlFor="supplierFilter">Fornecedor</Label>
-              <Select value={historyFilters.supplierId || ""} onValueChange={(value) => setHistoryFilters({ ...historyFilters, supplierId: value })}>
-                <SelectTrigger id="supplierFilter">
-                  <SelectValue placeholder="Todos" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="0">Todos</SelectItem>
-                  {suppliers?.filter((s: any) => s.supplierId != null).map((s: any) => (
-                    <SelectItem key={s.supplierId} value={s.supplierId.toString()}>
-                      {s.supplierName}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label htmlFor="startDate">Data Inicial</Label>
-              <Input
-                id="startDate"
-                type="date"
-                value={historyFilters.startDate}
-                onChange={(e) => setHistoryFilters({ ...historyFilters, startDate: e.target.value })}
-              />
-            </div>
-            <div>
-              <Label htmlFor="endDate">Data Final</Label>
-              <Input
-                id="endDate"
-                type="date"
-                value={historyFilters.endDate}
-                onChange={(e) => setHistoryFilters({ ...historyFilters, endDate: e.target.value })}
-              />
-            </div>
-            <div>
-              <Label htmlFor="docNumber">Número Documento</Label>
-              <Input
-                id="docNumber"
-                type="text"
-                placeholder="Ex: 123"
-                value={historyFilters.docNumber}
-                onChange={(e) => setHistoryFilters({ ...historyFilters, docNumber: e.target.value })}
-              />
-            </div>
-            <div>
-              <Label htmlFor="paymentMethodFilter">Forma Pagamento</Label>
-              <Select value={historyFilters.paymentMethod} onValueChange={(value) => setHistoryFilters({ ...historyFilters, paymentMethod: value })}>
-                <SelectTrigger id="paymentMethodFilter">
-                  <SelectValue placeholder="Todas" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todas</SelectItem>
-                  <SelectItem value="DINHEIRO">Dinheiro</SelectItem>
-                  <SelectItem value="PIX">PIX</SelectItem>
-                  <SelectItem value="CARTAO_CREDITO">Cartão de Crédito</SelectItem>
-                  <SelectItem value="CARTAO_DEBITO">Cartão de Débito</SelectItem>
-                  <SelectItem value="BOLETO">Boleto</SelectItem>
-                  <SelectItem value="TRANSFERENCIA">Transferência</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          
-          <Button onClick={() => { setShowHistory(true); refetchHistory(); }} className="w-full md:w-auto">
-            Buscar Pagamentos
-          </Button>
-          
-          {/* Tabela de Resultados */}
-          {showHistory && (
-            <div className="mt-4">
-              {!paymentHistory || paymentHistory.length === 0 ? (
-                <p className="text-center text-muted-foreground py-8">
-                  Nenhum pagamento encontrado com os filtros aplicados
-                </p>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>ID</TableHead>
-                      <TableHead>Fornecedor</TableHead>
-                      <TableHead>Data Criação</TableHead>
-                      <TableHead>Vencimento</TableHead>
-                      <TableHead>Data Pagamento</TableHead>
-                      <TableHead>Descrição</TableHead>
-                      <TableHead>Origem</TableHead>
-                      <TableHead>Valor Total</TableHead>
-                      <TableHead>Valor Pago</TableHead>
-                      <TableHead>Forma Pagamento</TableHead>
-                      <TableHead>Observações</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {paymentHistory.map((payment: any) => (
-                      <TableRow key={payment.id}>
-                        <TableCell className="font-medium">#{payment.id}</TableCell>
-                        <TableCell>{payment.supplierName}</TableCell>
-                        <TableCell>{formatDate(payment.expenseDate)}</TableCell>
-                        <TableCell>{formatDate(payment.dueDate)}</TableCell>
-                        <TableCell>
-                          {formatDate(payment.paidDate)}
-                        </TableCell>
-                        <TableCell>{payment.description}</TableCell>
-                        <TableCell>
-                          <Badge variant={payment.origin === 'Compra' ? 'default' : 'secondary'}>
-                            {payment.origin}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>{formatCurrency(payment.totalAmount)}</TableCell>
-                        <TableCell className="text-green-600 font-medium">
-                          {formatCurrency(payment.paidAmount)}
-                        </TableCell>
-                        <TableCell>
-                          {payment.paymentMethod ? (
-                            <Badge variant="outline">
-                              {payment.paymentMethod === 'DINHEIRO' ? 'Dinheiro' :
-                               payment.paymentMethod === 'PIX' ? 'PIX' :
-                               payment.paymentMethod === 'CARTAO_CREDITO' ? 'Cartão Crédito' :
-                               payment.paymentMethod === 'CARTAO_DEBITO' ? 'Cartão Débito' :
-                               payment.paymentMethod === 'BOLETO' ? 'Boleto' :
-                               payment.paymentMethod === 'TRANSFERENCIA' ? 'Transferência' :
-                               payment.paymentMethod}
-                            </Badge>
-                          ) : '-'}
-                        </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
-                          {payment.notes || '-'}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
-            </div>
-          )}
-          
-          {!showHistory && (
-            <p className="text-center text-muted-foreground py-8">
-              Use os filtros acima e clique em "Buscar Pagamentos" para consultar o histórico
-            </p>
-          )}
-        </CardContent>
-      </Card>
+
       </div>
     </DashboardLayout>
   );

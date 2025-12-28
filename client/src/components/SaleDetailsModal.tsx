@@ -269,8 +269,10 @@ export function SaleDetailsModal({ saleId, open, onClose }: SaleDetailsModalProp
       <body>
         <div class="header">
           <img src="/logo-adega.png" alt="Adega Beira Rio" style="max-width: 150px; margin: 0 auto 10px; display: block;">
-          <h1>Adega Beira Rio</h1>
-          <p>Comprovante de Venda</p>
+          <h1>Adega Beira Rio Comércio de Bebidas Ltda</h1>
+          <p style="margin: 5px 0;">Rua Israel, 286 - Rochdale, Osasco/SP CEP 06220-053</p>
+          <p style="margin: 5px 0;">CNPJ: 50.887.052/0001-08</p>
+          <p style="margin-top: 15px; font-weight: bold;">Comprovante de Venda</p>
         </div>
         
         <div class="info">
@@ -282,6 +284,7 @@ export function SaleDetailsModal({ saleId, open, onClose }: SaleDetailsModalProp
             <span><strong>Data:</strong> ${formatDate(saleData.saleDate)}</span>
           </div>
           ${saleData.customerId ? `<div class="info-row"><span><strong>Cliente ID:</strong> ${saleData.customerId}</span></div>` : ''}
+          ${user?.name ? `<div class="info-row"><span><strong>Vendedor:</strong> ${user.name}</span></div>` : ''}
         </div>
         
         <div class="items">

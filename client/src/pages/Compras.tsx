@@ -532,6 +532,7 @@ export default function Compras() {
                                   <th className="text-left p-3">Produto</th>
                                   <th className="text-right p-3">Qtd</th>
                                   <th className="text-right p-3">Custo Unit.</th>
+                                  <th className="text-right p-3">Subtotal</th>
                                   <th className="text-right p-3">Validade</th>
                                   <th className="text-right p-3">Ações</th>
                                 </tr>
@@ -562,6 +563,9 @@ export default function Compras() {
                                         className="w-24 text-right"
                                         placeholder="0.00"
                                       />
+                                    </td>
+                                    <td className="p-3 text-right font-medium">
+                                      R$ {(item.quantity * item.unitCost).toFixed(2)}
                                     </td>
                                     <td className="p-3">
                                       <Input
