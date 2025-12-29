@@ -1046,8 +1046,12 @@ export default function Produtos() {
                         onChange={(e) =>
                           setFormData({ ...formData, currentStock: e.target.value })
                         }
-                        disabled={!permissions.canEdit}
+                        disabled={true}
+                        className="bg-muted cursor-not-allowed"
                       />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        🔒 Estoque alterado apenas via Compras, Vendas, Perdas ou Acerto Manual
+                      </p>
                     </div>
 
                     <div className="grid gap-2">

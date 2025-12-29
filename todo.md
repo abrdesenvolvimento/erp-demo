@@ -40,6 +40,12 @@
 
 ## 🔵 EM DESENVOLVIMENTO
 
+### Correção de Integridade - Estoque Atual (29/12/2025)
+- [x] **Travar campo "Estoque Atual" no formulário de edição** - Campo deve ser somente leitura (disabled)
+  - Estoque só pode ser alterado por: Compras, Vendas, Perdas ou Acerto Manual
+  - Garantir integridade do histórico de movimentações
+  - Exibir mensagem informativa: "Estoque alterado apenas via operações ou Acerto Manual"
+
 
 ### Despesas - Melhorias
 - [x] **Corrigir autocomplete de Fornecedor** - Ao digitar no campo de fornecedor, não carrega resultados. Mesmo problema que havia em Compras.
