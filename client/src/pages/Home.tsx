@@ -21,6 +21,8 @@ export default function Home() {
   const [showLowStockModal, setShowLowStockModal] = useState(false);
   const [showExpiringModal, setShowExpiringModal] = useState(false);
   const [showStockValueModal, setShowStockValueModal] = useState(false);
+  const [showDeliveryMarginModal, setShowDeliveryMarginModal] = useState(false);
+  const [showGrossMarginModal, setShowGrossMarginModal] = useState(false);
   const [expandedCategories, setExpandedCategories] = useState<Set<number>>(new Set());
   const [selectedSaleId, setSelectedSaleId] = useState<number | null>(null);
   const [showSaleDetailsModal, setShowSaleDetailsModal] = useState(false);
@@ -288,136 +290,72 @@ export default function Home() {
           )}
         </div>
 
-        {/* Card de Margem Líquida Delivery - Apenas para Admin */}
+        {/* Card Compacto de Margem Líquida Delivery - Apenas para Admin */}
         {isAdmin && (
-          <Card className="border-t-4 border-t-purple-500">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-              <CardTitle className="text-lg font-semibold">
+          <Card 
+            className="border-t-4 border-t-purple-500 cursor-pointer hover:shadow-md transition-shadow"
+            onClick={() => setShowDeliveryMarginModal(true)}
+          >
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">
                 Mg Líquida Delivery
               </CardTitle>
-              <TrendingUp className="h-5 w-5 text-purple-500" />
+              <TrendingUp className="h-4 w-4 text-purple-500" />
             </CardHeader>
             <CardContent>
               {isDeliveryMarginLoading ? (
                 <div className="text-sm text-muted-foreground">Carregando...</div>
               ) : deliveryMargin && parseFloat(deliveryMargin.deliveryRevenue) > 0 ? (
                 <>
-                  {/* Resumo Principal */}
-                  <div className="mb-4 p-4 rounded-lg bg-purple-50 border border-purple-200">
-                    <div className="flex items-center justify-between mb-3">
-                      <div>
-                        <p className="text-sm font-medium text-purple-900">Margem Líquida (após taxa 7%)</p>
-                        <p className="text-xs text-purple-700 mt-0.5">
-                          Faturamento Delivery: <span className="font-semibold">R$ {formatCurrency(deliveryMargin.deliveryRevenue)}</span>
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-3xl font-bold text-purple-600">
-                          {deliveryMargin.netMarginPercent}%
-                        </p>
-                        <p className="text-xs text-purple-700">margem líquida</p>
-                      </div>
-                    </div>
-                    
-                    {/* Detalhamento */}
-                    <div className="space-y-2 pt-3 border-t border-purple-200">
-                      <div className="flex justify-between text-xs">
-                        <span className="text-purple-700">Custo dos Produtos:</span>
-                        <span className="font-semibold text-purple-900">R$ {formatCurrency(deliveryMargin.totalCost)}</span>
-                      </div>
-                      <div className="flex justify-between text-xs">
-                        <span className="text-purple-700">Lucro Bruto:</span>
-                        <span className="font-semibold text-purple-900">R$ {formatCurrency(deliveryMargin.grossProfit)} ({deliveryMargin.grossMarginPercent}%)</span>
-                      </div>
-                      <div className="flex justify-between text-xs">
-                        <span className="text-purple-700">Taxa iFood (7%):</span>
-                        <span className="font-semibold text-red-600">- R$ {formatCurrency(deliveryMargin.ifoodFee)}</span>
-                      </div>
-                      <div className="flex justify-between text-sm pt-2 border-t border-purple-200">
-                        <span className="font-semibold text-purple-900">Lucro Líquido:</span>
-                        <span className="font-bold text-purple-600">R$ {formatCurrency(deliveryMargin.netProfit)}</span>
-                      </div>
-                    </div>
-                  </div>
-                                {/* Compara\u00e7\u00e3o */}
-                  <div className="text-xs text-muted-foreground mb-3">
-                    <p className="mb-1">
-                      <span className="font-semibold">Impacto da taxa:</span> A taxa de 7% do iFood reduz a margem de {deliveryMargin.grossMarginPercent}% para {deliveryMargin.netMarginPercent}%
-                    </p>
-                  </div>
-                  
-                  {/* Bot\u00e3o para an\u00e1lise detalhada */}
-                  <Link href="/analise-delivery">
-                    <Button variant="outline" className="w-full" size="sm">
-                      Ver Detalhes por Produto \u2192
-                    </Button>
-                  </Link>            </>
+                  <div className="text-3xl font-bold text-purple-600">{deliveryMargin.netMarginPercent}%</div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Faturamento: R$ {formatCurrency(deliveryMargin.deliveryRevenue)}
+                  </p>
+                  <p className="text-xs text-purple-600 mt-2">
+                    Clique para ver detalhes
+                  </p>
+                </>
               ) : (
-                <p className="text-sm text-muted-foreground">Nenhuma venda delivery no mês atual</p>
+                <p className="text-sm text-muted-foreground">Sem vendas delivery</p>
               )}
             </CardContent>
           </Card>
         )}
 
-        {/* Card de Margem Bruta por Categoria - Apenas para Admin */}
+        {/* Card Compacto de Margem Bruta por Categoria - Apenas para Admin */}
         {isAdmin && (
-          <Card className="border-t-4 border-t-emerald-500">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-              <CardTitle className="text-lg font-semibold">
+          <Card 
+            className="border-t-4 border-t-emerald-500 cursor-pointer hover:shadow-md transition-shadow"
+            onClick={() => setShowGrossMarginModal(true)}
+          >
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">
                 Mg Bruta por Categoria
               </CardTitle>
-              <TrendingDown className="h-5 w-5 text-emerald-500" />
+              <TrendingDown className="h-4 w-4 text-emerald-500" />
             </CardHeader>
             <CardContent>
               {isMarginLoading ? (
                 <div className="text-sm text-muted-foreground">Carregando...</div>
               ) : marginData && marginData.length > 0 ? (
                 <>
-                  {/* Margem Geral */}
-                  <div className="mb-4 p-4 rounded-lg bg-emerald-50 border border-emerald-200">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-emerald-900">Margem Geral</p>
-                        <p className="text-xs text-emerald-700 mt-0.5">
-                          Faturamento Total: <span className="font-semibold">R$ {formatCurrency(
-                            stats?.monthRevenue || 0
-                          )}</span>
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-3xl font-bold text-emerald-600">
-                          {(() => {
-                            const totalRevenue = marginData.reduce((sum, cat) => sum + parseFloat(cat.totalRevenue), 0);
-                            const totalCost = marginData.reduce((sum, cat) => sum + parseFloat(cat.totalCost), 0);
-                            const overallMargin = totalRevenue > 0 ? (1 - (totalCost / totalRevenue)) * 100 : 0;
-                            return overallMargin.toFixed(1);
-                          })()}%
-                        </p>
-                        <p className="text-xs text-emerald-700">margem média</p>
-                      </div>
-                    </div>
+                  <div className="text-3xl font-bold text-emerald-600">
+                    {(() => {
+                      const totalRevenue = marginData.reduce((sum, cat) => sum + parseFloat(cat.totalRevenue), 0);
+                      const totalCost = marginData.reduce((sum, cat) => sum + parseFloat(cat.totalCost), 0);
+                      const overallMargin = totalRevenue > 0 ? (1 - (totalCost / totalRevenue)) * 100 : 0;
+                      return overallMargin.toFixed(1);
+                    })()}%
                   </div>
-
-                  {/* Margem por Categoria */}
-                  <div className="space-y-3">
-                    {marginData.map((category) => (
-                      <div key={category.categoryId} className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors">
-                        <div className="flex-1">
-                          <p className="font-medium text-sm">{category.categoryName}</p>
-                          <p className="text-xs text-muted-foreground mt-0.5">
-                            Faturamento: <span className="font-semibold text-emerald-600">R$ {formatCurrency(category.totalRevenue)}</span>
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-2xl font-bold text-emerald-600">{category.marginPercent}%</p>
-                          <p className="text-xs text-muted-foreground">margem</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Margem geral do mês
+                  </p>
+                  <p className="text-xs text-emerald-600 mt-2">
+                    Clique para ver por categoria
+                  </p>
                 </>
               ) : (
-                <p className="text-sm text-muted-foreground">Nenhuma venda no mês atual</p>
+                <p className="text-sm text-muted-foreground">Sem vendas no mês</p>
               )}
             </CardContent>
           </Card>
@@ -684,6 +622,136 @@ export default function Home() {
         open={showSaleDetailsModal}
         onClose={closeSaleDetailsModal}
       />
+
+      {/* Modal de Margem Líquida Delivery */}
+      <Dialog open={showDeliveryMarginModal} onOpenChange={setShowDeliveryMarginModal}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-purple-500" />
+              Margem Líquida Delivery
+            </DialogTitle>
+          </DialogHeader>
+          {deliveryMargin && parseFloat(deliveryMargin.deliveryRevenue) > 0 ? (
+            <div className="space-y-4">
+              {/* Resumo Principal */}
+              <div className="p-4 rounded-lg bg-purple-50 border border-purple-200">
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <p className="text-sm font-medium text-purple-900">Margem Líquida (após taxa 7%)</p>
+                    <p className="text-xs text-purple-700 mt-0.5">
+                      Faturamento Delivery: <span className="font-semibold">R$ {formatCurrency(deliveryMargin.deliveryRevenue)}</span>
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-4xl font-bold text-purple-600">
+                      {deliveryMargin.netMarginPercent}%
+                    </p>
+                    <p className="text-xs text-purple-700">margem líquida</p>
+                  </div>
+                </div>
+                
+                {/* Detalhamento */}
+                <div className="space-y-2 pt-3 border-t border-purple-200">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-purple-700">Custo dos Produtos:</span>
+                    <span className="font-semibold text-purple-900">R$ {formatCurrency(deliveryMargin.totalCost)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-purple-700">Lucro Bruto:</span>
+                    <span className="font-semibold text-purple-900">R$ {formatCurrency(deliveryMargin.grossProfit)} ({deliveryMargin.grossMarginPercent}%)</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-purple-700">Taxa iFood (7%):</span>
+                    <span className="font-semibold text-red-600">- R$ {formatCurrency(deliveryMargin.ifoodFee)}</span>
+                  </div>
+                  <div className="flex justify-between text-base pt-2 border-t border-purple-200">
+                    <span className="font-semibold text-purple-900">Lucro Líquido:</span>
+                    <span className="font-bold text-purple-600">R$ {formatCurrency(deliveryMargin.netProfit)}</span>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Comparação */}
+              <div className="text-sm text-muted-foreground">
+                <p className="mb-1">
+                  <span className="font-semibold">Impacto da taxa:</span> A taxa de 7% do iFood reduz a margem de {deliveryMargin.grossMarginPercent}% para {deliveryMargin.netMarginPercent}%
+                </p>
+              </div>
+              
+              {/* Botão para análise detalhada */}
+              <Link href="/analise-delivery">
+                <Button variant="default" className="w-full" onClick={() => setShowDeliveryMarginModal(false)}>
+                  Ver Análise Detalhada por Produto →
+                </Button>
+              </Link>
+            </div>
+          ) : (
+            <p className="text-center py-8 text-muted-foreground">Nenhuma venda delivery no mês atual</p>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de Margem Bruta por Categoria */}
+      <Dialog open={showGrossMarginModal} onOpenChange={setShowGrossMarginModal}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <TrendingDown className="h-5 w-5 text-emerald-500" />
+              Margem Bruta por Categoria
+            </DialogTitle>
+          </DialogHeader>
+          {marginData && marginData.length > 0 ? (
+            <div className="space-y-4">
+              {/* Margem Geral */}
+              <div className="p-4 rounded-lg bg-emerald-50 border border-emerald-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-emerald-900">Margem Geral</p>
+                    <p className="text-xs text-emerald-700 mt-0.5">
+                      Faturamento Total: <span className="font-semibold">R$ {formatCurrency(
+                        stats?.monthRevenue || 0
+                      )}</span>
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-4xl font-bold text-emerald-600">
+                      {(() => {
+                        const totalRevenue = marginData.reduce((sum, cat) => sum + parseFloat(cat.totalRevenue), 0);
+                        const totalCost = marginData.reduce((sum, cat) => sum + parseFloat(cat.totalCost), 0);
+                        const overallMargin = totalRevenue > 0 ? (1 - (totalCost / totalRevenue)) * 100 : 0;
+                        return overallMargin.toFixed(1);
+                      })()}%
+                    </p>
+                    <p className="text-xs text-emerald-700">margem média</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Margem por Categoria */}
+              <div className="space-y-3">
+                <h3 className="text-sm font-semibold text-muted-foreground">Breakdown por Categoria</h3>
+                {marginData.map((category) => (
+                  <div key={category.categoryId} className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors">
+                    <div className="flex-1">
+                      <p className="font-medium text-sm">{category.categoryName}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Faturamento: <span className="font-semibold text-emerald-600">R$ {formatCurrency(category.totalRevenue)}</span>
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-2xl font-bold text-emerald-600">{category.marginPercent}%</p>
+                      <p className="text-xs text-muted-foreground">margem</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <p className="text-center py-8 text-muted-foreground">Nenhuma venda no mês atual</p>
+          )}
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 }

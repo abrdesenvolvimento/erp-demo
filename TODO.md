@@ -250,3 +250,11 @@
 - [x] Menu - Adicionar link para Análise Delivery no menu lateral
 - [x] Implementar filtros (período, categoria, ordenação) - implementado ordenação por lucro/margem/faturamento
 - [x] Destaques visuais por faixa de margem (verde/amarelo/vermelho)
+
+### Melhorias de UX - Dashboard e Análise Delivery (28/12/2025)
+- [x] Dashboard - Compactar card "Mg Líquida Delivery" (mostrar só margem %, abrir modal com detalhes)
+- [x] Dashboard - Compactar card "Mg Bruta por Categoria" (mostrar só margem geral %, abrir modal com breakdown)
+- [x] Dashboard - Reorganizar grid para manter harmonia visual (7 cards principais + 2 compactos)
+- [ ] Análise Delivery - Adicionar filtro de período (data início/fim) - não implementado (backend precisa suporte)
+- [x] Análise Delivery - Adicionar busca por produto específico
+- [ ] Análise Delivery - Adicionar filtro por categoria - não implementado (backend precisa suporte)

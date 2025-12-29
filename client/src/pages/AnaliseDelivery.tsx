@@ -3,7 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { trpc } from "@/lib/trpc";
-import { TrendingUp, TrendingDown, AlertCircle, ArrowLeft } from "lucide-react";
+import { TrendingUp, TrendingDown, AlertCircle, ArrowLeft, Search } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { Link } from "wouter";
 import { useState } from "react";
 
@@ -11,6 +12,7 @@ export default function AnaliseDelivery() {
   const { data: deliveryMargin, isLoading: isMarginLoading } = trpc.dashboard.deliveryNetMargin.useQuery();
   const { data: products, isLoading: isProductsLoading } = trpc.dashboard.deliveryProductAnalysis.useQuery();
   const [sortBy, setSortBy] = useState<'netProfit' | 'netMargin' | 'revenue'>('netProfit');
+  const [searchTerm, setSearchTerm] = useState('');
 
   const formatCurrency = (value: string | number | null | undefined): string => {
     if (!value) return "0,00";
@@ -35,11 +37,17 @@ export default function AnaliseDelivery() {
     return "🔴 Crítico";
   };
 
-  const sortedProducts = products ? [...products].sort((a, b) => {
-    if (sortBy === 'netProfit') return parseFloat(b.netProfit) - parseFloat(a.netProfit);
-    if (sortBy === 'netMargin') return parseFloat(b.netMarginPercent) - parseFloat(a.netMarginPercent);
-    return parseFloat(b.revenue) - parseFloat(a.revenue);
-  }) : [];
+  // Filtrar e ordenar produtos
+  const filteredAndSortedProducts = products ? [...products]
+    .filter(p => {
+      if (!searchTerm) return true;
+      return p.productName.toLowerCase().includes(searchTerm.toLowerCase());
+    })
+    .sort((a, b) => {
+      if (sortBy === 'netProfit') return parseFloat(b.netProfit) - parseFloat(a.netProfit);
+      if (sortBy === 'netMargin') return parseFloat(b.netMarginPercent) - parseFloat(a.netMarginPercent);
+      return parseFloat(b.revenue) - parseFloat(a.revenue);
+    }) : [];
 
   if (isMarginLoading || isProductsLoading) {
     return (
@@ -107,7 +115,7 @@ export default function AnaliseDelivery() {
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle className="text-lg">Produtos ({sortedProducts.length})</CardTitle>
+              <CardTitle className="text-lg">Produtos ({filteredAndSortedProducts.length})</CardTitle>
               <div className="flex gap-2">
                 <Button 
                   variant={sortBy === 'netProfit' ? 'default' : 'outline'} 
@@ -134,7 +142,26 @@ export default function AnaliseDelivery() {
             </div>
           </CardHeader>
           <CardContent>
-            {sortedProducts.length === 0 ? (
+            {/* Campo de Busca */}
+            <div className="mb-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder="Buscar produto..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              {searchTerm && (
+                <p className="text-xs text-muted-foreground mt-2">
+                  {filteredAndSortedProducts.length} produto(s) encontrado(s)
+                </p>
+              )}
+            </div>
+
+            {filteredAndSortedProducts.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 <AlertCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
                 <p>Nenhuma venda delivery no mês atual</p>
@@ -156,7 +183,7 @@ export default function AnaliseDelivery() {
                     </tr>
                   </thead>
                   <tbody>
-                    {sortedProducts.map((product, index) => (
+                    {filteredAndSortedProducts.map((product, index) => (
                       <tr 
                         key={product.productId} 
                         className={`border-b hover:bg-muted/50 transition-colors ${
