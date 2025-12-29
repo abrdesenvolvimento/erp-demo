@@ -330,6 +330,7 @@ export const appRouter = router({
         endDate: z.date().optional(),
         type: z.enum(["ENTRADA", "SAIDA", "PERDA", "ACERTO", "ESTORNO"]).optional(),
         limit: z.number().optional(),
+        offset: z.number().optional(),
       }))
       .query(async ({ input }) => {
         return await db.getProductMovements(input.productId, {
@@ -337,6 +338,7 @@ export const appRouter = router({
           endDate: input.endDate,
           type: input.type,
           limit: input.limit,
+          offset: input.offset,
         });
       }),
     

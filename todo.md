@@ -41,10 +41,15 @@
 ## 🔵 EM DESENVOLVIMENTO
 
 ### Melhorias de UX - Modal de Movimentações (29/12/2025)
-- [x] **Aumentar tamanho do modal** - Maximizar uso da tela para reduzir scroll
-  - Largura: max-w-7xl → max-w-[95vw] (quase tela cheia)
-  - Altura: 85vh → 90vh (altura máxima)
-  - Melhor aproveitamento do espaço disponível
+- [x] **Aumentar tamanho do modal** - Maximizado para 95vw × 90vh
+- [x] **Eliminar scroll lateral** - Ajustar larguras das colunas para serem responsivas
+  - Remover larguras fixas que causam overflow horizontal
+  - Usar classes Tailwind flex/grid para distribuição automática
+- [x] **Implementar paginação** - Navegar por todo o histórico
+  - 50 registros por página
+  - Botões Anterior/Próximo
+  - Indicador de página atual e total
+  - Backend: adicionar parâmetros offset e limit
 
 ### Correção de Integridade - Estoque Atual (29/12/2025)
 - [x] **Travar campo "Estoque Atual" no formulário de edição** - Campo deve ser somente leitura (disabled)

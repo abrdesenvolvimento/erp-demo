@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface ProductMovementsModalProps {
   productId: number;
@@ -39,14 +40,34 @@ export default function ProductMovementsModal({
   onClose,
 }: ProductMovementsModalProps) {
   const [limit] = useState(50);
+  const [page, setPage] = useState(1);
+
+  const offset = (page - 1) * limit;
 
   const { data: movements, isLoading } = trpc.products.getMovements.useQuery(
-    { productId, limit },
+    { productId, limit, offset },
     { enabled: open }
   );
 
+  const hasNextPage = movements && movements.length === limit;
+  const hasPrevPage = page > 1;
+
+  const handleNextPage = () => {
+    if (hasNextPage) setPage(page + 1);
+  };
+
+  const handlePrevPage = () => {
+    if (hasPrevPage) setPage(page - 1);
+  };
+
+  // Resetar página ao abrir modal
+  const handleClose = () => {
+    setPage(1);
+    onClose();
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-[95vw] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Histórico de Movimentações - {productName}</DialogTitle>
@@ -61,16 +82,16 @@ export default function ProductMovementsModal({
             Nenhuma movimentação registrada para este produto.
           </div>
         ) : (
-          <div className="rounded-md border">
+          <div className="rounded-md border overflow-hidden">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[180px]">Data/Hora</TableHead>
-                  <TableHead className="w-[120px]">Tipo</TableHead>
-                  <TableHead className="w-[150px]">Documento</TableHead>
-                  <TableHead className="w-[100px] text-right">Quantidade</TableHead>
-                  <TableHead className="w-[150px]">Usuário</TableHead>
-                  <TableHead>Observações</TableHead>
+                  <TableHead className="whitespace-nowrap">Data/Hora</TableHead>
+                  <TableHead className="whitespace-nowrap">Tipo</TableHead>
+                  <TableHead className="whitespace-nowrap">Documento</TableHead>
+                  <TableHead className="text-right whitespace-nowrap">Quantidade</TableHead>
+                  <TableHead className="whitespace-nowrap">Usuário</TableHead>
+                  <TableHead className="min-w-[200px]">Observações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -81,7 +102,7 @@ export default function ProductMovementsModal({
 
                   return (
                     <TableRow key={movement.id}>
-                      <TableCell className="font-mono text-sm">
+                      <TableCell className="font-mono text-sm whitespace-nowrap">
                         {new Date(movement.date).toLocaleString("pt-BR", {
                           day: "2-digit",
                           month: "2-digit",
@@ -90,20 +111,20 @@ export default function ProductMovementsModal({
                           minute: "2-digit",
                         })}
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="whitespace-nowrap">
                         <Badge variant={typeInfo.variant}>{typeInfo.label}</Badge>
                       </TableCell>
-                      <TableCell className="text-sm">
+                      <TableCell className="text-sm whitespace-nowrap">
                         {movement.documentNumber || "-"}
                       </TableCell>
                       <TableCell
-                        className={`text-right font-semibold ${
+                        className={`text-right font-semibold whitespace-nowrap ${
                           isNegative ? "text-red-600" : "text-green-600"
                         }`}
                       >
                         {isNegative ? "" : "+"}{quantity.toFixed(3)}
                       </TableCell>
-                      <TableCell className="text-sm">
+                      <TableCell className="text-sm whitespace-nowrap">
                         {movement.userName || "Sistema"}
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">
@@ -117,9 +138,32 @@ export default function ProductMovementsModal({
           </div>
         )}
 
-        <div className="text-sm text-muted-foreground text-right">
-          Mostrando últimas {movements?.length || 0} movimentações
-        </div>
+        {/* Controles de Paginação */}
+        {!isLoading && movements && movements.length > 0 && (
+          <div className="flex items-center justify-between pt-4 border-t">
+            <div className="text-sm text-muted-foreground">
+              Página {page} • Mostrando {movements.length} movimentações
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handlePrevPage}
+                disabled={!hasPrevPage}
+              >
+                ← Anterior
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleNextPage}
+                disabled={!hasNextPage}
+              >
+                Próximo →
+              </Button>
+            </div>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );

@@ -4233,6 +4233,7 @@ export async function getProductMovements(productId: number, filters?: {
   endDate?: Date;
   type?: string;
   limit?: number;
+  offset?: number;
 }) {
   const db = await getDb();
   if (!db) return [];
@@ -4271,6 +4272,10 @@ export async function getProductMovements(productId: number, filters?: {
 
   if (filters?.limit) {
     query = query.limit(filters.limit);
+  }
+
+  if (filters?.offset) {
+    query = query.offset(filters.offset);
   }
 
   const movements = await query;
