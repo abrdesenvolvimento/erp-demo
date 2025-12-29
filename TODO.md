@@ -258,3 +258,8 @@
 - [ ] Análise Delivery - Adicionar filtro de período (data início/fim) - não implementado (backend precisa suporte)
 - [x] Análise Delivery - Adicionar busca por produto específico
 - [ ] Análise Delivery - Adicionar filtro por categoria - não implementado (backend precisa suporte)
+
+### Ajustes Finais de Layout - Dashboard (28/12/2025)
+- [x] Integrar cards de margem no grid principal (4 colunas, 2 linhas completas)
+- [x] Ajustar tamanho dos cards de margem para ficarem idênticos aos demais
+- [x] Ajustar cores dos cards para evitar repetição visual (Mg Delivery: Rosa/Pink, Mg Bruta: Teal/Ciano)

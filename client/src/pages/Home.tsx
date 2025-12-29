@@ -288,78 +288,78 @@ export default function Home() {
               </CardContent>
             </Card>
           )}
+
+          {/* Card de Margem Líquida Delivery - Apenas para Admin */}
+          {isAdmin && (
+            <Card 
+              className="border-t-4 border-t-pink-500 cursor-pointer hover:shadow-md transition-shadow"
+              onClick={() => setShowDeliveryMarginModal(true)}
+            >
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Mg Líquida Delivery
+                </CardTitle>
+                <TrendingUp className="h-4 w-4 text-pink-500" />
+              </CardHeader>
+              <CardContent>
+                {isDeliveryMarginLoading ? (
+                  <div className="text-sm text-muted-foreground">Carregando...</div>
+                ) : deliveryMargin && parseFloat(deliveryMargin.deliveryRevenue) > 0 ? (
+                  <>
+                    <div className="text-2xl font-bold text-pink-600">{deliveryMargin.netMarginPercent}%</div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Faturamento: R$ {formatCurrency(deliveryMargin.deliveryRevenue)}
+                    </p>
+                    <p className="text-xs text-pink-600 mt-2">
+                      Clique para ver detalhes
+                    </p>
+                  </>
+                ) : (
+                  <p className="text-sm text-muted-foreground">Sem vendas delivery</p>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Card de Margem Bruta por Categoria - Apenas para Admin */}
+          {isAdmin && (
+            <Card 
+              className="border-t-4 border-t-teal-500 cursor-pointer hover:shadow-md transition-shadow"
+              onClick={() => setShowGrossMarginModal(true)}
+            >
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Mg Bruta por Categoria
+                </CardTitle>
+                <TrendingDown className="h-4 w-4 text-teal-500" />
+              </CardHeader>
+              <CardContent>
+                {isMarginLoading ? (
+                  <div className="text-sm text-muted-foreground">Carregando...</div>
+                ) : marginData && marginData.length > 0 ? (
+                  <>
+                    <div className="text-2xl font-bold text-teal-600">
+                      {(() => {
+                        const totalRevenue = marginData.reduce((sum, cat) => sum + parseFloat(cat.totalRevenue), 0);
+                        const totalCost = marginData.reduce((sum, cat) => sum + parseFloat(cat.totalCost), 0);
+                        const overallMargin = totalRevenue > 0 ? (1 - (totalCost / totalRevenue)) * 100 : 0;
+                        return overallMargin.toFixed(1);
+                      })()}%
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Margem geral do mês
+                    </p>
+                    <p className="text-xs text-teal-600 mt-2">
+                      Clique para ver por categoria
+                    </p>
+                  </>
+                ) : (
+                  <p className="text-sm text-muted-foreground">Sem vendas no mês</p>
+                )}
+              </CardContent>
+            </Card>
+          )}
         </div>
-
-        {/* Card Compacto de Margem Líquida Delivery - Apenas para Admin */}
-        {isAdmin && (
-          <Card 
-            className="border-t-4 border-t-purple-500 cursor-pointer hover:shadow-md transition-shadow"
-            onClick={() => setShowDeliveryMarginModal(true)}
-          >
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Mg Líquida Delivery
-              </CardTitle>
-              <TrendingUp className="h-4 w-4 text-purple-500" />
-            </CardHeader>
-            <CardContent>
-              {isDeliveryMarginLoading ? (
-                <div className="text-sm text-muted-foreground">Carregando...</div>
-              ) : deliveryMargin && parseFloat(deliveryMargin.deliveryRevenue) > 0 ? (
-                <>
-                  <div className="text-3xl font-bold text-purple-600">{deliveryMargin.netMarginPercent}%</div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Faturamento: R$ {formatCurrency(deliveryMargin.deliveryRevenue)}
-                  </p>
-                  <p className="text-xs text-purple-600 mt-2">
-                    Clique para ver detalhes
-                  </p>
-                </>
-              ) : (
-                <p className="text-sm text-muted-foreground">Sem vendas delivery</p>
-              )}
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Card Compacto de Margem Bruta por Categoria - Apenas para Admin */}
-        {isAdmin && (
-          <Card 
-            className="border-t-4 border-t-emerald-500 cursor-pointer hover:shadow-md transition-shadow"
-            onClick={() => setShowGrossMarginModal(true)}
-          >
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Mg Bruta por Categoria
-              </CardTitle>
-              <TrendingDown className="h-4 w-4 text-emerald-500" />
-            </CardHeader>
-            <CardContent>
-              {isMarginLoading ? (
-                <div className="text-sm text-muted-foreground">Carregando...</div>
-              ) : marginData && marginData.length > 0 ? (
-                <>
-                  <div className="text-3xl font-bold text-emerald-600">
-                    {(() => {
-                      const totalRevenue = marginData.reduce((sum, cat) => sum + parseFloat(cat.totalRevenue), 0);
-                      const totalCost = marginData.reduce((sum, cat) => sum + parseFloat(cat.totalCost), 0);
-                      const overallMargin = totalRevenue > 0 ? (1 - (totalCost / totalRevenue)) * 100 : 0;
-                      return overallMargin.toFixed(1);
-                    })()}%
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Margem geral do mês
-                  </p>
-                  <p className="text-xs text-emerald-600 mt-2">
-                    Clique para ver por categoria
-                  </p>
-                </>
-              ) : (
-                <p className="text-sm text-muted-foreground">Sem vendas no mês</p>
-              )}
-            </CardContent>
-          </Card>
-        )}
 
         {/* Calendário Compacto de Vendas */}
         <Card>
