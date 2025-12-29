@@ -43,13 +43,15 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { trpc } from "@/lib/trpc";
-import { Package, Plus, Search, AlertTriangle, Edit, Trash2, Check, X, ChevronsUpDown } from "lucide-react";
+import { Package, Plus, Search, AlertTriangle, Edit, Trash2, Check, X, ChevronsUpDown, History, Settings } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { usePermissions } from "@/hooks/usePermissions";
 import { validateEAN } from "@/lib/validators";
+import ProductMovementsModal from "@/components/ProductMovementsModal";
+import AdjustStockModal from "@/components/AdjustStockModal";
 
 // Componente para gerenciar composições de produtos
 function CompositionsSection({ productId, refreshKey, onSaved }: { productId: number; refreshKey?: number; onSaved?: () => void }) {
@@ -502,6 +504,11 @@ export default function Produtos() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<any>(null);
   const [compositionsKey, setCompositionsKey] = useState(0);
+  
+  // Estados para modais de movimentações
+  const [movementsModalOpen, setMovementsModalOpen] = useState(false);
+  const [adjustStockModalOpen, setAdjustStockModalOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<any>(null);
   
   const { data: products, isLoading, refetch } = trpc.products.list.useQuery({
     search: search || undefined,
@@ -1290,13 +1297,40 @@ export default function Produtos() {
                           </div>
                         </TableCell>
                         <TableCell className="text-right">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleEdit(product)}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
+                          <div className="flex items-center justify-end gap-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setSelectedProduct(product);
+                                setMovementsModalOpen(true);
+                              }}
+                              title="Histórico de Movimentações"
+                            >
+                              <History className="h-4 w-4" />
+                            </Button>
+                            {isAdmin && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  setSelectedProduct(product);
+                                  setAdjustStockModalOpen(true);
+                                }}
+                                title="Acerto Manual de Estoque"
+                              >
+                                <Settings className="h-4 w-4" />
+                              </Button>
+                            )}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleEdit(product)}
+                              title="Editar Produto"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     );
@@ -1319,6 +1353,35 @@ export default function Produtos() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Modais de Movimentações */}
+      {selectedProduct && (
+        <>
+          <ProductMovementsModal
+            productId={selectedProduct.id}
+            productName={selectedProduct.name}
+            open={movementsModalOpen}
+            onClose={() => {
+              setMovementsModalOpen(false);
+              setSelectedProduct(null);
+            }}
+          />
+          
+          <AdjustStockModal
+            productId={selectedProduct.id}
+            productName={selectedProduct.name}
+            currentStock={selectedProduct.currentStock || 0}
+            open={adjustStockModalOpen}
+            onClose={() => {
+              setAdjustStockModalOpen(false);
+              setSelectedProduct(null);
+            }}
+            onSuccess={() => {
+              refetch();
+            }}
+          />
+        </>
+      )}
     </DashboardLayout>
   );
 }

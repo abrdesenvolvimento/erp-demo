@@ -22,7 +22,8 @@ import {
   receivableInstallments, ReceivableInstallment, InsertReceivableInstallment,
   receivablePayments, ReceivablePayment, InsertReceivablePayment,
   customerPayments, CustomerPayment, InsertCustomerPayment,
-  customerDebits, CustomerDebit, InsertCustomerDebit
+  customerDebits, CustomerDebit, InsertCustomerDebit,
+  productMovements, ProductMovement, InsertProductMovement
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -521,9 +522,20 @@ export async function createSale(saleData: InsertSale, items: Omit<InsertSaleIte
   const itemsWithSaleId = items.map(item => ({ ...item, saleId }));
   await db.insert(saleItems).values(itemsWithSaleId);
   
-  // Baixar estoque (considerando produtos compostos)
+  // Baixar estoque (considerando produtos compostos) e registrar movimentação
   for (const item of items) {
     await updateProductStockWithCompositions(item.productId, -item.quantity);
+    
+    // Registrar movimentação de SAIDA
+    await createProductMovement({
+      productId: item.productId,
+      date: saleData.saleDate || new Date(),
+      type: "SAIDA",
+      quantity: (-item.quantity).toString(),
+      documentNumber: `Venda #${saleId}`,
+      userId: saleData.createdBy,
+      notes: `Venda ${saleData.saleType} - ${saleData.paymentMethod || 'N/A'}`,
+    });
   }
   
   // Atualizar saldo do cliente se for venda a prazo
@@ -1027,6 +1039,20 @@ export async function confirmPurchaseOrder(purchaseOrderId: number) {
     
     // Atualizar produto
     await updateProduct(prod.id, updateData);
+    
+    // Registrar movimentação de ENTRADA
+    const purchaseOrderData = await getPurchaseOrderById(purchaseOrderId);
+    if (purchaseOrderData) {
+      await createProductMovement({
+        productId: prod.id,
+        date: new Date(),
+        type: "ENTRADA",
+        quantity: quantityPurchased.toString(),
+        documentNumber: purchaseOrderData.purchaseOrder.docNumber || `Compra #${purchaseOrderId}`,
+        userId: purchaseOrderData.purchaseOrder.createdBy,
+        notes: `Compra confirmada - Fornecedor: ${purchaseOrderData.supplier?.name || 'N/A'}`,
+      });
+    }
     
     // Atualizar custo de produtos compostos que usam este componente
     if (item.productId) {
@@ -1569,17 +1595,34 @@ export async function createExpense(data: InsertExpense) {
           updatedAt: new Date()
         })
         .where(eq(products.id, data.productId));
+      
+      // Registrar movimentação de PERDA (será feito após inserir a despesa)
+      // Guardar dados para registro posterior
+      (data as any)._shouldRegisterMovement = true;
+      (data as any)._productId = data.productId;
+      (data as any)._lossQuantity = data.lossQuantity;
+      (data as any)._productName = product[0].name;
     }
   }
   
   const result = await db.insert(expenses).values(data);
   const insertId = (result as any)[0]?.insertId || (result as any).insertId;
-  if (!insertId) {
-    // Fallback: buscar o último registro inserido
-    const lastRecord = await db.select().from(expenses).orderBy(desc(expenses.id)).limit(1);
-    return lastRecord[0]?.id || 0;
+  const expenseId = insertId ? Number(insertId) : (await db.select().from(expenses).orderBy(desc(expenses.id)).limit(1))[0]?.id || 0;
+  
+  // Registrar movimentação de PERDA se for categoria Perdas
+  if ((data as any)._shouldRegisterMovement) {
+    await createProductMovement({
+      productId: (data as any)._productId,
+      date: new Date(),
+      type: "PERDA",
+      quantity: (-(data as any)._lossQuantity).toString(),
+      documentNumber: `Despesa #${expenseId}`,
+      userId: data.createdBy,
+      notes: `Perda registrada - Produto: ${(data as any)._productName}`,
+    });
   }
-  return Number(insertId);
+  
+  return expenseId;
 }
 
 export async function updateExpense(id: number, data: Partial<InsertExpense>) {
@@ -4165,4 +4208,114 @@ export async function getPayablesCalendar(year: number, month: number) {
   }
 
   return Object.values(calendar);
+}
+
+// ============================================
+// HISTÓRICO DE MOVIMENTAÇÕES DE PRODUTOS
+// ============================================
+
+/**
+ * Registra uma movimentação de estoque de produto
+ */
+export async function createProductMovement(data: InsertProductMovement) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const result = await db.insert(productMovements).values(data);
+  return result[0].insertId;
+}
+
+/**
+ * Busca movimentações de um produto específico
+ */
+export async function getProductMovements(productId: number, filters?: {
+  startDate?: Date;
+  endDate?: Date;
+  type?: string;
+  limit?: number;
+}) {
+  const db = await getDb();
+  if (!db) return [];
+
+  let query = db
+    .select({
+      id: productMovements.id,
+      productId: productMovements.productId,
+      date: productMovements.date,
+      type: productMovements.type,
+      quantity: productMovements.quantity,
+      documentNumber: productMovements.documentNumber,
+      userId: productMovements.userId,
+      notes: productMovements.notes,
+      createdAt: productMovements.createdAt,
+      userName: users.name,
+    })
+    .from(productMovements)
+    .leftJoin(users, eq(productMovements.userId, users.id))
+    .where(eq(productMovements.productId, productId))
+    .$dynamic();
+
+  if (filters?.startDate) {
+    query = query.where(gte(productMovements.date, filters.startDate));
+  }
+
+  if (filters?.endDate) {
+    query = query.where(lte(productMovements.date, filters.endDate));
+  }
+
+  if (filters?.type) {
+    query = query.where(eq(productMovements.type, filters.type as any));
+  }
+
+  query = query.orderBy(desc(productMovements.date));
+
+  if (filters?.limit) {
+    query = query.limit(filters.limit);
+  }
+
+  const movements = await query;
+  return movements;
+}
+
+/**
+ * Realiza acerto manual de estoque
+ */
+export async function adjustProductStock(data: {
+  productId: number;
+  quantity: number; // Pode ser positivo (entrada) ou negativo (saída)
+  userId: string;
+  reason: string; // Justificativa obrigatória
+  notes?: string;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  // Buscar produto atual
+  const product = await getProduct(data.productId);
+  if (!product) throw new Error("Product not found");
+
+  // Calcular novo estoque
+  const newStock = (product.currentStock || 0) + data.quantity;
+  if (newStock < 0) {
+    throw new Error("Stock cannot be negative");
+  }
+
+  // Atualizar estoque
+  await db
+    .update(products)
+    .set({ currentStock: newStock })
+    .where(eq(products.id, data.productId));
+
+  // Registrar movimentação
+  await createProductMovement({
+    productId: data.productId,
+    date: new Date(),
+    type: "ACERTO",
+    quantity: data.quantity.toString(),
+    documentNumber: null,
+    userId: data.userId,
+    notes: `${data.reason}${data.notes ? ` - ${data.notes}` : ''}`,
+  });
+
+  return { success: true, newStock };
 }

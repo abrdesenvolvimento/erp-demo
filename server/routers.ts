@@ -321,6 +321,41 @@ export const appRouter = router({
         await db.setProductCompositions(input.productId, input.compositions);
         return { success: true };
       }),
+    
+    // Histórico de movimentações
+    getMovements: protectedProcedure
+      .input(z.object({
+        productId: z.number(),
+        startDate: z.date().optional(),
+        endDate: z.date().optional(),
+        type: z.enum(["ENTRADA", "SAIDA", "PERDA", "ACERTO", "ESTORNO"]).optional(),
+        limit: z.number().optional(),
+      }))
+      .query(async ({ input }) => {
+        return await db.getProductMovements(input.productId, {
+          startDate: input.startDate,
+          endDate: input.endDate,
+          type: input.type,
+          limit: input.limit,
+        });
+      }),
+    
+    adjustStock: adminProcedure
+      .input(z.object({
+        productId: z.number(),
+        quantity: z.number(),
+        reason: z.string().min(1),
+        notes: z.string().optional(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        return await db.adjustProductStock({
+          productId: input.productId,
+          quantity: input.quantity,
+          userId: ctx.user.id,
+          reason: input.reason,
+          notes: input.notes,
+        });
+      }),
   }),
 
   // ==================== PARCEIROS ====================

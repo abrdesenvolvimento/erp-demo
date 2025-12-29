@@ -40,6 +40,7 @@
 
 ## 🔵 EM DESENVOLVIMENTO
 
+
 ### Despesas - Melhorias
 - [x] **Corrigir autocomplete de Fornecedor** - Ao digitar no campo de fornecedor, não carrega resultados. Mesmo problema que havia em Compras.
 - [x] **Corrigir autocomplete de Categoria** - Ao digitar no campo de categoria, não carrega resultados.
@@ -102,7 +103,25 @@
 
 - [ ] Implementar filtro por subcategoria em Produtos
 
-## ✅ CONCLUÍDO RECENTEMENTE (04/12/2025)
+## ✅ CONCLUÍDO RECENTEMENTE (29/12/2025)
+
+### Histórico de Movimentações de Produtos - Sistema Completo de Auditoria
+- [x] **Tabela productMovements criada** - Banco de dados com índices otimizados
+- [x] **Registros automáticos implementados** - Compras (ENTRADA), Vendas (SAIDA), Perdas (PERDA)
+- [x] **Modal de Histórico** - Visualização completa com filtros e badges coloridos por tipo
+- [x] **Modal de Acerto Manual** - Apenas admin, com justificativa obrigatória e prévia do novo estoque
+- [x] **Botões na listagem** - Ícones History (histórico) e Settings (acerto) ao lado de Editar
+- [x] **Backend completo** - 3 funções (create, get, adjust) + 2 endpoints tRPC
+- [x] **Rastreabilidade total** - Cada entrada/saída registra data, usuário, documento e observações
+
+### Análise Delivery - Melhorias de UX
+- [x] **Filtro por Status de Margem** - Dropdown com 4 opções (Todos/Excelente ≥20%/Atenção 10-20%/Crítico <10%)
+- [x] **Legenda reposicionada** - Movida para acima da tabela (abaixo dos filtros) com background destacado
+- [x] **Grid de filtros expandido** - 4 colunas responsivas (Data Início, Data Fim, Categoria, Status)
+- [x] **Workflow otimizado** - Filtros → Legenda → Busca → Tabela para melhor UX
+- [x] **Identificação visual** - Emojis coloridos (🟢🟡🔴) sempre visíveis durante análise
+
+## ✅ CONCLUÍDO EM DEZEMBRO (04/12/2025)
 
 ### Melhorias Avançadas em Análise de Vendas
 - [x] **Seleção múltipla de produtos** - Chips visuais com autocomplete, permite comparar vários produtos simultaneamente

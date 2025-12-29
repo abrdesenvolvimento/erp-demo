@@ -118,6 +118,26 @@ export const productPrices = mysqlTable("productPrices", {
 export type ProductPrice = typeof productPrices.$inferSelect;
 export type InsertProductPrice = typeof productPrices.$inferInsert;
 
+// Histórico de movimentações de produtos
+export const productMovements = mysqlTable("productMovements", {
+  id: int("id").primaryKey().autoincrement(),
+  productId: int("productId").notNull(),
+  date: timestamp("date").notNull(),
+  type: mysqlEnum("type", ["ENTRADA", "SAIDA", "PERDA", "ACERTO", "ESTORNO"]).notNull(),
+  quantity: decimal("quantity", { precision: 10, scale: 3 }).notNull(), // Pode ser negativo para saídas
+  documentNumber: varchar("documentNumber", { length: 100 }), // Nota fiscal, ID da venda, etc
+  userId: varchar("userId", { length: 64 }).notNull(), // Usuário responsável
+  notes: text("notes"), // Observações/Justificativa
+  createdAt: timestamp("createdAt").defaultNow(),
+}, (table) => ({
+  productIdx: index("product_idx").on(table.productId),
+  dateIdx: index("date_idx").on(table.date),
+  typeIdx: index("type_idx").on(table.type),
+}));
+
+export type ProductMovement = typeof productMovements.$inferSelect;
+export type InsertProductMovement = typeof productMovements.$inferInsert;
+
 // Parceiros (clientes e fornecedores)
 export const partners = mysqlTable("partners", {
   id: int("id").primaryKey().autoincrement(),
