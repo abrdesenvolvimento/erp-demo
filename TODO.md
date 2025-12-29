@@ -272,3 +272,7 @@
 - [x] Frontend - Implementar seletor de período (data início/fim) na página Análise Delivery
 - [x] Frontend - Implementar dropdown de categoria na página Análise Delivery
 - [x] Integrar filtros com query do tRPC (refetch automático ao alterar filtros)
+
+### Melhorias UX - Análise Delivery (28/12/2025)
+- [x] Adicionar filtro por status de margem (Excelente ≥20% / Atenção 10-20% / Crítico <10% / Todos)
+- [x] Reposicionar legenda de cores acima da tabela (abaixo dos filtros)

@@ -15,6 +15,7 @@ export default function AnaliseDelivery() {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [categoryId, setCategoryId] = useState<number | undefined>(undefined);
+  const [marginStatus, setMarginStatus] = useState<'all' | 'excellent' | 'attention' | 'critical'>('all');
   
   // Queries com filtros
   const { data: deliveryMargin, isLoading: isMarginLoading } = trpc.dashboard.deliveryNetMargin.useQuery();
@@ -49,8 +50,20 @@ export default function AnaliseDelivery() {
   // Filtrar e ordenar produtos
   const filteredAndSortedProducts = products ? [...products]
     .filter(p => {
-      if (!searchTerm) return true;
-      return p.productName.toLowerCase().includes(searchTerm.toLowerCase());
+      // Filtro de busca por nome
+      if (searchTerm && !p.productName.toLowerCase().includes(searchTerm.toLowerCase())) {
+        return false;
+      }
+      
+      // Filtro de status de margem
+      if (marginStatus !== 'all') {
+        const margin = parseFloat(p.netMarginPercent);
+        if (marginStatus === 'excellent' && margin < 20) return false;
+        if (marginStatus === 'attention' && (margin < 10 || margin >= 20)) return false;
+        if (marginStatus === 'critical' && margin >= 10) return false;
+      }
+      
+      return true;
     })
     .sort((a, b) => {
       if (sortBy === 'netProfit') return parseFloat(b.netProfit) - parseFloat(a.netProfit);
@@ -151,8 +164,8 @@ export default function AnaliseDelivery() {
             </div>
           </CardHeader>
           <CardContent>
-            {/* Filtros de Período e Categoria */}
-            <div className="mb-4 grid gap-4 md:grid-cols-3">
+            {/* Filtros de Período, Categoria e Status */}
+            <div className="mb-4 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
               {/* Filtro de Data Início */}
               <div>
                 <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
@@ -203,6 +216,56 @@ export default function AnaliseDelivery() {
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+              
+              {/* Filtro de Status de Margem */}
+              <div>
+                <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
+                  <TrendingUp className="inline h-3 w-3 mr-1" />
+                  Status da Margem
+                </label>
+                <Select
+                  value={marginStatus}
+                  onValueChange={(value: any) => setMarginStatus(value)}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Todos os status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos os status</SelectItem>
+                    <SelectItem value="excellent">Excelente (&gt;= 20%)</SelectItem>
+                    <SelectItem value="attention">Atenção (10-20%)</SelectItem>
+                    <SelectItem value="critical">Crítico (&lt; 10%)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            
+            {/* Legenda de Status */}
+            <div className="mb-4 p-4 bg-muted/30 rounded-lg">
+              <p className="text-xs font-semibold text-muted-foreground mb-2">Legenda de Status da Margem:</p>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+                <div className="flex items-center gap-2">
+                  <span className="text-lg">🟢</span>
+                  <div>
+                    <p className="font-semibold text-green-600 text-xs">Excelente</p>
+                    <p className="text-xs text-muted-foreground">Margem ≥ 20%</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-lg">🟡</span>
+                  <div>
+                    <p className="font-semibold text-yellow-600 text-xs">Atenção</p>
+                    <p className="text-xs text-muted-foreground">Margem 10-20%</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-lg">🔴</span>
+                  <div>
+                    <p className="font-semibold text-red-600 text-xs">Crítico</p>
+                    <p className="text-xs text-muted-foreground">Margem &lt; 10%</p>
+                  </div>
+                </div>
               </div>
             </div>
             
@@ -304,37 +367,7 @@ export default function AnaliseDelivery() {
           </CardContent>
         </Card>
 
-        {/* Legenda */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm">Legenda de Status</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-              <div className="flex items-center gap-2">
-                <span className="text-2xl">🟢</span>
-                <div>
-                  <p className="font-semibold text-green-600">Excelente</p>
-                  <p className="text-xs text-muted-foreground">Margem líquida ≥ 20%</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-2xl">🟡</span>
-                <div>
-                  <p className="font-semibold text-yellow-600">Atenção</p>
-                  <p className="text-xs text-muted-foreground">Margem líquida entre 10% e 20%</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-2xl">🔴</span>
-                <div>
-                  <p className="font-semibold text-red-600">Crítico</p>
-                  <p className="text-xs text-muted-foreground">Margem líquida &lt; 10%</p>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+
       </div>
     </DashboardLayout>
   );
