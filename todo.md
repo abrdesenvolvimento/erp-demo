@@ -40,6 +40,12 @@
 
 ## 🔵 EM DESENVOLVIMENTO
 
+### Melhorias de UX - Modal de Movimentações (29/12/2025)
+- [x] **Aumentar tamanho do modal** - Modal atual muito pequeno, cortando informações
+  - Aumentar largura para exibir todas as colunas confortavelmente
+  - Aumentar altura para mostrar mais registros sem scroll excessivo
+  - Melhorar responsividade em diferentes tamanhos de tela
+
 ### Correção de Integridade - Estoque Atual (29/12/2025)
 - [x] **Travar campo "Estoque Atual" no formulário de edição** - Campo deve ser somente leitura (disabled)
   - Estoque só pode ser alterado por: Compras, Vendas, Perdas ou Acerto Manual
