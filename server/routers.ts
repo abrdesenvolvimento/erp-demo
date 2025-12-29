@@ -1471,6 +1471,159 @@ export const appRouter = router({
       const margins = await db.getGrossMarginByCategory();
       return margins;
     }),
+    
+    // Análise detalhada por produto delivery
+    deliveryProductAnalysis: protectedProcedure.query(async ({ ctx }) => {
+      // Buscar vendas delivery do mês atual
+      const todayDateStr = new Date().toLocaleDateString('en-US', { timeZone: 'America/Sao_Paulo' });
+      const [month, day, year] = todayDateStr.split('/');
+      const today = new Date(`${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T00:00:00`);
+      
+      const allMonthSales = await db.getSales({ limit: 10000 });
+      
+      // Filtrar vendas delivery do mês
+      const deliverySales = allMonthSales.filter(s => {
+        if (!s.saleDate || s.status === 'CANCELLED' || s.saleType !== 'DELIVERY') return false;
+        
+        // Filtrar por usuário se for operacional
+        if (ctx.user?.role === 'operacional' && s.createdBy !== ctx.user.id) return false;
+        
+        const saleDateStr = new Date(s.saleDate).toLocaleDateString('en-US', { timeZone: 'America/Sao_Paulo' });
+        const [saleMonth, saleDay, saleYear] = saleDateStr.split('/');
+        
+        return parseInt(saleYear) === today.getFullYear() &&
+               parseInt(saleMonth) === (today.getMonth() + 1);
+      });
+      
+      if (deliverySales.length === 0) return [];
+      
+      // Buscar itens das vendas delivery
+      const deliverySaleIds = deliverySales.map(s => s.id);
+      const items = await db.getSaleItemsBySaleIds(deliverySaleIds);
+      
+      // Agrupar por produto
+      const productMap = new Map<number, {
+        productId: number;
+        productName: string;
+        quantity: number;
+        revenue: number;
+        cost: number;
+      }>();
+      
+      for (const item of items) {
+        const productId = item.productId;
+        const productName = item.productName || 'Produto sem nome';
+        const quantity = parseFloat(item.quantity?.toString() || '0');
+        const unitPrice = parseFloat(item.unitPrice?.toString() || '0');
+        const avgCost = parseFloat(item.avgCost?.toString() || '0');
+        
+        const revenue = quantity * unitPrice;
+        const cost = quantity * avgCost;
+        
+        if (!productMap.has(productId)) {
+          productMap.set(productId, {
+            productId,
+            productName,
+            quantity: 0,
+            revenue: 0,
+            cost: 0,
+          });
+        }
+        
+        const product = productMap.get(productId)!;
+        product.quantity += quantity;
+        product.revenue += revenue;
+        product.cost += cost;
+      }
+      
+      // Calcular margens e ordenar por lucro líquido
+      const result = Array.from(productMap.values())
+        .map(p => {
+          const grossProfit = p.revenue - p.cost;
+          const grossMarginPercent = p.revenue > 0 ? (grossProfit / p.revenue) * 100 : 0;
+          
+          const ifoodFee = p.revenue * 0.07;
+          const netProfit = grossProfit - ifoodFee;
+          const netMarginPercent = p.revenue > 0 ? (netProfit / p.revenue) * 100 : 0;
+          
+          return {
+            productId: p.productId,
+            productName: p.productName,
+            quantity: p.quantity.toFixed(2),
+            revenue: p.revenue.toFixed(2),
+            cost: p.cost.toFixed(2),
+            grossProfit: grossProfit.toFixed(2),
+            grossMarginPercent: grossMarginPercent.toFixed(1),
+            ifoodFee: ifoodFee.toFixed(2),
+            netProfit: netProfit.toFixed(2),
+            netMarginPercent: netMarginPercent.toFixed(1),
+          };
+        })
+        .sort((a, b) => parseFloat(b.netProfit) - parseFloat(a.netProfit));
+      
+      return result;
+    }),
+    
+    // Margem líquida delivery (deduzindo 7% de taxa iFood)
+    deliveryNetMargin: protectedProcedure.query(async ({ ctx }) => {
+      // Buscar vendas delivery do mês atual
+      const todayDateStr = new Date().toLocaleDateString('en-US', { timeZone: 'America/Sao_Paulo' });
+      const [month, day, year] = todayDateStr.split('/');
+      const today = new Date(`${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T00:00:00`);
+      
+      const allMonthSales = await db.getSales({ limit: 10000 });
+      
+      // Filtrar vendas delivery do mês
+      const deliverySales = allMonthSales.filter(s => {
+        if (!s.saleDate || s.status === 'CANCELLED' || s.saleType !== 'DELIVERY') return false;
+        
+        // Filtrar por usuário se for operacional
+        if (ctx.user?.role === 'operacional' && s.createdBy !== ctx.user.id) return false;
+        
+        const saleDateStr = new Date(s.saleDate).toLocaleDateString('en-US', { timeZone: 'America/Sao_Paulo' });
+        const [saleMonth, saleDay, saleYear] = saleDateStr.split('/');
+        
+        return parseInt(saleYear) === today.getFullYear() &&
+               parseInt(saleMonth) === (today.getMonth() + 1);
+      });
+      
+      // Calcular faturamento delivery
+      const deliveryRevenue = deliverySales.reduce((sum, sale) => 
+        sum + parseFloat(sale.finalAmount || '0'), 0
+      );
+      
+      // Buscar itens das vendas delivery para calcular custo
+      const deliverySaleIds = deliverySales.map(s => s.id);
+      let totalCost = 0;
+      
+      if (deliverySaleIds.length > 0) {
+        const items = await db.getSaleItemsBySaleIds(deliverySaleIds);
+        totalCost = items.reduce((sum, item) => {
+          const quantity = parseFloat(item.quantity?.toString() || '0');
+          const avgCost = parseFloat(item.avgCost?.toString() || '0');
+          return sum + (quantity * avgCost);
+        }, 0);
+      }
+      
+      // Calcular margem bruta
+      const grossProfit = deliveryRevenue - totalCost;
+      const grossMarginPercent = deliveryRevenue > 0 ? (grossProfit / deliveryRevenue) * 100 : 0;
+      
+      // Calcular margem líquida (deduzindo 7% de taxa)
+      const ifoodFee = deliveryRevenue * 0.07;
+      const netProfit = grossProfit - ifoodFee;
+      const netMarginPercent = deliveryRevenue > 0 ? (netProfit / deliveryRevenue) * 100 : 0;
+      
+      return {
+        deliveryRevenue: deliveryRevenue.toFixed(2),
+        totalCost: totalCost.toFixed(2),
+        grossProfit: grossProfit.toFixed(2),
+        grossMarginPercent: grossMarginPercent.toFixed(1),
+        ifoodFee: ifoodFee.toFixed(2),
+        netProfit: netProfit.toFixed(2),
+        netMarginPercent: netMarginPercent.toFixed(1),
+      };
+    }),
   }),
 
   // ==================== ANÁLISE DE VENDAS ====================

@@ -237,3 +237,16 @@
 
 ### Ajuste Fino de Margem (28/12/2025)
 - [x] Aumentar margem de 2mm para 3mm para evitar corte da primeira letra dos produtos
+
+### Feature: Margem Líquida Delivery (28/12/2025)
+- [x] Backend - Criar endpoint para calcular margem líquida delivery (faturamento - custo - 7% taxa iFood)
+- [x] Frontend - Adicionar card no Dashboard com margem líquida e percentual
+- [x] Exibir comparação entre margem bruta e margem líquida delivery
+
+### Feature: Página de Análise Delivery Detalhada (28/12/2025)
+- [x] Backend - Endpoint para análise detalhada por produto delivery (margem líquida individual)
+- [x] Frontend - Criar página AnaliseDelivery.tsx com tabela completa
+- [x] Dashboard - Adicionar botão "Ver Detalhes por Produto" no card de margem líquida
+- [x] Menu - Adicionar link para Análise Delivery no menu lateral
+- [x] Implementar filtros (período, categoria, ordenação) - implementado ordenação por lucro/margem/faturamento
+- [x] Destaques visuais por faixa de margem (verde/amarelo/vermelho)

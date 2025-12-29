@@ -1,5 +1,6 @@
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { trpc } from "@/lib/trpc";
@@ -16,6 +17,7 @@ export default function Home() {
   const { data: stats, isLoading } = trpc.dashboard.stats.useQuery();
   const { data: purchaseStats, isLoading: isPurchaseLoading } = trpc.dashboard.purchaseStats.useQuery();
   const { data: marginData, isLoading: isMarginLoading } = trpc.dashboard.grossMarginByCategory.useQuery();
+  const { data: deliveryMargin, isLoading: isDeliveryMarginLoading } = trpc.dashboard.deliveryNetMargin.useQuery();
   const [showLowStockModal, setShowLowStockModal] = useState(false);
   const [showExpiringModal, setShowExpiringModal] = useState(false);
   const [showStockValueModal, setShowStockValueModal] = useState(false);
@@ -285,6 +287,77 @@ export default function Home() {
             </Card>
           )}
         </div>
+
+        {/* Card de Margem Líquida Delivery - Apenas para Admin */}
+        {isAdmin && (
+          <Card className="border-t-4 border-t-purple-500">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+              <CardTitle className="text-lg font-semibold">
+                Mg Líquida Delivery
+              </CardTitle>
+              <TrendingUp className="h-5 w-5 text-purple-500" />
+            </CardHeader>
+            <CardContent>
+              {isDeliveryMarginLoading ? (
+                <div className="text-sm text-muted-foreground">Carregando...</div>
+              ) : deliveryMargin && parseFloat(deliveryMargin.deliveryRevenue) > 0 ? (
+                <>
+                  {/* Resumo Principal */}
+                  <div className="mb-4 p-4 rounded-lg bg-purple-50 border border-purple-200">
+                    <div className="flex items-center justify-between mb-3">
+                      <div>
+                        <p className="text-sm font-medium text-purple-900">Margem Líquida (após taxa 7%)</p>
+                        <p className="text-xs text-purple-700 mt-0.5">
+                          Faturamento Delivery: <span className="font-semibold">R$ {formatCurrency(deliveryMargin.deliveryRevenue)}</span>
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-3xl font-bold text-purple-600">
+                          {deliveryMargin.netMarginPercent}%
+                        </p>
+                        <p className="text-xs text-purple-700">margem líquida</p>
+                      </div>
+                    </div>
+                    
+                    {/* Detalhamento */}
+                    <div className="space-y-2 pt-3 border-t border-purple-200">
+                      <div className="flex justify-between text-xs">
+                        <span className="text-purple-700">Custo dos Produtos:</span>
+                        <span className="font-semibold text-purple-900">R$ {formatCurrency(deliveryMargin.totalCost)}</span>
+                      </div>
+                      <div className="flex justify-between text-xs">
+                        <span className="text-purple-700">Lucro Bruto:</span>
+                        <span className="font-semibold text-purple-900">R$ {formatCurrency(deliveryMargin.grossProfit)} ({deliveryMargin.grossMarginPercent}%)</span>
+                      </div>
+                      <div className="flex justify-between text-xs">
+                        <span className="text-purple-700">Taxa iFood (7%):</span>
+                        <span className="font-semibold text-red-600">- R$ {formatCurrency(deliveryMargin.ifoodFee)}</span>
+                      </div>
+                      <div className="flex justify-between text-sm pt-2 border-t border-purple-200">
+                        <span className="font-semibold text-purple-900">Lucro Líquido:</span>
+                        <span className="font-bold text-purple-600">R$ {formatCurrency(deliveryMargin.netProfit)}</span>
+                      </div>
+                    </div>
+                  </div>
+                                {/* Compara\u00e7\u00e3o */}
+                  <div className="text-xs text-muted-foreground mb-3">
+                    <p className="mb-1">
+                      <span className="font-semibold">Impacto da taxa:</span> A taxa de 7% do iFood reduz a margem de {deliveryMargin.grossMarginPercent}% para {deliveryMargin.netMarginPercent}%
+                    </p>
+                  </div>
+                  
+                  {/* Bot\u00e3o para an\u00e1lise detalhada */}
+                  <Link href="/analise-delivery">
+                    <Button variant="outline" className="w-full" size="sm">
+                      Ver Detalhes por Produto \u2192
+                    </Button>
+                  </Link>            </>
+              ) : (
+                <p className="text-sm text-muted-foreground">Nenhuma venda delivery no mês atual</p>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         {/* Card de Margem Bruta por Categoria - Apenas para Admin */}
         {isAdmin && (

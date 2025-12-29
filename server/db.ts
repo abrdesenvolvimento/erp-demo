@@ -483,6 +483,29 @@ export async function getSaleItems(saleId: number) {
   return result;
 }
 
+export async function getSaleItemsBySaleIds(saleIds: number[]) {
+  const db = await getDb();
+  if (!db || saleIds.length === 0) return [];
+  
+  // Buscar itens com custo médio do produto
+  const result = await db
+    .select({
+      id: saleItems.id,
+      saleId: saleItems.saleId,
+      productId: saleItems.productId,
+      productName: products.name,
+      quantity: saleItems.quantity,
+      unitPrice: saleItems.unitPrice,
+      totalPrice: saleItems.totalPrice,
+      avgCost: products.avgCost,
+    })
+    .from(saleItems)
+    .leftJoin(products, eq(saleItems.productId, products.id))
+    .where(sql`${saleItems.saleId} IN (${sql.join(saleIds.map(id => sql`${id}`), sql`, `)})`);
+  
+  return result;
+}
+
 export async function createSale(saleData: InsertSale, items: Omit<InsertSaleItem, 'saleId'>[]) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");

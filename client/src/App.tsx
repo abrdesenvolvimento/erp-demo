@@ -13,6 +13,7 @@ import MinhaConta from "./pages/MinhaConta";
 import Usuarios from "./pages/Usuarios";
 import Relatorios from "./pages/Relatorios";
 import AnáliseVendas from "./pages/AnáliseVendas";
+import AnaliseDelivery from "./pages/AnaliseDelivery";
 import AccessDenied from "./pages/AccessDenied";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
@@ -32,6 +33,7 @@ function Router() {
       <Route path="/usuarios" component={Usuarios} />
       <Route path="/relatorios" component={Relatorios} />
       <Route path="/analise-vendas" component={AnáliseVendas} />
+      <Route path="/analise-delivery" component={AnaliseDelivery} />
       <Route path="/minha-conta" component={MinhaConta} />
       <Route path="/acesso-negado" component={AccessDenied} />
       <Route path="/404" component={NotFound} />
