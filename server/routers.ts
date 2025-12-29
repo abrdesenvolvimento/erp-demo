@@ -1473,26 +1473,40 @@ export const appRouter = router({
     }),
     
     // Análise detalhada por produto delivery
-    deliveryProductAnalysis: protectedProcedure.query(async ({ ctx }) => {
-      // Buscar vendas delivery do mês atual
-      const todayDateStr = new Date().toLocaleDateString('en-US', { timeZone: 'America/Sao_Paulo' });
-      const [month, day, year] = todayDateStr.split('/');
-      const today = new Date(`${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T00:00:00`);
+    deliveryProductAnalysis: protectedProcedure
+      .input(z.object({
+        startDate: z.string().optional(),
+        endDate: z.string().optional(),
+        categoryId: z.number().optional(),
+      }).optional())
+      .query(async ({ ctx, input }) => {
+      // Determinar período de filtro
+      let startDate: Date;
+      let endDate: Date;
+      
+      if (input?.startDate && input?.endDate) {
+        startDate = new Date(input.startDate + 'T00:00:00');
+        endDate = new Date(input.endDate + 'T23:59:59');
+      } else {
+        // Padrão: mês atual
+        const todayDateStr = new Date().toLocaleDateString('en-US', { timeZone: 'America/Sao_Paulo' });
+        const [month, day, year] = todayDateStr.split('/');
+        const today = new Date(`${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T00:00:00`);
+        startDate = new Date(today.getFullYear(), today.getMonth(), 1);
+        endDate = new Date(today.getFullYear(), today.getMonth() + 1, 0, 23, 59, 59);
+      }
       
       const allMonthSales = await db.getSales({ limit: 10000 });
       
-      // Filtrar vendas delivery do mês
+      // Filtrar vendas delivery
       const deliverySales = allMonthSales.filter(s => {
         if (!s.saleDate || s.status === 'CANCELLED' || s.saleType !== 'DELIVERY') return false;
         
         // Filtrar por usuário se for operacional
         if (ctx.user?.role === 'operacional' && s.createdBy !== ctx.user.id) return false;
         
-        const saleDateStr = new Date(s.saleDate).toLocaleDateString('en-US', { timeZone: 'America/Sao_Paulo' });
-        const [saleMonth, saleDay, saleYear] = saleDateStr.split('/');
-        
-        return parseInt(saleYear) === today.getFullYear() &&
-               parseInt(saleMonth) === (today.getMonth() + 1);
+        const saleDate = new Date(s.saleDate);
+        return saleDate >= startDate && saleDate <= endDate;
       });
       
       if (deliverySales.length === 0) return [];
@@ -1500,6 +1514,12 @@ export const appRouter = router({
       // Buscar itens das vendas delivery
       const deliverySaleIds = deliverySales.map(s => s.id);
       const items = await db.getSaleItemsBySaleIds(deliverySaleIds);
+      
+      // Buscar produtos completos para ter acesso à categoria
+      const productIds = Array.from(new Set(items.map(i => i.productId)));
+      const allProducts = await db.getProducts();
+      const products = allProducts.filter(p => productIds.includes(p.id));
+      const productCategoryMap = new Map(products.map((p: any) => [p.id, p.categoryId]));
       
       // Agrupar por produto
       const productMap = new Map<number, {
@@ -1511,6 +1531,10 @@ export const appRouter = router({
       }>();
       
       for (const item of items) {
+        // Filtrar por categoria se especificado
+        const productCategoryId = productCategoryMap.get(item.productId);
+        if (input?.categoryId && productCategoryId !== input.categoryId) continue;
+        
         const productId = item.productId;
         const productName = item.productName || 'Produto sem nome';
         const quantity = parseFloat(item.quantity?.toString() || '0');

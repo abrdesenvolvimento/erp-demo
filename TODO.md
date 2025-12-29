@@ -263,3 +263,12 @@
 - [x] Integrar cards de margem no grid principal (4 colunas, 2 linhas completas)
 - [x] Ajustar tamanho dos cards de margem para ficarem idênticos aos demais
 - [x] Ajustar cores dos cards para evitar repetição visual (Mg Delivery: Rosa/Pink, Mg Bruta: Teal/Ciano)
+
+### Melhorias Finais - Ícones e Filtros (28/12/2025)
+- [x] Trocar ícone de caminhão (Truck) por motocicleta (Bike) na tela de Vendas
+- [x] Trocar ícone de caminhão (Truck) por motocicleta (Bike) no menu lateral (Análise Delivery)
+- [x] Backend - Adicionar suporte a filtros de período (startDate, endDate) no endpoint deliveryProductAnalysis
+- [x] Backend - Adicionar suporte a filtro de categoria no endpoint deliveryProductAnalysis
+- [x] Frontend - Implementar seletor de período (data início/fim) na página Análise Delivery
+- [x] Frontend - Implementar dropdown de categoria na página Análise Delivery
+- [x] Integrar filtros com query do tRPC (refetch automático ao alterar filtros)

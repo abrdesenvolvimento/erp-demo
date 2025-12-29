@@ -27,7 +27,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ShoppingCart, Plus, Search, X, Store, Truck, Calendar } from "lucide-react";
+import { ShoppingCart, Plus, Search, X, Store, Bike, Calendar } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
@@ -515,7 +515,7 @@ export default function Vendas() {
           <Card className="border-t-4 border-t-purple-500">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Vendas Delivery</CardTitle>
-              <Truck className="h-4 w-4 text-purple-500" />
+              <Bike className="h-4 w-4 text-purple-500" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-purple-600">
@@ -698,7 +698,7 @@ export default function Vendas() {
                   onClick={() => handleSelectType("DELIVERY")}
                 >
                   <CardContent className="flex flex-col items-center justify-center p-6 space-y-4">
-                    <Truck className="h-16 w-16 text-purple-500" />
+                    <Bike className="h-16 w-16 text-purple-500" />
                     <div className="text-center">
                       <h3 className="font-bold text-lg">DELIVERY</h3>
                       <p className="text-sm text-muted-foreground">Pedido de entrega via plataforma</p>

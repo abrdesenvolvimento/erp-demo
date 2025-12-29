@@ -3,16 +3,25 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { trpc } from "@/lib/trpc";
-import { TrendingUp, TrendingDown, AlertCircle, ArrowLeft, Search } from "lucide-react";
+import { TrendingUp, TrendingDown, AlertCircle, ArrowLeft, Search, Calendar, Filter } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Link } from "wouter";
 import { useState } from "react";
 
 export default function AnaliseDelivery() {
-  const { data: deliveryMargin, isLoading: isMarginLoading } = trpc.dashboard.deliveryNetMargin.useQuery();
-  const { data: products, isLoading: isProductsLoading } = trpc.dashboard.deliveryProductAnalysis.useQuery();
   const [sortBy, setSortBy] = useState<'netProfit' | 'netMargin' | 'revenue'>('netProfit');
   const [searchTerm, setSearchTerm] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [categoryId, setCategoryId] = useState<number | undefined>(undefined);
+  
+  // Queries com filtros
+  const { data: deliveryMargin, isLoading: isMarginLoading } = trpc.dashboard.deliveryNetMargin.useQuery();
+  const { data: products, isLoading: isProductsLoading } = trpc.dashboard.deliveryProductAnalysis.useQuery(
+    startDate && endDate ? { startDate, endDate, categoryId } : { categoryId }
+  );
+  const { data: categories } = trpc.categories.list.useQuery();
 
   const formatCurrency = (value: string | number | null | undefined): string => {
     if (!value) return "0,00";
@@ -142,6 +151,61 @@ export default function AnaliseDelivery() {
             </div>
           </CardHeader>
           <CardContent>
+            {/* Filtros de Período e Categoria */}
+            <div className="mb-4 grid gap-4 md:grid-cols-3">
+              {/* Filtro de Data Início */}
+              <div>
+                <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
+                  <Calendar className="inline h-3 w-3 mr-1" />
+                  Data Início
+                </label>
+                <Input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="w-full"
+                />
+              </div>
+              
+              {/* Filtro de Data Fim */}
+              <div>
+                <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
+                  <Calendar className="inline h-3 w-3 mr-1" />
+                  Data Fim
+                </label>
+                <Input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="w-full"
+                />
+              </div>
+              
+              {/* Filtro de Categoria */}
+              <div>
+                <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
+                  <Filter className="inline h-3 w-3 mr-1" />
+                  Categoria
+                </label>
+                <Select
+                  value={categoryId?.toString() || 'all'}
+                  onValueChange={(value) => setCategoryId(value === 'all' ? undefined : parseInt(value))}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Todas as categorias" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas as categorias</SelectItem>
+                    {categories?.map((cat) => (
+                      <SelectItem key={cat.id} value={cat.id.toString()}>
+                        {cat.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            
             {/* Campo de Busca */}
             <div className="mb-4">
               <div className="relative">
