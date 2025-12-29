@@ -47,7 +47,7 @@ export default function ProductMovementsModal({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-7xl max-h-[85vh] overflow-y-auto">
+      <DialogContent className="max-w-[95vw] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Histórico de Movimentações - {productName}</DialogTitle>
         </DialogHeader>

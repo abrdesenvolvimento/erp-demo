@@ -41,10 +41,10 @@
 ## 🔵 EM DESENVOLVIMENTO
 
 ### Melhorias de UX - Modal de Movimentações (29/12/2025)
-- [x] **Aumentar tamanho do modal** - Modal atual muito pequeno, cortando informações
-  - Aumentar largura para exibir todas as colunas confortavelmente
-  - Aumentar altura para mostrar mais registros sem scroll excessivo
-  - Melhorar responsividade em diferentes tamanhos de tela
+- [x] **Aumentar tamanho do modal** - Maximizar uso da tela para reduzir scroll
+  - Largura: max-w-7xl → max-w-[95vw] (quase tela cheia)
+  - Altura: 85vh → 90vh (altura máxima)
+  - Melhor aproveitamento do espaço disponível
 
 ### Correção de Integridade - Estoque Atual (29/12/2025)
 - [x] **Travar campo "Estoque Atual" no formulário de edição** - Campo deve ser somente leitura (disabled)
