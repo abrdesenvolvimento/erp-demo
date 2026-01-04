@@ -1,0 +1,17 @@
+{
+  "query": "SELECT \n  YEAR(saleDate) as year,\n  MONTH(saleDate) as month,\n  DAY(saleDate) as day,\n  COUNT(*) as count,\n  SUM(finalAmount) as total\nFROM sales \nWHERE saleType = 'DELIVERY'\n  AND (\n    (YEAR(saleDate) = 2024 AND MONTH(saleDate) = 12 AND DAY(saleDate) = 31)\n    OR (YEAR(saleDate) = 2026 AND MONTH(saleDate) = 1 AND DAY(saleDate) IN (1, 3))\n  )\n  AND status = 'ACTIVE'\nGROUP BY YEAR(saleDate), MONTH(saleDate), DAY(saleDate)\nORDER BY year, month, day",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  YEAR(saleDate) as year,\n  MONTH(saleDate) as month,\n  DAY(saleDate) as day,\n  COUNT(*) as count,\n  SUM(finalAmount) as total\nFROM sales \nWHERE saleType = 'DELIVERY'\n  AND (\n    (YEAR(saleDate) = 2024 AND MONTH(saleDate) = 12 AND DAY(saleDate) = 31)\n    OR (YEAR(saleDate) = 2026 AND MONTH(saleDate) = 1 AND DAY(saleDate) IN (1, 3))\n  )\n  AND status = 'ACTIVE'\nGROUP BY YEAR(saleDate), MONTH(saleDate), DAY(saleDate)\nORDER BY year, month, day",
+  "rows": [
+    {
+      "year": "2024",
+      "month": "12",
+      "day": "31",
+      "count": "122",
+      "total": "6657.91"
+    }
+  ],
+  "messages": [],
+  "stdout": "year\tmonth\tday\tcount\ttotal\n2024\t12\t31\t122\t6657.91\n",
+  "stderr": "",
+  "execution_time_ms": 141
+}

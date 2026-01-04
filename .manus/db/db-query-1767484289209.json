@@ -1,0 +1,9 @@
+{
+  "query": "SELECT \n  DATE(saleDate) as date,\n  saleType,\n  COUNT(*) as count\nFROM sales \nWHERE DATE(saleDate) >= '2025-01-01' AND DATE(saleDate) <= '2025-01-03'\n  AND status = 'ACTIVE'\nGROUP BY DATE(saleDate), saleType\nORDER BY date, saleType",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  DATE(saleDate) as date,\n  saleType,\n  COUNT(*) as count\nFROM sales \nWHERE DATE(saleDate) >= '2025-01-01' AND DATE(saleDate) <= '2025-01-03'\n  AND status = 'ACTIVE'\nGROUP BY DATE(saleDate), saleType\nORDER BY date, saleType",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 77
+}

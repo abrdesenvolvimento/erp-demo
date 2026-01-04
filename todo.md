@@ -40,6 +40,10 @@
 
 ## 🔵 EM DESENVOLVIMENTO
 
+### Bugs Identificados (29/12/2025)
+- [x] **Filtro de fornecedores não inclui tipo 'Ambos'** - CORRIGIDO! Função getPartners() agora usa OR para incluir tipo BOTH ao buscar SUPPLIER ou CUSTOMER
+- [x] **Divergência de saldo em Contas a Receber** - CORRIGIDO! Saldo órfão de R$ 124,00 zerado (era teste antigo sem origem rastreada)
+
 ### Melhorias de UX - Modal de Movimentações (29/12/2025)
 - [x] **Aumentar tamanho do modal** - Maximizado para 95vw × 90vh
 - [x] **Eliminar scroll lateral** - Ajustar larguras das colunas para serem responsivas

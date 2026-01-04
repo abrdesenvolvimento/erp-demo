@@ -1,0 +1,9 @@
+{
+  "query": "SELECT \n  DATE(saleDate) as date,\n  COUNT(*) as count,\n  SUM(finalAmount) as totalAmount\nFROM sales \nWHERE saleType = 'DELIVERY' \n  AND (DATE(saleDate) = '2025-01-01' OR DATE(saleDate) = '2025-01-03')\n  AND status = 'ACTIVE'\nGROUP BY DATE(saleDate)\nORDER BY date",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  DATE(saleDate) as date,\n  COUNT(*) as count,\n  SUM(finalAmount) as totalAmount\nFROM sales \nWHERE saleType = 'DELIVERY' \n  AND (DATE(saleDate) = '2025-01-01' OR DATE(saleDate) = '2025-01-03')\n  AND status = 'ACTIVE'\nGROUP BY DATE(saleDate)\nORDER BY date",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 60
+}

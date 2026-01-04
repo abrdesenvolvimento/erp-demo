@@ -1,0 +1,8 @@
+{
+  "query": "SELECT \n  'receivables' as source,\n  id,\n  saleId,\n  originalAmount,\n  paidAmount,\n  remainingAmount,\n  status,\n  dueDate\nFROM receivables \nWHERE customerId = (SELECT id FROM partners WHERE name LIKE '%Gabriel%' LIMIT 1)\n  AND status IN ('PENDING', 'PARTIAL')\nUNION ALL\nSELECT \n  'sales' as source,\n  s.id,\n  NULL as saleId,\n  s.finalAmount as originalAmount,\n  NULL as paidAmount,\n  NULL as remainingAmount,\n  s.status,\n  NULL as dueDate\nFROM sales s\nWHERE s.customerId = (SELECT id FROM partners WHERE name LIKE '%Gabriel%' LIMIT 1)\n  AND s.saleType = 'A_PRAZO'\n  AND s.status = 'ACTIVE'\nORDER BY source, id",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  'receivables' as source,\n  id,\n  saleId,\n  originalAmount,\n  paidAmount,\n  remainingAmount,\n  status,\n  dueDate\nFROM receivables \nWHERE customerId = (SELECT id FROM partners WHERE name LIKE '%Gabriel%' LIMIT 1)\n  AND status IN ('PENDING', 'PARTIAL')\nUNION ALL\nSELECT \n  'sales' as source,\n  s.id,\n  NULL as saleId,\n  s.finalAmount as originalAmount,\n  NULL as paidAmount,\n  NULL as remainingAmount,\n  s.status,\n  NULL as dueDate\nFROM sales s\nWHERE s.customerId = (SELECT id FROM partners WHERE name LIKE '%Gabriel%' LIMIT 1)\n  AND s.saleType = 'A_PRAZO'\n  AND s.status = 'ACTIVE'\nORDER BY source, id",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 1: Unknown column 'originalamount' in 'field list'"
+  ]
+}

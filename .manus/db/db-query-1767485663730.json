@@ -1,0 +1,60 @@
+{
+  "query": "SELECT \n  DATE(saleDate) as data,\n  COUNT(*) as vendas,\n  SUM(finalAmount) as valor_total\nFROM sales \nWHERE saleType = 'DELIVERY'\n  AND status = 'ACTIVE'\n  AND saleDate >= '2025-12-01'\nGROUP BY DATE(saleDate)\nORDER BY data DESC\nLIMIT 10",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  DATE(saleDate) as data,\n  COUNT(*) as vendas,\n  SUM(finalAmount) as valor_total\nFROM sales \nWHERE saleType = 'DELIVERY'\n  AND status = 'ACTIVE'\n  AND saleDate >= '2025-12-01'\nGROUP BY DATE(saleDate)\nORDER BY data DESC\nLIMIT 10",
+  "rows": [
+    {
+      "data": "2025-12-31",
+      "vendas": "138",
+      "valor_total": "7296.99"
+    },
+    {
+      "data": "2025-12-30",
+      "vendas": "8",
+      "valor_total": "363.95"
+    },
+    {
+      "data": "2025-12-29",
+      "vendas": "11",
+      "valor_total": "594.94"
+    },
+    {
+      "data": "2025-12-28",
+      "vendas": "37",
+      "valor_total": "1372.61"
+    },
+    {
+      "data": "2025-12-27",
+      "vendas": "13",
+      "valor_total": "759.30"
+    },
+    {
+      "data": "2025-12-25",
+      "vendas": "124",
+      "valor_total": "6321.80"
+    },
+    {
+      "data": "2025-12-24",
+      "vendas": "138",
+      "valor_total": "8003.45"
+    },
+    {
+      "data": "2025-12-23",
+      "vendas": "41",
+      "valor_total": "1173.84"
+    },
+    {
+      "data": "2025-12-21",
+      "vendas": "68",
+      "valor_total": "2797.34"
+    },
+    {
+      "data": "2025-12-20",
+      "vendas": "77",
+      "valor_total": "3342.48"
+    }
+  ],
+  "messages": [],
+  "stdout": "data\tvendas\tvalor_total\n2025-12-31\t138\t7296.99\n2025-12-30\t8\t363.95\n2025-12-29\t11\t594.94\n2025-12-28\t37\t1372.61\n2025-12-27\t13\t759.30\n2025-12-25\t124\t6321.80\n2025-12-24\t138\t8003.45\n2025-12-23\t41\t1173.84\n2025-12-21\t68\t2797.34\n2025-12-20\t77\t3342.48\n",
+  "stderr": "",
+  "execution_time_ms": 222
+}

@@ -1,0 +1,9 @@
+{
+  "query": "DELETE FROM saleItems \nWHERE saleId IN (22290008, 23340003, 34530041, 34530046, 34530078, 34530084, 34530101, 34530104, 34530133, 35040005, 36330007, 36810035)",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute DELETE FROM saleItems \nWHERE saleId IN (22290008, 23340003, 34530041, 34530046, 34530078, 34530084, 34530101, 34530104, 34530133, 35040005, 36330007, 36810035)",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 67
+}

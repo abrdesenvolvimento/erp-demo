@@ -1,0 +1,13 @@
+{
+  "query": "SELECT \n  COUNT(*) as still_in_2026\nFROM sales \nWHERE saleType = 'DELIVERY'\n  AND YEAR(saleDate) = 2026\n  AND status = 'ACTIVE'",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  COUNT(*) as still_in_2026\nFROM sales \nWHERE saleType = 'DELIVERY'\n  AND YEAR(saleDate) = 2026\n  AND status = 'ACTIVE'",
+  "rows": [
+    {
+      "still_in_2026": "0"
+    }
+  ],
+  "messages": [],
+  "stdout": "still_in_2026\n0\n",
+  "stderr": "",
+  "execution_time_ms": 58
+}

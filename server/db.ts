@@ -385,7 +385,20 @@ export async function getPartners(filters?: { search?: string; partnerType?: str
   }
   
   if (filters?.partnerType) {
-    conditions.push(eq(partners.partnerType, filters.partnerType as any));
+    // Se buscar por SUPPLIER ou CUSTOMER, incluir também tipo BOTH
+    if (filters.partnerType === 'SUPPLIER') {
+      conditions.push(or(
+        eq(partners.partnerType, 'SUPPLIER'),
+        eq(partners.partnerType, 'BOTH')
+      ));
+    } else if (filters.partnerType === 'CUSTOMER') {
+      conditions.push(or(
+        eq(partners.partnerType, 'CUSTOMER'),
+        eq(partners.partnerType, 'BOTH')
+      ));
+    } else {
+      conditions.push(eq(partners.partnerType, filters.partnerType as any));
+    }
   }
   
   if (filters?.search) {

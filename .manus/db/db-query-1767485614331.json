@@ -1,0 +1,22 @@
+{
+  "query": "SELECT \n  YEAR(saleDate) as ano,\n  MONTH(saleDate) as mes,\n  COUNT(*) as count,\n  SUM(finalAmount) as total\nFROM sales \nWHERE saleType = 'DELIVERY'\n  AND status = 'ACTIVE'\nGROUP BY YEAR(saleDate), MONTH(saleDate)\nORDER BY ano, mes",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  YEAR(saleDate) as ano,\n  MONTH(saleDate) as mes,\n  COUNT(*) as count,\n  SUM(finalAmount) as total\nFROM sales \nWHERE saleType = 'DELIVERY'\n  AND status = 'ACTIVE'\nGROUP BY YEAR(saleDate), MONTH(saleDate)\nORDER BY ano, mes",
+  "rows": [
+    {
+      "ano": "2025",
+      "mes": "11",
+      "count": "333",
+      "total": "11984.82"
+    },
+    {
+      "ano": "2025",
+      "mes": "12",
+      "count": "1404",
+      "total": "57959.44"
+    }
+  ],
+  "messages": [],
+  "stdout": "ano\tmes\tcount\ttotal\n2025\t11\t333\t11984.82\n2025\t12\t1404\t57959.44\n",
+  "stderr": "",
+  "execution_time_ms": 58
+}

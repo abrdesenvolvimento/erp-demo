@@ -1,0 +1,129 @@
+{
+  "query": "SELECT \n  si.saleId,\n  si.productId,\n  si.quantity,\n  p.name as productName,\n  p.currentStock\nFROM saleItems si\nJOIN products p ON si.productId = p.id\nWHERE si.saleId IN (22290008, 23340003, 34530041, 34530046, 34530078, 34530084, 34530101, 34530104, 34530133, 35040005, 36330007, 36810035)\nORDER BY si.saleId, si.productId",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  si.saleId,\n  si.productId,\n  si.quantity,\n  p.name as productName,\n  p.currentStock\nFROM saleItems si\nJOIN products p ON si.productId = p.id\nWHERE si.saleId IN (22290008, 23340003, 34530041, 34530046, 34530078, 34530084, 34530101, 34530104, 34530133, 35040005, 36330007, 36810035)\nORDER BY si.saleId, si.productId",
+  "rows": [
+    {
+      "saleId": "22290008",
+      "productId": "480001",
+      "quantity": "8",
+      "productName": "Amstel Ultra 269ml",
+      "currentStock": "17"
+    },
+    {
+      "saleId": "23340003",
+      "productId": "720001",
+      "quantity": "5",
+      "productName": "Minalba 510ml",
+      "currentStock": "6"
+    },
+    {
+      "saleId": "34530041",
+      "productId": "540007",
+      "quantity": "7",
+      "productName": "Corona Extra 269ml",
+      "currentStock": "21"
+    },
+    {
+      "saleId": "34530046",
+      "productId": "510007",
+      "quantity": "3",
+      "productName": "Heineken 330ml",
+      "currentStock": "528"
+    },
+    {
+      "saleId": "34530046",
+      "productId": "1080001",
+      "quantity": "2",
+      "productName": "Red Bull 250ml",
+      "currentStock": "166"
+    },
+    {
+      "saleId": "34530078",
+      "productId": "450001",
+      "quantity": "12",
+      "productName": "Amstel 269ml",
+      "currentStock": "544"
+    },
+    {
+      "saleId": "34530084",
+      "productId": "480001",
+      "quantity": "5",
+      "productName": "Amstel Ultra 269ml",
+      "currentStock": "17"
+    },
+    {
+      "saleId": "34530101",
+      "productId": "660003",
+      "quantity": "1",
+      "productName": "Guaraná Antarctica 2l",
+      "currentStock": "45"
+    },
+    {
+      "saleId": "34530104",
+      "productId": "1470007",
+      "quantity": "1",
+      "productName": "Pérgola Branco Suave 1l",
+      "currentStock": "5"
+    },
+    {
+      "saleId": "34530133",
+      "productId": "450001",
+      "quantity": "8",
+      "productName": "Amstel 269ml",
+      "currentStock": "544"
+    },
+    {
+      "saleId": "35040005",
+      "productId": "870001",
+      "quantity": "12",
+      "productName": "Budweiser 269ml",
+      "currentStock": "111"
+    },
+    {
+      "saleId": "36330007",
+      "productId": "510001",
+      "quantity": "12",
+      "productName": "Heineken 269ml",
+      "currentStock": "389"
+    },
+    {
+      "saleId": "36810035",
+      "productId": "1020006",
+      "quantity": "1",
+      "productName": "Monster Zero Sugar 473ml",
+      "currentStock": "2"
+    },
+    {
+      "saleId": "36810035",
+      "productId": "2070022",
+      "quantity": "1",
+      "productName": "Gatorade Maracujá 500ml",
+      "currentStock": "8"
+    },
+    {
+      "saleId": "36810035",
+      "productId": "2070024",
+      "quantity": "1",
+      "productName": "Gatorade Limão 500ml",
+      "currentStock": "8"
+    },
+    {
+      "saleId": "36810035",
+      "productId": "2070026",
+      "quantity": "1",
+      "productName": "Gatorade Morango e Maracujá 500ml",
+      "currentStock": "5"
+    },
+    {
+      "saleId": "36810035",
+      "productId": "2070027",
+      "quantity": "1",
+      "productName": "Gatorade Tangerina 500ml",
+      "currentStock": "11"
+    }
+  ],
+  "messages": [],
+  "stdout": "saleId\tproductId\tquantity\tproductName\tcurrentStock\n22290008\t480001\t8\tAmstel Ultra 269ml\t17\n23340003\t720001\t5\tMinalba 510ml\t6\n34530041\t540007\t7\tCorona Extra 269ml\t21\n34530046\t510007\t3\tHeineken 330ml\t528\n34530046\t1080001\t2\tRed Bull 250ml\t166\n34530078\t450001\t12\tAmstel 269ml\t544\n34530084\t480001\t5\tAmstel Ultra 269ml\t17\n34530101\t660003\t1\tGuaraná Antarctica 2l\t45\n34530104\t1470007\t1\tPérgola Branco Suave 1l\t5\n34530133\t450001\t8\tAmstel 269ml\t544\n35040005\t870001\t12\tBudweiser 269ml\t111\n36330007\t510001\t12\tHeineken 269ml\t389\n36810035\t1020006\t1\tMonster Zero Sugar 473ml\t2\n36810035\t2070022\t1\tGatorade Maracujá 500ml\t8\n36810035\t2070024\t1\tGatorade Limão 500ml\t8\n36810035\t2070026\t1\tGatorade Morango e Maracujá 500ml\t5\n36810035\t2070027\t1\tGatorade Tangerina 500ml\t11\n",
+  "stderr": "",
+  "execution_time_ms": 60
+}

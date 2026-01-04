@@ -1,0 +1,80 @@
+{
+  "query": "SELECT \n  id,\n  saleType,\n  saleDate,\n  finalAmount,\n  platformOrderId\nFROM sales \nWHERE saleType = 'DELIVERY'\n  AND (\n    (saleDate >= '2024-12-31 00:00:00' AND saleDate <= '2024-12-31 23:59:59')\n    OR (saleDate >= '2026-01-01 00:00:00' AND saleDate <= '2026-01-03 23:59:59')\n  )\n  AND status = 'ACTIVE'\nORDER BY saleDate\nLIMIT 10",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  id,\n  saleType,\n  saleDate,\n  finalAmount,\n  platformOrderId\nFROM sales \nWHERE saleType = 'DELIVERY'\n  AND (\n    (saleDate >= '2024-12-31 00:00:00' AND saleDate <= '2024-12-31 23:59:59')\n    OR (saleDate >= '2026-01-01 00:00:00' AND saleDate <= '2026-01-03 23:59:59')\n  )\n  AND status = 'ACTIVE'\nORDER BY saleDate\nLIMIT 10",
+  "rows": [
+    {
+      "id": "36330001",
+      "saleType": "DELIVERY",
+      "saleDate": "2024-12-31 23:59:59",
+      "finalAmount": "24.98",
+      "platformOrderId": "0899"
+    },
+    {
+      "id": "36330002",
+      "saleType": "DELIVERY",
+      "saleDate": "2024-12-31 23:59:59",
+      "finalAmount": "47.90",
+      "platformOrderId": "9850"
+    },
+    {
+      "id": "36330003",
+      "saleType": "DELIVERY",
+      "saleDate": "2024-12-31 23:59:59",
+      "finalAmount": "62.89",
+      "platformOrderId": "2924"
+    },
+    {
+      "id": "36330004",
+      "saleType": "DELIVERY",
+      "saleDate": "2024-12-31 23:59:59",
+      "finalAmount": "195.21",
+      "platformOrderId": "8049"
+    },
+    {
+      "id": "36330006",
+      "saleType": "DELIVERY",
+      "saleDate": "2024-12-31 23:59:59",
+      "finalAmount": "236.88",
+      "platformOrderId": "1374"
+    },
+    {
+      "id": "36330008",
+      "saleType": "DELIVERY",
+      "saleDate": "2024-12-31 23:59:59",
+      "finalAmount": "119.98",
+      "platformOrderId": "5391"
+    },
+    {
+      "id": "36330009",
+      "saleType": "DELIVERY",
+      "saleDate": "2024-12-31 23:59:59",
+      "finalAmount": "68.77",
+      "platformOrderId": "1513"
+    },
+    {
+      "id": "36330011",
+      "saleType": "DELIVERY",
+      "saleDate": "2024-12-31 23:59:59",
+      "finalAmount": "149.87",
+      "platformOrderId": "1085"
+    },
+    {
+      "id": "36330012",
+      "saleType": "DELIVERY",
+      "saleDate": "2024-12-31 23:59:59",
+      "finalAmount": "44.21",
+      "platformOrderId": "1476"
+    },
+    {
+      "id": "36330013",
+      "saleType": "DELIVERY",
+      "saleDate": "2024-12-31 23:59:59",
+      "finalAmount": "27.16",
+      "platformOrderId": "0975"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tsaleType\tsaleDate\tfinalAmount\tplatformOrderId\n36330001\tDELIVERY\t2024-12-31 23:59:59\t24.98\t0899\n36330002\tDELIVERY\t2024-12-31 23:59:59\t47.90\t9850\n36330003\tDELIVERY\t2024-12-31 23:59:59\t62.89\t2924\n36330004\tDELIVERY\t2024-12-31 23:59:59\t195.21\t8049\n36330006\tDELIVERY\t2024-12-31 23:59:59\t236.88\t1374\n36330008\tDELIVERY\t2024-12-31 23:59:59\t119.98\t5391\n36330009\tDELIVERY\t2024-12-31 23:59:59\t68.77\t1513\n36330011\tDELIVERY\t2024-12-31 23:59:59\t149.87\t1085\n36330012\tDELIVERY\t2024-12-31 23:59:59\t44.21\t1476\n36330013\tDELIVERY\t2024-12-31 23:59:59\t27.16\t0975\n",
+  "stderr": "",
+  "execution_time_ms": 57
+}

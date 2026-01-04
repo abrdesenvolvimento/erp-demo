@@ -1,0 +1,9 @@
+{
+  "query": "SELECT \n  r.id,\n  r.saleId,\n  r.totalAmount,\n  r.receivedAmount,\n  (r.totalAmount - r.receivedAmount) as saldoDevedor,\n  r.status\nFROM receivables r\nWHERE r.customerId = (SELECT id FROM partners WHERE name LIKE '%Gabriel%' LIMIT 1)\n  AND r.status IN ('PENDENTE', 'PARCIAL', 'VENCIDO')\nORDER BY r.id",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  r.id,\n  r.saleId,\n  r.totalAmount,\n  r.receivedAmount,\n  (r.totalAmount - r.receivedAmount) as saldoDevedor,\n  r.status\nFROM receivables r\nWHERE r.customerId = (SELECT id FROM partners WHERE name LIKE '%Gabriel%' LIMIT 1)\n  AND r.status IN ('PENDENTE', 'PARCIAL', 'VENCIDO')\nORDER BY r.id",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 52
+}

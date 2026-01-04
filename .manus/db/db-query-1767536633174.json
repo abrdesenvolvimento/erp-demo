@@ -1,0 +1,18 @@
+{
+  "query": "SELECT \n  id,\n  name,\n  docNumber,\n  partnerType,\n  currentBalance,\n  creditLimit\nFROM partners \nWHERE name LIKE '%Gabriel%'\n  AND active = 1",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  id,\n  name,\n  docNumber,\n  partnerType,\n  currentBalance,\n  creditLimit\nFROM partners \nWHERE name LIKE '%Gabriel%'\n  AND active = 1",
+  "rows": [
+    {
+      "id": "240002",
+      "name": "Gabriel Morais Santos",
+      "docNumber": "44626646808",
+      "partnerType": "BOTH",
+      "currentBalance": "124.00",
+      "creditLimit": "500.00"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tdocNumber\tpartnerType\tcurrentBalance\tcreditLimit\n240002\tGabriel Morais Santos\t44626646808\tBOTH\t124.00\t500.00\n",
+  "stderr": "",
+  "execution_time_ms": 55
+}

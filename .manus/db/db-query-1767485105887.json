@@ -1,0 +1,9 @@
+{
+  "query": "UPDATE sales \nSET saleDate = CONCAT('2024-12-31 ', TIME(saleDate))\nWHERE saleType = 'DELIVERY' \n  AND (\n    (saleDate >= '2026-01-01 00:00:00' AND saleDate < '2026-01-02 00:00:00')\n    OR (saleDate >= '2026-01-03 00:00:00' AND saleDate < '2026-01-04 00:00:00')\n  )\n  AND status = 'ACTIVE'",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute UPDATE sales \nSET saleDate = CONCAT('2024-12-31 ', TIME(saleDate))\nWHERE saleType = 'DELIVERY' \n  AND (\n    (saleDate >= '2026-01-01 00:00:00' AND saleDate < '2026-01-02 00:00:00')\n    OR (saleDate >= '2026-01-03 00:00:00' AND saleDate < '2026-01-04 00:00:00')\n  )\n  AND status = 'ACTIVE'",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 62
+}

@@ -1,0 +1,17 @@
+{
+  "query": "SELECT \n  saleType,\n  COUNT(*) as count,\n  SUM(finalAmount) as totalAmount,\n  MIN(saleDate) as firstSale,\n  MAX(saleDate) as lastSale\nFROM sales \nWHERE saleDate >= '2024-12-31 00:00:00' AND saleDate <= '2024-12-31 23:59:59'\n  AND status = 'ACTIVE'\nGROUP BY saleType\nORDER BY saleType",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  saleType,\n  COUNT(*) as count,\n  SUM(finalAmount) as totalAmount,\n  MIN(saleDate) as firstSale,\n  MAX(saleDate) as lastSale\nFROM sales \nWHERE saleDate >= '2024-12-31 00:00:00' AND saleDate <= '2024-12-31 23:59:59'\n  AND status = 'ACTIVE'\nGROUP BY saleType\nORDER BY saleType",
+  "rows": [
+    {
+      "saleType": "DELIVERY",
+      "count": "122",
+      "totalAmount": "6657.91",
+      "firstSale": "2024-12-31 23:59:59",
+      "lastSale": "2024-12-31 23:59:59"
+    }
+  ],
+  "messages": [],
+  "stdout": "saleType\tcount\ttotalAmount\tfirstSale\tlastSale\nDELIVERY\t122\t6657.91\t2024-12-31 23:59:59\t2024-12-31 23:59:59\n",
+  "stderr": "",
+  "execution_time_ms": 77
+}
