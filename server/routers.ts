@@ -770,6 +770,7 @@ export const appRouter = router({
         issueDate: z.string(),
         postingDate: z.string(),
         paymentMethod: z.string(),
+        discount: z.string().optional(),
         freightCost: z.string().optional(),
         chargesCost: z.string().optional(),
         notes: z.string().optional(),
@@ -791,9 +792,10 @@ export const appRouter = router({
         const subtotal = items.reduce((sum, item) => 
           sum + (item.quantity * item.unitCost), 0
         );
+        const discount = parseFloat(purchaseData.discount || "0");
         const freightCost = parseFloat(purchaseData.freightCost || "0");
         const chargesCost = parseFloat(purchaseData.chargesCost || "0");
-        const totalAmount = subtotal + freightCost + chargesCost;
+        const totalAmount = subtotal - discount + freightCost + chargesCost;
         
         // Criar ordem de compra
         const purchaseOrderData: any = {
@@ -802,6 +804,7 @@ export const appRouter = router({
           issueDate: new Date(purchaseData.issueDate),
           postingDate: new Date(purchaseData.postingDate),
           totalAmount: totalAmount.toFixed(2),
+          discount: discount.toFixed(2),
           freightCost: freightCost.toFixed(2),
           chargesCost: chargesCost.toFixed(2),
           paymentMethod: purchaseData.paymentMethod,

@@ -73,6 +73,7 @@ export default function Compras() {
   const [installments, setInstallments] = useState<PaymentInstallment[]>([
     { dueDate: formatDateForInput(getTodayInBrazil()), amount: 0 }
   ]);
+  const [discount, setDiscount] = useState("0");
   const [freightCost, setFreightCost] = useState("0");
   const [chargesCost, setChargesCost] = useState("0");
   const [notes, setNotes] = useState("");
@@ -85,12 +86,13 @@ export default function Compras() {
   // Auto-fill single installment amount
   useEffect(() => {
     if (installments.length === 1 && items.length > 0) {
-      const totalAmount = items.reduce((sum, item) => sum + (item.quantity * item.unitCost), 0) + parseFloat(freightCost) + parseFloat(chargesCost);
+      const subtotal = items.reduce((sum, item) => sum + (item.quantity * item.unitCost), 0);
+      const totalAmount = subtotal - parseFloat(discount) + parseFloat(freightCost) + parseFloat(chargesCost);
       if (totalAmount > 0) {
         setInstallments([{ ...installments[0], amount: totalAmount }]);
       }
     }
-  }, [items, freightCost, chargesCost, installments.length]);
+  }, [items, discount, freightCost, chargesCost, installments.length]);
   
   // Queries
   const { data: purchases = [], refetch } = trpc.purchases.list.useQuery({
@@ -285,9 +287,10 @@ export default function Compras() {
         return;
       }
 
-      const totalAmount = items.reduce((sum, item) => 
+      const subtotal = items.reduce((sum, item) => 
         sum + (item.quantity * item.unitCost), 0
-      ) + parseFloat(freightCost) + parseFloat(chargesCost);
+      );
+      const totalAmount = subtotal - parseFloat(discount) + parseFloat(freightCost) + parseFloat(chargesCost);
 
       createMutation.mutate({
         supplierId,
@@ -296,6 +299,7 @@ export default function Compras() {
         accessKey: accessKey || undefined,
         issueDate: parseDateInBrazil(issueDate).toISOString(),
         postingDate: parseDateInBrazil(postingDate).toISOString(),
+        discount: discount || "0",
         freightCost: freightCost || "0",
         chargesCost: chargesCost || "0",
         paymentMethod,
@@ -628,25 +632,40 @@ export default function Compras() {
                           <span>Subtotal:</span>
                           <span>R$ {(items.reduce((sum, item) => sum + (item.quantity * item.unitCost), 0)).toFixed(2)}</span>
                         </div>
-                        <div className="flex justify-between">
-                          <span>Frete:</span>
-                          <span>R$ {parseFloat(freightCost).toFixed(2)}</span>
+                        <div className="flex justify-between text-muted-foreground">
+                          <span>Desconto:</span>
+                          <span>- R$ {parseFloat(discount).toFixed(2)}</span>
                         </div>
-                        <div className="flex justify-between">
+                        <div className="flex justify-between text-muted-foreground">
+                          <span>Frete:</span>
+                          <span>+ R$ {parseFloat(freightCost).toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between text-muted-foreground">
                           <span>Taxas:</span>
-                          <span>R$ {parseFloat(chargesCost).toFixed(2)}</span>
+                          <span>+ R$ {parseFloat(chargesCost).toFixed(2)}</span>
                         </div>
                         <div className="border-t pt-3 flex justify-between font-semibold text-base">
                           <span>Total:</span>
-                          <span>R$ {(items.reduce((sum, item) => sum + (item.quantity * item.unitCost), 0) + parseFloat(freightCost) + parseFloat(chargesCost)).toFixed(2)}</span>
+                          <span>R$ {(items.reduce((sum, item) => sum + (item.quantity * item.unitCost), 0) - parseFloat(discount) + parseFloat(freightCost) + parseFloat(chargesCost)).toFixed(2)}</span>
                         </div>
                       </div>
                     </div>
 
                     {/* Custos Adicionais */}
                     <div className="bg-card border rounded-lg p-6">
-                      <h3 className="text-lg font-semibold mb-4">Custos Adicionais</h3>
+                      <h3 className="text-lg font-semibold mb-4">Ajustes de Valor</h3>
                       <div className="space-y-4">
+                        <div>
+                          <Label>Desconto</Label>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            value={discount}
+                            onChange={(e) => setDiscount(e.target.value)}
+                            placeholder="0.00"
+                          />
+                          <p className="text-xs text-muted-foreground mt-1">Desconto negociado com fornecedor</p>
+                        </div>
                         <div>
                           <Label>Frete</Label>
                           <Input
@@ -764,7 +783,8 @@ export default function Compras() {
                             type="button"
                             variant="outline"
                             onClick={() => {
-                              const totalAmount = items.reduce((sum, item) => sum + (item.quantity * item.unitCost), 0) + parseFloat(freightCost) + parseFloat(chargesCost);
+                              const subtotal = items.reduce((sum, item) => sum + (item.quantity * item.unitCost), 0);
+                            const totalAmount = subtotal - parseFloat(discount) + parseFloat(freightCost) + parseFloat(chargesCost);
                               const amountPerInstallment = totalAmount / installments.length;
                               const newInst = installments.map((inst, idx) => ({
                                 ...inst,

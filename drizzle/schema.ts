@@ -224,6 +224,7 @@ export const purchaseOrders = mysqlTable("purchaseOrders", {
   issueDate: timestamp("issueDate").notNull(),
   postingDate: timestamp("postingDate").notNull(),
   totalAmount: decimal("totalAmount", { precision: 10, scale: 2 }).notNull(),
+  discount: decimal("discount", { precision: 10, scale: 2 }).default("0.00"),
   freightCost: decimal("freightCost", { precision: 10, scale: 2 }).default("0.00"),
   chargesCost: decimal("chargesCost", { precision: 10, scale: 2 }).default("0.00"),
   paymentMethod: varchar("paymentMethod", { length: 50 }).notNull(),

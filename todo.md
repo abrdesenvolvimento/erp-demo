@@ -1591,3 +1591,15 @@
 - [ ] **Mensagens de erro amigáveis** - Melhorar mensagens de erro quando queries falham ou não retornam dados
 
 - [ ] **Tooltips explicativos** - Adicionar tooltips em métricas complexas (margem bruta, mix de produtos, etc.) explicando o cálculo
+
+
+### Nova Funcionalidade - Campo de Desconto em Compras (06/01/2026)
+- [x] **Adicionar campo de desconto em Compras** - IMPLEMENTADO! Permite registrar descontos negociados com fornecedores
+  - Campo `discount` (decimal) adicionado na tabela purchaseOrders
+  - Banco de dados migrado via ALTER TABLE
+  - Fórmula de rateio atualizada: (subtotal - desconto + frete + taxas) / subtotal
+  - Campo adicionado no formulário em "Ajustes de Valor" (antes de Frete e Taxas)
+  - Cálculo de Total da Nota atualizado: Subtotal - Desconto + Frete + Taxas
+  - Resumo visual mostra breakdown: Subtotal, Desconto (-), Frete (+), Taxas (+), Total
+  - Backend tRPC atualizado para aceitar e processar discount
+  - Testado com exemplos: desconto de R$ 100 reduz custo em 5% (compra de R$ 1.000)

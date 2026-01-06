@@ -1020,9 +1020,10 @@ export async function confirmPurchaseOrder(purchaseOrderId: number) {
   const purchaseOrderData = await getPurchaseOrderById(purchaseOrderId);
   if (!purchaseOrderData) throw new Error("Ordem de compra não encontrada");
   
+  const discount = parseFloat(purchaseOrderData.purchaseOrder.discount?.toString() || "0");
   const freightCost = parseFloat(purchaseOrderData.purchaseOrder.freightCost?.toString() || "0");
   const chargesCost = parseFloat(purchaseOrderData.purchaseOrder.chargesCost?.toString() || "0");
-  const additionalCosts = freightCost + chargesCost;
+  const netAdjustment = -discount + freightCost + chargesCost;
   
   // Buscar itens da compra
   const items = await getPurchaseOrderItems(purchaseOrderId);
@@ -1035,10 +1036,10 @@ export async function confirmPurchaseOrder(purchaseOrderId: number) {
     subtotal += quantity * unitCost;
   }
   
-  // Calcular fator de rateio (1 + custos adicionais / subtotal)
-  const allocationFactor = subtotal > 0 ? (subtotal + additionalCosts) / subtotal : 1;
+  // Calcular fator de rateio: (subtotal - desconto + frete + taxas) / subtotal
+  const allocationFactor = subtotal > 0 ? (subtotal + netAdjustment) / subtotal : 1;
   
-  console.log(`[confirmPurchaseOrder] Subtotal: R$ ${subtotal.toFixed(2)}, Frete: R$ ${freightCost.toFixed(2)}, Taxas: R$ ${chargesCost.toFixed(2)}, Fator: ${allocationFactor.toFixed(6)}`);
+  console.log(`[confirmPurchaseOrder] Subtotal: R$ ${subtotal.toFixed(2)}, Desconto: R$ ${discount.toFixed(2)}, Frete: R$ ${freightCost.toFixed(2)}, Taxas: R$ ${chargesCost.toFixed(2)}, Fator: ${allocationFactor.toFixed(6)}`);
   
   // Atualizar estoque e custo médio para cada item
   for (const item of items) {
