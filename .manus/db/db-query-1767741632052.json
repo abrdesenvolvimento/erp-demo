@@ -1,0 +1,18 @@
+{
+  "query": "SELECT id, name FROM products WHERE name IN (\n  'Coca Cola 2l Retornável',\n  'Skol Lata 350ml',\n  'Guaraná Antarctica 2l',\n  'Heineken Long Neck',\n  'Água Mineral 500ml'\n) ORDER BY name",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT id, name FROM products WHERE name IN (\n  'Coca Cola 2l Retornável',\n  'Skol Lata 350ml',\n  'Guaraná Antarctica 2l',\n  'Heineken Long Neck',\n  'Água Mineral 500ml'\n) ORDER BY name",
+  "rows": [
+    {
+      "id": "630012",
+      "name": "Coca Cola 2l Retornável"
+    },
+    {
+      "id": "660003",
+      "name": "Guaraná Antarctica 2l"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\n630012\tCoca Cola 2l Retornável\n660003\tGuaraná Antarctica 2l\n",
+  "stderr": "",
+  "execution_time_ms": 834
+}

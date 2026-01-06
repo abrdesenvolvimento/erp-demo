@@ -1,0 +1,30 @@
+{
+  "query": "SELECT id, name FROM products ORDER BY name LIMIT 5",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT id, name FROM products ORDER BY name LIMIT 5",
+  "rows": [
+    {
+      "id": "2250007",
+      "name": "43 700ml"
+    },
+    {
+      "id": "2250010",
+      "name": "43 Baristo 700ml"
+    },
+    {
+      "id": "4140003",
+      "name": "43 Chocolate 700ml"
+    },
+    {
+      "id": "3060004",
+      "name": "43 Creme Brulee 700ml"
+    },
+    {
+      "id": "2250009",
+      "name": "43 Horchata 700ml"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\n2250007\t43 700ml\n2250010\t43 Baristo 700ml\n4140003\t43 Chocolate 700ml\n3060004\t43 Creme Brulee 700ml\n2250009\t43 Horchata 700ml\n",
+  "stderr": "",
+  "execution_time_ms": 51
+}

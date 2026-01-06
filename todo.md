@@ -1614,3 +1614,17 @@
   - Cores semânticas: verde para descontos (redução), laranja para acréscimos
   - Rodapé com totais e nota explicativa sobre o funcionamento do rateio
   - Seção só aparece se houver ajustes (desconto > 0 OU frete > 0 OU taxas > 0)
+
+
+### Migração de Dados Legados - De-Para (06/01/2026)
+- [x] **Concluir mapeamento De-Para para migração** - CONCLUÍDO! Documentação completa e script de migração criados
+  - Documento DE-PARA-MIGRACAO-VENDAS.md criado com mapeamento completo
+  - Escopo: Migração de vendas históricas do Excel (2020-2025)
+  - Campos mapeados: Data, Item (produto), Quantidade, Valor Unitário, Custo de Venda
+  - Valores padrão definidos: Canal=Balcão, Cliente=NULL, Pagamento/Status="Migração de Dados"
+  - Script migrate-sales-from-excel.mjs criado (lê .xlsx, valida, importa para DB)
+  - Validações: datas, produtos existentes, quantidades/preços positivos
+  - Fuzzy matching para produtos com nomes similares
+  - Logs automáticos: relatório, produtos não encontrados, erros detalhados
+  - GUIA-MIGRACAO-VENDAS.md criado com instruções passo a passo
+  - Pronto para execução: `node migrate-sales-from-excel.mjs vendas.xlsx`
