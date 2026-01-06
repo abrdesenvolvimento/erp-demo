@@ -1603,3 +1603,14 @@
   - Resumo visual mostra breakdown: Subtotal, Desconto (-), Frete (+), Taxas (+), Total
   - Backend tRPC atualizado para aceitar e processar discount
   - Testado com exemplos: desconto de R$ 100 reduz custo em 5% (compra de R$ 1.000)
+
+
+### Melhoria de UX - Exibição de Rateio de Custos (06/01/2026)
+- [x] **Exibir detalhes de rateio no modal de compras** - IMPLEMENTADO! Mostra como desconto/frete/taxas foram distribuídos entre produtos
+  - Modal de detalhes localizado (botão "Detalhes" na listagem de compras)
+  - Seção "Rateio de Custos" adicionada após tabela de itens
+  - Resumo em cards: Subtotal, Desconto (-), Frete (+), Taxas (+), Fator de Rateio (%)
+  - Tabela detalhada: Produto, Custo Original, Custo Ajustado, Diferença (R$ e %)
+  - Cores semânticas: verde para descontos (redução), laranja para acréscimos
+  - Rodapé com totais e nota explicativa sobre o funcionamento do rateio
+  - Seção só aparece se houver ajustes (desconto > 0 OU frete > 0 OU taxas > 0)

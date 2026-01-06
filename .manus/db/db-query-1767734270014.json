@@ -1,0 +1,9 @@
+{
+  "query": "INSERT INTO purchaseOrders \n(supplierId, docType, docNumber, issueDate, postingDate, totalAmount, discount, freightCost, chargesCost, paymentMethod, status, createdBy)\nSELECT \n  (SELECT id FROM partners WHERE name LIKE '%Spal%' LIMIT 1),\n  'NOTA_FISCAL',\n  'TEST-RATEIO-001',\n  NOW(),\n  NOW(),\n  950.00,\n  100.00,\n  30.00,\n  20.00,\n  'Dinheiro',\n  'CONFIRMED',\n  'admin'",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute INSERT INTO purchaseOrders \n(supplierId, docType, docNumber, issueDate, postingDate, totalAmount, discount, freightCost, chargesCost, paymentMethod, status, createdBy)\nSELECT \n  (SELECT id FROM partners WHERE name LIKE '%Spal%' LIMIT 1),\n  'NOTA_FISCAL',\n  'TEST-RATEIO-001',\n  NOW(),\n  NOW(),\n  950.00,\n  100.00,\n  30.00,\n  20.00,\n  'Dinheiro',\n  'CONFIRMED',\n  'admin'",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 64
+}

@@ -1,0 +1,20 @@
+{
+  "query": "SELECT id, postingDate, issueDate, totalAmount, discount, freightCost, chargesCost, status \nFROM purchaseOrders \nWHERE id = 2490001",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT id, postingDate, issueDate, totalAmount, discount, freightCost, chargesCost, status \nFROM purchaseOrders \nWHERE id = 2490001",
+  "rows": [
+    {
+      "id": "2490001",
+      "postingDate": "2026-01-06 15:00:00",
+      "issueDate": "2026-01-06 15:00:00",
+      "totalAmount": "964.17",
+      "discount": "0.00",
+      "freightCost": "0.00",
+      "chargesCost": "25.77",
+      "status": "CONFIRMED"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tpostingDate\tissueDate\ttotalAmount\tdiscount\tfreightCost\tchargesCost\tstatus\n2490001\t2026-01-06 15:00:00\t2026-01-06 15:00:00\t964.17\t0.00\t0.00\t25.77\tCONFIRMED\n",
+  "stderr": "",
+  "execution_time_ms": 73
+}

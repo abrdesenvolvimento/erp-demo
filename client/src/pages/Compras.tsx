@@ -1206,6 +1206,126 @@ export default function Compras() {
                           </table>
                         </div>
                       </div>
+
+                      {/* Rateio de Custos */}
+                      {(() => {
+                        const purchase = purchases.find(p => p.purchaseOrder.id === selectedPurchaseId);
+                        if (!purchase) return null;
+                        
+                        const discount = parseFloat(purchase.purchaseOrder.discount?.toString() || '0');
+                        const freightCost = parseFloat(purchase.purchaseOrder.freightCost?.toString() || '0');
+                        const chargesCost = parseFloat(purchase.purchaseOrder.chargesCost?.toString() || '0');
+                        
+                        // Só exibe se houver algum ajuste
+                        if (discount === 0 && freightCost === 0 && chargesCost === 0) return null;
+                        
+                        const subtotal = purchaseDetails.reduce((sum: number, item: any) => 
+                          sum + (parseFloat(item.quantity.toString()) * parseFloat(item.unitCost.toString())), 0
+                        );
+                        const netAdjustment = -discount + freightCost + chargesCost;
+                        const allocationFactor = subtotal > 0 ? (subtotal + netAdjustment) / subtotal : 1;
+                        const factorPercent = ((allocationFactor - 1) * 100);
+                        
+                        return (
+                          <div className="border-t pt-4">
+                            <h3 className="font-semibold mb-3 flex items-center gap-2">
+                              Rateio de Custos
+                              <span className="text-xs font-normal text-muted-foreground">
+                                (Ajustes distribuídos proporcionalmente)
+                              </span>
+                            </h3>
+                            
+                            {/* Resumo de Ajustes */}
+                            <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4 p-4 bg-muted/30 rounded-lg">
+                              <div>
+                                <div className="text-xs text-muted-foreground">Subtotal</div>
+                                <div className="font-medium">R$ {subtotal.toFixed(2)}</div>
+                              </div>
+                              {discount > 0 && (
+                                <div>
+                                  <div className="text-xs text-muted-foreground">Desconto</div>
+                                  <div className="font-medium text-green-600">- R$ {discount.toFixed(2)}</div>
+                                </div>
+                              )}
+                              {freightCost > 0 && (
+                                <div>
+                                  <div className="text-xs text-muted-foreground">Frete</div>
+                                  <div className="font-medium text-orange-600">+ R$ {freightCost.toFixed(2)}</div>
+                                </div>
+                              )}
+                              {chargesCost > 0 && (
+                                <div>
+                                  <div className="text-xs text-muted-foreground">Taxas</div>
+                                  <div className="font-medium text-orange-600">+ R$ {chargesCost.toFixed(2)}</div>
+                                </div>
+                              )}
+                              <div>
+                                <div className="text-xs text-muted-foreground">Fator de Rateio</div>
+                                <div className="font-semibold">
+                                  {allocationFactor.toFixed(6)}
+                                  <span className={`text-xs ml-1 ${factorPercent >= 0 ? 'text-orange-600' : 'text-green-600'}`}>
+                                    ({factorPercent >= 0 ? '+' : ''}{factorPercent.toFixed(2)}%)
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                            
+                            {/* Tabela de Rateio por Produto */}
+                            <div className="border rounded-lg overflow-hidden">
+                              <table className="w-full text-sm">
+                                <thead className="bg-muted/50 border-b">
+                                  <tr>
+                                    <th className="text-left p-3 font-medium">Produto</th>
+                                    <th className="text-right p-3 font-medium">Custo Original</th>
+                                    <th className="text-right p-3 font-medium">Custo Ajustado</th>
+                                    <th className="text-right p-3 font-medium">Diferença</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {purchaseDetails.map((item: any) => {
+                                    const originalCost = parseFloat(item.unitCost.toString());
+                                    const adjustedCost = originalCost * allocationFactor;
+                                    const difference = adjustedCost - originalCost;
+                                    const differencePercent = ((adjustedCost / originalCost - 1) * 100);
+                                    
+                                    return (
+                                      <tr key={item.id} className="border-b hover:bg-muted/50">
+                                        <td className="p-3">{item.productName}</td>
+                                        <td className="text-right p-3 text-muted-foreground">R$ {originalCost.toFixed(4)}</td>
+                                        <td className="text-right p-3 font-medium">R$ {adjustedCost.toFixed(4)}</td>
+                                        <td className="text-right p-3">
+                                          <span className={difference >= 0 ? 'text-orange-600' : 'text-green-600'}>
+                                            {difference >= 0 ? '+' : ''}R$ {difference.toFixed(4)}
+                                            <span className="text-xs ml-1">({differencePercent >= 0 ? '+' : ''}{differencePercent.toFixed(2)}%)</span>
+                                          </span>
+                                        </td>
+                                      </tr>
+                                    );
+                                  })}
+                                </tbody>
+                                <tfoot className="bg-muted/30 border-t">
+                                  <tr>
+                                    <td className="p-3 font-semibold">Total dos Ajustes</td>
+                                    <td className="text-right p-3 text-muted-foreground">R$ {subtotal.toFixed(2)}</td>
+                                    <td className="text-right p-3 font-semibold">R$ {(subtotal + netAdjustment).toFixed(2)}</td>
+                                    <td className="text-right p-3 font-semibold">
+                                      <span className={netAdjustment >= 0 ? 'text-orange-600' : 'text-green-600'}>
+                                        {netAdjustment >= 0 ? '+' : ''}R$ {netAdjustment.toFixed(2)}
+                                      </span>
+                                    </td>
+                                  </tr>
+                                </tfoot>
+                              </table>
+                            </div>
+                            
+                            {/* Nota Explicativa */}
+                            <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900 rounded-lg text-xs text-blue-900 dark:text-blue-100">
+                              <strong>Como funciona o rateio:</strong> Os ajustes (desconto, frete e taxas) são distribuídos proporcionalmente entre todos os produtos.
+                              O custo ajustado é o valor que foi usado para atualizar o custo médio de cada produto no estoque.
+                            </div>
+                          </div>
+                        );
+                      })()}
                     </div>
                   )}
                 </DialogContent>
