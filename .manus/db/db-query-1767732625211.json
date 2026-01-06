@@ -1,0 +1,19 @@
+{
+  "query": "SELECT \n  po.id,\n  po.docNumber,\n  po.totalAmount,\n  po.freightCost,\n  po.chargesCost,\n  po.status,\n  p.name as supplier\nFROM purchaseOrders po\nLEFT JOIN partners p ON po.supplierId = p.id\nWHERE po.id = 2490001",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  po.id,\n  po.docNumber,\n  po.totalAmount,\n  po.freightCost,\n  po.chargesCost,\n  po.status,\n  p.name as supplier\nFROM purchaseOrders po\nLEFT JOIN partners p ON po.supplierId = p.id\nWHERE po.id = 2490001",
+  "rows": [
+    {
+      "id": "2490001",
+      "docNumber": "23746042",
+      "totalAmount": "964.17",
+      "freightCost": "0.00",
+      "chargesCost": "25.77",
+      "status": "CONFIRMED",
+      "supplier": "Spal Industria Brasileira de Bebidas S/A"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tdocNumber\ttotalAmount\tfreightCost\tchargesCost\tstatus\tsupplier\n2490001\t23746042\t964.17\t0.00\t25.77\tCONFIRMED\tSpal Industria Brasileira de Bebidas S/A\n",
+  "stderr": "",
+  "execution_time_ms": 866
+}

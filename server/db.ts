@@ -1016,8 +1016,29 @@ export async function confirmPurchaseOrder(purchaseOrderId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
+  // Buscar ordem de compra para pegar frete e taxas
+  const purchaseOrderData = await getPurchaseOrderById(purchaseOrderId);
+  if (!purchaseOrderData) throw new Error("Ordem de compra não encontrada");
+  
+  const freightCost = parseFloat(purchaseOrderData.purchaseOrder.freightCost?.toString() || "0");
+  const chargesCost = parseFloat(purchaseOrderData.purchaseOrder.chargesCost?.toString() || "0");
+  const additionalCosts = freightCost + chargesCost;
+  
   // Buscar itens da compra
   const items = await getPurchaseOrderItems(purchaseOrderId);
+  
+  // Calcular subtotal dos produtos para rateio
+  let subtotal = 0;
+  for (const item of items) {
+    const quantity = parseFloat(item.quantity.toString());
+    const unitCost = parseFloat(item.unitCost.toString());
+    subtotal += quantity * unitCost;
+  }
+  
+  // Calcular fator de rateio (1 + custos adicionais / subtotal)
+  const allocationFactor = subtotal > 0 ? (subtotal + additionalCosts) / subtotal : 1;
+  
+  console.log(`[confirmPurchaseOrder] Subtotal: R$ ${subtotal.toFixed(2)}, Frete: R$ ${freightCost.toFixed(2)}, Taxas: R$ ${chargesCost.toFixed(2)}, Fator: ${allocationFactor.toFixed(6)}`);
   
   // Atualizar estoque e custo médio para cada item
   for (const item of items) {
@@ -1031,13 +1052,18 @@ export async function confirmPurchaseOrder(purchaseOrderId: number) {
     const quantityPurchased = parseFloat(item.quantity.toString());
     const unitCost = parseFloat(item.unitCost.toString());
     
+    // Aplicar fator de rateio ao custo unitário (inclui frete e taxas proporcionalmente)
+    const adjustedUnitCost = unitCost * allocationFactor;
+    
+    console.log(`[confirmPurchaseOrder] Produto ${prod.name}: Custo original R$ ${unitCost.toFixed(4)}, Custo ajustado R$ ${adjustedUnitCost.toFixed(4)}`);
+    
     // Calcular novo estoque
     const newStock = currentStock + quantityPurchased;
     
-    // Calcular novo custo médio ponderado (RN-COMP-01)
+    // Calcular novo custo médio ponderado (RN-COMP-01) usando custo ajustado
     const newAvgCost = currentStock > 0
-      ? (currentStock * currentAvgCost + quantityPurchased * unitCost) / newStock
-      : unitCost;
+      ? (currentStock * currentAvgCost + quantityPurchased * adjustedUnitCost) / newStock
+      : adjustedUnitCost;
     
     // Preparar dados de atualização
     const updateData: any = {
@@ -1054,18 +1080,15 @@ export async function confirmPurchaseOrder(purchaseOrderId: number) {
     await updateProduct(prod.id, updateData);
     
     // Registrar movimentação de ENTRADA
-    const purchaseOrderData = await getPurchaseOrderById(purchaseOrderId);
-    if (purchaseOrderData) {
-      await createProductMovement({
-        productId: prod.id,
-        date: new Date(),
-        type: "ENTRADA",
-        quantity: quantityPurchased.toString(),
-        documentNumber: purchaseOrderData.purchaseOrder.docNumber || `Compra #${purchaseOrderId}`,
-        userId: purchaseOrderData.purchaseOrder.createdBy,
-        notes: `Compra confirmada - Fornecedor: ${purchaseOrderData.supplier?.name || 'N/A'}`,
-      });
-    }
+    await createProductMovement({
+      productId: prod.id,
+      date: new Date(),
+      type: "ENTRADA",
+      quantity: quantityPurchased.toString(),
+      documentNumber: purchaseOrderData.purchaseOrder.docNumber || `Compra #${purchaseOrderId}`,
+      userId: purchaseOrderData.purchaseOrder.createdBy,
+      notes: `Compra confirmada - Fornecedor: ${purchaseOrderData.supplier?.name || 'N/A'}`,
+    });
     
     // Atualizar custo de produtos compostos que usam este componente
     if (item.productId) {

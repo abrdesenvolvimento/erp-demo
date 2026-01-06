@@ -44,6 +44,13 @@
 - [x] **Filtro de fornecedores não inclui tipo 'Ambos'** - CORRIGIDO! Função getPartners() agora usa OR para incluir tipo BOTH ao buscar SUPPLIER ou CUSTOMER
 - [x] **Divergência de saldo em Contas a Receber** - CORRIGIDO! Saldo órfão de R$ 124,00 zerado (era teste antigo sem origem rastreada)
 
+### Bug Reportado (06/01/2026)
+- [x] **Taxas/Encargos não são rateadas no custo dos produtos** - CORRIGIDO! Função confirmPurchaseOrder agora rateia frete e taxas proporcionalmente entre os produtos
+  - Implementado cálculo de fator de rateio: (subtotal + frete + taxas) / subtotal
+  - Custo unitário de cada produto é multiplicado pelo fator antes de atualizar custo médio
+  - Testado com compra #2490001: Subtotal R$ 938,40 + Taxas R$ 25,77 = Fator 1,027462 (2,75% acréscimo)
+  - Logs detalhados adicionados para auditoria de cada produto
+
 ### Melhorias de UX - Modal de Movimentações (29/12/2025)
 - [x] **Aumentar tamanho do modal** - Maximizado para 95vw × 90vh
 - [x] **Eliminar scroll lateral** - Ajustar larguras das colunas para serem responsivas

@@ -1,0 +1,127 @@
+{
+  "query": "SELECT \n  poi.id,\n  poi.productId,\n  p.name as productName,\n  p.avgCost as currentAvgCost,\n  poi.quantity,\n  poi.unitCost,\n  (poi.quantity * poi.unitCost) as itemTotal\nFROM purchaseOrderItems poi\nLEFT JOIN products p ON poi.productId = p.id\nWHERE poi.purchaseOrderId = 2490001",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  poi.id,\n  poi.productId,\n  p.name as productName,\n  p.avgCost as currentAvgCost,\n  poi.quantity,\n  poi.unitCost,\n  (poi.quantity * poi.unitCost) as itemTotal\nFROM purchaseOrderItems poi\nLEFT JOIN products p ON poi.productId = p.id\nWHERE poi.purchaseOrderId = 2490001",
+  "rows": [
+    {
+      "id": "2490005",
+      "productId": "630012",
+      "productName": "Coca Cola 2l Retornável",
+      "currentAvgCost": "6.24",
+      "quantity": "18.000",
+      "unitCost": "6.2400",
+      "itemTotal": "112.3200000"
+    },
+    {
+      "id": "2490006",
+      "productId": "630013",
+      "productName": "Coca Cola 2l Retornável Zero Açúcar",
+      "currentAvgCost": "6.24",
+      "quantity": "9.000",
+      "unitCost": "6.2400",
+      "itemTotal": "56.1600000"
+    },
+    {
+      "id": "2490007",
+      "productId": "630014",
+      "productName": "Fanta Laranja 2l Retornável",
+      "currentAvgCost": "6.24",
+      "quantity": "9.000",
+      "unitCost": "6.2400",
+      "itemTotal": "56.1600000"
+    },
+    {
+      "id": "2490010",
+      "productId": "780001",
+      "productName": "Crystal 500ml",
+      "currentAvgCost": "1.53",
+      "quantity": "24.000",
+      "unitCost": "1.5300",
+      "itemTotal": "36.7200000"
+    },
+    {
+      "id": "2490011",
+      "productId": "810001",
+      "productName": "Crystal 1,5l",
+      "currentAvgCost": "2.78",
+      "quantity": "12.000",
+      "unitCost": "2.7800",
+      "itemTotal": "33.3600000"
+    },
+    {
+      "id": "2490009",
+      "productId": "1020001",
+      "productName": "Monster Mango Loco 473ml",
+      "currentAvgCost": "7.47",
+      "quantity": "18.000",
+      "unitCost": "7.4700",
+      "itemTotal": "134.4600000"
+    },
+    {
+      "id": "2490008",
+      "productId": "1020006",
+      "productName": "Monster Zero Sugar 473ml",
+      "currentAvgCost": "7.47",
+      "quantity": "12.000",
+      "unitCost": "7.4700",
+      "itemTotal": "89.6400000"
+    },
+    {
+      "id": "2490004",
+      "productId": "1020014",
+      "productName": "Monster 473ml",
+      "currentAvgCost": "7.47",
+      "quantity": "24.000",
+      "unitCost": "7.4700",
+      "itemTotal": "179.2800000"
+    },
+    {
+      "id": "2490003",
+      "productId": "1260010",
+      "productName": "Del Valle Laranja 1l",
+      "currentAvgCost": "6.84",
+      "quantity": "6.000",
+      "unitCost": "5.4300",
+      "itemTotal": "32.5800000"
+    },
+    {
+      "id": "2490013",
+      "productId": "1500006",
+      "productName": "Del Valle Uva 1,5l",
+      "currentAvgCost": "5.43",
+      "quantity": "12.000",
+      "unitCost": "5.4300",
+      "itemTotal": "65.1600000"
+    },
+    {
+      "id": "2490002",
+      "productId": "2070040",
+      "productName": "Del Valle Kapo Uva 200ml",
+      "currentAvgCost": "2.23",
+      "quantity": "25.000",
+      "unitCost": "2.2300",
+      "itemTotal": "55.7500000"
+    },
+    {
+      "id": "2490012",
+      "productId": "2070041",
+      "productName": "Del Valle Kapo Laranja 200ml",
+      "currentAvgCost": "2.23",
+      "quantity": "24.000",
+      "unitCost": "2.2300",
+      "itemTotal": "53.5200000"
+    },
+    {
+      "id": "2490001",
+      "productId": "3390001",
+      "productName": "Crystal Com Gás 1,5l",
+      "currentAvgCost": "2.81",
+      "quantity": "12.000",
+      "unitCost": "2.7740",
+      "itemTotal": "33.2880000"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tproductId\tproductName\tcurrentAvgCost\tquantity\tunitCost\titemTotal\n2490005\t630012\tCoca Cola 2l Retornável\t6.24\t18.000\t6.2400\t112.3200000\n2490006\t630013\tCoca Cola 2l Retornável Zero Açúcar\t6.24\t9.000\t6.2400\t56.1600000\n2490007\t630014\tFanta Laranja 2l Retornável\t6.24\t9.000\t6.2400\t56.1600000\n2490010\t780001\tCrystal 500ml\t1.53\t24.000\t1.5300\t36.7200000\n2490011\t810001\tCrystal 1,5l\t2.78\t12.000\t2.7800\t33.3600000\n2490009\t1020001\tMonster Mango Loco 473ml\t7.47\t18.000\t7.4700\t134.4600000\n2490008\t1020006\tMonster Zero Sugar 473ml\t7.47\t12.000\t7.4700\t89.6400000\n2490004\t1020014\tMonster 473ml\t7.47\t24.000\t7.4700\t179.2800000\n2490003\t1260010\tDel Valle Laranja 1l\t6.84\t6.000\t5.4300\t32.5800000\n2490013\t1500006\tDel Valle Uva 1,5l\t5.43\t12.000\t5.4300\t65.1600000\n2490002\t2070040\tDel Valle Kapo Uva 200ml\t2.23\t25.000\t2.2300\t55.7500000\n2490012\t2070041\tDel Valle Kapo Laranja 200ml\t2.23\t24.000\t2.2300\t53.5200000\n2490001\t3390001\tCrystal Com Gás 1,5l\t2.81\t12.000\t2.7740\t33.2880000\n",
+  "stderr": "",
+  "execution_time_ms": 57
+}

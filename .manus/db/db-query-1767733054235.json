@@ -1,0 +1,50 @@
+{
+  "query": "SELECT \n  p.id,\n  p.name as productName,\n  p.avgCost as avgCostAfter,\n  poi.quantity,\n  poi.unitCost as originalUnitCost,\n  ROUND(poi.unitCost * 1.027462, 4) as adjustedUnitCost\nFROM purchaseOrderItems poi\nLEFT JOIN products p ON poi.productId = p.id\nWHERE poi.purchaseOrderId = 2490001\nORDER BY poi.id\nLIMIT 5",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  p.id,\n  p.name as productName,\n  p.avgCost as avgCostAfter,\n  poi.quantity,\n  poi.unitCost as originalUnitCost,\n  ROUND(poi.unitCost * 1.027462, 4) as adjustedUnitCost\nFROM purchaseOrderItems poi\nLEFT JOIN products p ON poi.productId = p.id\nWHERE poi.purchaseOrderId = 2490001\nORDER BY poi.id\nLIMIT 5",
+  "rows": [
+    {
+      "id": "3390001",
+      "productName": "Crystal Com Gás 1,5l",
+      "avgCostAfter": "2.84",
+      "quantity": "12.000",
+      "originalUnitCost": "2.7740",
+      "adjustedUnitCost": "2.8502"
+    },
+    {
+      "id": "2070040",
+      "productName": "Del Valle Kapo Uva 200ml",
+      "avgCostAfter": "2.29",
+      "quantity": "25.000",
+      "originalUnitCost": "2.2300",
+      "adjustedUnitCost": "2.2912"
+    },
+    {
+      "id": "1260010",
+      "productName": "Del Valle Laranja 1l",
+      "avgCostAfter": "6.37",
+      "quantity": "6.000",
+      "originalUnitCost": "5.4300",
+      "adjustedUnitCost": "5.5791"
+    },
+    {
+      "id": "1020014",
+      "productName": "Monster 473ml",
+      "avgCostAfter": "7.68",
+      "quantity": "24.000",
+      "originalUnitCost": "7.4700",
+      "adjustedUnitCost": "7.6751"
+    },
+    {
+      "id": "630012",
+      "productName": "Coca Cola 2l Retornável",
+      "avgCostAfter": "6.41",
+      "quantity": "18.000",
+      "originalUnitCost": "6.2400",
+      "adjustedUnitCost": "6.4114"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tproductName\tavgCostAfter\tquantity\toriginalUnitCost\tadjustedUnitCost\n3390001\tCrystal Com Gás 1,5l\t2.84\t12.000\t2.7740\t2.8502\n2070040\tDel Valle Kapo Uva 200ml\t2.29\t25.000\t2.2300\t2.2912\n1260010\tDel Valle Laranja 1l\t6.37\t6.000\t5.4300\t5.5791\n1020014\tMonster 473ml\t7.68\t24.000\t7.4700\t7.6751\n630012\tCoca Cola 2l Retornável\t6.41\t18.000\t6.2400\t6.4114\n",
+  "stderr": "",
+  "execution_time_ms": 60
+}
