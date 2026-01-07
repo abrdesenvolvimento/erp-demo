@@ -1313,78 +1313,29 @@ export const appRouter = router({
       const products = await db.getProducts({ activeOnly: false });
       const recentSales = await db.getSales({ limit: 10 });
       
-      // Buscar TODAS as vendas do mês atual para cálculos corretos
       // Usar horário de Brasília (GMT-3) para cálculos de data
       const todayDateStr = new Date().toLocaleDateString('en-US', { timeZone: 'America/Sao_Paulo' });
       const [month, day, year] = todayDateStr.split('/');
       const today = new Date(`${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T00:00:00`);
-      
-      const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-      const allMonthSales = await db.getSales({ limit: 10000 }); // Buscar todas as vendas
       
       // Produtos com estoque baixo
       const lowStockProducts = products.filter(p => 
         p.currentStock !== null && p.minStock !== null && p.currentStock < p.minStock
       );
       
-      // Vendas de hoje (usando horário de Brasília)
-      const todaySales = allMonthSales.filter(s => {
-        if (!s.saleDate || s.status === 'CANCELLED') return false;
-        
-        // Filtrar por usuário se for operacional
-        if (ctx.user?.role === 'operacional' && s.createdBy !== ctx.user.id) return false;
-        
-        // Converter data da venda para Brasília (apenas data, sem hora)
-        const saleDateStr = new Date(s.saleDate).toLocaleDateString('en-US', { timeZone: 'America/Sao_Paulo' });
-        const [saleMonth, saleDay, saleYear] = saleDateStr.split('/');
-        
-        // Comparar apenas ano, mês e dia
-        return parseInt(saleYear) === today.getFullYear() &&
-               parseInt(saleMonth) === (today.getMonth() + 1) &&
-               parseInt(saleDay) === today.getDate();
-      });
+      // OTIMIZAÇÃO: Usar queries SQL diretas ao invés de buscar todas as vendas e filtrar em JavaScript
+      // Isso resolve o problema de limite de 10.000 vendas e melhora performance significativamente
+      const dailyRevenue = await db.getDashboardDailyRevenue();
+      const monthlyRevenue = await db.getDashboardMonthlyRevenue();
+      const monthlyPurchases = await db.getDashboardMonthlyPurchases();
       
-      const todayRevenue = todaySales.reduce((sum, sale) => 
-        sum + parseFloat(sale.finalAmount || '0'), 0
-      );
+      const todayRevenue = dailyRevenue.total;
+      const todayRevenueBalcao = dailyRevenue.balcao;
+      const todayRevenueDelivery = dailyRevenue.delivery;
       
-      // Faturamento diário por canal
-      const todayRevenueBalcao = todaySales
-        .filter(s => s.saleType === 'BALCAO' || s.saleType === 'A_PRAZO')
-        .reduce((sum, sale) => sum + parseFloat(sale.finalAmount || '0'), 0);
-      
-      const todayRevenueDelivery = todaySales
-        .filter(s => s.saleType === 'DELIVERY')
-        .reduce((sum, sale) => sum + parseFloat(sale.finalAmount || '0'), 0);
-      
-      // Faturamento do mês atual - TODAS as vendas do mês
-      const monthSales = allMonthSales.filter(s => {
-        if (!s.saleDate || s.status === 'CANCELLED') return false;
-        
-        // Filtrar por usuário se for operacional
-        if (ctx.user?.role === 'operacional' && s.createdBy !== ctx.user.id) return false;
-        
-        // Converter data da venda para Brasília (apenas data, sem hora)
-        const saleDateStr = new Date(s.saleDate).toLocaleDateString('en-US', { timeZone: 'America/Sao_Paulo' });
-        const [saleMonth, saleDay, saleYear] = saleDateStr.split('/');
-        
-        // Comparar apenas ano e mês (não precisa de hora)
-        return parseInt(saleYear) === today.getFullYear() &&
-               parseInt(saleMonth) === (today.getMonth() + 1);
-      });
-      
-      const monthRevenue = monthSales.reduce((sum, sale) => 
-        sum + parseFloat(sale.finalAmount || '0'), 0
-      );
-      
-      // Faturamento por canal
-      const monthRevenueBalcao = monthSales
-        .filter(s => s.saleType === 'BALCAO' || s.saleType === 'A_PRAZO')
-        .reduce((sum, sale) => sum + parseFloat(sale.finalAmount || '0'), 0);
-      
-      const monthRevenueDelivery = monthSales
-        .filter(s => s.saleType === 'DELIVERY')
-        .reduce((sum, sale) => sum + parseFloat(sale.finalAmount || '0'), 0);
+      const monthRevenue = monthlyRevenue.total;
+      const monthRevenueBalcao = monthlyRevenue.balcao + monthlyRevenue.aPrazo; // Balcão + A Prazo
+      const monthRevenueDelivery = monthlyRevenue.delivery;
       
       // Total pendente a receber
       const totalPendingReceivables = await db.getTotalPendingReceivables();

@@ -4361,3 +4361,117 @@ export async function adjustProductStock(data: {
 
   return { success: true, newStock };
 }
+
+
+// ============================================
+// DASHBOARD - QUERIES OTIMIZADAS
+// ============================================
+
+/**
+ * Busca faturamento do mês atual diretamente no SQL
+ * Muito mais eficiente que buscar todas as vendas e filtrar em JavaScript
+ */
+export async function getDashboardMonthlyRevenue() {
+  const db = await getDb();
+  if (!db) return { 
+    total: 0, 
+    balcao: 0, 
+    delivery: 0, 
+    aPrazo: 0,
+    count: 0 
+  };
+
+  // Usar CONVERT_TZ para garantir que a data seja calculada no horário de Brasília
+  const result = await db.execute(sql.raw(`
+    SELECT 
+      COALESCE(SUM(finalAmount), 0) as total,
+      COALESCE(SUM(CASE WHEN saleType = 'BALCAO' THEN finalAmount ELSE 0 END), 0) as balcao,
+      COALESCE(SUM(CASE WHEN saleType = 'DELIVERY' THEN finalAmount ELSE 0 END), 0) as delivery,
+      COALESCE(SUM(CASE WHEN saleType = 'A_PRAZO' THEN finalAmount ELSE 0 END), 0) as aPrazo,
+      COUNT(*) as count
+    FROM sales
+    WHERE status != 'CANCELLED'
+      AND YEAR(CONVERT_TZ(saleDate, '+00:00', '-03:00')) = YEAR(CONVERT_TZ(NOW(), '+00:00', '-03:00'))
+      AND MONTH(CONVERT_TZ(saleDate, '+00:00', '-03:00')) = MONTH(CONVERT_TZ(NOW(), '+00:00', '-03:00'))
+  `));
+
+  const rows = result[0] as unknown as any[];
+  const row = rows?.[0] || {};
+  return {
+    total: parseFloat(row.total || '0'),
+    balcao: parseFloat(row.balcao || '0'),
+    delivery: parseFloat(row.delivery || '0'),
+    aPrazo: parseFloat(row.aPrazo || '0'),
+    count: parseInt(row.count || '0', 10)
+  };
+}
+
+/**
+ * Busca faturamento de hoje diretamente no SQL
+ */
+export async function getDashboardDailyRevenue() {
+  const db = await getDb();
+  if (!db) return { 
+    total: 0, 
+    balcao: 0, 
+    delivery: 0, 
+    count: 0 
+  };
+
+  const result = await db.execute(sql.raw(`
+    SELECT 
+      COALESCE(SUM(finalAmount), 0) as total,
+      COALESCE(SUM(CASE WHEN saleType = 'BALCAO' OR saleType = 'A_PRAZO' THEN finalAmount ELSE 0 END), 0) as balcao,
+      COALESCE(SUM(CASE WHEN saleType = 'DELIVERY' THEN finalAmount ELSE 0 END), 0) as delivery,
+      COUNT(*) as count
+    FROM sales
+    WHERE status != 'CANCELLED'
+      AND DATE(CONVERT_TZ(saleDate, '+00:00', '-03:00')) = DATE(CONVERT_TZ(NOW(), '+00:00', '-03:00'))
+  `));
+
+  const rows = result[0] as unknown as any[];
+  const row = rows?.[0] || {};
+  return {
+    total: parseFloat(row.total || '0'),
+    balcao: parseFloat(row.balcao || '0'),
+    delivery: parseFloat(row.delivery || '0'),
+    count: parseInt(row.count || '0', 10)
+  };
+}
+
+/**
+ * Busca total de compras do mês atual
+ */
+export async function getDashboardMonthlyPurchases() {
+  const db = await getDb();
+  if (!db) return { 
+    total: 0, 
+    cupom: 0, 
+    notaFiscal: 0, 
+    semDocumento: 0,
+    count: 0 
+  };
+
+  const result = await db.execute(sql.raw(`
+    SELECT 
+      COALESCE(SUM(totalAmount), 0) as total,
+      COALESCE(SUM(CASE WHEN docType = 'CUPOM' THEN totalAmount ELSE 0 END), 0) as cupom,
+      COALESCE(SUM(CASE WHEN docType = 'NOTA_FISCAL' THEN totalAmount ELSE 0 END), 0) as notaFiscal,
+      COALESCE(SUM(CASE WHEN docType IS NULL OR docType = '' THEN totalAmount ELSE 0 END), 0) as semDocumento,
+      COUNT(*) as count
+    FROM purchaseOrders
+    WHERE status = 'CONFIRMED'
+      AND YEAR(CONVERT_TZ(createdAt, '+00:00', '-03:00')) = YEAR(CONVERT_TZ(NOW(), '+00:00', '-03:00'))
+      AND MONTH(CONVERT_TZ(createdAt, '+00:00', '-03:00')) = MONTH(CONVERT_TZ(NOW(), '+00:00', '-03:00'))
+  `));
+
+  const rows = result[0] as unknown as any[];
+  const row = rows?.[0] || {};
+  return {
+    total: parseFloat(row.total || '0'),
+    cupom: parseFloat(row.cupom || '0'),
+    notaFiscal: parseFloat(row.notaFiscal || '0'),
+    semDocumento: parseFloat(row.semDocumento || '0'),
+    count: parseInt(row.count || '0', 10)
+  };
+}

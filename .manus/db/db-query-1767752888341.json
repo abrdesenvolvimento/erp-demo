@@ -1,0 +1,45 @@
+{
+  "query": "SELECT \n  DATE(saleDate) as data,\n  COUNT(*) as qtd_vendas,\n  SUM(finalAmount) as faturamento\nFROM sales \nWHERE saleDate >= '2026-01-01' \n  AND saleDate < '2026-02-01'\n  AND status NOT LIKE '%CANCELADO%'\nGROUP BY DATE(saleDate)\nORDER BY data DESC\nLIMIT 10",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  DATE(saleDate) as data,\n  COUNT(*) as qtd_vendas,\n  SUM(finalAmount) as faturamento\nFROM sales \nWHERE saleDate >= '2026-01-01' \n  AND saleDate < '2026-02-01'\n  AND status NOT LIKE '%CANCELADO%'\nGROUP BY DATE(saleDate)\nORDER BY data DESC\nLIMIT 10",
+  "rows": [
+    {
+      "data": "2026-01-07",
+      "qtd_vendas": "14",
+      "faturamento": "385.70"
+    },
+    {
+      "data": "2026-01-06",
+      "qtd_vendas": "41",
+      "faturamento": "1287.54"
+    },
+    {
+      "data": "2026-01-05",
+      "qtd_vendas": "55",
+      "faturamento": "1889.60"
+    },
+    {
+      "data": "2026-01-04",
+      "qtd_vendas": "126",
+      "faturamento": "5019.91"
+    },
+    {
+      "data": "2026-01-03",
+      "qtd_vendas": "66",
+      "faturamento": "3165.73"
+    },
+    {
+      "data": "2026-01-02",
+      "qtd_vendas": "1",
+      "faturamento": "128.00"
+    },
+    {
+      "data": "2026-01-01",
+      "qtd_vendas": "187",
+      "faturamento": "10893.99"
+    }
+  ],
+  "messages": [],
+  "stdout": "data\tqtd_vendas\tfaturamento\n2026-01-07\t14\t385.70\n2026-01-06\t41\t1287.54\n2026-01-05\t55\t1889.60\n2026-01-04\t126\t5019.91\n2026-01-03\t66\t3165.73\n2026-01-02\t1\t128.00\n2026-01-01\t187\t10893.99\n",
+  "stderr": "",
+  "execution_time_ms": 140
+}

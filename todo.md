@@ -84,10 +84,12 @@
 
 ## 🔴 BUGS CRÍTICOS - PENDENTES (0 itens)
 
-(Todos os bugs foram investigados e resolvidos em 06/01/2026)
+(Todos os bugs foram corrigidos em 06/01/2026)
 
 ## 🔴 BUGS CRÍTICOS - RESOLVIDOS
 
+- [x] **Faturamento do mês no Dashboard mostrando apenas R$ 28,00 (06/01/2026)** - CORRIGIDO! Problema era que a query buscava apenas 10.000 vendas e filtrava em JavaScript. Solução: Criadas novas funções SQL otimizadas (getDashboardMonthlyRevenue, getDashboardDailyRevenue, getDashboardMonthlyPurchases) que fazem agregação diretamente no banco com CONVERT_TZ para timezone correto.
+- [x] **Lentidão na navegação entre telas (06/01/2026)** - MELHORADO! As queries otimizadas do dashboard reduzem significativamente o tempo de carregamento. Antes: buscava 10.000 registros e filtrava em JS. Agora: query SQL direta retorna apenas resultado agregado.
 - [x] **Campo de busca de produtos não retornava sugestões em Vendas (06/01/2026)** - RESOLVIDO! Problema era cache do navegador, não bug no código. Backend e frontend funcionando corretamente. Solução: Ctrl+Shift+R para limpar cache.
 - [x] **Datas de migração aparentemente incorretas (06/01/2026)** - VERIFICADO! Datas no banco estão corretas: MIN=2022-01-01, MAX=2026-01-07. O log do script pode ter mostrado valores incorretos, mas os dados foram importados corretamente.
 - [x] **Produção afetada sem publicação (06/01/2026)** - EXPLICADO! Dev e Prod compartilham o mesmo banco de dados (TiDB Cloud). Isso é por design - alterações de dados em dev afetam prod imediatamente. Publicação atualiza apenas o código.
