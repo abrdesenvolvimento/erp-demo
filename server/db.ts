@@ -4080,23 +4080,30 @@ export async function getSalesByProductAndDate(
     SELECT 
       p.id as productId,
       p.name as productName,
+      p.categoryId as categoryId,
+      c.name as categoryName,
       DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) as saleDate,
       SUM(si.quantity) as quantity,
-      SUM(si.totalPrice) as revenue
+      SUM(si.totalPrice) as revenue,
+      SUM(si.quantity * COALESCE(p.avgCost, 0)) as cost
     FROM saleItems si
     INNER JOIN sales s ON si.saleId = s.id
     INNER JOIN products p ON si.productId = p.id
+    LEFT JOIN categories c ON p.categoryId = c.id
     WHERE ${whereConditions}
-    GROUP BY p.id, p.name, DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00'))
+    GROUP BY p.id, p.name, p.categoryId, c.name, DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00'))
     ORDER BY p.name, DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00'))
   `));
 
   return (result[0] || []) as any as Array<{
     productId: number;
     productName: string;
+    categoryId: number;
+    categoryName: string;
     saleDate: string;
     quantity: string;
     revenue: string;
+    cost: string;
   }>;
 }
 
@@ -4474,4 +4481,68 @@ export async function getDashboardMonthlyPurchases() {
     semDocumento: parseFloat(row.semDocumento || '0'),
     count: parseInt(row.count || '0', 10)
   };
+}
+
+
+/**
+ * Análise Delivery por Produto - Query SQL otimizada
+ * Retorna produtos vendidos via delivery com faturamento, custo e margem
+ */
+export async function getDeliveryProductAnalysis(
+  startDate: string,
+  endDate: string,
+  categoryId?: number
+) {
+  const db = await getDb();
+  if (!db) return [];
+
+  // Construir condições WHERE
+  let whereConditions = `s.status != 'CANCELLED' AND s.saleType = 'DELIVERY' AND DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) >= '${startDate}' AND DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) <= '${endDate}'`;
+  
+  if (categoryId) {
+    whereConditions += ` AND p.categoryId = ${categoryId}`;
+  }
+
+  const result = await db.execute(sql.raw(`
+    SELECT 
+      p.id as productId,
+      p.name as productName,
+      SUM(si.quantity) as totalQuantity,
+      SUM(si.totalPrice) as totalRevenue,
+      SUM(si.quantity * p.avgCost) as totalCost
+    FROM saleItems si
+    INNER JOIN sales s ON si.saleId = s.id
+    INNER JOIN products p ON si.productId = p.id
+    WHERE ${whereConditions}
+    GROUP BY p.id, p.name
+    ORDER BY totalRevenue DESC
+  `));
+
+  const rows = (result[0] || []) as any[];
+  
+  return rows.map(row => {
+    const revenue = parseFloat(row.totalRevenue || '0');
+    const cost = parseFloat(row.totalCost || '0');
+    const quantity = parseFloat(row.totalQuantity || '0');
+    
+    const grossProfit = revenue - cost;
+    const grossMarginPercent = revenue > 0 ? (grossProfit / revenue) * 100 : 0;
+    
+    const ifoodFee = revenue * 0.07;
+    const netProfit = grossProfit - ifoodFee;
+    const netMarginPercent = revenue > 0 ? (netProfit / revenue) * 100 : 0;
+    
+    return {
+      productId: row.productId,
+      productName: row.productName,
+      quantity: quantity.toFixed(2),
+      revenue: revenue.toFixed(2),
+      cost: cost.toFixed(2),
+      grossProfit: grossProfit.toFixed(2),
+      grossMarginPercent: grossMarginPercent.toFixed(1),
+      ifoodFee: ifoodFee.toFixed(2),
+      netProfit: netProfit.toFixed(2),
+      netMarginPercent: netMarginPercent.toFixed(1),
+    };
+  });
 }

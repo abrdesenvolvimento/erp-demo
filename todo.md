@@ -82,6 +82,12 @@
 ### Análise de Vendas - Comparação entre Canais
 - [ ] **Comparar quantidade entre canais** - Permitir comparar quantidade vendida entre Balcão vs Delivery vs A Prazo para identificar desempenho por canal.
 
+## 🔴 BUG - 07/01/2026
+
+- [x] **Análise Delivery não mostra produtos** - CORRIGIDO! Query SQL otimizada com CONVERT_TZ
+- [x] **Filtro "Por Categoria" não aplicava filtros de data/mês/dia** - CORRIGIDO! Adicionado categoryId e categoryName na query getSalesByProductAndDate, e recalculado categoryData a partir do matrixData filtrado no frontend
+- [ ] **Agrupamento por mês na Análise de Vendas** - Mostrar colunas lado a lado por mês/ano em vez de linhas por dia
+
 ## 📝 SPRINT 06/01/2026 - NOITE
 
 - [x] **Filtro de ano na Análise de Vendas** - Adicionado seletor de ano (2022, 2023, 2024, 2025, 2026) para análise de dados legados

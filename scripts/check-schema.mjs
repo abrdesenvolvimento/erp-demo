@@ -1,17 +1,20 @@
-import mysql from 'mysql2/promise';
-import dotenv from 'dotenv';
+import { drizzle } from "drizzle-orm/mysql2";
+import { sql } from "drizzle-orm";
+import dotenv from "dotenv";
+
 dotenv.config();
 
-async function check() {
-  const conn = await mysql.createConnection(process.env.DATABASE_URL);
-  
-  const [cols] = await conn.execute(`SHOW COLUMNS FROM sales`);
-  
-  console.log('Colunas da tabela sales:');
-  for (const col of cols) {
-    console.log(`  ${col.Field}: ${col.Type}`);
+const db = drizzle(process.env.DATABASE_URL);
+
+async function test() {
+  try {
+    const result = await db.execute(sql.raw(`DESCRIBE products`));
+    console.log("Colunas da tabela products:");
+    result[0].forEach(col => console.log(`  - ${col.Field}: ${col.Type}`));
+  } catch (error) {
+    console.error("Erro:", error.message);
   }
-  
-  await conn.end();
+  process.exit(0);
 }
-check().catch(console.error);
+
+test();

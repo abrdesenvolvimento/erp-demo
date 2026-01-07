@@ -106,6 +106,26 @@ export default function AnáliseVendas() {
       return { from: new Date(2025, 11, 1), to: new Date(2025, 11, 31) };
     }
 
+    // Se nenhum dia específico selecionado ("Todos os dias"), usar primeiro e último dia dos meses
+    if (selectedDays.length === 0) {
+      // Encontrar menor ano/mês e maior ano/mês
+      const sortedYears = [...selectedYears].sort((a, b) => a - b);
+      const sortedMonths = [...selectedMonths].sort((a, b) => a - b);
+      
+      const minYear = sortedYears[0];
+      const maxYear = sortedYears[sortedYears.length - 1];
+      const minMonth = sortedMonths[0];
+      const maxMonth = sortedMonths[sortedMonths.length - 1];
+      
+      // Primeiro dia do menor mês/ano
+      const from = new Date(minYear, minMonth - 1, 1);
+      // Último dia do maior mês/ano
+      const lastDay = new Date(maxYear, maxMonth, 0).getDate();
+      const to = new Date(maxYear, maxMonth - 1, lastDay);
+      
+      return { from, to };
+    }
+
     // Gerar todas as combinações de ano/mês/dia selecionadas
     const dates: Date[] = [];
     for (const year of selectedYears) {
@@ -116,7 +136,7 @@ export default function AnáliseVendas() {
       }
     }
 
-    if (dates.length === 0 || selectedMonths.length === 0) {
+    if (dates.length === 0) {
       return null; // Retorna null quando não há período selecionado
     }
 
@@ -166,7 +186,7 @@ export default function AnáliseVendas() {
     { enabled: isAdmin && groupBy === "product" && !!dateRange }
   );
 
-  const { data: categoryData, isLoading: isCategoryLoading } = trpc.salesAnalysis.byCategoryValue.useQuery(
+  const { data: categoryDataRaw, isLoading: isCategoryLoading } = trpc.salesAnalysis.byCategoryValue.useQuery(
     { 
       startDate: dateRange?.from ?? new Date(), 
       endDate: dateRange?.to ?? new Date(),
@@ -214,19 +234,7 @@ export default function AnáliseVendas() {
     { enabled: isAdmin && groupBy === "week" && !!dateRange }
   );
 
-  const { data: monthData, isLoading: isMonthLoading } = trpc.salesAnalysis.byMonth.useQuery(
-    { 
-      startDate: dateRange?.from ?? new Date(), 
-      endDate: dateRange?.to ?? new Date(),
-      productIds: selectedProductIds.length > 0 ? selectedProductIds : undefined,
-      subcategoryId: selectedSubcategoryId,
-      channels: selectedChannels.length > 0 ? selectedChannels : undefined,
-      paymentMethod: selectedPaymentMethod,
-    },
-    { enabled: isAdmin && groupBy === "month" && !!dateRange }
-  );
-
-  // Query para matriz produto×dia (Evolução Diária)
+  // Query para matriz produto×dia (Evolução Diária) - movido para antes do monthData pois é usado no filtro
   const { data: matrixData, isLoading: isMatrixLoading } = trpc.salesAnalysis.byProductAndDate.useQuery(
     { 
       startDate: dateRange?.from ?? new Date(), 
@@ -238,6 +246,119 @@ export default function AnáliseVendas() {
     },
     { enabled: isAdmin && !!dateRange }
   );
+
+  const { data: monthDataRaw, isLoading: isMonthLoading } = trpc.salesAnalysis.byMonth.useQuery(
+    { 
+      startDate: dateRange?.from ?? new Date(), 
+      endDate: dateRange?.to ?? new Date(),
+      productIds: selectedProductIds.length > 0 ? selectedProductIds : undefined,
+      subcategoryId: selectedSubcategoryId,
+      channels: selectedChannels.length > 0 ? selectedChannels : undefined,
+      paymentMethod: selectedPaymentMethod,
+    },
+    { enabled: isAdmin && groupBy === "month" && !!dateRange }
+  );
+
+  // Filtrar monthData considerando meses/anos selecionados e recalcular se dias específicos foram selecionados
+  const monthData = useMemo(() => {
+    if (!monthDataRaw) return monthDataRaw;
+    
+    // Primeiro filtrar apenas os meses/anos selecionados
+    let filtered = monthDataRaw.filter((item: any) => {
+      const [year, month] = item.yearMonth.split('-').map(Number);
+      return selectedYears.includes(year) && selectedMonths.includes(month);
+    });
+    
+    // Se dias específicos foram selecionados, precisamos recalcular usando matrixData
+    if (selectedDays.length > 0 && matrixData && matrixData.length > 0) {
+      // Filtrar matrixData pelos filtros selecionados
+      const filteredMatrix = matrixData.filter((row: any) => {
+        const saleDate = new Date(row.saleDate + 'T00:00:00');
+        const saleYear = saleDate.getFullYear();
+        const saleMonth = saleDate.getMonth() + 1;
+        const saleDay = saleDate.getDate();
+        
+        return selectedYears.includes(saleYear) && 
+               selectedMonths.includes(saleMonth) && 
+               selectedDays.includes(saleDay);
+      });
+      
+      // Agrupar por mês
+      const monthsMap = new Map<string, { totalQuantity: number; totalRevenue: number; totalCost: number }>();
+      
+      filteredMatrix.forEach((row: any) => {
+        const saleDate = new Date(row.saleDate + 'T00:00:00');
+        const yearMonth = `${saleDate.getFullYear()}-${String(saleDate.getMonth() + 1).padStart(2, '0')}`;
+        
+        if (!monthsMap.has(yearMonth)) {
+          monthsMap.set(yearMonth, { totalQuantity: 0, totalRevenue: 0, totalCost: 0 });
+        }
+        const data = monthsMap.get(yearMonth)!;
+        data.totalQuantity += parseFloat(row.quantity);
+        data.totalRevenue += parseFloat(row.revenue);
+        data.totalCost += parseFloat(row.cost);
+      });
+      
+      // Converter para array no formato esperado
+      filtered = Array.from(monthsMap.entries()).map(([yearMonth, data]) => ({
+        yearMonth,
+        totalQuantity: data.totalQuantity.toString(),
+        totalRevenue: data.totalRevenue.toString(),
+        totalCost: data.totalCost.toString(),
+        marginPercent: data.totalRevenue > 0 
+          ? ((1 - data.totalCost / data.totalRevenue) * 100).toFixed(1)
+          : '0.0'
+      })).sort((a, b) => a.yearMonth.localeCompare(b.yearMonth));
+    }
+    
+    return filtered;
+  }, [monthDataRaw, selectedYears, selectedMonths, selectedDays, matrixData]);
+
+  // Filtrar categoryData considerando meses/anos/dias selecionados
+  const categoryData = useMemo(() => {
+    if (!matrixData || matrixData.length === 0) return categoryDataRaw;
+    
+    // Filtrar matrixData pelos meses/anos/dias selecionados
+    const filteredMatrix = matrixData.filter((row: any) => {
+      const saleDate = new Date(row.saleDate + 'T00:00:00');
+      const saleYear = saleDate.getFullYear();
+      const saleMonth = saleDate.getMonth() + 1;
+      const saleDay = saleDate.getDate();
+      
+      const matchesYearMonth = selectedYears.includes(saleYear) && selectedMonths.includes(saleMonth);
+      const matchesDay = selectedDays.length === 0 || selectedDays.includes(saleDay);
+      
+      return matchesYearMonth && matchesDay;
+    });
+    
+    // Agrupar por categoria
+    const categoryMap = new Map<number, { categoryId: number; categoryName: string; totalQuantity: number; totalRevenue: number; totalCost: number }>();
+    
+    filteredMatrix.forEach((row: any) => {
+      const catId = row.categoryId || 0;
+      const catName = row.categoryName || 'Sem Categoria';
+      
+      if (!categoryMap.has(catId)) {
+        categoryMap.set(catId, { categoryId: catId, categoryName: catName, totalQuantity: 0, totalRevenue: 0, totalCost: 0 });
+      }
+      const data = categoryMap.get(catId)!;
+      data.totalQuantity += parseFloat(row.quantity);
+      data.totalRevenue += parseFloat(row.revenue);
+      data.totalCost += parseFloat(row.cost);
+    });
+    
+    // Converter para array no formato esperado
+    return Array.from(categoryMap.values()).map(data => ({
+      categoryId: data.categoryId,
+      categoryName: data.categoryName,
+      totalQuantity: data.totalQuantity.toString(),
+      totalRevenue: data.totalRevenue.toString(),
+      totalCost: data.totalCost.toString(),
+      marginPercent: data.totalRevenue > 0 
+        ? ((1 - data.totalCost / data.totalRevenue) * 100).toFixed(1)
+        : '0.0'
+    })).sort((a, b) => parseFloat(b.totalRevenue) - parseFloat(a.totalRevenue));
+  }, [categoryDataRaw, matrixData, selectedYears, selectedMonths, selectedDays]);
 
   // Query para comparação de períodos
   const { data: comparisonData, isLoading: isComparisonLoading } = trpc.salesAnalysis.comparePeriods.useQuery(
@@ -661,7 +782,7 @@ export default function AnáliseVendas() {
           <TabsList>
             <TabsTrigger value="evolucao" className="flex items-center gap-2">
               <CalendarIcon className="h-4 w-4" />
-              Evolução Diária
+              Análise de Produto
             </TabsTrigger>
             <TabsTrigger value="valores" className="flex items-center gap-2">
               <TrendingUp className="h-4 w-4" />
@@ -678,11 +799,11 @@ export default function AnáliseVendas() {
             </TabsTrigger>
           </TabsList>
 
-          {/* NOVA ABA: Evolução Diária */}
+          {/* NOVA ABA: Análise de Produto */}
           <TabsContent value="evolucao" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle>Evolução Diária de Vendas por Produto</CardTitle>
+                <CardTitle>Análise de Vendas por Produto</CardTitle>
               </CardHeader>
               <CardContent>
                 {isMatrixLoading ? (
@@ -696,14 +817,47 @@ export default function AnáliseVendas() {
                 ) : (
                   <div className="overflow-x-auto">
                     {(() => {
-                      // Gerar array de datas ou semanas do período
+                      // Gerar array de datas, semanas ou meses do período
                       const dates: string[] = [];
                       const weeks: { start: string; end: string; dates: string[] }[] = [];
+                      const months: { yearMonth: string; label: string; dates: string[] }[] = [];
                       
                       const current = new Date(dateRange?.from ?? new Date());
                       const end = new Date(dateRange?.to ?? new Date());
                       
-                      if (groupBy === 'week') {
+                      if (groupBy === 'month') {
+                        // Agrupar por meses - APENAS os meses/anos selecionados
+                        const monthsMap = new Map<string, string[]>();
+                        const tempCurrent = new Date(current);
+                        
+                        while (tempCurrent <= end) {
+                          const currentYear = tempCurrent.getFullYear();
+                          const currentMonth = tempCurrent.getMonth() + 1; // 1-12
+                          
+                          // Verificar se este mês/ano está nos filtros selecionados
+                          if (selectedYears.includes(currentYear) && selectedMonths.includes(currentMonth)) {
+                            const yearMonth = `${currentYear}-${String(currentMonth).padStart(2, '0')}`;
+                            if (!monthsMap.has(yearMonth)) {
+                              monthsMap.set(yearMonth, []);
+                            }
+                            monthsMap.get(yearMonth)!.push(tempCurrent.toISOString().split('T')[0]);
+                          }
+                          tempCurrent.setDate(tempCurrent.getDate() + 1);
+                        }
+                        
+                        // Converter para array ordenado
+                        const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+                        Array.from(monthsMap.entries())
+                          .sort((a, b) => a[0].localeCompare(b[0]))
+                          .forEach(([yearMonth, monthDates]) => {
+                            const [year, month] = yearMonth.split('-');
+                            months.push({
+                              yearMonth,
+                              label: `${monthNames[parseInt(month) - 1]}/${year}`,
+                              dates: monthDates
+                            });
+                          });
+                      } else if (groupBy === 'week') {
                         // Agrupar por semanas
                         let weekStart = new Date(current);
                         let weekDates: string[] = [];
@@ -733,10 +887,30 @@ export default function AnáliseVendas() {
                         }
                       }
 
+                      // Filtrar dados para incluir apenas as datas que correspondem aos filtros selecionados
+                      const filteredMatrixData = matrixData.filter(row => {
+                        const saleDate = new Date(row.saleDate + 'T00:00:00');
+                        const saleYear = saleDate.getFullYear();
+                        const saleMonth = saleDate.getMonth() + 1; // 1-12
+                        const saleDay = saleDate.getDate();
+                        
+                        // Verificar se o ano e mês estão nos filtros
+                        if (!selectedYears.includes(saleYear) || !selectedMonths.includes(saleMonth)) {
+                          return false;
+                        }
+                        
+                        // Se dias específicos foram selecionados, verificar o dia
+                        if (selectedDays.length > 0 && !selectedDays.includes(saleDay)) {
+                          return false;
+                        }
+                        
+                        return true;
+                      });
+
                       // Agrupar dados por produto
                       const productMap = new Map<number, { name: string; sales: Map<string, { quantity: number; revenue: number }> }>();
                       
-                      matrixData.forEach(row => {
+                      filteredMatrixData.forEach(row => {
                         if (!productMap.has(row.productId)) {
                           productMap.set(row.productId, {
                             name: row.productName,
@@ -791,7 +965,16 @@ export default function AnáliseVendas() {
                           <thead>
                             <tr>
                               <th className="sticky left-0 z-10 bg-white border px-3 py-2 text-left font-semibold">Produto</th>
-                              {groupBy === 'week' ? (
+                              {groupBy === 'month' ? (
+                                months.map((month) => (
+                                  <th 
+                                    key={month.yearMonth} 
+                                    className="border px-3 py-2 text-center min-w-[100px] bg-purple-50"
+                                  >
+                                    <div className="font-semibold">{month.label}</div>
+                                  </th>
+                                ))
+                              ) : groupBy === 'week' ? (
                                 weeks.map((week, idx) => {
                                   const startDate = new Date(week.start + 'T00:00:00');
                                   const endDate = new Date(week.end + 'T00:00:00');
@@ -856,7 +1039,32 @@ export default function AnáliseVendas() {
                                     <td className="sticky left-0 z-10 bg-white border px-3 py-2 font-medium">
                                       {product.name}
                                     </td>
-                                    {groupBy === 'week' ? (
+                                    {groupBy === 'month' ? (
+                                      months.map((month) => {
+                                        // Somar quantidades de todos os dias do mês
+                                        let monthQuantity = 0;
+                                        let monthRevenue = 0;
+                                        month.dates.forEach(date => {
+                                          const sale = product.sales.get(date);
+                                          if (sale) {
+                                            monthQuantity += sale.quantity;
+                                            monthRevenue += sale.revenue;
+                                          }
+                                        });
+                                        
+                                        return (
+                                          <td 
+                                            key={month.yearMonth} 
+                                            className={`border px-3 py-2 text-center ${
+                                              getHeatmapColor(monthQuantity)
+                                            }`}
+                                            title={monthQuantity > 0 ? `${monthQuantity} unidades\nR$ ${formatCurrency(monthRevenue)}` : undefined}
+                                          >
+                                            {monthQuantity > 0 ? monthQuantity : '-'}
+                                          </td>
+                                        );
+                                      })
+                                    ) : groupBy === 'week' ? (
                                       weeks.map((week, idx) => {
                                         // Somar quantidades de todos os dias da semana
                                         let weekQuantity = 0;
@@ -1141,7 +1349,7 @@ export default function AnáliseVendas() {
 
             {/* Resumo de Valores */}
             {(() => {
-              const currentData = 
+              let currentData = 
                 groupBy === "product" ? valueData :
                 groupBy === "day" ? dayData :
                 groupBy === "week" ? weekData :

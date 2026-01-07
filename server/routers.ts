@@ -1463,120 +1463,32 @@ export const appRouter = router({
       return margins;
     }),
     
-    // Análise detalhada por produto delivery
+    // Análise detalhada por produto delivery - usando query SQL otimizada
     deliveryProductAnalysis: protectedProcedure
       .input(z.object({
         startDate: z.string().optional(),
         endDate: z.string().optional(),
         categoryId: z.number().optional(),
       }).optional())
-      .query(async ({ ctx, input }) => {
-      // Determinar período de filtro
-      let startDate: Date;
-      let endDate: Date;
+      .query(async ({ input }) => {
+      // Determinar strings de data para filtro
+      let startDateStr: string;
+      let endDateStr: string;
       
       if (input?.startDate && input?.endDate) {
-        startDate = new Date(input.startDate + 'T00:00:00');
-        endDate = new Date(input.endDate + 'T23:59:59');
+        startDateStr = input.startDate;
+        endDateStr = input.endDate;
       } else {
         // Padrão: mês atual
         const todayDateStr = new Date().toLocaleDateString('en-US', { timeZone: 'America/Sao_Paulo' });
         const [month, day, year] = todayDateStr.split('/');
-        const today = new Date(`${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T00:00:00`);
-        startDate = new Date(today.getFullYear(), today.getMonth(), 1);
-        endDate = new Date(today.getFullYear(), today.getMonth() + 1, 0, 23, 59, 59);
+        startDateStr = `${year}-${month.padStart(2, '0')}-01`;
+        const lastDay = new Date(parseInt(year), parseInt(month), 0).getDate();
+        endDateStr = `${year}-${month.padStart(2, '0')}-${lastDay.toString().padStart(2, '0')}`;
       }
       
-      const allMonthSales = await db.getSales({ limit: 10000 });
-      
-      // Filtrar vendas delivery
-      const deliverySales = allMonthSales.filter(s => {
-        if (!s.saleDate || s.status === 'CANCELLED' || s.saleType !== 'DELIVERY') return false;
-        
-        // Filtrar por usuário se for operacional
-        if (ctx.user?.role === 'operacional' && s.createdBy !== ctx.user.id) return false;
-        
-        const saleDate = new Date(s.saleDate);
-        return saleDate >= startDate && saleDate <= endDate;
-      });
-      
-      if (deliverySales.length === 0) return [];
-      
-      // Buscar itens das vendas delivery
-      const deliverySaleIds = deliverySales.map(s => s.id);
-      const items = await db.getSaleItemsBySaleIds(deliverySaleIds);
-      
-      // Buscar produtos completos para ter acesso à categoria
-      const productIds = Array.from(new Set(items.map(i => i.productId)));
-      const allProducts = await db.getProducts();
-      const products = allProducts.filter(p => productIds.includes(p.id));
-      const productCategoryMap = new Map(products.map((p: any) => [p.id, p.categoryId]));
-      
-      // Agrupar por produto
-      const productMap = new Map<number, {
-        productId: number;
-        productName: string;
-        quantity: number;
-        revenue: number;
-        cost: number;
-      }>();
-      
-      for (const item of items) {
-        // Filtrar por categoria se especificado
-        const productCategoryId = productCategoryMap.get(item.productId);
-        if (input?.categoryId && productCategoryId !== input.categoryId) continue;
-        
-        const productId = item.productId;
-        const productName = item.productName || 'Produto sem nome';
-        const quantity = parseFloat(item.quantity?.toString() || '0');
-        const unitPrice = parseFloat(item.unitPrice?.toString() || '0');
-        const avgCost = parseFloat(item.avgCost?.toString() || '0');
-        
-        const revenue = quantity * unitPrice;
-        const cost = quantity * avgCost;
-        
-        if (!productMap.has(productId)) {
-          productMap.set(productId, {
-            productId,
-            productName,
-            quantity: 0,
-            revenue: 0,
-            cost: 0,
-          });
-        }
-        
-        const product = productMap.get(productId)!;
-        product.quantity += quantity;
-        product.revenue += revenue;
-        product.cost += cost;
-      }
-      
-      // Calcular margens e ordenar por lucro líquido
-      const result = Array.from(productMap.values())
-        .map(p => {
-          const grossProfit = p.revenue - p.cost;
-          const grossMarginPercent = p.revenue > 0 ? (grossProfit / p.revenue) * 100 : 0;
-          
-          const ifoodFee = p.revenue * 0.07;
-          const netProfit = grossProfit - ifoodFee;
-          const netMarginPercent = p.revenue > 0 ? (netProfit / p.revenue) * 100 : 0;
-          
-          return {
-            productId: p.productId,
-            productName: p.productName,
-            quantity: p.quantity.toFixed(2),
-            revenue: p.revenue.toFixed(2),
-            cost: p.cost.toFixed(2),
-            grossProfit: grossProfit.toFixed(2),
-            grossMarginPercent: grossMarginPercent.toFixed(1),
-            ifoodFee: ifoodFee.toFixed(2),
-            netProfit: netProfit.toFixed(2),
-            netMarginPercent: netMarginPercent.toFixed(1),
-          };
-        })
-        .sort((a, b) => parseFloat(b.netProfit) - parseFloat(a.netProfit));
-      
-      return result;
+      // Usar query SQL otimizada com CONVERT_TZ
+      return await db.getDeliveryProductAnalysis(startDateStr, endDateStr, input?.categoryId);
     }),
     
     // Margem líquida delivery (deduzindo 7% de taxa iFood)

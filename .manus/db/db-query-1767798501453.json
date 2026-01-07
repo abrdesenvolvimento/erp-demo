@@ -1,0 +1,43 @@
+{
+  "query": "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'products' AND COLUMN_NAME LIKE '%cost%' OR COLUMN_NAME LIKE '%Cost%'",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'products' AND COLUMN_NAME LIKE '%cost%' OR COLUMN_NAME LIKE '%Cost%'",
+  "rows": [
+    {
+      "COLUMN_NAME": "avgCost"
+    },
+    {
+      "COLUMN_NAME": "unitCost"
+    },
+    {
+      "COLUMN_NAME": "totalCost"
+    },
+    {
+      "COLUMN_NAME": "freightCost"
+    },
+    {
+      "COLUMN_NAME": "chargesCost"
+    },
+    {
+      "COLUMN_NAME": "avgCost"
+    },
+    {
+      "COLUMN_NAME": "unitCost"
+    },
+    {
+      "COLUMN_NAME": "totalCost"
+    },
+    {
+      "COLUMN_NAME": "freightCost"
+    },
+    {
+      "COLUMN_NAME": "chargesCost"
+    },
+    {
+      "COLUMN_NAME": "avg_cost"
+    }
+  ],
+  "messages": [],
+  "stdout": "COLUMN_NAME\navgCost\nunitCost\ntotalCost\nfreightCost\nchargesCost\navgCost\nunitCost\ntotalCost\nfreightCost\nchargesCost\navg_cost\n",
+  "stderr": "",
+  "execution_time_ms": 68
+}

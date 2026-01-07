@@ -17,11 +17,29 @@ export default function AnaliseDelivery() {
   const [categoryId, setCategoryId] = useState<number | undefined>(undefined);
   const [marginStatus, setMarginStatus] = useState<'all' | 'excellent' | 'attention' | 'critical'>('all');
   
-  // Queries com filtros
-  const { data: deliveryMargin, isLoading: isMarginLoading } = trpc.dashboard.deliveryNetMargin.useQuery();
-  const { data: products, isLoading: isProductsLoading } = trpc.dashboard.deliveryProductAnalysis.useQuery(
-    startDate && endDate ? { startDate, endDate, categoryId } : { categoryId }
-  );
+  // Queries com filtros - usar mesmos parâmetros para resumo e lista de produtos
+  const queryParams = startDate && endDate ? { startDate, endDate, categoryId } : { categoryId };
+  const { data: products, isLoading: isProductsLoading } = trpc.dashboard.deliveryProductAnalysis.useQuery(queryParams);
+  
+  // Calcular resumo a partir dos produtos filtrados
+  const deliveryMargin = products && products.length > 0 ? {
+    deliveryRevenue: products.reduce((sum, p) => sum + parseFloat(p.revenue), 0).toFixed(2),
+    totalCost: products.reduce((sum, p) => sum + parseFloat(p.cost), 0).toFixed(2),
+    grossProfit: products.reduce((sum, p) => sum + parseFloat(p.grossProfit), 0).toFixed(2),
+    grossMarginPercent: (() => {
+      const revenue = products.reduce((sum, p) => sum + parseFloat(p.revenue), 0);
+      const cost = products.reduce((sum, p) => sum + parseFloat(p.cost), 0);
+      return revenue > 0 ? ((revenue - cost) / revenue * 100).toFixed(1) : '0.0';
+    })(),
+    ifoodFee: (products.reduce((sum, p) => sum + parseFloat(p.revenue), 0) * 0.07).toFixed(2),
+    netProfit: products.reduce((sum, p) => sum + parseFloat(p.netProfit), 0).toFixed(2),
+    netMarginPercent: (() => {
+      const revenue = products.reduce((sum, p) => sum + parseFloat(p.revenue), 0);
+      const netProfit = products.reduce((sum, p) => sum + parseFloat(p.netProfit), 0);
+      return revenue > 0 ? (netProfit / revenue * 100).toFixed(1) : '0.0';
+    })(),
+  } : null;
+  const isMarginLoading = isProductsLoading;
   const { data: categories } = trpc.categories.list.useQuery();
 
   const formatCurrency = (value: string | number | null | undefined): string => {
