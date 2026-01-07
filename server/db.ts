@@ -4518,7 +4518,7 @@ export async function getDeliveryProductAnalysis(
     ORDER BY totalRevenue DESC
   `));
 
-  const rows = (result[0] || []) as any[];
+  const rows = (result[0] as unknown as any[]) || [];
   
   return rows.map(row => {
     const revenue = parseFloat(row.totalRevenue || '0');
@@ -4587,7 +4587,7 @@ export async function getSalesAnalysisSummary(
     WHERE ${whereConditions}
   `));
 
-  const rows = (result[0] || []) as any[];
+  const rows = (result[0] as unknown as any[]) || [];
   const row = rows[0] || {};
   
   return {

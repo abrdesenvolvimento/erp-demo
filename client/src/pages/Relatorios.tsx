@@ -13,7 +13,7 @@ const MONTHS = [
 
 const DAYS_OF_WEEK = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 
-export default function Relatorios() {
+export default function AnaliseFaturamento() {
   const todayInfo = getCurrentBrazilDateInfo();
   const [selectedYear, setSelectedYear] = useState(todayInfo.year);
   const [selectedMonth, setSelectedMonth] = useState(todayInfo.month);
@@ -110,9 +110,9 @@ export default function Relatorios() {
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle className="flex items-center gap-2">
-                <CalendarIcon className="h-5 w-5" />
-                Calendário de Vendas
+<CardTitle className="flex items-center gap-2">
+              <CalendarIcon className="h-5 w-5" />
+              Análise de Faturamento
               </CardTitle>
               <div className="flex flex-col items-center gap-1">
                 <div className="flex items-center gap-2">

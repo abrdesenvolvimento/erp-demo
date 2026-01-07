@@ -1691,3 +1691,22 @@
   - Causa: usava saleItems.totalPrice ao invés de sales.finalAmount
   - Solução: modificado endpoint comparePeriods para usar getSalesAnalysisSummary para os totais
   - Testado: 2024 agora mostra R$ 884.440,08 (valor correto!)
+
+## 🔴 BUG PENDENTE - Card Mg Líquida Delivery (07/01/2026)
+
+- [ ] **Card Mg Líquida Delivery no Dashboard mostra valores incorretos** - Verificar cálculo de margem líquida delivery
+  - Faturamento mostrado: R$ 119,74
+  - Margem mostrada: 20.9%
+  - Investigar se está usando período correto e se cálculo está considerando todas as vendas delivery do mês
+
+## 🟡 SPRINT 07/01/2026 - Reorganização do Menu
+
+- [x] **Criar submenu "Análises" no menu lateral**
+  - Agrupar itens relacionados a análises em submenu expansível
+  - Itens do submenu:
+    - Análise de Vendas (já existe)
+    - Análise de Faturamento (renomear de "Relatórios")
+    - Análise Delivery (já existe)
+    - Análise por Canal (nova página - comparar Balcão vs Delivery vs A Prazo)
+  - Implementar toggle de expansão/colapso do submenu
+  - Manter destaque visual quando qualquer item do submenu estiver ativo

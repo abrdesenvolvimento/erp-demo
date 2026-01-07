@@ -312,15 +312,22 @@ export default function AnáliseVendas() {
       });
       
       // Converter para array no formato esperado
-      filtered = Array.from(monthsMap.entries()).map(([yearMonth, data]) => ({
-        yearMonth,
-        totalQuantity: data.totalQuantity.toString(),
-        totalRevenue: data.totalRevenue.toString(),
-        totalCost: data.totalCost.toString(),
-        marginPercent: data.totalRevenue > 0 
-          ? ((1 - data.totalCost / data.totalRevenue) * 100).toFixed(1)
-          : '0.0'
-      })).sort((a, b) => a.yearMonth.localeCompare(b.yearMonth));
+      filtered = Array.from(monthsMap.entries()).map(([yearMonth, data]) => {
+        const [year, month] = yearMonth.split('-').map(Number);
+        const totalProfit = data.totalRevenue - data.totalCost;
+        return {
+          yearMonth,
+          year,
+          month,
+          totalQuantity: data.totalQuantity.toString(),
+          totalRevenue: data.totalRevenue.toString(),
+          totalCost: data.totalCost.toString(),
+          totalProfit: totalProfit.toString(),
+          marginPercent: data.totalRevenue > 0 
+            ? ((1 - data.totalCost / data.totalRevenue) * 100).toFixed(1)
+            : '0.0'
+        };
+      }).sort((a, b) => a.yearMonth.localeCompare(b.yearMonth));
     }
     
     return filtered;
