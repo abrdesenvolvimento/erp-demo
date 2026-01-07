@@ -12,6 +12,11 @@ const MONTH_NAMES = [
   "Jul", "Ago", "Set", "Out", "Nov", "Dez"
 ];
 
+const MONTH_NAMES_FULL = [
+  "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+  "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
+];
+
 type ExpenseItem = {
   expenseId: number;
   description: string;
@@ -44,9 +49,11 @@ type CategoryData = {
 };
 
 export default function AnaliseDespesas() {
-  // Filtros de ano
+  // Filtros de ano e mês
   const currentYear = new Date().getFullYear();
+  const currentMonth = new Date().getMonth() + 1; // 1-12
   const [selectedYears, setSelectedYears] = useState<number[]>([currentYear]);
+  const [selectedMonths, setSelectedMonths] = useState<number[]>([]); // vazio = todos os meses
   
   // Estados de expansão
   const [expandedCategories, setExpandedCategories] = useState<Set<number>>(new Set());
@@ -80,7 +87,12 @@ export default function AnaliseDespesas() {
     }
 
     // Filtrar por anos selecionados
-    const filteredData = rawData.filter((item: ExpenseItem) => selectedYears.includes(item.year));
+    let filteredData = rawData.filter((item: ExpenseItem) => selectedYears.includes(item.year));
+
+    // Filtrar por meses selecionados (se houver)
+    if (selectedMonths.length > 0) {
+      filteredData = filteredData.filter((item: ExpenseItem) => selectedMonths.includes(item.month));
+    }
 
     // Coletar todos os meses únicos
     const monthsSet = new Set<MonthKey>();
@@ -130,7 +142,7 @@ export default function AnaliseDespesas() {
     });
 
     return { hierarchicalData: categories, allMonths, grandTotal };
-  }, [rawData, selectedYears]);
+  }, [rawData, selectedYears, selectedMonths]);
 
   // Toggle ano
   const toggleYear = (year: number) => {
@@ -139,6 +151,20 @@ export default function AnaliseDespesas() {
         ? prev.filter(y => y !== year)
         : [...prev, year].sort()
     );
+  };
+
+  // Toggle mês
+  const toggleMonth = (month: number) => {
+    setSelectedMonths(prev => 
+      prev.includes(month) 
+        ? prev.filter(m => m !== month)
+        : [...prev, month].sort((a, b) => a - b)
+    );
+  };
+
+  // Selecionar todos os meses
+  const selectAllMonths = () => {
+    setSelectedMonths([]);
   };
 
   // Toggle expansão de categoria
@@ -171,6 +197,7 @@ export default function AnaliseDespesas() {
   // Limpar filtros
   const clearFilters = () => {
     setSelectedYears([currentYear]);
+    setSelectedMonths([]);
     setExpandedCategories(new Set());
     setExpandedSuppliers(new Set());
   };
@@ -224,18 +251,46 @@ export default function AnaliseDespesas() {
               </Button>
             </div>
           </CardHeader>
-          <CardContent>
-            <div className="flex gap-2 flex-wrap">
-              {[2024, 2025, 2026].map(year => (
+          <CardContent className="space-y-4">
+            {/* Filtro de Anos */}
+            <div>
+              <label className="text-sm font-medium text-muted-foreground mb-2 block">Ano</label>
+              <div className="flex gap-2 flex-wrap">
+                {[2024, 2025, 2026].map(year => (
+                  <Button
+                    key={year}
+                    variant={selectedYears.includes(year) ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => toggleYear(year)}
+                  >
+                    {year}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            {/* Filtro de Meses */}
+            <div>
+              <label className="text-sm font-medium text-muted-foreground mb-2 block">Mês</label>
+              <div className="flex gap-2 flex-wrap">
                 <Button
-                  key={year}
-                  variant={selectedYears.includes(year) ? "default" : "outline"}
+                  variant={selectedMonths.length === 0 ? "default" : "outline"}
                   size="sm"
-                  onClick={() => toggleYear(year)}
+                  onClick={selectAllMonths}
                 >
-                  {year}
+                  Todos
                 </Button>
-              ))}
+                {MONTH_NAMES_FULL.map((monthName, index) => (
+                  <Button
+                    key={index}
+                    variant={selectedMonths.includes(index + 1) ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => toggleMonth(index + 1)}
+                  >
+                    {MONTH_NAMES[index]}
+                  </Button>
+                ))}
+              </div>
             </div>
           </CardContent>
         </Card>

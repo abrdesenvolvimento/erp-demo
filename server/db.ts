@@ -4969,7 +4969,7 @@ export async function getExpenseAnalysisDetail(
       ec.id as categoryId,
       ec.name as categoryName,
       p.id as supplierId,
-      p.tradeName as supplierName
+      COALESCE(p.tradeName, p.name) as supplierName
     FROM expenses e
     INNER JOIN expenseCategories ec ON e.categoryId = ec.id
     LEFT JOIN partners p ON e.supplierId = p.id
@@ -5079,7 +5079,7 @@ export async function getExpenseHierarchicalData(
       ec.id as categoryId,
       ec.name as categoryName,
       COALESCE(p.id, 0) as supplierId,
-      COALESCE(p.tradeName, 'Sem Fornecedor') as supplierName
+      COALESCE(p.tradeName, p.name, 'Sem Fornecedor') as supplierName
     FROM expenses e
     INNER JOIN expenseCategories ec ON e.categoryId = ec.id
     LEFT JOIN partners p ON e.supplierId = p.id

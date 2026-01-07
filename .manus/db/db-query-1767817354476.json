@@ -1,0 +1,15 @@
+{
+  "query": "SELECT COUNT(*) as total, \n       SUM(CASE WHEN supplierId IS NULL THEN 1 ELSE 0 END) as sem_fornecedor,\n       SUM(CASE WHEN supplierId IS NOT NULL THEN 1 ELSE 0 END) as com_fornecedor\nFROM expenses WHERE status != 'CANCELADA'",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT COUNT(*) as total, \n       SUM(CASE WHEN supplierId IS NULL THEN 1 ELSE 0 END) as sem_fornecedor,\n       SUM(CASE WHEN supplierId IS NOT NULL THEN 1 ELSE 0 END) as com_fornecedor\nFROM expenses WHERE status != 'CANCELADA'",
+  "rows": [
+    {
+      "total": "5",
+      "sem_fornecedor": "0",
+      "com_fornecedor": "5"
+    }
+  ],
+  "messages": [],
+  "stdout": "total\tsem_fornecedor\tcom_fornecedor\n5\t0\t5\n",
+  "stderr": "",
+  "execution_time_ms": 109
+}

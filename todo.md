@@ -1806,3 +1806,11 @@
   - Meses lado a lado em colunas (01 2025, 02 2025, ..., 12 2025, 01 2026)
   - Coluna Total Geral no final
   - Estrutura similar ao Excel: Categoria > Fornecedor > Lançamento
+
+
+## 🐛 CORREÇÕES - Análise de Despesas (07/01/2026)
+
+- [x] Adicionar filtro de meses (além do filtro de ano) - IMPLEMENTADO!
+- [x] Investigar e corrigir lançamentos aparecendo "Sem Fornecedor" - CORRIGIDO!
+  - Causa: Query usava apenas p.tradeName, mas alguns parceiros têm tradeName NULL e usam p.name
+  - Solução: Alterado para COALESCE(p.tradeName, p.name, 'Sem Fornecedor')

@@ -1,0 +1,26 @@
+{
+  "query": "SELECT e.id, e.description, e.amount, e.supplierId, p.id as partnerId, p.tradeName\nFROM expenses e\nLEFT JOIN partners p ON e.supplierId = p.id\nWHERE e.description LIKE '%Pacotes%' OR e.description LIKE '%5Kg%'\nORDER BY e.createdAt DESC\nLIMIT 5",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT e.id, e.description, e.amount, e.supplierId, p.id as partnerId, p.tradeName\nFROM expenses e\nLEFT JOIN partners p ON e.supplierId = p.id\nWHERE e.description LIKE '%Pacotes%' OR e.description LIKE '%5Kg%'\nORDER BY e.createdAt DESC\nLIMIT 5",
+  "rows": [
+    {
+      "id": "360001",
+      "description": "3 Pacotes Sacola 40x50 R$12,99*3 = 38,97 / 2 Pacotes Sacola 25x35 R$5,20*2 = R$10,40",
+      "amount": "49.37",
+      "supplierId": "1350002",
+      "partnerId": "1350002",
+      "tradeName": "RM Embalagens"
+    },
+    {
+      "id": "330001",
+      "description": "2 Pacotes 5Kg 30x40 / 2 Pacotes 5Kg 40x5 / 3 Pacotes 5Kg 50x70 e 2 Pacotes 5Kg 70x90",
+      "amount": "434.70",
+      "supplierId": "1080001",
+      "partnerId": "1080001",
+      "tradeName": "NULL"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tdescription\tamount\tsupplierId\tpartnerId\ttradeName\n360001\t3 Pacotes Sacola 40x50 R$12,99*3 = 38,97 / 2 Pacotes Sacola 25x35 R$5,20*2 = R$10,40\t49.37\t1350002\t1350002\tRM Embalagens\n330001\t2 Pacotes 5Kg 30x40 / 2 Pacotes 5Kg 40x5 / 3 Pacotes 5Kg 50x70 e 2 Pacotes 5Kg 70x90\t434.70\t1080001\t1080001\tNULL\n",
+  "stderr": "",
+  "execution_time_ms": 52
+}

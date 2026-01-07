@@ -1,0 +1,18 @@
+{
+  "query": "SELECT e.id, e.description, e.amount, e.supplierId, e.categoryId, ec.name as categoryName\nFROM expenses e\nJOIN expenseCategories ec ON e.categoryId = ec.id\nWHERE e.status != 'CANCELADA' \n  AND YEAR(CONVERT_TZ(e.createdAt, '+00:00', '-03:00')) = 2025\n  AND MONTH(CONVERT_TZ(e.createdAt, '+00:00', '-03:00')) = 12\n  AND ec.name = 'Custo Operacional'\nORDER BY e.createdAt DESC",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT e.id, e.description, e.amount, e.supplierId, e.categoryId, ec.name as categoryName\nFROM expenses e\nJOIN expenseCategories ec ON e.categoryId = ec.id\nWHERE e.status != 'CANCELADA' \n  AND YEAR(CONVERT_TZ(e.createdAt, '+00:00', '-03:00')) = 2025\n  AND MONTH(CONVERT_TZ(e.createdAt, '+00:00', '-03:00')) = 12\n  AND ec.name = 'Custo Operacional'\nORDER BY e.createdAt DESC",
+  "rows": [
+    {
+      "id": "330001",
+      "description": "2 Pacotes 5Kg 30x40 / 2 Pacotes 5Kg 40x5 / 3 Pacotes 5Kg 50x70 e 2 Pacotes 5Kg 70x90",
+      "amount": "434.70",
+      "supplierId": "1080001",
+      "categoryId": "60001",
+      "categoryName": "Custo Operacional"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tdescription\tamount\tsupplierId\tcategoryId\tcategoryName\n330001\t2 Pacotes 5Kg 30x40 / 2 Pacotes 5Kg 40x5 / 3 Pacotes 5Kg 50x70 e 2 Pacotes 5Kg 70x90\t434.70\t1080001\t60001\tCusto Operacional\n",
+  "stderr": "",
+  "execution_time_ms": 56
+}
