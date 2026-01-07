@@ -86,7 +86,21 @@
 
 - [x] **Análise Delivery não mostra produtos** - CORRIGIDO! Query SQL otimizada com CONVERT_TZ
 - [x] **Filtro "Por Categoria" não aplicava filtros de data/mês/dia** - CORRIGIDO! Adicionado categoryId e categoryName na query getSalesByProductAndDate, e recalculado categoryData a partir do matrixData filtrado no frontend
-- [ ] **Agrupamento por mês na Análise de Vendas** - Mostrar colunas lado a lado por mês/ano em vez de linhas por dia
+
+## 🟡 MELHORIAS - Análise de Vendas (07/01/2026)
+
+- [x] **Aba "Por Categoria" - Agrupamento por mês** - IMPLEMENTADO!
+  - Tabela com colunas por mês quando múltiplos meses selecionados
+  - Mostra Qtd, Faturamento, Lucro e Margem% por mês
+  - Total Geral na última coluna
+  - Linha de totais por período
+
+- [x] **Aba "Comparar Períodos" - Refatorar filtros** - IMPLEMENTADO!
+  - Removidos seletores de calendário duplicados
+  - Períodos calculados automaticamente dos filtros existentes
+  - Opção "Ano Anterior" ou "Período Anterior"
+  - Cards visuais mostrando períodos claramente
+  - Linha de totais com crescimento geral
 
 ## 📝 SPRINT 06/01/2026 - NOITE
 

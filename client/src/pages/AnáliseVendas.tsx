@@ -93,6 +93,7 @@ export default function AnáliseVendas() {
   });
   const [enableComparison, setEnableComparison] = useState(false);
   const [comparisonType, setComparisonType] = useState<"value" | "quantity">("value");
+  const [comparisonMode, setComparisonMode] = useState<"previous_year" | "previous_month">("previous_year");
 
   // Buscar produtos, subcategorias e categorias para filtros
   const { data: products } = trpc.products.list.useQuery(undefined, { enabled: isAdmin });
@@ -360,16 +361,120 @@ export default function AnáliseVendas() {
     })).sort((a, b) => parseFloat(b.totalRevenue) - parseFloat(a.totalRevenue));
   }, [categoryDataRaw, matrixData, selectedYears, selectedMonths, selectedDays]);
 
-  // Query para comparação de períodos
+  // Dados de categoria agrupados por mês/ano para visualização lado a lado
+  const categoryDataByMonth = useMemo(() => {
+    if (!matrixData || matrixData.length === 0) return null;
+    
+    // Filtrar matrixData pelos meses/anos/dias selecionados
+    const filteredMatrix = matrixData.filter((row: any) => {
+      const saleDate = new Date(row.saleDate + 'T00:00:00');
+      const saleYear = saleDate.getFullYear();
+      const saleMonth = saleDate.getMonth() + 1;
+      const saleDay = saleDate.getDate();
+      
+      const matchesYearMonth = selectedYears.includes(saleYear) && selectedMonths.includes(saleMonth);
+      const matchesDay = selectedDays.length === 0 || selectedDays.includes(saleDay);
+      
+      return matchesYearMonth && matchesDay;
+    });
+    
+    // Estrutura: Map<yearMonth, Map<categoryId, data>>
+    const monthCategoryMap = new Map<string, Map<number, { categoryId: number; categoryName: string; totalQuantity: number; totalRevenue: number; totalCost: number }>>();
+    
+    // Coletar todos os períodos (ano-mês) únicos
+    const allPeriods = new Set<string>();
+    const allCategories = new Map<number, string>(); // categoryId -> categoryName
+    
+    filteredMatrix.forEach((row: any) => {
+      const saleDate = new Date(row.saleDate + 'T00:00:00');
+      const yearMonth = `${saleDate.getFullYear()}-${String(saleDate.getMonth() + 1).padStart(2, '0')}`;
+      const catId = row.categoryId || 0;
+      const catName = row.categoryName || 'Sem Categoria';
+      
+      allPeriods.add(yearMonth);
+      allCategories.set(catId, catName);
+      
+      if (!monthCategoryMap.has(yearMonth)) {
+        monthCategoryMap.set(yearMonth, new Map());
+      }
+      
+      const categoryMap = monthCategoryMap.get(yearMonth)!;
+      if (!categoryMap.has(catId)) {
+        categoryMap.set(catId, { categoryId: catId, categoryName: catName, totalQuantity: 0, totalRevenue: 0, totalCost: 0 });
+      }
+      
+      const data = categoryMap.get(catId)!;
+      data.totalQuantity += parseFloat(row.quantity);
+      data.totalRevenue += parseFloat(row.revenue);
+      data.totalCost += parseFloat(row.cost);
+    });
+    
+    // Ordenar períodos cronologicamente
+    const sortedPeriods = Array.from(allPeriods).sort();
+    
+    // Ordenar categorias por faturamento total (soma de todos os meses)
+    const categoryTotals = new Map<number, number>();
+    monthCategoryMap.forEach(categoryMap => {
+      categoryMap.forEach((data, catId) => {
+        categoryTotals.set(catId, (categoryTotals.get(catId) || 0) + data.totalRevenue);
+      });
+    });
+    const sortedCategories = Array.from(allCategories.entries())
+      .sort((a, b) => (categoryTotals.get(b[0]) || 0) - (categoryTotals.get(a[0]) || 0));
+    
+    return {
+      periods: sortedPeriods,
+      categories: sortedCategories, // [categoryId, categoryName][]
+      data: monthCategoryMap // Map<yearMonth, Map<categoryId, data>>
+    };
+  }, [matrixData, selectedYears, selectedMonths, selectedDays]);
+
+  // Calcular períodos de comparação baseado nos filtros selecionados
+  const comparisonPeriods = useMemo(() => {
+    if (!dateRange || selectedMonths.length === 0 || selectedYears.length === 0) {
+      return null;
+    }
+    
+    // Período atual: baseado nos filtros selecionados
+    const currentPeriod = {
+      from: dateRange.from,
+      to: dateRange.to
+    };
+    
+    // Período de comparação: calculado automaticamente
+    let comparePeriod: { from: Date; to: Date };
+    
+    if (comparisonMode === "previous_year") {
+      // Mesmo período do ano anterior
+      comparePeriod = {
+        from: new Date(currentPeriod.from.getFullYear() - 1, currentPeriod.from.getMonth(), currentPeriod.from.getDate()),
+        to: new Date(currentPeriod.to.getFullYear() - 1, currentPeriod.to.getMonth(), currentPeriod.to.getDate())
+      };
+    } else {
+      // Mês anterior (ou período anterior equivalente)
+      const monthDiff = selectedMonths.length;
+      comparePeriod = {
+        from: new Date(currentPeriod.from.getFullYear(), currentPeriod.from.getMonth() - monthDiff, currentPeriod.from.getDate()),
+        to: new Date(currentPeriod.to.getFullYear(), currentPeriod.to.getMonth() - monthDiff, currentPeriod.to.getDate())
+      };
+    }
+    
+    return {
+      current: currentPeriod,
+      compare: comparePeriod
+    };
+  }, [dateRange, selectedMonths, selectedYears, comparisonMode]);
+
+  // Query para comparação de períodos (usando períodos calculados automaticamente)
   const { data: comparisonData, isLoading: isComparisonLoading } = trpc.salesAnalysis.comparePeriods.useQuery(
     {
       period1: {
-        startDate: comparisonPeriod1.from,
-        endDate: comparisonPeriod1.to,
+        startDate: comparisonPeriods?.current.from ?? new Date(),
+        endDate: comparisonPeriods?.current.to ?? new Date(),
       },
       period2: {
-        startDate: comparisonPeriod2.from,
-        endDate: comparisonPeriod2.to,
+        startDate: comparisonPeriods?.compare.from ?? new Date(),
+        endDate: comparisonPeriods?.compare.to ?? new Date(),
       },
       comparisonType: comparisonType,
       productIds: selectedProductIds.length > 0 ? selectedProductIds : undefined,
@@ -377,7 +482,7 @@ export default function AnáliseVendas() {
       channels: selectedChannels.length > 0 ? selectedChannels : undefined,
       paymentMethod: selectedPaymentMethod,
     },
-    { enabled: isAdmin && enableComparison }
+    { enabled: isAdmin && enableComparison && !!comparisonPeriods }
   );
 
   // Redirecionar se não for admin
@@ -1409,16 +1514,175 @@ export default function AnáliseVendas() {
           <TabsContent value="categorias" className="space-y-4">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle>Desempenho por Categoria</CardTitle>
+                <CardTitle>Desempenho por Categoria {categoryDataByMonth && categoryDataByMonth.periods.length > 1 ? '(por Mês)' : ''}</CardTitle>
                 <Button variant="outline" size="sm">
                   <Download className="h-4 w-4 mr-2" />
                   Exportar
                 </Button>
               </CardHeader>
               <CardContent>
-                {isCategoryLoading ? (
+                {isCategoryLoading || isMatrixLoading ? (
                   <p className="text-sm text-muted-foreground">Carregando...</p>
+                ) : categoryDataByMonth && categoryDataByMonth.periods.length > 1 ? (
+                  /* Visualização por mês quando há múltiplos períodos */
+                  <div className="space-y-6">
+                    {/* Tabela comparativa por mês */}
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm border-collapse">
+                        <thead>
+                          <tr className="bg-muted/50">
+                            <th className="border px-3 py-2 text-left font-semibold sticky left-0 bg-muted/50 z-10">Categoria</th>
+                            {categoryDataByMonth.periods.map(period => (
+                              <th key={period} colSpan={4} className="border px-3 py-2 text-center font-semibold bg-blue-50">
+                                {formatMonthYear(period)}
+                              </th>
+                            ))}
+                            <th colSpan={4} className="border px-3 py-2 text-center font-semibold bg-emerald-50">Total Geral</th>
+                          </tr>
+                          <tr className="bg-muted/30 text-xs">
+                            <th className="border px-2 py-1 sticky left-0 bg-muted/30 z-10"></th>
+                            {categoryDataByMonth.periods.map(period => (
+                              <>
+                                <th key={`${period}-qty`} className="border px-2 py-1 text-right">Qtd</th>
+                                <th key={`${period}-fat`} className="border px-2 py-1 text-right">Faturamento</th>
+                                <th key={`${period}-lucro`} className="border px-2 py-1 text-right">Lucro</th>
+                                <th key={`${period}-mg`} className="border px-2 py-1 text-right">Mg%</th>
+                              </>
+                            ))}
+                            <th className="border px-2 py-1 text-right">Qtd</th>
+                            <th className="border px-2 py-1 text-right">Faturamento</th>
+                            <th className="border px-2 py-1 text-right">Lucro</th>
+                            <th className="border px-2 py-1 text-right">Mg%</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {categoryDataByMonth.categories.map(([catId, catName]) => {
+                            // Calcular totais da categoria
+                            let totalQty = 0, totalRevenue = 0, totalCost = 0;
+                            categoryDataByMonth.periods.forEach(period => {
+                              const periodData = categoryDataByMonth.data.get(period);
+                              const catData = periodData?.get(catId);
+                              if (catData) {
+                                totalQty += catData.totalQuantity;
+                                totalRevenue += catData.totalRevenue;
+                                totalCost += catData.totalCost;
+                              }
+                            });
+                            const totalProfit = totalRevenue - totalCost;
+                            const totalMargin = totalRevenue > 0 ? ((totalProfit / totalRevenue) * 100).toFixed(1) : '0.0';
+                            
+                            return (
+                              <tr key={catId} className="hover:bg-muted/20">
+                                <td className="border px-3 py-2 font-medium sticky left-0 bg-white z-10">{catName}</td>
+                                {categoryDataByMonth.periods.map(period => {
+                                  const periodData = categoryDataByMonth.data.get(period);
+                                  const catData = periodData?.get(catId);
+                                  const qty = catData?.totalQuantity || 0;
+                                  const revenue = catData?.totalRevenue || 0;
+                                  const cost = catData?.totalCost || 0;
+                                  const profit = revenue - cost;
+                                  const margin = revenue > 0 ? ((profit / revenue) * 100).toFixed(1) : '0.0';
+                                  
+                                  return (
+                                    <>
+                                      <td key={`${period}-${catId}-qty`} className="border px-2 py-1 text-right text-xs">
+                                        {qty > 0 ? formatCurrency(qty) : '-'}
+                                      </td>
+                                      <td key={`${period}-${catId}-fat`} className="border px-2 py-1 text-right text-xs text-emerald-600">
+                                        {revenue > 0 ? `R$ ${formatCurrency(revenue)}` : '-'}
+                                      </td>
+                                      <td key={`${period}-${catId}-lucro`} className="border px-2 py-1 text-right text-xs text-blue-600">
+                                        {revenue > 0 ? `R$ ${formatCurrency(profit)}` : '-'}
+                                      </td>
+                                      <td key={`${period}-${catId}-mg`} className="border px-2 py-1 text-right text-xs font-semibold">
+                                        {revenue > 0 ? `${margin}%` : '-'}
+                                      </td>
+                                    </>
+                                  );
+                                })}
+                                {/* Totais da categoria */}
+                                <td className="border px-2 py-1 text-right text-xs font-semibold bg-emerald-50">
+                                  {formatCurrency(totalQty)}
+                                </td>
+                                <td className="border px-2 py-1 text-right text-xs font-semibold text-emerald-600 bg-emerald-50">
+                                  R$ {formatCurrency(totalRevenue)}
+                                </td>
+                                <td className="border px-2 py-1 text-right text-xs font-semibold text-blue-600 bg-emerald-50">
+                                  R$ {formatCurrency(totalProfit)}
+                                </td>
+                                <td className="border px-2 py-1 text-right text-xs font-bold bg-emerald-50">
+                                  {totalMargin}%
+                                </td>
+                              </tr>
+                            );
+                          })}
+                          {/* Linha de totais por período */}
+                          <tr className="bg-muted/50 font-semibold border-t-2">
+                            <td className="border px-3 py-2 sticky left-0 bg-muted/50 z-10">TOTAL</td>
+                            {categoryDataByMonth.periods.map(period => {
+                              const periodData = categoryDataByMonth.data.get(period);
+                              let periodQty = 0, periodRevenue = 0, periodCost = 0;
+                              periodData?.forEach(catData => {
+                                periodQty += catData.totalQuantity;
+                                periodRevenue += catData.totalRevenue;
+                                periodCost += catData.totalCost;
+                              });
+                              const periodProfit = periodRevenue - periodCost;
+                              const periodMargin = periodRevenue > 0 ? ((periodProfit / periodRevenue) * 100).toFixed(1) : '0.0';
+                              
+                              return (
+                                <>
+                                  <td key={`${period}-total-qty`} className="border px-2 py-1 text-right text-xs">
+                                    {formatCurrency(periodQty)}
+                                  </td>
+                                  <td key={`${period}-total-fat`} className="border px-2 py-1 text-right text-xs text-emerald-600">
+                                    R$ {formatCurrency(periodRevenue)}
+                                  </td>
+                                  <td key={`${period}-total-lucro`} className="border px-2 py-1 text-right text-xs text-blue-600">
+                                    R$ {formatCurrency(periodProfit)}
+                                  </td>
+                                  <td key={`${period}-total-mg`} className="border px-2 py-1 text-right text-xs font-bold">
+                                    {periodMargin}%
+                                  </td>
+                                </>
+                              );
+                            })}
+                            {/* Total geral */}
+                            {(() => {
+                              let grandQty = 0, grandRevenue = 0, grandCost = 0;
+                              categoryDataByMonth.data.forEach(periodData => {
+                                periodData.forEach(catData => {
+                                  grandQty += catData.totalQuantity;
+                                  grandRevenue += catData.totalRevenue;
+                                  grandCost += catData.totalCost;
+                                });
+                              });
+                              const grandProfit = grandRevenue - grandCost;
+                              const grandMargin = grandRevenue > 0 ? ((grandProfit / grandRevenue) * 100).toFixed(1) : '0.0';
+                              return (
+                                <>
+                                  <td className="border px-2 py-1 text-right text-xs font-bold bg-emerald-100">
+                                    {formatCurrency(grandQty)}
+                                  </td>
+                                  <td className="border px-2 py-1 text-right text-xs font-bold text-emerald-700 bg-emerald-100">
+                                    R$ {formatCurrency(grandRevenue)}
+                                  </td>
+                                  <td className="border px-2 py-1 text-right text-xs font-bold text-blue-700 bg-emerald-100">
+                                    R$ {formatCurrency(grandProfit)}
+                                  </td>
+                                  <td className="border px-2 py-1 text-right text-xs font-bold bg-emerald-100">
+                                    {grandMargin}%
+                                  </td>
+                                </>
+                              );
+                            })()}
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
                 ) : categoryData && categoryData.length > 0 ? (
+                  /* Visualização simples quando há apenas um período */
                   <div className="rounded-md border">
                     <Table>
                       <TableHeader>
@@ -1461,229 +1725,251 @@ export default function AnáliseVendas() {
             <Card>
               <CardHeader>
                 <CardTitle>Comparar Períodos</CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  Compara o período selecionado nos filtros acima com um período anterior equivalente
+                </p>
               </CardHeader>
               <CardContent className="space-y-6">
-                {/* Seletores de Período */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Período 1 */}
-                  <div className="space-y-3">
-                    <Label className="text-base font-semibold">Período 1</Label>
-                    <div className="flex gap-2">
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button variant="outline" className="flex-1 justify-start text-left font-normal">
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {format(comparisonPeriod1.from, "dd/MM/yyyy", { locale: ptBR })}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={comparisonPeriod1.from}
-                            onSelect={(date) => date && setComparisonPeriod1(prev => ({ ...prev, from: date }))}
-                            locale={ptBR}
-                          />
-                        </PopoverContent>
-                      </Popover>
-                      <span className="flex items-center px-2">até</span>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button variant="outline" className="flex-1 justify-start text-left font-normal">
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {format(comparisonPeriod1.to, "dd/MM/yyyy", { locale: ptBR })}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={comparisonPeriod1.to}
-                            onSelect={(date) => date && setComparisonPeriod1(prev => ({ ...prev, to: date }))}
-                            locale={ptBR}
-                          />
-                        </PopoverContent>
-                      </Popover>
-                    </div>
+                {/* Informação dos períodos */}
+                {!comparisonPeriods ? (
+                  <div className="text-center py-8 bg-muted/30 rounded-lg">
+                    <p className="text-lg font-medium text-muted-foreground">Selecione um período nos filtros acima</p>
+                    <p className="text-sm text-muted-foreground mt-2">Escolha mês(es) e ano(s) para habilitar a comparação</p>
                   </div>
-
-                  {/* Período 2 */}
-                  <div className="space-y-3">
-                    <Label className="text-base font-semibold">Período 2</Label>
-                    <div className="flex gap-2">
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button variant="outline" className="flex-1 justify-start text-left font-normal">
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {format(comparisonPeriod2.from, "dd/MM/yyyy", { locale: ptBR })}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={comparisonPeriod2.from}
-                            onSelect={(date) => date && setComparisonPeriod2(prev => ({ ...prev, from: date }))}
-                            locale={ptBR}
-                          />
-                        </PopoverContent>
-                      </Popover>
-                      <span className="flex items-center px-2">até</span>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button variant="outline" className="flex-1 justify-start text-left font-normal">
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {format(comparisonPeriod2.to, "dd/MM/yyyy", { locale: ptBR })}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={comparisonPeriod2.to}
-                            onSelect={(date) => date && setComparisonPeriod2(prev => ({ ...prev, to: date }))}
-                            locale={ptBR}
-                          />
-                        </PopoverContent>
-                      </Popover>
+                ) : (
+                  <>
+                    {/* Períodos calculados automaticamente */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                        <Label className="text-base font-semibold text-blue-800">Período Atual (Selecionado)</Label>
+                        <p className="text-lg font-bold text-blue-900 mt-2">
+                          {format(comparisonPeriods.current.from, "dd/MM/yyyy", { locale: ptBR })} - {format(comparisonPeriods.current.to, "dd/MM/yyyy", { locale: ptBR })}
+                        </p>
+                      </div>
+                      <div className="p-4 bg-amber-50 rounded-lg border border-amber-200">
+                        <Label className="text-base font-semibold text-amber-800">Período de Comparação</Label>
+                        <p className="text-lg font-bold text-amber-900 mt-2">
+                          {format(comparisonPeriods.compare.from, "dd/MM/yyyy", { locale: ptBR })} - {format(comparisonPeriods.compare.to, "dd/MM/yyyy", { locale: ptBR })}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                </div>
 
-                {/* Toggle Tipo de Comparação */}
-                <div className="flex justify-center gap-2 mb-4">
-                  <Button
-                    className={comparisonType === "value" ? "bg-blue-600 text-white hover:bg-blue-700" : ""}
-                    variant={comparisonType === "value" ? "default" : "outline"}
-                    onClick={() => setComparisonType("value")}
-                    size="sm"
-                  >
-                    Valores (R$)
-                  </Button>
-                  <Button
-                    className={comparisonType === "quantity" ? "bg-blue-600 text-white hover:bg-blue-700" : ""}
-                    variant={comparisonType === "quantity" ? "default" : "outline"}
-                    onClick={() => setComparisonType("quantity")}
-                    size="sm"
-                  >
-                    Quantidade (unidades)
-                  </Button>
-                </div>
-
-                {/* Botão Comparar */}
-                <div className="flex justify-center">
-                  <Button 
-                    onClick={() => setEnableComparison(true)}
-                    size="lg"
-                    className="px-8"
-                  >
-                    <TrendingUp className="mr-2 h-4 w-4" />
-                    Comparar Períodos
-                  </Button>
-                </div>
-
-                {/* Tabela Comparativa */}
-                {enableComparison && (
-                  <div className="mt-6">
-                    {isComparisonLoading ? (
-                      <div className="flex items-center justify-center h-64">
-                        <p className="text-muted-foreground">Carregando comparação...</p>
+                    {/* Seletor de modo de comparação */}
+                    <div className="flex flex-col items-center gap-3">
+                      <Label className="text-sm font-medium">Comparar com:</Label>
+                      <div className="flex gap-2">
+                        <Button
+                          className={comparisonMode === "previous_year" ? "bg-amber-600 text-white hover:bg-amber-700" : ""}
+                          variant={comparisonMode === "previous_year" ? "default" : "outline"}
+                          onClick={() => { setComparisonMode("previous_year"); setEnableComparison(false); }}
+                          size="sm"
+                        >
+                          Ano Anterior
+                        </Button>
+                        <Button
+                          className={comparisonMode === "previous_month" ? "bg-amber-600 text-white hover:bg-amber-700" : ""}
+                          variant={comparisonMode === "previous_month" ? "default" : "outline"}
+                          onClick={() => { setComparisonMode("previous_month"); setEnableComparison(false); }}
+                          size="sm"
+                        >
+                          Período Anterior
+                        </Button>
                       </div>
-                    ) : !comparisonData || (!comparisonData.period1.length && !comparisonData.period2.length) ? (
-                      <div className="flex items-center justify-center h-64">
-                        <p className="text-muted-foreground">Nenhum dado disponível para os períodos selecionados</p>
+                    </div>
+
+                    {/* Toggle Tipo de Comparação */}
+                    <div className="flex flex-col items-center gap-3">
+                      <Label className="text-sm font-medium">Métrica:</Label>
+                      <div className="flex gap-2">
+                        <Button
+                          className={comparisonType === "value" ? "bg-blue-600 text-white hover:bg-blue-700" : ""}
+                          variant={comparisonType === "value" ? "default" : "outline"}
+                          onClick={() => setComparisonType("value")}
+                          size="sm"
+                        >
+                          Valores (R$)
+                        </Button>
+                        <Button
+                          className={comparisonType === "quantity" ? "bg-blue-600 text-white hover:bg-blue-700" : ""}
+                          variant={comparisonType === "quantity" ? "default" : "outline"}
+                          onClick={() => setComparisonType("quantity")}
+                          size="sm"
+                        >
+                          Quantidade (unidades)
+                        </Button>
                       </div>
-                    ) : (
-                      <div className="overflow-x-auto">
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead className="w-[200px]">Produto</TableHead>
-                              <TableHead className="text-right">Período 1<br/><span className="text-xs text-muted-foreground">{format(comparisonPeriod1.from, "dd/MM", { locale: ptBR })} - {format(comparisonPeriod1.to, "dd/MM", { locale: ptBR })}</span></TableHead>
-                              <TableHead className="text-right">Período 2<br/><span className="text-xs text-muted-foreground">{format(comparisonPeriod2.from, "dd/MM", { locale: ptBR })} - {format(comparisonPeriod2.to, "dd/MM", { locale: ptBR })}</span></TableHead>
-                              <TableHead className="text-right">Variação</TableHead>
-                              <TableHead className="text-right">Crescimento</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {(() => {
-                              // Determinar qual campo usar baseado no tipo de comparação
-                              const valueField = comparisonType === "quantity" ? "totalQuantity" : "totalRevenue";
-                              
-                              // Criar mapa de produtos do período 1
-                              const period1Map = new Map(
-                                comparisonData.period1.map(item => [
-                                  item.productId,
-                                  { name: item.productName, value: parseFloat(item[valueField]) }
-                                ])
-                              );
+                    </div>
 
-                              // Criar mapa de produtos do período 2
-                              const period2Map = new Map(
-                                comparisonData.period2.map(item => [
-                                  item.productId,
-                                  { name: item.productName, value: parseFloat(item[valueField]) }
-                                ])
-                              );
+                    {/* Botão Comparar */}
+                    <div className="flex justify-center">
+                      <Button 
+                        onClick={() => setEnableComparison(true)}
+                        size="lg"
+                        className="px-8"
+                        disabled={!comparisonPeriods}
+                      >
+                        <TrendingUp className="mr-2 h-4 w-4" />
+                        Comparar Períodos
+                      </Button>
+                    </div>
 
-                              // Unir todos os produtos
-                              const allProductIds = new Set([
-                                ...Array.from(period1Map.keys()),
-                                ...Array.from(period2Map.keys())
-                              ]);
-
-                              // Criar array de comparação
-                              const comparison = Array.from(allProductIds).map(productId => {
-                                const p1 = period1Map.get(productId);
-                                const p2 = period2Map.get(productId);
-                                const value1 = p1?.value || 0;
-                                const value2 = p2?.value || 0;
-                                const variation = value1 - value2;
-                                const growth = value2 > 0 ? ((value1 - value2) / value2) * 100 : (value1 > 0 ? 100 : 0);
-
-                                return {
-                                  productId,
-                                  productName: p1?.name || p2?.name || "Produto Desconhecido",
-                                  value1,
-                                  value2,
-                                  variation,
-                                  growth
-                                };
-                              });
-
-                              // Ordenar por variação (maior crescimento primeiro)
-                              comparison.sort((a, b) => b.variation - a.variation);
-
-                              return comparison.map(item => (
-                                <TableRow key={item.productId}>
-                                  <TableCell className="font-medium">{item.productName}</TableCell>
-                                  <TableCell className="text-right">
-                                    {comparisonType === "quantity" 
-                                      ? `${item.value1.toFixed(0)} un` 
-                                      : `R$ ${formatCurrency(item.value1)}`}
-                                  </TableCell>
-                                  <TableCell className="text-right">
-                                    {comparisonType === "quantity" 
-                                      ? `${item.value2.toFixed(0)} un` 
-                                      : `R$ ${formatCurrency(item.value2)}`}
-                                  </TableCell>
-                                  <TableCell className="text-right">
-                                    <span className={item.variation >= 0 ? "text-green-600" : "text-red-600"}>
-                                      {item.variation >= 0 ? "+" : ""}
-                                      {comparisonType === "quantity" 
-                                        ? `${Math.abs(item.variation).toFixed(0)} un` 
-                                        : `R$ ${formatCurrency(Math.abs(item.variation))}`}
+                    {/* Tabela Comparativa */}
+                    {enableComparison && (
+                      <div className="mt-6">
+                        {isComparisonLoading ? (
+                          <div className="flex items-center justify-center h-64">
+                            <p className="text-muted-foreground">Carregando comparação...</p>
+                          </div>
+                        ) : !comparisonData || (!comparisonData.period1.length && !comparisonData.period2.length) ? (
+                          <div className="flex items-center justify-center h-64">
+                            <p className="text-muted-foreground">Nenhum dado disponível para os períodos selecionados</p>
+                          </div>
+                        ) : (
+                          <div className="overflow-x-auto">
+                            <Table>
+                              <TableHeader>
+                                <TableRow>
+                                  <TableHead className="w-[200px]">Produto</TableHead>
+                                  <TableHead className="text-right bg-blue-50">
+                                    Período Atual<br/>
+                                    <span className="text-xs text-muted-foreground">
+                                      {format(comparisonPeriods.current.from, "dd/MM/yy", { locale: ptBR })} - {format(comparisonPeriods.current.to, "dd/MM/yy", { locale: ptBR })}
                                     </span>
-                                  </TableCell>
-                                  <TableCell className="text-right">
-                                    <span className={item.growth >= 0 ? "text-green-600 font-semibold" : "text-red-600 font-semibold"}>
-                                      {item.growth >= 0 ? "🔺" : "🔻"} {item.growth >= 0 ? "+" : ""}{item.growth.toFixed(1)}%
+                                  </TableHead>
+                                  <TableHead className="text-right bg-amber-50">
+                                    {comparisonMode === "previous_year" ? "Ano Anterior" : "Período Anterior"}<br/>
+                                    <span className="text-xs text-muted-foreground">
+                                      {format(comparisonPeriods.compare.from, "dd/MM/yy", { locale: ptBR })} - {format(comparisonPeriods.compare.to, "dd/MM/yy", { locale: ptBR })}
                                     </span>
-                                  </TableCell>
+                                  </TableHead>
+                                  <TableHead className="text-right">Variação</TableHead>
+                                  <TableHead className="text-right">Crescimento</TableHead>
                                 </TableRow>
-                              ));
-                            })()}
-                          </TableBody>
-                        </Table>
+                              </TableHeader>
+                              <TableBody>
+                                {(() => {
+                                  // Determinar qual campo usar baseado no tipo de comparação
+                                  const valueField = comparisonType === "quantity" ? "totalQuantity" : "totalRevenue";
+                                  
+                                  // Criar mapa de produtos do período atual (period1)
+                                  const period1Map = new Map(
+                                    comparisonData.period1.map(item => [
+                                      item.productId,
+                                      { name: item.productName, value: parseFloat(item[valueField]) }
+                                    ])
+                                  );
+
+                                  // Criar mapa de produtos do período de comparação (period2)
+                                  const period2Map = new Map(
+                                    comparisonData.period2.map(item => [
+                                      item.productId,
+                                      { name: item.productName, value: parseFloat(item[valueField]) }
+                                    ])
+                                  );
+
+                                  // Unir todos os produtos
+                                  const allProductIds = new Set([
+                                    ...Array.from(period1Map.keys()),
+                                    ...Array.from(period2Map.keys())
+                                  ]);
+
+                                  // Criar array de comparação
+                                  const comparison = Array.from(allProductIds).map(productId => {
+                                    const p1 = period1Map.get(productId);
+                                    const p2 = period2Map.get(productId);
+                                    const value1 = p1?.value || 0;
+                                    const value2 = p2?.value || 0;
+                                    const variation = value1 - value2;
+                                    const growth = value2 > 0 ? ((value1 - value2) / value2) * 100 : (value1 > 0 ? 100 : 0);
+
+                                    return {
+                                      productId,
+                                      productName: p1?.name || p2?.name || "Produto Desconhecido",
+                                      value1,
+                                      value2,
+                                      variation,
+                                      growth
+                                    };
+                                  });
+
+                                  // Ordenar por variação (maior crescimento primeiro)
+                                  comparison.sort((a, b) => b.variation - a.variation);
+
+                                  // Calcular totais
+                                  const totals = comparison.reduce((acc, item) => ({
+                                    value1: acc.value1 + item.value1,
+                                    value2: acc.value2 + item.value2
+                                  }), { value1: 0, value2: 0 });
+                                  const totalVariation = totals.value1 - totals.value2;
+                                  const totalGrowth = totals.value2 > 0 ? ((totals.value1 - totals.value2) / totals.value2) * 100 : (totals.value1 > 0 ? 100 : 0);
+
+                                  return (
+                                    <>
+                                      {comparison.map(item => (
+                                        <TableRow key={item.productId}>
+                                          <TableCell className="font-medium">{item.productName}</TableCell>
+                                          <TableCell className="text-right bg-blue-50/50">
+                                            {comparisonType === "quantity" 
+                                              ? `${item.value1.toFixed(0)} un` 
+                                              : `R$ ${formatCurrency(item.value1)}`}
+                                          </TableCell>
+                                          <TableCell className="text-right bg-amber-50/50">
+                                            {comparisonType === "quantity" 
+                                              ? `${item.value2.toFixed(0)} un` 
+                                              : `R$ ${formatCurrency(item.value2)}`}
+                                          </TableCell>
+                                          <TableCell className="text-right">
+                                            <span className={item.variation >= 0 ? "text-green-600" : "text-red-600"}>
+                                              {item.variation >= 0 ? "+" : ""}
+                                              {comparisonType === "quantity" 
+                                                ? `${item.variation.toFixed(0)} un` 
+                                                : `R$ ${formatCurrency(item.variation)}`}
+                                            </span>
+                                          </TableCell>
+                                          <TableCell className="text-right">
+                                            <span className={item.growth >= 0 ? "text-green-600 font-semibold" : "text-red-600 font-semibold"}>
+                                              {item.growth >= 0 ? "🔺" : "🔻"} {item.growth >= 0 ? "+" : ""}{item.growth.toFixed(1)}%
+                                            </span>
+                                          </TableCell>
+                                        </TableRow>
+                                      ))}
+                                      {/* Linha de totais */}
+                                      <TableRow className="bg-muted/50 font-bold border-t-2">
+                                        <TableCell>TOTAL ({comparison.length} produtos)</TableCell>
+                                        <TableCell className="text-right bg-blue-100">
+                                          {comparisonType === "quantity" 
+                                            ? `${totals.value1.toFixed(0)} un` 
+                                            : `R$ ${formatCurrency(totals.value1)}`}
+                                        </TableCell>
+                                        <TableCell className="text-right bg-amber-100">
+                                          {comparisonType === "quantity" 
+                                            ? `${totals.value2.toFixed(0)} un` 
+                                            : `R$ ${formatCurrency(totals.value2)}`}
+                                        </TableCell>
+                                        <TableCell className="text-right">
+                                          <span className={totalVariation >= 0 ? "text-green-600" : "text-red-600"}>
+                                            {totalVariation >= 0 ? "+" : ""}
+                                            {comparisonType === "quantity" 
+                                              ? `${totalVariation.toFixed(0)} un` 
+                                              : `R$ ${formatCurrency(totalVariation)}`}
+                                          </span>
+                                        </TableCell>
+                                        <TableCell className="text-right">
+                                          <span className={totalGrowth >= 0 ? "text-green-700 font-bold text-lg" : "text-red-700 font-bold text-lg"}>
+                                            {totalGrowth >= 0 ? "🔺" : "🔻"} {totalGrowth >= 0 ? "+" : ""}{totalGrowth.toFixed(1)}%
+                                          </span>
+                                        </TableCell>
+                                      </TableRow>
+                                    </>
+                                  );
+                                })()}
+                              </TableBody>
+                            </Table>
+                          </div>
+                        )}
                       </div>
                     )}
-                  </div>
+                  </>
                 )}
               </CardContent>
             </Card>
