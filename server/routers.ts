@@ -141,6 +141,7 @@ export const appRouter = router({
       .input(z.object({
         search: z.string().optional(),
         categoryId: z.number().optional(),
+        subcategoryId: z.number().optional(),
         activeOnly: z.boolean().optional().default(true),
         includePrices: z.boolean().optional(), // OTIMIZAÇÃO: não carregar preços no autocomplete
       }).optional())

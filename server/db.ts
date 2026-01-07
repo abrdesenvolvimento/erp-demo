@@ -204,7 +204,7 @@ export async function createSalesChannel(data: InsertSalesChannel) {
 }
 
 // ==================== PRODUTOS ====================
-export async function getProducts(filters?: { search?: string; categoryId?: number; activeOnly?: boolean; includePrices?: boolean }) {
+export async function getProducts(filters?: { search?: string; categoryId?: number; subcategoryId?: number; activeOnly?: boolean; includePrices?: boolean }) {
   const db = await getDb();
   if (!db) return [];
   
@@ -218,6 +218,10 @@ export async function getProducts(filters?: { search?: string; categoryId?: numb
   
   if (filters?.categoryId) {
     conditions.push(eq(products.categoryId, filters.categoryId));
+  }
+  
+  if (filters?.subcategoryId) {
+    conditions.push(eq(products.subcategoryId, filters.subcategoryId));
   }
   
   if (filters?.search) {

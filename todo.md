@@ -89,6 +89,58 @@
 - [x] **Filtro "Por Categoria" não aplicava filtros de data/mês/dia** - CORRIGIDO! Adicionado categoryId e categoryName na query getSalesByProductAndDate, e recalculado categoryData a partir do matrixData filtrado no frontend
 - [x] **Divergência de faturamento 2024** - CORRIGIDO! Faturamento mostrava R$ 851.612 ao invés de R$ 884.440 (diferença de R$ 32.827). Causa: 1.000 vendas sem itens + 103 vendas com diferença entre finalAmount e soma de itens. Solução: criada query separada getSalesAnalysisSummary que usa sales.finalAmount diretamente para os cards de resumo
 
+## 🟠 PENDÊNCIAS IDENTIFICADAS (07/01/2026)
+
+### Bugs
+- [x] **Divergência de horário entre listagem e detalhes da venda** - CORRIGIDO! Adicionado timeZone: 'America/Sao_Paulo' na função formatDate do SaleDetailsModal.tsx
+
+### Funcionalidades Pendentes
+- [ ] **Controle de Acesso** - Testar perfis Admin/User para validar restrições
+- [ ] **Desempenho nas Análises** - Verificar o que podemos fazer para melhorar performance das análises
+- [ ] **Exportação de Relatórios** - Implementar exportação para Excel/PDF
+- [ ] **Fechamento Mensal e Consolidado** - Consolidar informações de Vendas, Compras, Despesas e demais informações para chegar ao resultado final do mês e Ano em R$ e %
+- [x] **Filtro por subcategoria em Produtos** - IMPLEMENTADO! Adicionado filtro por categoria e subcategoria na listagem de produtos
+- [x] **Exportação de Produtos para Excel** - IMPLEMENTADO! Botão "Exportar Excel" na tela de Produtos com todas as informações
+- [ ] **Histórico de Alterações** - Log de auditoria para rastrear mudanças
+- [ ] **Reorganizar Menu Financeiro** - Submenu agrupando Contas a Pagar, Contas a Receber, Despesas e Compras
+- [ ] **Rotina de Backup** - Definir local e criar rotina automática
+- [ ] **Sistema de Metas** - Cadastro de metas de faturamento (mensal), acompanhamento no Dashboard, indicadores de atingimento, metas por canal
+
+---
+
+## 🟣 FUTURO - Integração Catálogo Digital + ERP (07/01/2026)
+
+**Documentação completa**: `/docs/INTEGRACAO_CATALOGO_ERP.md`
+
+### Fase 1: Catálogo Dinâmico Básico
+- [ ] Criar endpoint /api/catalogo no ERP
+- [ ] Criar página /catalogo com design atual
+- [ ] Sincronizar produtos e preços do canal Balcão
+- [ ] Adicionar indicador de disponibilidade (estoque)
+
+### Fase 2: Multi-canal
+- [ ] Parâmetro de canal na URL (/catalogo?canal=delivery)
+- [ ] Preços específicos por canal
+- [ ] Filtro de produtos por canal
+
+### Fase 3: Promoções e Destaques
+- [ ] Badges automáticos (Novidade, Oferta, etc.)
+- [ ] Seção de destaques no topo
+- [ ] Produtos próximos do vencimento
+
+### Fase 4: Pedidos Online
+- [ ] Carrinho de compras
+- [ ] Formulário de pedido
+- [ ] Integração com vendas do ERP
+- [ ] Notificação para funcionários
+
+### Fase 5: Analytics e Otimizações
+- [ ] Rastreamento de visualizações
+- [ ] Dashboard de métricas
+- [ ] Otimizações de performance
+
+---
+
 ## 🟡 MELHORIAS - Análise de Vendas (07/01/2026)
 
 - [x] **Aba "Por Categoria" - Agrupamento por mês** - IMPLEMENTADO!

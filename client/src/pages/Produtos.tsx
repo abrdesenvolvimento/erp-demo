@@ -43,7 +43,8 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { trpc } from "@/lib/trpc";
-import { Package, Plus, Search, AlertTriangle, Edit, Trash2, Check, X, ChevronsUpDown, History, Settings } from "lucide-react";
+import { Package, Plus, Search, AlertTriangle, Edit, Trash2, Check, X, ChevronsUpDown, History, Settings, Download, Filter } from "lucide-react";
+import * as XLSX from 'xlsx';
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
@@ -505,20 +506,86 @@ export default function Produtos() {
   const [editingProduct, setEditingProduct] = useState<any>(null);
   const [compositionsKey, setCompositionsKey] = useState(0);
   
+  // Filtros de categoria e subcategoria
+  const [filterCategoryId, setFilterCategoryId] = useState<string>("");
+  const [filterSubcategoryId, setFilterSubcategoryId] = useState<string>("");
+  const [showFilters, setShowFilters] = useState(false);
+  
   // Estados para modais de movimentações
   const [movementsModalOpen, setMovementsModalOpen] = useState(false);
   const [adjustStockModalOpen, setAdjustStockModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   
-  const { data: products, isLoading, refetch } = trpc.products.list.useQuery({
-    search: search || undefined,
-    activeOnly: false, // Mostrar todos os produtos (ativos e inativos)
-  });
-  
   const { data: categories } = trpc.categories.list.useQuery();
   const { data: subcategories } = trpc.subcategories.list.useQuery();
   const { data: channels } = trpc.salesChannels.list.useQuery();
   const utils = trpc.useUtils();
+  
+  const { data: products, isLoading, refetch } = trpc.products.list.useQuery({
+    search: search || undefined,
+    activeOnly: false, // Mostrar todos os produtos (ativos e inativos)
+    categoryId: filterCategoryId ? parseInt(filterCategoryId) : undefined,
+    subcategoryId: filterSubcategoryId ? parseInt(filterSubcategoryId) : undefined,
+  });
+  
+  // Subcategorias filtradas pela categoria selecionada
+  const filteredSubcategoriesForFilter = subcategories?.filter(
+    (sub: any) => !filterCategoryId || sub.categoryId === parseInt(filterCategoryId)
+  ) || [];
+  
+  // Função para exportar produtos para Excel
+  const handleExportExcel = () => {
+    if (!products || products.length === 0) {
+      toast.error("Nenhum produto para exportar");
+      return;
+    }
+    
+    const exportData = products.map((product: any) => {
+      const category = categories?.find(c => c.id === product.categoryId);
+      const subcategory = subcategories?.find((s: any) => s.id === product.subcategoryId);
+      
+      return {
+        'ID': product.id,
+        'Nome': product.name,
+        'EAN': product.ean || '',
+        'Categoria': category?.name || '',
+        'Subcategoria': subcategory?.name || '',
+        'Unidade': product.uom,
+        'Estoque Atual': product.currentStock || 0,
+        'Estoque Mínimo': product.minStock || 0,
+        'Custo Médio': isAdmin ? parseFloat(product.avgCost || '0').toFixed(2) : '',
+        'Tipo': product.isComposite ? 'Composto' : 'Simples',
+        'Ativo': product.active ? 'Sim' : 'Não',
+        'Observações': product.notes || '',
+      };
+    });
+    
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    
+    // Ajustar largura das colunas
+    ws['!cols'] = [
+      { wch: 8 },   // ID
+      { wch: 40 },  // Nome
+      { wch: 15 },  // EAN
+      { wch: 20 },  // Categoria
+      { wch: 20 },  // Subcategoria
+      { wch: 10 },  // Unidade
+      { wch: 12 },  // Estoque Atual
+      { wch: 12 },  // Estoque Mínimo
+      { wch: 12 },  // Custo Médio
+      { wch: 10 },  // Tipo
+      { wch: 8 },   // Ativo
+      { wch: 30 },  // Observações
+    ];
+    
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Produtos');
+    
+    const fileName = `produtos_${new Date().toISOString().split('T')[0]}.xlsx`;
+    XLSX.writeFile(wb, fileName);
+    
+    toast.success(`Exportados ${products.length} produtos para Excel`);
+  };
   
   const createSubcategory = trpc.subcategories.create.useMutation({
     onSuccess: (data) => {
@@ -1201,16 +1268,105 @@ export default function Produtos() {
 
         <Card>
           <CardHeader>
-            <div className="flex items-center gap-4">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Buscar produtos por nome ou EAN..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="pl-10"
-                />
+            <div className="space-y-4">
+              <div className="flex items-center gap-4">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Buscar produtos por nome ou EAN..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowFilters(!showFilters)}
+                  className={showFilters ? "bg-accent" : ""}
+                >
+                  <Filter className="h-4 w-4 mr-2" />
+                  Filtros
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleExportExcel}
+                  disabled={!products || products.length === 0}
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Exportar Excel
+                </Button>
               </div>
+              
+              {showFilters && (
+                <div className="flex items-center gap-4 p-4 bg-muted/50 rounded-lg">
+                  <div className="flex-1">
+                    <Label className="text-sm font-medium mb-1 block">Categoria</Label>
+                    <Select
+                      value={filterCategoryId}
+                      onValueChange={(value) => {
+                        setFilterCategoryId(value === "all" ? "" : value);
+                        setFilterSubcategoryId(""); // Limpar subcategoria ao mudar categoria
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Todas as categorias" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todas as categorias</SelectItem>
+                        {categories?.map((cat) => (
+                          <SelectItem key={cat.id} value={cat.id.toString()}>
+                            {cat.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="flex-1">
+                    <Label className="text-sm font-medium mb-1 block">Subcategoria</Label>
+                    <Select
+                      value={filterSubcategoryId}
+                      onValueChange={(value) => setFilterSubcategoryId(value === "all" ? "" : value)}
+                      disabled={!filterCategoryId}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder={filterCategoryId ? "Todas as subcategorias" : "Selecione uma categoria"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todas as subcategorias</SelectItem>
+                        {filteredSubcategoriesForFilter.map((sub: any) => (
+                          <SelectItem key={sub.id} value={sub.id.toString()}>
+                            {sub.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="flex items-end">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setFilterCategoryId("");
+                        setFilterSubcategoryId("");
+                      }}
+                    >
+                      Limpar Filtros
+                    </Button>
+                  </div>
+                </div>
+              )}
+              
+              {(filterCategoryId || filterSubcategoryId) && (
+                <div className="text-sm text-muted-foreground">
+                  Mostrando {products?.length || 0} produto(s)
+                  {filterCategoryId && ` na categoria "${categories?.find(c => c.id.toString() === filterCategoryId)?.name}"`}
+                  {filterSubcategoryId && ` / subcategoria "${subcategories?.find((s: any) => s.id.toString() === filterSubcategoryId)?.name}"`}
+                </div>
+              )}
             </div>
           </CardHeader>
           <CardContent>
