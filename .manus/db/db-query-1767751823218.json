@@ -1,0 +1,16 @@
+{
+  "query": "SELECT \n  MIN(saleDate) as data_minima, \n  MAX(saleDate) as data_maxima,\n  COUNT(*) as total_vendas,\n  SUM(CASE WHEN paymentMethod = 'Migração de Dados' THEN 1 ELSE 0 END) as vendas_migradas\nFROM sales",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  MIN(saleDate) as data_minima, \n  MAX(saleDate) as data_maxima,\n  COUNT(*) as total_vendas,\n  SUM(CASE WHEN paymentMethod = 'Migração de Dados' THEN 1 ELSE 0 END) as vendas_migradas\nFROM sales",
+  "rows": [
+    {
+      "data_minima": "2022-01-01 12:00:00",
+      "data_maxima": "2026-01-07 01:54:22",
+      "total_vendas": "121991",
+      "vendas_migradas": "116487"
+    }
+  ],
+  "messages": [],
+  "stdout": "data_minima\tdata_maxima\ttotal_vendas\tvendas_migradas\n2022-01-01 12:00:00\t2026-01-07 01:54:22\t121991\t116487\n",
+  "stderr": "",
+  "execution_time_ms": 125
+}

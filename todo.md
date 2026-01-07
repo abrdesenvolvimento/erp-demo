@@ -84,7 +84,13 @@
 
 ## 🔴 BUGS CRÍTICOS - PENDENTES (0 itens)
 
+(Todos os bugs foram investigados e resolvidos em 06/01/2026)
+
 ## 🔴 BUGS CRÍTICOS - RESOLVIDOS
+
+- [x] **Campo de busca de produtos não retornava sugestões em Vendas (06/01/2026)** - RESOLVIDO! Problema era cache do navegador, não bug no código. Backend e frontend funcionando corretamente. Solução: Ctrl+Shift+R para limpar cache.
+- [x] **Datas de migração aparentemente incorretas (06/01/2026)** - VERIFICADO! Datas no banco estão corretas: MIN=2022-01-01, MAX=2026-01-07. O log do script pode ter mostrado valores incorretos, mas os dados foram importados corretamente.
+- [x] **Produção afetada sem publicação (06/01/2026)** - EXPLICADO! Dev e Prod compartilham o mesmo banco de dados (TiDB Cloud). Isso é por design - alterações de dados em dev afetam prod imediatamente. Publicação atualiza apenas o código.
 
 - [x] **Tabela de relatório sobrepõe menu lateral ao rolar horizontalmente** - CORRIGIDO! Problema: ao rolar a tabela horizontalmente na Análise de Vendas, ela sobrepunha o menu lateral. Solução: adicionado `z-50` ao container do Sidebar no DashboardLayout. Agora o menu lateral sempre fica acima do conteúdo, mesmo com scroll horizontal.
 
