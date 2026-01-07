@@ -1,0 +1,82 @@
+{
+  "query": "SELECT \n  MONTH(saleDate) as mes,\n  COUNT(*) as total_vendas,\n  COUNT(DISTINCT id) as ids_unicos,\n  ROUND(SUM(finalAmount), 2) as faturamento\nFROM sales\nWHERE YEAR(saleDate) = 2024 \n  AND status != 'CANCELLED'\nGROUP BY MONTH(saleDate)\nORDER BY mes;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  MONTH(saleDate) as mes,\n  COUNT(*) as total_vendas,\n  COUNT(DISTINCT id) as ids_unicos,\n  ROUND(SUM(finalAmount), 2) as faturamento\nFROM sales\nWHERE YEAR(saleDate) = 2024 \n  AND status != 'CANCELLED'\nGROUP BY MONTH(saleDate)\nORDER BY mes;",
+  "rows": [
+    {
+      "mes": "1",
+      "total_vendas": "2440",
+      "ids_unicos": "2440",
+      "faturamento": "61435.85"
+    },
+    {
+      "mes": "2",
+      "total_vendas": "2269",
+      "ids_unicos": "2269",
+      "faturamento": "58891.75"
+    },
+    {
+      "mes": "3",
+      "total_vendas": "2623",
+      "ids_unicos": "2623",
+      "faturamento": "74071.50"
+    },
+    {
+      "mes": "4",
+      "total_vendas": "2389",
+      "ids_unicos": "2389",
+      "faturamento": "61079.70"
+    },
+    {
+      "mes": "5",
+      "total_vendas": "3117",
+      "ids_unicos": "3117",
+      "faturamento": "75726.35"
+    },
+    {
+      "mes": "6",
+      "total_vendas": "3099",
+      "ids_unicos": "3099",
+      "faturamento": "85765.90"
+    },
+    {
+      "mes": "7",
+      "total_vendas": "3083",
+      "ids_unicos": "3083",
+      "faturamento": "74354.43"
+    },
+    {
+      "mes": "8",
+      "total_vendas": "3079",
+      "ids_unicos": "3079",
+      "faturamento": "72814.15"
+    },
+    {
+      "mes": "9",
+      "total_vendas": "3165",
+      "ids_unicos": "3165",
+      "faturamento": "72099.60"
+    },
+    {
+      "mes": "10",
+      "total_vendas": "2627",
+      "ids_unicos": "2627",
+      "faturamento": "59598.90"
+    },
+    {
+      "mes": "11",
+      "total_vendas": "2920",
+      "ids_unicos": "2920",
+      "faturamento": "80661.68"
+    },
+    {
+      "mes": "12",
+      "total_vendas": "3643",
+      "ids_unicos": "3643",
+      "faturamento": "124035.50"
+    }
+  ],
+  "messages": [],
+  "stdout": "mes\ttotal_vendas\tids_unicos\tfaturamento\n1\t2440\t2440\t61435.85\n2\t2269\t2269\t58891.75\n3\t2623\t2623\t74071.50\n4\t2389\t2389\t61079.70\n5\t3117\t3117\t75726.35\n6\t3099\t3099\t85765.90\n7\t3083\t3083\t74354.43\n8\t3079\t3079\t72814.15\n9\t3165\t3165\t72099.60\n10\t2627\t2627\t59598.90\n11\t2920\t2920\t80661.68\n12\t3643\t3643\t124035.50\n",
+  "stderr": "",
+  "execution_time_ms": 121
+}

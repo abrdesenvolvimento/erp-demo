@@ -1,0 +1,35 @@
+{
+  "query": "SELECT \n  YEAR(saleDate) as ano,\n  COUNT(*) as vendas,\n  ROUND(SUM(finalAmount), 2) as faturamento\nFROM sales\nWHERE status != 'CANCELLED' OR status IS NULL\nGROUP BY YEAR(saleDate)\nORDER BY ano;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  YEAR(saleDate) as ano,\n  COUNT(*) as vendas,\n  ROUND(SUM(finalAmount), 2) as faturamento\nFROM sales\nWHERE status != 'CANCELLED' OR status IS NULL\nGROUP BY YEAR(saleDate)\nORDER BY ano;",
+  "rows": [
+    {
+      "ano": "2022",
+      "vendas": "24331",
+      "faturamento": "576233.40"
+    },
+    {
+      "ano": "2023",
+      "vendas": "30229",
+      "faturamento": "833713.55"
+    },
+    {
+      "ano": "2024",
+      "vendas": "34454",
+      "faturamento": "900535.31"
+    },
+    {
+      "ano": "2025",
+      "vendas": "32480",
+      "faturamento": "900104.36"
+    },
+    {
+      "ano": "2026",
+      "vendas": "482",
+      "faturamento": "22420.34"
+    }
+  ],
+  "messages": [],
+  "stdout": "ano\tvendas\tfaturamento\n2022\t24331\t576233.40\n2023\t30229\t833713.55\n2024\t34454\t900535.31\n2025\t32480\t900104.36\n2026\t482\t22420.34\n",
+  "stderr": "",
+  "execution_time_ms": 382
+}

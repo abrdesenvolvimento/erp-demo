@@ -1,0 +1,15 @@
+{
+  "query": "SELECT MIN(id) as min_id, MAX(id) as max_id, COUNT(*) as total \nFROM sales \nWHERE YEAR(saleDate) = 2024 AND MONTH(saleDate) BETWEEN 5 AND 8;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT MIN(id) as min_id, MAX(id) as max_id, COUNT(*) as total \nFROM sales \nWHERE YEAR(saleDate) = 2024 AND MONTH(saleDate) BETWEEN 5 AND 8;",
+  "rows": [
+    {
+      "min_id": "37920027",
+      "max_id": "38002906",
+      "total": "10730"
+    }
+  ],
+  "messages": [],
+  "stdout": "min_id\tmax_id\ttotal\n37920027\t38002906\t10730\n",
+  "stderr": "",
+  "execution_time_ms": 102
+}

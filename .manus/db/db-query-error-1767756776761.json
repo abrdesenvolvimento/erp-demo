@@ -1,0 +1,8 @@
+{
+  "query": "SELECT \n  MONTH(saleDate) as mes,\n  salesChannelId,\n  COUNT(*) as vendas,\n  ROUND(SUM(finalAmount), 2) as fat\nFROM sales\nWHERE YEAR(saleDate) = 2024 \n  AND MONTH(saleDate) BETWEEN 5 AND 8\n  AND status != 'CANCELLED'\nGROUP BY MONTH(saleDate), salesChannelId\nORDER BY mes, salesChannelId;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  MONTH(saleDate) as mes,\n  salesChannelId,\n  COUNT(*) as vendas,\n  ROUND(SUM(finalAmount), 2) as fat\nFROM sales\nWHERE YEAR(saleDate) = 2024 \n  AND MONTH(saleDate) BETWEEN 5 AND 8\n  AND status != 'CANCELLED'\nGROUP BY MONTH(saleDate), salesChannelId\nORDER BY mes, salesChannelId;",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 1: Unknown column 'saleschannelid' in 'group statement'"
+  ]
+}

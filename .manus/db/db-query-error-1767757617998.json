@@ -1,0 +1,8 @@
+{
+  "query": "SELECT id, typeof(id) as tipo FROM sales WHERE id = 37939184 LIMIT 1;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT id, typeof(id) as tipo FROM sales WHERE id = 37939184 LIMIT 1;",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1305 (42000) at line 1: FUNCTION 7RkrCeS5KipYf8hkuNqrCk.typeof does not exist"
+  ]
+}
