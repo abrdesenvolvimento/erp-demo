@@ -1,0 +1,178 @@
+{
+  "query": "SELECT \n  table_name AS 'Tabela',\n  table_rows AS 'Registros (aprox)',\n  ROUND(data_length / 1024 / 1024, 2) AS 'Dados (MB)',\n  ROUND(index_length / 1024 / 1024, 2) AS 'Índices (MB)',\n  ROUND((data_length + index_length) / 1024 / 1024, 2) AS 'Total (MB)'\nFROM information_schema.tables \nWHERE table_schema = DATABASE()\nORDER BY (data_length + index_length) DESC;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  table_name AS 'Tabela',\n  table_rows AS 'Registros (aprox)',\n  ROUND(data_length / 1024 / 1024, 2) AS 'Dados (MB)',\n  ROUND(index_length / 1024 / 1024, 2) AS 'Índices (MB)',\n  ROUND((data_length + index_length) / 1024 / 1024, 2) AS 'Total (MB)'\nFROM information_schema.tables \nWHERE table_schema = DATABASE()\nORDER BY (data_length + index_length) DESC;",
+  "rows": [
+    {
+      "Tabela": "sales",
+      "Registros (aprox)": "121860",
+      "Dados (MB)": "15.22",
+      "Índices (MB)": "1.86",
+      "Total (MB)": "17.08"
+    },
+    {
+      "Tabela": "saleItems",
+      "Registros (aprox)": "121821",
+      "Dados (MB)": "5.81",
+      "Índices (MB)": "0.00",
+      "Total (MB)": "5.81"
+    },
+    {
+      "Tabela": "productMovements",
+      "Registros (aprox)": "2084",
+      "Dados (MB)": "0.23",
+      "Índices (MB)": "0.05",
+      "Total (MB)": "0.27"
+    },
+    {
+      "Tabela": "productPrices",
+      "Registros (aprox)": "3734",
+      "Dados (MB)": "0.19",
+      "Índices (MB)": "0.06",
+      "Total (MB)": "0.25"
+    },
+    {
+      "Tabela": "products",
+      "Registros (aprox)": "979",
+      "Dados (MB)": "0.12",
+      "Índices (MB)": "0.03",
+      "Total (MB)": "0.15"
+    },
+    {
+      "Tabela": "purchaseOrderItems",
+      "Registros (aprox)": "737",
+      "Dados (MB)": "0.04",
+      "Índices (MB)": "0.01",
+      "Total (MB)": "0.05"
+    },
+    {
+      "Tabela": "receivables",
+      "Registros (aprox)": "384",
+      "Dados (MB)": "0.03",
+      "Índices (MB)": "0.01",
+      "Total (MB)": "0.04"
+    },
+    {
+      "Tabela": "receivableInstallments",
+      "Registros (aprox)": "384",
+      "Dados (MB)": "0.03",
+      "Índices (MB)": "0.01",
+      "Total (MB)": "0.04"
+    },
+    {
+      "Tabela": "purchaseOrders",
+      "Registros (aprox)": "139",
+      "Dados (MB)": "0.02",
+      "Índices (MB)": "0.00",
+      "Total (MB)": "0.02"
+    },
+    {
+      "Tabela": "purchaseInstallments",
+      "Registros (aprox)": "180",
+      "Dados (MB)": "0.01",
+      "Índices (MB)": "0.00",
+      "Total (MB)": "0.01"
+    },
+    {
+      "Tabela": "partners",
+      "Registros (aprox)": "76",
+      "Dados (MB)": "0.01",
+      "Índices (MB)": "0.00",
+      "Total (MB)": "0.01"
+    },
+    {
+      "Tabela": "customerPayments",
+      "Registros (aprox)": "70",
+      "Dados (MB)": "0.00",
+      "Índices (MB)": "0.00",
+      "Total (MB)": "0.01"
+    },
+    {
+      "Tabela": "productCompositions",
+      "Registros (aprox)": "159",
+      "Dados (MB)": "0.01",
+      "Índices (MB)": "0.00",
+      "Total (MB)": "0.01"
+    },
+    {
+      "Tabela": "subcategories",
+      "Registros (aprox)": "48",
+      "Dados (MB)": "0.00",
+      "Índices (MB)": "0.00",
+      "Total (MB)": "0.00"
+    },
+    {
+      "Tabela": "customerDebits",
+      "Registros (aprox)": "15",
+      "Dados (MB)": "0.00",
+      "Índices (MB)": "0.00",
+      "Total (MB)": "0.00"
+    },
+    {
+      "Tabela": "expenseCategories",
+      "Registros (aprox)": "16",
+      "Dados (MB)": "0.00",
+      "Índices (MB)": "0.00",
+      "Total (MB)": "0.00"
+    },
+    {
+      "Tabela": "receivablePayments",
+      "Registros (aprox)": "14",
+      "Dados (MB)": "0.00",
+      "Índices (MB)": "0.00",
+      "Total (MB)": "0.00"
+    },
+    {
+      "Tabela": "expenses",
+      "Registros (aprox)": "5",
+      "Dados (MB)": "0.00",
+      "Índices (MB)": "0.00",
+      "Total (MB)": "0.00"
+    },
+    {
+      "Tabela": "users",
+      "Registros (aprox)": "6",
+      "Dados (MB)": "0.00",
+      "Índices (MB)": "0.00",
+      "Total (MB)": "0.00"
+    },
+    {
+      "Tabela": "__drizzle_migrations",
+      "Registros (aprox)": "7",
+      "Dados (MB)": "0.00",
+      "Índices (MB)": "0.00",
+      "Total (MB)": "0.00"
+    },
+    {
+      "Tabela": "accountsPayable",
+      "Registros (aprox)": "4",
+      "Dados (MB)": "0.00",
+      "Índices (MB)": "0.00",
+      "Total (MB)": "0.00"
+    },
+    {
+      "Tabela": "expenseInstallments",
+      "Registros (aprox)": "5",
+      "Dados (MB)": "0.00",
+      "Índices (MB)": "0.00",
+      "Total (MB)": "0.00"
+    },
+    {
+      "Tabela": "categories",
+      "Registros (aprox)": "9",
+      "Dados (MB)": "0.00",
+      "Índices (MB)": "0.00",
+      "Total (MB)": "0.00"
+    },
+    {
+      "Tabela": "salesChannels",
+      "Registros (aprox)": "4",
+      "Dados (MB)": "0.00",
+      "Índices (MB)": "0.00",
+      "Total (MB)": "0.00"
+    }
+  ],
+  "messages": [],
+  "stdout": "Tabela\tRegistros (aprox)\tDados (MB)\tÍndices (MB)\tTotal (MB)\nsales\t121860\t15.22\t1.86\t17.08\nsaleItems\t121821\t5.81\t0.00\t5.81\nproductMovements\t2084\t0.23\t0.05\t0.27\nproductPrices\t3734\t0.19\t0.06\t0.25\nproducts\t979\t0.12\t0.03\t0.15\npurchaseOrderItems\t737\t0.04\t0.01\t0.05\nreceivables\t384\t0.03\t0.01\t0.04\nreceivableInstallments\t384\t0.03\t0.01\t0.04\npurchaseOrders\t139\t0.02\t0.00\t0.02\npurchaseInstallments\t180\t0.01\t0.00\t0.01\npartners\t76\t0.01\t0.00\t0.01\ncustomerPayments\t70\t0.00\t0.00\t0.01\nproductCompositions\t159\t0.01\t0.00\t0.01\nsubcategories\t48\t0.00\t0.00\t0.00\ncustomerDebits\t15\t0.00\t0.00\t0.00\nexpenseCategories\t16\t0.00\t0.00\t0.00\nreceivablePayments\t14\t0.00\t0.00\t0.00\nexpenses\t5\t0.00\t0.00\t0.00\nusers\t6\t0.00\t0.00\t0.00\n__drizzle_migrations\t7\t0.00\t0.00\t0.00\naccountsPayable\t4\t0.00\t0.00\t0.00\nexpenseInstallments\t5\t0.00\t0.00\t0.00\ncategories\t9\t0.00\t0.00\t0.00\nsalesChannels\t4\t0.00\t0.00\t0.00\n",
+  "stderr": "",
+  "execution_time_ms": 208
+}

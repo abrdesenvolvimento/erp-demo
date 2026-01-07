@@ -61,7 +61,7 @@ export default function AnáliseVendas() {
 
   // Novos filtros de período
   const [selectedMonths, setSelectedMonths] = useState<number[]>([]); // Vazio - usuário escolhe o período
-  const [selectedYears] = useState<number[]>([2025]); // 2025 fixo até migração de dados históricos
+  const [selectedYears, setSelectedYears] = useState<number[]>([2025]); // Anos disponíveis: 2022-2026
   const [selectedDays, setSelectedDays] = useState<number[]>([]); // Vazio - usuário escolhe os dias
   const [filtersExpanded, setFiltersExpanded] = useState(true); // Controle de expansão dos filtros
 
@@ -370,16 +370,30 @@ export default function AnáliseVendas() {
                 </div>
               </div>
 
-              {/* Filtro de Ano - Fixo em 2025 */}
+              {/* Filtro de Ano */}
               <div className="mt-3">
-                <Label className="text-sm">Ano</Label>
-                <div className="flex gap-2 mt-2">
-                  <Button variant="default" size="sm" disabled>
-                    2025
-                  </Button>
-                  <span className="text-xs text-muted-foreground flex items-center">
-                    (Outros anos disponíveis após migração de dados históricos)
-                  </span>
+                <Label className="text-sm">Ano(s)</Label>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {[2022, 2023, 2024, 2025, 2026].map((year) => (
+                    <Button
+                      key={year}
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        if (selectedYears.includes(year)) {
+                          // Não permitir desmarcar se for o único ano selecionado
+                          if (selectedYears.length > 1) {
+                            setSelectedYears(selectedYears.filter(y => y !== year));
+                          }
+                        } else {
+                          setSelectedYears([...selectedYears, year].sort((a, b) => a - b));
+                        }
+                      }}
+                      className={selectedYears.includes(year) ? "bg-blue-600 text-white hover:bg-blue-700" : ""}
+                    >
+                      {year}
+                    </Button>
+                  ))}
                 </div>
               </div>
 

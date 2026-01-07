@@ -1,0 +1,178 @@
+{
+  "query": "SELECT \n  table_name AS tabela,\n  table_rows AS registros,\n  ROUND(data_length / 1024 / 1024, 2) AS dados_mb,\n  ROUND(index_length / 1024 / 1024, 2) AS indices_mb,\n  ROUND((data_length + index_length) / 1024 / 1024, 2) AS total_mb\nFROM information_schema.tables \nWHERE table_schema = DATABASE()\nORDER BY (data_length + index_length) DESC\nLIMIT 30;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  table_name AS tabela,\n  table_rows AS registros,\n  ROUND(data_length / 1024 / 1024, 2) AS dados_mb,\n  ROUND(index_length / 1024 / 1024, 2) AS indices_mb,\n  ROUND((data_length + index_length) / 1024 / 1024, 2) AS total_mb\nFROM information_schema.tables \nWHERE table_schema = DATABASE()\nORDER BY (data_length + index_length) DESC\nLIMIT 30;",
+  "rows": [
+    {
+      "tabela": "sales",
+      "registros": "121860",
+      "dados_mb": "15.22",
+      "indices_mb": "1.86",
+      "total_mb": "17.08"
+    },
+    {
+      "tabela": "saleItems",
+      "registros": "121821",
+      "dados_mb": "5.81",
+      "indices_mb": "0.00",
+      "total_mb": "5.81"
+    },
+    {
+      "tabela": "productMovements",
+      "registros": "2084",
+      "dados_mb": "0.23",
+      "indices_mb": "0.05",
+      "total_mb": "0.27"
+    },
+    {
+      "tabela": "productPrices",
+      "registros": "3734",
+      "dados_mb": "0.19",
+      "indices_mb": "0.06",
+      "total_mb": "0.25"
+    },
+    {
+      "tabela": "products",
+      "registros": "979",
+      "dados_mb": "0.12",
+      "indices_mb": "0.03",
+      "total_mb": "0.15"
+    },
+    {
+      "tabela": "purchaseOrderItems",
+      "registros": "737",
+      "dados_mb": "0.04",
+      "indices_mb": "0.01",
+      "total_mb": "0.05"
+    },
+    {
+      "tabela": "receivables",
+      "registros": "384",
+      "dados_mb": "0.03",
+      "indices_mb": "0.01",
+      "total_mb": "0.04"
+    },
+    {
+      "tabela": "receivableInstallments",
+      "registros": "384",
+      "dados_mb": "0.03",
+      "indices_mb": "0.01",
+      "total_mb": "0.04"
+    },
+    {
+      "tabela": "purchaseOrders",
+      "registros": "139",
+      "dados_mb": "0.02",
+      "indices_mb": "0.00",
+      "total_mb": "0.02"
+    },
+    {
+      "tabela": "purchaseInstallments",
+      "registros": "180",
+      "dados_mb": "0.01",
+      "indices_mb": "0.00",
+      "total_mb": "0.01"
+    },
+    {
+      "tabela": "partners",
+      "registros": "76",
+      "dados_mb": "0.01",
+      "indices_mb": "0.00",
+      "total_mb": "0.01"
+    },
+    {
+      "tabela": "customerPayments",
+      "registros": "70",
+      "dados_mb": "0.00",
+      "indices_mb": "0.00",
+      "total_mb": "0.01"
+    },
+    {
+      "tabela": "productCompositions",
+      "registros": "159",
+      "dados_mb": "0.01",
+      "indices_mb": "0.00",
+      "total_mb": "0.01"
+    },
+    {
+      "tabela": "subcategories",
+      "registros": "48",
+      "dados_mb": "0.00",
+      "indices_mb": "0.00",
+      "total_mb": "0.00"
+    },
+    {
+      "tabela": "customerDebits",
+      "registros": "15",
+      "dados_mb": "0.00",
+      "indices_mb": "0.00",
+      "total_mb": "0.00"
+    },
+    {
+      "tabela": "expenseCategories",
+      "registros": "16",
+      "dados_mb": "0.00",
+      "indices_mb": "0.00",
+      "total_mb": "0.00"
+    },
+    {
+      "tabela": "receivablePayments",
+      "registros": "14",
+      "dados_mb": "0.00",
+      "indices_mb": "0.00",
+      "total_mb": "0.00"
+    },
+    {
+      "tabela": "expenses",
+      "registros": "5",
+      "dados_mb": "0.00",
+      "indices_mb": "0.00",
+      "total_mb": "0.00"
+    },
+    {
+      "tabela": "users",
+      "registros": "6",
+      "dados_mb": "0.00",
+      "indices_mb": "0.00",
+      "total_mb": "0.00"
+    },
+    {
+      "tabela": "__drizzle_migrations",
+      "registros": "7",
+      "dados_mb": "0.00",
+      "indices_mb": "0.00",
+      "total_mb": "0.00"
+    },
+    {
+      "tabela": "accountsPayable",
+      "registros": "4",
+      "dados_mb": "0.00",
+      "indices_mb": "0.00",
+      "total_mb": "0.00"
+    },
+    {
+      "tabela": "expenseInstallments",
+      "registros": "5",
+      "dados_mb": "0.00",
+      "indices_mb": "0.00",
+      "total_mb": "0.00"
+    },
+    {
+      "tabela": "categories",
+      "registros": "9",
+      "dados_mb": "0.00",
+      "indices_mb": "0.00",
+      "total_mb": "0.00"
+    },
+    {
+      "tabela": "salesChannels",
+      "registros": "4",
+      "dados_mb": "0.00",
+      "indices_mb": "0.00",
+      "total_mb": "0.00"
+    }
+  ],
+  "messages": [],
+  "stdout": "tabela\tregistros\tdados_mb\tindices_mb\ttotal_mb\nsales\t121860\t15.22\t1.86\t17.08\nsaleItems\t121821\t5.81\t0.00\t5.81\nproductMovements\t2084\t0.23\t0.05\t0.27\nproductPrices\t3734\t0.19\t0.06\t0.25\nproducts\t979\t0.12\t0.03\t0.15\npurchaseOrderItems\t737\t0.04\t0.01\t0.05\nreceivables\t384\t0.03\t0.01\t0.04\nreceivableInstallments\t384\t0.03\t0.01\t0.04\npurchaseOrders\t139\t0.02\t0.00\t0.02\npurchaseInstallments\t180\t0.01\t0.00\t0.01\npartners\t76\t0.01\t0.00\t0.01\ncustomerPayments\t70\t0.00\t0.00\t0.01\nproductCompositions\t159\t0.01\t0.00\t0.01\nsubcategories\t48\t0.00\t0.00\t0.00\ncustomerDebits\t15\t0.00\t0.00\t0.00\nexpenseCategories\t16\t0.00\t0.00\t0.00\nreceivablePayments\t14\t0.00\t0.00\t0.00\nexpenses\t5\t0.00\t0.00\t0.00\nusers\t6\t0.00\t0.00\t0.00\n__drizzle_migrations\t7\t0.00\t0.00\t0.00\naccountsPayable\t4\t0.00\t0.00\t0.00\nexpenseInstallments\t5\t0.00\t0.00\t0.00\ncategories\t9\t0.00\t0.00\t0.00\nsalesChannels\t4\t0.00\t0.00\t0.00\n",
+  "stderr": "",
+  "execution_time_ms": 59
+}

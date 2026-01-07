@@ -82,6 +82,11 @@
 ### Análise de Vendas - Comparação entre Canais
 - [ ] **Comparar quantidade entre canais** - Permitir comparar quantidade vendida entre Balcão vs Delivery vs A Prazo para identificar desempenho por canal.
 
+## 📝 SPRINT 06/01/2026 - NOITE
+
+- [x] **Filtro de ano na Análise de Vendas** - Adicionado seletor de ano (2022, 2023, 2024, 2025, 2026) para análise de dados legados
+- [x] **Verificar tamanho do banco de dados** - Relatório completo gerado (ver abaixo)
+
 ## 🔴 BUGS CRÍTICOS - PENDENTES (0 itens)
 
 (Todos os bugs foram corrigidos em 06/01/2026)
