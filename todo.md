@@ -1795,3 +1795,14 @@
 - [x] Exclusão de Vendas → Implementado com limite 24h
 - [x] Confirmação antes de deletar → Já implementado
 - [x] Tooltips → Substituído por manual de utilização futuro
+
+
+## 🔄 REFATORAÇÃO - Análise de Despesas (07/01/2026)
+
+- [x] **Refazer Análise de Despesas com estrutura hierárquica**
+  - Categoria na primeira coluna (expansível)
+  - Ao clicar na categoria, expande para mostrar fornecedores
+  - Ao clicar no fornecedor, expande para mostrar lançamentos individuais
+  - Meses lado a lado em colunas (01 2025, 02 2025, ..., 12 2025, 01 2026)
+  - Coluna Total Geral no final
+  - Estrutura similar ao Excel: Categoria > Fornecedor > Lançamento

@@ -1785,6 +1785,19 @@ export const appRouter = router({
         );
       }),
 
+    // Dados hierárquicos para matriz expansível
+    hierarchical: adminProcedure
+      .input(z.object({
+        startDate: z.string().optional(),
+        endDate: z.string().optional(),
+      }).optional())
+      .query(async ({ input }) => {
+        return await db.getExpenseHierarchicalData(
+          input?.startDate,
+          input?.endDate
+        );
+      }),
+
     // Detalhamento de lançamentos
     detail: adminProcedure
       .input(z.object({

@@ -5044,3 +5044,62 @@ export async function getExpenseAnalysisSummary(
     avgPerLancamento,
   };
 }
+
+
+/**
+ * Busca dados hierárquicos de despesas para matriz expansível
+ * Retorna: Categoria > Fornecedor > Lançamento com valores por mês
+ */
+export async function getExpenseHierarchicalData(
+  startDate?: string,
+  endDate?: string
+) {
+  const db = await getDb();
+  if (!db) return [];
+
+  let whereClause = `WHERE e.status != 'CANCELADA'`;
+  
+  if (startDate) {
+    whereClause += ` AND DATE(CONVERT_TZ(e.createdAt, '+00:00', '-03:00')) >= '${startDate}'`;
+  }
+  if (endDate) {
+    whereClause += ` AND DATE(CONVERT_TZ(e.createdAt, '+00:00', '-03:00')) <= '${endDate}'`;
+  }
+
+  const result = await db.execute(sql.raw(`
+    SELECT 
+      e.id as expenseId,
+      e.description,
+      e.amount,
+      e.notes,
+      e.docNumber,
+      DATE(CONVERT_TZ(e.createdAt, '+00:00', '-03:00')) as expenseDate,
+      YEAR(CONVERT_TZ(e.createdAt, '+00:00', '-03:00')) as year,
+      MONTH(CONVERT_TZ(e.createdAt, '+00:00', '-03:00')) as month,
+      ec.id as categoryId,
+      ec.name as categoryName,
+      COALESCE(p.id, 0) as supplierId,
+      COALESCE(p.tradeName, 'Sem Fornecedor') as supplierName
+    FROM expenses e
+    INNER JOIN expenseCategories ec ON e.categoryId = ec.id
+    LEFT JOIN partners p ON e.supplierId = p.id
+    ${whereClause}
+    ORDER BY ec.name, p.tradeName, e.createdAt
+  `));
+
+  const rows = result[0] as unknown as any[];
+  return rows.map(row => ({
+    expenseId: row.expenseId,
+    description: row.description,
+    amount: parseFloat(row.amount || '0'),
+    notes: row.notes,
+    docNumber: row.docNumber,
+    expenseDate: row.expenseDate,
+    year: parseInt(row.year, 10),
+    month: parseInt(row.month, 10),
+    categoryId: row.categoryId,
+    categoryName: row.categoryName,
+    supplierId: row.supplierId,
+    supplierName: row.supplierName,
+  }));
+}
