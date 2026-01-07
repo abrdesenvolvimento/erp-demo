@@ -23,7 +23,8 @@ import {
   receivablePayments, ReceivablePayment, InsertReceivablePayment,
   customerPayments, CustomerPayment, InsertCustomerPayment,
   customerDebits, CustomerDebit, InsertCustomerDebit,
-  productMovements, ProductMovement, InsertProductMovement
+  productMovements, ProductMovement, InsertProductMovement,
+  revenueGoals, RevenueGoal, InsertRevenueGoal
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -5144,4 +5145,519 @@ export async function getExpenseHierarchicalData(
     supplierId: row.supplierId,
     supplierName: row.supplierName,
   }));
+}
+
+
+// ==================== METAS DE FATURAMENTO ====================
+
+export async function getRevenueGoals(year?: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  let whereClause = '';
+  if (year) {
+    whereClause = `WHERE year = ${year}`;
+  }
+
+  const result = await db.execute(sql.raw(`
+    SELECT 
+      rg.id,
+      rg.year,
+      rg.month,
+      rg.channelId,
+      rg.targetAmount,
+      rg.notes,
+      rg.createdBy,
+      rg.createdAt,
+      rg.updatedAt,
+      COALESCE(sc.name, 'Geral') as channelName
+    FROM revenueGoals rg
+    LEFT JOIN salesChannels sc ON rg.channelId = sc.id
+    ${whereClause}
+    ORDER BY rg.year DESC, rg.month ASC, rg.channelId ASC
+  `));
+
+  const rows = result[0] as unknown as any[];
+  return rows.map(row => ({
+    id: row.id,
+    year: row.year,
+    month: row.month,
+    channelId: row.channelId,
+    targetAmount: parseFloat(row.targetAmount || '0'),
+    notes: row.notes,
+    createdBy: row.createdBy,
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
+    channelName: row.channelName,
+  }));
+}
+
+export async function getRevenueGoal(year: number, month: number, channelId?: number | null) {
+  const db = await getDb();
+  if (!db) return null;
+
+  const channelCondition = channelId === null || channelId === undefined 
+    ? 'AND channelId IS NULL' 
+    : `AND channelId = ${channelId}`;
+
+  const result = await db.execute(sql.raw(`
+    SELECT 
+      rg.id,
+      rg.year,
+      rg.month,
+      rg.channelId,
+      rg.targetAmount,
+      rg.notes,
+      rg.createdBy,
+      rg.createdAt,
+      rg.updatedAt,
+      COALESCE(sc.name, 'Geral') as channelName
+    FROM revenueGoals rg
+    LEFT JOIN salesChannels sc ON rg.channelId = sc.id
+    WHERE rg.year = ${year} AND rg.month = ${month} ${channelCondition}
+    LIMIT 1
+  `));
+
+  const rows = result[0] as unknown as any[];
+  if (rows.length === 0) return null;
+
+  const row = rows[0];
+  return {
+    id: row.id,
+    year: row.year,
+    month: row.month,
+    channelId: row.channelId,
+    targetAmount: parseFloat(row.targetAmount || '0'),
+    notes: row.notes,
+    createdBy: row.createdBy,
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
+    channelName: row.channelName,
+  };
+}
+
+export async function createRevenueGoal(data: {
+  year: number;
+  month: number;
+  channelId?: number | null;
+  targetAmount: number;
+  notes?: string;
+  createdBy: string;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const channelValue = data.channelId === null || data.channelId === undefined ? 'NULL' : data.channelId;
+  const notesValue = data.notes ? `'${data.notes.replace(/'/g, "''")}'` : 'NULL';
+
+  await db.execute(sql.raw(`
+    INSERT INTO revenueGoals (year, month, channelId, targetAmount, notes, createdBy)
+    VALUES (${data.year}, ${data.month}, ${channelValue}, ${data.targetAmount}, ${notesValue}, '${data.createdBy}')
+  `));
+
+  return { success: true };
+}
+
+export async function updateRevenueGoal(id: number, data: {
+  targetAmount?: number;
+  notes?: string;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const updates: string[] = [];
+  if (data.targetAmount !== undefined) {
+    updates.push(`targetAmount = ${data.targetAmount}`);
+  }
+  if (data.notes !== undefined) {
+    updates.push(`notes = '${data.notes.replace(/'/g, "''")}'`);
+  }
+
+  if (updates.length === 0) return { success: true };
+
+  await db.execute(sql.raw(`
+    UPDATE revenueGoals
+    SET ${updates.join(', ')}
+    WHERE id = ${id}
+  `));
+
+  return { success: true };
+}
+
+export async function deleteRevenueGoal(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db.execute(sql.raw(`DELETE FROM revenueGoals WHERE id = ${id}`));
+  return { success: true };
+}
+
+export async function upsertRevenueGoal(data: {
+  year: number;
+  month: number;
+  channelId?: number | null;
+  targetAmount: number;
+  notes?: string;
+  createdBy: string;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  // Verificar se já existe
+  const existing = await getRevenueGoal(data.year, data.month, data.channelId);
+  
+  if (existing) {
+    return updateRevenueGoal(existing.id, {
+      targetAmount: data.targetAmount,
+      notes: data.notes,
+    });
+  } else {
+    return createRevenueGoal(data);
+  }
+}
+
+export async function getRevenueGoalProgress(year: number, month: number) {
+  const db = await getDb();
+  if (!db) return null;
+
+  // Buscar metas do mês
+  const goals = await db.execute(sql.raw(`
+    SELECT 
+      rg.id,
+      rg.channelId,
+      rg.targetAmount,
+      COALESCE(sc.name, 'Geral') as channelName,
+      COALESCE(sc.code, 'ALL') as channelCode
+    FROM revenueGoals rg
+    LEFT JOIN salesChannels sc ON rg.channelId = sc.id
+    WHERE rg.year = ${year} AND rg.month = ${month}
+  `));
+
+  const goalsRows = goals[0] as unknown as any[];
+  if (goalsRows.length === 0) return null;
+
+  // Buscar faturamento do mês
+  const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
+  const endDate = new Date(year, month, 0).toISOString().split('T')[0]; // Último dia do mês
+
+  const revenue = await db.execute(sql.raw(`
+    SELECT 
+      COALESCE(s.channelId, 0) as channelId,
+      SUM(s.finalAmount) as totalRevenue
+    FROM sales s
+    WHERE s.status = 'ACTIVE'
+      AND DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) >= '${startDate}'
+      AND DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) <= '${endDate}'
+    GROUP BY s.channelId
+  `));
+
+  const revenueRows = revenue[0] as unknown as any[];
+  const revenueByChannel: Record<number, number> = {};
+  let totalRevenue = 0;
+
+  for (const row of revenueRows) {
+    const channelId = row.channelId || 0;
+    const amount = parseFloat(row.totalRevenue || '0');
+    revenueByChannel[channelId] = amount;
+    totalRevenue += amount;
+  }
+
+  // Montar resultado
+  const result = goalsRows.map(goal => {
+    const channelId = goal.channelId;
+    const targetAmount = parseFloat(goal.targetAmount || '0');
+    let currentRevenue = 0;
+
+    if (channelId === null) {
+      // Meta geral - soma de todos os canais
+      currentRevenue = totalRevenue;
+    } else {
+      // Meta específica do canal
+      currentRevenue = revenueByChannel[channelId] || 0;
+    }
+
+    const progress = targetAmount > 0 ? (currentRevenue / targetAmount) * 100 : 0;
+    const remaining = Math.max(0, targetAmount - currentRevenue);
+
+    return {
+      id: goal.id,
+      channelId,
+      channelName: goal.channelName,
+      channelCode: goal.channelCode,
+      targetAmount,
+      currentRevenue,
+      progress: Math.round(progress * 10) / 10, // 1 casa decimal
+      remaining,
+      achieved: currentRevenue >= targetAmount,
+    };
+  });
+
+  return {
+    year,
+    month,
+    goals: result,
+    totalTarget: result.reduce((sum, g) => sum + g.targetAmount, 0),
+    totalRevenue,
+    overallProgress: result.length > 0 
+      ? Math.round((totalRevenue / result.reduce((sum, g) => sum + g.targetAmount, 0)) * 1000) / 10 
+      : 0,
+  };
+}
+
+
+// ==================== FECHAMENTO MENSAL ====================
+
+export async function getMonthlyClosing(year: number, month: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
+  const endDate = new Date(year, month, 0).toISOString().split('T')[0]; // Último dia do mês
+
+  // 1. VENDAS - Faturamento por tipo (simplificado para compatibilidade)
+  const salesResult = await db.execute(sql.raw(`
+    SELECT 
+      s.saleType,
+      COUNT(*) as salesCount,
+      SUM(s.finalAmount) as revenue,
+      SUM(s.subtotal) as subtotal
+    FROM sales s
+    WHERE s.status = 'ACTIVE'
+      AND DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) >= '${startDate}'
+      AND DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) <= '${endDate}'
+    GROUP BY s.saleType
+  `));
+
+  // Buscar custo total separadamente
+  const costResult = await db.execute(sql.raw(`
+    SELECT 
+      SUM(si.quantity * p.avgCost) as totalCost
+    FROM saleItems si
+    INNER JOIN sales s ON si.saleId = s.id
+    INNER JOIN products p ON si.productId = p.id
+    WHERE s.status = 'ACTIVE'
+      AND DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) >= '${startDate}'
+      AND DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) <= '${endDate}'
+  `));
+  const totalCostValue = parseFloat((costResult[0] as unknown as any[])[0]?.totalCost || '0');
+
+  const salesRows = salesResult[0] as unknown as any[];
+  const salesByType: Record<string, { count: number; revenue: number; cost: number }> = {};
+  let totalSales = { count: 0, revenue: 0, cost: totalCostValue };
+
+  for (const row of salesRows) {
+    const type = row.saleType;
+    if (!type) continue;
+    
+    const data = {
+      count: parseInt(row.salesCount || '0'),
+      revenue: parseFloat(row.revenue || '0'),
+      cost: 0, // Custo será distribuído proporcionalmente
+    };
+    
+    salesByType[type] = data;
+    totalSales.count += data.count;
+    totalSales.revenue += data.revenue;
+  }
+
+  // Distribuir custo proporcionalmente por tipo de venda
+  if (totalSales.revenue > 0) {
+    for (const type of Object.keys(salesByType)) {
+      const proportion = salesByType[type].revenue / totalSales.revenue;
+      salesByType[type].cost = totalCostValue * proportion;
+    }
+  }
+
+  // 2. COMPRAS - Total por tipo de documento
+  const purchasesResult = await db.execute(sql.raw(`
+    SELECT 
+      po.docType,
+      COUNT(*) as purchaseCount,
+      SUM(po.totalAmount) as totalAmount
+    FROM purchaseOrders po
+    WHERE po.status = 'CONFIRMED'
+      AND DATE(CONVERT_TZ(po.postingDate, '+00:00', '-03:00')) >= '${startDate}'
+      AND DATE(CONVERT_TZ(po.postingDate, '+00:00', '-03:00')) <= '${endDate}'
+    GROUP BY po.docType
+  `));
+
+  const purchasesRows = purchasesResult[0] as unknown as any[];
+  const purchasesByType: Record<string, { count: number; amount: number }> = {};
+  let totalPurchases = { count: 0, amount: 0 };
+
+  for (const row of purchasesRows) {
+    const type = row.docType;
+    if (!type) continue;
+    
+    const data = {
+      count: parseInt(row.purchaseCount || '0'),
+      amount: parseFloat(row.totalAmount || '0'),
+    };
+    
+    purchasesByType[type] = data;
+    totalPurchases.count += data.count;
+    totalPurchases.amount += data.amount;
+  }
+
+  // 3. DESPESAS - Total por categoria
+  const expensesResult = await db.execute(sql.raw(`
+    SELECT 
+      ec.id as categoryId,
+      ec.name as categoryName,
+      COUNT(*) as expenseCount,
+      SUM(e.amount) as totalAmount
+    FROM expenses e
+    LEFT JOIN expenseCategories ec ON e.categoryId = ec.id
+    WHERE e.status != 'CANCELADA'
+      AND DATE(CONVERT_TZ(e.createdAt, '+00:00', '-03:00')) >= '${startDate}'
+      AND DATE(CONVERT_TZ(e.createdAt, '+00:00', '-03:00')) <= '${endDate}'
+    GROUP BY ec.id, ec.name
+  `));
+
+  const expensesRows = expensesResult[0] as unknown as any[];
+  const expensesByCategory: Array<{ categoryId: number; categoryName: string; count: number; amount: number }> = [];
+  let totalExpenses = { count: 0, amount: 0 };
+
+  for (const row of expensesRows) {
+    const data = {
+      categoryId: row.categoryId || 0,
+      categoryName: row.categoryName || 'Sem Categoria',
+      count: parseInt(row.expenseCount || '0'),
+      amount: parseFloat(row.totalAmount || '0'),
+    };
+    expensesByCategory.push(data);
+    totalExpenses.count += data.count;
+    totalExpenses.amount += data.amount;
+  }
+
+  // 4. CONTAS A PAGAR - Pagamentos realizados no mês (queries separadas para compatibilidade)
+  const purchasePaymentsResult = await db.execute(sql.raw(`
+    SELECT COALESCE(SUM(amount), 0) as total
+    FROM purchaseInstallments 
+    WHERE paidDate IS NOT NULL
+      AND DATE(CONVERT_TZ(paidDate, '+00:00', '-03:00')) >= '${startDate}'
+      AND DATE(CONVERT_TZ(paidDate, '+00:00', '-03:00')) <= '${endDate}'
+  `));
+
+  const expensePaymentsResult = await db.execute(sql.raw(`
+    SELECT COALESCE(SUM(paymentAmount), 0) as total
+    FROM expenseInstallments 
+    WHERE paymentDate IS NOT NULL
+      AND DATE(CONVERT_TZ(paymentDate, '+00:00', '-03:00')) >= '${startDate}'
+      AND DATE(CONVERT_TZ(paymentDate, '+00:00', '-03:00')) <= '${endDate}'
+  `));
+
+  const purchasePaymentsRows = purchasePaymentsResult[0] as unknown as any[];
+  const expensePaymentsRows = expensePaymentsResult[0] as unknown as any[];
+  const purchasePayments = parseFloat(purchasePaymentsRows[0]?.total || '0');
+  const expensePayments = parseFloat(expensePaymentsRows[0]?.total || '0');
+
+  // 5. CONTAS A RECEBER - Recebimentos no mês
+  const receivablesResult = await db.execute(sql.raw(`
+    SELECT COALESCE(SUM(paidAmount), 0) as totalReceived
+    FROM receivablePayments
+    WHERE DATE(CONVERT_TZ(paidDate, '+00:00', '-03:00')) >= '${startDate}'
+      AND DATE(CONVERT_TZ(paidDate, '+00:00', '-03:00')) <= '${endDate}'
+  `));
+
+  const receivablesRows = receivablesResult[0] as unknown as any[];
+  const totalReceived = parseFloat(receivablesRows[0]?.totalReceived || '0');
+
+  // 6. Calcular resultados
+  const grossProfit = totalSales.revenue - totalSales.cost;
+  const grossMargin = totalSales.revenue > 0 ? (grossProfit / totalSales.revenue) * 100 : 0;
+  const netResult = totalSales.revenue - totalSales.cost - totalExpenses.amount;
+  const netMargin = totalSales.revenue > 0 ? (netResult / totalSales.revenue) * 100 : 0;
+
+  return {
+    period: {
+      year,
+      month,
+      startDate,
+      endDate,
+      monthName: new Date(year, month - 1, 1).toLocaleString('pt-BR', { month: 'long' }),
+    },
+    sales: {
+      total: totalSales,
+      byType: salesByType,
+    },
+    purchases: {
+      total: totalPurchases,
+      byType: purchasesByType,
+    },
+    expenses: {
+      total: totalExpenses,
+      byCategory: expensesByCategory,
+    },
+    cashFlow: {
+      received: totalReceived,
+      paid: purchasePayments + expensePayments,
+      purchasePayments,
+      expensePayments,
+      balance: totalReceived - (purchasePayments + expensePayments),
+    },
+    results: {
+      revenue: totalSales.revenue,
+      cost: totalSales.cost,
+      grossProfit,
+      grossMargin: Math.round(grossMargin * 10) / 10,
+      operationalExpenses: totalExpenses.amount,
+      netResult,
+      netMargin: Math.round(netMargin * 10) / 10,
+    },
+  };
+}
+
+export async function getYearlyClosing(year: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const monthlyData: any[] = [];
+  
+  // Buscar dados de cada mês
+  for (let month = 1; month <= 12; month++) {
+    const data = await getMonthlyClosing(year, month);
+    monthlyData.push({
+      month,
+      monthName: data.period.monthName,
+      ...data.results,
+      salesCount: data.sales.total.count,
+      purchasesTotal: data.purchases.total.amount,
+      expensesTotal: data.expenses.total.amount,
+    });
+  }
+
+  // Calcular totais anuais
+  const yearTotals = monthlyData.reduce((acc, m) => ({
+    revenue: acc.revenue + m.revenue,
+    cost: acc.cost + m.cost,
+    grossProfit: acc.grossProfit + m.grossProfit,
+    operationalExpenses: acc.operationalExpenses + m.operationalExpenses,
+    netResult: acc.netResult + m.netResult,
+    salesCount: acc.salesCount + m.salesCount,
+    purchasesTotal: acc.purchasesTotal + m.purchasesTotal,
+    expensesTotal: acc.expensesTotal + m.expensesTotal,
+  }), {
+    revenue: 0,
+    cost: 0,
+    grossProfit: 0,
+    operationalExpenses: 0,
+    netResult: 0,
+    salesCount: 0,
+    purchasesTotal: 0,
+    expensesTotal: 0,
+  });
+
+  yearTotals.grossMargin = yearTotals.revenue > 0 
+    ? Math.round((yearTotals.grossProfit / yearTotals.revenue) * 1000) / 10 
+    : 0;
+  yearTotals.netMargin = yearTotals.revenue > 0 
+    ? Math.round((yearTotals.netResult / yearTotals.revenue) * 1000) / 10 
+    : 0;
+
+  return {
+    year,
+    months: monthlyData,
+    totals: yearTotals,
+  };
 }

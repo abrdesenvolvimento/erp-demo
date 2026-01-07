@@ -22,7 +22,7 @@ import {
 import { APP_LOGO, APP_TITLE, getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
-import { LayoutDashboard, LogOut, PanelLeft, Users, Package, ShoppingCart, BarChart3, ShoppingBag, Receipt, DollarSign, CreditCard, UserCircle, Shield, TrendingUp, Bike, ChevronDown, ChevronRight, PieChart, GitCompare } from "lucide-react";
+import { LayoutDashboard, LogOut, PanelLeft, Users, Package, ShoppingCart, BarChart3, ShoppingBag, Receipt, DollarSign, CreditCard, UserCircle, Shield, TrendingUp, Bike, ChevronDown, ChevronRight, PieChart, GitCompare, Wallet, Target, FileText } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
@@ -32,13 +32,19 @@ import { Button } from "./ui/button";
 const mainMenuItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/", roles: ["admin", "operacional", "consultor"] },
   { icon: Package, label: "Produtos", path: "/produtos", roles: ["admin", "operacional", "consultor"] },
-  { icon: ShoppingBag, label: "Compras", path: "/compras", roles: ["admin", "consultor"] },
   { icon: ShoppingCart, label: "Vendas", path: "/vendas", roles: ["admin", "operacional", "consultor"] },
   { icon: Users, label: "Parceiros", path: "/parceiros", roles: ["admin", "operacional", "consultor"] },
+  { icon: Shield, label: "Gerenciar Usuários", path: "/usuarios", roles: ["admin"] },
+];
+
+// Submenu Financeiro
+const financeMenuItems = [
+  { icon: ShoppingBag, label: "Compras", path: "/compras", roles: ["admin", "consultor"] },
   { icon: Receipt, label: "Despesas", path: "/despesas", roles: ["admin", "consultor"] },
   { icon: DollarSign, label: "Contas a Receber", path: "/contas-receber", roles: ["admin", "operacional", "consultor"] },
   { icon: CreditCard, label: "Contas a Pagar", path: "/contas-pagar", roles: ["admin", "consultor"] },
-  { icon: Shield, label: "Gerenciar Usuários", path: "/usuarios", roles: ["admin"] },
+  { icon: Target, label: "Metas", path: "/metas", roles: ["admin"] },
+  { icon: FileText, label: "Fechamento Mensal", path: "/fechamento", roles: ["admin"] },
 ];
 
 // Submenu de Análises
@@ -57,6 +63,7 @@ const getMenuItemsForRole = (items: typeof mainMenuItems, role?: string) => {
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";
 const ANALYSIS_SUBMENU_KEY = "analysis-submenu-expanded";
+const FINANCE_SUBMENU_KEY = "finance-submenu-expanded";
 const DEFAULT_WIDTH = 280;
 const MIN_WIDTH = 200;
 const MAX_WIDTH = 480;
@@ -154,15 +161,25 @@ function DashboardLayoutContent({
     return saved === 'true';
   });
   
+  // Estado do submenu financeiro
+  const [financeExpanded, setFinanceExpanded] = useState(() => {
+    const saved = localStorage.getItem(FINANCE_SUBMENU_KEY);
+    return saved === 'true';
+  });
+  
   // Filtra itens por role
   const filteredMainItems = getMenuItemsForRole(mainMenuItems, user?.role);
   const filteredAnalysisItems = getMenuItemsForRole(analysisMenuItems, user?.role);
+  const filteredFinanceItems = getMenuItemsForRole(financeMenuItems, user?.role);
   
   // Verifica se algum item de análise está ativo
   const isAnalysisActive = filteredAnalysisItems.some(item => item.path === location);
   
+  // Verifica se algum item financeiro está ativo
+  const isFinanceActive = filteredFinanceItems.some(item => item.path === location);
+  
   // Encontra o item ativo atual
-  const allItems = [...filteredMainItems, ...filteredAnalysisItems];
+  const allItems = [...filteredMainItems, ...filteredAnalysisItems, ...filteredFinanceItems];
   const activeMenuItem = allItems.find(item => item.path === location);
   
   const isMobile = useIsMobile();
@@ -171,6 +188,10 @@ function DashboardLayoutContent({
   useEffect(() => {
     localStorage.setItem(ANALYSIS_SUBMENU_KEY, analysisExpanded.toString());
   }, [analysisExpanded]);
+  
+  useEffect(() => {
+    localStorage.setItem(FINANCE_SUBMENU_KEY, financeExpanded.toString());
+  }, [financeExpanded]);
 
   // Expande automaticamente o submenu se um item de análise estiver ativo
   useEffect(() => {
@@ -178,6 +199,13 @@ function DashboardLayoutContent({
       setAnalysisExpanded(true);
     }
   }, [isAnalysisActive]);
+  
+  // Expande automaticamente o submenu se um item financeiro estiver ativo
+  useEffect(() => {
+    if (isFinanceActive && !financeExpanded) {
+      setFinanceExpanded(true);
+    }
+  }, [isFinanceActive]);
 
   useEffect(() => {
     if (isCollapsed) {
@@ -236,6 +264,19 @@ function DashboardLayoutContent({
     if (user?.role !== 'admin') {
       // Consultor só pode ver Análise de Faturamento (antigo Relatórios)
       return item.path === '/relatorios';
+    }
+    return true;
+  });
+  
+  // Filtra itens financeiros por role
+  const visibleFinanceItems = filteredFinanceItems.filter(item => {
+    if (user?.role === 'operacional') {
+      // Operacional só pode ver Contas a Receber
+      return item.path === '/contas-receber';
+    }
+    if (user?.role === 'consultor') {
+      // Consultor pode ver tudo exceto Compras e Despesas (só visualização)
+      return true;
     }
     return true;
   });
@@ -308,6 +349,77 @@ function DashboardLayoutContent({
                   </SidebarMenuItem>
                 );
               })}
+
+              {/* Submenu Financeiro */}
+              {visibleFinanceItems.length > 0 && (
+                <>
+                  {/* Separador visual */}
+                  <div className="my-2 mx-2 border-t border-border/50" />
+                  
+                  {/* Cabeçalho do submenu */}
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      onClick={() => setFinanceExpanded(!financeExpanded)}
+                      tooltip="Financeiro"
+                      className={`h-10 transition-all font-medium ${isFinanceActive ? "bg-accent text-accent-foreground" : ""}`}
+                    >
+                      <Wallet className={`h-4 w-4 ${isFinanceActive ? "text-primary" : ""}`} />
+                      <span className="flex-1">Financeiro</span>
+                      {!isCollapsed && (
+                        financeExpanded ? (
+                          <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                        ) : (
+                          <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                        )
+                      )}
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+
+                  {/* Itens do submenu */}
+                  {financeExpanded && !isCollapsed && (
+                    <div className="ml-4 border-l border-border/50 pl-2">
+                      {visibleFinanceItems.map(item => {
+                        const isActive = location === item.path;
+                        return (
+                          <SidebarMenuItem key={item.path}>
+                            <SidebarMenuButton
+                              isActive={isActive}
+                              onClick={() => setLocation(item.path)}
+                              tooltip={item.label}
+                              className={`h-9 transition-all font-normal text-sm`}
+                            >
+                              <item.icon
+                                className={`h-4 w-4 ${isActive ? "text-primary" : ""}`}
+                              />
+                              <span>{item.label}</span>
+                            </SidebarMenuButton>
+                          </SidebarMenuItem>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* Quando colapsado, mostra itens como tooltip */}
+                  {isCollapsed && visibleFinanceItems.map(item => {
+                    const isActive = location === item.path;
+                    return (
+                      <SidebarMenuItem key={item.path}>
+                        <SidebarMenuButton
+                          isActive={isActive}
+                          onClick={() => setLocation(item.path)}
+                          tooltip={item.label}
+                          className={`h-10 transition-all font-normal`}
+                        >
+                          <item.icon
+                            className={`h-4 w-4 ${isActive ? "text-primary" : ""}`}
+                          />
+                          <span>{item.label}</span>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })}
+                </>
+              )}
 
               {/* Submenu de Análises */}
               {visibleAnalysisItems.length > 0 && (

@@ -16,6 +16,8 @@ import AnáliseVendas from "./pages/AnáliseVendas";
 import AnaliseDelivery from "./pages/AnaliseDelivery";
 import AnaliseCanal from "./pages/AnaliseCanal";
 import AnaliseDespesas from "./pages/AnaliseDespesas";
+import Metas from "./pages/Metas";
+import FechamentoMensal from "./pages/FechamentoMensal";
 import AccessDenied from "./pages/AccessDenied";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
@@ -38,6 +40,8 @@ function Router() {
       <Route path="/analise-delivery" component={AnaliseDelivery} />
       <Route path="/analise-canal" component={AnaliseCanal} />
       <Route path="/analise-despesas" component={AnaliseDespesas} />
+      <Route path="/metas" component={Metas} />
+      <Route path="/fechamento" component={FechamentoMensal} />
       <Route path="/minha-conta" component={MinhaConta} />
       <Route path="/acesso-negado" component={AccessDenied} />
       <Route path="/404" component={NotFound} />

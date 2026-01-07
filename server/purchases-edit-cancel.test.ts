@@ -27,7 +27,7 @@ describe('Purchases - Edit and Cancel', () => {
   beforeAll(async () => {
     // Criar fornecedor de teste
     const supplier = await caller.partners.create({
-      type: 'SUPPLIER',
+      partnerType: 'SUPPLIER',
       name: 'Fornecedor Teste Cancelamento',
       cpfCnpj: '12345678901234',
       email: 'fornecedor-cancel@test.com',
@@ -41,19 +41,20 @@ describe('Purchases - Edit and Cancel', () => {
     });
     testSupplierId = supplier.id;
 
-    // Criar produto de teste
+    // Criar produto de teste - usar channelId numérico (1=Balcão, 2=Delivery, etc)
     const product = await caller.products.create({
       name: 'Produto Teste Cancelamento',
       ean: '7891234567890',
-      category: 'Bebidas',
+      categoryId: 1,
       subcategoryId: 1,
+      uom: 'UN',
       currentStock: 100,
       minStock: 10,
       avgCost: '5.00',
       prices: {
-        BALCAO: 10.00,
-        DELIVERY: 12.00,
-        A_PRAZO: 11.00,
+        '1': '10.00',  // Balcão
+        '2': '12.00',  // Delivery
+        '3': '11.00',  // A Prazo
       },
     });
     testProductId = product.id;

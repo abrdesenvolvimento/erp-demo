@@ -470,3 +470,25 @@ export const customerDebits = mysqlTable("customerDebits", {
 
 export type CustomerDebit = typeof customerDebits.$inferSelect;
 export type InsertCustomerDebit = typeof customerDebits.$inferInsert;
+
+
+// ==================== METAS DE FATURAMENTO ====================
+
+// Metas mensais de faturamento
+export const revenueGoals = mysqlTable("revenueGoals", {
+  id: int("id").primaryKey().autoincrement(),
+  year: int("year").notNull(), // Ano da meta
+  month: int("month").notNull(), // Mês da meta (1-12)
+  channelId: int("channelId"), // Canal específico (null = meta geral)
+  targetAmount: decimal("targetAmount", { precision: 12, scale: 2 }).notNull(), // Valor da meta
+  notes: text("notes"), // Observações
+  createdBy: varchar("createdBy", { length: 64 }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow(),
+}, (table) => ({
+  yearMonthIdx: index("year_month_idx").on(table.year, table.month),
+  channelIdx: index("channel_idx").on(table.channelId),
+}));
+
+export type RevenueGoal = typeof revenueGoals.$inferSelect;
+export type InsertRevenueGoal = typeof revenueGoals.$inferInsert;

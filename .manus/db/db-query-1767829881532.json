@@ -1,0 +1,64 @@
+{
+  "query": "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'purchaseInstallments'",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'purchaseInstallments'",
+  "rows": [
+    {
+      "COLUMN_NAME": "id"
+    },
+    {
+      "COLUMN_NAME": "purchaseOrderId"
+    },
+    {
+      "COLUMN_NAME": "installmentNumber"
+    },
+    {
+      "COLUMN_NAME": "dueDate"
+    },
+    {
+      "COLUMN_NAME": "amount"
+    },
+    {
+      "COLUMN_NAME": "paidDate"
+    },
+    {
+      "COLUMN_NAME": "status"
+    },
+    {
+      "COLUMN_NAME": "createdAt"
+    },
+    {
+      "COLUMN_NAME": "updatedAt"
+    },
+    {
+      "COLUMN_NAME": "id"
+    },
+    {
+      "COLUMN_NAME": "purchaseOrderId"
+    },
+    {
+      "COLUMN_NAME": "installmentNumber"
+    },
+    {
+      "COLUMN_NAME": "dueDate"
+    },
+    {
+      "COLUMN_NAME": "amount"
+    },
+    {
+      "COLUMN_NAME": "paidDate"
+    },
+    {
+      "COLUMN_NAME": "status"
+    },
+    {
+      "COLUMN_NAME": "createdAt"
+    },
+    {
+      "COLUMN_NAME": "updatedAt"
+    }
+  ],
+  "messages": [],
+  "stdout": "COLUMN_NAME\nid\npurchaseOrderId\ninstallmentNumber\ndueDate\namount\npaidDate\nstatus\ncreatedAt\nupdatedAt\nid\npurchaseOrderId\ninstallmentNumber\ndueDate\namount\npaidDate\nstatus\ncreatedAt\nupdatedAt\n",
+  "stderr": "",
+  "execution_time_ms": 55
+}

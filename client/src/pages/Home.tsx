@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { trpc } from "@/lib/trpc";
-import { TrendingUp, TrendingDown, AlertTriangle, ShoppingCart, DollarSign, Calendar, Package, Clock, ChevronDown, ChevronRight } from "lucide-react";
+import { TrendingUp, TrendingDown, AlertTriangle, ShoppingCart, DollarSign, Calendar, Package, Clock, ChevronDown, ChevronRight, Target } from "lucide-react";
 import { Link } from "wouter";
 import { useState } from "react";
 import { SaleDetailsModal } from "@/components/SaleDetailsModal";
@@ -18,6 +18,12 @@ export default function Home() {
   const { data: purchaseStats, isLoading: isPurchaseLoading } = trpc.dashboard.purchaseStats.useQuery();
   const { data: marginData, isLoading: isMarginLoading } = trpc.dashboard.grossMarginByCategory.useQuery();
   const { data: deliveryMargin, isLoading: isDeliveryMarginLoading } = trpc.dashboard.deliveryNetMargin.useQuery();
+  const currentYear = new Date().getFullYear();
+  const currentMonth = new Date().getMonth() + 1;
+  const { data: goalProgress, isLoading: isGoalProgressLoading } = trpc.goals.progress.useQuery(
+    { year: currentYear, month: currentMonth },
+    { enabled: isAdmin }
+  );
   const [showLowStockModal, setShowLowStockModal] = useState(false);
   const [showExpiringModal, setShowExpiringModal] = useState(false);
   const [showStockValueModal, setShowStockValueModal] = useState(false);
@@ -358,6 +364,55 @@ export default function Home() {
                 )}
               </CardContent>
             </Card>
+          )}
+
+          {/* Card de Meta do Mês - Apenas para Admin */}
+          {isAdmin && (
+            <Link href="/metas">
+              <Card 
+                className="border-t-4 border-t-emerald-500 cursor-pointer hover:shadow-md transition-shadow"
+              >
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">
+                    Meta do Mês
+                  </CardTitle>
+                  <Target className="h-4 w-4 text-emerald-500" />
+                </CardHeader>
+                <CardContent>
+                  {isGoalProgressLoading ? (
+                    <div className="text-sm text-muted-foreground">Carregando...</div>
+                  ) : goalProgress && goalProgress.goals.length > 0 ? (
+                    <>
+                      <div className={`text-2xl font-bold ${
+                        goalProgress.overallProgress >= 100 
+                          ? 'text-green-600' 
+                          : goalProgress.overallProgress >= 80 
+                            ? 'text-amber-600' 
+                            : 'text-emerald-600'
+                      }`}>
+                        {goalProgress.overallProgress.toFixed(1)}%
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {goalProgress.overallProgress >= 100 
+                          ? 'Meta atingida!' 
+                          : `Faltam R$ ${formatCurrency(goalProgress.goals[0]?.remaining || 0)}`
+                        }
+                      </p>
+                      <p className="text-xs text-emerald-600 mt-2">
+                        Clique para gerenciar metas
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-sm text-muted-foreground">Nenhuma meta configurada</p>
+                      <p className="text-xs text-emerald-600 mt-2">
+                        Clique para criar metas
+                      </p>
+                    </>
+                  )}
+                </CardContent>
+              </Card>
+            </Link>
           )}
         </div>
 

@@ -99,13 +99,13 @@
 - [ ] **Controle de Acesso** - Testar perfis Admin/User para validar restrições
 - [ ] **Desempenho nas Análises** - Verificar o que podemos fazer para melhorar performance das análises
 - [ ] **Exportação de Relatórios** - Implementar exportação para Excel/PDF
-- [ ] **Fechamento Mensal e Consolidado** - Consolidar informações de Vendas, Compras, Despesas e demais informações para chegar ao resultado final do mês e Ano em R$ e %
+- [x] **Fechamento Mensal e Consolidado** - IMPLEMENTADO! Relatório completo em Financeiro > Fechamento Mensal com DRE simplificado, vendas por tipo, compras por documento, despesas por categoria, fluxo de caixa e resultado líquido
 - [x] **Filtro por subcategoria em Produtos** - IMPLEMENTADO! Adicionado filtro por categoria e subcategoria na listagem de produtos
 - [x] **Exportação de Produtos para Excel** - IMPLEMENTADO! Botão "Exportar Excel" na tela de Produtos com todas as informações incluindo Preço Balcão, Preço Delivery e Preço A Prazo
 - [ ] **Histórico de Alterações** - Log de auditoria para rastrear mudanças
-- [ ] **Reorganizar Menu Financeiro** - Submenu agrupando Contas a Pagar, Contas a Receber, Despesas e Compras
+- [x] **Reorganizar Menu Financeiro** - IMPLEMENTADO! Submenu "Financeiro" com Compras, Despesas, Contas a Receber e Contas a Pagar. Expande/colapsa automaticamente e mantém estado no localStorage
 - [ ] **Rotina de Backup** - Definir local e criar rotina automática
-- [ ] **Sistema de Metas** - Cadastro de metas de faturamento (mensal), acompanhamento no Dashboard, indicadores de atingimento, metas por canal
+- [x] **Sistema de Metas** - IMPLEMENTADO! Cadastro de metas mensais por canal, card no Dashboard com progresso, página de gerenciamento em Financeiro > Metas
 
 ---
 

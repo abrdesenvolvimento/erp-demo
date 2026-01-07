@@ -1849,6 +1849,81 @@ export const appRouter = router({
         );
       }),
   }),
+
+  // ==================== FECHAMENTO MENSAL ====================
+  closing: router({
+    monthly: adminProcedure
+      .input(z.object({
+        year: z.number(),
+        month: z.number(),
+      }))
+      .query(async ({ input }) => {
+        return await db.getMonthlyClosing(input.year, input.month);
+      }),
+
+    yearly: adminProcedure
+      .input(z.object({
+        year: z.number(),
+      }))
+      .query(async ({ input }) => {
+        return await db.getYearlyClosing(input.year);
+      }),
+  }),
+
+  // ==================== METAS DE FATURAMENTO ====================
+  goals: router({
+    list: adminProcedure
+      .input(z.object({
+        year: z.number().optional(),
+      }).optional())
+      .query(async ({ input }) => {
+        return await db.getRevenueGoals(input?.year);
+      }),
+
+    get: adminProcedure
+      .input(z.object({
+        year: z.number(),
+        month: z.number(),
+        channelId: z.number().nullable().optional(),
+      }))
+      .query(async ({ input }) => {
+        return await db.getRevenueGoal(input.year, input.month, input.channelId);
+      }),
+
+    upsert: adminProcedure
+      .input(z.object({
+        year: z.number(),
+        month: z.number(),
+        channelId: z.number().nullable().optional(),
+        targetAmount: z.number().positive(),
+        notes: z.string().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        return await db.upsertRevenueGoal({
+          year: input.year,
+          month: input.month,
+          channelId: input.channelId,
+          targetAmount: input.targetAmount,
+          notes: input.notes,
+          createdBy: ctx.user.id,
+        });
+      }),
+
+    delete: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        return await db.deleteRevenueGoal(input.id);
+      }),
+
+    progress: protectedProcedure
+      .input(z.object({
+        year: z.number(),
+        month: z.number(),
+      }))
+      .query(async ({ input }) => {
+        return await db.getRevenueGoalProgress(input.year, input.month);
+      }),
+  }),
 });
 
 export type AppRouter = typeof appRouter;
