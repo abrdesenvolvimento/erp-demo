@@ -1,0 +1,15 @@
+{
+  "query": "SELECT \n  COUNT(*) as total_vendas,\n  SUM(CAST(finalAmount AS DECIMAL(10,2))) as faturamento_total,\n  SUM(CAST(finalAmount AS DECIMAL(10,2))) * 0.07 as taxa_ifood\nFROM sales \nWHERE saleType = 'DELIVERY' \n  AND status != 'CANCELLED'\n  AND MONTH(CONVERT_TZ(saleDate, '+00:00', '-03:00')) = 1\n  AND YEAR(CONVERT_TZ(saleDate, '+00:00', '-03:00')) = 2026",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  COUNT(*) as total_vendas,\n  SUM(CAST(finalAmount AS DECIMAL(10,2))) as faturamento_total,\n  SUM(CAST(finalAmount AS DECIMAL(10,2))) * 0.07 as taxa_ifood\nFROM sales \nWHERE saleType = 'DELIVERY' \n  AND status != 'CANCELLED'\n  AND MONTH(CONVERT_TZ(saleDate, '+00:00', '-03:00')) = 1\n  AND YEAR(CONVERT_TZ(saleDate, '+00:00', '-03:00')) = 2026",
+  "rows": [
+    {
+      "total_vendas": "76",
+      "faturamento_total": "3022.86",
+      "taxa_ifood": "211.6002"
+    }
+  ],
+  "messages": [],
+  "stdout": "total_vendas\tfaturamento_total\ttaxa_ifood\n76\t3022.86\t211.6002\n",
+  "stderr": "",
+  "execution_time_ms": 204
+}

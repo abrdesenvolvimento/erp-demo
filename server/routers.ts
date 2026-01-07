@@ -1501,64 +1501,9 @@ export const appRouter = router({
     }),
     
     // Margem líquida delivery (deduzindo 7% de taxa iFood)
-    deliveryNetMargin: protectedProcedure.query(async ({ ctx }) => {
-      // Buscar vendas delivery do mês atual
-      const todayDateStr = new Date().toLocaleDateString('en-US', { timeZone: 'America/Sao_Paulo' });
-      const [month, day, year] = todayDateStr.split('/');
-      const today = new Date(`${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T00:00:00`);
-      
-      const allMonthSales = await db.getSales({ limit: 10000 });
-      
-      // Filtrar vendas delivery do mês
-      const deliverySales = allMonthSales.filter(s => {
-        if (!s.saleDate || s.status === 'CANCELLED' || s.saleType !== 'DELIVERY') return false;
-        
-        // Filtrar por usuário se for operacional
-        if (ctx.user?.role === 'operacional' && s.createdBy !== ctx.user.id) return false;
-        
-        const saleDateStr = new Date(s.saleDate).toLocaleDateString('en-US', { timeZone: 'America/Sao_Paulo' });
-        const [saleMonth, saleDay, saleYear] = saleDateStr.split('/');
-        
-        return parseInt(saleYear) === today.getFullYear() &&
-               parseInt(saleMonth) === (today.getMonth() + 1);
-      });
-      
-      // Calcular faturamento delivery
-      const deliveryRevenue = deliverySales.reduce((sum, sale) => 
-        sum + parseFloat(sale.finalAmount || '0'), 0
-      );
-      
-      // Buscar itens das vendas delivery para calcular custo
-      const deliverySaleIds = deliverySales.map(s => s.id);
-      let totalCost = 0;
-      
-      if (deliverySaleIds.length > 0) {
-        const items = await db.getSaleItemsBySaleIds(deliverySaleIds);
-        totalCost = items.reduce((sum, item) => {
-          const quantity = parseFloat(item.quantity?.toString() || '0');
-          const avgCost = parseFloat(item.avgCost?.toString() || '0');
-          return sum + (quantity * avgCost);
-        }, 0);
-      }
-      
-      // Calcular margem bruta
-      const grossProfit = deliveryRevenue - totalCost;
-      const grossMarginPercent = deliveryRevenue > 0 ? (grossProfit / deliveryRevenue) * 100 : 0;
-      
-      // Calcular margem líquida (deduzindo 7% de taxa)
-      const ifoodFee = deliveryRevenue * 0.07;
-      const netProfit = grossProfit - ifoodFee;
-      const netMarginPercent = deliveryRevenue > 0 ? (netProfit / deliveryRevenue) * 100 : 0;
-      
-      return {
-        deliveryRevenue: deliveryRevenue.toFixed(2),
-        totalCost: totalCost.toFixed(2),
-        grossProfit: grossProfit.toFixed(2),
-        grossMarginPercent: grossMarginPercent.toFixed(1),
-        ifoodFee: ifoodFee.toFixed(2),
-        netProfit: netProfit.toFixed(2),
-        netMarginPercent: netMarginPercent.toFixed(1),
-      };
+    // Usa query SQL otimizada para garantir consistência com outros cálculos do dashboard
+    deliveryNetMargin: protectedProcedure.query(async () => {
+      return await db.getDeliveryNetMarginOptimized();
     }),
   }),
 

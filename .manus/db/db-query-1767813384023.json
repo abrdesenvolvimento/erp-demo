@@ -1,0 +1,17 @@
+{
+  "query": "SELECT \n  SUM(CAST(s.finalAmount AS DECIMAL(10,2))) as faturamento,\n  SUM(si.quantity * p.avgCost) as custo_total,\n  SUM(CAST(s.finalAmount AS DECIMAL(10,2))) - SUM(si.quantity * p.avgCost) as lucro_bruto,\n  SUM(CAST(s.finalAmount AS DECIMAL(10,2))) * 0.07 as taxa_ifood,\n  SUM(CAST(s.finalAmount AS DECIMAL(10,2))) - SUM(si.quantity * p.avgCost) - (SUM(CAST(s.finalAmount AS DECIMAL(10,2))) * 0.07) as lucro_liquido\nFROM sales s\nINNER JOIN saleItems si ON si.saleId = s.id\nINNER JOIN products p ON si.productId = p.id\nWHERE s.saleType = 'DELIVERY' \n  AND s.status != 'CANCELLED'\n  AND MONTH(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) = MONTH(CONVERT_TZ(NOW(), '+00:00', '-03:00'))\n  AND YEAR(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) = YEAR(CONVERT_TZ(NOW(), '+00:00', '-03:00'))",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  SUM(CAST(s.finalAmount AS DECIMAL(10,2))) as faturamento,\n  SUM(si.quantity * p.avgCost) as custo_total,\n  SUM(CAST(s.finalAmount AS DECIMAL(10,2))) - SUM(si.quantity * p.avgCost) as lucro_bruto,\n  SUM(CAST(s.finalAmount AS DECIMAL(10,2))) * 0.07 as taxa_ifood,\n  SUM(CAST(s.finalAmount AS DECIMAL(10,2))) - SUM(si.quantity * p.avgCost) - (SUM(CAST(s.finalAmount AS DECIMAL(10,2))) * 0.07) as lucro_liquido\nFROM sales s\nINNER JOIN saleItems si ON si.saleId = s.id\nINNER JOIN products p ON si.productId = p.id\nWHERE s.saleType = 'DELIVERY' \n  AND s.status != 'CANCELLED'\n  AND MONTH(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) = MONTH(CONVERT_TZ(NOW(), '+00:00', '-03:00'))\n  AND YEAR(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) = YEAR(CONVERT_TZ(NOW(), '+00:00', '-03:00'))",
+  "rows": [
+    {
+      "faturamento": "6210.24",
+      "custo_total": "2086.53",
+      "lucro_bruto": "4123.71",
+      "taxa_ifood": "434.7168",
+      "lucro_liquido": "3688.9932"
+    }
+  ],
+  "messages": [],
+  "stdout": "faturamento\tcusto_total\tlucro_bruto\ttaxa_ifood\tlucro_liquido\n6210.24\t2086.53\t4123.71\t434.7168\t3688.9932\n",
+  "stderr": "",
+  "execution_time_ms": 174
+}

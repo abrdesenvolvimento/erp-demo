@@ -1,0 +1,14 @@
+{
+  "query": "SELECT \n  COUNT(*) as total_vendas,\n  SUM(CAST(finalAmount AS DECIMAL(10,2))) as faturamento_total\nFROM sales \nWHERE saleType = 'DELIVERY' \n  AND status != 'CANCELLED'\n  AND MONTH(CONVERT_TZ(saleDate, '+00:00', '-03:00')) = MONTH(CONVERT_TZ(NOW(), '+00:00', '-03:00'))\n  AND YEAR(CONVERT_TZ(saleDate, '+00:00', '-03:00')) = YEAR(CONVERT_TZ(NOW(), '+00:00', '-03:00'))",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  COUNT(*) as total_vendas,\n  SUM(CAST(finalAmount AS DECIMAL(10,2))) as faturamento_total\nFROM sales \nWHERE saleType = 'DELIVERY' \n  AND status != 'CANCELLED'\n  AND MONTH(CONVERT_TZ(saleDate, '+00:00', '-03:00')) = MONTH(CONVERT_TZ(NOW(), '+00:00', '-03:00'))\n  AND YEAR(CONVERT_TZ(saleDate, '+00:00', '-03:00')) = YEAR(CONVERT_TZ(NOW(), '+00:00', '-03:00'))",
+  "rows": [
+    {
+      "total_vendas": "76",
+      "faturamento_total": "3022.86"
+    }
+  ],
+  "messages": [],
+  "stdout": "total_vendas\tfaturamento_total\n76\t3022.86\n",
+  "stderr": "",
+  "execution_time_ms": 160
+}

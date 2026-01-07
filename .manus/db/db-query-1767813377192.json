@@ -1,0 +1,60 @@
+{
+  "query": "SELECT \n  id,\n  DATE(CONVERT_TZ(saleDate, '+00:00', '-03:00')) as data_venda,\n  finalAmount\nFROM sales \nWHERE saleType = 'DELIVERY' \n  AND status != 'CANCELLED'\n  AND MONTH(CONVERT_TZ(saleDate, '+00:00', '-03:00')) = MONTH(CONVERT_TZ(NOW(), '+00:00', '-03:00'))\n  AND YEAR(CONVERT_TZ(saleDate, '+00:00', '-03:00')) = YEAR(CONVERT_TZ(NOW(), '+00:00', '-03:00'))\nORDER BY saleDate DESC\nLIMIT 10",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  id,\n  DATE(CONVERT_TZ(saleDate, '+00:00', '-03:00')) as data_venda,\n  finalAmount\nFROM sales \nWHERE saleType = 'DELIVERY' \n  AND status != 'CANCELLED'\n  AND MONTH(CONVERT_TZ(saleDate, '+00:00', '-03:00')) = MONTH(CONVERT_TZ(NOW(), '+00:00', '-03:00'))\n  AND YEAR(CONVERT_TZ(saleDate, '+00:00', '-03:00')) = YEAR(CONVERT_TZ(NOW(), '+00:00', '-03:00'))\nORDER BY saleDate DESC\nLIMIT 10",
+  "rows": [
+    {
+      "id": "38036522",
+      "data_venda": "2026-01-06",
+      "finalAmount": "12.49"
+    },
+    {
+      "id": "38036521",
+      "data_venda": "2026-01-06",
+      "finalAmount": "30.90"
+    },
+    {
+      "id": "38036520",
+      "data_venda": "2026-01-06",
+      "finalAmount": "43.36"
+    },
+    {
+      "id": "38036519",
+      "data_venda": "2026-01-06",
+      "finalAmount": "32.99"
+    },
+    {
+      "id": "37942045",
+      "data_venda": "2026-01-06",
+      "finalAmount": "54.58"
+    },
+    {
+      "id": "37938683",
+      "data_venda": "2026-01-06",
+      "finalAmount": "29.99"
+    },
+    {
+      "id": "37920025",
+      "data_venda": "2026-01-06",
+      "finalAmount": "40.41"
+    },
+    {
+      "id": "37920024",
+      "data_venda": "2026-01-06",
+      "finalAmount": "24.98"
+    },
+    {
+      "id": "37920012",
+      "data_venda": "2026-01-06",
+      "finalAmount": "24.98"
+    },
+    {
+      "id": "37920011",
+      "data_venda": "2026-01-06",
+      "finalAmount": "24.99"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tdata_venda\tfinalAmount\n38036522\t2026-01-06\t12.49\n38036521\t2026-01-06\t30.90\n38036520\t2026-01-06\t43.36\n38036519\t2026-01-06\t32.99\n37942045\t2026-01-06\t54.58\n37938683\t2026-01-06\t29.99\n37920025\t2026-01-06\t40.41\n37920024\t2026-01-06\t24.98\n37920012\t2026-01-06\t24.98\n37920011\t2026-01-06\t24.99\n",
+  "stderr": "",
+  "execution_time_ms": 80
+}

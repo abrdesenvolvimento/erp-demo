@@ -91,6 +91,9 @@ export default function AnaliseCanal() {
 
   const isLoading = isLoadingBalcao || isLoadingDelivery || isLoadingAPrazo;
 
+  // Taxa de delivery (7%)
+  const DELIVERY_FEE_PERCENT = 0.07;
+
   // Calcular métricas por canal
   const channelMetrics = useMemo(() => {
     const calculateChannelMetrics = (data: typeof balcaoData, channelName: string, channelKey: string): ChannelData => {
@@ -113,8 +116,16 @@ export default function AnaliseCanal() {
         cost: acc.cost + parseFloat(item.totalCost),
       }), { quantity: 0, revenue: 0, cost: 0 });
 
-      const profit = totals.revenue - totals.cost;
-      const margin = totals.revenue > 0 ? (profit / totals.revenue) * 100 : 0;
+      // Para Delivery, descontar 7% de taxa do faturamento para calcular margem líquida
+      let effectiveRevenue = totals.revenue;
+      let deliveryFee = 0;
+      if (channelKey === 'DELIVERY') {
+        deliveryFee = totals.revenue * DELIVERY_FEE_PERCENT;
+        effectiveRevenue = totals.revenue - deliveryFee;
+      }
+
+      const profit = effectiveRevenue - totals.cost;
+      const margin = effectiveRevenue > 0 ? (profit / effectiveRevenue) * 100 : 0;
       // Contar vendas distintas (aproximação: número de produtos únicos vendidos)
       const salesCount = data.length;
       const avgTicket = salesCount > 0 ? totals.revenue / salesCount : 0;
@@ -124,7 +135,7 @@ export default function AnaliseCanal() {
         channelKey,
         quantity: totals.quantity,
         revenue: totals.revenue,
-        cost: totals.cost,
+        cost: totals.cost + deliveryFee, // Incluir taxa como "custo" para visualização
         profit,
         margin,
         avgTicket,

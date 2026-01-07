@@ -4702,3 +4702,70 @@ export async function getSalesMonthlyStats(year: number) {
 
   return Object.values(monthlyData);
 }
+
+
+/**
+ * Busca margem líquida de delivery do mês atual usando SQL otimizado
+ * Calcula faturamento, custo e margem líquida (após dedução de 7% de taxa)
+ */
+export async function getDeliveryNetMarginOptimized() {
+  const db = await getDb();
+  if (!db) return {
+    deliveryRevenue: '0.00',
+    totalCost: '0.00',
+    grossProfit: '0.00',
+    grossMarginPercent: '0.0',
+    ifoodFee: '0.00',
+    netProfit: '0.00',
+    netMarginPercent: '0.0',
+  };
+
+  // Query 1: Buscar faturamento total de delivery (sem JOIN para evitar duplicação)
+  const revenueResult = await db.execute(sql.raw(`
+    SELECT 
+      COALESCE(SUM(finalAmount), 0) as deliveryRevenue
+    FROM sales
+    WHERE saleType = 'DELIVERY' 
+      AND status != 'CANCELLED'
+      AND YEAR(CONVERT_TZ(saleDate, '+00:00', '-03:00')) = YEAR(CONVERT_TZ(NOW(), '+00:00', '-03:00'))
+      AND MONTH(CONVERT_TZ(saleDate, '+00:00', '-03:00')) = MONTH(CONVERT_TZ(NOW(), '+00:00', '-03:00'))
+  `));
+
+  // Query 2: Buscar custo total dos itens vendidos
+  const costResult = await db.execute(sql.raw(`
+    SELECT 
+      COALESCE(SUM(si.quantity * p.avgCost), 0) as totalCost
+    FROM sales s
+    INNER JOIN saleItems si ON si.saleId = s.id
+    INNER JOIN products p ON si.productId = p.id
+    WHERE s.saleType = 'DELIVERY' 
+      AND s.status != 'CANCELLED'
+      AND YEAR(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) = YEAR(CONVERT_TZ(NOW(), '+00:00', '-03:00'))
+      AND MONTH(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) = MONTH(CONVERT_TZ(NOW(), '+00:00', '-03:00'))
+  `));
+
+  const revenueRows = revenueResult[0] as unknown as any[];
+  const costRows = costResult[0] as unknown as any[];
+  
+  const deliveryRevenue = parseFloat(revenueRows?.[0]?.deliveryRevenue || '0');
+  const totalCost = parseFloat(costRows?.[0]?.totalCost || '0');
+  
+  // Calcular margem bruta
+  const grossProfit = deliveryRevenue - totalCost;
+  const grossMarginPercent = deliveryRevenue > 0 ? (grossProfit / deliveryRevenue) * 100 : 0;
+  
+  // Calcular margem líquida (deduzindo 7% de taxa)
+  const ifoodFee = deliveryRevenue * 0.07;
+  const netProfit = grossProfit - ifoodFee;
+  const netMarginPercent = deliveryRevenue > 0 ? (netProfit / deliveryRevenue) * 100 : 0;
+
+  return {
+    deliveryRevenue: deliveryRevenue.toFixed(2),
+    totalCost: totalCost.toFixed(2),
+    grossProfit: grossProfit.toFixed(2),
+    grossMarginPercent: grossMarginPercent.toFixed(1),
+    ifoodFee: ifoodFee.toFixed(2),
+    netProfit: netProfit.toFixed(2),
+    netMarginPercent: netMarginPercent.toFixed(1),
+  };
+}

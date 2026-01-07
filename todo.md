@@ -1726,3 +1726,9 @@
 - [x] **Criar abas Mensal/Diária** - Alternar entre visão de total mensal e calendário diário
 - [x] **Visão Mensal** - Tabela resumida com totais por mês
 - [x] **Visão Diária** - Calendário atual com valores por dia
+
+
+## 🔴 CORREÇÕES - Margem Delivery (07/01/2026)
+
+- [x] **Análise por Canal - Margem Líquida Delivery** - Descontar 7% de taxa do Delivery no cálculo da margem
+- [x] **Dashboard - Card Mg Líquida Delivery** - Corrigir valores incorretos no card do dashboard
