@@ -1733,15 +1733,25 @@ export const appRouter = router({
           ? db.getSalesAnalysisByQuantity 
           : db.getSalesAnalysisByValue;
 
-        // Buscar dados dos dois períodos em paralelo
-        const [period1Data, period2Data] = await Promise.all([
+        // Buscar dados dos dois períodos em paralelo + totais usando finalAmount
+        const [period1Data, period2Data, period1Summary, period2Summary] = await Promise.all([
           fetchFunction(input.period1.startDate, input.period1.endDate, filters),
           fetchFunction(input.period2.startDate, input.period2.endDate, filters),
+          db.getSalesAnalysisSummary(input.period1.startDate, input.period1.endDate, filters),
+          db.getSalesAnalysisSummary(input.period2.startDate, input.period2.endDate, filters),
         ]);
 
         return {
           period1: period1Data,
           period2: period2Data,
+          period1Total: {
+            revenue: period1Summary.totalRevenue,
+            sales: period1Summary.totalSales,
+          },
+          period2Total: {
+            revenue: period2Summary.totalRevenue,
+            sales: period2Summary.totalSales,
+          },
         };
       }),
   }),

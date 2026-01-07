@@ -1908,11 +1908,19 @@ export default function AnáliseVendas() {
                                   // Ordenar por variação (maior crescimento primeiro)
                                   comparison.sort((a, b) => b.variation - a.variation);
 
-                                  // Calcular totais
-                                  const totals = comparison.reduce((acc, item) => ({
+                                  // Calcular totais - usar period1Total/period2Total para valores (finalAmount), soma para quantidade
+                                  const itemTotals = comparison.reduce((acc, item) => ({
                                     value1: acc.value1 + item.value1,
                                     value2: acc.value2 + item.value2
                                   }), { value1: 0, value2: 0 });
+                                  
+                                  // Para valores, usar os totais do backend (finalAmount); para quantidade, usar soma dos itens
+                                  const totals = comparisonType === "quantity" 
+                                    ? itemTotals 
+                                    : {
+                                        value1: comparisonData.period1Total?.revenue ?? itemTotals.value1,
+                                        value2: comparisonData.period2Total?.revenue ?? itemTotals.value2
+                                      };
                                   const totalVariation = totals.value1 - totals.value2;
                                   const totalGrowth = totals.value2 > 0 ? ((totals.value1 - totals.value2) / totals.value2) * 100 : (totals.value1 > 0 ? 100 : 0);
 

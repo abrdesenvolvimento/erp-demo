@@ -1683,3 +1683,11 @@
   - Diferença: R$ 32.827,55 (3.7%)
   - Anos 2022, 2023 e 2025 batem corretamente
   - Investigar: filtros de canal, meses, query SQL
+
+## 🔴 BUG - Comparar Períodos (07/01/2026) - CORRIGIDO!
+
+- [x] **Aba Comparar Períodos mostra valor errado de 2024** - CORRIGIDO!
+  - Problema: mostrava R$ 851.612 ao invés de R$ 884.440
+  - Causa: usava saleItems.totalPrice ao invés de sales.finalAmount
+  - Solução: modificado endpoint comparePeriods para usar getSalesAnalysisSummary para os totais
+  - Testado: 2024 agora mostra R$ 884.440,08 (valor correto!)
