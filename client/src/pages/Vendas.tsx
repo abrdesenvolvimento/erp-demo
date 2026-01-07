@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { formatDateForInput, getTodayInBrazil } from "@shared/dateUtils";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
@@ -78,21 +78,37 @@ export default function Vendas() {
   const [paymentMethod, setPaymentMethod] = useState("");
   const [notes, setNotes] = useState("");
 
+  // ========== OTIMIZAÇÕES DE PERFORMANCE ==========
+  // Debounce para busca de produtos (evita queries a cada tecla)
+  const [debouncedProductSearch, setDebouncedProductSearch] = useState("");
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedProductSearch(productSearch);
+    }, 300); // 300ms de debounce
+    return () => clearTimeout(timer);
+  }, [productSearch]);
+
   // Queries
   const utils = trpc.useUtils();
-  const { data: sales = [], refetch } = trpc.sales.list.useQuery();
+  
+  // OTIMIZAÇÃO: Buscar vendas com filtro de data no backend
+  const { data: sales = [], refetch, isLoading: salesLoading } = trpc.sales.list.useQuery({
+    dateFrom: filterFromDate || undefined,
+    dateTo: filterToDate || undefined,
+    saleType: filterSaleType && filterSaleType !== "all" ? (filterSaleType as "BALCAO" | "DELIVERY" | "A_PRAZO") : undefined,
+  }, {
+    enabled: !!filterFromDate || !!filterToDate, // Só busca quando tem filtro de data
+    staleTime: 30000, // Cache por 30 segundos
+  });
+  
   const { data: stats } = trpc.sales.stats.useQuery({ 
     dateFrom: filterFromDate,
     dateTo: filterToDate,
     channel: filterSaleType === "" ? 'all' : (filterSaleType as 'BALCAO' | 'DELIVERY' | 'A_PRAZO')
   }, {
-    refetchOnMount: true
+    refetchOnMount: true,
+    staleTime: 30000, // Cache por 30 segundos
   });
-  
-  // Invalidate stats cache when filters change
-  useEffect(() => {
-    utils.sales.stats.invalidate();
-  }, [filterFromDate, filterToDate, filterSaleType, utils]);
 
   // Query de exportação
   const exportSales = trpc.sales.exportSales.useQuery(
@@ -103,21 +119,42 @@ export default function Vendas() {
     },
     { enabled: false } // Não executar automaticamente
   );
-  const { data: channels = [] } = trpc.salesChannels.list.useQuery({ activeOnly: true });
-  // Buscar parceiros que sejam CUSTOMER ou BOTH (clientes e fornecedores)
-  const { data: allPartners = [] } = trpc.partners.list.useQuery({ 
-    activeOnly: true 
-  });
+  
+  // OTIMIZAÇÃO: Carregar canais apenas quando modal está aberto
+  const { data: channels = [] } = trpc.salesChannels.list.useQuery(
+    { activeOnly: true },
+    { 
+      enabled: isModalOpen,
+      staleTime: 60000, // Cache por 1 minuto
+    }
+  );
+  
+  // OTIMIZAÇÃO: Carregar parceiros apenas quando necessário (modal aberto e não é delivery)
+  const { data: allPartners = [] } = trpc.partners.list.useQuery(
+    { activeOnly: true },
+    { 
+      enabled: isModalOpen && saleType !== "DELIVERY",
+      staleTime: 60000, // Cache por 1 minuto
+    }
+  );
   
   // Filtrar apenas parceiros que podem ser clientes (CUSTOMER ou BOTH)
   const partners = useMemo(() => 
     allPartners.filter((p: any) => p.partnerType === "CUSTOMER" || p.partnerType === "BOTH"),
     [allPartners]
   );
-  const { data: products = [] } = trpc.products.list.useQuery({ 
-    search: productSearch,
-    activeOnly: true 
-  });
+  
+  // OTIMIZAÇÃO: Buscar produtos com debounce e apenas quando modal está aberto
+  const { data: products = [], isLoading: productsLoading } = trpc.products.list.useQuery(
+    { 
+      search: debouncedProductSearch,
+      activeOnly: true 
+    },
+    {
+      enabled: isModalOpen && step === "form",
+      staleTime: 30000, // Cache por 30 segundos
+    }
+  );
   
   // Buscar crédito disponível em tempo real quando cliente é selecionado
   const { data: creditInfo } = trpc.partners.getAvailableCredit.useQuery(
@@ -135,39 +172,11 @@ export default function Vendas() {
     );
   }, [partners, customerSearch]);
 
-  // Filter sales by date range and sale type
+  // OTIMIZAÇÃO: Filtro agora é feito no backend, apenas ordenar aqui
   const filteredSales = useMemo(() => {
-    let result = sales;
-    
-    // Filter by date range (using Brasilia timezone like backend)
-    if (filterFromDate || filterToDate) {
-      result = result.filter((sale: any) => {
-        const saleDate = new Date(sale.saleDate || sale.createdAt);
-        const saleBrasiliaStr = saleDate.toLocaleString('en-US', { 
-          timeZone: 'America/Sao_Paulo',
-          year: 'numeric',
-          month: '2-digit',
-          day: '2-digit',
-          hour12: false
-        });
-        
-        const [saleDatePart] = saleBrasiliaStr.split(', ');
-        const [saleMonth, saleDay, saleYear] = saleDatePart.split('/');
-        const saleDateStr = `${saleYear}-${saleMonth}-${saleDay}`; // YYYY-MM-DD
-        
-        if (filterFromDate && saleDateStr < filterFromDate) return false;
-        if (filterToDate && saleDateStr > filterToDate) return false;
-        return true;
-      });
-    }
-    
-    // Filter by sale type
-    if (filterSaleType && filterSaleType !== "all") {
-      result = result.filter((sale: any) => sale.saleType === filterSaleType);
-    }
-    
-    return result;
-  }, [sales, filterFromDate, filterToDate, filterSaleType]);
+    // Vendas já vem filtradas do backend, apenas retornar
+    return sales;
+  }, [sales]);
 
   // Initialize filter to today only (using Brazil timezone)
   useEffect(() => {
@@ -623,9 +632,13 @@ export default function Vendas() {
                 </Button>
               </div>
             </div>
-            {filteredSales.length === 0 ? (
+            {salesLoading ? (
               <div className="text-center py-12 text-muted-foreground">
-                Nenhuma venda registrada
+                <div className="animate-pulse">Carregando vendas...</div>
+              </div>
+            ) : filteredSales.length === 0 ? (
+              <div className="text-center py-12 text-muted-foreground">
+                Nenhuma venda encontrada no período selecionado
               </div>
             ) : (
               <Table>
@@ -818,9 +831,16 @@ export default function Vendas() {
                           setSelectedProduct(null);
                         }}
                       />
-                      {productSearch && products.length > 0 && !selectedProduct && (
+                      {/* Loading indicator */}
+                      {productSearch && productsLoading && !selectedProduct && (
+                        <div className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg p-4 text-center text-gray-500">
+                          Buscando produtos...
+                        </div>
+                      )}
+                      {/* Lista de produtos */}
+                      {productSearch && !productsLoading && products.length > 0 && !selectedProduct && (
                         <div className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg max-h-60 overflow-y-auto">
-                          {products.map((product: any) => {
+                          {products.slice(0, 20).map((product: any) => {
                             const price = product.prices?.find((p: any) => p.channelId === parseInt(channelId));
                             return (
                               <div
@@ -838,6 +858,11 @@ export default function Vendas() {
                               </div>
                             );
                           })}
+                          {products.length > 20 && (
+                            <div className="px-4 py-2 text-sm text-gray-500 text-center border-t">
+                              Mostrando 20 de {products.length} resultados. Digite mais para refinar.
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>

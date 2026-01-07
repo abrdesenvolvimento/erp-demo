@@ -1814,3 +1814,30 @@
 - [x] Investigar e corrigir lançamentos aparecendo "Sem Fornecedor" - CORRIGIDO!
   - Causa: Query usava apenas p.tradeName, mas alguns parceiros têm tradeName NULL e usam p.name
   - Solução: Alterado para COALESCE(p.tradeName, p.name, 'Sem Fornecedor')
+
+
+## 🚀 OTIMIZAÇÃO DE PERFORMANCE - Tela de Vendas (07/01/2026)
+
+- [ ] Lentidão ao digitar produto no autocomplete
+- [ ] Delay ao selecionar canal de venda (Delivery)
+- [ ] Demora no carregamento das vendas do dia com filtro
+
+
+## 🚀 OTIMIZAÇÃO DE PERFORMANCE - Tela de Vendas (07/01/2026)
+
+- [x] **Lentidão ao digitar produto no autocomplete** - OTIMIZADO!
+  - Implementado debounce de 300ms para evitar queries a cada tecla
+  - Query só dispara quando modal está aberto e no step "form"
+  - Limitado exibição a 20 resultados com indicação de mais
+  - Adicionado indicador de loading "Buscando produtos..."
+
+- [x] **Delay ao selecionar canal de venda (Delivery)** - OTIMIZADO!
+  - Canais só carregam quando modal abre (enabled: isModalOpen)
+  - Parceiros só carregam quando necessário (não é delivery)
+  - Cache de 1 minuto (staleTime: 60000)
+
+- [x] **Demora no carregamento das vendas do dia com filtro** - OTIMIZADO!
+  - Filtro de data agora é feito no backend (query SQL com CONVERT_TZ)
+  - Removido filtro duplicado no frontend
+  - Cache de 30 segundos nas queries
+  - Indicador de loading "Carregando vendas..."

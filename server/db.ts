@@ -439,10 +439,43 @@ export async function updatePartner(id: number, data: Partial<InsertPartner>) {
 }
 
 // ==================== VENDAS ====================
-export async function getSales(filters?: { saleType?: string; customerId?: number; limit?: number }) {
+export async function getSales(filters?: { saleType?: string; customerId?: number; limit?: number; dateFrom?: string; dateTo?: string }) {
   const db = await getDb();
   if (!db) return [];
   
+  // Se tem filtro de data, usar query SQL otimizada
+  if (filters?.dateFrom || filters?.dateTo) {
+    let whereConditions = `1=1`;
+    
+    if (filters?.saleType) {
+      whereConditions += ` AND saleType = '${filters.saleType}'`;
+    }
+    
+    if (filters?.customerId) {
+      whereConditions += ` AND customerId = ${filters.customerId}`;
+    }
+    
+    // Filtro de data usando CONVERT_TZ para horário de Brasília
+    if (filters?.dateFrom) {
+      whereConditions += ` AND DATE(CONVERT_TZ(saleDate, '+00:00', '-03:00')) >= '${filters.dateFrom}'`;
+    }
+    if (filters?.dateTo) {
+      whereConditions += ` AND DATE(CONVERT_TZ(saleDate, '+00:00', '-03:00')) <= '${filters.dateTo}'`;
+    }
+    
+    const limitClause = filters?.limit ? `LIMIT ${filters.limit}` : '';
+    
+    const result = await db.execute(sql.raw(`
+      SELECT * FROM sales 
+      WHERE ${whereConditions}
+      ORDER BY createdAt DESC
+      ${limitClause}
+    `));
+    
+    return (result[0] as unknown as any[]) || [];
+  }
+  
+  // Query padrão sem filtro de data
   let query = db.select().from(sales);
   const conditions = [];
   

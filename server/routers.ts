@@ -461,7 +461,9 @@ export const appRouter = router({
       .input(z.object({
         saleType: z.enum(["BALCAO", "DELIVERY", "A_PRAZO"]).optional(),
         customerId: z.number().optional(),
-        limit: z.number().optional().default(5000), // Aumentado para garantir que todas as vendas sejam carregadas
+        limit: z.number().optional().default(500), // Reduzido - usar filtro de data para performance
+        dateFrom: z.string().optional(), // Formato: YYYY-MM-DD
+        dateTo: z.string().optional(),   // Formato: YYYY-MM-DD
       }).optional())
       .query(async ({ input }) => {
         return await db.getSales(input);
