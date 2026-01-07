@@ -1732,3 +1732,66 @@
 
 - [x] **Análise por Canal - Margem Líquida Delivery** - Descontar 7% de taxa do Delivery no cálculo da margem
 - [x] **Dashboard - Card Mg Líquida Delivery** - Corrigir valores incorretos no card do dashboard
+
+
+## 📋 PENDÊNCIAS CONSOLIDADAS (07/01/2026)
+
+### 🔴 ALTA PRIORIDADE - Próximas Implementações
+
+- [x] **Análise de Despesas** (NOVA)
+  - Análise por categoria de despesas
+  - Informações de Fornecedor e Observação do lançamento
+  - Visão detalhada separada por mês
+  - Filtros por período, categoria, fornecedor
+  - Comparativo mensal de evolução de gastos
+  - Gráficos de distribuição por categoria
+
+- [ ] **Sistema de Metas** (NOVA)
+  - Cadastro de metas de faturamento (mensal/diário)
+  - Acompanhamento de progresso no Dashboard
+  - Indicadores visuais de atingimento (%, valor faltante)
+  - Metas por canal (Balcão, Delivery, A Prazo)
+
+- [ ] **Fechamento de Caixa/Período** (NOVA)
+  - Rotina de fechamento diário/mensal
+  - Resumo de entradas e saídas
+  - Conferência de valores
+  - Relatório de fechamento para impressão
+
+- [ ] **Reorganizar menu Financeiro**
+  - Criar submenu "Financeiro" no menu lateral
+  - Agrupar: Contas a Pagar, Contas a Receber, Despesas
+  - Similar ao submenu "Análises"
+
+- [ ] **Filtro por subcategoria em Produtos**
+  - Facilitar navegação no catálogo de produtos
+
+- [ ] **Importação de cadastro de produtos via Excel**
+  - Permitir importar/atualizar produtos em massa
+  - Cruzar informações com outros sistemas (iFood)
+
+### 🟡 MÉDIA PRIORIDADE - Próxima Rodada de Melhorias
+
+- [ ] **Controle de Acesso** - Testar com ambos os perfis (Admin e User)
+- [ ] **Análise ABC** - Classificar produtos em A/B/C por faturamento (80/15/5)
+- [ ] **Exportação de Relatórios** - Exportar análises para Excel/PDF
+- [ ] **Filtro por Vendedor** - Analisar performance individual
+- [ ] **Histórico de alterações** - Log de auditoria (quem alterou o quê)
+
+### 🟢 INFRAESTRUTURA
+
+- [ ] **Rotina de Backup Automático** - Definir local de armazenamento e criar rotina
+- [ ] **Cache de análises** - Melhorar performance em relatórios pesados
+
+### ✅ RESOLVIDO/REMOVIDO (07/01/2026)
+
+- [x] Comparar canais → Criado Análise por Canal
+- [x] Sistema de Comissões → Card Mg Líquida Delivery desconta 7%
+- [x] Relatório de Margem por Produto → Disponível na Análise de Vendas
+- [x] Card de ticket médio → Disponível na Análise por Canal
+- [x] Importar histórico 2022-2025 → Concluído
+- [x] Completar inventário físico → Removido (novos produtos entram como novos)
+- [x] Edição de Vendas → Implementado com limite 24h
+- [x] Exclusão de Vendas → Implementado com limite 24h
+- [x] Confirmação antes de deletar → Já implementado
+- [x] Tooltips → Substituído por manual de utilização futuro

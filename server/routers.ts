@@ -1714,6 +1714,96 @@ export const appRouter = router({
         };
       }),
   }),
+
+  // ==================== ANÁLISE DE DESPESAS ====================
+  expenseAnalysis: router({
+    // Resumo geral de despesas
+    summary: adminProcedure
+      .input(z.object({
+        startDate: z.string().optional(),
+        endDate: z.string().optional(),
+        categoryId: z.number().optional(),
+        supplierId: z.number().optional(),
+      }).optional())
+      .query(async ({ input }) => {
+        return await db.getExpenseAnalysisSummary(
+          input?.startDate,
+          input?.endDate,
+          input?.categoryId,
+          input?.supplierId
+        );
+      }),
+
+    // Análise por categoria
+    byCategory: adminProcedure
+      .input(z.object({
+        startDate: z.string().optional(),
+        endDate: z.string().optional(),
+        categoryId: z.number().optional(),
+        supplierId: z.number().optional(),
+      }).optional())
+      .query(async ({ input }) => {
+        return await db.getExpenseAnalysisByCategory(
+          input?.startDate,
+          input?.endDate,
+          input?.categoryId,
+          input?.supplierId
+        );
+      }),
+
+    // Análise por mês
+    byMonth: adminProcedure
+      .input(z.object({
+        startDate: z.string().optional(),
+        endDate: z.string().optional(),
+        categoryId: z.number().optional(),
+        supplierId: z.number().optional(),
+      }).optional())
+      .query(async ({ input }) => {
+        return await db.getExpenseAnalysisByMonth(
+          input?.startDate,
+          input?.endDate,
+          input?.categoryId,
+          input?.supplierId
+        );
+      }),
+
+    // Análise por categoria e mês (matriz)
+    byCategoryAndMonth: adminProcedure
+      .input(z.object({
+        startDate: z.string().optional(),
+        endDate: z.string().optional(),
+        categoryId: z.number().optional(),
+        supplierId: z.number().optional(),
+      }).optional())
+      .query(async ({ input }) => {
+        return await db.getExpenseAnalysisByCategoryAndMonth(
+          input?.startDate,
+          input?.endDate,
+          input?.categoryId,
+          input?.supplierId
+        );
+      }),
+
+    // Detalhamento de lançamentos
+    detail: adminProcedure
+      .input(z.object({
+        startDate: z.string().optional(),
+        endDate: z.string().optional(),
+        categoryId: z.number().optional(),
+        supplierId: z.number().optional(),
+        limit: z.number().optional().default(500),
+      }).optional())
+      .query(async ({ input }) => {
+        return await db.getExpenseAnalysisDetail(
+          input?.startDate,
+          input?.endDate,
+          input?.categoryId,
+          input?.supplierId,
+          input?.limit
+        );
+      }),
+  }),
 });
 
 export type AppRouter = typeof appRouter;

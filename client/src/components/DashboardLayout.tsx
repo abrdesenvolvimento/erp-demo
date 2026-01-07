@@ -47,6 +47,7 @@ const analysisMenuItems = [
   { icon: BarChart3, label: "Análise de Faturamento", path: "/relatorios", roles: ["admin", "consultor"] },
   { icon: Bike, label: "Análise Delivery", path: "/analise-delivery", roles: ["admin"] },
   { icon: GitCompare, label: "Análise por Canal", path: "/analise-canal", roles: ["admin"] },
+  { icon: Receipt, label: "Análise de Despesas", path: "/analise-despesas", roles: ["admin"] },
 ];
 
 const getMenuItemsForRole = (items: typeof mainMenuItems, role?: string) => {

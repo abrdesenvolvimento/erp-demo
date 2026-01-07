@@ -4769,3 +4769,278 @@ export async function getDeliveryNetMarginOptimized() {
     netMarginPercent: netMarginPercent.toFixed(1),
   };
 }
+
+
+// ==================== ANÁLISE DE DESPESAS ====================
+
+/**
+ * Busca análise de despesas por categoria
+ * Agrupa despesas por categoria com totais
+ */
+export async function getExpenseAnalysisByCategory(
+  startDate?: string,
+  endDate?: string,
+  categoryId?: number,
+  supplierId?: number
+) {
+  const db = await getDb();
+  if (!db) return [];
+
+  let whereClause = `WHERE e.status != 'CANCELADA'`;
+  
+  if (startDate) {
+    whereClause += ` AND DATE(CONVERT_TZ(e.createdAt, '+00:00', '-03:00')) >= '${startDate}'`;
+  }
+  if (endDate) {
+    whereClause += ` AND DATE(CONVERT_TZ(e.createdAt, '+00:00', '-03:00')) <= '${endDate}'`;
+  }
+  if (categoryId) {
+    whereClause += ` AND e.categoryId = ${categoryId}`;
+  }
+  if (supplierId) {
+    whereClause += ` AND e.supplierId = ${supplierId}`;
+  }
+
+  const result = await db.execute(sql.raw(`
+    SELECT 
+      ec.id as categoryId,
+      ec.name as categoryName,
+      COUNT(e.id) as totalLancamentos,
+      COALESCE(SUM(e.amount), 0) as totalAmount
+    FROM expenses e
+    INNER JOIN expenseCategories ec ON e.categoryId = ec.id
+    ${whereClause}
+    GROUP BY ec.id, ec.name
+    ORDER BY totalAmount DESC
+  `));
+
+  const rows = result[0] as unknown as any[];
+  return rows.map(row => ({
+    categoryId: row.categoryId,
+    categoryName: row.categoryName,
+    totalLancamentos: parseInt(row.totalLancamentos || '0', 10),
+    totalAmount: parseFloat(row.totalAmount || '0'),
+  }));
+}
+
+/**
+ * Busca análise de despesas por mês
+ * Agrupa despesas por mês/ano com totais
+ */
+export async function getExpenseAnalysisByMonth(
+  startDate?: string,
+  endDate?: string,
+  categoryId?: number,
+  supplierId?: number
+) {
+  const db = await getDb();
+  if (!db) return [];
+
+  let whereClause = `WHERE e.status != 'CANCELADA'`;
+  
+  if (startDate) {
+    whereClause += ` AND DATE(CONVERT_TZ(e.createdAt, '+00:00', '-03:00')) >= '${startDate}'`;
+  }
+  if (endDate) {
+    whereClause += ` AND DATE(CONVERT_TZ(e.createdAt, '+00:00', '-03:00')) <= '${endDate}'`;
+  }
+  if (categoryId) {
+    whereClause += ` AND e.categoryId = ${categoryId}`;
+  }
+  if (supplierId) {
+    whereClause += ` AND e.supplierId = ${supplierId}`;
+  }
+
+  const result = await db.execute(sql.raw(`
+    SELECT 
+      YEAR(CONVERT_TZ(e.createdAt, '+00:00', '-03:00')) as year,
+      MONTH(CONVERT_TZ(e.createdAt, '+00:00', '-03:00')) as month,
+      COUNT(e.id) as totalLancamentos,
+      COALESCE(SUM(e.amount), 0) as totalAmount
+    FROM expenses e
+    ${whereClause}
+    GROUP BY year, month
+    ORDER BY year DESC, month DESC
+  `));
+
+  const rows = result[0] as unknown as any[];
+  return rows.map(row => ({
+    year: parseInt(row.year, 10),
+    month: parseInt(row.month, 10),
+    totalLancamentos: parseInt(row.totalLancamentos || '0', 10),
+    totalAmount: parseFloat(row.totalAmount || '0'),
+  }));
+}
+
+/**
+ * Busca análise de despesas por categoria e mês (matriz)
+ * Para comparativo mensal por categoria
+ */
+export async function getExpenseAnalysisByCategoryAndMonth(
+  startDate?: string,
+  endDate?: string,
+  categoryId?: number,
+  supplierId?: number
+) {
+  const db = await getDb();
+  if (!db) return [];
+
+  let whereClause = `WHERE e.status != 'CANCELADA'`;
+  
+  if (startDate) {
+    whereClause += ` AND DATE(CONVERT_TZ(e.createdAt, '+00:00', '-03:00')) >= '${startDate}'`;
+  }
+  if (endDate) {
+    whereClause += ` AND DATE(CONVERT_TZ(e.createdAt, '+00:00', '-03:00')) <= '${endDate}'`;
+  }
+  if (categoryId) {
+    whereClause += ` AND e.categoryId = ${categoryId}`;
+  }
+  if (supplierId) {
+    whereClause += ` AND e.supplierId = ${supplierId}`;
+  }
+
+  const result = await db.execute(sql.raw(`
+    SELECT 
+      ec.id as categoryId,
+      ec.name as categoryName,
+      YEAR(CONVERT_TZ(e.createdAt, '+00:00', '-03:00')) as year,
+      MONTH(CONVERT_TZ(e.createdAt, '+00:00', '-03:00')) as month,
+      COUNT(e.id) as totalLancamentos,
+      COALESCE(SUM(e.amount), 0) as totalAmount
+    FROM expenses e
+    INNER JOIN expenseCategories ec ON e.categoryId = ec.id
+    ${whereClause}
+    GROUP BY ec.id, ec.name, year, month
+    ORDER BY ec.name, year DESC, month DESC
+  `));
+
+  const rows = result[0] as unknown as any[];
+  return rows.map(row => ({
+    categoryId: row.categoryId,
+    categoryName: row.categoryName,
+    year: parseInt(row.year, 10),
+    month: parseInt(row.month, 10),
+    totalLancamentos: parseInt(row.totalLancamentos || '0', 10),
+    totalAmount: parseFloat(row.totalAmount || '0'),
+  }));
+}
+
+/**
+ * Busca detalhamento de despesas (lançamentos individuais)
+ * Com informações de fornecedor e observação
+ */
+export async function getExpenseAnalysisDetail(
+  startDate?: string,
+  endDate?: string,
+  categoryId?: number,
+  supplierId?: number,
+  limit: number = 500
+) {
+  const db = await getDb();
+  if (!db) return [];
+
+  let whereClause = `WHERE e.status != 'CANCELADA'`;
+  
+  if (startDate) {
+    whereClause += ` AND DATE(CONVERT_TZ(e.createdAt, '+00:00', '-03:00')) >= '${startDate}'`;
+  }
+  if (endDate) {
+    whereClause += ` AND DATE(CONVERT_TZ(e.createdAt, '+00:00', '-03:00')) <= '${endDate}'`;
+  }
+  if (categoryId) {
+    whereClause += ` AND e.categoryId = ${categoryId}`;
+  }
+  if (supplierId) {
+    whereClause += ` AND e.supplierId = ${supplierId}`;
+  }
+
+  const result = await db.execute(sql.raw(`
+    SELECT 
+      e.id,
+      e.description,
+      e.amount,
+      e.notes,
+      e.docType,
+      e.docNumber,
+      e.paymentMethod,
+      e.status,
+      e.createdAt,
+      ec.id as categoryId,
+      ec.name as categoryName,
+      p.id as supplierId,
+      p.tradeName as supplierName
+    FROM expenses e
+    INNER JOIN expenseCategories ec ON e.categoryId = ec.id
+    LEFT JOIN partners p ON e.supplierId = p.id
+    ${whereClause}
+    ORDER BY e.createdAt DESC
+    LIMIT ${limit}
+  `));
+
+  const rows = result[0] as unknown as any[];
+  return rows.map(row => ({
+    id: row.id,
+    description: row.description,
+    amount: parseFloat(row.amount || '0'),
+    notes: row.notes,
+    docType: row.docType,
+    docNumber: row.docNumber,
+    paymentMethod: row.paymentMethod,
+    status: row.status,
+    createdAt: row.createdAt,
+    categoryId: row.categoryId,
+    categoryName: row.categoryName,
+    supplierId: row.supplierId,
+    supplierName: row.supplierName,
+  }));
+}
+
+/**
+ * Busca resumo geral de despesas
+ */
+export async function getExpenseAnalysisSummary(
+  startDate?: string,
+  endDate?: string,
+  categoryId?: number,
+  supplierId?: number
+) {
+  const db = await getDb();
+  if (!db) return { totalAmount: 0, totalLancamentos: 0, avgPerLancamento: 0 };
+
+  let whereClause = `WHERE e.status != 'CANCELADA'`;
+  
+  if (startDate) {
+    whereClause += ` AND DATE(CONVERT_TZ(e.createdAt, '+00:00', '-03:00')) >= '${startDate}'`;
+  }
+  if (endDate) {
+    whereClause += ` AND DATE(CONVERT_TZ(e.createdAt, '+00:00', '-03:00')) <= '${endDate}'`;
+  }
+  if (categoryId) {
+    whereClause += ` AND e.categoryId = ${categoryId}`;
+  }
+  if (supplierId) {
+    whereClause += ` AND e.supplierId = ${supplierId}`;
+  }
+
+  const result = await db.execute(sql.raw(`
+    SELECT 
+      COUNT(e.id) as totalLancamentos,
+      COALESCE(SUM(e.amount), 0) as totalAmount
+    FROM expenses e
+    ${whereClause}
+  `));
+
+  const rows = result[0] as unknown as any[];
+  const row = rows?.[0] || {};
+  
+  const totalLancamentos = parseInt(row.totalLancamentos || '0', 10);
+  const totalAmount = parseFloat(row.totalAmount || '0');
+  const avgPerLancamento = totalLancamentos > 0 ? totalAmount / totalLancamentos : 0;
+
+  return {
+    totalAmount,
+    totalLancamentos,
+    avgPerLancamento,
+  };
+}
