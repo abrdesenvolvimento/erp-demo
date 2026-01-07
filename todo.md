@@ -84,6 +84,7 @@
 
 ## 🔴 BUG - 07/01/2026
 
+- [x] **Autocomplete de produtos mostrava EAN ao invés de preço** - CORRIGIDO! Alterado para mostrar "Estoque: X | Preço: R$ X,XX" ao invés de "Estoque: X | EAN: XXXXX". Performance mantida com includePrices=true na query.
 - [x] **Análise Delivery não mostra produtos** - CORRIGIDO! Query SQL otimizada com CONVERT_TZ
 - [x] **Filtro "Por Categoria" não aplicava filtros de data/mês/dia** - CORRIGIDO! Adicionado categoryId e categoryName na query getSalesByProductAndDate, e recalculado categoryData a partir do matrixData filtrado no frontend
 - [x] **Divergência de faturamento 2024** - CORRIGIDO! Faturamento mostrava R$ 851.612 ao invés de R$ 884.440 (diferença de R$ 32.827). Causa: 1.000 vendas sem itens + 103 vendas com diferença entre finalAmount e soma de itens. Solução: criada query separada getSalesAnalysisSummary que usa sales.finalAmount diretamente para os cards de resumo

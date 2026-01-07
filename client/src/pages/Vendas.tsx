@@ -144,12 +144,12 @@ export default function Vendas() {
     [allPartners]
   );
   
-  // OTIMIZAÇÃO: Buscar produtos com debounce e sem preços (mais rápido)
+  // OTIMIZAÇÃO: Buscar produtos com debounce e com preços para exibir no autocomplete
   const { data: products = [], isLoading: productsLoading } = trpc.products.list.useQuery(
     { 
       search: debouncedProductSearch,
       activeOnly: true,
-      includePrices: false // Não carregar preços no autocomplete
+      includePrices: true // Carregar preços para exibir no autocomplete
     },
     {
       enabled: isModalOpen && step === "form" && debouncedProductSearch.length >= 2,
@@ -848,24 +848,30 @@ export default function Vendas() {
                           Buscando produtos...
                         </div>
                       )}
-                      {/* Lista de produtos - OTIMIZADO: sem preços no autocomplete */}
+                      {/* Lista de produtos com preços */}
                       {productSearch && debouncedProductSearch.length >= 2 && !productsLoading && products.length > 0 && !selectedProduct && (
                         <div className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg max-h-60 overflow-y-auto">
-                          {products.slice(0, 20).map((product: any) => (
-                            <div
-                              key={product.id}
-                              className="px-4 py-2 cursor-pointer hover:bg-gray-100"
-                              onClick={() => {
-                                setSelectedProduct(product);
-                                setProductSearch(product.name);
-                              }}
-                            >
-                              <div className="font-medium">{product.name}</div>
-                              <div className="text-sm text-gray-600">
-                                Estoque: {product.currentStock} {product.ean ? `| EAN: ${product.ean}` : ''}
+                          {products.slice(0, 20).map((product: any) => {
+                            // Buscar preço do canal selecionado
+                            const channelPrice = product.prices?.find((p: any) => p.channelId === parseInt(channelId));
+                            const priceDisplay = channelPrice ? `R$ ${parseFloat(channelPrice.price).toFixed(2).replace('.', ',')}` : null;
+                            
+                            return (
+                              <div
+                                key={product.id}
+                                className="px-4 py-2 cursor-pointer hover:bg-gray-100"
+                                onClick={() => {
+                                  setSelectedProduct(product);
+                                  setProductSearch(product.name);
+                                }}
+                              >
+                                <div className="font-medium">{product.name}</div>
+                                <div className="text-sm text-gray-600">
+                                  Estoque: {product.currentStock} {priceDisplay ? `| Preço: ${priceDisplay}` : ''}
+                                </div>
                               </div>
-                            </div>
-                          ))}
+                            );
+                          })}
                           {products.length > 20 && (
                             <div className="px-4 py-2 text-sm text-gray-500 text-center border-t">
                               Mostrando 20 de {products.length} resultados. Digite mais para refinar.

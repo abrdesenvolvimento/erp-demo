@@ -233,9 +233,9 @@ export async function getProducts(filters?: { search?: string; categoryId?: numb
   
   const productList = await query.orderBy(products.name);
   
-  // OTIMIZAÇÃO: Só carregar preços se necessário (includePrices=true)
-  // Por padrão, carregar preços apenas se não houver busca (listagem completa)
-  const shouldIncludePrices = filters?.includePrices !== false && !filters?.search;
+  // OTIMIZAÇÃO: Só carregar preços se explicitamente solicitado (includePrices=true)
+  // Para autocomplete, passar includePrices=true para mostrar preços nas sugestões
+  const shouldIncludePrices = filters?.includePrices === true;
   
   if (productList.length === 0) return [];
   
