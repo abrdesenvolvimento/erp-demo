@@ -1,0 +1,38 @@
+{
+  "query": "EXPLAIN SELECT * FROM sales \nWHERE saleDate >= '2026-01-05 03:00:00' \nAND saleDate < DATE_ADD('2026-01-06', INTERVAL 1 DAY) + INTERVAL 3 HOUR\nORDER BY saleDate DESC\nLIMIT 500;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute EXPLAIN SELECT * FROM sales \nWHERE saleDate >= '2026-01-05 03:00:00' \nAND saleDate < DATE_ADD('2026-01-06', INTERVAL 1 DAY) + INTERVAL 3 HOUR\nORDER BY saleDate DESC\nLIMIT 500;",
+  "rows": [
+    {
+      "id": "Limit_14",
+      "estRows": "132.68",
+      "task": "root",
+      "access object": "",
+      "operator info": "offset:?, count:?"
+    },
+    {
+      "id": "└─IndexLookUp_42",
+      "estRows": "132.68",
+      "task": "root",
+      "access object": "",
+      "operator info": ""
+    },
+    {
+      "id": "  ├─IndexRangeScan_40(Build)",
+      "estRows": "132.68",
+      "task": "cop[tikv]",
+      "access object": "table:sales, index:date_idx(saleDate)",
+      "operator info": "range:[?,?), keep order:true, desc, stats:partial[idx_sales_createdat:missing]"
+    },
+    {
+      "id": "  └─TableRowIDScan_41(Probe)",
+      "estRows": "132.68",
+      "task": "cop[tikv]",
+      "access object": "table:sales",
+      "operator info": "keep order:false, stats:partial[idx_sales_createdat:missing]"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\testRows\ttask\taccess object\toperator info\nLimit_14\t132.68\troot\t\toffset:?, count:?\n└─IndexLookUp_42\t132.68\troot\t\t\n  ├─IndexRangeScan_40(Build)\t132.68\tcop[tikv]\ttable:sales, index:date_idx(saleDate)\trange:[?,?), keep order:true, desc, stats:partial[idx_sales_createdat:missing]\n  └─TableRowIDScan_41(Probe)\t132.68\tcop[tikv]\ttable:sales\tkeep order:false, stats:partial[idx_sales_createdat:missing]\n",
+  "stderr": "",
+  "execution_time_ms": 116
+}

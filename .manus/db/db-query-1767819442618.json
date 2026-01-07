@@ -1,0 +1,28 @@
+{
+  "query": "SELECT Table_name, Index_name, Column_name, Seq_in_index FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = 'sales' ORDER BY Index_name, Seq_in_index;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT Table_name, Index_name, Column_name, Seq_in_index FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = 'sales' ORDER BY Index_name, Seq_in_index;",
+  "rows": [
+    {
+      "Table_name": "sales",
+      "Index_name": "PRIMARY",
+      "Column_name": "id",
+      "Seq_in_index": "1"
+    },
+    {
+      "Table_name": "sales",
+      "Index_name": "customer_idx",
+      "Column_name": "customerId",
+      "Seq_in_index": "1"
+    },
+    {
+      "Table_name": "sales",
+      "Index_name": "date_idx",
+      "Column_name": "saleDate",
+      "Seq_in_index": "1"
+    }
+  ],
+  "messages": [],
+  "stdout": "Table_name\tIndex_name\tColumn_name\tSeq_in_index\nsales\tPRIMARY\tid\t1\nsales\tcustomer_idx\tcustomerId\t1\nsales\tdate_idx\tsaleDate\t1\n",
+  "stderr": "",
+  "execution_time_ms": 53
+}

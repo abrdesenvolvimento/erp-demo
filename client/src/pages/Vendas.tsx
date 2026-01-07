@@ -144,15 +144,25 @@ export default function Vendas() {
     [allPartners]
   );
   
-  // OTIMIZAÇÃO: Buscar produtos com debounce e apenas quando modal está aberto
+  // OTIMIZAÇÃO: Buscar produtos com debounce e sem preços (mais rápido)
   const { data: products = [], isLoading: productsLoading } = trpc.products.list.useQuery(
     { 
       search: debouncedProductSearch,
-      activeOnly: true 
+      activeOnly: true,
+      includePrices: false // Não carregar preços no autocomplete
     },
     {
-      enabled: isModalOpen && step === "form",
-      staleTime: 30000, // Cache por 30 segundos
+      enabled: isModalOpen && step === "form" && debouncedProductSearch.length >= 2,
+      staleTime: 60000, // Cache por 1 minuto
+    }
+  );
+  
+  // OTIMIZAÇÃO: Buscar preço apenas do produto selecionado
+  const { data: selectedProductWithPrices } = trpc.products.getWithPrices.useQuery(
+    { id: selectedProduct?.id || 0 },
+    {
+      enabled: !!selectedProduct?.id && !!channelId,
+      staleTime: 30000,
     }
   );
   
@@ -307,8 +317,9 @@ export default function Vendas() {
       return;
     }
 
-    // Find price for selected channel
-    const price = selectedProduct.prices?.find((p: any) => p.channelId === parseInt(channelId));
+    // OTIMIZAÇÃO: Usar preços do produto carregado separadamente
+    const productWithPrices = selectedProductWithPrices || selectedProduct;
+    const price = productWithPrices.prices?.find((p: any) => p.channelId === parseInt(channelId));
     if (!price) {
       toast.error("Produto não tem preço configurado para este canal");
       return;
@@ -837,27 +848,24 @@ export default function Vendas() {
                           Buscando produtos...
                         </div>
                       )}
-                      {/* Lista de produtos */}
-                      {productSearch && !productsLoading && products.length > 0 && !selectedProduct && (
+                      {/* Lista de produtos - OTIMIZADO: sem preços no autocomplete */}
+                      {productSearch && debouncedProductSearch.length >= 2 && !productsLoading && products.length > 0 && !selectedProduct && (
                         <div className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg max-h-60 overflow-y-auto">
-                          {products.slice(0, 20).map((product: any) => {
-                            const price = product.prices?.find((p: any) => p.channelId === parseInt(channelId));
-                            return (
-                              <div
-                                key={product.id}
-                                className="px-4 py-2 cursor-pointer hover:bg-gray-100"
-                                onClick={() => {
-                                  setSelectedProduct(product);
-                                  setProductSearch(product.name);
-                                }}
-                              >
-                                <div className="font-medium">{product.name}</div>
-                                <div className="text-sm text-gray-600">
-                                  Estoque: {product.currentStock} | Preço: {price ? `R$ ${parseFloat(price.price).toFixed(2).replace('.', ',')}` : 'N/D'}
-                                </div>
+                          {products.slice(0, 20).map((product: any) => (
+                            <div
+                              key={product.id}
+                              className="px-4 py-2 cursor-pointer hover:bg-gray-100"
+                              onClick={() => {
+                                setSelectedProduct(product);
+                                setProductSearch(product.name);
+                              }}
+                            >
+                              <div className="font-medium">{product.name}</div>
+                              <div className="text-sm text-gray-600">
+                                Estoque: {product.currentStock} {product.ean ? `| EAN: ${product.ean}` : ''}
                               </div>
-                            );
-                          })}
+                            </div>
+                          ))}
                           {products.length > 20 && (
                             <div className="px-4 py-2 text-sm text-gray-500 text-center border-t">
                               Mostrando 20 de {products.length} resultados. Digite mais para refinar.
@@ -877,6 +885,11 @@ export default function Vendas() {
                       {selectedProduct && (
                         <div className="text-xs text-muted-foreground whitespace-nowrap">
                           Disp: {selectedProduct.currentStock}
+                          {selectedProductWithPrices?.prices?.find((p: any) => p.channelId === parseInt(channelId)) && (
+                            <span className="ml-1 text-green-600">
+                              R$ {parseFloat(selectedProductWithPrices.prices.find((p: any) => p.channelId === parseInt(channelId))?.price || '0').toFixed(2).replace('.', ',')}
+                            </span>
+                          )}
                           {parseInt(quantity) > selectedProduct.currentStock && (
                             <span className="text-destructive ml-1">⚠️</span>
                           )}

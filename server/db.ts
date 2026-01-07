@@ -204,7 +204,7 @@ export async function createSalesChannel(data: InsertSalesChannel) {
 }
 
 // ==================== PRODUTOS ====================
-export async function getProducts(filters?: { search?: string; categoryId?: number; activeOnly?: boolean }) {
+export async function getProducts(filters?: { search?: string; categoryId?: number; activeOnly?: boolean; includePrices?: boolean }) {
   const db = await getDb();
   if (!db) return [];
   
@@ -233,9 +233,21 @@ export async function getProducts(filters?: { search?: string; categoryId?: numb
   
   const productList = await query.orderBy(products.name);
   
-  // Get all prices in a single query
+  // OTIMIZAÇÃO: Só carregar preços se necessário (includePrices=true)
+  // Por padrão, carregar preços apenas se não houver busca (listagem completa)
+  const shouldIncludePrices = filters?.includePrices !== false && !filters?.search;
+  
   if (productList.length === 0) return [];
   
+  if (!shouldIncludePrices) {
+    // Retornar produtos sem preços para autocomplete (mais rápido)
+    return productList.map(product => ({
+      ...product,
+      prices: []
+    }));
+  }
+  
+  // Get all prices in a single query
   const productIds = productList.map(p => p.id);
   const allPrices = await db.select()
     .from(productPrices)
@@ -455,20 +467,24 @@ export async function getSales(filters?: { saleType?: string; customerId?: numbe
       whereConditions += ` AND customerId = ${filters.customerId}`;
     }
     
-    // Filtro de data usando CONVERT_TZ para horário de Brasília
+    // OTIMIZAÇÃO: Usar range de timestamps ao invés de CONVERT_TZ
+    // Isso permite usar o índice em saleDate
+    // Brasília = UTC-3, então adicionamos 3 horas para converter para UTC
     if (filters?.dateFrom) {
-      whereConditions += ` AND DATE(CONVERT_TZ(saleDate, '+00:00', '-03:00')) >= '${filters.dateFrom}'`;
+      // Início do dia em Brasília (00:00) = 03:00 UTC
+      whereConditions += ` AND saleDate >= '${filters.dateFrom} 03:00:00'`;
     }
     if (filters?.dateTo) {
-      whereConditions += ` AND DATE(CONVERT_TZ(saleDate, '+00:00', '-03:00')) <= '${filters.dateTo}'`;
+      // Fim do dia em Brasília (23:59:59) = próximo dia 02:59:59 UTC
+      whereConditions += ` AND saleDate < DATE_ADD('${filters.dateTo}', INTERVAL 1 DAY) + INTERVAL 3 HOUR`;
     }
     
-    const limitClause = filters?.limit ? `LIMIT ${filters.limit}` : '';
+    const limitClause = filters?.limit ? `LIMIT ${filters.limit}` : 'LIMIT 500';
     
     const result = await db.execute(sql.raw(`
       SELECT * FROM sales 
       WHERE ${whereConditions}
-      ORDER BY createdAt DESC
+      ORDER BY saleDate DESC
       ${limitClause}
     `));
     
@@ -608,106 +624,62 @@ export async function getSalesStats(
     total: { count: 0, total: "0.00" },
   };
   
-  // Buscar todas as vendas (excluindo canceladas)
-  let allSales = await db.select().from(sales).where(ne(sales.status, "CANCELLED"));
+  // OTIMIZAÇÃO: Usar SQL diretamente com filtro de data
+  // Isso evita carregar 120k+ registros na memória
   
-  // Aplicar filtro de data customizada (tem prioridade sobre period)
-  // IMPORTANTE: Usa saleDate (data real da venda) ao invés de createdAt (data de implantação)
+  // Construir condições WHERE
+  let whereConditions = `status != 'CANCELLED'`;
+  
+  // Filtro de data customizada (tem prioridade sobre period)
   if (dateFrom || dateTo) {
-    allSales = allSales.filter(sale => {
-      const saleDate = new Date(sale.saleDate!);
-      const saleBrasiliaStr = saleDate.toLocaleString('en-US', { 
-        timeZone: 'America/Sao_Paulo',
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour12: false
-      });
-      
-      const [saleDatePart] = saleBrasiliaStr.split(', ');
-      const [saleMonth, saleDay, saleYear] = saleDatePart.split('/');
-      const saleDateStr = `${saleYear}-${saleMonth}-${saleDay}`; // YYYY-MM-DD
-      
-      if (dateFrom && saleDateStr < dateFrom) return false;
-      if (dateTo && saleDateStr > dateTo) return false;
-      return true;
-    });
-  }
-  // Aplicar filtro de período usando horário de Brasília (GMT-3)
-  else if (period && period !== 'all') {
-    // Obter data ATUAL em Brasília
+    // Usar range de timestamps ao invés de CONVERT_TZ para usar índice
+    // Brasília = UTC-3, então adicionamos 3 horas para converter para UTC
+    if (dateFrom) {
+      // Início do dia em Brasília (00:00) = 03:00 UTC
+      whereConditions += ` AND saleDate >= '${dateFrom} 03:00:00'`;
+    }
+    if (dateTo) {
+      // Fim do dia em Brasília (23:59:59) = próximo dia 02:59:59 UTC
+      whereConditions += ` AND saleDate < DATE_ADD('${dateTo}', INTERVAL 1 DAY) + INTERVAL 3 HOUR`;
+    }
+  } else if (period && period !== 'all') {
+    // Obter data atual em Brasília
     const now = new Date();
-    const nowBrasiliaStr = now.toLocaleString('en-US', { 
-      timeZone: 'America/Sao_Paulo',
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: false
-    });
-    
-    // Parse: "12/01/2025, 18:03:00" -> partes
-    const [datePart, timePart] = nowBrasiliaStr.split(', ');
-    const [month, day, year] = datePart.split('/');
-    const todayBrasilia = { year: parseInt(year), month: parseInt(month), day: parseInt(day) };
+    const nowBrasiliaStr = now.toLocaleString('en-CA', { timeZone: 'America/Sao_Paulo' }).split(',')[0]; // YYYY-MM-DD
     
     if (period === 'today') {
-      // Filtrar vendas de hoje comparando data em Brasília
-      // IMPORTANTE: Usa saleDate (data real da venda) ao invés de createdAt
-      allSales = allSales.filter(sale => {
-        const saleDate = new Date(sale.saleDate!);
-        const saleBrasiliaStr = saleDate.toLocaleString('en-US', { 
-          timeZone: 'America/Sao_Paulo',
-          year: 'numeric',
-          month: '2-digit',
-          day: '2-digit',
-          hour12: false
-        });
-        
-        const [saleDatePart] = saleBrasiliaStr.split(', ');
-        const [saleMonth, saleDay, saleYear] = saleDatePart.split('/');
-        
-        return parseInt(saleYear) === todayBrasilia.year &&
-               parseInt(saleMonth) === todayBrasilia.month &&
-               parseInt(saleDay) === todayBrasilia.day;
-      });
+      whereConditions += ` AND saleDate >= '${nowBrasiliaStr} 03:00:00'`;
+      whereConditions += ` AND saleDate < DATE_ADD('${nowBrasiliaStr}', INTERVAL 1 DAY) + INTERVAL 3 HOUR`;
     } else if (period === 'week') {
-      // 7 dias atrás
-      // IMPORTANTE: Usa saleDate (data real da venda) ao invés de createdAt
       const weekAgo = new Date(now);
       weekAgo.setDate(now.getDate() - 7);
-      allSales = allSales.filter(sale => {
-        const saleDate = new Date(sale.saleDate!);
-        return saleDate >= weekAgo;
-      });
+      const weekAgoStr = weekAgo.toLocaleString('en-CA', { timeZone: 'America/Sao_Paulo' }).split(',')[0];
+      whereConditions += ` AND saleDate >= '${weekAgoStr} 03:00:00'`;
     } else if (period === 'month') {
-      // Mês atual comparando data em Brasília
-      // IMPORTANTE: Usa saleDate (data real da venda) ao invés de createdAt
-      allSales = allSales.filter(sale => {
-        const saleDate = new Date(sale.saleDate!);
-        const saleBrasiliaStr = saleDate.toLocaleString('en-US', { 
-          timeZone: 'America/Sao_Paulo',
-          year: 'numeric',
-          month: '2-digit',
-          day: '2-digit',
-          hour12: false
-        });
-        
-        const [saleDatePart] = saleBrasiliaStr.split(', ');
-        const [saleMonth, saleDay, saleYear] = saleDatePart.split('/');
-        
-        return parseInt(saleYear) === todayBrasilia.year &&
-               parseInt(saleMonth) === todayBrasilia.month;
-      });
+      // Primeiro dia do mês atual
+      const [year, month] = nowBrasiliaStr.split('-');
+      const firstDayOfMonth = `${year}-${month}-01`;
+      whereConditions += ` AND saleDate >= '${firstDayOfMonth} 03:00:00'`;
     }
   }
   
-  // Aplicar filtro de canal se especificado
+  // Filtro de canal
   if (channel) {
-    allSales = allSales.filter(sale => sale.saleType === channel);
+    whereConditions += ` AND saleType = '${channel}'`;
   }
+  
+  // Query SQL otimizada com GROUP BY
+  const result = await db.execute(sql.raw(`
+    SELECT 
+      saleType,
+      COUNT(*) as count,
+      COALESCE(SUM(finalAmount), 0) as total
+    FROM sales
+    WHERE ${whereConditions}
+    GROUP BY saleType
+  `));
+  
+  const rows = (result[0] as unknown as any[]) || [];
   
   const stats = {
     balcao: { count: 0, total: 0 },
@@ -715,18 +687,16 @@ export async function getSalesStats(
     aPrazo: { count: 0, total: 0 },
   };
   
-  for (const sale of allSales) {
-    const amount = parseFloat(sale.finalAmount);
+  for (const row of rows) {
+    const count = parseInt(row.count || '0', 10);
+    const total = parseFloat(row.total || '0');
     
-    if (sale.saleType === "BALCAO") {
-      stats.balcao.count++;
-      stats.balcao.total += amount;
-    } else if (sale.saleType === "DELIVERY") {
-      stats.delivery.count++;
-      stats.delivery.total += amount;
-    } else if (sale.saleType === "A_PRAZO") {
-      stats.aPrazo.count++;
-      stats.aPrazo.total += amount;
+    if (row.saleType === 'BALCAO') {
+      stats.balcao = { count, total };
+    } else if (row.saleType === 'DELIVERY') {
+      stats.delivery = { count, total };
+    } else if (row.saleType === 'A_PRAZO') {
+      stats.aPrazo = { count, total };
     }
   }
   
@@ -3172,49 +3142,53 @@ export async function getSalesCalendar(year: number, month: number) {
   const db = await getDb();
   if (!db) return [];
 
-  // Buscar TODAS as vendas (sem filtro de data no SQL)
-  // Vamos filtrar em JavaScript após converter para Brasília
-  const allSales = await db.select().from(sales);
-
-  // Agrupar por dia e canal
+  // OTIMIZAÇÃO: Usar SQL com filtro de data para evitar carregar 120k+ registros
+  // Calcular range de datas para o mês (considerando timezone Brasília = UTC-3)
+  const monthStr = month.toString().padStart(2, '0');
+  const firstDayOfMonth = `${year}-${monthStr}-01`;
+  
+  // Último dia do mês
+  const lastDay = new Date(year, month, 0).getDate();
+  const lastDayOfMonth = `${year}-${monthStr}-${lastDay.toString().padStart(2, '0')}`;
+  
+  // Query SQL otimizada com GROUP BY dia
+  const result = await db.execute(sql.raw(`
+    SELECT 
+      DAY(CONVERT_TZ(saleDate, '+00:00', '-03:00')) as day,
+      saleType,
+      COUNT(*) as count,
+      COALESCE(SUM(finalAmount), 0) as total
+    FROM sales
+    WHERE status != 'CANCELLED'
+      AND saleDate >= '${firstDayOfMonth} 03:00:00'
+      AND saleDate < DATE_ADD('${lastDayOfMonth}', INTERVAL 1 DAY) + INTERVAL 3 HOUR
+    GROUP BY DAY(CONVERT_TZ(saleDate, '+00:00', '-03:00')), saleType
+    ORDER BY day
+  `));
+  
+  const rows = (result[0] as unknown as any[]) || [];
+  
+  // Agrupar por dia
   const calendar: Record<number, { day: number; balcao: number; delivery: number; aPrazo: number; total: number; count: number }> = {};
-
-  for (const sale of allSales) {
-    // Excluir vendas canceladas (consistente com dashboard.stats)
-    if (sale.status === 'CANCELLED') {
-      continue;
-    }
+  
+  for (const row of rows) {
+    const day = parseInt(row.day, 10);
+    const total = parseFloat(row.total || '0');
+    const count = parseInt(row.count || '0', 10);
     
-    const saleDate = new Date(sale.saleDate || sale.createdAt || new Date());
-    
-    // Converter para horário de Brasília para obter ano/mês/dia corretos
-    const dateStr = saleDate.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' });
-    const [datePart] = dateStr.split(', ');
-    const [monthStr, dayStr, yearStr] = datePart.split('/');
-    
-    const saleYear = parseInt(yearStr, 10);
-    const saleMonth = parseInt(monthStr, 10);
-    const day = parseInt(dayStr, 10);
-    
-    // Filtrar apenas vendas do mês/ano solicitado (APÓS conversão para Brasília)
-    if (saleYear !== year || saleMonth !== month) {
-      continue;
-    }
-
     if (!calendar[day]) {
       calendar[day] = { day, balcao: 0, delivery: 0, aPrazo: 0, total: 0, count: 0 };
     }
-
-    const amount = parseFloat(sale.finalAmount);
-    calendar[day].total += amount;
-    calendar[day].count += 1;
-
-    if (sale.saleType === 'BALCAO') {
-      calendar[day].balcao += amount;
-    } else if (sale.saleType === 'DELIVERY') {
-      calendar[day].delivery += amount;
-    } else if (sale.saleType === 'A_PRAZO') {
-      calendar[day].aPrazo += amount;
+    
+    calendar[day].total += total;
+    calendar[day].count += count;
+    
+    if (row.saleType === 'BALCAO') {
+      calendar[day].balcao += total;
+    } else if (row.saleType === 'DELIVERY') {
+      calendar[day].delivery += total;
+    } else if (row.saleType === 'A_PRAZO') {
+      calendar[day].aPrazo += total;
     }
   }
 
@@ -4688,9 +4662,28 @@ export async function getSalesMonthlyStats(year: number) {
   const db = await getDb();
   if (!db) return [];
 
-  // Buscar todas as vendas não canceladas
-  const allSales = await db.select().from(sales);
-
+  // OTIMIZAÇÃO: Usar SQL com filtro de ano para evitar carregar 120k+ registros
+  // Calcular range de datas para o ano (considerando timezone Brasília = UTC-3)
+  const firstDayOfYear = `${year}-01-01`;
+  const lastDayOfYear = `${year}-12-31`;
+  
+  // Query SQL otimizada com GROUP BY mês
+  const result = await db.execute(sql.raw(`
+    SELECT 
+      MONTH(CONVERT_TZ(saleDate, '+00:00', '-03:00')) as month,
+      saleType,
+      COUNT(*) as count,
+      COALESCE(SUM(finalAmount), 0) as total
+    FROM sales
+    WHERE status != 'CANCELLED'
+      AND saleDate >= '${firstDayOfYear} 03:00:00'
+      AND saleDate < DATE_ADD('${lastDayOfYear}', INTERVAL 1 DAY) + INTERVAL 3 HOUR
+    GROUP BY MONTH(CONVERT_TZ(saleDate, '+00:00', '-03:00')), saleType
+    ORDER BY month
+  `));
+  
+  const rows = (result[0] as unknown as any[]) || [];
+  
   // Estrutura para armazenar dados por mês
   const monthlyData: Record<number, { month: number; balcao: number; delivery: number; aPrazo: number; total: number; count: number }> = {};
 
@@ -4698,38 +4691,21 @@ export async function getSalesMonthlyStats(year: number) {
   for (let m = 1; m <= 12; m++) {
     monthlyData[m] = { month: m, balcao: 0, delivery: 0, aPrazo: 0, total: 0, count: 0 };
   }
-
-  for (const sale of allSales) {
-    // Excluir vendas canceladas
-    if (sale.status === 'CANCELLED') {
-      continue;
-    }
+  
+  for (const row of rows) {
+    const month = parseInt(row.month, 10);
+    const total = parseFloat(row.total || '0');
+    const count = parseInt(row.count || '0', 10);
     
-    const saleDate = new Date(sale.saleDate || sale.createdAt || new Date());
+    monthlyData[month].total += total;
+    monthlyData[month].count += count;
     
-    // Converter para horário de Brasília
-    const dateStr = saleDate.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' });
-    const [datePart] = dateStr.split(', ');
-    const [monthStr, , yearStr] = datePart.split('/');
-    
-    const saleYear = parseInt(yearStr, 10);
-    const saleMonth = parseInt(monthStr, 10);
-    
-    // Filtrar apenas vendas do ano solicitado
-    if (saleYear !== year) {
-      continue;
-    }
-
-    const amount = parseFloat(sale.finalAmount);
-    monthlyData[saleMonth].total += amount;
-    monthlyData[saleMonth].count += 1;
-
-    if (sale.saleType === 'BALCAO') {
-      monthlyData[saleMonth].balcao += amount;
-    } else if (sale.saleType === 'DELIVERY') {
-      monthlyData[saleMonth].delivery += amount;
-    } else if (sale.saleType === 'A_PRAZO') {
-      monthlyData[saleMonth].aPrazo += amount;
+    if (row.saleType === 'BALCAO') {
+      monthlyData[month].balcao += total;
+    } else if (row.saleType === 'DELIVERY') {
+      monthlyData[month].delivery += total;
+    } else if (row.saleType === 'A_PRAZO') {
+      monthlyData[month].aPrazo += total;
     }
   }
 

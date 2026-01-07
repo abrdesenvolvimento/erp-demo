@@ -142,6 +142,7 @@ export const appRouter = router({
         search: z.string().optional(),
         categoryId: z.number().optional(),
         activeOnly: z.boolean().optional().default(true),
+        includePrices: z.boolean().optional(), // OTIMIZAÇÃO: não carregar preços no autocomplete
       }).optional())
       .query(async ({ input, ctx }) => {
         const products = await db.getProducts(input);
@@ -289,6 +290,16 @@ export const appRouter = router({
       .input(z.object({ productId: z.number() }))
       .query(async ({ input }) => {
         return await db.getProductPrices(input.productId);
+      }),
+    
+    // OTIMIZAÇÃO: Buscar produto com preços (para seleção na venda)
+    getWithPrices: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .query(async ({ input }) => {
+        const product = await db.getProduct(input.id);
+        if (!product) return null;
+        const prices = await db.getProductPrices(input.id);
+        return { ...product, prices };
       }),
     
     setPrice: protectedProcedure
