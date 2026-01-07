@@ -1555,6 +1555,21 @@ export const appRouter = router({
 
   // ==================== ANÁLISE DE VENDAS ====================
   salesAnalysis: router({
+    // Resumo usando sales.finalAmount (valor correto para totais)
+    summary: adminProcedure
+      .input(z.object({
+        startDate: z.date(),
+        endDate: z.date(),
+        channels: z.array(z.string()).optional(),
+        paymentMethod: z.string().optional(),
+      }))
+      .query(async ({ input }) => {
+        return await db.getSalesAnalysisSummary(input.startDate, input.endDate, {
+          channels: input.channels,
+          paymentMethod: input.paymentMethod,
+        });
+      }),
+
     // Análise por valores (faturamento, margem, lucro)
     byValue: adminProcedure
       .input(z.object({

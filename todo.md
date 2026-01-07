@@ -86,6 +86,7 @@
 
 - [x] **Análise Delivery não mostra produtos** - CORRIGIDO! Query SQL otimizada com CONVERT_TZ
 - [x] **Filtro "Por Categoria" não aplicava filtros de data/mês/dia** - CORRIGIDO! Adicionado categoryId e categoryName na query getSalesByProductAndDate, e recalculado categoryData a partir do matrixData filtrado no frontend
+- [x] **Divergência de faturamento 2024** - CORRIGIDO! Faturamento mostrava R$ 851.612 ao invés de R$ 884.440 (diferença de R$ 32.827). Causa: 1.000 vendas sem itens + 103 vendas com diferença entre finalAmount e soma de itens. Solução: criada query separada getSalesAnalysisSummary que usa sales.finalAmount diretamente para os cards de resumo
 
 ## 🟡 MELHORIAS - Análise de Vendas (07/01/2026)
 
@@ -1673,3 +1674,12 @@
   - Tempo de execução: 46 minutos e 19 segundos
   - Relatório de erros gerado: migracao-erros-*.txt
   - Dados prontos para análise e relatórios históricos
+
+## 🔴 BUG - Divergência Faturamento 2024 (07/01/2026)
+
+- [ ] **Faturamento 2024 divergente na Análise de Vendas**
+  - Valor esperado: R$ 884.440,00
+  - Valor mostrado: R$ 851.612,45
+  - Diferença: R$ 32.827,55 (3.7%)
+  - Anos 2022, 2023 e 2025 batem corretamente
+  - Investigar: filtros de canal, meses, query SQL

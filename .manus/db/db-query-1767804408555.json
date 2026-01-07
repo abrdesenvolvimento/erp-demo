@@ -1,0 +1,15 @@
+{
+  "query": "SELECT \n  YEAR(CONVERT_TZ(saleDate, '+00:00', '-03:00')) as ano,\n  SUM(finalAmount) as faturamento_total,\n  COUNT(*) as total_vendas\nFROM sales \nWHERE YEAR(CONVERT_TZ(saleDate, '+00:00', '-03:00')) = 2024\nGROUP BY YEAR(CONVERT_TZ(saleDate, '+00:00', '-03:00'))",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  YEAR(CONVERT_TZ(saleDate, '+00:00', '-03:00')) as ano,\n  SUM(finalAmount) as faturamento_total,\n  COUNT(*) as total_vendas\nFROM sales \nWHERE YEAR(CONVERT_TZ(saleDate, '+00:00', '-03:00')) = 2024\nGROUP BY YEAR(CONVERT_TZ(saleDate, '+00:00', '-03:00'))",
+  "rows": [
+    {
+      "ano": "2024",
+      "faturamento_total": "884440.08",
+      "total_vendas": "32806"
+    }
+  ],
+  "messages": [],
+  "stdout": "ano\tfaturamento_total\ttotal_vendas\n2024\t884440.08\t32806\n",
+  "stderr": "",
+  "execution_time_ms": 221
+}

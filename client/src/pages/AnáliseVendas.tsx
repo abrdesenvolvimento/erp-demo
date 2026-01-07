@@ -199,6 +199,17 @@ export default function AnáliseVendas() {
     { enabled: isAdmin && groupBy === "product" && !!dateRange }
   );
 
+  // Query para resumo usando sales.finalAmount (valor correto para totais)
+  const { data: summaryData, isLoading: isSummaryLoading } = trpc.salesAnalysis.summary.useQuery(
+    { 
+      startDate: dateRange?.from ?? new Date(), 
+      endDate: dateRange?.to ?? new Date(),
+      channels: selectedChannels.length > 0 ? selectedChannels : undefined,
+      paymentMethod: selectedPaymentMethod,
+    },
+    { enabled: isAdmin && !!dateRange }
+  );
+
   // Queries temporais
   const { data: dayDataRaw, isLoading: isDayLoading } = trpc.salesAnalysis.byDay.useQuery(
     { 
@@ -1462,7 +1473,9 @@ export default function AnáliseVendas() {
               
               if (!currentData || currentData.length === 0) return null;
 
-              const totalRevenue = currentData.reduce((sum, item) => sum + parseFloat(item.totalRevenue), 0);
+              // Usar summaryData.totalRevenue para o faturamento correto (inclui vendas sem itens)
+              // Manter custo calculado dos itens (não temos custo para vendas sem itens)
+              const totalRevenue = summaryData?.totalRevenue ?? currentData.reduce((sum, item) => sum + parseFloat(item.totalRevenue), 0);
               const totalCost = currentData.reduce((sum, item) => sum + parseFloat(item.totalCost), 0);
               const margin = totalRevenue > 0 ? ((1 - (totalCost / totalRevenue)) * 100).toFixed(1) : "0.0";
 

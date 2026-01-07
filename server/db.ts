@@ -4546,3 +4546,52 @@ export async function getDeliveryProductAnalysis(
     };
   });
 }
+
+
+/**
+ * Análise de Vendas - Resumo usando sales.finalAmount
+ * Retorna faturamento total correto (inclui vendas sem itens detalhados)
+ * Esta função deve ser usada para os cards de resumo na Análise de Vendas
+ */
+export async function getSalesAnalysisSummary(
+  startDate: Date, 
+  endDate: Date,
+  filters?: { 
+    channels?: string[];
+    paymentMethod?: string;
+  }
+) {
+  const db = await getDb();
+  if (!db) return { totalRevenue: 0, totalSales: 0 };
+
+  // Formatar datas para MySQL
+  const startStr = startDate.toISOString().split('T')[0];
+  const endStr = endDate.toISOString().split('T')[0];
+
+  // Construir condições WHERE dinâmicas
+  let whereConditions = `status != 'CANCELLED' AND DATE(CONVERT_TZ(saleDate, '+00:00', '-03:00')) >= '${startStr}' AND DATE(CONVERT_TZ(saleDate, '+00:00', '-03:00')) <= '${endStr}'`;
+  
+  if (filters?.channels && filters.channels.length > 0) {
+    const channelList = filters.channels.map(ch => `'${ch}'`).join(',');
+    whereConditions += ` AND saleType IN (${channelList})`;
+  }
+  if (filters?.paymentMethod) {
+    whereConditions += ` AND paymentMethod = '${filters.paymentMethod}'`;
+  }
+
+  const result = await db.execute(sql.raw(`
+    SELECT 
+      COALESCE(SUM(finalAmount), 0) as totalRevenue,
+      COUNT(*) as totalSales
+    FROM sales
+    WHERE ${whereConditions}
+  `));
+
+  const rows = (result[0] || []) as any[];
+  const row = rows[0] || {};
+  
+  return {
+    totalRevenue: parseFloat(row.totalRevenue || '0'),
+    totalSales: parseInt(row.totalSales || '0', 10)
+  };
+}

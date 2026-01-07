@@ -1,0 +1,16 @@
+{
+  "query": "SELECT \n  YEAR(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) as ano,\n  SUM(si.totalPrice) as faturamento_saleItems,\n  SUM(s.finalAmount) as faturamento_sales_finalAmount,\n  COUNT(DISTINCT s.id) as total_vendas\nFROM saleItems si\nINNER JOIN sales s ON si.saleId = s.id\nWHERE s.status != 'CANCELLED' \n  AND YEAR(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) = 2024\nGROUP BY YEAR(CONVERT_TZ(s.saleDate, '+00:00', '-03:00'))",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  YEAR(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) as ano,\n  SUM(si.totalPrice) as faturamento_saleItems,\n  SUM(s.finalAmount) as faturamento_sales_finalAmount,\n  COUNT(DISTINCT s.id) as total_vendas\nFROM saleItems si\nINNER JOIN sales s ON si.saleId = s.id\nWHERE s.status != 'CANCELLED' \n  AND YEAR(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) = 2024\nGROUP BY YEAR(CONVERT_TZ(s.saleDate, '+00:00', '-03:00'))",
+  "rows": [
+    {
+      "ano": "2024",
+      "faturamento_saleItems": "851612.45",
+      "faturamento_sales_finalAmount": "874915.62",
+      "total_vendas": "31806"
+    }
+  ],
+  "messages": [],
+  "stdout": "ano\tfaturamento_saleItems\tfaturamento_sales_finalAmount\ttotal_vendas\n2024\t851612.45\t874915.62\t31806\n",
+  "stderr": "",
+  "execution_time_ms": 312
+}
