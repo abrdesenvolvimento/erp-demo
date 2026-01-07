@@ -21,13 +21,13 @@ import XLSX from 'xlsx';
 // ============================================================================
 
 const CONFIG = {
-  // Colunas esperadas na planilha Excel
+  // Colunas esperadas na planilha Excel (aceita múltiplos formatos)
   columns: {
-    date: 'Data',
-    item: 'Item',
-    quantity: 'Quantidade',
-    unitPrice: 'Valor Unitário',
-    unitCost: 'Custo de Venda'
+    date: ['Data'],
+    item: ['Item'],
+    quantity: ['Quantidade', 'Quant'],
+    unitPrice: ['Valor Unitário', 'Vlr Uni'],
+    unitCost: ['Custo de Venda']
   },
   
   // Valores padrão para vendas migradas
@@ -93,6 +93,18 @@ function connectDatabase() {
     throw new Error('DATABASE_URL não configurada');
   }
   return drizzle(process.env.DATABASE_URL);
+}
+
+/**
+ * Busca valor de coluna com nomes alternativos
+ */
+function getColumnValue(row, columnNames) {
+  for (const name of columnNames) {
+    if (row.hasOwnProperty(name)) {
+      return row[name];
+    }
+  }
+  return undefined;
 }
 
 /**
@@ -228,35 +240,42 @@ async function findProductByName(db, productName) {
 function validateRow(row, lineNumber) {
   const errors = [];
   
+  // Buscar valores com nomes flexíveis
+  const dateValue = getColumnValue(row, CONFIG.columns.date);
+  const itemValue = getColumnValue(row, CONFIG.columns.item);
+  const quantityValue = getColumnValue(row, CONFIG.columns.quantity);
+  const unitPriceValue = getColumnValue(row, CONFIG.columns.unitPrice);
+  const unitCostValue = getColumnValue(row, CONFIG.columns.unitCost);
+  
   // Validar data
-  const date = parseExcelDate(row[CONFIG.columns.date]);
+  const date = parseExcelDate(dateValue);
   if (!date) {
-    errors.push(`Data inválida: ${row[CONFIG.columns.date]}`);
+    errors.push(`Data inválida: ${dateValue}`);
   } else if (date < CONFIG.validation.minDate || date > CONFIG.validation.maxDate) {
     errors.push(`Data fora do intervalo permitido: ${date.toISOString()}`);
   }
   
   // Validar produto
-  if (!row[CONFIG.columns.item] || row[CONFIG.columns.item].trim() === '') {
+  if (!itemValue || itemValue.trim() === '') {
     errors.push('Nome do produto vazio');
   }
   
   // Validar quantidade
-  const quantity = parseFloat(row[CONFIG.columns.quantity]);
+  const quantity = parseFloat(quantityValue);
   if (isNaN(quantity) || quantity < CONFIG.validation.minQuantity) {
-    errors.push(`Quantidade inválida: ${row[CONFIG.columns.quantity]}`);
+    errors.push(`Quantidade inválida: ${quantityValue}`);
   }
   
   // Validar preço unitário
-  const unitPrice = parseFloat(row[CONFIG.columns.unitPrice]);
+  const unitPrice = parseFloat(unitPriceValue);
   if (isNaN(unitPrice) || unitPrice < CONFIG.validation.minPrice) {
-    errors.push(`Valor unitário inválido: ${row[CONFIG.columns.unitPrice]}`);
+    errors.push(`Valor unitário inválido: ${unitPriceValue}`);
   }
   
   // Validar custo (pode ser zero)
-  const unitCost = parseFloat(row[CONFIG.columns.unitCost]);
+  const unitCost = parseFloat(unitCostValue);
   if (isNaN(unitCost) || unitCost < CONFIG.validation.minCost) {
-    errors.push(`Custo de venda inválido: ${row[CONFIG.columns.unitCost]}`);
+    errors.push(`Custo de venda inválido: ${unitCostValue}`);
   }
   
   // Warning: custo maior que preço
@@ -287,12 +306,18 @@ async function processRow(db, row, lineNumber) {
     return false;
   }
   
-  // Parsear dados
-  const saleDate = formatMySQLDateTime(parseExcelDate(row[CONFIG.columns.date]));
-  const productName = row[CONFIG.columns.item].trim();
-  const quantity = parseFloat(row[CONFIG.columns.quantity]);
-  const unitPrice = parseFloat(row[CONFIG.columns.unitPrice]);
-  const unitCost = parseFloat(row[CONFIG.columns.unitCost]);
+  // Parsear dados usando getColumnValue
+  const dateValue = getColumnValue(row, CONFIG.columns.date);
+  const itemValue = getColumnValue(row, CONFIG.columns.item);
+  const quantityValue = getColumnValue(row, CONFIG.columns.quantity);
+  const unitPriceValue = getColumnValue(row, CONFIG.columns.unitPrice);
+  const unitCostValue = getColumnValue(row, CONFIG.columns.unitCost);
+  
+  const saleDate = formatMySQLDateTime(parseExcelDate(dateValue));
+  const productName = itemValue.trim();
+  const quantity = parseFloat(quantityValue);
+  const unitPrice = parseFloat(unitPriceValue);
+  const unitCost = parseFloat(unitCostValue);
   
   // Buscar produto
   const productId = await findProductByName(db, productName);

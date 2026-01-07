@@ -1628,3 +1628,15 @@
   - Logs automáticos: relatório, produtos não encontrados, erros detalhados
   - GUIA-MIGRACAO-VENDAS.md criado com instruções passo a passo
   - Pronto para execução: `node migrate-sales-from-excel.mjs vendas.xlsx`
+
+
+### Migração de Dados Legado - CONCLUÍDA (06/01/2026)
+- [x] **Migração completa de 114.834 linhas de vendas** - SUCESSO! 99,70% de taxa de sucesso
+  - Planilha corrigida com encoding UTF-8 correto
+  - 114.487 vendas migradas com sucesso
+  - 347 linhas rejeitadas (0,30%) - produtos não encontrados
+  - Faturamento histórico migrado: R$ 2.991.649,54
+  - Período coberto: 31/12/2019 a 06/01/2026
+  - Tempo de execução: 46 minutos e 19 segundos
+  - Relatório de erros gerado: migracao-erros-*.txt
+  - Dados prontos para análise e relatórios históricos
