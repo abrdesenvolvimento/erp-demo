@@ -64,7 +64,7 @@ function CompositionsSection({ productId, refreshKey, onSaved }: { productId: nu
   const [editingQuantity, setEditingQuantity] = useState("");
   
   const utils = trpc.useUtils();
-  const { data: products } = trpc.products.list.useQuery({ activeOnly: true });
+  const { data: productsForComposition } = trpc.products.list.useQuery({ activeOnly: true, includePrices: false });
   const { data: compositionsData, refetch } = trpc.products.getCompositions.useQuery(
     { productId },
     {
@@ -74,7 +74,7 @@ function CompositionsSection({ productId, refreshKey, onSaved }: { productId: nu
     }
   );
   
-  const filteredProducts = products?.filter(p => 
+  const filteredProducts = productsForComposition?.filter(p => 
     !p.isComposite && 
     p.id !== productId &&
     p.name.toLowerCase().includes(productSearch.toLowerCase())
@@ -131,7 +131,7 @@ function CompositionsSection({ productId, refreshKey, onSaved }: { productId: nu
       return;
     }
     
-    const product = products?.find(p => p.id === parseInt(newComposition.childProductId));
+    const product = productsForComposition?.find((p: any) => p.id === parseInt(newComposition.childProductId));
     if (!product) return;
     
     setCompositions([...compositions, {
@@ -311,9 +311,9 @@ function TempCompositionsSection({
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editingQuantity, setEditingQuantity] = useState("");
   
-  const { data: products } = trpc.products.list.useQuery({ activeOnly: true });
+  const { data: productsForTemp } = trpc.products.list.useQuery({ activeOnly: true, includePrices: false });
   
-  const filteredProducts = products?.filter(p => 
+  const filteredProducts = productsForTemp?.filter((p: any) => 
     !p.isComposite && 
     p.name.toLowerCase().includes(productSearch.toLowerCase())
   ) || [];
@@ -330,7 +330,7 @@ function TempCompositionsSection({
       return;
     }
     
-    const product = products?.find(p => p.id === parseInt(newComposition.childProductId));
+    const product = productsForTemp?.find((p: any) => p.id === parseInt(newComposition.childProductId));
     if (!product) return;
     
     onCompositionsChange([...compositions, {
@@ -521,11 +521,13 @@ export default function Produtos() {
   const { data: channels } = trpc.salesChannels.list.useQuery();
   const utils = trpc.useUtils();
   
+  // Query principal para listagem (com preços para exportação)
   const { data: products, isLoading, refetch } = trpc.products.list.useQuery({
     search: search || undefined,
     activeOnly: false, // Mostrar todos os produtos (ativos e inativos)
     categoryId: filterCategoryId ? parseInt(filterCategoryId) : undefined,
     subcategoryId: filterSubcategoryId ? parseInt(filterSubcategoryId) : undefined,
+    includePrices: true, // Incluir preços para exportação
   });
   
   // Subcategorias filtradas pela categoria selecionada
@@ -534,57 +536,98 @@ export default function Produtos() {
   ) || [];
   
   // Função para exportar produtos para Excel
-  const handleExportExcel = () => {
-    if (!products || products.length === 0) {
-      toast.error("Nenhum produto para exportar");
-      return;
-    }
+  const [isExporting, setIsExporting] = useState(false);
+  
+  const handleExportExcel = async () => {
+    if (isExporting) return;
     
-    const exportData = products.map((product: any) => {
-      const category = categories?.find(c => c.id === product.categoryId);
-      const subcategory = subcategories?.find((s: any) => s.id === product.subcategoryId);
+    setIsExporting(true);
+    toast.info("Carregando dados para exportação...");
+    
+    try {
+      // Buscar produtos com preços usando endpoint específico
+      const productsWithPrices = await utils.client.products.exportWithPrices.query();
       
-      return {
-        'ID': product.id,
-        'Nome': product.name,
-        'EAN': product.ean || '',
-        'Categoria': category?.name || '',
-        'Subcategoria': subcategory?.name || '',
-        'Unidade': product.uom,
-        'Estoque Atual': product.currentStock || 0,
-        'Estoque Mínimo': product.minStock || 0,
-        'Custo Médio': isAdmin ? parseFloat(product.avgCost || '0').toFixed(2) : '',
-        'Tipo': product.isComposite ? 'Composto' : 'Simples',
-        'Ativo': product.active ? 'Sim' : 'Não',
-        'Observações': product.notes || '',
-      };
-    });
-    
-    const ws = XLSX.utils.json_to_sheet(exportData);
-    
-    // Ajustar largura das colunas
-    ws['!cols'] = [
-      { wch: 8 },   // ID
-      { wch: 40 },  // Nome
-      { wch: 15 },  // EAN
-      { wch: 20 },  // Categoria
-      { wch: 20 },  // Subcategoria
-      { wch: 10 },  // Unidade
-      { wch: 12 },  // Estoque Atual
-      { wch: 12 },  // Estoque Mínimo
-      { wch: 12 },  // Custo Médio
-      { wch: 10 },  // Tipo
-      { wch: 8 },   // Ativo
-      { wch: 30 },  // Observações
-    ];
-    
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Produtos');
-    
-    const fileName = `produtos_${new Date().toISOString().split('T')[0]}.xlsx`;
-    XLSX.writeFile(wb, fileName);
-    
-    toast.success(`Exportados ${products.length} produtos para Excel`);
+      if (!productsWithPrices || productsWithPrices.length === 0) {
+        toast.error("Nenhum produto para exportar");
+        setIsExporting(false);
+        return;
+      }
+      
+      // Debug: verificar se os preços estão sendo carregados
+      console.log('[Export] Total produtos:', productsWithPrices.length);
+      console.log('[Export] Primeiro produto:', productsWithPrices[0]);
+      console.log('[Export] Preços do primeiro produto:', productsWithPrices[0]?.prices);
+      console.log('[Export] Canais disponíveis:', channels);
+      
+      // Usar IDs fixos dos canais (1=Balcão, 2=Delivery, 3=A Prazo, 4=Custo)
+      // Isso é mais confiável do que buscar por nome
+      const BALCAO_ID = 1;
+      const DELIVERY_ID = 2;
+      const A_PRAZO_ID = 3;
+      
+      const exportData = productsWithPrices.map((product: any) => {
+        const category = categories?.find(c => c.id === product.categoryId);
+        const subcategory = subcategories?.find((s: any) => s.id === product.subcategoryId);
+        
+        // Buscar preços por canal usando IDs fixos
+        const precoBalcao = product.prices?.find((p: any) => p.channelId === BALCAO_ID)?.price || '';
+        const precoDelivery = product.prices?.find((p: any) => p.channelId === DELIVERY_ID)?.price || '';
+        const precoAPrazo = product.prices?.find((p: any) => p.channelId === A_PRAZO_ID)?.price || '';
+        
+        return {
+          'ID': product.id,
+          'Nome': product.name,
+          'EAN': product.ean || '',
+          'Categoria': category?.name || '',
+          'Subcategoria': subcategory?.name || '',
+          'Unidade': product.uom,
+          'Estoque Atual': product.currentStock || 0,
+          'Estoque Mínimo': product.minStock || 0,
+          'Custo Médio': isAdmin ? parseFloat(product.avgCost || '0').toFixed(2) : '',
+          'Preço Balcão': precoBalcao ? parseFloat(precoBalcao).toFixed(2) : '',
+          'Preço Delivery': precoDelivery ? parseFloat(precoDelivery).toFixed(2) : '',
+          'Preço A Prazo': precoAPrazo ? parseFloat(precoAPrazo).toFixed(2) : '',
+          'Tipo': product.isComposite ? 'Composto' : 'Simples',
+          'Ativo': product.active ? 'Sim' : 'Não',
+          'Observações': product.notes || '',
+        };
+      });
+      
+      const ws = XLSX.utils.json_to_sheet(exportData);
+      
+      // Ajustar largura das colunas
+      ws['!cols'] = [
+        { wch: 8 },   // ID
+        { wch: 40 },  // Nome
+        { wch: 15 },  // EAN
+        { wch: 20 },  // Categoria
+        { wch: 20 },  // Subcategoria
+        { wch: 10 },  // Unidade
+        { wch: 12 },  // Estoque Atual
+        { wch: 12 },  // Estoque Mínimo
+        { wch: 12 },  // Custo Médio
+        { wch: 12 },  // Preço Balcão
+        { wch: 12 },  // Preço Delivery
+        { wch: 12 },  // Preço A Prazo
+        { wch: 10 },  // Tipo
+        { wch: 8 },   // Ativo
+        { wch: 30 },  // Observações
+      ];
+      
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Produtos');
+      
+      const fileName = `produtos_${new Date().toISOString().split('T')[0]}.xlsx`;
+      XLSX.writeFile(wb, fileName);
+      
+      toast.success(`Exportados ${productsWithPrices.length} produtos para Excel`);
+    } catch (error) {
+      console.error('[Export] Erro:', error);
+      toast.error("Erro ao exportar produtos");
+    } finally {
+      setIsExporting(false);
+    }
   };
   
   const createSubcategory = trpc.subcategories.create.useMutation({

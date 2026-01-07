@@ -1,0 +1,38 @@
+{
+  "query": "SELECT p.id, p.name, pp.channelId, sc.name as channelName, pp.price \nFROM products p \nLEFT JOIN productPrices pp ON p.id = pp.productId\nLEFT JOIN salesChannels sc ON pp.channelId = sc.id\nWHERE p.name LIKE '43 700ml%'\nORDER BY p.id, pp.channelId",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT p.id, p.name, pp.channelId, sc.name as channelName, pp.price \nFROM products p \nLEFT JOIN productPrices pp ON p.id = pp.productId\nLEFT JOIN salesChannels sc ON pp.channelId = sc.id\nWHERE p.name LIKE '43 700ml%'\nORDER BY p.id, pp.channelId",
+  "rows": [
+    {
+      "id": "2250007",
+      "name": "43 700ml",
+      "channelId": "1",
+      "channelName": "Balcão / A Prazo",
+      "price": "160.00"
+    },
+    {
+      "id": "2250007",
+      "name": "43 700ml",
+      "channelId": "2",
+      "channelName": "Delivery iFood",
+      "price": "215.89"
+    },
+    {
+      "id": "2250007",
+      "name": "43 700ml",
+      "channelId": "3",
+      "channelName": "Delivery 99Food",
+      "price": "215.89"
+    },
+    {
+      "id": "2250007",
+      "name": "43 700ml",
+      "channelId": "4",
+      "channelName": "Delivery Próprio",
+      "price": "160.00"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tchannelId\tchannelName\tprice\n2250007\t43 700ml\t1\tBalcão / A Prazo\t160.00\n2250007\t43 700ml\t2\tDelivery iFood\t215.89\n2250007\t43 700ml\t3\tDelivery 99Food\t215.89\n2250007\t43 700ml\t4\tDelivery Próprio\t160.00\n",
+  "stderr": "",
+  "execution_time_ms": 66
+}

@@ -92,7 +92,8 @@
 ## 🟠 PENDÊNCIAS IDENTIFICADAS (07/01/2026)
 
 ### Bugs
-- [x] **Divergência de horário entre listagem e detalhes da venda** - CORRIGIDO! Adicionado timeZone: 'America/Sao_Paulo' na função formatDate do SaleDetailsModal.tsx
+- [x] **Divergência de horário entre listagem e detalhes da venda** - CORRIGIDO! Adicionado CONVERT_TZ nas queries getSales e getSale para converter UTC para GMT-3 (Brasília)
+- [x] **Exportação de Produtos não incluía preços dos canais** - CORRIGIDO! Criado endpoint exportWithPrices com IDs fixos dos canais (1=Balcão, 2=Delivery, 3=A Prazo)
 
 ### Funcionalidades Pendentes
 - [ ] **Controle de Acesso** - Testar perfis Admin/User para validar restrições
@@ -100,7 +101,7 @@
 - [ ] **Exportação de Relatórios** - Implementar exportação para Excel/PDF
 - [ ] **Fechamento Mensal e Consolidado** - Consolidar informações de Vendas, Compras, Despesas e demais informações para chegar ao resultado final do mês e Ano em R$ e %
 - [x] **Filtro por subcategoria em Produtos** - IMPLEMENTADO! Adicionado filtro por categoria e subcategoria na listagem de produtos
-- [x] **Exportação de Produtos para Excel** - IMPLEMENTADO! Botão "Exportar Excel" na tela de Produtos com todas as informações
+- [x] **Exportação de Produtos para Excel** - IMPLEMENTADO! Botão "Exportar Excel" na tela de Produtos com todas as informações incluindo Preço Balcão, Preço Delivery e Preço A Prazo
 - [ ] **Histórico de Alterações** - Log de auditoria para rastrear mudanças
 - [ ] **Reorganizar Menu Financeiro** - Submenu agrupando Contas a Pagar, Contas a Receber, Despesas e Compras
 - [ ] **Rotina de Backup** - Definir local e criar rotina automática

@@ -1,0 +1,220 @@
+{
+  "query": "SELECT pp.productId, p.name, pp.channelId, sc.name as channelName, pp.price \nFROM productPrices pp \nJOIN products p ON pp.productId = p.id \nJOIN salesChannels sc ON pp.channelId = sc.id \nWHERE p.name LIKE '43%' OR p.name LIKE '51%'\nORDER BY p.name, sc.name\nLIMIT 30",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT pp.productId, p.name, pp.channelId, sc.name as channelName, pp.price \nFROM productPrices pp \nJOIN products p ON pp.productId = p.id \nJOIN salesChannels sc ON pp.channelId = sc.id \nWHERE p.name LIKE '43%' OR p.name LIKE '51%'\nORDER BY p.name, sc.name\nLIMIT 30",
+  "rows": [
+    {
+      "productId": "2250007",
+      "name": "43 700ml",
+      "channelId": "1",
+      "channelName": "Balcão / A Prazo",
+      "price": "160.00"
+    },
+    {
+      "productId": "2250007",
+      "name": "43 700ml",
+      "channelId": "3",
+      "channelName": "Delivery 99Food",
+      "price": "215.89"
+    },
+    {
+      "productId": "2250007",
+      "name": "43 700ml",
+      "channelId": "4",
+      "channelName": "Delivery Próprio",
+      "price": "160.00"
+    },
+    {
+      "productId": "2250007",
+      "name": "43 700ml",
+      "channelId": "2",
+      "channelName": "Delivery iFood",
+      "price": "215.89"
+    },
+    {
+      "productId": "2250010",
+      "name": "43 Baristo 700ml",
+      "channelId": "1",
+      "channelName": "Balcão / A Prazo",
+      "price": "200.00"
+    },
+    {
+      "productId": "2250010",
+      "name": "43 Baristo 700ml",
+      "channelId": "3",
+      "channelName": "Delivery 99Food",
+      "price": "200.00"
+    },
+    {
+      "productId": "2250010",
+      "name": "43 Baristo 700ml",
+      "channelId": "4",
+      "channelName": "Delivery Próprio",
+      "price": "200.00"
+    },
+    {
+      "productId": "2250010",
+      "name": "43 Baristo 700ml",
+      "channelId": "2",
+      "channelName": "Delivery iFood",
+      "price": "200.00"
+    },
+    {
+      "productId": "3060004",
+      "name": "43 Creme Brulee 700ml",
+      "channelId": "1",
+      "channelName": "Balcão / A Prazo",
+      "price": "200.00"
+    },
+    {
+      "productId": "3060004",
+      "name": "43 Creme Brulee 700ml",
+      "channelId": "3",
+      "channelName": "Delivery 99Food",
+      "price": "200.00"
+    },
+    {
+      "productId": "3060004",
+      "name": "43 Creme Brulee 700ml",
+      "channelId": "4",
+      "channelName": "Delivery Próprio",
+      "price": "200.00"
+    },
+    {
+      "productId": "3060004",
+      "name": "43 Creme Brulee 700ml",
+      "channelId": "2",
+      "channelName": "Delivery iFood",
+      "price": "200.00"
+    },
+    {
+      "productId": "2250009",
+      "name": "43 Horchata 700ml",
+      "channelId": "1",
+      "channelName": "Balcão / A Prazo",
+      "price": "170.00"
+    },
+    {
+      "productId": "2250009",
+      "name": "43 Horchata 700ml",
+      "channelId": "3",
+      "channelName": "Delivery 99Food",
+      "price": "170.00"
+    },
+    {
+      "productId": "2250009",
+      "name": "43 Horchata 700ml",
+      "channelId": "4",
+      "channelName": "Delivery Próprio",
+      "price": "175.00"
+    },
+    {
+      "productId": "2250009",
+      "name": "43 Horchata 700ml",
+      "channelId": "2",
+      "channelName": "Delivery iFood",
+      "price": "170.00"
+    },
+    {
+      "productId": "2250008",
+      "name": "43 Limited Edition 700ml",
+      "channelId": "1",
+      "channelName": "Balcão / A Prazo",
+      "price": "180.00"
+    },
+    {
+      "productId": "2250008",
+      "name": "43 Limited Edition 700ml",
+      "channelId": "3",
+      "channelName": "Delivery 99Food",
+      "price": "180.00"
+    },
+    {
+      "productId": "2250008",
+      "name": "43 Limited Edition 700ml",
+      "channelId": "4",
+      "channelName": "Delivery Próprio",
+      "price": "175.00"
+    },
+    {
+      "productId": "2250008",
+      "name": "43 Limited Edition 700ml",
+      "channelId": "2",
+      "channelName": "Delivery iFood",
+      "price": "180.00"
+    },
+    {
+      "productId": "1620001",
+      "name": "51 Cachaça 350ml",
+      "channelId": "1",
+      "channelName": "Balcão / A Prazo",
+      "price": "6.00"
+    },
+    {
+      "productId": "1620001",
+      "name": "51 Cachaça 350ml",
+      "channelId": "3",
+      "channelName": "Delivery 99Food",
+      "price": "5.89"
+    },
+    {
+      "productId": "1620001",
+      "name": "51 Cachaça 350ml",
+      "channelId": "4",
+      "channelName": "Delivery Próprio",
+      "price": "6.00"
+    },
+    {
+      "productId": "1620001",
+      "name": "51 Cachaça 350ml",
+      "channelId": "2",
+      "channelName": "Delivery iFood",
+      "price": "5.89"
+    },
+    {
+      "productId": "2490013",
+      "name": "51 Cachaça 965ml",
+      "channelId": "1",
+      "channelName": "Balcão / A Prazo",
+      "price": "15.00"
+    },
+    {
+      "productId": "2490013",
+      "name": "51 Cachaça 965ml",
+      "channelId": "3",
+      "channelName": "Delivery 99Food",
+      "price": "15.79"
+    },
+    {
+      "productId": "2490013",
+      "name": "51 Cachaça 965ml",
+      "channelId": "4",
+      "channelName": "Delivery Próprio",
+      "price": "15.00"
+    },
+    {
+      "productId": "2490013",
+      "name": "51 Cachaça 965ml",
+      "channelId": "2",
+      "channelName": "Delivery iFood",
+      "price": "15.79"
+    },
+    {
+      "productId": "1230004",
+      "name": "51 Ice Balada 275ml",
+      "channelId": "1",
+      "channelName": "Balcão / A Prazo",
+      "price": "8.00"
+    },
+    {
+      "productId": "1230004",
+      "name": "51 Ice Balada 275ml",
+      "channelId": "3",
+      "channelName": "Delivery 99Food",
+      "price": "6.49"
+    }
+  ],
+  "messages": [],
+  "stdout": "productId\tname\tchannelId\tchannelName\tprice\n2250007\t43 700ml\t1\tBalcão / A Prazo\t160.00\n2250007\t43 700ml\t3\tDelivery 99Food\t215.89\n2250007\t43 700ml\t4\tDelivery Próprio\t160.00\n2250007\t43 700ml\t2\tDelivery iFood\t215.89\n2250010\t43 Baristo 700ml\t1\tBalcão / A Prazo\t200.00\n2250010\t43 Baristo 700ml\t3\tDelivery 99Food\t200.00\n2250010\t43 Baristo 700ml\t4\tDelivery Próprio\t200.00\n2250010\t43 Baristo 700ml\t2\tDelivery iFood\t200.00\n3060004\t43 Creme Brulee 700ml\t1\tBalcão / A Prazo\t200.00\n3060004\t43 Creme Brulee 700ml\t3\tDelivery 99Food\t200.00\n3060004\t43 Creme Brulee 700ml\t4\tDelivery Próprio\t200.00\n3060004\t43 Creme Brulee 700ml\t2\tDelivery iFood\t200.00\n2250009\t43 Horchata 700ml\t1\tBalcão / A Prazo\t170.00\n2250009\t43 Horchata 700ml\t3\tDelivery 99Food\t170.00\n2250009\t43 Horchata 700ml\t4\tDelivery Próprio\t175.00\n2250009\t43 Horchata 700ml\t2\tDelivery iFood\t170.00\n2250008\t43 Limited Edition 700ml\t1\tBalcão / A Prazo\t180.00\n2250008\t43 Limited Edition 700ml\t3\tDelivery 99Food\t180.00\n2250008\t43 Limited Edition 700ml\t4\tDelivery Próprio\t175.00\n2250008\t43 Limited Edition 700ml\t2\tDelivery iFood\t180.00\n1620001\t51 Cachaça 350ml\t1\tBalcão / A Prazo\t6.00\n1620001\t51 Cachaça 350ml\t3\tDelivery 99Food\t5.89\n1620001\t51 Cachaça 350ml\t4\tDelivery Próprio\t6.00\n1620001\t51 Cachaça 350ml\t2\tDelivery iFood\t5.89\n2490013\t51 Cachaça 965ml\t1\tBalcão / A Prazo\t15.00\n2490013\t51 Cachaça 965ml\t3\tDelivery 99Food\t15.79\n2490013\t51 Cachaça 965ml\t4\tDelivery Próprio\t15.00\n2490013\t51 Cachaça 965ml\t2\tDelivery iFood\t15.79\n1230004\t51 Ice Balada 275ml\t1\tBalcão / A Prazo\t8.00\n1230004\t51 Ice Balada 275ml\t3\tDelivery 99Food\t6.49\n",
+  "stderr": "",
+  "execution_time_ms": 61
+}

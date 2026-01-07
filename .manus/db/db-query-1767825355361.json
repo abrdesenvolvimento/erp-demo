@@ -1,0 +1,150 @@
+{
+  "query": "SELECT pp.productId, p.name, pp.channelId, sc.name as channelName, pp.price \nFROM productPrices pp \nJOIN products p ON pp.productId = p.id \nJOIN salesChannels sc ON pp.channelId = sc.id \nLIMIT 20",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT pp.productId, p.name, pp.channelId, sc.name as channelName, pp.price \nFROM productPrices pp \nJOIN products p ON pp.productId = p.id \nJOIN salesChannels sc ON pp.channelId = sc.id \nLIMIT 20",
+  "rows": [
+    {
+      "productId": "390001",
+      "name": "Itaipava 269ml",
+      "channelId": "4",
+      "channelName": "Delivery Próprio",
+      "price": "3.00"
+    },
+    {
+      "productId": "390001",
+      "name": "Itaipava 269ml",
+      "channelId": "3",
+      "channelName": "Delivery 99Food",
+      "price": "2.79"
+    },
+    {
+      "productId": "390001",
+      "name": "Itaipava 269ml",
+      "channelId": "2",
+      "channelName": "Delivery iFood",
+      "price": "2.79"
+    },
+    {
+      "productId": "390001",
+      "name": "Itaipava 269ml",
+      "channelId": "1",
+      "channelName": "Balcão / A Prazo",
+      "price": "3.00"
+    },
+    {
+      "productId": "420001",
+      "name": "Itaipava 269ml 12 Unidades",
+      "channelId": "4",
+      "channelName": "Delivery Próprio",
+      "price": "33.48"
+    },
+    {
+      "productId": "420001",
+      "name": "Itaipava 269ml 12 Unidades",
+      "channelId": "3",
+      "channelName": "Delivery 99Food",
+      "price": "32.00"
+    },
+    {
+      "productId": "420001",
+      "name": "Itaipava 269ml 12 Unidades",
+      "channelId": "2",
+      "channelName": "Delivery iFood",
+      "price": "32.00"
+    },
+    {
+      "productId": "420001",
+      "name": "Itaipava 269ml 12 Unidades",
+      "channelId": "1",
+      "channelName": "Balcão / A Prazo",
+      "price": "32.00"
+    },
+    {
+      "productId": "420002",
+      "name": "Petra 350ml",
+      "channelId": "4",
+      "channelName": "Delivery Próprio",
+      "price": "4.00"
+    },
+    {
+      "productId": "420002",
+      "name": "Petra 350ml",
+      "channelId": "3",
+      "channelName": "Delivery 99Food",
+      "price": "3.59"
+    },
+    {
+      "productId": "420002",
+      "name": "Petra 350ml",
+      "channelId": "2",
+      "channelName": "Delivery iFood",
+      "price": "3.59"
+    },
+    {
+      "productId": "420002",
+      "name": "Petra 350ml",
+      "channelId": "1",
+      "channelName": "Balcão / A Prazo",
+      "price": "4.00"
+    },
+    {
+      "productId": "420003",
+      "name": "Petra 350ml 12 Unidades",
+      "channelId": "4",
+      "channelName": "Delivery Próprio",
+      "price": "43.00"
+    },
+    {
+      "productId": "420003",
+      "name": "Petra 350ml 12 Unidades",
+      "channelId": "3",
+      "channelName": "Delivery 99Food",
+      "price": "45.00"
+    },
+    {
+      "productId": "420003",
+      "name": "Petra 350ml 12 Unidades",
+      "channelId": "2",
+      "channelName": "Delivery iFood",
+      "price": "45.00"
+    },
+    {
+      "productId": "420003",
+      "name": "Petra 350ml 12 Unidades",
+      "channelId": "1",
+      "channelName": "Balcão / A Prazo",
+      "price": "45.00"
+    },
+    {
+      "productId": "420004",
+      "name": "Petra 269ml",
+      "channelId": "4",
+      "channelName": "Delivery Próprio",
+      "price": "3.09"
+    },
+    {
+      "productId": "420004",
+      "name": "Petra 269ml",
+      "channelId": "3",
+      "channelName": "Delivery 99Food",
+      "price": "3.09"
+    },
+    {
+      "productId": "420004",
+      "name": "Petra 269ml",
+      "channelId": "2",
+      "channelName": "Delivery iFood",
+      "price": "3.09"
+    },
+    {
+      "productId": "420004",
+      "name": "Petra 269ml",
+      "channelId": "1",
+      "channelName": "Balcão / A Prazo",
+      "price": "3.50"
+    }
+  ],
+  "messages": [],
+  "stdout": "productId\tname\tchannelId\tchannelName\tprice\n390001\tItaipava 269ml\t4\tDelivery Próprio\t3.00\n390001\tItaipava 269ml\t3\tDelivery 99Food\t2.79\n390001\tItaipava 269ml\t2\tDelivery iFood\t2.79\n390001\tItaipava 269ml\t1\tBalcão / A Prazo\t3.00\n420001\tItaipava 269ml 12 Unidades\t4\tDelivery Próprio\t33.48\n420001\tItaipava 269ml 12 Unidades\t3\tDelivery 99Food\t32.00\n420001\tItaipava 269ml 12 Unidades\t2\tDelivery iFood\t32.00\n420001\tItaipava 269ml 12 Unidades\t1\tBalcão / A Prazo\t32.00\n420002\tPetra 350ml\t4\tDelivery Próprio\t4.00\n420002\tPetra 350ml\t3\tDelivery 99Food\t3.59\n420002\tPetra 350ml\t2\tDelivery iFood\t3.59\n420002\tPetra 350ml\t1\tBalcão / A Prazo\t4.00\n420003\tPetra 350ml 12 Unidades\t4\tDelivery Próprio\t43.00\n420003\tPetra 350ml 12 Unidades\t3\tDelivery 99Food\t45.00\n420003\tPetra 350ml 12 Unidades\t2\tDelivery iFood\t45.00\n420003\tPetra 350ml 12 Unidades\t1\tBalcão / A Prazo\t45.00\n420004\tPetra 269ml\t4\tDelivery Próprio\t3.09\n420004\tPetra 269ml\t3\tDelivery 99Food\t3.09\n420004\tPetra 269ml\t2\tDelivery iFood\t3.09\n420004\tPetra 269ml\t1\tBalcão / A Prazo\t3.50\n",
+  "stderr": "",
+  "execution_time_ms": 125
+}

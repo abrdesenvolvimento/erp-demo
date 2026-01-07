@@ -486,7 +486,15 @@ export async function getSales(filters?: { saleType?: string; customerId?: numbe
     const limitClause = filters?.limit ? `LIMIT ${filters.limit}` : 'LIMIT 500';
     
     const result = await db.execute(sql.raw(`
-      SELECT * FROM sales 
+      SELECT 
+        id, saleType, 
+        CONVERT_TZ(saleDate, '+00:00', '-03:00') as saleDate,
+        customerId, channelId, platformOrderId,
+        subtotal, discountAmount, surchargeAmount, finalAmount,
+        paymentMethod, requiresAdminApproval, adminApprovedBy, notes,
+        status, cancelledAt, cancelledBy, cancellationReason,
+        createdBy, createdAt
+      FROM sales 
       WHERE ${whereConditions}
       ORDER BY saleDate DESC
       ${limitClause}
@@ -495,37 +503,58 @@ export async function getSales(filters?: { saleType?: string; customerId?: numbe
     return (result[0] as unknown as any[]) || [];
   }
   
-  // Query padrão sem filtro de data
-  let query = db.select().from(sales);
-  const conditions = [];
+  // Query padrão sem filtro de data - usar SQL para converter timezone
+  let whereConditions = `1=1`;
   
   if (filters?.saleType) {
-    conditions.push(eq(sales.saleType, filters.saleType as any));
+    whereConditions += ` AND saleType = '${filters.saleType}'`;
   }
   
   if (filters?.customerId) {
-    conditions.push(eq(sales.customerId, filters.customerId));
+    whereConditions += ` AND customerId = ${filters.customerId}`;
   }
   
-  if (conditions.length > 0) {
-    query = query.where(and(...conditions)) as any;
-  }
+  const limitClause = filters?.limit ? `LIMIT ${filters.limit}` : 'LIMIT 500';
   
-  query = query.orderBy(desc(sales.createdAt)) as any;
+  const result = await db.execute(sql.raw(`
+    SELECT 
+      id, saleType, 
+      CONVERT_TZ(saleDate, '+00:00', '-03:00') as saleDate,
+      customerId, channelId, platformOrderId,
+      subtotal, discountAmount, surchargeAmount, finalAmount,
+      paymentMethod, requiresAdminApproval, adminApprovedBy, notes,
+      status, cancelledAt, cancelledBy, cancellationReason,
+      createdBy, createdAt
+    FROM sales 
+    WHERE ${whereConditions}
+    ORDER BY saleDate DESC
+    ${limitClause}
+  `));
   
-  if (filters?.limit) {
-    query = query.limit(filters.limit) as any;
-  }
-  
-  return await query;
+  return (result[0] as unknown as any[]) || [];
 }
 
 export async function getSale(id: number) {
   const db = await getDb();
   if (!db) return undefined;
   
-  const result = await db.select().from(sales).where(eq(sales.id, id)).limit(1);
-  return result.length > 0 ? result[0] : undefined;
+  // Usar SQL raw para converter saleDate para timezone de Brasília
+  const result = await db.execute(sql.raw(`
+    SELECT 
+      id, saleType, 
+      CONVERT_TZ(saleDate, '+00:00', '-03:00') as saleDate,
+      customerId, channelId, platformOrderId,
+      subtotal, discountAmount, surchargeAmount, finalAmount,
+      paymentMethod, requiresAdminApproval, adminApprovedBy, notes,
+      status, cancelledAt, cancelledBy, cancellationReason,
+      createdBy, createdAt
+    FROM sales 
+    WHERE id = ${id} 
+    LIMIT 1
+  `));
+  
+  const rows = (result[0] as unknown as any[]) || [];
+  return rows.length > 0 ? rows[0] : undefined;
 }
 
 export async function getSaleItems(saleId: number) {

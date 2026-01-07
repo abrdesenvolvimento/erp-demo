@@ -146,7 +146,12 @@ export const appRouter = router({
         includePrices: z.boolean().optional(), // OTIMIZAÇÃO: não carregar preços no autocomplete
       }).optional())
       .query(async ({ input, ctx }) => {
+        console.log('[products.list] Input:', JSON.stringify(input), 'includePrices:', input?.includePrices);
         const products = await db.getProducts(input);
+        console.log('[products.list] Total produtos:', products.length);
+        if (products.length > 0) {
+          console.log('[products.list] Primeiro produto preços:', JSON.stringify(products[0].prices));
+        }
         
         // Se for operacional, retornar apenas campos permitidos
         if (ctx.user?.role === 'operacional') {
@@ -170,6 +175,19 @@ export const appRouter = router({
       .input(z.object({ id: z.number() }))
       .query(async ({ input }) => {
         return await db.getProduct(input.id);
+      }),
+    
+    // Endpoint específico para exportação com preços (sempre inclui preços)
+    exportWithPrices: protectedProcedure
+      .query(async () => {
+        console.log('[exportWithPrices] Iniciando busca de produtos com preços...');
+        const products = await db.getProducts({ activeOnly: false, includePrices: true });
+        console.log('[exportWithPrices] Total produtos:', products.length);
+        if (products.length > 0) {
+          console.log('[exportWithPrices] Primeiro produto:', products[0].name);
+          console.log('[exportWithPrices] Preços do primeiro produto:', JSON.stringify(products[0].prices));
+        }
+        return products;
       }),
     
     create: protectedProcedure
