@@ -704,6 +704,15 @@ export const appRouter = router({
         return await db.getSalesCalendar(input.year, input.month);
       }),
 
+    // Estatísticas mensais para visão anual
+    monthlyStats: protectedProcedure
+      .input(z.object({
+        year: z.number(),
+      }))
+      .query(async ({ input }) => {
+        return await db.getSalesMonthlyStats(input.year);
+      }),
+
     cancel: adminProcedure
       .input(z.object({
         id: z.number(),
@@ -1556,17 +1565,22 @@ export const appRouter = router({
   // ==================== ANÁLISE DE VENDAS ====================
   salesAnalysis: router({
     // Resumo usando sales.finalAmount (valor correto para totais)
+    // Quando filtro de produto é aplicado, calcula apenas para produtos selecionados
     summary: adminProcedure
       .input(z.object({
         startDate: z.date(),
         endDate: z.date(),
         channels: z.array(z.string()).optional(),
         paymentMethod: z.string().optional(),
+        productIds: z.array(z.number()).optional(),
+        subcategoryId: z.number().optional(),
       }))
       .query(async ({ input }) => {
         return await db.getSalesAnalysisSummary(input.startDate, input.endDate, {
           channels: input.channels,
           paymentMethod: input.paymentMethod,
+          productIds: input.productIds,
+          subcategoryId: input.subcategoryId,
         });
       }),
 

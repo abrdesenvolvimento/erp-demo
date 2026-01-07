@@ -1710,3 +1710,19 @@
     - Análise por Canal (nova página - comparar Balcão vs Delivery vs A Prazo)
   - Implementar toggle de expansão/colapso do submenu
   - Manter destaque visual quando qualquer item do submenu estiver ativo
+
+## 🔴 BUG - Análise de Vendas (07/01/2026)
+
+- [x] **Faturamento Total não respeita filtro de produto** - Quando filtra um produto específico (ex: Coca Cola 2l), os cards de resumo mostram o faturamento total geral (R$ 906.104) ao invés do valor filtrado
+
+## 🟡 MELHORIAS - Análise por Canal (07/01/2026)
+
+- [x] **Adicionar filtro de produtos** - Permitir selecionar produtos específicos para análise
+- [x] **Período flexível** - Permitir selecionar range de datas customizável, não apenas mês fechado
+- [x] **Melhorar visualização** - Adicionar gráficos comparativos entre canais
+
+## 🟡 MELHORIAS - Análise de Faturamento (07/01/2026)
+
+- [x] **Criar abas Mensal/Diária** - Alternar entre visão de total mensal e calendário diário
+- [x] **Visão Mensal** - Tabela resumida com totais por mês
+- [x] **Visão Diária** - Calendário atual com valores por dia

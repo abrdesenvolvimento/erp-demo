@@ -4552,6 +4552,9 @@ export async function getDeliveryProductAnalysis(
  * Análise de Vendas - Resumo usando sales.finalAmount
  * Retorna faturamento total correto (inclui vendas sem itens detalhados)
  * Esta função deve ser usada para os cards de resumo na Análise de Vendas
+ * 
+ * NOTA: Quando filtro de produtos é aplicado, usa saleItems para calcular
+ * faturamento apenas dos produtos selecionados
  */
 export async function getSalesAnalysisSummary(
   startDate: Date, 
@@ -4559,16 +4562,60 @@ export async function getSalesAnalysisSummary(
   filters?: { 
     channels?: string[];
     paymentMethod?: string;
+    productIds?: number[];
+    subcategoryId?: number;
   }
 ) {
   const db = await getDb();
-  if (!db) return { totalRevenue: 0, totalSales: 0 };
+  if (!db) return { totalRevenue: 0, totalSales: 0, totalCost: 0 };
 
   // Formatar datas para MySQL
   const startStr = startDate.toISOString().split('T')[0];
   const endStr = endDate.toISOString().split('T')[0];
 
-  // Construir condições WHERE dinâmicas
+  // Se tem filtro de produto ou subcategoria, usar saleItems para calcular
+  const hasProductFilter = (filters?.productIds && filters.productIds.length > 0) || filters?.subcategoryId;
+
+  if (hasProductFilter) {
+    // Query baseada em saleItems para filtrar por produtos específicos
+    let whereConditions = `s.status != 'CANCELLED' AND DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) >= '${startStr}' AND DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) <= '${endStr}'`;
+    
+    if (filters?.channels && filters.channels.length > 0) {
+      const channelList = filters.channels.map(ch => `'${ch}'`).join(',');
+      whereConditions += ` AND s.saleType IN (${channelList})`;
+    }
+    if (filters?.paymentMethod) {
+      whereConditions += ` AND s.paymentMethod = '${filters.paymentMethod}'`;
+    }
+    if (filters?.productIds && filters.productIds.length > 0) {
+      whereConditions += ` AND p.id IN (${filters.productIds.join(',')})`;
+    }
+    if (filters?.subcategoryId) {
+      whereConditions += ` AND p.subcategoryId = ${filters.subcategoryId}`;
+    }
+
+    const result = await db.execute(sql.raw(`
+      SELECT 
+        COALESCE(SUM(si.totalPrice), 0) as totalRevenue,
+        COALESCE(SUM(si.quantity * p.avgCost), 0) as totalCost,
+        COUNT(DISTINCT s.id) as totalSales
+      FROM saleItems si
+      INNER JOIN sales s ON si.saleId = s.id
+      INNER JOIN products p ON si.productId = p.id
+      WHERE ${whereConditions}
+    `));
+
+    const rows = (result[0] as unknown as any[]) || [];
+    const row = rows[0] || {};
+    
+    return {
+      totalRevenue: parseFloat(row.totalRevenue || '0'),
+      totalCost: parseFloat(row.totalCost || '0'),
+      totalSales: parseInt(row.totalSales || '0', 10)
+    };
+  }
+
+  // Query original usando sales.finalAmount (sem filtro de produto)
   let whereConditions = `status != 'CANCELLED' AND DATE(CONVERT_TZ(saleDate, '+00:00', '-03:00')) >= '${startStr}' AND DATE(CONVERT_TZ(saleDate, '+00:00', '-03:00')) <= '${endStr}'`;
   
   if (filters?.channels && filters.channels.length > 0) {
@@ -4592,6 +4639,66 @@ export async function getSalesAnalysisSummary(
   
   return {
     totalRevenue: parseFloat(row.totalRevenue || '0'),
+    totalCost: 0, // Não temos custo quando não filtra por produto
     totalSales: parseInt(row.totalSales || '0', 10)
   };
+}
+
+
+// ==================== ANÁLISE DE FATURAMENTO - VISÃO MENSAL ====================
+
+/**
+ * Retorna estatísticas mensais de vendas para um ano específico
+ * Agrupa por mês e canal de venda
+ */
+export async function getSalesMonthlyStats(year: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  // Buscar todas as vendas não canceladas
+  const allSales = await db.select().from(sales);
+
+  // Estrutura para armazenar dados por mês
+  const monthlyData: Record<number, { month: number; balcao: number; delivery: number; aPrazo: number; total: number; count: number }> = {};
+
+  // Inicializar todos os 12 meses
+  for (let m = 1; m <= 12; m++) {
+    monthlyData[m] = { month: m, balcao: 0, delivery: 0, aPrazo: 0, total: 0, count: 0 };
+  }
+
+  for (const sale of allSales) {
+    // Excluir vendas canceladas
+    if (sale.status === 'CANCELLED') {
+      continue;
+    }
+    
+    const saleDate = new Date(sale.saleDate || sale.createdAt || new Date());
+    
+    // Converter para horário de Brasília
+    const dateStr = saleDate.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' });
+    const [datePart] = dateStr.split(', ');
+    const [monthStr, , yearStr] = datePart.split('/');
+    
+    const saleYear = parseInt(yearStr, 10);
+    const saleMonth = parseInt(monthStr, 10);
+    
+    // Filtrar apenas vendas do ano solicitado
+    if (saleYear !== year) {
+      continue;
+    }
+
+    const amount = parseFloat(sale.finalAmount);
+    monthlyData[saleMonth].total += amount;
+    monthlyData[saleMonth].count += 1;
+
+    if (sale.saleType === 'BALCAO') {
+      monthlyData[saleMonth].balcao += amount;
+    } else if (sale.saleType === 'DELIVERY') {
+      monthlyData[saleMonth].delivery += amount;
+    } else if (sale.saleType === 'A_PRAZO') {
+      monthlyData[saleMonth].aPrazo += amount;
+    }
+  }
+
+  return Object.values(monthlyData);
 }

@@ -200,12 +200,15 @@ export default function AnáliseVendas() {
   );
 
   // Query para resumo usando sales.finalAmount (valor correto para totais)
+  // Quando filtro de produto é aplicado, calcula apenas para produtos selecionados
   const { data: summaryData, isLoading: isSummaryLoading } = trpc.salesAnalysis.summary.useQuery(
     { 
       startDate: dateRange?.from ?? new Date(), 
       endDate: dateRange?.to ?? new Date(),
       channels: selectedChannels.length > 0 ? selectedChannels : undefined,
       paymentMethod: selectedPaymentMethod,
+      productIds: selectedProductIds.length > 0 ? selectedProductIds : undefined,
+      subcategoryId: selectedSubcategoryId,
     },
     { enabled: isAdmin && !!dateRange }
   );
