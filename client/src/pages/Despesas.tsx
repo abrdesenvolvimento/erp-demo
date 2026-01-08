@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
+import { usePermissions } from "@/hooks/usePermissions";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,6 +30,7 @@ const PAYMENT_METHODS = [
 
 export default function Despesas() {
   const { user } = useAuth();
+  const { expenses: expensePermissions } = usePermissions();
   const [isCreating, setIsCreating] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editingExpenseId, setEditingExpenseId] = useState<number | null>(null);
@@ -712,10 +714,12 @@ export default function Despesas() {
               Gerencie as despesas da empresa
             </p>
           </div>
+{expensePermissions.canCreate && (
           <Button onClick={() => setIsCreating(true)}>
             <Plus className="h-4 w-4 mr-2" />
             Nova Despesa
           </Button>
+          )}
         </div>
 
         {/* Filtros */}
@@ -892,7 +896,7 @@ export default function Despesas() {
                         <div className="text-xl font-bold">
                           R$ {parseFloat(item.expense.amount).toFixed(2)}
                         </div>
-                        {item.expense.status === "ATIVA" && user?.role === "admin" && (
+                        {item.expense.status === "ATIVA" && expensePermissions.canEdit && (
                           <div className="flex gap-2 mt-2 justify-end">
                             <Button
                               variant="outline"

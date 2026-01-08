@@ -58,7 +58,7 @@ export function usePermissions() {
       canCreate: role === "admin",
       canEdit: role === "admin",
       canDelete: role === "admin",
-      canView: true, // Todos podem visualizar
+      canView: role === "admin" || role === "operacional", // Consultor não vê Contas a Receber
       canRegisterPayment: role === "admin" || role === "operacional", // Operacional pode registrar pagamentos
       canAddDebit: role === "admin" || role === "operacional", // Operacional pode lançar débitos
     },
@@ -67,7 +67,7 @@ export function usePermissions() {
       canCreate: role === "admin",
       canEdit: role === "admin",
       canDelete: role === "admin",
-      canView: role === "admin" || role === "consultor",
+      canView: role === "admin", // Consultor não vê Contas a Pagar
     },
 
     users: {

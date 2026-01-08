@@ -2012,3 +2012,21 @@
 - [ ] Configurar backup automático S3 + Google Drive
 - [ ] Notificação de backup (sucesso no início, depois só erros)
 - [ ] PDF de histórico de vendas a prazo para enviar ao cliente
+
+
+## Sprint 08/01/2026 - Ajustes de Permissões
+
+### Consultor
+- [x] Ocultar botão "Nova Compra" em Compras
+- [x] Permitir visualizar lista de compras e detalhes (somente leitura)
+- [x] Ocultar botões Confirmar/Cancelar em Compras
+- [x] Ocultar botão "Nova Despesa" em Despesas
+- [x] Permitir visualizar lista de despesas e detalhes (somente leitura)
+- [x] Ocultar botões Editar/Cancelar em Despesas
+- [x] Ocultar menu Contas a Receber
+- [x] Ocultar menu Contas a Pagar
+- [x] Liberar Análise de Fechamento (Metas também liberado)
+
+### Operacional
+- [x] Ocultar cards de estatísticas na tela de Vendas (Opção A)
+- [x] Contas a Receber: manter acesso atual (pode visualizar, registrar pagamentos, lançar débitos)

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { formatDateForInput, getTodayInBrazil, parseDateInBrazil, addDays } from "@shared/dateUtils";
 import { useAuth } from "@/_core/hooks/useAuth";
+import { usePermissions } from "@/hooks/usePermissions";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,6 +40,7 @@ const PAYMENT_METHODS = [
 
 export default function Compras() {
   const { user } = useAuth();
+  const { purchases: purchasePermissions } = usePermissions();
   const [isCreating, setIsCreating] = useState(false);
   const lastItemRef = useRef<HTMLTableRowElement>(null);
   const [supplierDialogOpen, setSupplierDialogOpen] = useState(false);
@@ -827,10 +829,12 @@ export default function Compras() {
                     Gerencie as ordens de compra
                   </p>
                 </div>
+{purchasePermissions.canCreate && (
                 <Button onClick={() => setIsCreating(true)}>
                   <Plus className="h-4 w-4 mr-2" />
                   Nova Compra
                 </Button>
+                )}
               </div>
             </div>
 
@@ -1041,7 +1045,7 @@ export default function Compras() {
                                     <Package className="h-3 w-3 mr-1" />
                                     Detalhes
                                   </Button>
-                                  {purchase.purchaseOrder.status === "DRAFT" && (
+                                  {purchase.purchaseOrder.status === "DRAFT" && purchasePermissions.canEdit && (
                                     <>
                                       <Button
                                         size="sm"

@@ -515,7 +515,8 @@ export default function Vendas() {
 
 
 
-        {/* Cards de Resumo */}
+        {/* Cards de Resumo - Oculto para Operacional */}
+        {!permissions.isOperacional && (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <Card className="border-t-4 border-t-blue-500">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -577,6 +578,7 @@ export default function Vendas() {
             </CardContent>
           </Card>
         </div>
+        )}
 
         <Card>
           <CardHeader>

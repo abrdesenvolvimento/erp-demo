@@ -262,8 +262,8 @@ function DashboardLayoutContent({
   const visibleMainItems = getFilteredItems(filteredMainItems);
   const visibleAnalysisItems = filteredAnalysisItems.filter(item => {
     if (user?.role !== 'admin') {
-      // Consultor só pode ver Análise de Faturamento (antigo Relatórios)
-      return item.path === '/relatorios';
+      // Consultor pode ver Análise de Faturamento, Metas e Fechamento
+      return item.path === '/relatorios' || item.path === '/metas' || item.path === '/fechamento';
     }
     return true;
   });
@@ -275,8 +275,9 @@ function DashboardLayoutContent({
       return item.path === '/contas-receber';
     }
     if (user?.role === 'consultor') {
-      // Consultor pode ver tudo exceto Compras e Despesas (só visualização)
-      return true;
+      // Consultor pode ver Compras e Despesas (somente visualização)
+      // Ocultar Contas a Receber e Contas a Pagar
+      return item.path === '/compras' || item.path === '/despesas';
     }
     return true;
   });
