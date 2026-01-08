@@ -1,0 +1,9 @@
+
+Teste de Backup - ERP Adega Beira Rio
+=====================================
+Data/Hora: 08/01/2026, 19:24:13
+Servidor: Manus Sandbox
+Status: OK
+
+Este é um arquivo de teste para verificar se o backup está funcionando corretamente.
+Se você está vendo este arquivo no Google Drive, o backup está configurado com sucesso!

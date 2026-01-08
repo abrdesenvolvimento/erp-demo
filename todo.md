@@ -104,7 +104,7 @@
 - [x] **Exportação de Produtos para Excel** - IMPLEMENTADO! Botão "Exportar Excel" na tela de Produtos com todas as informações incluindo Preço Balcão, Preço Delivery e Preço A Prazo
 - [ ] **Histórico de Alterações** - Log de auditoria para rastrear mudanças
 - [x] **Reorganizar Menu Financeiro** - IMPLEMENTADO! Submenu "Financeiro" com Compras, Despesas, Contas a Receber e Contas a Pagar. Expande/colapsa automaticamente e mantém estado no localStorage
-- [ ] **Rotina de Backup** - Definir local e criar rotina automática
+- [x] **Rotina de Backup** - IMPLEMENTADO! Backup automático diário às 3h (GMT-3) para Google Drive. Inclui dump do banco SQL + ZIP do código. Notificação via Manus após conclusão.
 - [x] **Sistema de Metas** - IMPLEMENTADO! Cadastro de metas mensais por canal, card no Dashboard com progresso, página de gerenciamento em Financeiro > Metas
 
 ---
