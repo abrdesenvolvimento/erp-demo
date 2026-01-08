@@ -342,6 +342,7 @@ export default function Metas() {
                       <TableHead className="py-2">Canal</TableHead>
                       <TableHead className="py-2 text-right">Anterior</TableHead>
                       <TableHead className="py-2 text-right">Novo</TableHead>
+                      <TableHead className="py-2">Obs</TableHead>
                       <TableHead className="py-2">Usuário</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -363,6 +364,9 @@ export default function Metas() {
                         </TableCell>
                         <TableCell className="py-2 text-right font-medium">
                           {formatCurrency(item.newAmount)}
+                        </TableCell>
+                        <TableCell className="py-2 text-xs text-muted-foreground max-w-[150px] truncate" title={item.notes || '-'}>
+                          {item.notes || '-'}
                         </TableCell>
                         <TableCell className="py-2 text-xs text-muted-foreground">
                           {item.changedByName || 'Usuário'}

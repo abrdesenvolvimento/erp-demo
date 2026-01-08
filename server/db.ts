@@ -5729,9 +5729,10 @@ export async function getAllRevenueGoalHistory(year: number) {
       h.changedBy,
       h.changedByName,
       h.reason,
-      h.createdAt,
+      CONVERT_TZ(h.createdAt, '+00:00', '-03:00') as createdAt,
       g.year,
       g.month,
+      g.notes,
       COALESCE(sc.name, 'Geral') as channelName
     FROM revenueGoalHistory h
     JOIN revenueGoals g ON h.goalId = g.id
@@ -5750,6 +5751,7 @@ export async function getAllRevenueGoalHistory(year: number) {
     changedBy: row.changedBy,
     changedByName: row.changedByName,
     reason: row.reason,
+    notes: row.notes,
     createdAt: row.createdAt,
     year: row.year,
     month: row.month,

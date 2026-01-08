@@ -43,8 +43,6 @@ const financeMenuItems = [
   { icon: Receipt, label: "Despesas", path: "/despesas", roles: ["admin", "consultor"] },
   { icon: DollarSign, label: "Contas a Receber", path: "/contas-receber", roles: ["admin", "operacional", "consultor"] },
   { icon: CreditCard, label: "Contas a Pagar", path: "/contas-pagar", roles: ["admin", "consultor"] },
-  { icon: Target, label: "Metas", path: "/metas", roles: ["admin"] },
-  { icon: FileText, label: "Fechamento", path: "/fechamento", roles: ["admin"] },
 ];
 
 // Submenu de Análises
@@ -54,6 +52,8 @@ const analysisMenuItems = [
   { icon: Bike, label: "Análise Delivery", path: "/analise-delivery", roles: ["admin"] },
   { icon: GitCompare, label: "Análise por Canal", path: "/analise-canal", roles: ["admin"] },
   { icon: Receipt, label: "Análise de Despesas", path: "/analise-despesas", roles: ["admin"] },
+  { icon: Target, label: "Metas", path: "/metas", roles: ["admin"] },
+  { icon: FileText, label: "Fechamento", path: "/fechamento", roles: ["admin"] },
 ];
 
 const getMenuItemsForRole = (items: typeof mainMenuItems, role?: string) => {

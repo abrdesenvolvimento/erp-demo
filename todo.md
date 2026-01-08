@@ -1983,3 +1983,9 @@
 - [x] Simplificar histórico de alterações de metas (formato tabela compacta com colunas)
 - [ ] Layout de impressão do Fechamento (logo da empresa, formatação profissional) - FUTURO
 - [ ] Configurar DRE com categorias de despesas corretas (Despesas de Venda, Administrativas, Financeiras)
+
+### Correções 08/01/2026 - Tarde (2)
+- [x] Adicionar coluna de Observações no histórico de alterações de metas
+- [x] Corrigir timezone no histórico de metas (CONVERT_TZ para GMT-3)
+- [x] Mover Metas e Fechamento do menu Financeiro para Análises
+- [ ] Melhorar UI da tela de Metas (design mais elaborado) - FUTURO
