@@ -2041,3 +2041,19 @@
 - [x] Corrigir erro de permissão no Fechamento (erro 10002)
 - [x] Corrigir listagem de Compras (não mostra dados ao filtrar)
 - [x] Corrigir listagem de Despesas (não mostra dados ao filtrar)
+
+
+## 📧 BACKUP - Melhorias (08/01/2026)
+
+- [x] **Notificação por Email** - Configurado envio de email via Gmail API para comercial@adegabeirario.com.br
+  - Email HTML formatado com links diretos para arquivos
+  - Enviado de abrwf21@gmail.com
+  - Inclui resumo do backup (arquivos, tamanhos, links)
+
+- [x] **Política de Retenção Implementada**
+  - Local (sandbox): 7 dias - backups recentes para recuperação rápida
+  - Google Drive: 30 dias - histórico de um mês completo
+  - Limpeza automática de arquivos antigos no Drive
+
+- [x] **Gmail API Habilitada** - Escopo gmail.send adicionado ao OAuth2 do projeto erp-adega-backup
+

@@ -4,7 +4,7 @@
  * Script de Backup Automático para Google Drive (OAuth2)
  * Executa diariamente às 3h da manhã (GMT-3)
  * Faz backup do banco de dados (SQL dump) e código (ZIP)
- * Envia notificação de conclusão
+ * Envia notificação de conclusão via Manus e Email
  */
 
 import fs from 'fs';
@@ -21,7 +21,11 @@ const projectRoot = path.resolve(__dirname, '..');
 const BACKUP_DIR = path.join(projectRoot, 'backups');
 const GOOGLE_CREDENTIALS = JSON.parse(process.env.GOOGLE_DRIVE_CREDENTIALS || '{}');
 const GOOGLE_FOLDER_ID = process.env.GOOGLE_DRIVE_FOLDER_ID;
-const BACKUP_EMAIL = process.env.BACKUP_EMAIL_NOTIFICATION;
+const BACKUP_EMAIL = process.env.BACKUP_EMAIL_NOTIFICATION || 'comercial@adegabeirario.com.br';
+
+// Política de Retenção (em dias)
+const RETENTION_LOCAL = 7;    // Manter 7 dias localmente
+const RETENTION_DRIVE = 30;   // Manter 30 dias no Google Drive
 
 // Criar diretório de backups se não existir
 if (!fs.existsSync(BACKUP_DIR)) {
@@ -152,71 +156,191 @@ async function uploadToGoogleDrive(filePath) {
 }
 
 /**
- * Enviar notificação via Manus
+ * Enviar email via Gmail API
  */
-async function sendNotification(backupResults, success = true) {
-  console.log('[Notificação] Enviando notificação...');
+async function sendEmail(subject, htmlBody) {
+  console.log('[Email] Enviando email de notificação...');
   
   try {
-    const timestamp = new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+    const auth = getOAuth2Client();
+    const gmail = google.gmail({ version: 'v1', auth });
     
-    const title = success 
-      ? '✓ Backup Concluído - ERP Adega Beira Rio'
-      : '✗ Backup Falhou - ERP Adega Beira Rio';
+    // Construir email no formato RFC 2822
+    const emailLines = [
+      `To: ${BACKUP_EMAIL}`,
+      `Subject: ${subject}`,
+      'MIME-Version: 1.0',
+      'Content-Type: text/html; charset=utf-8',
+      '',
+      htmlBody
+    ];
     
-    let content = `**Data/Hora:** ${timestamp}\n\n`;
+    const email = emailLines.join('\r\n');
     
-    if (success) {
-      content += `**Status:** Concluído com sucesso\n\n`;
-      content += `**Arquivos Gerados:**\n`;
-      for (const result of backupResults) {
-        const sizeMB = (result.size / 1024 / 1024).toFixed(2);
-        content += `- ${result.name} (${sizeMB} MB)\n`;
-        content += `  Link: ${result.link}\n`;
-      }
-    } else {
-      content += `**Status:** Falhou\n\n`;
-      content += `**Erro:** ${backupResults}\n`;
-    }
+    // Codificar em base64url
+    const encodedEmail = Buffer.from(email)
+      .toString('base64')
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=+$/, '');
     
-    content += `\n**Pasta de Backup:** https://drive.google.com/drive/folders/${GOOGLE_FOLDER_ID}`;
+    await gmail.users.messages.send({
+      userId: 'me',
+      requestBody: {
+        raw: encodedEmail,
+      },
+    });
     
-    // Usar o serviço de notificação do Manus
-    if (process.env.BUILT_IN_FORGE_API_URL && process.env.BUILT_IN_FORGE_API_KEY) {
-      const response = await fetch(`${process.env.BUILT_IN_FORGE_API_URL}/notification/send`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${process.env.BUILT_IN_FORGE_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          title,
-          content,
-        }),
-      });
-      
-      if (response.ok) {
-        console.log('[Notificação] ✓ Notificação enviada com sucesso');
-        return true;
-      }
-    }
-    
-    console.log('[Notificação] ⚠ Serviço de notificação não disponível');
-    return false;
+    console.log(`[Email] ✓ Email enviado para ${BACKUP_EMAIL}`);
+    return true;
   } catch (error) {
-    console.error('[Notificação] ✗ Erro ao enviar notificação:', error.message);
+    console.error('[Email] ✗ Erro ao enviar email:', error.message);
+    // Não falhar o backup por causa do email
     return false;
   }
 }
 
 /**
- * Limpar backups antigos (manter apenas últimos 7 dias localmente)
+ * Enviar notificação via Manus
  */
-async function cleanOldBackups() {
-  console.log('[Limpeza] Removendo backups locais antigos...');
+async function sendManusNotification(title, content) {
+  console.log('[Manus] Enviando notificação...');
   
   try {
-    const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+    if (process.env.BUILT_IN_FORGE_API_URL && process.env.BUILT_IN_FORGE_API_KEY) {
+      const response = await fetch(`${process.env.BUILT_IN_FORGE_API_URL}/webdevtoken.v1.WebDevService/SendNotification`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${process.env.BUILT_IN_FORGE_API_KEY}`,
+          'Content-Type': 'application/json',
+          'accept': 'application/json',
+          'connect-protocol-version': '1',
+        },
+        body: JSON.stringify({ title, content }),
+      });
+      
+      if (response.ok) {
+        console.log('[Manus] ✓ Notificação enviada com sucesso');
+        return true;
+      }
+    }
+    
+    console.log('[Manus] ⚠ Serviço de notificação não disponível');
+    return false;
+  } catch (error) {
+    console.error('[Manus] ✗ Erro ao enviar notificação:', error.message);
+    return false;
+  }
+}
+
+/**
+ * Enviar todas as notificações (Manus + Email)
+ */
+async function sendNotification(backupResults, success = true) {
+  const timestamp = new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+  
+  const title = success 
+    ? '✓ Backup Concluído - ERP Adega Beira Rio'
+    : '✗ Backup Falhou - ERP Adega Beira Rio';
+  
+  // Conteúdo para Manus (Markdown)
+  let manusContent = `**Data/Hora:** ${timestamp}\n\n`;
+  
+  if (success) {
+    manusContent += `**Status:** Concluído com sucesso\n\n`;
+    manusContent += `**Arquivos Gerados:**\n`;
+    for (const result of backupResults) {
+      const sizeMB = (result.size / 1024 / 1024).toFixed(2);
+      manusContent += `- ${result.name} (${sizeMB} MB)\n`;
+      manusContent += `  Link: ${result.link}\n`;
+    }
+  } else {
+    manusContent += `**Status:** Falhou\n\n`;
+    manusContent += `**Erro:** ${backupResults}\n`;
+  }
+  
+  manusContent += `\n**Pasta de Backup:** https://drive.google.com/drive/folders/${GOOGLE_FOLDER_ID}`;
+  
+  // Conteúdo para Email (HTML)
+  let emailHtml = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <div style="background: ${success ? '#10B981' : '#EF4444'}; color: white; padding: 20px; text-align: center;">
+        <h1 style="margin: 0;">${success ? '✓' : '✗'} Backup ${success ? 'Concluído' : 'Falhou'}</h1>
+        <p style="margin: 10px 0 0;">ERP Adega Beira Rio</p>
+      </div>
+      
+      <div style="padding: 20px; background: #f9f9f9;">
+        <p><strong>Data/Hora:</strong> ${timestamp}</p>
+        <p><strong>Status:</strong> ${success ? 'Concluído com sucesso' : 'Falhou'}</p>
+  `;
+  
+  if (success) {
+    emailHtml += `
+        <h3 style="color: #333;">Arquivos Gerados:</h3>
+        <table style="width: 100%; border-collapse: collapse;">
+          <tr style="background: #ddd;">
+            <th style="padding: 10px; text-align: left;">Arquivo</th>
+            <th style="padding: 10px; text-align: right;">Tamanho</th>
+          </tr>
+    `;
+    
+    for (const result of backupResults) {
+      const sizeMB = (result.size / 1024 / 1024).toFixed(2);
+      emailHtml += `
+          <tr style="border-bottom: 1px solid #ddd;">
+            <td style="padding: 10px;">
+              <a href="${result.link}" style="color: #2563EB;">${result.name}</a>
+            </td>
+            <td style="padding: 10px; text-align: right;">${sizeMB} MB</td>
+          </tr>
+      `;
+    }
+    
+    emailHtml += `</table>`;
+  } else {
+    emailHtml += `
+        <div style="background: #FEE2E2; border: 1px solid #EF4444; padding: 15px; border-radius: 5px;">
+          <strong>Erro:</strong> ${backupResults}
+        </div>
+    `;
+  }
+  
+  emailHtml += `
+        <p style="margin-top: 20px;">
+          <a href="https://drive.google.com/drive/folders/${GOOGLE_FOLDER_ID}" 
+             style="display: inline-block; background: #2563EB; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
+            Abrir Pasta de Backup
+          </a>
+        </p>
+        
+        <hr style="margin: 20px 0; border: none; border-top: 1px solid #ddd;">
+        
+        <p style="color: #666; font-size: 12px;">
+          <strong>Política de Retenção:</strong><br>
+          • Backups locais: ${RETENTION_LOCAL} dias<br>
+          • Backups no Google Drive: ${RETENTION_DRIVE} dias
+        </p>
+      </div>
+      
+      <div style="background: #333; color: #999; padding: 15px; text-align: center; font-size: 12px;">
+        Este é um email automático do sistema de backup.
+      </div>
+    </div>
+  `;
+  
+  // Enviar ambas as notificações
+  await sendManusNotification(title, manusContent);
+  await sendEmail(title, emailHtml);
+}
+
+/**
+ * Limpar backups antigos localmente (manter apenas últimos X dias)
+ */
+async function cleanOldLocalBackups() {
+  console.log(`[Limpeza Local] Removendo backups com mais de ${RETENTION_LOCAL} dias...`);
+  
+  try {
+    const cutoffDate = Date.now() - (RETENTION_LOCAL * 24 * 60 * 60 * 1000);
     const files = fs.readdirSync(BACKUP_DIR);
     
     let deletedCount = 0;
@@ -224,16 +348,62 @@ async function cleanOldBackups() {
       const filePath = path.join(BACKUP_DIR, file);
       const stats = fs.statSync(filePath);
       
-      if (stats.mtimeMs < sevenDaysAgo) {
+      if (stats.mtimeMs < cutoffDate) {
         fs.unlinkSync(filePath);
         deletedCount++;
-        console.log(`[Limpeza] Removido: ${file}`);
+        console.log(`[Limpeza Local] Removido: ${file}`);
       }
     }
     
-    console.log(`[Limpeza] ✓ ${deletedCount} arquivo(s) removido(s)`);
+    console.log(`[Limpeza Local] ✓ ${deletedCount} arquivo(s) removido(s)`);
   } catch (error) {
-    console.error('[Limpeza] ✗ Erro ao limpar backups antigos:', error.message);
+    console.error('[Limpeza Local] ✗ Erro ao limpar backups antigos:', error.message);
+  }
+}
+
+/**
+ * Limpar backups antigos no Google Drive (manter apenas últimos X dias)
+ */
+async function cleanOldDriveBackups() {
+  console.log(`[Limpeza Drive] Removendo backups com mais de ${RETENTION_DRIVE} dias...`);
+  
+  try {
+    const auth = getOAuth2Client();
+    const drive = google.drive({ version: 'v3', auth });
+    
+    // Calcular data de corte
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - RETENTION_DRIVE);
+    const cutoffDateStr = cutoffDate.toISOString();
+    
+    // Buscar arquivos antigos na pasta de backup
+    const response = await drive.files.list({
+      q: `'${GOOGLE_FOLDER_ID}' in parents and createdTime < '${cutoffDateStr}' and trashed = false`,
+      fields: 'files(id, name, createdTime)',
+      orderBy: 'createdTime asc',
+    });
+    
+    const oldFiles = response.data.files || [];
+    
+    if (oldFiles.length === 0) {
+      console.log('[Limpeza Drive] ✓ Nenhum arquivo antigo encontrado');
+      return;
+    }
+    
+    console.log(`[Limpeza Drive] Encontrados ${oldFiles.length} arquivo(s) para remover`);
+    
+    for (const file of oldFiles) {
+      try {
+        await drive.files.delete({ fileId: file.id });
+        console.log(`[Limpeza Drive] Removido: ${file.name} (${file.createdTime})`);
+      } catch (err) {
+        console.error(`[Limpeza Drive] Erro ao remover ${file.name}:`, err.message);
+      }
+    }
+    
+    console.log(`[Limpeza Drive] ✓ ${oldFiles.length} arquivo(s) removido(s)`);
+  } catch (error) {
+    console.error('[Limpeza Drive] ✗ Erro ao limpar backups antigos:', error.message);
   }
 }
 
@@ -244,6 +414,7 @@ async function runBackup() {
   console.log('═══════════════════════════════════════════════════');
   console.log('Backup Automático - ERP Adega Beira Rio');
   console.log(`Timestamp: ${new Date().toISOString()}`);
+  console.log(`Email de notificação: ${BACKUP_EMAIL}`);
   console.log('═══════════════════════════════════════════════════\n');
   
   const startTime = Date.now();
@@ -275,13 +446,14 @@ async function runBackup() {
       link: codeDriveFile.webViewLink,
     });
     
-    // 4. Enviar notificação de sucesso
+    // 4. Enviar notificações (Manus + Email)
     console.log('');
     await sendNotification(results, true);
     
-    // 5. Limpar backups antigos
+    // 5. Limpar backups antigos (local e Drive)
     console.log('');
-    await cleanOldBackups();
+    await cleanOldLocalBackups();
+    await cleanOldDriveBackups();
     
     // Resumo final
     const duration = ((Date.now() - startTime) / 1000).toFixed(2);
