@@ -560,20 +560,25 @@ export default function Produtos() {
       console.log('[Export] Preços do primeiro produto:', productsWithPrices[0]?.prices);
       console.log('[Export] Canais disponíveis:', channels);
       
-      // Usar IDs fixos dos canais (1=Balcão, 2=Delivery, 3=A Prazo, 4=Custo)
-      // Isso é mais confiável do que buscar por nome
-      const BALCAO_ID = 1;
-      const DELIVERY_ID = 2;
-      const A_PRAZO_ID = 3;
+      // IDs dos canais de venda:
+      // 1 = Balcão / A Prazo
+      // 2 = Delivery iFood
+      // 3 = Delivery 99Food
+      // 4 = Delivery Próprio
+      const BALCAO_APRAZO_ID = 1;
+      const DELIVERY_IFOOD_ID = 2;
+      const DELIVERY_99FOOD_ID = 3;
+      const DELIVERY_PROPRIO_ID = 4;
       
       const exportData = productsWithPrices.map((product: any) => {
         const category = categories?.find(c => c.id === product.categoryId);
         const subcategory = subcategories?.find((s: any) => s.id === product.subcategoryId);
         
         // Buscar preços por canal usando IDs fixos
-        const precoBalcao = product.prices?.find((p: any) => p.channelId === BALCAO_ID)?.price || '';
-        const precoDelivery = product.prices?.find((p: any) => p.channelId === DELIVERY_ID)?.price || '';
-        const precoAPrazo = product.prices?.find((p: any) => p.channelId === A_PRAZO_ID)?.price || '';
+        const precoBalcaoAPrazo = product.prices?.find((p: any) => p.channelId === BALCAO_APRAZO_ID)?.price || '';
+        const precoDelivery99Food = product.prices?.find((p: any) => p.channelId === DELIVERY_99FOOD_ID)?.price || '';
+        const precoDeliveryProprio = product.prices?.find((p: any) => p.channelId === DELIVERY_PROPRIO_ID)?.price || '';
+        const precoDeliveryIFood = product.prices?.find((p: any) => p.channelId === DELIVERY_IFOOD_ID)?.price || '';
         
         return {
           'ID': product.id,
@@ -585,9 +590,10 @@ export default function Produtos() {
           'Estoque Atual': product.currentStock || 0,
           'Estoque Mínimo': product.minStock || 0,
           'Custo Médio': isAdmin ? parseFloat(product.avgCost || '0').toFixed(2) : '',
-          'Preço Balcão': precoBalcao ? parseFloat(precoBalcao).toFixed(2) : '',
-          'Preço Delivery': precoDelivery ? parseFloat(precoDelivery).toFixed(2) : '',
-          'Preço A Prazo': precoAPrazo ? parseFloat(precoAPrazo).toFixed(2) : '',
+          'Preço Balcão/A Prazo': precoBalcaoAPrazo ? parseFloat(precoBalcaoAPrazo).toFixed(2) : '',
+          'Preço Delivery 99Food': precoDelivery99Food ? parseFloat(precoDelivery99Food).toFixed(2) : '',
+          'Preço Delivery Próprio': precoDeliveryProprio ? parseFloat(precoDeliveryProprio).toFixed(2) : '',
+          'Preço Delivery iFood': precoDeliveryIFood ? parseFloat(precoDeliveryIFood).toFixed(2) : '',
           'Tipo': product.isComposite ? 'Composto' : 'Simples',
           'Ativo': product.active ? 'Sim' : 'Não',
           'Observações': product.notes || '',
@@ -607,9 +613,10 @@ export default function Produtos() {
         { wch: 12 },  // Estoque Atual
         { wch: 12 },  // Estoque Mínimo
         { wch: 12 },  // Custo Médio
-        { wch: 12 },  // Preço Balcão
-        { wch: 12 },  // Preço Delivery
-        { wch: 12 },  // Preço A Prazo
+        { wch: 18 },  // Preço Balcão/A Prazo
+        { wch: 18 },  // Preço Delivery 99Food
+        { wch: 18 },  // Preço Delivery Próprio
+        { wch: 18 },  // Preço Delivery iFood
         { wch: 10 },  // Tipo
         { wch: 8 },   // Ativo
         { wch: 30 },  // Observações

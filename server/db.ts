@@ -5261,9 +5261,16 @@ export async function createRevenueGoal(data: {
 export async function updateRevenueGoal(id: number, data: {
   targetAmount?: number;
   notes?: string;
+  changedBy?: string;
+  changedByName?: string;
 }) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
+
+  // Buscar valor anterior para histórico
+  const currentGoal = await db.execute(sql.raw(`SELECT targetAmount FROM revenueGoals WHERE id = ${id}`));
+  const currentRows = currentGoal[0] as unknown as any[];
+  const previousAmount = currentRows[0]?.targetAmount ? parseFloat(currentRows[0].targetAmount) : 0;
 
   const updates: string[] = [];
   if (data.targetAmount !== undefined) {
@@ -5280,6 +5287,15 @@ export async function updateRevenueGoal(id: number, data: {
     SET ${updates.join(', ')}
     WHERE id = ${id}
   `));
+
+  // Registrar histórico se o valor mudou
+  if (data.targetAmount !== undefined && data.targetAmount !== previousAmount && data.changedBy) {
+    const changedByName = data.changedByName ? `'${data.changedByName.replace(/'/g, "''")}'` : 'NULL';
+    await db.execute(sql.raw(`
+      INSERT INTO revenueGoalHistory (goalId, previousAmount, newAmount, changedBy, changedByName)
+      VALUES (${id}, ${previousAmount}, ${data.targetAmount}, '${data.changedBy}', ${changedByName})
+    `));
+  }
 
   return { success: true };
 }
@@ -5299,6 +5315,7 @@ export async function upsertRevenueGoal(data: {
   targetAmount: number;
   notes?: string;
   createdBy: string;
+  createdByName?: string;
 }) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
@@ -5310,6 +5327,8 @@ export async function upsertRevenueGoal(data: {
     return updateRevenueGoal(existing.id, {
       targetAmount: data.targetAmount,
       notes: data.notes,
+      changedBy: data.createdBy,
+      changedByName: data.createdByName,
     });
   } else {
     return createRevenueGoal(data);
@@ -5660,4 +5679,80 @@ export async function getYearlyClosing(year: number) {
     months: monthlyData,
     totals: yearTotals,
   };
+}
+
+
+// Buscar histórico de alterações de uma meta
+export async function getRevenueGoalHistory(goalId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  const result = await db.execute(sql.raw(`
+    SELECT 
+      id,
+      goalId,
+      previousAmount,
+      newAmount,
+      changedBy,
+      changedByName,
+      reason,
+      createdAt
+    FROM revenueGoalHistory
+    WHERE goalId = ${goalId}
+    ORDER BY createdAt DESC
+  `));
+
+  const rows = result[0] as unknown as any[];
+  return rows.map(row => ({
+    id: row.id,
+    goalId: row.goalId,
+    previousAmount: parseFloat(row.previousAmount || '0'),
+    newAmount: parseFloat(row.newAmount || '0'),
+    changedBy: row.changedBy,
+    changedByName: row.changedByName,
+    reason: row.reason,
+    createdAt: row.createdAt,
+  }));
+}
+
+// Buscar todo o histórico de metas de um período
+export async function getAllRevenueGoalHistory(year: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  const result = await db.execute(sql.raw(`
+    SELECT 
+      h.id,
+      h.goalId,
+      h.previousAmount,
+      h.newAmount,
+      h.changedBy,
+      h.changedByName,
+      h.reason,
+      h.createdAt,
+      g.year,
+      g.month,
+      COALESCE(sc.name, 'Geral') as channelName
+    FROM revenueGoalHistory h
+    JOIN revenueGoals g ON h.goalId = g.id
+    LEFT JOIN salesChannels sc ON g.channelId = sc.id
+    WHERE g.year = ${year}
+    ORDER BY h.createdAt DESC
+    LIMIT 50
+  `));
+
+  const rows = result[0] as unknown as any[];
+  return rows.map(row => ({
+    id: row.id,
+    goalId: row.goalId,
+    previousAmount: parseFloat(row.previousAmount || '0'),
+    newAmount: parseFloat(row.newAmount || '0'),
+    changedBy: row.changedBy,
+    changedByName: row.changedByName,
+    reason: row.reason,
+    createdAt: row.createdAt,
+    year: row.year,
+    month: row.month,
+    channelName: row.channelName,
+  }));
 }

@@ -492,3 +492,21 @@ export const revenueGoals = mysqlTable("revenueGoals", {
 
 export type RevenueGoal = typeof revenueGoals.$inferSelect;
 export type InsertRevenueGoal = typeof revenueGoals.$inferInsert;
+
+
+// Histórico de alterações de metas
+export const revenueGoalHistory = mysqlTable("revenueGoalHistory", {
+  id: int("id").primaryKey().autoincrement(),
+  goalId: int("goalId").notNull(), // FK para revenueGoals
+  previousAmount: decimal("previousAmount", { precision: 12, scale: 2 }).notNull(),
+  newAmount: decimal("newAmount", { precision: 12, scale: 2 }).notNull(),
+  changedBy: varchar("changedBy", { length: 64 }).notNull(), // ID do usuário
+  changedByName: varchar("changedByName", { length: 200 }), // Nome do usuário
+  reason: text("reason"), // Motivo da alteração
+  createdAt: timestamp("createdAt").defaultNow(),
+}, (table) => ({
+  goalIdx: index("goal_idx").on(table.goalId),
+}));
+
+export type RevenueGoalHistory = typeof revenueGoalHistory.$inferSelect;
+export type InsertRevenueGoalHistory = typeof revenueGoalHistory.$inferInsert;

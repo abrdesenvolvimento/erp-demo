@@ -1906,13 +1906,8 @@ export const appRouter = router({
           targetAmount: input.targetAmount,
           notes: input.notes,
           createdBy: ctx.user.id,
+          createdByName: ctx.user.name || undefined,
         });
-      }),
-
-    delete: adminProcedure
-      .input(z.object({ id: z.number() }))
-      .mutation(async ({ input }) => {
-        return await db.deleteRevenueGoal(input.id);
       }),
 
     progress: protectedProcedure
@@ -1922,6 +1917,14 @@ export const appRouter = router({
       }))
       .query(async ({ input }) => {
         return await db.getRevenueGoalProgress(input.year, input.month);
+      }),
+
+    history: adminProcedure
+      .input(z.object({
+        year: z.number(),
+      }))
+      .query(async ({ input }) => {
+        return await db.getAllRevenueGoalHistory(input.year);
       }),
   }),
 });

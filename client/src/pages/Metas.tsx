@@ -27,7 +27,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { trpc } from "@/lib/trpc";
-import { Target, Plus, Edit, Trash2, TrendingUp, CheckCircle2, AlertCircle } from "lucide-react";
+import { Target, Plus, Edit, TrendingUp, CheckCircle2, AlertCircle, History } from "lucide-react";
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
 import { Progress } from "@/components/ui/progress";
@@ -69,27 +69,18 @@ export default function Metas() {
     year: currentYear, 
     month: currentMonth 
   });
+  const { data: history, isLoading: historyLoading } = trpc.goals.history.useQuery({ year: selectedYear });
 
   const upsertMutation = trpc.goals.upsert.useMutation({
     onSuccess: () => {
       toast.success(editingGoal ? "Meta atualizada!" : "Meta criada!");
       utils.goals.list.invalidate();
       utils.goals.progress.invalidate();
+      utils.goals.history.invalidate();
       handleCloseDialog();
     },
     onError: (error) => {
       toast.error("Erro ao salvar meta: " + error.message);
-    },
-  });
-
-  const deleteMutation = trpc.goals.delete.useMutation({
-    onSuccess: () => {
-      toast.success("Meta excluída!");
-      utils.goals.list.invalidate();
-      utils.goals.progress.invalidate();
-    },
-    onError: (error) => {
-      toast.error("Erro ao excluir meta: " + error.message);
     },
   });
 
@@ -133,12 +124,6 @@ export default function Metas() {
       targetAmount,
       notes: formNotes || undefined,
     });
-  };
-
-  const handleDelete = (id: number) => {
-    if (confirm("Tem certeza que deseja excluir esta meta?")) {
-      deleteMutation.mutate({ id });
-    }
   };
 
   const formatCurrency = (value: number) => {
@@ -309,15 +294,9 @@ export default function Metas() {
                                 variant="ghost"
                                 size="icon"
                                 onClick={() => handleOpenDialog(goal)}
+                                title="Editar meta"
                               >
                                 <Edit className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => handleDelete(goal.id)}
-                              >
-                                <Trash2 className="h-4 w-4 text-destructive" />
                               </Button>
                             </div>
                           </TableCell>
@@ -337,6 +316,50 @@ export default function Metas() {
                   <Plus className="h-4 w-4 mr-2" />
                   Criar Primeira Meta
                 </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Histórico de Alterações */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <History className="h-5 w-5" />
+              Histórico de Alterações
+            </CardTitle>
+            <CardDescription>
+              Últimas alterações nas metas de {selectedYear}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {historyLoading ? (
+              <div className="text-center py-4 text-muted-foreground">Carregando histórico...</div>
+            ) : history && history.length > 0 ? (
+              <div className="space-y-3">
+                {history.slice(0, 10).map((item: any) => (
+                  <div key={item.id} className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
+                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                      <Edit className="h-4 w-4 text-primary" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm">
+                        <span className="font-medium">{item.changedByName || 'Usuário'}</span> alterou a meta de{' '}
+                        <span className="font-medium">{getMonthName(item.month)}</span> ({item.channelName})
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        De {formatCurrency(item.previousAmount)} para {formatCurrency(item.newAmount)}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {item.createdAt ? new Date(item.createdAt).toLocaleString('pt-BR') : ''}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                Nenhuma alteração registrada em {selectedYear}
               </div>
             )}
           </CardContent>

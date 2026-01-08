@@ -1,0 +1,46 @@
+{
+  "query": "SELECT * FROM salesChannels ORDER BY id",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT * FROM salesChannels ORDER BY id",
+  "rows": [
+    {
+      "id": "1",
+      "code": "BALCAO",
+      "name": "Balcão / A Prazo",
+      "type": "BALCAO",
+      "active": "1",
+      "createdAt": "2025-10-18 23:39:31",
+      "updatedAt": "2025-10-18 23:39:31"
+    },
+    {
+      "id": "2",
+      "code": "IFOOD",
+      "name": "Delivery iFood",
+      "type": "DELIVERY",
+      "active": "1",
+      "createdAt": "2025-10-18 23:39:31",
+      "updatedAt": "2025-10-18 23:39:31"
+    },
+    {
+      "id": "3",
+      "code": "99FOOD",
+      "name": "Delivery 99Food",
+      "type": "DELIVERY",
+      "active": "1",
+      "createdAt": "2025-10-18 23:39:31",
+      "updatedAt": "2025-10-18 23:39:31"
+    },
+    {
+      "id": "4",
+      "code": "PROPRIO",
+      "name": "Delivery Próprio",
+      "type": "DELIVERY",
+      "active": "1",
+      "createdAt": "2025-10-18 23:39:31",
+      "updatedAt": "2025-10-18 23:39:31"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tcode\tname\ttype\tactive\tcreatedAt\tupdatedAt\n1\tBALCAO\tBalcão / A Prazo\tBALCAO\t1\t2025-10-18 23:39:31\t2025-10-18 23:39:31\n2\tIFOOD\tDelivery iFood\tDELIVERY\t1\t2025-10-18 23:39:31\t2025-10-18 23:39:31\n3\t99FOOD\tDelivery 99Food\tDELIVERY\t1\t2025-10-18 23:39:31\t2025-10-18 23:39:31\n4\tPROPRIO\tDelivery Próprio\tDELIVERY\t1\t2025-10-18 23:39:31\t2025-10-18 23:39:31\n",
+  "stderr": "",
+  "execution_time_ms": 58
+}

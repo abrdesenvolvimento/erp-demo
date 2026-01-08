@@ -1958,3 +1958,23 @@
 - Filtro de data: < 1 segundo
 - Autocomplete: resposta quase instantânea
 
+
+
+## Melhorias Solicitadas - 08/01/2026
+
+### Exportação de Produtos
+- [x] Corrigir colunas de preço na exportação: usar 4 colunas (Balcão/A Prazo, Delivery 99Food, Delivery Próprio, Delivery iFood) ao invés de 3 colunas separadas
+
+### Filtro de Produtos
+- [x] Implementar associação categoria-subcategoria: JÁ IMPLEMENTADO! Ao filtrar categoria, apenas subcategorias associadas são exibidas
+
+### Sistema de Metas
+- [x] Card no Dashboard: considera meta total (soma de todas as metas) para conferência rápida
+- [x] Removida opção de excluir meta (manter apenas edição)
+- [x] Criado histórico de alterações de metas com nome do usuário, valor anterior e novo valor (log de quem alterou, quando e o que mudou)
+
+### Fechamento (antes Fechamento Mensal)
+- [x] Renomear "Fechamento Mensal" para apenas "Fechamento"
+- [x] Criar visão anual: mês ao lado de mês com totalizador no final (tabela comparativa + cards de totais)
+- [ ] Adicionar quadro de compras por categoria ou subcategoria (a implementar)
+- [x] Remover quadro de Fluxo de Caixa (removido conforme solicitado)ura para futura classificação de despesas (venda vs financeiras)

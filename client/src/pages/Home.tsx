@@ -395,7 +395,7 @@ export default function Home() {
                       <p className="text-xs text-muted-foreground mt-1">
                         {goalProgress.overallProgress >= 100 
                           ? 'Meta atingida!' 
-                          : `Faltam R$ ${formatCurrency(goalProgress.goals[0]?.remaining || 0)}`
+                          : `Faltam R$ ${formatCurrency(goalProgress.totalTarget - goalProgress.totalRevenue)}`
                         }
                       </p>
                       <p className="text-xs text-emerald-600 mt-2">

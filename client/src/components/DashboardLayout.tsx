@@ -44,7 +44,7 @@ const financeMenuItems = [
   { icon: DollarSign, label: "Contas a Receber", path: "/contas-receber", roles: ["admin", "operacional", "consultor"] },
   { icon: CreditCard, label: "Contas a Pagar", path: "/contas-pagar", roles: ["admin", "consultor"] },
   { icon: Target, label: "Metas", path: "/metas", roles: ["admin"] },
-  { icon: FileText, label: "Fechamento Mensal", path: "/fechamento", roles: ["admin"] },
+  { icon: FileText, label: "Fechamento", path: "/fechamento", roles: ["admin"] },
 ];
 
 // Submenu de Análises

@@ -1,0 +1,17 @@
+Canais de Venda no Sistema ERP Adega Beira Rio:
+
+ID 1 - Balcão / A Prazo (type: BALCAO)
+ID 2 - Delivery iFood (type: DELIVERY)
+ID 3 - Delivery 99Food (type: DELIVERY)
+ID 4 - Delivery Próprio (type: DELIVERY)
+
+Na exportação atual, está usando:
+- Preço Balcão (ID 1)
+- Preço Delivery (ID 2)
+- Preço A Prazo (ID 3)
+
+Correção necessária:
+- Preço Balcão/A Prazo (ID 1)
+- Preço Delivery 99Food (ID 3)
+- Preço Delivery Próprio (ID 4)
+- Preço Delivery iFood (ID 2)

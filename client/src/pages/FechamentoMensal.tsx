@@ -25,11 +25,11 @@ import {
   ShoppingCart, 
   Receipt, 
   CreditCard,
-  ArrowUpCircle,
-  ArrowDownCircle,
-  Download,
-  Printer
+  Printer,
+  Calendar,
+  CalendarDays
 } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useState, useRef } from "react";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 
@@ -54,11 +54,16 @@ const currentMonth = new Date().getMonth() + 1;
 export default function FechamentoMensal() {
   const [selectedYear, setSelectedYear] = useState(currentYear);
   const [selectedMonth, setSelectedMonth] = useState(currentMonth);
+  const [viewMode, setViewMode] = useState<'monthly' | 'yearly'>('monthly');
   const reportRef = useRef<HTMLDivElement>(null);
 
   const { data, isLoading, error } = trpc.closing.monthly.useQuery({
     year: selectedYear,
     month: selectedMonth,
+  });
+
+  const { data: yearlyData, isLoading: yearlyLoading } = trpc.closing.yearly.useQuery({
+    year: selectedYear,
   });
 
   const formatCurrency = (value: number) => {
@@ -103,25 +108,39 @@ export default function FechamentoMensal() {
           <div>
             <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
               <FileText className="h-6 w-6 text-primary" />
-              Fechamento Mensal
+              Fechamento
             </h1>
             <p className="text-muted-foreground mt-1">
-              Relatório consolidado de resultados do mês
+              Relatório consolidado de resultados
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <Select value={selectedMonth.toString()} onValueChange={(v) => setSelectedMonth(parseInt(v))}>
-              <SelectTrigger className="w-[140px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {MONTHS.map(month => (
-                  <SelectItem key={month.value} value={month.value.toString()}>
-                    {month.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as 'monthly' | 'yearly')}>
+              <TabsList>
+                <TabsTrigger value="monthly" className="flex items-center gap-1">
+                  <Calendar className="h-4 w-4" />
+                  Mensal
+                </TabsTrigger>
+                <TabsTrigger value="yearly" className="flex items-center gap-1">
+                  <CalendarDays className="h-4 w-4" />
+                  Anual
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+            {viewMode === 'monthly' && (
+              <Select value={selectedMonth.toString()} onValueChange={(v) => setSelectedMonth(parseInt(v))}>
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {MONTHS.map(month => (
+                    <SelectItem key={month.value} value={month.value.toString()}>
+                      {month.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
             <Select value={selectedYear.toString()} onValueChange={(v) => setSelectedYear(parseInt(v))}>
               <SelectTrigger className="w-[100px]">
                 <SelectValue />
@@ -139,18 +158,21 @@ export default function FechamentoMensal() {
           </div>
         </div>
 
-        {isLoading ? (
-          <div className="flex items-center justify-center min-h-[60vh]">
-            <LoadingSpinner size="lg" text="Carregando dados do fechamento..." />
-          </div>
-        ) : error ? (
-          <Card>
-            <CardContent className="py-12 text-center">
-              <p className="text-destructive">Erro ao carregar dados: {error.message}</p>
-            </CardContent>
-          </Card>
-        ) : data ? (
-          <div ref={reportRef} className="space-y-6 print:space-y-4">
+        {/* Visão Mensal */}
+        {viewMode === 'monthly' && (
+          <>
+            {isLoading ? (
+              <div className="flex items-center justify-center min-h-[60vh]">
+                <LoadingSpinner size="lg" text="Carregando dados do fechamento..." />
+              </div>
+            ) : error ? (
+              <Card>
+                <CardContent className="py-12 text-center">
+                  <p className="text-destructive">Erro ao carregar dados: {error.message}</p>
+                </CardContent>
+              </Card>
+            ) : data ? (
+              <div ref={reportRef} className="space-y-6 print:space-y-4">
             {/* Cabeçalho do Relatório (visível na impressão) */}
             <div className="hidden print:block text-center mb-6">
               <h1 className="text-2xl font-bold">Fechamento Mensal</h1>
@@ -375,65 +397,6 @@ export default function FechamentoMensal() {
                 </CardContent>
               </Card>
 
-              {/* Fluxo de Caixa */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <DollarSign className="h-5 w-5 text-primary" />
-                    Fluxo de Caixa
-                  </CardTitle>
-                  <CardDescription>
-                    Movimentação financeira do período
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between p-3 rounded-lg bg-green-50 dark:bg-green-950/20">
-                      <div className="flex items-center gap-2">
-                        <ArrowUpCircle className="h-5 w-5 text-green-600" />
-                        <span className="font-medium">Recebimentos</span>
-                      </div>
-                      <span className="text-lg font-bold text-green-600">
-                        {formatCurrency(data.cashFlow.received)}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center justify-between p-3 rounded-lg bg-red-50 dark:bg-red-950/20">
-                      <div className="flex items-center gap-2">
-                        <ArrowDownCircle className="h-5 w-5 text-red-600" />
-                        <span className="font-medium">Pagamentos</span>
-                      </div>
-                      <span className="text-lg font-bold text-red-600">
-                        {formatCurrency(data.cashFlow.paid)}
-                      </span>
-                    </div>
-
-                    <div className="text-sm text-muted-foreground pl-7 space-y-1">
-                      <div className="flex justify-between">
-                        <span>Fornecedores (Compras)</span>
-                        <span>{formatCurrency(data.cashFlow.purchasePayments)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Despesas Operacionais</span>
-                        <span>{formatCurrency(data.cashFlow.expensePayments)}</span>
-                      </div>
-                    </div>
-
-                    <div className={`flex items-center justify-between p-3 rounded-lg ${
-                      data.cashFlow.balance >= 0 
-                        ? 'bg-blue-50 dark:bg-blue-950/20' 
-                        : 'bg-amber-50 dark:bg-amber-950/20'
-                    }`}>
-                      <span className="font-medium">Saldo do Período</span>
-                      <span className={`text-lg font-bold ${
-                        data.cashFlow.balance >= 0 ? 'text-blue-600' : 'text-amber-600'
-                      }`}>
-                        {formatCurrency(data.cashFlow.balance)}
-                      </span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
             </div>
 
             {/* DRE Simplificado */}
@@ -497,7 +460,200 @@ export default function FechamentoMensal() {
               </CardContent>
             </Card>
           </div>
-        ) : null}
+            ) : null}
+          </>
+        )}
+
+        {/* Visão Anual */}
+        {viewMode === 'yearly' && (
+          <>
+            {yearlyLoading ? (
+              <div className="flex items-center justify-center min-h-[60vh]">
+                <LoadingSpinner size="lg" text="Carregando dados anuais..." />
+              </div>
+            ) : yearlyData ? (
+              <div className="space-y-6">
+                {/* Cabeçalho do Relatório Anual */}
+                <div className="hidden print:block text-center mb-6">
+                  <h1 className="text-2xl font-bold">Fechamento Anual</h1>
+                  <p className="text-lg">{selectedYear}</p>
+                </div>
+
+                {/* Tabela Comparativa Mensal */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <CalendarDays className="h-5 w-5 text-primary" />
+                      Resultado Mensal Comparativo - {selectedYear}
+                    </CardTitle>
+                    <CardDescription>
+                      Visão consolidada mês a mês
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="sticky left-0 bg-background">Indicador</TableHead>
+                          {MONTHS.map(month => (
+                            <TableHead key={month.value} className="text-center min-w-[100px]">
+                              {month.label.substring(0, 3)}
+                            </TableHead>
+                          ))}
+                          <TableHead className="text-center font-bold bg-muted min-w-[120px]">Total</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {/* Faturamento */}
+                        <TableRow>
+                          <TableCell className="font-medium sticky left-0 bg-background">Faturamento</TableCell>
+                          {yearlyData.months.map((m: any) => (
+                            <TableCell key={m.month} className="text-right font-mono text-sm">
+                              {m.revenue > 0 ? formatCurrency(m.revenue) : '-'}
+                            </TableCell>
+                          ))}
+                          <TableCell className="text-right font-mono font-bold bg-muted">
+                            {formatCurrency(yearlyData.totals.revenue)}
+                          </TableCell>
+                        </TableRow>
+                        {/* CMV */}
+                        <TableRow>
+                          <TableCell className="font-medium sticky left-0 bg-background text-muted-foreground">(-) CMV</TableCell>
+                          {yearlyData.months.map((m: any) => (
+                            <TableCell key={m.month} className="text-right font-mono text-sm text-red-600">
+                              {m.cost > 0 ? `(${formatCurrency(m.cost)})` : '-'}
+                            </TableCell>
+                          ))}
+                          <TableCell className="text-right font-mono font-bold bg-muted text-red-600">
+                            ({formatCurrency(yearlyData.totals.cost)})
+                          </TableCell>
+                        </TableRow>
+                        {/* Lucro Bruto */}
+                        <TableRow className="bg-muted/30">
+                          <TableCell className="font-bold sticky left-0 bg-muted/30">Lucro Bruto</TableCell>
+                          {yearlyData.months.map((m: any) => (
+                            <TableCell key={m.month} className="text-right font-mono text-sm font-medium">
+                              {m.grossProfit !== 0 ? formatCurrency(m.grossProfit) : '-'}
+                            </TableCell>
+                          ))}
+                          <TableCell className="text-right font-mono font-bold bg-muted">
+                            {formatCurrency(yearlyData.totals.grossProfit)}
+                          </TableCell>
+                        </TableRow>
+                        {/* Margem Bruta % */}
+                        <TableRow>
+                          <TableCell className="font-medium sticky left-0 bg-background text-muted-foreground">Margem Bruta %</TableCell>
+                          {yearlyData.months.map((m: any) => (
+                            <TableCell key={m.month} className="text-right font-mono text-sm text-muted-foreground">
+                              {m.revenue > 0 ? `${m.grossMargin.toFixed(1)}%` : '-'}
+                            </TableCell>
+                          ))}
+                          <TableCell className="text-right font-mono font-bold bg-muted">
+                            {yearlyData.totals.grossMargin.toFixed(1)}%
+                          </TableCell>
+                        </TableRow>
+                        {/* Despesas */}
+                        <TableRow>
+                          <TableCell className="font-medium sticky left-0 bg-background text-muted-foreground">(-) Despesas</TableCell>
+                          {yearlyData.months.map((m: any) => (
+                            <TableCell key={m.month} className="text-right font-mono text-sm text-red-600">
+                              {m.operationalExpenses > 0 ? `(${formatCurrency(m.operationalExpenses)})` : '-'}
+                            </TableCell>
+                          ))}
+                          <TableCell className="text-right font-mono font-bold bg-muted text-red-600">
+                            ({formatCurrency(yearlyData.totals.operationalExpenses)})
+                          </TableCell>
+                        </TableRow>
+                        {/* Resultado Líquido */}
+                        <TableRow className="bg-green-50 dark:bg-green-950/20">
+                          <TableCell className="font-bold sticky left-0 bg-green-50 dark:bg-green-950/20">Resultado Líquido</TableCell>
+                          {yearlyData.months.map((m: any) => (
+                            <TableCell key={m.month} className={`text-right font-mono text-sm font-medium ${
+                              m.netResult >= 0 ? 'text-green-600' : 'text-red-600'
+                            }`}>
+                              {m.revenue > 0 ? formatCurrency(m.netResult) : '-'}
+                            </TableCell>
+                          ))}
+                          <TableCell className={`text-right font-mono font-bold bg-muted ${
+                            yearlyData.totals.netResult >= 0 ? 'text-green-600' : 'text-red-600'
+                          }`}>
+                            {formatCurrency(yearlyData.totals.netResult)}
+                          </TableCell>
+                        </TableRow>
+                        {/* Margem Líquida % */}
+                        <TableRow>
+                          <TableCell className="font-medium sticky left-0 bg-background text-muted-foreground">Margem Líquida %</TableCell>
+                          {yearlyData.months.map((m: any) => (
+                            <TableCell key={m.month} className={`text-right font-mono text-sm ${
+                              m.netMargin >= 0 ? 'text-green-600' : 'text-red-600'
+                            }`}>
+                              {m.revenue > 0 ? `${m.netMargin.toFixed(1)}%` : '-'}
+                            </TableCell>
+                          ))}
+                          <TableCell className={`text-right font-mono font-bold bg-muted ${
+                            yearlyData.totals.netMargin >= 0 ? 'text-green-600' : 'text-red-600'
+                          }`}>
+                            {yearlyData.totals.netMargin.toFixed(1)}%
+                          </TableCell>
+                        </TableRow>
+                      </TableBody>
+                    </Table>
+                  </CardContent>
+                </Card>
+
+                {/* Cards de Totais Anuais */}
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                  <Card className="border-t-4 border-t-blue-500">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-medium">Faturamento Total</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold text-blue-600">
+                        {formatCurrency(yearlyData.totals.revenue)}
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card className="border-t-4 border-t-amber-500">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-medium">Lucro Bruto Total</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold text-amber-600">
+                        {formatCurrency(yearlyData.totals.grossProfit)}
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Margem: {yearlyData.totals.grossMargin.toFixed(1)}%
+                      </p>
+                    </CardContent>
+                  </Card>
+                  <Card className="border-t-4 border-t-red-500">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-medium">Despesas Totais</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold text-red-600">
+                        {formatCurrency(yearlyData.totals.operationalExpenses)}
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card className={`border-t-4 ${yearlyData.totals.netResult >= 0 ? 'border-t-green-500' : 'border-t-red-500'}`}>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-medium">Resultado Líquido Total</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className={`text-2xl font-bold ${yearlyData.totals.netResult >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        {formatCurrency(yearlyData.totals.netResult)}
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Margem: {yearlyData.totals.netMargin.toFixed(1)}%
+                      </p>
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
+            ) : null}
+          </>
+        )}
       </div>
 
       {/* Estilos de impressão */}
