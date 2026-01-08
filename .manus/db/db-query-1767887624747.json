@@ -1,0 +1,100 @@
+{
+  "query": "SELECT \n  table_name,\n  ROUND(data_length / 1024 / 1024, 2) as data_mb,\n  ROUND(index_length / 1024 / 1024, 2) as index_mb,\n  table_rows\nFROM information_schema.tables \nWHERE table_schema = DATABASE()\nORDER BY data_length DESC\nLIMIT 15",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  table_name,\n  ROUND(data_length / 1024 / 1024, 2) as data_mb,\n  ROUND(index_length / 1024 / 1024, 2) as index_mb,\n  table_rows\nFROM information_schema.tables \nWHERE table_schema = DATABASE()\nORDER BY data_length DESC\nLIMIT 15",
+  "rows": [
+    {
+      "table_name": "sales",
+      "data_mb": "15.03",
+      "index_mb": "3.67",
+      "table_rows": "120359"
+    },
+    {
+      "table_name": "saleItems",
+      "data_mb": "5.73",
+      "index_mb": "0.00",
+      "table_rows": "120203"
+    },
+    {
+      "table_name": "productMovements",
+      "data_mb": "0.23",
+      "index_mb": "0.05",
+      "table_rows": "2116"
+    },
+    {
+      "table_name": "productPrices",
+      "data_mb": "0.19",
+      "index_mb": "0.06",
+      "table_rows": "3737"
+    },
+    {
+      "table_name": "products",
+      "data_mb": "0.12",
+      "index_mb": "0.03",
+      "table_rows": "981"
+    },
+    {
+      "table_name": "purchaseOrderItems",
+      "data_mb": "0.04",
+      "index_mb": "0.01",
+      "table_rows": "737"
+    },
+    {
+      "table_name": "receivables",
+      "data_mb": "0.03",
+      "index_mb": "0.01",
+      "table_rows": "386"
+    },
+    {
+      "table_name": "receivableInstallments",
+      "data_mb": "0.03",
+      "index_mb": "0.01",
+      "table_rows": "386"
+    },
+    {
+      "table_name": "purchaseOrders",
+      "data_mb": "0.02",
+      "index_mb": "0.00",
+      "table_rows": "139"
+    },
+    {
+      "table_name": "purchaseInstallments",
+      "data_mb": "0.01",
+      "index_mb": "0.00",
+      "table_rows": "180"
+    },
+    {
+      "table_name": "partners",
+      "data_mb": "0.01",
+      "index_mb": "0.00",
+      "table_rows": "79"
+    },
+    {
+      "table_name": "productCompositions",
+      "data_mb": "0.01",
+      "index_mb": "0.00",
+      "table_rows": "159"
+    },
+    {
+      "table_name": "customerPayments",
+      "data_mb": "0.00",
+      "index_mb": "0.00",
+      "table_rows": "70"
+    },
+    {
+      "table_name": "subcategories",
+      "data_mb": "0.00",
+      "index_mb": "0.00",
+      "table_rows": "48"
+    },
+    {
+      "table_name": "customerDebits",
+      "data_mb": "0.00",
+      "index_mb": "0.00",
+      "table_rows": "15"
+    }
+  ],
+  "messages": [],
+  "stdout": "table_name\tdata_mb\tindex_mb\ttable_rows\nsales\t15.03\t3.67\t120359\nsaleItems\t5.73\t0.00\t120203\nproductMovements\t0.23\t0.05\t2116\nproductPrices\t0.19\t0.06\t3737\nproducts\t0.12\t0.03\t981\npurchaseOrderItems\t0.04\t0.01\t737\nreceivables\t0.03\t0.01\t386\nreceivableInstallments\t0.03\t0.01\t386\npurchaseOrders\t0.02\t0.00\t139\npurchaseInstallments\t0.01\t0.00\t180\npartners\t0.01\t0.00\t79\nproductCompositions\t0.01\t0.00\t159\ncustomerPayments\t0.00\t0.00\t70\nsubcategories\t0.00\t0.00\t48\ncustomerDebits\t0.00\t0.00\t15\n",
+  "stderr": "",
+  "execution_time_ms": 72
+}

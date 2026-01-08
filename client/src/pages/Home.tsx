@@ -14,6 +14,9 @@ import { useAuth } from "@/_core/hooks/useAuth";
 export default function Home() {
   const { user } = useAuth();
   const isAdmin = user?.role === "admin";
+  const isConsultor = user?.role === "consultor";
+  const isOperacional = user?.role === "operacional";
+  const canViewFinancials = isAdmin || isConsultor; // Admin e Consultor podem ver informações financeiras
   const { data: stats, isLoading } = trpc.dashboard.stats.useQuery();
   const { data: purchaseStats, isLoading: isPurchaseLoading } = trpc.dashboard.purchaseStats.useQuery();
   const { data: marginData, isLoading: isMarginLoading } = trpc.dashboard.grossMarginByCategory.useQuery();
@@ -22,7 +25,7 @@ export default function Home() {
   const currentMonth = new Date().getMonth() + 1;
   const { data: goalProgress, isLoading: isGoalProgressLoading } = trpc.goals.progress.useQuery(
     { year: currentYear, month: currentMonth },
-    { enabled: isAdmin }
+    { enabled: isAdmin || isConsultor }
   );
   const [showLowStockModal, setShowLowStockModal] = useState(false);
   const [showExpiringModal, setShowExpiringModal] = useState(false);
@@ -94,6 +97,7 @@ export default function Home() {
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {canViewFinancials && (
           <Card className="border-t-4 border-t-blue-500">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
@@ -127,7 +131,9 @@ export default function Home() {
               </div>
             </CardContent>
           </Card>
+          )}
 
+          {canViewFinancials && (
           <Card className="border-t-4 border-t-orange-500">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
@@ -144,6 +150,7 @@ export default function Home() {
               </p>
             </CardContent>
           </Card>
+          )}
 
           <Card className="border-t-4 border-t-green-500">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -258,7 +265,7 @@ export default function Home() {
             </CardContent>
           </Card>
 
-          {isAdmin && (
+          {canViewFinancials && (
             <Card className="border-t-4 border-t-indigo-500">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
@@ -366,8 +373,8 @@ export default function Home() {
             </Card>
           )}
 
-          {/* Card de Meta do Mês - Apenas para Admin */}
-          {isAdmin && (
+          {/* Card de Meta do Mês - Admin e Consultor */}
+          {canViewFinancials && (
             <Link href="/metas">
               <Card 
                 className="border-t-4 border-t-emerald-500 cursor-pointer hover:shadow-md transition-shadow"
@@ -416,56 +423,14 @@ export default function Home() {
           )}
         </div>
 
-        {/* Calendário Compacto de Vendas */}
+        {/* Calendário Compacto de Vendas - Oculto para Operacional */}
+        {!isOperacional && (
         <Card>
           <CardContent className="pt-6">
             <CompactSalesCalendar />
           </CardContent>
         </Card>
-
-        {/* Vendas Recentes - largura completa */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Vendas Recentes</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {stats?.recentSales && stats.recentSales.length > 0 ? (
-                <div className="space-y-4">
-                   {stats.recentSales.map((sale: any) => (
-                    <div
-                      key={sale.id}
-                      onClick={() => handleSaleClick(sale.id)}
-                      className="flex items-center justify-between border-b pb-3 last:border-0 last:pb-0 cursor-pointer hover:bg-muted/50 transition-colors rounded-lg p-2 -m-2"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                          <ShoppingCart className="h-5 w-5 text-primary" />
-                        </div>
-                        <div>
-                          <p className="font-medium">
-                            Venda #{sale.id}
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            {formatSaleType(sale.saleType, sale.channelName, sale.customerTradeName)} - {new Date(sale.saleDate!).toLocaleDateString('pt-BR')} às {new Date(sale.saleDate!).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-bold text-green-600">
-                          R$ {sale.finalAmount}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-muted-foreground text-center py-8">
-                  Nenhuma venda registrada ainda
-                </p>
-              )}
-            </CardContent>
-          </Card>
-
+        )}
 
       </div>
 

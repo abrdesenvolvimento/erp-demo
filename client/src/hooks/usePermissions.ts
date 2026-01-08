@@ -80,5 +80,14 @@ export function usePermissions() {
     reports: {
       canView: role === "admin" || role === "consultor",
     },
+
+    goals: {
+      canView: role === "admin" || role === "consultor",
+      canEdit: role === "admin", // Apenas admin pode editar metas
+    },
+
+    closing: {
+      canView: role === "admin" || role === "consultor",
+    },
   };
 }

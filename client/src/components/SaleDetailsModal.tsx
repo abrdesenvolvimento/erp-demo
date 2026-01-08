@@ -374,7 +374,7 @@ export function SaleDetailsModal({ saleId, open, onClose }: SaleDetailsModalProp
             <span class="info-label">Data:</span> ${formatDate(saleData.saleDate)}
           </div>
           ${saleData.customerId ? `<div class="info-row"><span class="info-label">Cliente:</span> ${saleData.customerId}</div>` : ''}
-          ${user?.name ? `<div class="info-row"><span class="info-label">Vendedor:</span> ${user.name}</div>` : ''}
+          ${saleData.sellerName ? `<div class="info-row"><span class="info-label">Vendedor:</span> ${saleData.sellerName}</div>` : ''}
         </div>
         
         <div class="items">

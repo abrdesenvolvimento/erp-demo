@@ -1989,3 +1989,26 @@
 - [x] Corrigir timezone no histórico de metas (CONVERT_TZ para GMT-3)
 - [x] Mover Metas e Fechamento do menu Financeiro para Análises
 - [ ] Melhorar UI da tela de Metas (design mais elaborado) - FUTURO
+
+### Sprint 08/01/2026 - Permissões e Bugs
+- [x] Ocultar Calendário de Vendas para perfil Operacional
+- [x] Remover quadro "Vendas Recentes" do Dashboard
+- [x] Permitir Consultor ver Custo Médio de produtos
+- [x] Permitir Consultor acessar Metas (somente leitura)
+- [x] Permitir Consultor acessar Fechamento (somente leitura)
+- [x] BUG: Vendedor errado no documento impresso (mostra sempre o usuário logado, não o vendedor da venda)
+- [ ] Configurar backup automático S3 + Google Drive
+- [ ] Notificação de backup (sucesso no início, depois só erros)
+- [ ] PDF de histórico de vendas a prazo para enviar ao cliente
+
+
+### Sprint 08/01/2026 - Permissões e Bugs
+- [x] Ocultar Calendário de Vendas para perfil Operacional
+- [x] Remover quadro "Vendas Recentes" do Dashboard
+- [x] Permitir Consultor ver Custo Médio de produtos
+- [x] Permitir Consultor acessar Metas (somente leitura)
+- [x] Permitir Consultor acessar Fechamento (somente leitura)
+- [x] BUG: Vendedor errado no documento impresso (mostra sempre o usuário logado, não o vendedor da venda)
+- [ ] Configurar backup automático S3 + Google Drive
+- [ ] Notificação de backup (sucesso no início, depois só erros)
+- [ ] PDF de histórico de vendas a prazo para enviar ao cliente

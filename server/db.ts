@@ -540,17 +540,20 @@ export async function getSale(id: number) {
   if (!db) return undefined;
   
   // Usar SQL raw para converter saleDate para timezone de Brasília
+  // Incluir JOIN com users para retornar o nome do vendedor
   const result = await db.execute(sql.raw(`
     SELECT 
-      id, saleType, 
-      CONVERT_TZ(saleDate, '+00:00', '-03:00') as saleDate,
-      customerId, channelId, platformOrderId,
-      subtotal, discountAmount, surchargeAmount, finalAmount,
-      paymentMethod, requiresAdminApproval, adminApprovedBy, notes,
-      status, cancelledAt, cancelledBy, cancellationReason,
-      createdBy, createdAt
-    FROM sales 
-    WHERE id = ${id} 
+      s.id, s.saleType, 
+      CONVERT_TZ(s.saleDate, '+00:00', '-03:00') as saleDate,
+      s.customerId, s.channelId, s.platformOrderId,
+      s.subtotal, s.discountAmount, s.surchargeAmount, s.finalAmount,
+      s.paymentMethod, s.requiresAdminApproval, s.adminApprovedBy, s.notes,
+      s.status, s.cancelledAt, s.cancelledBy, s.cancellationReason,
+      s.createdBy, s.createdAt,
+      u.name as sellerName
+    FROM sales s
+    LEFT JOIN users u ON s.createdBy = u.id
+    WHERE s.id = ${id} 
     LIMIT 1
   `));
   

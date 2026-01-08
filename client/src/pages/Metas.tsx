@@ -31,6 +31,7 @@ import { Target, Plus, Edit, TrendingUp, CheckCircle2, AlertCircle, History } fr
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
 import { Progress } from "@/components/ui/progress";
+import { usePermissions } from "@/hooks/usePermissions";
 
 const MONTHS = [
   { value: 1, label: "Janeiro" },
@@ -51,6 +52,8 @@ const currentYear = new Date().getFullYear();
 const currentMonth = new Date().getMonth() + 1;
 
 export default function Metas() {
+  const { goals: goalsPermissions } = usePermissions();
+  const canEdit = goalsPermissions.canEdit;
   const [selectedYear, setSelectedYear] = useState(currentYear);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingGoal, setEditingGoal] = useState<any>(null);
@@ -172,10 +175,12 @@ export default function Metas() {
                 ))}
               </SelectContent>
             </Select>
+            {canEdit && (
             <Button onClick={() => handleOpenDialog()}>
               <Plus className="h-4 w-4 mr-2" />
               Nova Meta
             </Button>
+            )}
           </div>
         </div>
 
@@ -263,7 +268,7 @@ export default function Metas() {
                       <TableHead>Canal</TableHead>
                       <TableHead className="text-right">Meta</TableHead>
                       <TableHead>Observações</TableHead>
-                      <TableHead className="w-[100px]">Ações</TableHead>
+                      {canEdit && <TableHead className="w-[100px]">Ações</TableHead>}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -288,6 +293,7 @@ export default function Metas() {
                           <TableCell className="text-muted-foreground text-sm">
                             {goal.notes || "-"}
                           </TableCell>
+                          {canEdit && (
                           <TableCell>
                             <div className="flex items-center gap-1">
                               <Button
@@ -300,6 +306,7 @@ export default function Metas() {
                               </Button>
                             </div>
                           </TableCell>
+                          )}
                         </TableRow>
                       ));
                     })}
@@ -312,10 +319,12 @@ export default function Metas() {
                 <p className="text-muted-foreground mb-4">
                   Nenhuma meta configurada para {selectedYear}
                 </p>
+                {canEdit && (
                 <Button onClick={() => handleOpenDialog()}>
                   <Plus className="h-4 w-4 mr-2" />
                   Criar Primeira Meta
                 </Button>
+                )}
               </div>
             )}
           </CardContent>
