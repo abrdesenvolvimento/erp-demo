@@ -3,7 +3,7 @@ import { TRPCError } from "@trpc/server";
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
-import { publicProcedure, protectedProcedure, adminProcedure, router } from "./_core/trpc";
+import { publicProcedure, protectedProcedure, adminProcedure, consultorProcedure, router } from "./_core/trpc";
 import * as db from "./db";
 
 export const appRouter = router({
@@ -770,7 +770,7 @@ export const appRouter = router({
 
   // ==================== COMPRAS ====================
   purchases: router({
-    list: adminProcedure
+    list: consultorProcedure
       .input(z.object({
         status: z.string().optional(),
         supplierId: z.number().optional(),
@@ -784,13 +784,13 @@ export const appRouter = router({
         return await db.getPurchaseOrders(input);
       }),
     
-    getById: adminProcedure
+    getById: consultorProcedure
       .input(z.object({ id: z.number() }))
       .query(async ({ input }) => {
         return await db.getPurchaseOrderById(input.id);
       }),
     
-    getItems: adminProcedure
+    getItems: consultorProcedure
       .input(z.object({ purchaseOrderId: z.number() }))
       .query(async ({ input }) => {
         return await db.getPurchaseOrderItems(input.purchaseOrderId);
@@ -946,7 +946,7 @@ export const appRouter = router({
   expenses: router({
     // Categorias
     categories: router({
-      list: adminProcedure
+      list: consultorProcedure
         .input(z.object({ activeOnly: z.boolean().optional().default(true) }).optional())
         .query(async ({ input }) => {
           return await db.getExpenseCategories(input?.activeOnly ?? true);
@@ -979,7 +979,7 @@ export const appRouter = router({
     }),
     
     // Despesas
-    list: adminProcedure
+    list: consultorProcedure
       .input(z.object({
         categoryId: z.number().optional(),
         status: z.enum(["ATIVA", "CANCELADA"]).optional(),
@@ -994,7 +994,7 @@ export const appRouter = router({
         return await db.getExpenses(input);
       }),
     
-    get: adminProcedure
+    get: consultorProcedure
       .input(z.object({ id: z.number() }))
       .query(async ({ input }) => {
         return await db.getExpenseById(input.id);
@@ -1852,7 +1852,7 @@ export const appRouter = router({
 
   // ==================== FECHAMENTO MENSAL ====================
   closing: router({
-    monthly: adminProcedure
+    monthly: consultorProcedure
       .input(z.object({
         year: z.number(),
         month: z.number(),
@@ -1861,7 +1861,7 @@ export const appRouter = router({
         return await db.getMonthlyClosing(input.year, input.month);
       }),
 
-    yearly: adminProcedure
+    yearly: consultorProcedure
       .input(z.object({
         year: z.number(),
       }))

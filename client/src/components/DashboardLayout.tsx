@@ -262,8 +262,8 @@ function DashboardLayoutContent({
   const visibleMainItems = getFilteredItems(filteredMainItems);
   const visibleAnalysisItems = filteredAnalysisItems.filter(item => {
     if (user?.role !== 'admin') {
-      // Consultor pode ver Análise de Faturamento, Metas e Fechamento
-      return item.path === '/relatorios' || item.path === '/metas' || item.path === '/fechamento';
+      // Consultor pode ver Análise de Faturamento e Fechamento (sem Metas)
+      return item.path === '/relatorios' || item.path === '/fechamento';
     }
     return true;
   });

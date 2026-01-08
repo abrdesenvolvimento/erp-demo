@@ -2030,3 +2030,14 @@
 ### Operacional
 - [x] Ocultar cards de estatísticas na tela de Vendas (Opção A)
 - [x] Contas a Receber: manter acesso atual (pode visualizar, registrar pagamentos, lançar débitos)
+
+## Bugs e Ajustes - 08/01/2026 (Tarde)
+
+### Operacional
+- [x] Ocultar botão "Exportar para Excel" na tela de Vendas
+
+### Consultor
+- [x] Ocultar menu Metas (não irá acompanhar)
+- [x] Corrigir erro de permissão no Fechamento (erro 10002)
+- [x] Corrigir listagem de Compras (não mostra dados ao filtrar)
+- [x] Corrigir listagem de Despesas (não mostra dados ao filtrar)

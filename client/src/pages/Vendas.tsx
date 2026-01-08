@@ -584,6 +584,7 @@ export default function Vendas() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-semibold">Vendas Registradas</h2>
+{!permissions.isOperacional && (
               <Button
                 variant="outline"
                 onClick={handleExportSales}
@@ -591,6 +592,7 @@ export default function Vendas() {
               >
                 {exportSales.isLoading ? "Exportando..." : "Exportar para Excel"}
               </Button>
+              )}
             </div>
           </CardHeader>
           <CardContent>
