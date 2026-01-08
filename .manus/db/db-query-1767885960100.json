@@ -1,0 +1,90 @@
+{
+  "query": "SELECT id, name, description FROM expenseCategories ORDER BY name",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT id, name, description FROM expenseCategories ORDER BY name",
+  "rows": [
+    {
+      "id": "1",
+      "name": "Aluguel",
+      "description": "Aluguel do imóvel comercial"
+    },
+    {
+      "id": "6",
+      "name": "Contador",
+      "description": "Serviços contábeis"
+    },
+    {
+      "id": "60001",
+      "name": "Custo Operacional",
+      "description": "Despesas operacionais do negócio (sacolas, embalagens, etc.)"
+    },
+    {
+      "id": "2",
+      "name": "Energia Elétrica",
+      "description": "Conta de luz"
+    },
+    {
+      "id": "8",
+      "name": "Limpeza",
+      "description": "Serviços de limpeza e materiais"
+    },
+    {
+      "id": "7",
+      "name": "Manutenção",
+      "description": "Manutenção predial e equipamentos"
+    },
+    {
+      "id": "10",
+      "name": "Marketing e Publicidade",
+      "description": "Propaganda, redes sociais, anúncios"
+    },
+    {
+      "id": "12",
+      "name": "Material de Escritório",
+      "description": "Papelaria, materiais administrativos"
+    },
+    {
+      "id": "14",
+      "name": "Outras Despesas",
+      "description": "Despesas diversas não categorizadas"
+    },
+    {
+      "id": "30001",
+      "name": "Perdas",
+      "description": "Perdas de estoque por vencimento, avaria ou outros motivos"
+    },
+    {
+      "id": "5",
+      "name": "Salários e Encargos",
+      "description": "Folha de pagamento e encargos trabalhistas"
+    },
+    {
+      "id": "9",
+      "name": "Segurança",
+      "description": "Serviços de segurança"
+    },
+    {
+      "id": "11",
+      "name": "Taxas e Impostos",
+      "description": "Impostos diversos, taxas municipais"
+    },
+    {
+      "id": "4",
+      "name": "Telefone/Internet",
+      "description": "Serviços de telecomunicações"
+    },
+    {
+      "id": "13",
+      "name": "Transporte/Combustível",
+      "description": "Combustível, manutenção de veículos"
+    },
+    {
+      "id": "3",
+      "name": "Água",
+      "description": "Conta de água"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tdescription\n1\tAluguel\tAluguel do imóvel comercial\n6\tContador\tServiços contábeis\n60001\tCusto Operacional\tDespesas operacionais do negócio (sacolas, embalagens, etc.)\n2\tEnergia Elétrica\tConta de luz\n8\tLimpeza\tServiços de limpeza e materiais\n7\tManutenção\tManutenção predial e equipamentos\n10\tMarketing e Publicidade\tPropaganda, redes sociais, anúncios\n12\tMaterial de Escritório\tPapelaria, materiais administrativos\n14\tOutras Despesas\tDespesas diversas não categorizadas\n30001\tPerdas\tPerdas de estoque por vencimento, avaria ou outros motivos\n5\tSalários e Encargos\tFolha de pagamento e encargos trabalhistas\n9\tSegurança\tServiços de segurança\n11\tTaxas e Impostos\tImpostos diversos, taxas municipais\n4\tTelefone/Internet\tServiços de telecomunicações\n13\tTransporte/Combustível\tCombustível, manutenção de veículos\n3\tÁgua\tConta de água\n",
+  "stderr": "",
+  "execution_time_ms": 113
+}

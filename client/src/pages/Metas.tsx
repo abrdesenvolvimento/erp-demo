@@ -321,44 +321,59 @@ export default function Metas() {
           </CardContent>
         </Card>
 
-        {/* Histórico de Alterações */}
+        {/* Histórico de Alterações - Formato Tabela Compacta */}
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <History className="h-5 w-5" />
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <History className="h-4 w-4" />
               Histórico de Alterações
             </CardTitle>
-            <CardDescription>
-              Últimas alterações nas metas de {selectedYear}
-            </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-0">
             {historyLoading ? (
-              <div className="text-center py-4 text-muted-foreground">Carregando histórico...</div>
+              <div className="text-center py-4 text-muted-foreground text-sm">Carregando...</div>
             ) : history && history.length > 0 ? (
-              <div className="space-y-3">
-                {history.slice(0, 10).map((item: any) => (
-                  <div key={item.id} className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
-                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                      <Edit className="h-4 w-4 text-primary" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm">
-                        <span className="font-medium">{item.changedByName || 'Usuário'}</span> alterou a meta de{' '}
-                        <span className="font-medium">{getMonthName(item.month)}</span> ({item.channelName})
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        De {formatCurrency(item.previousAmount)} para {formatCurrency(item.newAmount)}
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {item.createdAt ? new Date(item.createdAt).toLocaleString('pt-BR') : ''}
-                      </p>
-                    </div>
-                  </div>
-                ))}
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="text-xs">
+                      <TableHead className="py-2">Data</TableHead>
+                      <TableHead className="py-2">Mês</TableHead>
+                      <TableHead className="py-2">Canal</TableHead>
+                      <TableHead className="py-2 text-right">Anterior</TableHead>
+                      <TableHead className="py-2 text-right">Novo</TableHead>
+                      <TableHead className="py-2">Usuário</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {history.slice(0, 10).map((item: any) => (
+                      <TableRow key={item.id} className="text-sm">
+                        <TableCell className="py-2 text-xs text-muted-foreground whitespace-nowrap">
+                          {item.createdAt ? new Date(item.createdAt).toLocaleString('pt-BR', { 
+                            day: '2-digit', 
+                            month: '2-digit', 
+                            hour: '2-digit', 
+                            minute: '2-digit' 
+                          }) : '-'}
+                        </TableCell>
+                        <TableCell className="py-2 font-medium">{getMonthName(item.month)}</TableCell>
+                        <TableCell className="py-2 text-muted-foreground">{item.channelName}</TableCell>
+                        <TableCell className="py-2 text-right text-muted-foreground">
+                          {formatCurrency(item.previousAmount)}
+                        </TableCell>
+                        <TableCell className="py-2 text-right font-medium">
+                          {formatCurrency(item.newAmount)}
+                        </TableCell>
+                        <TableCell className="py-2 text-xs text-muted-foreground">
+                          {item.changedByName || 'Usuário'}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               </div>
             ) : (
-              <div className="text-center py-8 text-muted-foreground">
+              <div className="text-center py-4 text-muted-foreground text-sm">
                 Nenhuma alteração registrada em {selectedYear}
               </div>
             )}

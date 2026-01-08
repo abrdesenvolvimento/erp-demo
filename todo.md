@@ -1978,3 +1978,8 @@
 - [x] Criar visão anual: mês ao lado de mês com totalizador no final (tabela comparativa + cards de totais)
 - [ ] Adicionar quadro de compras por categoria ou subcategoria (a implementar)
 - [x] Remover quadro de Fluxo de Caixa (removido conforme solicitado)ura para futura classificação de despesas (venda vs financeiras)
+
+### Sprint 08/01/2026 - Tarde
+- [x] Simplificar histórico de alterações de metas (formato tabela compacta com colunas)
+- [ ] Layout de impressão do Fechamento (logo da empresa, formatação profissional) - FUTURO
+- [ ] Configurar DRE com categorias de despesas corretas (Despesas de Venda, Administrativas, Financeiras)
