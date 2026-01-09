@@ -122,7 +122,9 @@
 
 ## ✅ CONCLUÍDO RECENTEMENTE
 
-- [x] **BUG CORRIGIDO:** Recebíveis órfãos em Contas a Receber (09/01/2026)
+- [x] **BUG CORRIGIDO:** Vendas canceladas ainda geravam saldo a receber (09/01/2026)
+  - Corrigidas 3 funções para excluir vendas CANCELADA do cálculo de saldo
+  - getCustomerBalance(), getCustomerReceivableDetail(), getCustomersWithBalance()
   - Função cancelSale() agora deleta recebível, parcelas e pagamentos
   - Limpeza de recebíveis órfãos existentes no banco
 - [x] Backup automático diário para Google Drive (08/01/2026)

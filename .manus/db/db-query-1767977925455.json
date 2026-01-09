@@ -1,0 +1,17 @@
+{
+  "query": "SELECT id, status, customerId, finalAmount, saleDate FROM sales WHERE customerId = 240002 ORDER BY saleDate DESC LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT id, status, customerId, finalAmount, saleDate FROM sales WHERE customerId = 240002 ORDER BY saleDate DESC LIMIT 5;",
+  "rows": [
+    {
+      "id": "38520001",
+      "status": "CANCELLED",
+      "customerId": "240002",
+      "finalAmount": "13.00",
+      "saleDate": "2026-01-09 16:27:35"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tstatus\tcustomerId\tfinalAmount\tsaleDate\n38520001\tCANCELLED\t240002\t13.00\t2026-01-09 16:27:35\n",
+  "stderr": "",
+  "execution_time_ms": 53
+}

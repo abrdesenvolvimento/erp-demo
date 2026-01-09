@@ -2416,7 +2416,8 @@ export async function getCustomerReceivableDetail(customerId: number) {
   .leftJoin(receivables, eq(sales.id, receivables.saleId))
   .where(and(
     eq(sales.customerId, customerId),
-    eq(sales.saleType, "A_PRAZO")
+    eq(sales.saleType, "A_PRAZO"),
+    eq(sales.status, "ACTIVE")
   ))
   .orderBy(desc(sales.saleDate));
   
@@ -3251,14 +3252,15 @@ export async function getCustomerBalance(customerId: number): Promise<number> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  // Soma total de vendas A_PRAZO
+  // Soma total de vendas A_PRAZO (excluindo canceladas)
   const [salesResult] = await db.select({
     total: sql<string>`COALESCE(SUM(CAST(${sales.finalAmount} AS DECIMAL(10,2))), 0)`
   })
   .from(sales)
   .where(and(
     eq(sales.customerId, customerId),
-    eq(sales.saleType, "A_PRAZO")
+    eq(sales.saleType, "A_PRAZO"),
+    eq(sales.status, "ACTIVE")
   ));
 
   // Soma total de débitos manuais
@@ -3298,7 +3300,10 @@ export async function getCustomersWithBalance() {
   })
   .from(sales)
   .leftJoin(partners, eq(sales.customerId, partners.id))
-  .where(eq(sales.saleType, "A_PRAZO"))
+  .where(and(
+    eq(sales.saleType, "A_PRAZO"),
+    eq(sales.status, "ACTIVE")
+  ))
   .groupBy(sales.customerId, partners.name);
 
   // Para cada cliente, calcular saldo (vendas - pagamentos)
@@ -3345,7 +3350,8 @@ export async function getCustomerAccountHistory(customerId: number) {
   .from(sales)
   .where(and(
     eq(sales.customerId, customerId),
-    eq(sales.saleType, "A_PRAZO")
+    eq(sales.saleType, "A_PRAZO"),
+    eq(sales.status, "ACTIVE")
   ));
 
   // Buscar produtos de cada venda
