@@ -1,0 +1,15 @@
+{
+  "query": "\n-- Buscar ID do Alexandre\nSELECT id, name, partnerType FROM partners WHERE name LIKE '%Alexandre%' LIMIT 5;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute \n-- Buscar ID do Alexandre\nSELECT id, name, partnerType FROM partners WHERE name LIKE '%Alexandre%' LIMIT 5;\n",
+  "rows": [
+    {
+      "id": "270001",
+      "name": "Alexandre Lima",
+      "partnerType": "CUSTOMER"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tpartnerType\n270001\tAlexandre Lima\tCUSTOMER\n",
+  "stderr": "",
+  "execution_time_ms": 52
+}

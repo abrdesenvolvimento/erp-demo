@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { trpc } from "../lib/trpc";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
 import { Button } from "../components/ui/button";
@@ -9,8 +8,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Textarea } from "../components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table";
 import { toast } from "sonner";
-import { DollarSign, User, ChevronRight, ArrowLeft } from "lucide-react";
+import { DollarSign, User, ChevronRight, ArrowLeft, FileDown, Loader2 } from "lucide-react";
+import { useState } from "react";
 import DashboardLayout from "../components/DashboardLayout";
+
+interface PaymentForm {
+  paidDate: string;
+  paidAmount: string;
+  paymentMethod: string;
+  notes: string;
+}
 
 export default function ContasReceber() {
   const [selectedCustomerId, setSelectedCustomerId] = useState<number | null>(null);
@@ -44,6 +51,33 @@ export default function ContasReceber() {
     },
     onError: (error) => {
       toast.error(`Erro ao registrar recebimento: ${error.message}`);
+    }
+  });
+
+  const exportPDF = trpc.receivables.exportPDF.useMutation({
+    onSuccess: (data) => {
+      // Converter base64 para blob
+      const binaryString = atob(data.pdf);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      const blob = new Blob([bytes], { type: 'application/pdf' });
+      
+      // Criar link de download
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = data.filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      toast.success("PDF baixado com sucesso!");
+    },
+    onError: (error) => {
+      toast.error(`Erro ao gerar PDF: ${error.message}`);
     }
   });
 
@@ -175,9 +209,23 @@ export default function ContasReceber() {
                 <CardTitle>Vendas A Prazo</CardTitle>
                 <CardDescription>Histórico de compras do cliente</CardDescription>
               </div>
-              <Button onClick={handleOpenPaymentModal}>
-                Registrar Recebimento
-              </Button>
+              <div className="flex gap-2">
+                <Button 
+                  onClick={() => exportPDF.mutate({ customerId: selectedCustomerId! })}
+                  disabled={exportPDF.isPending}
+                  variant="outline"
+                >
+                  {exportPDF.isPending ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <FileDown className="h-4 w-4 mr-2" />
+                  )}
+                  {exportPDF.isPending ? 'Gerando...' : 'Exportar PDF'}
+                </Button>
+                <Button onClick={handleOpenPaymentModal}>
+                  Registrar Recebimento
+                </Button>
+              </div>
             </div>
           </CardHeader>
           <CardContent>

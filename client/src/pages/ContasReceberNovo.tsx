@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, DollarSign, Plus } from "lucide-react";
+import { ArrowLeft, DollarSign, Plus, FileDown, Loader2 } from "lucide-react";
 
 import { getTodayInBrazil, getNowInBrazil, formatDateBR, formatDateTimeBR } from "@shared/dateUtils";
 import { toast } from "sonner";
@@ -66,7 +66,31 @@ export default function ContasReceberNovo() {
     }
   });
 
-  // Form state - Pagamento
+
+  // Mutation para exportar PDF
+  const exportPDF = trpc.receivables.exportPDF.useMutation({
+    onSuccess: (data) => {
+      const binaryString = atob(data.pdf);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      const blob = new Blob([bytes], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = data.filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      toast.success("PDF baixado com sucesso!");
+    },
+    onError: (error) => {
+      toast.error(`Erro ao gerar PDF: ${error.message}`);
+    }
+  });
+// Form state - Pagamento
   const [paymentForm, setPaymentForm] = useState({
     paidDate: getTodayInBrazil().toISOString().split('T')[0],
     paidAmount: "",
@@ -196,6 +220,18 @@ export default function ContasReceberNovo() {
                 </div>
               </div>
               <div className="flex gap-2">
+                <Button 
+                  variant="outline"
+                  onClick={() => selectedCustomerId && exportPDF.mutate({ customerId: selectedCustomerId })}
+                  disabled={exportPDF.isPending}
+                >
+                  {exportPDF.isPending ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <FileDown className="mr-2 h-4 w-4" />
+                  )}
+                  {exportPDF.isPending ? 'Gerando...' : 'Exportar PDF'}
+                </Button>
                 <Button 
                   onClick={() => setShowPaymentModal(true)}
                   disabled={!permissions.receivables.canRegisterPayment}

@@ -64,16 +64,18 @@ async function backupDatabase() {
       throw new Error('DATABASE_URL não configurado');
     }
     
-    // Parse da URL de conexão (mysql://user:password@host:port/database)
-    const urlMatch = databaseUrl.match(/mysql:\/\/([^:]+):([^@]+)@([^:]+):(\d+)\/(.+)/);
+    // Parse da URL de conexão (mysql://user:password@host:port/database?params)
+    const urlMatch = databaseUrl.match(/mysql:\/\/([^:]+):([^@]+)@([^:]+):(\d+)\/([^?]+)/);
     if (!urlMatch) {
       throw new Error('DATABASE_URL em formato inválido');
     }
     
     const [, user, password, host, port, database] = urlMatch;
+    // Remove qualquer parâmetro de query string do nome do banco
+    const cleanDatabase = database.split('?')[0];
     
     // Executar mysqldump
-    const command = `mysqldump -h ${host} -P ${port} -u ${user} -p${password} --ssl-mode=REQUIRED ${database} > ${backupFile}`;
+    const command = `mysqldump -h ${host} -P ${port} -u ${user} -p${password} --ssl-mode=REQUIRED ${cleanDatabase} > ${backupFile}`;
     execSync(command, { stdio: 'pipe' });
     
     console.log(`[Backup] ✓ Banco de dados exportado: ${backupFile}`);
@@ -239,9 +241,10 @@ async function sendManusNotification(title, content) {
 async function sendNotification(backupResults, success = true) {
   const timestamp = new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
   
+  // Título sem caracteres especiais para evitar problemas de encoding
   const title = success 
-    ? '✓ Backup Concluído - ERP Adega Beira Rio'
-    : '✗ Backup Falhou - ERP Adega Beira Rio';
+    ? 'Backup Concluido - ABRWF'
+    : 'Backup Falhou - ABRWF';
   
   // Conteúdo para Manus (Markdown)
   let manusContent = `**Data/Hora:** ${timestamp}\n\n`;
@@ -261,12 +264,14 @@ async function sendNotification(backupResults, success = true) {
   
   manusContent += `\n**Pasta de Backup:** https://drive.google.com/drive/folders/${GOOGLE_FOLDER_ID}`;
   
-  // Conteúdo para Email (HTML)
+  // Conteúdo para Email (HTML) - Cores da empresa (verde)
+  const logoUrl = process.env.VITE_APP_LOGO || '';
   let emailHtml = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-      <div style="background: ${success ? '#10B981' : '#EF4444'}; color: white; padding: 20px; text-align: center;">
-        <h1 style="margin: 0;">${success ? '✓' : '✗'} Backup ${success ? 'Concluído' : 'Falhou'}</h1>
-        <p style="margin: 10px 0 0;">ERP Adega Beira Rio</p>
+      <div style="background: ${success ? '#2D5A3D' : '#EF4444'}; color: white; padding: 20px; text-align: center;">
+        ${logoUrl ? `<img src="${logoUrl}" alt="ABRWF" style="height: 50px; margin-bottom: 10px;">` : ''}
+        <h1 style="margin: 0;">Backup ${success ? 'Concluído' : 'Falhou'}</h1>
+        <p style="margin: 10px 0 0;">ABRWF - Análise Baseada em Resultados</p>
       </div>
       
       <div style="padding: 20px; background: #f9f9f9;">
@@ -308,7 +313,7 @@ async function sendNotification(backupResults, success = true) {
   emailHtml += `
         <p style="margin-top: 20px;">
           <a href="https://drive.google.com/drive/folders/${GOOGLE_FOLDER_ID}" 
-             style="display: inline-block; background: #2563EB; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
+             style="display: inline-block; background: #2D5A3D; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
             Abrir Pasta de Backup
           </a>
         </p>
@@ -322,7 +327,9 @@ async function sendNotification(backupResults, success = true) {
         </p>
       </div>
       
-      <div style="background: #333; color: #999; padding: 15px; text-align: center; font-size: 12px;">
+      <div style="background: #2D5A3D; color: white; padding: 15px; text-align: center; font-size: 12px;">
+        ${logoUrl ? `<img src="${logoUrl}" alt="ABRWF" style="height: 30px; margin-bottom: 8px;"><br>` : ''}
+        <strong>ABRWF</strong> - Análise Baseada em Resultados<br>
         Este é um email automático do sistema de backup.
       </div>
     </div>
