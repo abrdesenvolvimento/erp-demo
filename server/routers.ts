@@ -1647,9 +1647,11 @@ export const appRouter = router({
         };
       }).filter(c => parseFloat(c.value) > 0).sort((a, b) => parseFloat(b.value) - parseFloat(a.value));
       
-      // Produtos próximos ao vencimento (30 dias)
+      // Produtos próximos ao vencimento (30 dias) - apenas com estoque > 0
       const expiringProducts = products.filter(p => {
         if (!p.active || !p.expirationDate) return false;
+        const stock = parseFloat(p.currentStock?.toString() || "0");
+        if (stock <= 0) return false; // Ignorar produtos sem estoque
         const expDate = new Date(p.expirationDate);
         const daysUntilExpiration = Math.ceil((expDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
         return daysUntilExpiration <= 30;

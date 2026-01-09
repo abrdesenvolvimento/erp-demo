@@ -176,3 +176,8 @@
 - [x] Corrigida lógica para selecionar apenas vendas mais recentes que formam o saldo
 - [x] Alexandre (R$ 52) - PDF correto: 2 vendas = R$ 52,00
 - [x] Victor (R$ 165,50) - PDF correto: 3 vendas = R$ 183,00 (saldo após pagamento parcial)
+
+### 13. BUG: Produtos próximos ao vencimento mostrando incorretamente (09/01/2026)
+- [x] Kaut 2l aparece como próximo ao vencimento mas não tem estoque - CORRIGIDO
+- [x] Adicionado filtro para ignorar produtos com estoque <= 0
+- [ ] Pepsi Black 350ml tem estoque mas vencimento é de registro antigo (precisa verificar manualmente)

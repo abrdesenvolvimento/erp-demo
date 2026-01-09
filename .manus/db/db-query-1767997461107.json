@@ -1,0 +1,24 @@
+{
+  "query": "SELECT id, name, currentStock, expirationDate, active \nFROM products \nWHERE name LIKE '%Kaut%' OR name LIKE '%Pepsi Black%' \nORDER BY name;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT id, name, currentStock, expirationDate, active \nFROM products \nWHERE name LIKE '%Kaut%' OR name LIKE '%Pepsi Black%' \nORDER BY name;",
+  "rows": [
+    {
+      "id": "1170004",
+      "name": "Pepsi Black 2l",
+      "currentStock": "17",
+      "expirationDate": "NULL",
+      "active": "1"
+    },
+    {
+      "id": "1170006",
+      "name": "Pepsi Black 350ml",
+      "currentStock": "18",
+      "expirationDate": "2026-02-08 00:00:00",
+      "active": "1"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tcurrentStock\texpirationDate\tactive\n1170004\tPepsi Black 2l\t17\tNULL\t1\n1170006\tPepsi Black 350ml\t18\t2026-02-08 00:00:00\t1\n",
+  "stderr": "",
+  "execution_time_ms": 123
+}

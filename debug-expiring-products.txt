@@ -1,0 +1,35 @@
+ANÁLISE: Produtos Próximos ao Vencimento
+
+Produtos encontrados com vencimento em 30 dias:
+1. Pepsi Black 350ml: estoque=18, vencimento=07/02/2026 - CORRETO (tem estoque)
+2. Kuat 2l: estoque=0, vencimento=07/02/2026 - INCORRETO (sem estoque)
+
+PROBLEMA IDENTIFICADO:
+O Kuat 2l tem estoque ZERO mas ainda aparece na lista de produtos próximos ao vencimento.
+Isso acontece porque a data de vencimento foi salva quando havia estoque, mas o estoque foi vendido.
+
+SOLUÇÃO:
+Adicionar filtro para excluir produtos com estoque <= 0 na consulta de produtos próximos ao vencimento.
+
+CÓDIGO ATUAL (routers.ts linha 1651-1656):
+const expiringProducts = products.filter(p => {
+  if (!p.active || !p.expirationDate) return false;
+  const expDate = new Date(p.expirationDate);
+  const daysUntilExpiration = Math.ceil((expDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+  return daysUntilExpiration <= 30;
+});
+
+CÓDIGO CORRIGIDO:
+const expiringProducts = products.filter(p => {
+  if (!p.active || !p.expirationDate) return false;
+  const stock = parseFloat(p.currentStock?.toString() || "0");
+  if (stock <= 0) return false; // NOVO: Ignorar produtos sem estoque
+  const expDate = new Date(p.expirationDate);
+  const daysUntilExpiration = Math.ceil((expDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+  return daysUntilExpiration <= 30;
+});
+
+SOBRE A PEPSI BLACK 350ml:
+O usuário mencionou que não colocou vencimento, mas o sistema mostra vencimento 07/02/2026.
+Isso pode ser de uma compra anterior. Se o vencimento está incorreto, precisa ser corrigido manualmente
+ou limpar a data de vencimento do produto.
