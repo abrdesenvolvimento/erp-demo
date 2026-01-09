@@ -1,0 +1,23 @@
+ANÁLISE COMPARATIVA DOS PDFs:
+
+ALEXANDRE LIMA (PDF CORRETO):
+- Saldo devedor: R$ 52,00
+- PDF mostra vendas desde 04/11/2025 até 04/01/2026
+- Soma das vendas no PDF: R$ 73 + R$ 15 + R$ 38 + R$ 10 + R$ 18 + R$ 58 + R$ 13 + R$ 10 + R$ 23,50 + R$ 59 + R$ 69 + R$ 24 + R$ 23 + R$ 36 + R$ 23 + R$ 45 + R$ 10 + R$ 42 = ~R$ 589,50
+- Isso significa que Alexandre tem pagamentos que cobriram R$ 537,50 das vendas
+- O PDF mostra TODAS as vendas, não apenas as em aberto
+
+VICTOR HUGO (PDF INCORRETO - mesmo problema):
+- Saldo devedor: R$ 165,50
+- PDF mostra 30 vendas totalizando R$ 931,25
+- Deveria mostrar apenas as vendas que formam o saldo de R$ 165,50
+
+CONCLUSÃO:
+O PDF do Alexandre também está mostrando TODAS as vendas, não apenas as em aberto.
+O usuário quer que o PDF mostre apenas as vendas que formam o saldo devedor atual.
+
+LÓGICA CORRETA:
+1. Calcular o saldo devedor atual (já está correto)
+2. Percorrer as vendas de trás para frente (mais recentes primeiro)
+3. Incluir vendas até que a soma atinja o saldo devedor
+4. Isso mostra apenas as vendas "em aberto" que ainda não foram pagas

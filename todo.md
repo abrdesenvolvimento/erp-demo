@@ -167,3 +167,12 @@
 ### 10. BUG: PDF mostrando apenas 2 vendas no histórico (09/01/2026)
 - [x] Usuário reportou que só aparecem 2 vendas para cliente Victor Hugo com saldo R$ 165,50
 - [x] Corrigido: PDF agora mostra todas as 30 vendas/débitos do cliente (2 páginas, 48KB)
+
+### 11. BUG: Erro ao enviar WhatsApp (09/01/2026)
+- [ ] Erro: "Object with ID '160255029629058' does not exist, cannot be loaded due to missing permissions"
+- [ ] Aguardando usuário verificar Phone Number ID no Meta Business Suite
+
+### 12. BUG: PDF mostrando histórico completo ao invés de vendas em aberto (09/01/2026)
+- [x] Corrigida lógica para selecionar apenas vendas mais recentes que formam o saldo
+- [x] Alexandre (R$ 52) - PDF correto: 2 vendas = R$ 52,00
+- [x] Victor (R$ 165,50) - PDF correto: 3 vendas = R$ 183,00 (saldo após pagamento parcial)

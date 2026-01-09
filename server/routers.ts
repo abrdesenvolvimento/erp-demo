@@ -1201,9 +1201,9 @@ export const appRouter = router({
           });
         }
         
-        // ===== MOSTRAR HISTÓRICO COMPLETO DE VENDAS/DÉBITOS =====
-        // O PDF mostra todas as vendas e débitos do cliente (sem pagamentos)
-        // O saldo devedor já está calculado corretamente no cabeçalho
+        // ===== MOSTRAR APENAS VENDAS QUE FORMAM O SALDO DEVEDOR ATUAL =====
+        // Lógica: percorrer vendas de trás para frente (mais recentes primeiro)
+        // e incluir até que a soma atinja o saldo devedor atual
         const history = customerDetail.history || [];
         const saldoAtual = parseFloat(customerDetail.currentBalance || '0');
         
@@ -1218,13 +1218,46 @@ export const appRouter = router({
           console.log('[exportPDF] Saldo zerado ou negativo, sem transações em aberto');
           transacoesEmAberto = [];
         } else {
-          // Mostrar todas as vendas e débitos (filtrar pagamentos)
-          // O cliente quer ver o histórico completo de compras
-          transacoesEmAberto = history.filter(item => item.type === 'SALE' || item.type === 'DEBIT');
+          // Filtrar apenas vendas e débitos
+          const vendasDebitos = history.filter(item => item.type === 'SALE' || item.type === 'DEBIT');
           
-          const somaTotal = transacoesEmAberto.reduce((acc, item) => acc + parseFloat(item.amount), 0);
-          console.log(`[exportPDF] Total de vendas/débitos: ${transacoesEmAberto.length}`);
-          console.log(`[exportPDF] Soma total: R$${somaTotal.toFixed(2)}`);
+          // Ordenar por data (mais recente primeiro)
+          const vendasOrdenadas = [...vendasDebitos].sort((a, b) => {
+            const dateA = a.date ? new Date(a.date).getTime() : 0;
+            const dateB = b.date ? new Date(b.date).getTime() : 0;
+            return dateB - dateA; // Mais recente primeiro
+          });
+          
+          // Percorrer de trás para frente até atingir o saldo
+          let somaAcumulada = 0;
+          const vendasEmAberto: typeof history = [];
+          
+          for (const venda of vendasOrdenadas) {
+            const valor = parseFloat(venda.amount);
+            
+            // Incluir esta venda se ainda não atingimos o saldo
+            if (somaAcumulada < saldoAtual) {
+              vendasEmAberto.push(venda);
+              somaAcumulada += valor;
+              console.log(`[exportPDF] Incluindo venda #${venda.id}: R$${valor.toFixed(2)}, soma=${somaAcumulada.toFixed(2)}`);
+              
+              // Se atingimos ou ultrapassamos o saldo, podemos parar
+              if (somaAcumulada >= saldoAtual - 0.01) {
+                console.log(`[exportPDF] Soma atingiu saldo atual, parando`);
+                break;
+              }
+            }
+          }
+          
+          // Ordenar de volta por data (mais antiga primeiro) para exibição
+          transacoesEmAberto = vendasEmAberto.sort((a, b) => {
+            const dateA = a.date ? new Date(a.date).getTime() : 0;
+            const dateB = b.date ? new Date(b.date).getTime() : 0;
+            return dateA - dateB; // Mais antiga primeiro
+          });
+          
+          console.log(`[exportPDF] Total de vendas em aberto: ${transacoesEmAberto.length}`);
+          console.log(`[exportPDF] Soma das vendas em aberto: R$${somaAcumulada.toFixed(2)}`);
         }
         
         // Criar objeto filtrado para o PDF
@@ -1282,7 +1315,7 @@ export const appRouter = router({
           });
         }
         
-        // ===== FILTRAR APENAS TRANSAÇÕES QUE FORMAM O SALDO ATUAL =====
+        // ===== MOSTRAR APENAS VENDAS QUE FORMAM O SALDO DEVEDOR ATUAL =====
         const history = customerDetail.history || [];
         const saldoAtual = parseFloat(customerDetail.currentBalance || '0');
         
@@ -1291,33 +1324,35 @@ export const appRouter = router({
         if (saldoAtual <= 0) {
           transacoesEmAberto = [];
         } else {
-          let ultimoPagamentoIndex = -1;
-          for (let i = history.length - 1; i >= 0; i--) {
-            if (history[i].type === 'PAYMENT') {
-              ultimoPagamentoIndex = i;
-              break;
+          // Filtrar apenas vendas e débitos
+          const vendasDebitos = history.filter(item => item.type === 'SALE' || item.type === 'DEBIT');
+          
+          // Ordenar por data (mais recente primeiro)
+          const vendasOrdenadas = [...vendasDebitos].sort((a, b) => {
+            const dateA = a.date ? new Date(a.date).getTime() : 0;
+            const dateB = b.date ? new Date(b.date).getTime() : 0;
+            return dateB - dateA;
+          });
+          
+          // Percorrer até atingir o saldo
+          let somaAcumulada = 0;
+          const vendasEmAberto: typeof history = [];
+          
+          for (const venda of vendasOrdenadas) {
+            const valor = parseFloat(venda.amount);
+            if (somaAcumulada < saldoAtual) {
+              vendasEmAberto.push(venda);
+              somaAcumulada += valor;
+              if (somaAcumulada >= saldoAtual - 0.01) break;
             }
           }
           
-          if (ultimoPagamentoIndex === -1) {
-            transacoesEmAberto = history;
-          } else {
-            const transacoesAposPagamento = history.slice(ultimoPagamentoIndex + 1);
-            let totalAposPagamento = 0;
-            for (const t of transacoesAposPagamento) {
-              if (t.type === 'SALE' || t.type === 'DEBIT') {
-                totalAposPagamento += parseFloat(t.amount);
-              } else if (t.type === 'PAYMENT') {
-                totalAposPagamento -= parseFloat(t.amount);
-              }
-            }
-            
-            if (Math.abs(totalAposPagamento - saldoAtual) < 0.01) {
-              transacoesEmAberto = transacoesAposPagamento.filter(t => t.type === 'SALE' || t.type === 'DEBIT');
-            } else {
-              transacoesEmAberto = history.filter(t => t.type === 'SALE' || t.type === 'DEBIT');
-            }
-          }
+          // Ordenar de volta por data (mais antiga primeiro)
+          transacoesEmAberto = vendasEmAberto.sort((a, b) => {
+            const dateA = a.date ? new Date(a.date).getTime() : 0;
+            const dateB = b.date ? new Date(b.date).getTime() : 0;
+            return dateA - dateB;
+          });
         }
         
         // Criar objeto filtrado para o PDF

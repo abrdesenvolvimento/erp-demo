@@ -1,0 +1,21 @@
+ANÁLISE DO PROBLEMA - PDF Victor Hugo:
+
+Logs do servidor:
+- [exportPDF] Soma atingiu saldo atual, parando
+- [exportPDF] Total de vendas em aberto: 3
+- [exportPDF] Soma das vendas em aberto: R$183.00
+
+Problema:
+- Saldo devedor: R$ 165,50
+- Vendas selecionadas: 3 vendas = R$ 183,00
+- Diferença: R$ 17,50 (provavelmente um pagamento parcial)
+
+A lógica atual está selecionando vendas até que a soma ULTRAPASSE o saldo.
+Mas o saldo de R$ 165,50 indica que houve pagamentos parciais.
+
+O PDF está vazio porque o frontend não conseguiu baixar corretamente.
+Preciso verificar se o problema é no download ou na geração.
+
+SOLUÇÃO:
+A lógica está correta - selecionar as vendas mais recentes até atingir o saldo.
+O problema é que o PDF está sendo gerado mas o download está falhando.

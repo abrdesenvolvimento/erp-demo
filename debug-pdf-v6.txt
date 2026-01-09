@@ -1,0 +1,23 @@
+ANÁLISE DO PROBLEMA - PDF Victor Hugo:
+
+O PDF de teste foi gerado corretamente:
+- 45KB, 1 página
+- Mostra 3 vendas totalizando R$ 183,00
+- Saldo devedor: R$ 165,50
+
+O problema é que a soma das vendas (R$ 183) é maior que o saldo (R$ 165,50).
+Isso indica que houve um pagamento parcial de R$ 17,50.
+
+A lógica atual está correta para selecionar as vendas mais recentes.
+Porém, o saldo de R$ 165,50 não bate com a soma das vendas.
+
+PROBLEMA IDENTIFICADO:
+O PDF está sendo gerado no servidor mas o download está falhando.
+O arquivo baixado tem 0 bytes.
+
+POSSÍVEL CAUSA:
+- O stream do PDF não está sendo convertido corretamente para base64
+- Ou o frontend não está decodificando corretamente
+
+PRÓXIMO PASSO:
+Verificar a lógica de conversão do stream para base64 no routers.ts

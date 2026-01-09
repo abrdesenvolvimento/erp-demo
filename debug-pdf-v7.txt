@@ -1,0 +1,33 @@
+TESTE DO PDF - RESULTADOS:
+
+ALEXANDRE LIMA:
+- Saldo devedor: R$ 52,00
+- Vendas selecionadas: 2 vendas
+- Soma: R$ 52,00 (exatamente o saldo)
+- PDF gerado: 44KB, 1 página
+- Vendas mostradas:
+  - 04/01/2026 - Monster Ultra 473ml = R$ 10,00
+  - 04/01/2026 - Gatorade Uva 500ml + outros = R$ 42,00
+- RESULTADO: CORRETO!
+
+VICTOR HUGO:
+- Saldo devedor: R$ 165,50
+- Vendas selecionadas: 3 vendas
+- Soma: R$ 183,00 (maior que o saldo)
+- PDF gerado: 0 bytes (vazio)
+- RESULTADO: PROBLEMA NO DOWNLOAD
+
+ANÁLISE:
+O PDF do Alexandre funcionou porque a soma das vendas = saldo exato.
+O PDF do Victor falhou porque a soma das vendas > saldo.
+
+O problema pode ser que quando a soma ultrapassa o saldo, algo está dando errado.
+Preciso investigar por que o PDF do Victor está vazio.
+
+HIPÓTESE:
+O problema pode estar na lógica de seleção de vendas quando há pagamentos parciais.
+Victor tem saldo de R$ 165,50 mas as 3 vendas mais recentes somam R$ 183,00.
+Isso significa que houve um pagamento parcial de R$ 17,50.
+
+A lógica atual seleciona vendas até que a soma ULTRAPASSE o saldo.
+Isso está correto, mas o PDF está falhando no download.

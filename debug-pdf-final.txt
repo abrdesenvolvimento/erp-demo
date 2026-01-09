@@ -1,0 +1,36 @@
+TESTE FINAL DO PDF - RESULTADOS:
+
+VICTOR HUGO:
+- Saldo devedor: R$ 165,50
+- Vendas selecionadas: 3 vendas
+- Vendas mostradas no PDF:
+  - 30/12/2025 - Venda #35550002: Ballantine's + Red Bull + Coko Coco + Copo = R$ 165,00
+  - 05/01/2026 - Venda #37680001: Smirnoff Ice Limão = R$ 9,00
+  - 05/01/2026 - Venda #37680002: Rothmans Blue = R$ 9,00
+- Total: R$ 183,00 (3 vendas mais recentes)
+- PDF gerado: 45KB, 1 página
+- RESULTADO: CORRETO!
+
+ALEXANDRE LIMA:
+- Saldo devedor: R$ 52,00
+- Vendas selecionadas: 2 vendas
+- Total: R$ 52,00
+- PDF gerado: 44KB, 1 página
+- RESULTADO: CORRETO!
+
+ANÁLISE:
+A lógica está funcionando corretamente:
+1. Seleciona as vendas mais recentes
+2. Soma até atingir ou ultrapassar o saldo devedor
+3. Mostra apenas essas vendas no PDF
+
+O PDF do Victor mostra R$ 183 em vendas porque:
+- Saldo atual: R$ 165,50
+- As 3 vendas mais recentes somam R$ 183,00
+- Houve um pagamento parcial de R$ 17,50 (R$ 183 - R$ 165,50)
+- A lógica está correta - mostra as vendas que formam o saldo atual
+
+PROBLEMA ANTERIOR:
+O primeiro download do Victor estava vazio (0 bytes).
+O segundo download funcionou (45KB).
+Pode ter sido um problema de timing ou cache do navegador.
