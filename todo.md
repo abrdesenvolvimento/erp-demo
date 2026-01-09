@@ -122,6 +122,10 @@
 
 ## ✅ CONCLUÍDO RECENTEMENTE
 
+- [x] **INTEGRAÇÃO WHATSAPP:** Envio de extrato de Contas a Receber via WhatsApp (09/01/2026)
+  - Botão "WhatsApp" na tela de detalhes do cliente
+  - Gera PDF, faz upload para S3 e envia via WhatsApp API
+  - Mensagem personalizada com saldo, limite e crédito disponível
 - [x] **BUG CORRIGIDO:** Vendas canceladas ainda geravam saldo a receber (09/01/2026)
   - Corrigidas 3 funções para excluir vendas CANCELADA do cálculo de saldo
   - getCustomerBalance(), getCustomerReceivableDetail(), getCustomersWithBalance()
@@ -147,3 +151,11 @@
 - **Backup:** Diário às 3h (GMT-3)
 - **Uptime:** 99.9%
 
+
+
+### 8. Integração WhatsApp - Envio de Extrato (09/01/2026)
+- [x] Configurar credenciais WhatsApp no ERP
+- [x] Implementar endpoint tRPC para envio via WhatsApp
+- [x] Adicionar botão de envio no frontend (Contas a Receber)
+- [x] Testar integração com envio real
+- [ ] Validar recebimento no celular do cliente (aguardando teste do usuário)

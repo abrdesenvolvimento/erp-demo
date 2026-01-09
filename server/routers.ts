@@ -1318,6 +1318,131 @@ export const appRouter = router({
         });
       }),
     
+    // Enviar extrato via WhatsApp
+    sendViaWhatsApp: protectedProcedure
+      .input(z.object({
+        customerId: z.number(),
+        phoneNumber: z.string(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const { sendWhatsAppDocument, isWhatsAppConfigured } = await import('./_core/whatsapp');
+        const { storagePut } = await import('./storage');
+        const { generateReceivablesPDF } = await import('./receivablesPdf');
+        
+        // Verificar se WhatsApp está configurado
+        if (!isWhatsAppConfigured()) {
+          throw new TRPCError({
+            code: 'PRECONDITION_FAILED',
+            message: 'WhatsApp não está configurado. Configure as credenciais no painel de administração.',
+          });
+        }
+        
+        // Buscar dados do cliente
+        const customerDetail = await db.getCustomerAccountHistory(input.customerId);
+        
+        if (!customerDetail) {
+          throw new TRPCError({
+            code: 'NOT_FOUND',
+            message: 'Cliente não encontrado',
+          });
+        }
+        
+        // ===== FILTRAR APENAS TRANSAÇÕES QUE FORMAM O SALDO ATUAL =====
+        const history = customerDetail.history || [];
+        const saldoAtual = parseFloat(customerDetail.currentBalance || '0');
+        
+        let transacoesEmAberto: typeof history = [];
+        
+        if (saldoAtual <= 0) {
+          transacoesEmAberto = [];
+        } else {
+          let ultimoPagamentoIndex = -1;
+          for (let i = history.length - 1; i >= 0; i--) {
+            if (history[i].type === 'PAYMENT') {
+              ultimoPagamentoIndex = i;
+              break;
+            }
+          }
+          
+          if (ultimoPagamentoIndex === -1) {
+            transacoesEmAberto = history;
+          } else {
+            const transacoesAposPagamento = history.slice(ultimoPagamentoIndex + 1);
+            let totalAposPagamento = 0;
+            for (const t of transacoesAposPagamento) {
+              if (t.type === 'SALE' || t.type === 'DEBIT') {
+                totalAposPagamento += parseFloat(t.amount);
+              } else if (t.type === 'PAYMENT') {
+                totalAposPagamento -= parseFloat(t.amount);
+              }
+            }
+            
+            if (Math.abs(totalAposPagamento - saldoAtual) < 0.01) {
+              transacoesEmAberto = transacoesAposPagamento.filter(t => t.type === 'SALE' || t.type === 'DEBIT');
+            } else {
+              transacoesEmAberto = history.filter(t => t.type === 'SALE' || t.type === 'DEBIT');
+            }
+          }
+        }
+        
+        // Criar objeto filtrado para o PDF
+        const filteredData = {
+          ...customerDetail,
+          history: transacoesEmAberto
+        };
+        
+        // Gerar PDF
+        const pdfStream = await generateReceivablesPDF(filteredData as any);
+        
+        // Converter stream para buffer
+        const chunks: Buffer[] = [];
+        const buffer = await new Promise<Buffer>((resolve, reject) => {
+          pdfStream.on('data', (chunk: Buffer) => chunks.push(chunk));
+          pdfStream.on('end', () => resolve(Buffer.concat(chunks)));
+          pdfStream.on('error', reject);
+        });
+        
+        // Upload para S3
+        const filename = `extrato-${customerDetail.customer.name.replace(/\s+/g, '-')}-${Date.now()}.pdf`;
+        const { url: pdfUrl } = await storagePut(
+          `whatsapp-extratos/${filename}`,
+          buffer,
+          'application/pdf'
+        );
+        
+        // Formatar mensagem
+        const saldoFormatado = saldoAtual.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        const limiteCredito = parseFloat(customerDetail.customer.creditLimit || '0');
+        const limiteFormatado = limiteCredito.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        const creditoDisponivel = Math.max(0, limiteCredito - saldoAtual);
+        const disponivelFormatado = creditoDisponivel.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        
+        const caption = `Olá ${customerDetail.customer.name.split(' ')[0]}! \n\nSegue seu extrato de Contas a Receber atualizado.\n\nSaldo Devedor: ${saldoFormatado}\nLimite de Crédito: ${limiteFormatado}\nCrédito Disponível: ${disponivelFormatado}\n\nQualquer dúvida, entre em contato!\n\nAdega Beira Rio`;
+        
+        // Enviar documento via WhatsApp
+        const result = await sendWhatsAppDocument(
+          input.phoneNumber,
+          pdfUrl,
+          filename,
+          caption
+        );
+        
+        if (!result.success) {
+          throw new TRPCError({
+            code: 'INTERNAL_SERVER_ERROR',
+            message: `Erro ao enviar WhatsApp: ${result.error}`,
+          });
+        }
+        
+        console.log(`[WhatsApp] Extrato enviado para ${customerDetail.customer.name} (${input.phoneNumber})`);
+        
+        return {
+          success: true,
+          messageId: result.messageId,
+          customerName: customerDetail.customer.name,
+        };
+      }),
+    
     // Parcelas
     installments: router({
       pending: protectedProcedure

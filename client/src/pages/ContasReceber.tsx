@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Textarea } from "../components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table";
 import { toast } from "sonner";
-import { DollarSign, User, ChevronRight, ArrowLeft, FileDown, Loader2 } from "lucide-react";
+import { DollarSign, User, ChevronRight, ArrowLeft, FileDown, Loader2, MessageCircle } from "lucide-react";
 import { useState, useEffect } from "react";
 import DashboardLayout from "../components/DashboardLayout";
 import { trpc } from "../lib/trpc";
@@ -30,6 +30,8 @@ export default function ContasReceber() {
   
   const [selectedCustomerId, setSelectedCustomerId] = useState<number | null>(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [showWhatsAppModal, setShowWhatsAppModal] = useState(false);
+  const [whatsAppPhone, setWhatsAppPhone] = useState("");
   const [searchCustomer, setSearchCustomer] = useState("");
   const [sortBy, setSortBy] = useState<"name" | "amount">("amount");
   const [paymentForm, setPaymentForm] = useState({
@@ -88,6 +90,32 @@ export default function ContasReceber() {
       toast.error(`Erro ao gerar PDF: ${error.message}`);
     }
   });
+
+  const sendViaWhatsApp = trpc.receivables.sendViaWhatsApp.useMutation({
+    onSuccess: (data) => {
+      toast.success(`Extrato enviado para ${data.customerName} via WhatsApp!`);
+      setShowWhatsAppModal(false);
+      setWhatsAppPhone("");
+    },
+    onError: (error) => {
+      toast.error(`Erro ao enviar WhatsApp: ${error.message}`);
+    }
+  });
+
+  const handleSendWhatsApp = () => {
+    if (!whatsAppPhone.trim()) {
+      toast.error("Digite o número de telefone");
+      return;
+    }
+    if (!selectedCustomerId) {
+      toast.error("Selecione um cliente");
+      return;
+    }
+    sendViaWhatsApp.mutate({
+      customerId: selectedCustomerId,
+      phoneNumber: whatsAppPhone
+    });
+  };
 
   const resetPaymentForm = () => {
     setPaymentForm({
@@ -229,6 +257,14 @@ export default function ContasReceber() {
                     <FileDown className="h-4 w-4 mr-2" />
                   )}
                   {exportPDF.isPending ? 'Gerando...' : 'Exportar PDF'}
+                </Button>
+                <Button 
+                  onClick={() => setShowWhatsAppModal(true)}
+                  variant="outline"
+                  className="bg-green-600 hover:bg-green-700 text-white border-green-600"
+                >
+                  <MessageCircle className="h-4 w-4 mr-2" />
+                  WhatsApp
                 </Button>
                 <Button onClick={handleOpenPaymentModal}>
                   Registrar Recebimento
@@ -389,6 +425,59 @@ export default function ContasReceber() {
                 </Button>
               </div>
             </form>
+          </DialogContent>
+        </Dialog>
+
+        {/* Modal de Envio via WhatsApp */}
+        <Dialog open={showWhatsAppModal} onOpenChange={setShowWhatsAppModal}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <MessageCircle className="h-5 w-5 text-green-600" />
+                Enviar Extrato via WhatsApp
+              </DialogTitle>
+              <DialogDescription>
+                O extrato será enviado diretamente para o WhatsApp do cliente
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="whatsapp-phone">Número de Telefone</Label>
+                <Input
+                  id="whatsapp-phone"
+                  type="tel"
+                  placeholder="(11) 98765-4321"
+                  value={whatsAppPhone}
+                  onChange={(e) => setWhatsAppPhone(e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Digite o número com DDD. Ex: 11987654321
+                </p>
+              </div>
+
+              <div className="flex justify-end gap-2">
+                <Button type="button" variant="outline" onClick={() => setShowWhatsAppModal(false)}>
+                  Cancelar
+                </Button>
+                <Button 
+                  onClick={handleSendWhatsApp}
+                  disabled={sendViaWhatsApp.isPending}
+                  className="bg-green-600 hover:bg-green-700"
+                >
+                  {sendViaWhatsApp.isPending ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Enviando...
+                    </>
+                  ) : (
+                    <>
+                      <MessageCircle className="h-4 w-4 mr-2" />
+                      Enviar WhatsApp
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
           </DialogContent>
         </Dialog>
         </div>
