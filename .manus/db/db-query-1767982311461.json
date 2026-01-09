@@ -1,0 +1,256 @@
+{
+  "query": "SELECT \n  'VENDA' as tipo,\n  s.id as id,\n  DATE_FORMAT(s.saleDate, '%d/%m/%Y %H:%i') as data,\n  CAST(s.finalAmount AS DECIMAL(10,2)) as valor\nFROM sales s\nJOIN partners p ON s.customerId = p.id\nWHERE p.name LIKE '%Victor Hugo%'\nAND s.saleType = 'A_PRAZO'\nAND s.status = 'ACTIVE'\nUNION ALL\nSELECT \n  'PAGAMENTO' as tipo,\n  cp.id as id,\n  DATE_FORMAT(cp.paidDate, '%d/%m/%Y %H:%i') as data,\n  CAST(cp.paidAmount AS DECIMAL(10,2)) as valor\nFROM customerPayments cp\nJOIN partners p ON cp.customerId = p.id\nWHERE p.name LIKE '%Victor Hugo%'\nORDER BY data;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  'VENDA' as tipo,\n  s.id as id,\n  DATE_FORMAT(s.saleDate, '%d/%m/%Y %H:%i') as data,\n  CAST(s.finalAmount AS DECIMAL(10,2)) as valor\nFROM sales s\nJOIN partners p ON s.customerId = p.id\nWHERE p.name LIKE '%Victor Hugo%'\nAND s.saleType = 'A_PRAZO'\nAND s.status = 'ACTIVE'\nUNION ALL\nSELECT \n  'PAGAMENTO' as tipo,\n  cp.id as id,\n  DATE_FORMAT(cp.paidDate, '%d/%m/%Y %H:%i') as data,\n  CAST(cp.paidAmount AS DECIMAL(10,2)) as valor\nFROM customerPayments cp\nJOIN partners p ON cp.customerId = p.id\nWHERE p.name LIKE '%Victor Hugo%'\nORDER BY data;",
+  "rows": [
+    {
+      "tipo": "PAGAMENTO",
+      "id": "1590001",
+      "data": "04/01/2026 14:38",
+      "valor": "200.00"
+    },
+    {
+      "tipo": "VENDA",
+      "id": "37680001",
+      "data": "05/01/2026 22:56",
+      "valor": "9.00"
+    },
+    {
+      "tipo": "PAGAMENTO",
+      "id": "1740001",
+      "data": "05/01/2026 22:56",
+      "valor": "30.00"
+    },
+    {
+      "tipo": "VENDA",
+      "id": "37680002",
+      "data": "05/01/2026 23:12",
+      "valor": "9.00"
+    },
+    {
+      "tipo": "VENDA",
+      "id": "13770001",
+      "data": "06/12/2025 13:04",
+      "valor": "176.00"
+    },
+    {
+      "tipo": "VENDA",
+      "id": "16410001",
+      "data": "09/12/2025 02:11",
+      "valor": "13.00"
+    },
+    {
+      "tipo": "PAGAMENTO",
+      "id": "360001",
+      "data": "10/12/2025 21:56",
+      "valor": "10.00"
+    },
+    {
+      "tipo": "PAGAMENTO",
+      "id": "510001",
+      "data": "13/12/2025 16:13",
+      "valor": "200.00"
+    },
+    {
+      "tipo": "VENDA",
+      "id": "20370001",
+      "data": "13/12/2025 16:13",
+      "valor": "24.50"
+    },
+    {
+      "tipo": "VENDA",
+      "id": "23070006",
+      "data": "14/12/2025 23:07",
+      "valor": "54.00"
+    },
+    {
+      "tipo": "PAGAMENTO",
+      "id": "930001",
+      "data": "16/12/2025 22:41",
+      "valor": "88.75"
+    },
+    {
+      "tipo": "VENDA",
+      "id": "24780009",
+      "data": "16/12/2025 22:42",
+      "valor": "9.00"
+    },
+    {
+      "tipo": "VENDA",
+      "id": "25080001",
+      "data": "17/12/2025 00:54",
+      "valor": "32.00"
+    },
+    {
+      "tipo": "VENDA",
+      "id": "25080018",
+      "data": "17/12/2025 01:38",
+      "valor": "25.00"
+    },
+    {
+      "tipo": "VENDA",
+      "id": "25920002",
+      "data": "18/12/2025 01:01",
+      "valor": "10.00"
+    },
+    {
+      "tipo": "VENDA",
+      "id": "26040003",
+      "data": "18/12/2025 02:12",
+      "valor": "7.00"
+    },
+    {
+      "tipo": "PAGAMENTO",
+      "id": "1110001",
+      "data": "19/12/2025 18:19",
+      "valor": "50.00"
+    },
+    {
+      "tipo": "PAGAMENTO",
+      "id": "1140001",
+      "data": "19/12/2025 19:04",
+      "valor": "87.00"
+    },
+    {
+      "tipo": "VENDA",
+      "id": "27720002",
+      "data": "20/12/2025 13:52",
+      "valor": "122.00"
+    },
+    {
+      "tipo": "VENDA",
+      "id": "27990003",
+      "data": "20/12/2025 17:10",
+      "valor": "17.50"
+    },
+    {
+      "tipo": "VENDA",
+      "id": "2310001",
+      "data": "21/11/2025 01:19",
+      "valor": "12.00"
+    },
+    {
+      "tipo": "VENDA",
+      "id": "3180002",
+      "data": "21/11/2025 23:51",
+      "valor": "67.00"
+    },
+    {
+      "tipo": "VENDA",
+      "id": "30270004",
+      "data": "21/12/2025 21:40",
+      "valor": "25.00"
+    },
+    {
+      "tipo": "VENDA",
+      "id": "3270005",
+      "data": "22/11/2025 01:03",
+      "valor": "4.50"
+    },
+    {
+      "tipo": "VENDA",
+      "id": "3330012",
+      "data": "22/11/2025 02:14",
+      "valor": "10.00"
+    },
+    {
+      "tipo": "VENDA",
+      "id": "3330013",
+      "data": "22/11/2025 02:26",
+      "valor": "6.00"
+    },
+    {
+      "tipo": "VENDA",
+      "id": "33660001",
+      "data": "24/12/2025 12:00",
+      "valor": "48.00"
+    },
+    {
+      "tipo": "VENDA",
+      "id": "6090006",
+      "data": "25/11/2025 00:13",
+      "valor": "2.00"
+    },
+    {
+      "tipo": "PAGAMENTO",
+      "id": "60005",
+      "data": "25/11/2025 05:00",
+      "valor": "10.00"
+    },
+    {
+      "tipo": "PAGAMENTO",
+      "id": "60002",
+      "data": "25/11/2025 05:00",
+      "valor": "12.00"
+    },
+    {
+      "tipo": "PAGAMENTO",
+      "id": "60004",
+      "data": "25/11/2025 05:00",
+      "valor": "11.00"
+    },
+    {
+      "tipo": "PAGAMENTO",
+      "id": "60003",
+      "data": "25/11/2025 05:00",
+      "valor": "67.00"
+    },
+    {
+      "tipo": "VENDA",
+      "id": "6810002",
+      "data": "26/11/2025 01:13",
+      "valor": "22.00"
+    },
+    {
+      "tipo": "VENDA",
+      "id": "7440001",
+      "data": "26/11/2025 23:06",
+      "valor": "21.50"
+    },
+    {
+      "tipo": "VENDA",
+      "id": "7740016",
+      "data": "27/11/2025 02:22",
+      "valor": "2.00"
+    },
+    {
+      "tipo": "VENDA",
+      "id": "8010002",
+      "data": "27/11/2025 23:09",
+      "valor": "7.00"
+    },
+    {
+      "tipo": "VENDA",
+      "id": "8010003",
+      "data": "27/11/2025 23:10",
+      "valor": "4.00"
+    },
+    {
+      "tipo": "VENDA",
+      "id": "8040001",
+      "data": "27/11/2025 23:21",
+      "valor": "10.00"
+    },
+    {
+      "tipo": "VENDA",
+      "id": "8190001",
+      "data": "28/11/2025 00:53",
+      "valor": "15.25"
+    },
+    {
+      "tipo": "VENDA",
+      "id": "10980022",
+      "data": "30/11/2025 23:38",
+      "valor": "2.00"
+    },
+    {
+      "tipo": "VENDA",
+      "id": "35550002",
+      "data": "30/12/2025 18:46",
+      "valor": "165.00"
+    }
+  ],
+  "messages": [],
+  "stdout": "tipo\tid\tdata\tvalor\nPAGAMENTO\t1590001\t04/01/2026 14:38\t200.00\nVENDA\t37680001\t05/01/2026 22:56\t9.00\nPAGAMENTO\t1740001\t05/01/2026 22:56\t30.00\nVENDA\t37680002\t05/01/2026 23:12\t9.00\nVENDA\t13770001\t06/12/2025 13:04\t176.00\nVENDA\t16410001\t09/12/2025 02:11\t13.00\nPAGAMENTO\t360001\t10/12/2025 21:56\t10.00\nPAGAMENTO\t510001\t13/12/2025 16:13\t200.00\nVENDA\t20370001\t13/12/2025 16:13\t24.50\nVENDA\t23070006\t14/12/2025 23:07\t54.00\nPAGAMENTO\t930001\t16/12/2025 22:41\t88.75\nVENDA\t24780009\t16/12/2025 22:42\t9.00\nVENDA\t25080001\t17/12/2025 00:54\t32.00\nVENDA\t25080018\t17/12/2025 01:38\t25.00\nVENDA\t25920002\t18/12/2025 01:01\t10.00\nVENDA\t26040003\t18/12/2025 02:12\t7.00\nPAGAMENTO\t1110001\t19/12/2025 18:19\t50.00\nPAGAMENTO\t1140001\t19/12/2025 19:04\t87.00\nVENDA\t27720002\t20/12/2025 13:52\t122.00\nVENDA\t27990003\t20/12/2025 17:10\t17.50\nVENDA\t2310001\t21/11/2025 01:19\t12.00\nVENDA\t3180002\t21/11/2025 23:51\t67.00\nVENDA\t30270004\t21/12/2025 21:40\t25.00\nVENDA\t3270005\t22/11/2025 01:03\t4.50\nVENDA\t3330012\t22/11/2025 02:14\t10.00\nVENDA\t3330013\t22/11/2025 02:26\t6.00\nVENDA\t33660001\t24/12/2025 12:00\t48.00\nVENDA\t6090006\t25/11/2025 00:13\t2.00\nPAGAMENTO\t60005\t25/11/2025 05:00\t10.00\nPAGAMENTO\t60002\t25/11/2025 05:00\t12.00\nPAGAMENTO\t60004\t25/11/2025 05:00\t11.00\nPAGAMENTO\t60003\t25/11/2025 05:00\t67.00\nVENDA\t6810002\t26/11/2025 01:13\t22.00\nVENDA\t7440001\t26/11/2025 23:06\t21.50\nVENDA\t7740016\t27/11/2025 02:22\t2.00\nVENDA\t8010002\t27/11/2025 23:09\t7.00\nVENDA\t8010003\t27/11/2025 23:10\t4.00\nVENDA\t8040001\t27/11/2025 23:21\t10.00\nVENDA\t8190001\t28/11/2025 00:53\t15.25\nVENDA\t10980022\t30/11/2025 23:38\t2.00\nVENDA\t35550002\t30/12/2025 18:46\t165.00\n",
+  "stderr": "",
+  "execution_time_ms": 64
+}

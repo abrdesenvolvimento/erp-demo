@@ -1,0 +1,12 @@
+ANÁLISE DO PROBLEMA DO PDF:
+
+O script de teste gerou o PDF corretamente:
+- 2 páginas
+- 48741 bytes
+- Mostra todas as 30 vendas do cliente Victor Hugo
+
+O problema está no download pelo navegador - o arquivo está vazio (0 bytes).
+
+Isso indica que o problema está na conversão do stream para base64 ou no download no frontend.
+
+Vou verificar o código do frontend que faz o download do PDF.

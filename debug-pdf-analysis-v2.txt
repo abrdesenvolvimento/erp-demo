@@ -1,0 +1,37 @@
+ANÁLISE COMPLETA DO PROBLEMA DO PDF - Victor Hugo Fernandes da Silva
+
+DADOS DO BANCO:
+- Total de 30 vendas ATIVAS A_PRAZO = R$ 931,25
+- Total de 11 pagamentos = R$ 765,75
+- Saldo devedor correto = R$ 165,50
+
+PROBLEMA IDENTIFICADO:
+O PDF mostra apenas 2 vendas (05/01/2026):
+- Venda #37680001 - R$ 9,00
+- Venda #37680002 - R$ 9,00
+Total no PDF: R$ 18,00
+
+MAS o saldo é R$ 165,50, então faltam R$ 147,50 em vendas.
+
+ANÁLISE DA LÓGICA DO exportPDF:
+A lógica atual busca o "último pagamento" e mostra apenas as vendas após ele.
+O último pagamento foi em 05/01/2026 às 17:56:33 (R$ 30,00).
+Após esse pagamento, só há 2 vendas (as de 05/01/2026).
+
+PROBLEMA NA LÓGICA:
+O pagamento de R$ 30,00 não zerou o saldo. Antes do pagamento, o saldo era R$ 195,50.
+Após o pagamento de R$ 30,00, o saldo ficou R$ 165,50.
+
+A lógica tenta encontrar vendas anteriores para completar o saldo, mas está falhando.
+
+SOLUÇÃO:
+Simplificar a lógica: em vez de tentar encontrar quais vendas específicas formam o saldo,
+mostrar TODAS as vendas e pagamentos que formam o histórico da conta corrente.
+
+O PDF deve mostrar o extrato completo com:
+- Todas as vendas
+- Todos os pagamentos
+- Saldo acumulado
+
+Ou, se quiser mostrar apenas o que está "em aberto", usar uma abordagem diferente:
+calcular de trás para frente quais vendas somam o saldo atual.

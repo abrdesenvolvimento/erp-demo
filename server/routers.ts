@@ -1201,11 +1201,9 @@ export const appRouter = router({
           });
         }
         
-        // ===== FILTRAR APENAS TRANSAÇÕES QUE FORMAM O SALDO ATUAL =====
-        // Lógica:
-        // 1. Encontrar o último pagamento no histórico
-        // 2. Mostrar apenas as vendas/débitos que não foram cobertos por esse pagamento
-        // 3. Ou seja, as vendas cujo valor total = saldo atual
+        // ===== MOSTRAR HISTÓRICO COMPLETO DE VENDAS/DÉBITOS =====
+        // O PDF mostra todas as vendas e débitos do cliente (sem pagamentos)
+        // O saldo devedor já está calculado corretamente no cabeçalho
         const history = customerDetail.history || [];
         const saldoAtual = parseFloat(customerDetail.currentBalance || '0');
         
@@ -1220,76 +1218,13 @@ export const appRouter = router({
           console.log('[exportPDF] Saldo zerado ou negativo, sem transações em aberto');
           transacoesEmAberto = [];
         } else {
-          // Encontrar o índice do último pagamento
-          let ultimoPagamentoIndex = -1;
-          for (let i = history.length - 1; i >= 0; i--) {
-            if (history[i].type === 'PAYMENT') {
-              ultimoPagamentoIndex = i;
-              console.log(`[exportPDF] Último pagamento encontrado no índice ${i}: R$${history[i].amount}`);
-              break;
-            }
-          }
+          // Mostrar todas as vendas e débitos (filtrar pagamentos)
+          // O cliente quer ver o histórico completo de compras
+          transacoesEmAberto = history.filter(item => item.type === 'SALE' || item.type === 'DEBIT');
           
-          if (ultimoPagamentoIndex === -1) {
-            // Sem pagamentos, mostrar todo o histórico
-            console.log('[exportPDF] Nenhum pagamento encontrado, mostrando todo histórico');
-            transacoesEmAberto = history;
-          } else {
-            // Pegar apenas as vendas/débitos APÓS o último pagamento
-            const transacoesAposPagamento = history.slice(ultimoPagamentoIndex + 1);
-            console.log(`[exportPDF] Transações após último pagamento: ${transacoesAposPagamento.length}`);
-            
-            // Calcular o valor total das transações após o pagamento
-            let totalAposPagamento = 0;
-            for (const t of transacoesAposPagamento) {
-              if (t.type === 'SALE' || t.type === 'DEBIT') {
-                totalAposPagamento += parseFloat(t.amount);
-              } else if (t.type === 'PAYMENT') {
-                totalAposPagamento -= parseFloat(t.amount);
-              }
-            }
-            console.log(`[exportPDF] Total após pagamento: R$${totalAposPagamento.toFixed(2)}`);
-            
-            // Se o total após pagamento = saldo atual, mostrar apenas essas
-            if (Math.abs(totalAposPagamento - saldoAtual) < 0.01) {
-              console.log('[exportPDF] Total após pagamento = saldo atual, mostrando apenas essas');
-              transacoesEmAberto = transacoesAposPagamento;
-            } else {
-              // O pagamento não zerou o saldo, precisamos incluir vendas anteriores
-              // Calcular quanto falta para completar o saldo atual
-              const faltante = saldoAtual - totalAposPagamento;
-              console.log(`[exportPDF] Faltante: R$${faltante.toFixed(2)}`);
-              
-              // Buscar vendas ANTES do pagamento que somam o valor faltante
-              // Começar do pagamento e ir para trás
-              let somaVendasAnteriores = 0;
-              let startIndex = ultimoPagamentoIndex;
-              
-              for (let i = ultimoPagamentoIndex - 1; i >= 0; i--) {
-                const item = history[i];
-                if (item.type === 'SALE' || item.type === 'DEBIT') {
-                  somaVendasAnteriores += parseFloat(item.amount);
-                  startIndex = i;
-                  console.log(`[exportPDF] Incluindo venda anterior ${i}: R$${item.amount}, soma=${somaVendasAnteriores.toFixed(2)}`);
-                  
-                  // Se a soma das vendas anteriores + total após pagamento >= saldo atual, paramos
-                  if (somaVendasAnteriores + totalAposPagamento >= saldoAtual - 0.01) {
-                    console.log(`[exportPDF] Soma suficiente, parando no índice ${i}`);
-                    break;
-                  }
-                } else if (item.type === 'PAYMENT') {
-                  // Se encontramos outro pagamento, paramos
-                  console.log(`[exportPDF] Encontrado outro pagamento no índice ${i}, parando`);
-                  break;
-                }
-              }
-              
-              // Incluir as vendas anteriores + pagamento + vendas posteriores
-              // Mas para o PDF, queremos mostrar apenas as vendas em aberto (sem o pagamento)
-              transacoesEmAberto = history.slice(startIndex).filter(t => t.type !== 'PAYMENT');
-              console.log(`[exportPDF] Transações em aberto (sem pagamentos): ${transacoesEmAberto.length}`);
-            }
-          }
+          const somaTotal = transacoesEmAberto.reduce((acc, item) => acc + parseFloat(item.amount), 0);
+          console.log(`[exportPDF] Total de vendas/débitos: ${transacoesEmAberto.length}`);
+          console.log(`[exportPDF] Soma total: R$${somaTotal.toFixed(2)}`);
         }
         
         // Criar objeto filtrado para o PDF

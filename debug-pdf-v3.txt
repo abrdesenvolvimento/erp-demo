@@ -1,0 +1,25 @@
+ANÁLISE DO LOG DO SERVIDOR:
+
+[exportPDF] Total de transações em aberto: 3
+[exportPDF] Soma das transações: R$183.00
+
+PROBLEMA: A soma é R$ 183,00 mas o saldo é R$ 165,50
+
+Isso significa que a lógica está incluindo vendas demais.
+O problema é que estamos somando vendas de trás para frente até atingir o saldo,
+mas quando uma venda ultrapassa o saldo, ela ainda é incluída inteira.
+
+Exemplo:
+- Saldo: R$ 165,50
+- Venda mais recente: R$ 9,00 (soma = 9)
+- Segunda mais recente: R$ 9,00 (soma = 18)
+- Terceira mais recente: R$ 165,00 (soma = 183) <- ultrapassa!
+
+A lógica para quando a soma >= saldo, mas inclui a venda que ultrapassou.
+
+SOLUÇÃO ALTERNATIVA:
+Em vez de tentar calcular quais vendas específicas formam o saldo,
+simplesmente mostrar TODAS as vendas/débitos que ainda não foram totalmente pagas.
+
+Ou seja, mostrar o histórico completo de vendas (sem pagamentos) para o PDF.
+O cliente quer ver o que ele comprou, não uma conta matemática complexa.

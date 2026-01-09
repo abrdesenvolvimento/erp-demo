@@ -1,0 +1,40 @@
+ANÁLISE DO PDF ENVIADO PELO USUÁRIO:
+
+O PDF mostra:
+- Cliente: Victor Hugo Fernandes da Silva
+- Saldo Devedor: R$ 165,50
+- Data do Extrato: 09/01/2026
+
+VENDAS/DÉBITOS EM ABERTO:
+1. 05/01/2026 19:56 - Venda #37680001 - Smirnoff Ice Limão 275ml - 1 x R$ 9,00 = R$ 9,00
+2. 05/01/2026 20:12 - Venda #37680002 - Rothmans Blue Hand-Selected - 1 x R$ 9,00 = R$ 9,00
+
+Total das vendas no PDF: R$ 18,00
+Saldo devedor: R$ 165,50
+Diferença: R$ 147,50 (vendas que não estão aparecendo)
+
+PROBLEMA IDENTIFICADO:
+O PDF está mostrando apenas vendas de 05/01/2026, mas o saldo inclui vendas anteriores que não estão sendo listadas.
+
+COMPARAÇÃO COM A TELA:
+Na tela do sistema (screenshot), aparecem vendas de:
+- 20/11/2025 (Venda #2310001)
+- 21/11/2025 (Venda #3180002)
+- 21/11/2025 (Venda #3270005)
+- 21/11/2025 (Venda #3330012)
+- 21/11/2025 (Venda #3330013)
+- 24/11/2025 (Venda #6090006)
+- 25/11/2025 (Pagamentos migrados)
+- 25/11/2025 (Venda #6810002)
+- 26/11/2025 (Venda #7440001)
+- 26/11/2025 (Venda #7740016)
+- 27/11/2025 (Venda #8010002)
+- 27/11/2025 (Venda #8010003)
+- 27/11/2025 (Venda #8040001)
+- 27/11/2025 (Venda #8190001)
+- E mais...
+
+CONCLUSÃO:
+O PDF está filtrando incorretamente as vendas. Parece estar mostrando apenas vendas recentes (05/01/2026) ao invés de todas as vendas que compõem o saldo.
+
+Preciso verificar a lógica de geração do PDF em server/routers.ts ou onde quer que esteja a função exportPDF.

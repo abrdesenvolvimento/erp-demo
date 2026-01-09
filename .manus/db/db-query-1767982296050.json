@@ -1,0 +1,220 @@
+{
+  "query": "SELECT \n  s.id as sale_id,\n  DATE_FORMAT(s.saleDate, '%d/%m/%Y %H:%i') as data_venda,\n  s.finalAmount,\n  s.status,\n  s.saleType\nFROM sales s\nJOIN partners p ON s.customerId = p.id\nWHERE p.name LIKE '%Victor Hugo%'\nAND s.saleType = 'A_PRAZO'\nORDER BY s.saleDate DESC;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  s.id as sale_id,\n  DATE_FORMAT(s.saleDate, '%d/%m/%Y %H:%i') as data_venda,\n  s.finalAmount,\n  s.status,\n  s.saleType\nFROM sales s\nJOIN partners p ON s.customerId = p.id\nWHERE p.name LIKE '%Victor Hugo%'\nAND s.saleType = 'A_PRAZO'\nORDER BY s.saleDate DESC;",
+  "rows": [
+    {
+      "sale_id": "37680002",
+      "data_venda": "05/01/2026 23:12",
+      "finalAmount": "9.00",
+      "status": "ACTIVE",
+      "saleType": "A_PRAZO"
+    },
+    {
+      "sale_id": "37680001",
+      "data_venda": "05/01/2026 22:56",
+      "finalAmount": "9.00",
+      "status": "ACTIVE",
+      "saleType": "A_PRAZO"
+    },
+    {
+      "sale_id": "35550002",
+      "data_venda": "30/12/2025 18:46",
+      "finalAmount": "165.00",
+      "status": "ACTIVE",
+      "saleType": "A_PRAZO"
+    },
+    {
+      "sale_id": "33660001",
+      "data_venda": "24/12/2025 12:00",
+      "finalAmount": "48.00",
+      "status": "ACTIVE",
+      "saleType": "A_PRAZO"
+    },
+    {
+      "sale_id": "30270004",
+      "data_venda": "21/12/2025 21:40",
+      "finalAmount": "25.00",
+      "status": "ACTIVE",
+      "saleType": "A_PRAZO"
+    },
+    {
+      "sale_id": "27990003",
+      "data_venda": "20/12/2025 17:10",
+      "finalAmount": "17.50",
+      "status": "ACTIVE",
+      "saleType": "A_PRAZO"
+    },
+    {
+      "sale_id": "27720002",
+      "data_venda": "20/12/2025 13:52",
+      "finalAmount": "122.00",
+      "status": "ACTIVE",
+      "saleType": "A_PRAZO"
+    },
+    {
+      "sale_id": "26040003",
+      "data_venda": "18/12/2025 02:12",
+      "finalAmount": "7.00",
+      "status": "ACTIVE",
+      "saleType": "A_PRAZO"
+    },
+    {
+      "sale_id": "25920002",
+      "data_venda": "18/12/2025 01:01",
+      "finalAmount": "10.00",
+      "status": "ACTIVE",
+      "saleType": "A_PRAZO"
+    },
+    {
+      "sale_id": "25080018",
+      "data_venda": "17/12/2025 01:38",
+      "finalAmount": "25.00",
+      "status": "ACTIVE",
+      "saleType": "A_PRAZO"
+    },
+    {
+      "sale_id": "25080001",
+      "data_venda": "17/12/2025 00:54",
+      "finalAmount": "32.00",
+      "status": "ACTIVE",
+      "saleType": "A_PRAZO"
+    },
+    {
+      "sale_id": "24780009",
+      "data_venda": "16/12/2025 22:42",
+      "finalAmount": "9.00",
+      "status": "ACTIVE",
+      "saleType": "A_PRAZO"
+    },
+    {
+      "sale_id": "23070006",
+      "data_venda": "14/12/2025 23:07",
+      "finalAmount": "54.00",
+      "status": "ACTIVE",
+      "saleType": "A_PRAZO"
+    },
+    {
+      "sale_id": "20370001",
+      "data_venda": "13/12/2025 16:13",
+      "finalAmount": "24.50",
+      "status": "ACTIVE",
+      "saleType": "A_PRAZO"
+    },
+    {
+      "sale_id": "16410001",
+      "data_venda": "09/12/2025 02:11",
+      "finalAmount": "13.00",
+      "status": "ACTIVE",
+      "saleType": "A_PRAZO"
+    },
+    {
+      "sale_id": "13770001",
+      "data_venda": "06/12/2025 13:04",
+      "finalAmount": "176.00",
+      "status": "ACTIVE",
+      "saleType": "A_PRAZO"
+    },
+    {
+      "sale_id": "10980022",
+      "data_venda": "30/11/2025 23:38",
+      "finalAmount": "2.00",
+      "status": "ACTIVE",
+      "saleType": "A_PRAZO"
+    },
+    {
+      "sale_id": "8190001",
+      "data_venda": "28/11/2025 00:53",
+      "finalAmount": "15.25",
+      "status": "ACTIVE",
+      "saleType": "A_PRAZO"
+    },
+    {
+      "sale_id": "8040001",
+      "data_venda": "27/11/2025 23:21",
+      "finalAmount": "10.00",
+      "status": "ACTIVE",
+      "saleType": "A_PRAZO"
+    },
+    {
+      "sale_id": "8010003",
+      "data_venda": "27/11/2025 23:10",
+      "finalAmount": "4.00",
+      "status": "ACTIVE",
+      "saleType": "A_PRAZO"
+    },
+    {
+      "sale_id": "8010002",
+      "data_venda": "27/11/2025 23:09",
+      "finalAmount": "7.00",
+      "status": "ACTIVE",
+      "saleType": "A_PRAZO"
+    },
+    {
+      "sale_id": "7740016",
+      "data_venda": "27/11/2025 02:22",
+      "finalAmount": "2.00",
+      "status": "ACTIVE",
+      "saleType": "A_PRAZO"
+    },
+    {
+      "sale_id": "7440001",
+      "data_venda": "26/11/2025 23:06",
+      "finalAmount": "21.50",
+      "status": "ACTIVE",
+      "saleType": "A_PRAZO"
+    },
+    {
+      "sale_id": "6810002",
+      "data_venda": "26/11/2025 01:13",
+      "finalAmount": "22.00",
+      "status": "ACTIVE",
+      "saleType": "A_PRAZO"
+    },
+    {
+      "sale_id": "6090006",
+      "data_venda": "25/11/2025 00:13",
+      "finalAmount": "2.00",
+      "status": "ACTIVE",
+      "saleType": "A_PRAZO"
+    },
+    {
+      "sale_id": "3330013",
+      "data_venda": "22/11/2025 02:26",
+      "finalAmount": "6.00",
+      "status": "ACTIVE",
+      "saleType": "A_PRAZO"
+    },
+    {
+      "sale_id": "3330012",
+      "data_venda": "22/11/2025 02:14",
+      "finalAmount": "10.00",
+      "status": "ACTIVE",
+      "saleType": "A_PRAZO"
+    },
+    {
+      "sale_id": "3270005",
+      "data_venda": "22/11/2025 01:03",
+      "finalAmount": "4.50",
+      "status": "ACTIVE",
+      "saleType": "A_PRAZO"
+    },
+    {
+      "sale_id": "3180002",
+      "data_venda": "21/11/2025 23:51",
+      "finalAmount": "67.00",
+      "status": "ACTIVE",
+      "saleType": "A_PRAZO"
+    },
+    {
+      "sale_id": "2310001",
+      "data_venda": "21/11/2025 01:19",
+      "finalAmount": "12.00",
+      "status": "ACTIVE",
+      "saleType": "A_PRAZO"
+    }
+  ],
+  "messages": [],
+  "stdout": "sale_id\tdata_venda\tfinalAmount\tstatus\tsaleType\n37680002\t05/01/2026 23:12\t9.00\tACTIVE\tA_PRAZO\n37680001\t05/01/2026 22:56\t9.00\tACTIVE\tA_PRAZO\n35550002\t30/12/2025 18:46\t165.00\tACTIVE\tA_PRAZO\n33660001\t24/12/2025 12:00\t48.00\tACTIVE\tA_PRAZO\n30270004\t21/12/2025 21:40\t25.00\tACTIVE\tA_PRAZO\n27990003\t20/12/2025 17:10\t17.50\tACTIVE\tA_PRAZO\n27720002\t20/12/2025 13:52\t122.00\tACTIVE\tA_PRAZO\n26040003\t18/12/2025 02:12\t7.00\tACTIVE\tA_PRAZO\n25920002\t18/12/2025 01:01\t10.00\tACTIVE\tA_PRAZO\n25080018\t17/12/2025 01:38\t25.00\tACTIVE\tA_PRAZO\n25080001\t17/12/2025 00:54\t32.00\tACTIVE\tA_PRAZO\n24780009\t16/12/2025 22:42\t9.00\tACTIVE\tA_PRAZO\n23070006\t14/12/2025 23:07\t54.00\tACTIVE\tA_PRAZO\n20370001\t13/12/2025 16:13\t24.50\tACTIVE\tA_PRAZO\n16410001\t09/12/2025 02:11\t13.00\tACTIVE\tA_PRAZO\n13770001\t06/12/2025 13:04\t176.00\tACTIVE\tA_PRAZO\n10980022\t30/11/2025 23:38\t2.00\tACTIVE\tA_PRAZO\n8190001\t28/11/2025 00:53\t15.25\tACTIVE\tA_PRAZO\n8040001\t27/11/2025 23:21\t10.00\tACTIVE\tA_PRAZO\n8010003\t27/11/2025 23:10\t4.00\tACTIVE\tA_PRAZO\n8010002\t27/11/2025 23:09\t7.00\tACTIVE\tA_PRAZO\n7740016\t27/11/2025 02:22\t2.00\tACTIVE\tA_PRAZO\n7440001\t26/11/2025 23:06\t21.50\tACTIVE\tA_PRAZO\n6810002\t26/11/2025 01:13\t22.00\tACTIVE\tA_PRAZO\n6090006\t25/11/2025 00:13\t2.00\tACTIVE\tA_PRAZO\n3330013\t22/11/2025 02:26\t6.00\tACTIVE\tA_PRAZO\n3330012\t22/11/2025 02:14\t10.00\tACTIVE\tA_PRAZO\n3270005\t22/11/2025 01:03\t4.50\tACTIVE\tA_PRAZO\n3180002\t21/11/2025 23:51\t67.00\tACTIVE\tA_PRAZO\n2310001\t21/11/2025 01:19\t12.00\tACTIVE\tA_PRAZO\n",
+  "stderr": "",
+  "execution_time_ms": 60
+}

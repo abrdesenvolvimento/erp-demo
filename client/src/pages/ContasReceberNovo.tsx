@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, DollarSign, Plus, FileDown, Loader2 } from "lucide-react";
+import { ArrowLeft, DollarSign, Plus, FileDown, Loader2, MessageCircle } from "lucide-react";
 
 import { getTodayInBrazil, getNowInBrazil, formatDateBR, formatDateTimeBR } from "@shared/dateUtils";
 import { toast } from "sonner";
@@ -25,6 +25,8 @@ export default function ContasReceberNovo() {
   const [selectedCustomerId, setSelectedCustomerId] = useState<number | null>(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showDebitModal, setShowDebitModal] = useState(false);
+  const [showWhatsAppModal, setShowWhatsAppModal] = useState(false);
+  const [whatsAppPhone, setWhatsAppPhone] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
 
   // Buscar lista de clientes com saldo
@@ -66,6 +68,18 @@ export default function ContasReceberNovo() {
     }
   });
 
+
+  // Mutation para enviar via WhatsApp
+  const sendViaWhatsApp = trpc.receivables.sendViaWhatsApp.useMutation({
+    onSuccess: (data) => {
+      toast.success(`Extrato enviado para ${data.customerName} via WhatsApp!`);
+      setShowWhatsAppModal(false);
+      setWhatsAppPhone("");
+    },
+    onError: (error) => {
+      toast.error(`Erro ao enviar WhatsApp: ${error.message}`);
+    }
+  });
 
   // Mutation para exportar PDF
   const exportPDF = trpc.receivables.exportPDF.useMutation({
@@ -231,6 +245,14 @@ export default function ContasReceberNovo() {
                     <FileDown className="mr-2 h-4 w-4" />
                   )}
                   {exportPDF.isPending ? 'Gerando...' : 'Exportar PDF'}
+                </Button>
+                <Button 
+                  variant="outline"
+                  onClick={() => setShowWhatsAppModal(true)}
+                  className="bg-green-600 hover:bg-green-700 text-white border-green-600"
+                >
+                  <MessageCircle className="mr-2 h-4 w-4" />
+                  WhatsApp
                 </Button>
                 <Button 
                   onClick={() => setShowPaymentModal(true)}
@@ -441,6 +463,66 @@ export default function ContasReceberNovo() {
                 </Button>
                 <Button onClick={handleDebitSubmit} disabled={registerDebit.isPending}>
                   {registerDebit.isPending ? "Salvando..." : "Confirmar"}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Modal de Envio via WhatsApp */}
+        <Dialog open={showWhatsAppModal} onOpenChange={setShowWhatsAppModal}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <MessageCircle className="h-5 w-5 text-green-600" />
+                Enviar Extrato via WhatsApp
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label>Número do WhatsApp *</Label>
+                <Input
+                  placeholder="(11) 98765-4321"
+                  value={whatsAppPhone}
+                  onChange={(e) => setWhatsAppPhone(e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Digite o número com DDD. O extrato será enviado diretamente para este número.
+                </p>
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setShowWhatsAppModal(false)}>
+                  Cancelar
+                </Button>
+                <Button 
+                  onClick={() => {
+                    if (!whatsAppPhone.trim()) {
+                      toast.error("Digite o número de telefone");
+                      return;
+                    }
+                    if (!selectedCustomerId) {
+                      toast.error("Selecione um cliente");
+                      return;
+                    }
+                    sendViaWhatsApp.mutate({
+                      customerId: selectedCustomerId,
+                      phoneNumber: whatsAppPhone
+                    });
+                  }}
+                  disabled={sendViaWhatsApp.isPending}
+                  className="bg-green-600 hover:bg-green-700"
+                >
+                  {sendViaWhatsApp.isPending ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Enviando...
+                    </>
+                  ) : (
+                    <>
+                      <MessageCircle className="h-4 w-4 mr-2" />
+                      Enviar WhatsApp
+                    </>
+                  )}
                 </Button>
               </div>
             </div>

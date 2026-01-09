@@ -1,0 +1,19 @@
+PROBLEMAS IDENTIFICADOS:
+
+1. BOTÃO WHATSAPP NÃO APARECE:
+   - Verificando o código em ContasReceber.tsx, o botão está presente (linhas 261-268)
+   - Mas na tela do usuário (screenshot) só aparecem: Exportar PDF, Registrar Pagamento, Lançar Débito
+   - No meu teste (screenshot atual) também só aparecem esses 3 botões
+   - CAUSA: O código pode não ter sido publicado ou há um problema de cache
+   
+2. VENDAS FALTANDO:
+   - Cliente Victor Hugo: Saldo R$ 165,50
+   - Na tela do usuário: só 2 vendas (R$ 12 + R$ 67 = R$ 79)
+   - Na minha tela: várias vendas aparecem (20/11, 21/11, 21/11, 21/11, 24/11, 25/11, etc.)
+   - O saldo parece estar correto considerando todas as vendas e pagamentos
+   - POSSÍVEL CAUSA: A tela do usuário pode estar com cache antigo ou versão desatualizada
+
+AÇÕES:
+1. Verificar se o botão WhatsApp está no código correto
+2. Reiniciar o servidor para garantir que as mudanças foram aplicadas
+3. Verificar a lógica de exibição de vendas no histórico

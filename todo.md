@@ -159,3 +159,11 @@
 - [x] Adicionar botão de envio no frontend (Contas a Receber)
 - [x] Testar integração com envio real
 - [ ] Validar recebimento no celular do cliente (aguardando teste do usuário)
+### 9. BUG: Botão WhatsApp não aparece na tela de Contas a Receber (09/01/2026)
+
+- [x] O botão WhatsApp está no arquivo ContasReceber.tsx mas a rota usa ContasReceberNovo.tsx
+- [x] Adicionar botão WhatsApp no ContasReceberNovo.tsx (área de botões linha 222-250)
+
+### 10. BUG: PDF mostrando apenas 2 vendas no histórico (09/01/2026)
+- [x] Usuário reportou que só aparecem 2 vendas para cliente Victor Hugo com saldo R$ 165,50
+- [x] Corrigido: PDF agora mostra todas as 30 vendas/débitos do cliente (2 páginas, 48KB)
