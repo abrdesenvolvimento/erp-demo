@@ -1,0 +1,9 @@
+{
+  "query": "SELECT r.id, r.customerId, r.totalAmount, r.status, r.saleId, s.id as sale_exists FROM receivables r LEFT JOIN sales s ON r.saleId = s.id WHERE r.customerId = 240002;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT r.id, r.customerId, r.totalAmount, r.status, r.saleId, s.id as sale_exists FROM receivables r LEFT JOIN sales s ON r.saleId = s.id WHERE r.customerId = 240002;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 69
+}

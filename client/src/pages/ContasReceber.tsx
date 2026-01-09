@@ -1,4 +1,3 @@
-import { trpc } from "../lib/trpc";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "../components/ui/dialog";
@@ -9,8 +8,9 @@ import { Textarea } from "../components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table";
 import { toast } from "sonner";
 import { DollarSign, User, ChevronRight, ArrowLeft, FileDown, Loader2 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import DashboardLayout from "../components/DashboardLayout";
+import { trpc } from "../lib/trpc";
 
 interface PaymentForm {
   paidDate: string;
@@ -20,6 +20,14 @@ interface PaymentForm {
 }
 
 export default function ContasReceber() {
+  const utils = trpc.useUtils();
+  
+  // Invalidar cache ao montar a página para garantir dados frescos
+  useEffect(() => {
+    utils.receivables.totalPending.invalidate();
+    utils.receivables.byCustomer.invalidate();
+  }, [utils]);
+  
   const [selectedCustomerId, setSelectedCustomerId] = useState<number | null>(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [searchCustomer, setSearchCustomer] = useState("");
