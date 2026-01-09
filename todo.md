@@ -122,6 +122,9 @@
 
 ## ✅ CONCLUÍDO RECENTEMENTE
 
+- [x] **BUG CORRIGIDO:** Recebíveis órfãos em Contas a Receber (09/01/2026)
+  - Função cancelSale() agora deleta recebível, parcelas e pagamentos
+  - Limpeza de recebíveis órfãos existentes no banco
 - [x] Backup automático diário para Google Drive (08/01/2026)
 - [x] Notificação por email após backup (08/01/2026)
 - [x] Política de retenção: 7 dias local, 30 dias Drive (08/01/2026)

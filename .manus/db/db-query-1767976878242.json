@@ -1,0 +1,17 @@
+{
+  "query": "SELECT r.id, r.customerId, r.totalAmount, r.status, r.saleId FROM receivables r LEFT JOIN sales s ON r.saleId = s.id WHERE r.status = 'QUITADO' AND s.id IS NULL LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT r.id, r.customerId, r.totalAmount, r.status, r.saleId FROM receivables r LEFT JOIN sales s ON r.saleId = s.id WHERE r.status = 'QUITADO' AND s.id IS NULL LIMIT 10;",
+  "rows": [
+    {
+      "id": "600001",
+      "customerId": "330001",
+      "totalAmount": "16.00",
+      "status": "QUITADO",
+      "saleId": "1680002"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tcustomerId\ttotalAmount\tstatus\tsaleId\n600001\t330001\t16.00\tQUITADO\t1680002\n",
+  "stderr": "",
+  "execution_time_ms": 62
+}

@@ -1399,11 +1399,19 @@ export async function cancelSale(saleId: number, userId: string, reason?: string
       .set({ currentBalance: sql`${partners.currentBalance} - ${sale.finalAmount}` })
       .where(eq(partners.id, sale.customerId));
 
-    // Marcar receivable como quitado (zerar débito)
+    // Deletar receivable e suas parcelas
     const receivable = await getReceivableBySaleId(saleId);
     if (receivable) {
-      await db.update(receivables)
-        .set({ status: "QUITADO", receivedAmount: receivable.totalAmount })
+      // Deletar parcelas do recebível
+      await db.delete(receivableInstallments)
+        .where(eq(receivableInstallments.receivableId, receivable.id));
+      
+      // Deletar pagamentos do recebível
+      await db.delete(receivablePayments)
+        .where(eq(receivablePayments.receivableId, receivable.id));
+      
+      // Deletar recebível
+      await db.delete(receivables)
         .where(eq(receivables.id, receivable.id));
     }
   }

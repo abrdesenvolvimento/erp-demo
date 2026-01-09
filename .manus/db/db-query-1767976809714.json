@@ -1,0 +1,17 @@
+{
+  "query": "SELECT r.id, r.customerId, r.totalAmount, r.status, r.createdAt FROM receivables r WHERE r.customerId = 240002;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT r.id, r.customerId, r.totalAmount, r.status, r.createdAt FROM receivables r WHERE r.customerId = 240002;",
+  "rows": [
+    {
+      "id": "8610001",
+      "customerId": "240002",
+      "totalAmount": "13.00",
+      "status": "QUITADO",
+      "createdAt": "2026-01-09 16:27:35"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tcustomerId\ttotalAmount\tstatus\tcreatedAt\n8610001\t240002\t13.00\tQUITADO\t2026-01-09 16:27:35\n",
+  "stderr": "",
+  "execution_time_ms": 50
+}
