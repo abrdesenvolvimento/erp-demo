@@ -39,7 +39,7 @@ export function SaleDetailsModal({ saleId, open, onClose }: SaleDetailsModalProp
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [newItemQuantity, setNewItemQuantity] = useState(1);
 
-  const { data: products } = trpc.products.list.useQuery();
+  const { data: products } = trpc.products.list.useQuery({ includePrices: true });
 
   const { data: saleData, isLoading } = trpc.sales.get.useQuery(
     { id: saleId! },

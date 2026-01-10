@@ -1,0 +1,60 @@
+{
+  "query": "SELECT id, name, active FROM products WHERE name LIKE '%Migração de Dados%' LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT id, name, active FROM products WHERE name LIKE '%Migração de Dados%' LIMIT 10;",
+  "rows": [
+    {
+      "id": "4050001",
+      "name": "Hocus Pocus (Migração de Dados)",
+      "active": "1"
+    },
+    {
+      "id": "4050002",
+      "name": "Baly 2l (Migração de Dados)",
+      "active": "1"
+    },
+    {
+      "id": "4050003",
+      "name": "Ziggy (Migração de Dados)",
+      "active": "1"
+    },
+    {
+      "id": "4110002",
+      "name": "Wienbier (Migração de Dados)",
+      "active": "1"
+    },
+    {
+      "id": "4140001",
+      "name": "Del Valle 1l (Migração de Dados)",
+      "active": "1"
+    },
+    {
+      "id": "4140002",
+      "name": "Del Valle 290ml (Migração de Dados)",
+      "active": "1"
+    },
+    {
+      "id": "4140005",
+      "name": "Leuven (Migração de Dados)",
+      "active": "1"
+    },
+    {
+      "id": "4140006",
+      "name": "Mansão Maromba (Migração de Dados)",
+      "active": "1"
+    },
+    {
+      "id": "4140007",
+      "name": "Colorado 600ml (Migração de Dados)",
+      "active": "1"
+    },
+    {
+      "id": "4140008",
+      "name": "Colorado 350ml (Migração de Dados)",
+      "active": "1"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tactive\n4050001\tHocus Pocus (Migração de Dados)\t1\n4050002\tBaly 2l (Migração de Dados)\t1\n4050003\tZiggy (Migração de Dados)\t1\n4110002\tWienbier (Migração de Dados)\t1\n4140001\tDel Valle 1l (Migração de Dados)\t1\n4140002\tDel Valle 290ml (Migração de Dados)\t1\n4140005\tLeuven (Migração de Dados)\t1\n4140006\tMansão Maromba (Migração de Dados)\t1\n4140007\tColorado 600ml (Migração de Dados)\t1\n4140008\tColorado 350ml (Migração de Dados)\t1\n",
+  "stderr": "",
+  "execution_time_ms": 56
+}

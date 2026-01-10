@@ -1,0 +1,28 @@
+{
+  "query": "SELECT id, name, expirationDate, currentStock FROM products WHERE expirationDate IS NOT NULL ORDER BY expirationDate LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT id, name, expirationDate, currentStock FROM products WHERE expirationDate IS NOT NULL ORDER BY expirationDate LIMIT 10;",
+  "rows": [
+    {
+      "id": "3510002",
+      "name": "Kuat 2l",
+      "expirationDate": "2026-02-08 00:00:00",
+      "currentStock": "0"
+    },
+    {
+      "id": "2040003",
+      "name": "Brahma 0,0% Álcool 350ml",
+      "expirationDate": "2026-04-21 00:00:00",
+      "currentStock": "12"
+    },
+    {
+      "id": "480001",
+      "name": "Amstel Ultra 269ml",
+      "expirationDate": "2026-07-10 00:00:00",
+      "currentStock": "30"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\texpirationDate\tcurrentStock\n3510002\tKuat 2l\t2026-02-08 00:00:00\t0\n2040003\tBrahma 0,0% Álcool 350ml\t2026-04-21 00:00:00\t12\n480001\tAmstel Ultra 269ml\t2026-07-10 00:00:00\t30\n",
+  "stderr": "",
+  "execution_time_ms": 54
+}

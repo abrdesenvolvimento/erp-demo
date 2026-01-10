@@ -168,9 +168,16 @@
 - [x] Usuário reportou que só aparecem 2 vendas para cliente Victor Hugo com saldo R$ 165,50
 - [x] Corrigido: PDF agora mostra todas as 30 vendas/débitos do cliente (2 páginas, 48KB)
 
-### 11. BUG: Erro ao enviar WhatsApp (09/01/2026)
-- [ ] Erro: "Object with ID '160255029629058' does not exist, cannot be loaded due to missing permissions"
-- [ ] Aguardando usuário verificar Phone Number ID no Meta Business Suite
+### 11. Integração WhatsApp - Configuração (09-10/01/2026)
+- [x] Token de acesso atualizado (usuário do sistema)
+- [x] Phone Number ID correto identificado: 1005788860213963
+- [x] API respondendo corretamente com dados do número +55 11 98603-7317
+- [x] Template de mensagem criado e enviado para análise (extrato_conta_corrente)
+- [ ] **PENDENTE:** Template foi criado na Conta 1, mas o número está na Conta 2
+- [ ] **PRÓXIMO PASSO:** Criar template na conta correta (Conta 2 - onde está o número conectado)
+- [ ] Aguardar aprovação do template pelo WhatsApp
+- [ ] Atualizar código para usar o nome do template aprovado
+- [ ] Testar envio real após aprovação
 
 ### 12. BUG: PDF mostrando histórico completo ao invés de vendas em aberto (09/01/2026)
 - [x] Corrigida lógica para selecionar apenas vendas mais recentes que formam o saldo
@@ -180,4 +187,30 @@
 ### 13. BUG: Produtos próximos ao vencimento mostrando incorretamente (09/01/2026)
 - [x] Kaut 2l aparece como próximo ao vencimento mas não tem estoque - CORRIGIDO
 - [x] Adicionado filtro para ignorar produtos com estoque <= 0
-- [ ] Pepsi Black 350ml tem estoque mas vencimento é de registro antigo (precisa verificar manualmente)
+- [x] Pepsi Black 350ml - vencimento antigo removido manualmente
+
+### 14. PDF Contas a Receber - Tratamento de pagamentos parciais (09/01/2026)
+- [ ] Decidir como exibir abatimentos quando cliente tem pagamento parcial
+- **Opção 1 (Recomendada)**: Resumo compacto no final do PDF
+  ```
+  Total em Compras:          R$ 183,00
+  (-) Pagamentos:            R$ 17,50
+  SALDO DEVEDOR:             R$ 165,50
+  ```
+- **Opção 2**: Resumo no cabeçalho antes das vendas
+  ```
+  Saldo Devedor: R$ 165,50
+  (Total R$ 183,00 - Pagamentos R$ 17,50)
+  ```
+- Objetivo: Cliente entender de onde vem o saldo quando há pagamentos parciais
+
+### 15. BUG: Edição de venda não puxa preços do canal correto (10/01/2026)
+- [x] Ao editar venda do iFood, produtos mostram "Preço: N/D"
+- [x] Sistema deveria puxar automaticamente os preços do canal da venda (iFood/Delivery)
+- [x] Corrigido: Adicionado `includePrices: true` na query de produtos do SaleDetailsModal
+
+
+### 16. Ocultar produtos de migração no autocomplete de vendas (10/01/2026)
+- [x] Produtos com "(Migração de Dados)" no nome não devem aparecer no autocomplete
+- [x] Desativados no banco de dados (active = 0)
+
