@@ -214,3 +214,11 @@
 - [x] Produtos com "(Migração de Dados)" no nome não devem aparecer no autocomplete
 - [x] Desativados no banco de dados (active = 0)
 
+
+### 17. Backup Automático em Produção (11/01/2026)
+- [x] Configurar backup automático no servidor de produção
+- [x] Integrar upload para Google Drive via API (preparado, aguarda credenciais)
+- [x] Configurar notificação por email após backup (via Manus)
+- [x] Testar execução completa do backup (4.16s, 32.80 MB)
+- [x] Agendar execução diária às 3h (GMT-3)
+- **IMPLEMENTAÇÃO:** Endpoint HTTP POST /api/backup criado em server/backupEndpoint.ts, agendado via cron para rodar diariamente
