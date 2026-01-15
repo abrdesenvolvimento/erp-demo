@@ -8,15 +8,46 @@ import { Router, Request, Response } from 'express';
 import { execSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
+import { google } from 'googleapis';
 
 const router = Router();
 
 // Configurações
 const BACKUP_DIR = path.join(process.cwd(), 'backups');
+const RETENTION_DAYS = 7;
+const RETENTION_DRIVE_DAYS = 30;
 
 // Criar diretório de backups se não existir
 if (!fs.existsSync(BACKUP_DIR)) {
   fs.mkdirSync(BACKUP_DIR, { recursive: true });
+}
+
+/**
+ * Criar cliente OAuth2 autenticado para Google Drive
+ */
+function getOAuth2Client() {
+  try {
+    const credentials = JSON.parse(process.env.GOOGLE_DRIVE_CREDENTIALS || '{}');
+    
+    if (!credentials.client_id || !credentials.client_secret || !credentials.refresh_token) {
+      console.log('[Google Drive] ⚠ Credenciais incompletas');
+      return null;
+    }
+    
+    const oauth2Client = new google.auth.OAuth2(
+      credentials.client_id,
+      credentials.client_secret
+    );
+    
+    oauth2Client.setCredentials({
+      refresh_token: credentials.refresh_token
+    });
+    
+    return oauth2Client;
+  } catch (error) {
+    console.error('[Google Drive] Erro ao criar cliente OAuth2:', error);
+    return null;
+  }
 }
 
 /**
@@ -76,6 +107,138 @@ async function backupCode(): Promise<{ file: string; size: number }> {
 }
 
 /**
+ * Fazer upload para Google Drive
+ */
+async function uploadToGoogleDrive(filePath: string): Promise<{ id: string; link: string } | null> {
+  try {
+    const auth = getOAuth2Client();
+    if (!auth) {
+      console.log('[Google Drive] ⚠ Cliente OAuth2 não disponível');
+      return null;
+    }
+    
+    const folderId = process.env.GOOGLE_DRIVE_FOLDER_ID;
+    if (!folderId) {
+      console.log('[Google Drive] ⚠ GOOGLE_DRIVE_FOLDER_ID não configurado');
+      return null;
+    }
+    
+    console.log(`[Google Drive] Fazendo upload de ${path.basename(filePath)}...`);
+    
+    const drive = google.drive({ version: 'v3', auth });
+    
+    const fileMetadata = {
+      name: path.basename(filePath),
+      parents: [folderId],
+    };
+    
+    const mimeType = filePath.endsWith('.sql') ? 'text/plain' : 'application/zip';
+    const media = {
+      mimeType,
+      body: fs.createReadStream(filePath),
+    };
+    
+    const response = await drive.files.create({
+      requestBody: fileMetadata,
+      media: media,
+      fields: 'id, webViewLink',
+    });
+    
+    console.log(`[Google Drive] ✓ Upload concluído: ${response.data.webViewLink}`);
+    return { id: response.data.id!, link: response.data.webViewLink! };
+  } catch (error: any) {
+    console.error('[Google Drive] ✗ Erro ao fazer upload:', error.message);
+    return null;
+  }
+}
+
+/**
+ * Limpar backups antigos localmente
+ */
+async function cleanOldLocalBackups(): Promise<number> {
+  console.log(`[Limpeza Local] Removendo backups com mais de ${RETENTION_DAYS} dias...`);
+  
+  const cutoffDate = Date.now() - (RETENTION_DAYS * 24 * 60 * 60 * 1000);
+  const files = fs.readdirSync(BACKUP_DIR);
+  
+  let deletedCount = 0;
+  for (const file of files) {
+    if (!file.endsWith('.sql') && !file.endsWith('.zip')) continue;
+    
+    const filePath = path.join(BACKUP_DIR, file);
+    const stats = fs.statSync(filePath);
+    
+    if (stats.mtimeMs < cutoffDate) {
+      fs.unlinkSync(filePath);
+      deletedCount++;
+      console.log(`[Limpeza Local] Removido: ${file}`);
+    }
+  }
+  
+  console.log(`[Limpeza Local] ✓ ${deletedCount} arquivo(s) removido(s)`);
+  return deletedCount;
+}
+
+/**
+ * Limpar backups antigos no Google Drive
+ */
+async function cleanOldDriveBackups(): Promise<number> {
+  try {
+    const auth = getOAuth2Client();
+    if (!auth) {
+      console.log('[Limpeza Drive] ⚠ Cliente OAuth2 não disponível');
+      return 0;
+    }
+    
+    const folderId = process.env.GOOGLE_DRIVE_FOLDER_ID;
+    if (!folderId) {
+      console.log('[Limpeza Drive] ⚠ GOOGLE_DRIVE_FOLDER_ID não configurado');
+      return 0;
+    }
+    
+    console.log(`[Limpeza Drive] Removendo backups com mais de ${RETENTION_DRIVE_DAYS} dias...`);
+    
+    const drive = google.drive({ version: 'v3', auth });
+    
+    // Calcular data de corte
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - RETENTION_DRIVE_DAYS);
+    const cutoffDateStr = cutoffDate.toISOString();
+    
+    // Buscar arquivos antigos na pasta de backup
+    const response = await drive.files.list({
+      q: `'${folderId}' in parents and createdTime < '${cutoffDateStr}' and trashed = false`,
+      fields: 'files(id, name, createdTime)',
+      orderBy: 'createdTime asc',
+    });
+    
+    const oldFiles = response.data.files || [];
+    
+    if (oldFiles.length === 0) {
+      console.log('[Limpeza Drive] ✓ Nenhum arquivo antigo encontrado');
+      return 0;
+    }
+    
+    console.log(`[Limpeza Drive] Encontrados ${oldFiles.length} arquivo(s) para remover`);
+    
+    for (const file of oldFiles) {
+      try {
+        await drive.files.delete({ fileId: file.id! });
+        console.log(`[Limpeza Drive] Removido: ${file.name}`);
+      } catch (err: any) {
+        console.error(`[Limpeza Drive] Erro ao remover ${file.name}:`, err.message);
+      }
+    }
+    
+    console.log(`[Limpeza Drive] ✓ ${oldFiles.length} arquivo(s) removido(s)`);
+    return oldFiles.length;
+  } catch (error: any) {
+    console.error('[Limpeza Drive] ✗ Erro:', error.message);
+    return 0;
+  }
+}
+
+/**
  * Enviar notificação via Manus
  */
 async function sendManusNotification(title: string, content: string) {
@@ -102,31 +265,6 @@ async function sendManusNotification(title: string, content: string) {
     console.error('[Manus] Erro:', error);
     return false;
   }
-}
-
-/**
- * Limpar backups antigos
- */
-async function cleanOldBackups(): Promise<number> {
-  const RETENTION_DAYS = 7;
-  const cutoffDate = Date.now() - (RETENTION_DAYS * 24 * 60 * 60 * 1000);
-  const files = fs.readdirSync(BACKUP_DIR);
-  
-  let deletedCount = 0;
-  for (const file of files) {
-    if (!file.endsWith('.sql') && !file.endsWith('.zip')) continue;
-    
-    const filePath = path.join(BACKUP_DIR, file);
-    const stats = fs.statSync(filePath);
-    
-    if (stats.mtimeMs < cutoffDate) {
-      fs.unlinkSync(filePath);
-      deletedCount++;
-      console.log(`[Limpeza] Removido: ${file}`);
-    }
-  }
-  
-  return deletedCount;
 }
 
 /**
@@ -158,19 +296,53 @@ router.post('/backup', async (req: Request, res: Response) => {
   try {
     // 1. Fazer backup do banco de dados
     const dbBackup = await backupDatabase();
-    results.push({ name: path.basename(dbBackup.file), size: dbBackup.size });
+    results.push({ name: path.basename(dbBackup.file), size: dbBackup.size, file: dbBackup.file });
     
     // 2. Fazer backup do código
     const codeBackup = await backupCode();
-    results.push({ name: path.basename(codeBackup.file), size: codeBackup.size });
+    results.push({ name: path.basename(codeBackup.file), size: codeBackup.size, file: codeBackup.file });
     
-    // 3. Limpar backups antigos
+    // 3. Fazer upload para Google Drive
+    console.log('\n[Google Drive] Iniciando upload dos arquivos...\n');
+    
+    const hasGoogleDrive = !!(process.env.GOOGLE_DRIVE_CREDENTIALS && process.env.GOOGLE_DRIVE_FOLDER_ID);
+    
+    if (hasGoogleDrive) {
+      for (let i = 0; i < results.length; i++) {
+        const driveResult = await uploadToGoogleDrive(results[i].file);
+        if (driveResult) {
+          results[i].driveLink = driveResult.link;
+          results[i].driveId = driveResult.id;
+        }
+      }
+    } else {
+      console.log('[Google Drive] ⚠ Credenciais não configuradas, pulando upload\n');
+    }
+    
+    // 4. Limpar backups antigos
     console.log('');
-    const deletedCount = await cleanOldBackups();
+    const deletedLocal = await cleanOldLocalBackups();
     
-    // 4. Enviar notificação
+    if (hasGoogleDrive) {
+      const deletedDrive = await cleanOldDriveBackups();
+    }
+    
+    // 5. Enviar notificação
     const timestamp = new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
-    const content = `**Data/Hora:** ${timestamp}\n\n**Status:** ✅ Concluído com sucesso\n\n**Arquivos:**\n${results.map(r => `- ${r.name} (${(r.size / 1024 / 1024).toFixed(2)} MB)`).join('\n')}\n\n**Limpeza:** ${deletedCount} arquivo(s) antigo(s) removido(s)`;
+    let content = `**Data/Hora:** ${timestamp}\n\n**Status:** ✅ Concluído com sucesso\n\n**Arquivos Locais:**\n`;
+    
+    for (const r of results) {
+      content += `- ${r.name} (${(r.size / 1024 / 1024).toFixed(2)} MB)\n`;
+      if (r.driveLink) {
+        content += `  📁 Google Drive: ${r.driveLink}\n`;
+      }
+    }
+    
+    content += `\n**Limpeza:** ${deletedLocal} arquivo(s) local(is) removido(s)`;
+    
+    if (process.env.GOOGLE_DRIVE_FOLDER_ID) {
+      content += `\n📂 Pasta: https://drive.google.com/drive/folders/${process.env.GOOGLE_DRIVE_FOLDER_ID}`;
+    }
     
     await sendManusNotification('Backup Concluído - ABRWF', content);
     
@@ -190,7 +362,8 @@ router.post('/backup', async (req: Request, res: Response) => {
       totalSize: `${(totalSize / 1024 / 1024).toFixed(2)} MB`,
       files: results.map(r => ({
         name: r.name,
-        size: `${(r.size / 1024 / 1024).toFixed(2)} MB`
+        size: `${(r.size / 1024 / 1024).toFixed(2)} MB`,
+        driveLink: r.driveLink || null
       }))
     });
     
@@ -198,7 +371,8 @@ router.post('/backup', async (req: Request, res: Response) => {
     console.error('\n✗ Erro durante o backup:', error.message);
     
     // Enviar notificação de falha
-    await sendManusNotification('Backup Falhou - ABRWF', `**Erro:** ${error.message}`);
+    const timestamp = new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+    await sendManusNotification('Backup Falhou - ABRWF', `**Data/Hora:** ${timestamp}\n\n**Erro:** ${error.message}`);
     
     res.status(500).json({
       success: false,
@@ -225,11 +399,15 @@ router.get('/backup/status', async (req: Request, res: Response) => {
       })
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     
+    const hasGoogleDrive = !!(process.env.GOOGLE_DRIVE_CREDENTIALS && process.env.GOOGLE_DRIVE_FOLDER_ID);
+    
     res.json({
       configured: true,
+      googleDriveEnabled: hasGoogleDrive,
       localBackups: files.slice(0, 10),
       retentionPolicy: {
-        local: '7 dias'
+        local: `${RETENTION_DAYS} dias`,
+        drive: `${RETENTION_DRIVE_DAYS} dias`
       }
     });
   } catch (error: any) {
