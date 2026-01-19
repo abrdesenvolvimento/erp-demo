@@ -346,3 +346,7 @@
 - [x] Substituir agrupamento por Categoria para Conta Gerencial
 - [x] Query agora usa managementAccounts + accountingMappings
 - [x] Exibe nome da conta com código contábil (ex: "Internet (3.2.01.005)")
+
+
+### 32. Análise de Despesas - Remover código contábil (19/01/2026)
+- [x] Exibir apenas nome da conta gerencial (sem código contábil)

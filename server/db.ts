@@ -5162,7 +5162,7 @@ export async function getExpenseHierarchicalData(
       YEAR(CONVERT_TZ(e.createdAt, '+00:00', '-03:00')) as year,
       MONTH(CONVERT_TZ(e.createdAt, '+00:00', '-03:00')) as month,
       COALESCE(ma.id, ec.id) as categoryId,
-      COALESCE(CONCAT(ma.name, ' (', am.accountingCode, ')'), ec.name, 'N/A') as categoryName,
+      COALESCE(ma.name, ec.name, 'N/A') as categoryName,
       COALESCE(p.id, 0) as supplierId,
       COALESCE(p.tradeName, p.name, 'Sem Fornecedor') as supplierName,
       ma.id as managementAccountId,
