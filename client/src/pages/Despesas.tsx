@@ -965,7 +965,7 @@ export default function Despesas() {
                           </span>
                         </div>
                         <div className="text-sm text-muted-foreground space-y-1">
-                          <div>Conta Gerencial: {item.managementAccount ? `${item.managementAccount.name} (${item.managementAccount.accountingCode})` : (item.category?.name || "N/A")}</div>
+                          <div>Conta Gerencial: {item.managementAccount ? `${item.managementAccount.name} (${item.accountingMapping?.accountingCode || item.expense.accountingCode || 'N/A'})` : (item.category?.name || "N/A")}</div>
                           {item.supplier && <div>Fornecedor: {item.supplier.name}</div>}
                           <div>Documento: {item.expense.docType} {item.expense.docNumber && `- ${item.expense.docNumber}`}</div>
                           <div>Forma de Pagamento: {item.expense.paymentMethod}</div>

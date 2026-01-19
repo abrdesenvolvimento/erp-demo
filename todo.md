@@ -335,3 +335,14 @@
 - [x] Associar despesas de janeiro às novas contas gerenciais (24 despesas migradas)
 - [x] Validar migração
 - [x] Corrigir registro de domínio para Software e Sistemas
+
+
+### 30. BUG: Código contábil undefined na listagem (19/01/2026)
+- [x] Corrigir exibição de "(undefined)" ao lado do nome da conta gerencial
+- [x] Adicionar join com tabela accountingMappings na query getExpenses
+- [x] Atualizar frontend para usar accountingMapping.accountingCode
+
+### 31. Atualizar Análise de Despesas para Conta Gerencial (19/01/2026)
+- [x] Substituir agrupamento por Categoria para Conta Gerencial
+- [x] Query agora usa managementAccounts + accountingMappings
+- [x] Exibe nome da conta com código contábil (ex: "Internet (3.2.01.005)")

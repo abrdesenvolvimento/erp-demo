@@ -1,0 +1,40 @@
+{
+  "query": "SELECT ma.id, ma.name, ma.code, am.accountingCode \nFROM managementAccounts ma\nLEFT JOIN accountingMappings am ON ma.id = am.managementAccountId\nLIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT ma.id, ma.name, ma.code, am.accountingCode \nFROM managementAccounts ma\nLEFT JOIN accountingMappings am ON ma.id = am.managementAccountId\nLIMIT 5;",
+  "rows": [
+    {
+      "id": "1",
+      "name": "Embalagens",
+      "code": "COP001",
+      "accountingCode": "3.1.01.001"
+    },
+    {
+      "id": "2",
+      "name": "Material de Limpeza",
+      "code": "COP002",
+      "accountingCode": "3.1.01.002"
+    },
+    {
+      "id": "3",
+      "name": "Gás Encanado",
+      "code": "COP003",
+      "accountingCode": "3.1.01.003"
+    },
+    {
+      "id": "4",
+      "name": "Fretes",
+      "code": "COP004",
+      "accountingCode": "3.1.01.004"
+    },
+    {
+      "id": "5",
+      "name": "Aluguel de Equipamentos",
+      "code": "COP005",
+      "accountingCode": "3.1.01.005"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tcode\taccountingCode\n1\tEmbalagens\tCOP001\t3.1.01.001\n2\tMaterial de Limpeza\tCOP002\t3.1.01.002\n3\tGás Encanado\tCOP003\t3.1.01.003\n4\tFretes\tCOP004\t3.1.01.004\n5\tAluguel de Equipamentos\tCOP005\t3.1.01.005\n",
+  "stderr": "",
+  "execution_time_ms": 88
+}

@@ -1562,12 +1562,14 @@ export async function getExpenses(filters?: {
     expense: expenses,
     category: expenseCategories,
     supplier: partners,
-    managementAccount: managementAccounts
+    managementAccount: managementAccounts,
+    accountingMapping: accountingMappings
   })
   .from(expenses)
   .leftJoin(expenseCategories, eq(expenses.categoryId, expenseCategories.id))
   .leftJoin(partners, eq(expenses.supplierId, partners.id))
-  .leftJoin(managementAccounts, eq(expenses.managementAccountId, managementAccounts.id));
+  .leftJoin(managementAccounts, eq(expenses.managementAccountId, managementAccounts.id))
+  .leftJoin(accountingMappings, eq(managementAccounts.id, accountingMappings.managementAccountId));
   
   const conditions = [];
   
@@ -5159,15 +5161,21 @@ export async function getExpenseHierarchicalData(
       DATE(CONVERT_TZ(e.createdAt, '+00:00', '-03:00')) as expenseDate,
       YEAR(CONVERT_TZ(e.createdAt, '+00:00', '-03:00')) as year,
       MONTH(CONVERT_TZ(e.createdAt, '+00:00', '-03:00')) as month,
-      ec.id as categoryId,
-      ec.name as categoryName,
+      COALESCE(ma.id, ec.id) as categoryId,
+      COALESCE(CONCAT(ma.name, ' (', am.accountingCode, ')'), ec.name, 'N/A') as categoryName,
       COALESCE(p.id, 0) as supplierId,
-      COALESCE(p.tradeName, p.name, 'Sem Fornecedor') as supplierName
+      COALESCE(p.tradeName, p.name, 'Sem Fornecedor') as supplierName,
+      ma.id as managementAccountId,
+      ma.name as managementAccountName,
+      am.accountingCode as accountingCode,
+      ma.classification as classification
     FROM expenses e
-    INNER JOIN expenseCategories ec ON e.categoryId = ec.id
+    LEFT JOIN expenseCategories ec ON e.categoryId = ec.id
+    LEFT JOIN managementAccounts ma ON e.managementAccountId = ma.id
+    LEFT JOIN accountingMappings am ON ma.id = am.managementAccountId
     LEFT JOIN partners p ON e.supplierId = p.id
     ${whereClause}
-    ORDER BY ec.name, p.tradeName, e.createdAt
+    ORDER BY COALESCE(ma.name, ec.name), p.tradeName, e.createdAt
   `));
 
   const rows = result[0] as unknown as any[];
@@ -5184,6 +5192,10 @@ export async function getExpenseHierarchicalData(
     categoryName: row.categoryName,
     supplierId: row.supplierId,
     supplierName: row.supplierName,
+    managementAccountId: row.managementAccountId,
+    managementAccountName: row.managementAccountName,
+    accountingCode: row.accountingCode,
+    classification: row.classification,
   }));
 }
 
