@@ -1005,7 +1005,9 @@ export const appRouter = router({
         supplierId: z.number().optional(),
         docType: z.enum(["NOTA_FISCAL", "CUPOM"]),
         docNumber: z.string().optional(),
-        categoryId: z.number(),
+        categoryId: z.number().optional(),
+        managementAccountId: z.number().optional(),
+        accountingCode: z.string().optional(),
         description: z.string().min(3),
         amount: z.string(),
         paymentMethod: z.string(),
@@ -1014,13 +1016,24 @@ export const appRouter = router({
           amount: z.string()
         })).min(1), // Array de datas e valores de vencimento
         notes: z.string().optional(),
+        // Campos para Perdas
+        productId: z.number().optional(),
+        lossQuantity: z.number().optional(),
       }))
       .mutation(async ({ input, ctx }) => {
+        // Se tiver managementAccountId, buscar o código contábil
+        let accountingCode = input.accountingCode;
+        if (input.managementAccountId && !accountingCode) {
+          accountingCode = await db.getAccountingCodeByManagementAccount(input.managementAccountId) || undefined;
+        }
+
         const expenseId = await db.createExpense({
           supplierId: input.supplierId,
           docType: input.docType,
           docNumber: input.docNumber,
           categoryId: input.categoryId,
+          managementAccountId: input.managementAccountId,
+          accountingCode: accountingCode,
           description: input.description,
           amount: input.amount,
           paymentMethod: input.paymentMethod,
@@ -1037,6 +1050,21 @@ export const appRouter = router({
             amount: input.dueDates[i].amount,
             dueDate: input.dueDates[i].date,
             status: "PENDENTE",
+          });
+        }
+
+        // Se for Perdas, registrar movimento de estoque
+        if (input.productId && input.lossQuantity && input.lossQuantity > 0) {
+          await db.createProductMovement({
+            productId: input.productId,
+            movementType: 'PERDA',
+            quantity: input.lossQuantity,
+            unitCost: (parseFloat(input.amount) / input.lossQuantity).toFixed(2),
+            totalCost: input.amount,
+            referenceType: 'EXPENSE',
+            referenceId: expenseId,
+            notes: `Perda registrada - ${input.description}`,
+            createdBy: ctx.user.id,
           });
         }
         
@@ -2156,7 +2184,75 @@ export const appRouter = router({
         return await db.getAllRevenueGoalHistory(input.year);
       }),
   }),
-});
 
-export type AppRouter = typeof appRouter;
+  // ==================== CONTAS GERENCIAIS ====================
+  managementAccounts: router({
+    // Listar todas as contas gerenciais
+    list: protectedProcedure
+      .input(z.object({
+        nature: z.enum(['CUSTO', 'DESPESA', 'RECEITA', 'PATRIMONIAL']).optional(),
+        classification: z.enum(['OPERACIONAL', 'ADMINISTRATIVA', 'COMERCIAL', 'FINANCEIRA', 'NAO_OPERACIONAL', 'PATRIMONIAL']).optional(),
+        search: z.string().optional(),
+      }).optional())
+      .query(async ({ input }) => {
+        return await db.listManagementAccounts(input);
+      }),
+
+    // Listar para dropdown (simplificado)
+    forSelect: protectedProcedure
+      .query(async () => {
+        return await db.listManagementAccountsForSelect();
+      }),
+
+    // Listar agrupadas por classificação
+    grouped: protectedProcedure
+      .query(async () => {
+        return await db.listManagementAccountsGrouped();
+      }),
+
+    // Buscar por ID
+    byId: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .query(async ({ input }) => {
+        return await db.getManagementAccountById(input.id);
+      }),
+
+    // Criar nova conta gerencial (admin only)
+    create: adminProcedure
+      .input(z.object({
+        code: z.string().min(1),
+        name: z.string().min(1),
+        description: z.string().optional(),
+        nature: z.enum(['CUSTO', 'DESPESA', 'RECEITA', 'PATRIMONIAL']),
+        costType: z.enum(['FIXA', 'VARIAVEL']).optional(),
+        classification: z.enum(['OPERACIONAL', 'ADMINISTRATIVA', 'COMERCIAL', 'FINANCEIRA', 'NAO_OPERACIONAL', 'PATRIMONIAL']),
+        impactMargin: z.boolean().optional(),
+        impactPayroll: z.boolean().optional(),
+        accountingCode: z.string().min(1),
+        accountingName: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const id = await db.createManagementAccount(input);
+        return { id, success: true };
+      }),
+
+    // Atualizar conta gerencial (admin only)
+    update: adminProcedure
+      .input(z.object({
+        id: z.number(),
+        name: z.string().min(1).optional(),
+        description: z.string().optional(),
+        costType: z.enum(['FIXA', 'VARIAVEL']).optional(),
+        impactMargin: z.boolean().optional(),
+        impactPayroll: z.boolean().optional(),
+        isActive: z.boolean().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const { id, ...data } = input;
+        await db.updateManagementAccount(id, data);
+        return { success: true };
+      }),
+  }),
+});
+export type AppRouter = typeof appRouter;;
 

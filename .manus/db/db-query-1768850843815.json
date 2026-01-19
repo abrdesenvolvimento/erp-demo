@@ -1,0 +1,170 @@
+{
+  "query": "SELECT \n  p.id,\n  p.name,\n  p.expirationDate,\n  p.currentStock,\n  p.active,\n  COUNT(pm.id) as movementCount\nFROM products p\nLEFT JOIN productMovements pm ON p.id = pm.productId AND pm.type = 'ENTRADA'\nWHERE p.expirationDate IS NULL AND p.currentStock > 0\nGROUP BY p.id\nORDER BY p.currentStock DESC\nLIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  p.id,\n  p.name,\n  p.expirationDate,\n  p.currentStock,\n  p.active,\n  COUNT(pm.id) as movementCount\nFROM products p\nLEFT JOIN productMovements pm ON p.id = pm.productId AND pm.type = 'ENTRADA'\nWHERE p.expirationDate IS NULL AND p.currentStock > 0\nGROUP BY p.id\nORDER BY p.currentStock DESC\nLIMIT 20;",
+  "rows": [
+    {
+      "id": "1860013",
+      "name": "Bala Yogurt",
+      "expirationDate": "NULL",
+      "currentStock": "571",
+      "active": "1",
+      "movementCount": "0"
+    },
+    {
+      "id": "690013",
+      "name": "Copo Ultra 700ml",
+      "expirationDate": "NULL",
+      "currentStock": "524",
+      "active": "1",
+      "movementCount": "3"
+    },
+    {
+      "id": "540013",
+      "name": "Original 269ml",
+      "expirationDate": "NULL",
+      "currentStock": "510",
+      "active": "1",
+      "movementCount": "3"
+    },
+    {
+      "id": "510001",
+      "name": "Heineken 269ml",
+      "expirationDate": "NULL",
+      "currentStock": "460",
+      "active": "1",
+      "movementCount": "5"
+    },
+    {
+      "id": "1560005",
+      "name": "Hot Coco Unidade",
+      "expirationDate": "NULL",
+      "currentStock": "459",
+      "active": "1",
+      "movementCount": "1"
+    },
+    {
+      "id": "1860011",
+      "name": "Zomo Seda Unidade",
+      "expirationDate": "NULL",
+      "currentStock": "381",
+      "active": "1",
+      "movementCount": "0"
+    },
+    {
+      "id": "420004",
+      "name": "Petra 269ml",
+      "expirationDate": "NULL",
+      "currentStock": "366",
+      "active": "1",
+      "movementCount": "0"
+    },
+    {
+      "id": "690003",
+      "name": "Coko Maracuja 200ml",
+      "expirationDate": "NULL",
+      "currentStock": "311",
+      "active": "1",
+      "movementCount": "0"
+    },
+    {
+      "id": "420002",
+      "name": "Petra 350ml",
+      "expirationDate": "NULL",
+      "currentStock": "302",
+      "active": "1",
+      "movementCount": "0"
+    },
+    {
+      "id": "450001",
+      "name": "Amstel 269ml",
+      "expirationDate": "NULL",
+      "currentStock": "301",
+      "active": "1",
+      "movementCount": "3"
+    },
+    {
+      "id": "390001",
+      "name": "Itaipava 269ml",
+      "expirationDate": "NULL",
+      "currentStock": "290",
+      "active": "1",
+      "movementCount": "0"
+    },
+    {
+      "id": "1890002",
+      "name": "Lacta Sonho de Valsa 20gr",
+      "expirationDate": "NULL",
+      "currentStock": "253",
+      "active": "1",
+      "movementCount": "0"
+    },
+    {
+      "id": "3360001",
+      "name": "Poosh!",
+      "expirationDate": "NULL",
+      "currentStock": "246",
+      "active": "1",
+      "movementCount": "0"
+    },
+    {
+      "id": "1860002",
+      "name": "Stan Unidade",
+      "expirationDate": "NULL",
+      "currentStock": "240",
+      "active": "1",
+      "movementCount": "0"
+    },
+    {
+      "id": "510007",
+      "name": "Heineken 330ml",
+      "expirationDate": "NULL",
+      "currentStock": "233",
+      "active": "1",
+      "movementCount": "2"
+    },
+    {
+      "id": "690004",
+      "name": "Coko Coco 200ml",
+      "expirationDate": "NULL",
+      "currentStock": "219",
+      "active": "1",
+      "movementCount": "0"
+    },
+    {
+      "id": "690002",
+      "name": "Coko Melancia 200ml",
+      "expirationDate": "NULL",
+      "currentStock": "174",
+      "active": "1",
+      "movementCount": "0"
+    },
+    {
+      "id": "540016",
+      "name": "Original 350ml",
+      "expirationDate": "NULL",
+      "currentStock": "153",
+      "active": "1",
+      "movementCount": "0"
+    },
+    {
+      "id": "510010",
+      "name": "Heineken 269ml 0.0% Álcool",
+      "expirationDate": "NULL",
+      "currentStock": "147",
+      "active": "1",
+      "movementCount": "0"
+    },
+    {
+      "id": "870001",
+      "name": "Budweiser 269ml",
+      "expirationDate": "NULL",
+      "currentStock": "143",
+      "active": "1",
+      "movementCount": "1"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\texpirationDate\tcurrentStock\tactive\tmovementCount\n1860013\tBala Yogurt\tNULL\t571\t1\t0\n690013\tCopo Ultra 700ml\tNULL\t524\t1\t3\n540013\tOriginal 269ml\tNULL\t510\t1\t3\n510001\tHeineken 269ml\tNULL\t460\t1\t5\n1560005\tHot Coco Unidade\tNULL\t459\t1\t1\n1860011\tZomo Seda Unidade\tNULL\t381\t1\t0\n420004\tPetra 269ml\tNULL\t366\t1\t0\n690003\tCoko Maracuja 200ml\tNULL\t311\t1\t0\n420002\tPetra 350ml\tNULL\t302\t1\t0\n450001\tAmstel 269ml\tNULL\t301\t1\t3\n390001\tItaipava 269ml\tNULL\t290\t1\t0\n1890002\tLacta Sonho de Valsa 20gr\tNULL\t253\t1\t0\n3360001\tPoosh!\tNULL\t246\t1\t0\n1860002\tStan Unidade\tNULL\t240\t1\t0\n510007\tHeineken 330ml\tNULL\t233\t1\t2\n690004\tCoko Coco 200ml\tNULL\t219\t1\t0\n690002\tCoko Melancia 200ml\tNULL\t174\t1\t0\n540016\tOriginal 350ml\tNULL\t153\t1\t0\n510010\tHeineken 269ml 0.0% Álcool\tNULL\t147\t1\t0\n870001\tBudweiser 269ml\tNULL\t143\t1\t1\n",
+  "stderr": "",
+  "execution_time_ms": 763
+}

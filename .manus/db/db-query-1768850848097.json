@@ -1,0 +1,9 @@
+{
+  "query": "SELECT \n  e.id,\n  e.description,\n  e.categoryId,\n  ec.name as categoryName,\n  e.productId,\n  e.lossQuantity,\n  e.amount,\n  e.paymentMethod,\n  e.status,\n  e.createdAt\nFROM expenses e\nLEFT JOIN expenseCategories ec ON e.categoryId = ec.id\nWHERE ec.name = 'Perdas' OR e.description LIKE '%Perda%'\nORDER BY e.createdAt DESC\nLIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  e.id,\n  e.description,\n  e.categoryId,\n  ec.name as categoryName,\n  e.productId,\n  e.lossQuantity,\n  e.amount,\n  e.paymentMethod,\n  e.status,\n  e.createdAt\nFROM expenses e\nLEFT JOIN expenseCategories ec ON e.categoryId = ec.id\nWHERE ec.name = 'Perdas' OR e.description LIKE '%Perda%'\nORDER BY e.createdAt DESC\nLIMIT 20;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 52
+}

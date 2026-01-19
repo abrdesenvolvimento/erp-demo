@@ -222,3 +222,93 @@
 - [x] Testar execução completa do backup (4.16s, 32.80 MB)
 - [x] Agendar execução diária às 3h (GMT-3)
 - **IMPLEMENTAÇÃO:** Endpoint HTTP POST /api/backup criado em server/backupEndpoint.ts, agendado via cron para rodar diariamente
+
+## Sprint 15/01/2026 - Levantamento de Melhorias Críticas
+
+### 18. Produtos Vencendo - Validação de Dados Fantasmas
+- [ ] Verificar se existem produtos marcados como vencidos sem data de validade registrada
+- [ ] Identificar casos onde validade de entrada não foi cadastrada corretamente
+- [ ] Criar query para detectar inconsistências (produtos vencidos sem data_validade)
+- [ ] Implementar validação na entrada de estoque (obrigar data de validade para produtos com controle)
+- [ ] Gerar relatório de produtos com dados inconsistentes
+
+### 19. Despesas - Tipo "Perdas" (Crítico)
+- [ ] Quando tipo = "Perdas", forma de pagamento deve ser automática "Perdas"
+- [ ] Valor da parcela deve preencher automaticamente
+- [ ] **BUG**: Perdas não está registrando mesmo com produto e quantidade informados
+- [ ] Verificar se há erro na query de inserção
+- [ ] Testar fluxo completo: produto → quantidade → salvar
+- [ ] Implementar validação de dados obrigatórios
+
+### 20. Tela de Fechamento - Novos Quadros de Análise
+- [ ] Quadro: Vendas por Tipo (hoje mostra por Canal: Delivery, Balcão, A Prazo)
+- [ ] Quadro: Vendas por Categoria de Produtos
+- [ ] Quadro: Compras por Categoria de Produtos
+- [ ] Quadro: Acompanhamento de Margem (novo)
+- [ ] Implementar filtros por período e categoria
+
+### 21. Contas Gerenciais - Reorganização de Categorias
+- [ ] Usuário está finalizando organização das contas gerenciais
+- [ ] Alinhamento com plano contábil
+- [ ] Necessário entender como fazer alteração no sistema
+- [ ] Possível impacto em relatórios e fechamentos
+
+### 22. Backup - Validação de Execução
+- [ ] Verificar se backup está sendo executado corretamente
+- [ ] Confirmar se upload para Google Drive está acontecendo
+- [ ] Validar se limpeza de arquivos antigos funciona
+- [ ] Testar notificações de sucesso/falha
+
+## Sprint 15/01/2026 - Plano Contábil e Gerencial (PRIORIDADE ALTA)
+
+### 23. Implementação do Plano Contábil e Gerencial
+- [ ] **Fase 1: Mapeamento Contábil (1 semana)** - Integrar plano contábil atual
+  - [ ] Criar tabela `accountingMappings` no schema
+  - [ ] Importar 50 contas gerenciais do arquivo Excel
+  - [ ] Mapear contas existentes de despesas
+  - [ ] Testar geração de DRE com dados atuais
+  
+- [ ] **Fase 2: Receitas (1-2 semanas)** - Mapear receitas de vendas
+  - [ ] Criar tabela `revenueAccounts`
+  - [ ] Adicionar contas contábeis para receitas (3.4.01.xxx)
+  - [ ] Modificar endpoint de vendas para registrar conta contábil
+  - [ ] Implementar cálculo de receita líquida
+  
+- [ ] **Fase 3: Estoque e CMV (2-3 semanas)** - Rastrear custo de mercadoria
+  - [ ] Criar tabela `inventoryAccounts`
+  - [ ] Adicionar contas contábeis para compras e CMV
+  - [ ] Implementar cálculo de CMV na venda
+  - [ ] Implementar cálculo de Lucro Bruto
+  
+- [ ] **Fase 4: Contas Patrimoniais (3-4 semanas)** - Gerar balanço
+  - [ ] Criar estrutura de contas patrimoniais (1.x, 2.x, 4.x)
+  - [ ] Integrar com movimentação de caixa
+  - [ ] Integrar com contas a receber/pagar
+  - [ ] Gerar balanço patrimonial
+
+### 24. Validação com Contador
+- [ ] Confirmar estrutura do plano contábil com contador
+- [ ] Validar se há outras receitas além de vendas
+- [ ] Definir se precisa de controle de estoque por lote (para validade)
+- [ ] Definir período de início do novo plano
+- [ ] Estratégia de migração de dados históricos
+
+**NOTA CRÍTICA:** O plano atual está bem estruturado mas INCOMPLETO. Contempla apenas despesas e custos. Necessário adicionar receitas, estoque e contas patrimoniais para DRE completo.
+
+
+## Sprint 19/01/2026 - Implementação Plano Contábil (INICIADO)
+
+### 25. Sistema de Contabilização - Fase 1 (19/01/2026)
+- [x] Extrair e analisar plano contábil do arquivo Excel (51 contas identificadas)
+- [x] Criar tabela `managementAccounts` (Contas Gerenciais)
+- [x] Criar tabela `accountingMappings` (Mapeamento Contábil)
+- [x] Criar tabela `chartOfAccounts` (Plano de Contas)
+- [x] Adicionar campos `managementAccountId` e `accountingCode` em expenses
+- [x] Importar 50 contas gerenciais do plano aprovado
+- [x] Criar mapeamentos contábeis automáticos
+- [x] Criar endpoints tRPC para gerenciar contas (listManagementAccounts, listForSelect, listGrouped, getAccountingCode)
+- [x] Atualizar frontend de Despesas para usar contas gerenciais (dropdown com busca)
+- [x] Testes unitários: 8 testes passando
+- [ ] Testar fluxo completo de lançamento com contabilização (em andamento)
+- [ ] Validar geração de DRE com novos dados
+- [ ] Migrar despesas existentes para novas contas gerenciais

@@ -24,7 +24,10 @@ import {
   customerPayments, CustomerPayment, InsertCustomerPayment,
   customerDebits, CustomerDebit, InsertCustomerDebit,
   productMovements, ProductMovement, InsertProductMovement,
-  revenueGoals, RevenueGoal, InsertRevenueGoal
+  revenueGoals, RevenueGoal, InsertRevenueGoal,
+  managementAccounts, ManagementAccount, InsertManagementAccount,
+  accountingMappings, AccountingMapping, InsertAccountingMapping,
+  chartOfAccounts, ChartOfAccount, InsertChartOfAccount
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -1642,52 +1645,70 @@ export async function getExpenseById(id: number) {
 export async function createExpense(data: InsertExpense) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
+
+  // Verificar se é conta de Perdas (pelo managementAccountId ou categoryId)
+  let isPerdas = false;
   
-  // Se for categoria Perdas, validar e calcular valor automaticamente
-  if (data.categoryId) {
-    const category = await db.select().from(expenseCategories).where(eq(expenseCategories.id, data.categoryId)).limit(1);
-    
-    if (category[0]?.name === 'Perdas') {
-      // Validar campos obrigatórios para Perdas
-      if (!data.productId || !data.lossQuantity) {
-        throw new Error("Para categoria Perdas, é necessário informar o produto e a quantidade perdida");
-      }
-      
-      // Buscar produto e calcular valor da perda (custo médio × quantidade)
-      const product = await db.select().from(products).where(eq(products.id, data.productId)).limit(1);
-      
-      if (!product[0]) {
-        throw new Error("Produto não encontrado");
-      }
-      
-      // Verificar se há estoque suficiente
-      const currentStock = product[0].currentStock || 0;
-      if (currentStock < data.lossQuantity) {
-        throw new Error(`Estoque insuficiente. Disponível: ${currentStock}, Solicitado: ${data.lossQuantity}`);
-      }
-      
-      // Calcular valor da perda
-      const avgCost = parseFloat(product[0].avgCost || '0');
-      const lossValue = avgCost * data.lossQuantity;
-      
-      // Atualizar valor da despesa
-      data.amount = lossValue.toFixed(2);
-      
-      // Baixar estoque
-      await db.update(products)
-        .set({ 
-          currentStock: currentStock - data.lossQuantity,
-          updatedAt: new Date()
-        })
-        .where(eq(products.id, data.productId));
-      
-      // Registrar movimentação de PERDA (será feito após inserir a despesa)
-      // Guardar dados para registro posterior
-      (data as any)._shouldRegisterMovement = true;
-      (data as any)._productId = data.productId;
-      (data as any)._lossQuantity = data.lossQuantity;
-      (data as any)._productName = product[0].name;
+  // Verificar por managementAccountId
+  if (data.managementAccountId) {
+    const account = await db.execute(sql.raw(`
+      SELECT name FROM managementAccounts WHERE id = ${data.managementAccountId}
+    `));
+    const accountRows = account[0] as unknown as any[];
+    if (accountRows[0]?.name === 'Perdas Estoque' || accountRows[0]?.name === 'Perdas Operacionais') {
+      isPerdas = true;
     }
+  }
+  
+  // Verificar por categoryId (compatibilidade)
+  if (data.categoryId && !isPerdas) {
+    const category = await db.select().from(expenseCategories).where(eq(expenseCategories.id, data.categoryId)).limit(1);
+    if (category[0]?.name === 'Perdas') {
+      isPerdas = true;
+    }
+  }
+  
+  // Se for Perdas, validar e calcular valor automaticamente
+  if (isPerdas) {
+    // Validar campos obrigatórios para Perdas
+    if (!data.productId || !data.lossQuantity) {
+      throw new Error("Para categoria Perdas, é necessário informar o produto e a quantidade perdida");
+    }
+    
+    // Buscar produto e calcular valor da perda (custo médio × quantidade)
+    const product = await db.select().from(products).where(eq(products.id, data.productId)).limit(1);
+    
+    if (!product[0]) {
+      throw new Error("Produto não encontrado");
+    }
+    
+    // Verificar se há estoque suficiente
+    const currentStock = product[0].currentStock || 0;
+    if (currentStock < data.lossQuantity) {
+      throw new Error(`Estoque insuficiente. Disponível: ${currentStock}, Solicitado: ${data.lossQuantity}`);
+    }
+    
+    // Calcular valor da perda
+    const avgCost = parseFloat(product[0].avgCost || '0');
+    const lossValue = avgCost * data.lossQuantity;
+    
+    // Atualizar valor da despesa
+    data.amount = lossValue.toFixed(2);
+    
+    // Baixar estoque
+    await db.update(products)
+      .set({ 
+        currentStock: currentStock - data.lossQuantity,
+        updatedAt: new Date()
+      })
+      .where(eq(products.id, data.productId));
+    
+    // Registrar movimentação de PERDA (será feito após inserir a despesa)
+    // Guardar dados para registro posterior
+    (data as any)._shouldRegisterMovement = true;
+    (data as any)._productId = data.productId;
+    (data as any)._lossQuantity = data.lossQuantity;
+    (data as any)._productName = product[0].name;
   }
   
   const result = await db.insert(expenses).values(data);
@@ -5774,4 +5795,259 @@ export async function getAllRevenueGoalHistory(year: number) {
     month: row.month,
     channelName: row.channelName,
   }));
+}
+
+
+// ==================== CONTAS GERENCIAIS ====================
+
+// Listar todas as contas gerenciais ativas
+export async function listManagementAccounts(filters?: {
+  nature?: string;
+  classification?: string;
+  search?: string;
+}) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  let query = `
+    SELECT 
+      ma.id,
+      ma.code,
+      ma.name,
+      ma.description,
+      ma.nature,
+      ma.costType,
+      ma.classification,
+      ma.impactMargin,
+      ma.impactPayroll,
+      ma.isActive,
+      ma.displayOrder,
+      am.accountingCode,
+      am.accountingName
+    FROM managementAccounts ma
+    LEFT JOIN accountingMappings am ON ma.id = am.managementAccountId 
+      AND am.effectiveDate <= NOW() 
+      AND (am.endDate IS NULL OR am.endDate > NOW())
+    WHERE ma.isActive = 1
+  `;
+  
+  if (filters?.nature) {
+    query += ` AND ma.nature = '${filters.nature}'`;
+  }
+  if (filters?.classification) {
+    query += ` AND ma.classification = '${filters.classification}'`;
+  }
+  if (filters?.search) {
+    query += ` AND (ma.name LIKE '%${filters.search}%' OR ma.code LIKE '%${filters.search}%')`;
+  }
+  
+  query += ` ORDER BY ma.displayOrder, ma.name`;
+  
+  const result = await db.execute(sql.raw(query));
+  const rows = result[0] as unknown as any[];
+  
+  return rows.map(row => ({
+    id: row.id,
+    code: row.code,
+    name: row.name,
+    description: row.description,
+    nature: row.nature,
+    costType: row.costType,
+    classification: row.classification,
+    impactMargin: Boolean(row.impactMargin),
+    impactPayroll: Boolean(row.impactPayroll),
+    isActive: Boolean(row.isActive),
+    displayOrder: row.displayOrder,
+    accountingCode: row.accountingCode,
+    accountingName: row.accountingName,
+  }));
+}
+
+// Buscar conta gerencial por ID
+export async function getManagementAccountById(id: number) {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const result = await db.execute(sql.raw(`
+    SELECT 
+      ma.id,
+      ma.code,
+      ma.name,
+      ma.description,
+      ma.nature,
+      ma.costType,
+      ma.classification,
+      ma.impactMargin,
+      ma.impactPayroll,
+      ma.isActive,
+      ma.displayOrder,
+      am.accountingCode,
+      am.accountingName
+    FROM managementAccounts ma
+    LEFT JOIN accountingMappings am ON ma.id = am.managementAccountId 
+      AND am.effectiveDate <= NOW() 
+      AND (am.endDate IS NULL OR am.endDate > NOW())
+    WHERE ma.id = ${id}
+  `));
+  
+  const rows = result[0] as unknown as any[];
+  if (rows.length === 0) return null;
+  
+  const row = rows[0];
+  return {
+    id: row.id,
+    code: row.code,
+    name: row.name,
+    description: row.description,
+    nature: row.nature,
+    costType: row.costType,
+    classification: row.classification,
+    impactMargin: Boolean(row.impactMargin),
+    impactPayroll: Boolean(row.impactPayroll),
+    isActive: Boolean(row.isActive),
+    displayOrder: row.displayOrder,
+    accountingCode: row.accountingCode,
+    accountingName: row.accountingName,
+  };
+}
+
+// Criar nova conta gerencial
+export async function createManagementAccount(data: {
+  code: string;
+  name: string;
+  description?: string;
+  nature: 'CUSTO' | 'DESPESA' | 'RECEITA' | 'PATRIMONIAL';
+  costType?: 'FIXA' | 'VARIAVEL';
+  classification: string;
+  impactMargin?: boolean;
+  impactPayroll?: boolean;
+  accountingCode: string;
+  accountingName?: string;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error('Database not available');
+  
+  // Inserir conta gerencial
+  const insertResult = await db.insert(managementAccounts).values({
+    code: data.code,
+    name: data.name,
+    description: data.description || data.name,
+    nature: data.nature,
+    costType: data.costType || null,
+    classification: data.classification as any,
+    impactMargin: data.impactMargin || false,
+    impactPayroll: data.impactPayroll || false,
+    isActive: true,
+  });
+  
+  const managementAccountId = (insertResult[0] as any).insertId;
+  
+  // Inserir mapeamento contábil
+  await db.insert(accountingMappings).values({
+    managementAccountId,
+    accountingCode: data.accountingCode,
+    accountingName: data.accountingName || data.name,
+    effectiveDate: new Date(),
+  });
+  
+  return managementAccountId;
+}
+
+// Atualizar conta gerencial
+export async function updateManagementAccount(id: number, data: {
+  name?: string;
+  description?: string;
+  costType?: 'FIXA' | 'VARIAVEL';
+  impactMargin?: boolean;
+  impactPayroll?: boolean;
+  isActive?: boolean;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error('Database not available');
+  
+  const updateData: Record<string, any> = {};
+  if (data.name !== undefined) updateData.name = data.name;
+  if (data.description !== undefined) updateData.description = data.description;
+  if (data.costType !== undefined) updateData.costType = data.costType;
+  if (data.impactMargin !== undefined) updateData.impactMargin = data.impactMargin;
+  if (data.impactPayroll !== undefined) updateData.impactPayroll = data.impactPayroll;
+  if (data.isActive !== undefined) updateData.isActive = data.isActive;
+  
+  if (Object.keys(updateData).length > 0) {
+    await db.update(managementAccounts)
+      .set(updateData)
+      .where(eq(managementAccounts.id, id));
+  }
+  
+  return true;
+}
+
+// Buscar código contábil por conta gerencial
+export async function getAccountingCodeByManagementAccount(managementAccountId: number): Promise<string | null> {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const result = await db.execute(sql.raw(`
+    SELECT accountingCode 
+    FROM accountingMappings 
+    WHERE managementAccountId = ${managementAccountId}
+      AND effectiveDate <= NOW()
+      AND (endDate IS NULL OR endDate > NOW())
+    ORDER BY effectiveDate DESC
+    LIMIT 1
+  `));
+  
+  const rows = result[0] as unknown as any[];
+  return rows.length > 0 ? rows[0].accountingCode : null;
+}
+
+// Listar contas gerenciais para dropdown (simplificado)
+export async function listManagementAccountsForSelect() {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const result = await db.execute(sql.raw(`
+    SELECT 
+      ma.id,
+      ma.code,
+      ma.name,
+      ma.nature,
+      ma.classification,
+      am.accountingCode
+    FROM managementAccounts ma
+    LEFT JOIN accountingMappings am ON ma.id = am.managementAccountId 
+      AND am.effectiveDate <= NOW() 
+      AND (am.endDate IS NULL OR am.endDate > NOW())
+    WHERE ma.isActive = 1
+    ORDER BY ma.classification, ma.displayOrder, ma.name
+  `));
+  
+  const rows = result[0] as unknown as any[];
+  
+  return rows.map(row => ({
+    id: row.id,
+    code: row.code,
+    name: row.name,
+    nature: row.nature,
+    classification: row.classification,
+    accountingCode: row.accountingCode,
+    label: `${row.name} (${row.accountingCode})`,
+  }));
+}
+
+// Buscar contas gerenciais agrupadas por classificação
+export async function listManagementAccountsGrouped() {
+  const accounts = await listManagementAccountsForSelect();
+  
+  const grouped: Record<string, typeof accounts> = {};
+  
+  for (const account of accounts) {
+    const classification = account.classification || 'OUTROS';
+    if (!grouped[classification]) {
+      grouped[classification] = [];
+    }
+    grouped[classification].push(account);
+  }
+  
+  return grouped;
 }

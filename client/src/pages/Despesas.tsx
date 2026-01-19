@@ -68,6 +68,11 @@ export default function Despesas() {
   const [productSearch, setProductSearch] = useState("");
   const [lossQuantity, setLossQuantity] = useState("");
   
+  // Estado para conta gerencial (novo sistema de contabilização)
+  const [managementAccountId, setManagementAccountId] = useState<number | undefined>();
+  const [managementAccountOpen, setManagementAccountOpen] = useState(false);
+  const [managementAccountSearch, setManagementAccountSearch] = useState("");
+
   // Queries
   const { data: expenses = [], refetch } = trpc.expenses.list.useQuery({
     startDate: filterStartDate ? new Date(filterStartDate + 'T00:00:00') : undefined,
@@ -79,6 +84,7 @@ export default function Despesas() {
   });
   const { data: suppliers = [] } = trpc.partners.list.useQuery({ partnerType: "SUPPLIER" });
   const { data: categories = [] } = trpc.expenses.categories.list.useQuery({ activeOnly: true });
+  const { data: managementAccounts = [] } = trpc.managementAccounts.forSelect.useQuery();
   const { data: products = [] } = trpc.products.list.useQuery();
   const { data: expenseDetails = [] } = trpc.expenses.getDetails.useQuery(
     { id: editingExpenseId! },
@@ -129,6 +135,8 @@ export default function Despesas() {
     setDocNumber("");
     setCategoryId(undefined);
     setCategorySearch("");
+    setManagementAccountId(undefined);
+    setManagementAccountSearch("");
     setDescription("");
     setAmount("");
     setPaymentMethod("");
@@ -191,8 +199,9 @@ export default function Despesas() {
   };
   
   const handleSubmit = () => {
-    if (!categoryId) {
-      toast.error("Selecione a categoria");
+    // Validar conta gerencial (novo sistema) ou categoria (sistema antigo)
+    if (!managementAccountId && !categoryId) {
+      toast.error("Selecione a conta gerencial");
       return;
     }
     if (!description) {
@@ -212,6 +221,19 @@ export default function Despesas() {
       toast.error("Informe o valor de todas as parcelas");
       return;
     }
+
+    // Verificar se é conta de Perdas e exigir produto
+    const isPerdas = selectedManagementAccount?.name === 'Perdas Estoque' || 
+                     selectedManagementAccount?.name === 'Perdas Operacionais' || 
+                     selectedCategory?.name === 'Perdas';
+    if (isPerdas && !productId) {
+      toast.error("Selecione o produto para lançamento de Perdas");
+      return;
+    }
+    if (isPerdas && (!lossQuantity || parseFloat(lossQuantity) <= 0)) {
+      toast.error("Informe a quantidade perdida");
+      return;
+    }
     
     // Calcular valor total somando as parcelas
     const totalAmount = dueDates.reduce((sum, d) => sum + parseFloat(d.amount), 0).toFixed(2);
@@ -221,6 +243,8 @@ export default function Despesas() {
       docType,
       docNumber,
       categoryId,
+      managementAccountId,
+      accountingCode: selectedManagementAccount?.accountingCode,
       description,
       amount: totalAmount,
       paymentMethod,
@@ -233,9 +257,9 @@ export default function Despesas() {
         };
       }),
       notes,
-      // Campos específicos para categoria Perdas
-      productId: selectedCategory?.name === 'Perdas' ? productId : undefined,
-      lossQuantity: selectedCategory?.name === 'Perdas' && lossQuantity ? parseFloat(lossQuantity) : undefined,
+      // Campos específicos para Perdas
+      productId: isPerdas ? productId : undefined,
+      lossQuantity: isPerdas && lossQuantity ? parseFloat(lossQuantity) : undefined,
     };
     
     if (isEditing && editingExpenseId) {
@@ -255,6 +279,32 @@ export default function Despesas() {
   const filteredCategories = categories.filter(c => 
     c.name.toLowerCase().includes(categorySearch.toLowerCase())
   );
+
+  // Conta gerencial selecionada e filtro
+  const selectedManagementAccount = managementAccounts.find(a => a.id === managementAccountId);
+  const filteredManagementAccounts = managementAccounts.filter(a => 
+    a.name.toLowerCase().includes(managementAccountSearch.toLowerCase()) ||
+    a.code.toLowerCase().includes(managementAccountSearch.toLowerCase()) ||
+    a.accountingCode?.toLowerCase().includes(managementAccountSearch.toLowerCase())
+  );
+
+  // Agrupar contas gerenciais por classificação para exibição
+  const groupedManagementAccounts = filteredManagementAccounts.reduce((acc, account) => {
+    const group = account.classification || 'OUTROS';
+    if (!acc[group]) acc[group] = [];
+    acc[group].push(account);
+    return acc;
+  }, {} as Record<string, typeof managementAccounts>);
+
+  const classificationLabels: Record<string, string> = {
+    'OPERACIONAL': 'Custos/Despesas Operacionais',
+    'ADMINISTRATIVA': 'Despesas Administrativas',
+    'COMERCIAL': 'Despesas Comerciais',
+    'FINANCEIRA': 'Despesas Financeiras',
+    'NAO_OPERACIONAL': 'Despesas Não Operacionais',
+    'PATRIMONIAL': 'Contas Patrimoniais',
+    'OUTROS': 'Outros'
+  };
   
   // Tela de criação de despesa
   if (isCreating) {
@@ -408,66 +458,94 @@ export default function Despesas() {
                   </div>
                 </div>
 
-                {/* Categoria */}
+                {/* Conta Gerencial (Novo Sistema de Contabilização) */}
                 <div className="bg-card border rounded-lg p-6">
-                  <h3 className="text-lg font-semibold mb-4">Categoria *</h3>
-                  <Popover open={categoryOpen} onOpenChange={setCategoryOpen}>
+                  <h3 className="text-lg font-semibold mb-4">Conta Gerencial *</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Selecione a conta gerencial para classificação contábil automática
+                  </p>
+                  <Popover open={managementAccountOpen} onOpenChange={setManagementAccountOpen}>
                     <PopoverTrigger asChild>
                       <Button
                         variant="outline"
                         role="combobox"
-                        aria-expanded={categoryOpen}
+                        aria-expanded={managementAccountOpen}
                         className="w-full justify-between"
                       >
-                        {selectedCategory ? selectedCategory.name : "Selecione uma categoria..."}
+                        {selectedManagementAccount 
+                          ? `${selectedManagementAccount.name} (${selectedManagementAccount.accountingCode})` 
+                          : "Selecione uma conta gerencial..."}
                         <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-[400px] p-0" align="start">
+                    <PopoverContent className="w-[500px] p-0" align="start">
                       <Command shouldFilter={false}>
                         <CommandInput 
-                          placeholder="Buscar categoria..." 
-                          value={categorySearch}
-                          onValueChange={setCategorySearch}
+                          placeholder="Buscar conta gerencial..." 
+                          value={managementAccountSearch}
+                          onValueChange={setManagementAccountSearch}
                         />
-                        <CommandList>
-                          <CommandEmpty>Nenhuma categoria encontrada.</CommandEmpty>
-                          <CommandGroup>
-                            {filteredCategories.map((category) => (
-                              <CommandItem
-                                key={category.id}
-                                value={category.id.toString()}
-                                onSelect={() => {
-                                  setCategoryId(category.id);
-                                  setCategoryOpen(false);
-                                  setCategorySearch("");
-                                }}
-                              >
-                                <Check
-                                  className={cn(
-                                    "mr-2 h-4 w-4",
-                                    categoryId === category.id ? "opacity-100" : "opacity-0"
-                                  )}
-                                />
-                                <div className="flex-1">
-                                  <div className="font-medium">{category.name}</div>
-                                  {category.description && (
-                                    <div className="text-xs text-muted-foreground">
-                                      {category.description}
+                        <CommandList className="max-h-[400px]">
+                          <CommandEmpty>Nenhuma conta gerencial encontrada.</CommandEmpty>
+                          {Object.entries(groupedManagementAccounts).map(([classification, accounts]) => (
+                            <CommandGroup key={classification} heading={classificationLabels[classification] || classification}>
+                              {accounts.map((account) => (
+                                <CommandItem
+                                  key={account.id}
+                                  value={account.id.toString()}
+                                  onSelect={() => {
+                                    setManagementAccountId(account.id);
+                                    // Também definir categoryId para compatibilidade com sistema antigo
+                                    // Buscar categoria correspondente pelo nome
+                                    const matchingCategory = categories.find(c => 
+                                      c.name.toLowerCase() === account.name.toLowerCase()
+                                    );
+                                    if (matchingCategory) {
+                                      setCategoryId(matchingCategory.id);
+                                    }
+                                    setManagementAccountOpen(false);
+                                    setManagementAccountSearch("");
+                                  }}
+                                >
+                                  <Check
+                                    className={cn(
+                                      "mr-2 h-4 w-4",
+                                      managementAccountId === account.id ? "opacity-100" : "opacity-0"
+                                    )}
+                                  />
+                                  <div className="flex-1">
+                                    <div className="font-medium">{account.name}</div>
+                                    <div className="text-xs text-muted-foreground flex gap-2">
+                                      <span className="font-mono bg-muted px-1 rounded">{account.accountingCode}</span>
+                                      <span className="text-blue-600 dark:text-blue-400">{account.nature}</span>
                                     </div>
-                                  )}
-                                </div>
-                              </CommandItem>
-                            ))}
-                          </CommandGroup>
+                                  </div>
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          ))}
                         </CommandList>
                       </Command>
                     </PopoverContent>
                   </Popover>
+                  {selectedManagementAccount && (
+                    <div className="mt-3 p-3 bg-muted/50 rounded-lg text-sm">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">Código Contábil:</span>
+                        <span className="font-mono bg-background px-2 py-0.5 rounded border">
+                          {selectedManagementAccount.accountingCode}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-4 mt-1 text-muted-foreground">
+                        <span>Natureza: {selectedManagementAccount.nature}</span>
+                        <span>Classificação: {classificationLabels[selectedManagementAccount.classification] || selectedManagementAccount.classification}</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
-                {/* Produto e Quantidade (apenas para categoria Perdas) */}
-                {selectedCategory?.name === 'Perdas' && (
+                {/* Produto e Quantidade (apenas para contas de Perdas) */}
+                {(selectedManagementAccount?.name === 'Perdas Estoque' || selectedManagementAccount?.name === 'Perdas Operacionais' || selectedCategory?.name === 'Perdas') && (
                   <div className="bg-card border rounded-lg p-6">
                     <h3 className="text-lg font-semibold mb-4">Produto e Quantidade Perdida *</h3>
                     <div className="space-y-4">

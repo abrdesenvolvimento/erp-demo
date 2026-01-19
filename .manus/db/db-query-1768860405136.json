@@ -1,0 +1,9 @@
+{
+  "query": "ALTER TABLE expenses ADD COLUMN managementAccountId INT NULL;\nALTER TABLE expenses ADD COLUMN accountingCode VARCHAR(20) NULL;\nALTER TABLE expenses ADD INDEX mgmt_account_idx (managementAccountId);\nALTER TABLE expenses ADD INDEX accounting_code_idx (accountingCode);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute ALTER TABLE expenses ADD COLUMN managementAccountId INT NULL;\nALTER TABLE expenses ADD COLUMN accountingCode VARCHAR(20) NULL;\nALTER TABLE expenses ADD INDEX mgmt_account_idx (managementAccountId);\nALTER TABLE expenses ADD INDEX accounting_code_idx (accountingCode);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1613
+}

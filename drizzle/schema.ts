@@ -328,7 +328,9 @@ export const expenses = mysqlTable("expenses", {
   purchaseOrderId: int("purchaseOrderId"), // FK para ordem de compra (se origem for Compra)
   docType: mysqlEnum("docType", ["NOTA_FISCAL", "CUPOM"]).notNull(), // Tipo de documento
   docNumber: varchar("docNumber", { length: 100 }), // Número do documento
-  categoryId: int("categoryId").notNull(),
+  categoryId: int("categoryId").notNull(),  // Categoria antiga (mantida para compatibilidade)
+  managementAccountId: int("managementAccountId"),  // FK para conta gerencial (novo sistema)
+  accountingCode: varchar("accountingCode", { length: 20 }),  // Código contábil desnormalizado
   description: varchar("description", { length: 255 }).notNull(),
   amount: decimal("amount", { precision: 10, scale: 2 }).notNull(), // Renomeado de totalAmount
   paymentMethod: varchar("paymentMethod", { length: 50 }).notNull(), // Forma de pagamento (igual Compras)
@@ -343,6 +345,8 @@ export const expenses = mysqlTable("expenses", {
   categoryIdx: index("category_idx").on(table.categoryId),
   statusIdx: index("status_idx").on(table.status),
   supplierIdx: index("supplier_idx").on(table.supplierId),
+  mgmtAccountIdx: index("mgmt_account_idx").on(table.managementAccountId),
+  accountingCodeIdx: index("accounting_code_idx").on(table.accountingCode),
 }));
 
 export type Expense = typeof expenses.$inferSelect;
@@ -510,3 +514,86 @@ export const revenueGoalHistory = mysqlTable("revenueGoalHistory", {
 
 export type RevenueGoalHistory = typeof revenueGoalHistory.$inferSelect;
 export type InsertRevenueGoalHistory = typeof revenueGoalHistory.$inferInsert;
+
+
+// ==================== SISTEMA DE CONTABILIZAÇÃO ====================
+
+// Contas Gerenciais (o que o usuário vê e seleciona)
+export const managementAccounts = mysqlTable("managementAccounts", {
+  id: int("id").primaryKey().autoincrement(),
+  code: varchar("code", { length: 20 }).notNull(),  // Código interno (ex: "ALU001")
+  name: varchar("name", { length: 100 }).notNull(),  // Nome da conta (ex: "Aluguel")
+  description: text("description"),  // Descrição detalhada
+  nature: mysqlEnum("nature", ["CUSTO", "DESPESA", "RECEITA", "PATRIMONIAL"]).notNull(),  // Natureza contábil
+  costType: mysqlEnum("costType", ["FIXA", "VARIAVEL"]),  // Tipo de custo (Fixa/Variável)
+  classification: mysqlEnum("classification", [
+    "OPERACIONAL",
+    "ADMINISTRATIVA", 
+    "COMERCIAL",
+    "FINANCEIRA",
+    "NAO_OPERACIONAL",
+    "PATRIMONIAL"
+  ]).notNull(),  // Classificação para DRE
+  impactMargin: boolean("impactMargin").default(false),  // Impacta margem de contribuição
+  impactPayroll: boolean("impactPayroll").default(false),  // Impacta folha de pagamento
+  isActive: boolean("isActive").default(true).notNull(),
+  displayOrder: int("displayOrder").default(0),  // Ordem de exibição
+  createdAt: timestamp("createdAt").defaultNow(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow(),
+}, (table) => ({
+  codeIdx: uniqueIndex("code_idx").on(table.code),
+  nameIdx: index("name_idx").on(table.name),
+  natureIdx: index("nature_idx").on(table.nature),
+  classificationIdx: index("classification_idx").on(table.classification),
+}));
+
+export type ManagementAccount = typeof managementAccounts.$inferSelect;
+export type InsertManagementAccount = typeof managementAccounts.$inferInsert;
+
+// Mapeamento Contábil (relação entre conta gerencial e código contábil)
+export const accountingMappings = mysqlTable("accountingMappings", {
+  id: int("id").primaryKey().autoincrement(),
+  managementAccountId: int("managementAccountId").notNull(),  // FK para conta gerencial
+  accountingCode: varchar("accountingCode", { length: 20 }).notNull(),  // Código contábil (ex: "3.2.01.001")
+  accountingName: varchar("accountingName", { length: 150 }),  // Nome da conta contábil
+  effectiveDate: timestamp("effectiveDate").notNull(),  // Data de início da vigência
+  endDate: timestamp("endDate"),  // Data de fim da vigência (NULL = ainda ativa)
+  notes: text("notes"),  // Observações
+  createdAt: timestamp("createdAt").defaultNow(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow(),
+}, (table) => ({
+  mgmtAccountIdx: index("mgmt_account_idx").on(table.managementAccountId),
+  accountingCodeIdx: index("accounting_code_idx").on(table.accountingCode),
+  effectiveDateIdx: index("effective_date_idx").on(table.effectiveDate),
+}));
+
+export type AccountingMapping = typeof accountingMappings.$inferSelect;
+export type InsertAccountingMapping = typeof accountingMappings.$inferInsert;
+
+// Plano de Contas Contábil (estrutura hierárquica do plano contábil)
+export const chartOfAccounts = mysqlTable("chartOfAccounts", {
+  id: int("id").primaryKey().autoincrement(),
+  code: varchar("code", { length: 20 }).notNull(),  // Código contábil (ex: "3.2.01.001")
+  name: varchar("name", { length: 150 }).notNull(),  // Nome da conta
+  parentCode: varchar("parentCode", { length: 20 }),  // Código da conta pai (para hierarquia)
+  level: int("level").notNull(),  // Nível na hierarquia (1, 2, 3, 4)
+  accountType: mysqlEnum("accountType", [
+    "ATIVO",
+    "PASSIVO", 
+    "PATRIMONIO_LIQUIDO",
+    "RECEITA",
+    "CUSTO",
+    "DESPESA"
+  ]).notNull(),
+  isAnalytical: boolean("isAnalytical").default(true),  // Conta analítica (permite lançamentos) ou sintética
+  isActive: boolean("isActive").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow(),
+}, (table) => ({
+  codeIdx: uniqueIndex("chart_code_idx").on(table.code),
+  parentIdx: index("parent_idx").on(table.parentCode),
+  typeIdx: index("type_idx").on(table.accountType),
+}));
+
+export type ChartOfAccount = typeof chartOfAccounts.$inferSelect;
+export type InsertChartOfAccount = typeof chartOfAccounts.$inferInsert;

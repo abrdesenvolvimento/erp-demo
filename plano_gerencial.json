@@ -1,0 +1,512 @@
+[
+  {
+    "grupo": "Despesas e Custos Operacionais",
+    "nome": "Aluguel",
+    "natureza": "Despesa",
+    "tipo": "Fixa",
+    "classificacao": "Operacional",
+    "impacta_margem": "Não",
+    "impacta_folha": "Sim",
+    "descricao": "Aluguel de Imóvel"
+  },
+  {
+    "grupo": "Despesas e Custos Operacionais",
+    "nome": "Seguros",
+    "natureza": "Despesa",
+    "tipo": "Fixa",
+    "classificacao": "Operacional",
+    "impacta_margem": "Não",
+    "impacta_folha": "Sim",
+    "descricao": "Seguro de Imóvel e Equipamentos"
+  },
+  {
+    "grupo": "Despesas e Custos Operacionais",
+    "nome": "Energia Elétrica",
+    "natureza": "Custo",
+    "tipo": "Variável",
+    "classificacao": "Operacional",
+    "impacta_margem": "Sim",
+    "impacta_folha": "Sim",
+    "descricao": "Energia do Imóvel"
+  },
+  {
+    "grupo": "Despesas e Custos Operacionais",
+    "nome": "Água",
+    "natureza": "Custo",
+    "tipo": "Variável",
+    "classificacao": "Operacional",
+    "impacta_margem": "Sim",
+    "impacta_folha": "Sim",
+    "descricao": "Água do Imóvel"
+  },
+  {
+    "grupo": "Despesas e Custos Operacionais",
+    "nome": "Telefonia",
+    "natureza": "Despesa",
+    "tipo": "Fixa",
+    "classificacao": "Operacional",
+    "impacta_margem": "Não",
+    "impacta_folha": "Sim",
+    "descricao": "Telefone Fixo e Móvel"
+  },
+  {
+    "grupo": "Despesas e Custos Operacionais",
+    "nome": "Impostos",
+    "natureza": "Despesa",
+    "tipo": "Variável",
+    "classificacao": "Administrativa",
+    "impacta_margem": "Não",
+    "impacta_folha": "Não",
+    "descricao": "Recolhimento Mensal e demais imposto"
+  },
+  {
+    "grupo": "Despesas e Custos Operacionais",
+    "nome": "IPTU",
+    "natureza": "Despesa",
+    "tipo": "Fixa",
+    "classificacao": "Administrativa",
+    "impacta_margem": "Não",
+    "impacta_folha": "Não",
+    "descricao": "IPTU (Considerar em 12x)"
+  },
+  {
+    "grupo": "Despesas e Custos Operacionais",
+    "nome": "Manutenção de Equipamentos",
+    "natureza": "Custo",
+    "tipo": "Variável",
+    "classificacao": "Operacional",
+    "impacta_margem": "Sim",
+    "impacta_folha": "Sim",
+    "descricao": "Manutenções de Equipamentos"
+  },
+  {
+    "grupo": "Despesas e Custos Operacionais",
+    "nome": "Link de Comunicação",
+    "natureza": "Despesa",
+    "tipo": "Fixa",
+    "classificacao": "Operacional",
+    "impacta_margem": "Não",
+    "impacta_folha": "Sim",
+    "descricao": "Internet"
+  },
+  {
+    "grupo": "Despesas e Custos Operacionais",
+    "nome": "Software e Sistemas",
+    "natureza": "Despesa",
+    "tipo": "Fixa",
+    "classificacao": "Administrativa",
+    "impacta_margem": "Não",
+    "impacta_folha": "Não",
+    "descricao": "Sistemas, Dominios, E-mail"
+  },
+  {
+    "grupo": "Despesas e Custos Operacionais",
+    "nome": "Segurança",
+    "natureza": "Despesa",
+    "tipo": "Fixa",
+    "classificacao": "Operacional",
+    "impacta_margem": "Não",
+    "impacta_folha": "Sim",
+    "descricao": "Segurança do Imóvel"
+  },
+  {
+    "grupo": "Despesas e Custos Operacionais",
+    "nome": "Serviço de Limpeza",
+    "natureza": "Despesa",
+    "tipo": "Fixa",
+    "classificacao": "Operacional",
+    "impacta_margem": "Não",
+    "impacta_folha": "Sim",
+    "descricao": "Serviço de Limpeza"
+  },
+  {
+    "grupo": "Despesas e Custos Operacionais",
+    "nome": "Consultoria e Assessoria",
+    "natureza": "Despesa",
+    "tipo": "Variável",
+    "classificacao": "Administrativa",
+    "impacta_margem": "Não",
+    "impacta_folha": "Não",
+    "descricao": "Consultoria e Assessorias"
+  },
+  {
+    "grupo": "Despesas e Custos Operacionais",
+    "nome": "Marcas e Patentes",
+    "natureza": "Despesa",
+    "tipo": "Fixa",
+    "classificacao": "Administrativa",
+    "impacta_margem": "Não",
+    "impacta_folha": "Não",
+    "descricao": "Regularização de Marca"
+  },
+  {
+    "grupo": "Despesas e Custos Operacionais",
+    "nome": "Treinamento",
+    "natureza": "Despesa",
+    "tipo": "Variável",
+    "classificacao": "Administrativa",
+    "impacta_margem": "Não",
+    "impacta_folha": "Não",
+    "descricao": "Treinamentos"
+  },
+  {
+    "grupo": "Despesas e Custos Operacionais",
+    "nome": "Serviços de RH",
+    "natureza": "Despesa",
+    "tipo": "Fixa",
+    "classificacao": "Administrativa",
+    "impacta_margem": "Não",
+    "impacta_folha": "Não",
+    "descricao": "Serviços de RH"
+  },
+  {
+    "grupo": "Despesas e Custos Operacionais",
+    "nome": "Pró-Labore",
+    "natureza": "Despesa",
+    "tipo": "Fixa",
+    "classificacao": "Administrativa",
+    "impacta_margem": "Não",
+    "impacta_folha": "Não",
+    "descricao": "Pró-Labore"
+  },
+  {
+    "grupo": "Despesas e Custos Operacionais",
+    "nome": "Propaganda",
+    "natureza": "Despesa",
+    "tipo": "Variável",
+    "classificacao": "Comercial",
+    "impacta_margem": "Não",
+    "impacta_folha": "Não",
+    "descricao": "Propaganda"
+  },
+  {
+    "grupo": "Despesas e Custos Operacionais",
+    "nome": "Viagens",
+    "natureza": "Despesa",
+    "tipo": "Variável",
+    "classificacao": "Administrativa",
+    "impacta_margem": "Não",
+    "impacta_folha": "Não",
+    "descricao": "Viagens"
+  },
+  {
+    "grupo": "Despesas e Custos Operacionais",
+    "nome": "Material de Escritório",
+    "natureza": "Despesa",
+    "tipo": "Variável",
+    "classificacao": "Administrativa",
+    "impacta_margem": "Não",
+    "impacta_folha": "Não",
+    "descricao": "Material de Escritório"
+  },
+  {
+    "grupo": "Despesas e Custos Operacionais",
+    "nome": "Reembolso de Despesas",
+    "natureza": "Despesa",
+    "tipo": "Variável",
+    "classificacao": "Administrativa",
+    "impacta_margem": "Não",
+    "impacta_folha": "Não",
+    "descricao": "Reembolso de Despesas"
+  },
+  {
+    "grupo": "Despesas e Custos Operacionais",
+    "nome": "Copa e Limpeza",
+    "natureza": "Despesa",
+    "tipo": "Variável",
+    "classificacao": "Operacional",
+    "impacta_margem": "Não",
+    "impacta_folha": "Não",
+    "descricao": "Consumo interno (café da manhã de funcionários, copo descartável, papel toalha entre outros)"
+  },
+  {
+    "grupo": "Despesas e Custos Operacionais",
+    "nome": "Material de Limpeza",
+    "natureza": "Custo",
+    "tipo": "Variável",
+    "classificacao": "Operacional",
+    "impacta_margem": "Sim",
+    "impacta_folha": "Sim",
+    "descricao": "Higienização de instalações e equipamentos"
+  },
+  {
+    "grupo": "Despesas e Custos Operacionais",
+    "nome": "Gás Encanado",
+    "natureza": "Custo",
+    "tipo": "Variável",
+    "classificacao": "Operacional",
+    "impacta_margem": "Sim",
+    "impacta_folha": "Sim",
+    "descricao": "Gás Encanado"
+  },
+  {
+    "grupo": "Despesas e Custos Operacionais",
+    "nome": "Fretes",
+    "natureza": "Custo",
+    "tipo": "Variável",
+    "classificacao": "Operacional",
+    "impacta_margem": "Sim",
+    "impacta_folha": "Sim",
+    "descricao": "=B26"
+  },
+  {
+    "grupo": "Despesas e Custos Operacionais",
+    "nome": "Aluguel de Equipamentos",
+    "natureza": "Custo",
+    "tipo": "Variável",
+    "classificacao": "Operacional",
+    "impacta_margem": "Sim",
+    "impacta_folha": "Sim",
+    "descricao": "Aluguel de Equipamentos"
+  },
+  {
+    "grupo": "Despesas e Custos Operacionais",
+    "nome": "Tarifa Cartões",
+    "natureza": "Custo",
+    "tipo": "Variável",
+    "classificacao": "Financeira",
+    "impacta_margem": "Sim",
+    "impacta_folha": "Não",
+    "descricao": "Tarifas de Venda Débito, Crédito e Pix"
+  },
+  {
+    "grupo": "Despesas e Custos Operacionais",
+    "nome": "Despesa Bancária",
+    "natureza": "Despesa",
+    "tipo": "Variável",
+    "classificacao": "Financeira",
+    "impacta_margem": "Não",
+    "impacta_folha": "Não",
+    "descricao": "Plano da Conta e demais da Conta Corrente"
+  },
+  {
+    "grupo": "Despesas e Custos Operacionais",
+    "nome": "Reclamação Trabalhista",
+    "natureza": "Despesa",
+    "tipo": "Variável",
+    "classificacao": "Não Operacional",
+    "impacta_margem": "Não",
+    "impacta_folha": "Não",
+    "descricao": "=B30"
+  },
+  {
+    "grupo": "Despesas e Custos Operacionais",
+    "nome": "Material de Consumo",
+    "natureza": "Custo",
+    "tipo": "Variável",
+    "classificacao": "Operacional",
+    "impacta_margem": "Sim",
+    "impacta_folha": "Sim",
+    "descricao": "Material de Consumo para Preparado de Produtos ou consumo"
+  },
+  {
+    "grupo": "Despesas e Custos Operacionais",
+    "nome": "Despesas com Juros",
+    "natureza": "Despesa",
+    "tipo": "Variável",
+    "classificacao": "Financeira",
+    "impacta_margem": "Não",
+    "impacta_folha": "Não",
+    "descricao": "Juros Atraso, Juros Conta Corrente"
+  },
+  {
+    "grupo": "Despesas e Custos Operacionais",
+    "nome": "Salários",
+    "natureza": "Despesa",
+    "tipo": "Fixa",
+    "classificacao": "Administrativa",
+    "impacta_margem": "Não",
+    "impacta_folha": "Sim",
+    "descricao": "=B33"
+  },
+  {
+    "grupo": "Despesas e Custos Operacionais",
+    "nome": "Terceirizado",
+    "natureza": "Custo",
+    "tipo": "Variável",
+    "classificacao": "Operacional",
+    "impacta_margem": "Sim",
+    "impacta_folha": "Sim",
+    "descricao": "=B34"
+  },
+  {
+    "grupo": "Despesas e Custos Operacionais",
+    "nome": "Premiação",
+    "natureza": "Despesa",
+    "tipo": "Variável",
+    "classificacao": "Administrativa",
+    "impacta_margem": "Não",
+    "impacta_folha": "Não",
+    "descricao": "=B35"
+  },
+  {
+    "grupo": "Despesas e Custos Operacionais",
+    "nome": "PJ",
+    "natureza": "Custo",
+    "tipo": "Variável",
+    "classificacao": "Operacional",
+    "impacta_margem": "Sim",
+    "impacta_folha": "Sim",
+    "descricao": "=B36"
+  },
+  {
+    "grupo": "Despesas e Custos Operacionais",
+    "nome": "Despesas Extra",
+    "natureza": "Despesa",
+    "tipo": "Variável",
+    "classificacao": "Não Operacional",
+    "impacta_margem": "Não",
+    "impacta_folha": "Não",
+    "descricao": "=B37"
+  },
+  {
+    "grupo": "Despesas e Custos Operacionais",
+    "nome": "Imóvel Alugado",
+    "natureza": "Despesa",
+    "tipo": "Fixa",
+    "classificacao": "Administrativa",
+    "impacta_margem": "Não",
+    "impacta_folha": "Não",
+    "descricao": "=B38"
+  },
+  {
+    "grupo": "Despesas e Custos Operacionais",
+    "nome": "Embalagens",
+    "natureza": "Custo",
+    "tipo": "Variável",
+    "classificacao": "Operacional",
+    "impacta_margem": "Sim",
+    "impacta_folha": "Sim",
+    "descricao": "=B39"
+  },
+  {
+    "grupo": "Despesas e Custos Operacionais",
+    "nome": "Equipamentos",
+    "natureza": "Custo",
+    "tipo": "Variável",
+    "classificacao": "Operacional",
+    "impacta_margem": "Sim",
+    "impacta_folha": "Sim",
+    "descricao": "Compra de Equipamentos Não imobilizados"
+  },
+  {
+    "grupo": "Despesas e Custos Operacionais",
+    "nome": "Imobilizados Equipamentos",
+    "natureza": "Patrimonial",
+    "tipo": "N/A",
+    "classificacao": "Patrimonial",
+    "impacta_margem": "Não",
+    "impacta_folha": "Não",
+    "descricao": "Não impacta DRE diretamente"
+  },
+  {
+    "grupo": "Despesas e Custos Operacionais",
+    "nome": "Imobilizados Benfeitoria",
+    "natureza": "Patrimonial",
+    "tipo": "N/A",
+    "classificacao": "Patrimonial",
+    "impacta_margem": "Não",
+    "impacta_folha": "Não",
+    "descricao": "Não impacta DRE diretamente"
+  },
+  {
+    "grupo": "Despesas e Custos Operacionais",
+    "nome": "Perdas Estoque",
+    "natureza": "Custo",
+    "tipo": "Variável",
+    "classificacao": "Operacional",
+    "impacta_margem": "Sim",
+    "impacta_folha": "Não",
+    "descricao": "Perdas Vencimento e Embalagem"
+  },
+  {
+    "grupo": "Despesas e Custos Operacionais",
+    "nome": "Vale Transporte",
+    "natureza": "Despesa",
+    "tipo": "Variável",
+    "classificacao": "Administrativa",
+    "impacta_margem": "Não",
+    "impacta_folha": "Não",
+    "descricao": "=B44"
+  },
+  {
+    "grupo": "Despesas e Custos Operacionais",
+    "nome": "Vale Refeição",
+    "natureza": "Despesa",
+    "tipo": "Variável",
+    "classificacao": "Administrativa",
+    "impacta_margem": "Não",
+    "impacta_folha": "Não",
+    "descricao": "=B45"
+  },
+  {
+    "grupo": "Despesas e Custos Operacionais",
+    "nome": "Hora Extra",
+    "natureza": "Despesa",
+    "tipo": "Variável",
+    "classificacao": "Administrativa",
+    "impacta_margem": "Não",
+    "impacta_folha": "Sim",
+    "descricao": "=B46"
+  },
+  {
+    "grupo": "Despesas e Custos Operacionais",
+    "nome": "Seguro de Vida",
+    "natureza": "Despesa",
+    "tipo": "Fixa",
+    "classificacao": "Administrativa",
+    "impacta_margem": "Não",
+    "impacta_folha": "Não",
+    "descricao": "=B47"
+  },
+  {
+    "grupo": "Despesas e Custos Operacionais",
+    "nome": "Perdas Operacionais",
+    "natureza": "Custo",
+    "tipo": "Variável",
+    "classificacao": "Operacional",
+    "impacta_margem": "Sim",
+    "impacta_folha": "Não",
+    "descricao": "Quebras, vencimentos, avarias"
+  },
+  {
+    "grupo": "Despesas e Custos Operacionais",
+    "nome": "IR / CSLL",
+    "natureza": "Despesa",
+    "tipo": "Variável",
+    "classificacao": "Não Operacional",
+    "impacta_margem": "Não",
+    "impacta_folha": "Não",
+    "descricao": "Impostos sobre o lucro"
+  },
+  {
+    "grupo": "Despesas e Custos Operacionais",
+    "nome": "FGTS",
+    "natureza": "Despesa",
+    "tipo": "Variável",
+    "classificacao": "Administrativa",
+    "impacta_margem": "Não",
+    "impacta_folha": "Não",
+    "descricao": "Encargo sobre folha"
+  },
+  {
+    "grupo": "Despesas e Custos Operacionais",
+    "nome": "INSS",
+    "natureza": "Despesa",
+    "tipo": "Variável",
+    "classificacao": "Administrativa",
+    "impacta_margem": "Não",
+    "impacta_folha": "Não",
+    "descricao": "Encargo sobre folha"
+  },
+  {
+    "grupo": "Despesas e Custos Operacionais",
+    "nome": "Manutenção das Instalações",
+    "natureza": "Custo",
+    "tipo": "Variável",
+    "classificacao": "Operacional",
+    "impacta_margem": "Sim",
+    "impacta_folha": "Sim",
+    "descricao": "Manutenções das Instalações"
+  }
+]

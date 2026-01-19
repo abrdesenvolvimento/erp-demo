@@ -1,0 +1,74 @@
+{
+  "query": "SELECT id, name FROM expenseCategories ORDER BY name;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT id, name FROM expenseCategories ORDER BY name;",
+  "rows": [
+    {
+      "id": "1",
+      "name": "Aluguel"
+    },
+    {
+      "id": "6",
+      "name": "Contador"
+    },
+    {
+      "id": "60001",
+      "name": "Custo Operacional"
+    },
+    {
+      "id": "2",
+      "name": "Energia Elétrica"
+    },
+    {
+      "id": "8",
+      "name": "Limpeza"
+    },
+    {
+      "id": "7",
+      "name": "Manutenção"
+    },
+    {
+      "id": "10",
+      "name": "Marketing e Publicidade"
+    },
+    {
+      "id": "12",
+      "name": "Material de Escritório"
+    },
+    {
+      "id": "14",
+      "name": "Outras Despesas"
+    },
+    {
+      "id": "30001",
+      "name": "Perdas"
+    },
+    {
+      "id": "5",
+      "name": "Salários e Encargos"
+    },
+    {
+      "id": "9",
+      "name": "Segurança"
+    },
+    {
+      "id": "11",
+      "name": "Taxas e Impostos"
+    },
+    {
+      "id": "4",
+      "name": "Telefone/Internet"
+    },
+    {
+      "id": "13",
+      "name": "Transporte/Combustível"
+    },
+    {
+      "id": "3",
+      "name": "Água"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\n1\tAluguel\n6\tContador\n60001\tCusto Operacional\n2\tEnergia Elétrica\n8\tLimpeza\n7\tManutenção\n10\tMarketing e Publicidade\n12\tMaterial de Escritório\n14\tOutras Despesas\n30001\tPerdas\n5\tSalários e Encargos\n9\tSegurança\n11\tTaxas e Impostos\n4\tTelefone/Internet\n13\tTransporte/Combustível\n3\tÁgua\n",
+  "stderr": "",
+  "execution_time_ms": 58
+}

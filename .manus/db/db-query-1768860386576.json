@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE IF NOT EXISTS managementAccounts (\n  id INT AUTO_INCREMENT PRIMARY KEY,\n  code VARCHAR(20) NOT NULL,\n  name VARCHAR(100) NOT NULL,\n  description TEXT,\n  nature ENUM('CUSTO', 'DESPESA', 'RECEITA', 'PATRIMONIAL') NOT NULL,\n  costType ENUM('FIXA', 'VARIAVEL'),\n  classification ENUM('OPERACIONAL', 'ADMINISTRATIVA', 'COMERCIAL', 'FINANCEIRA', 'NAO_OPERACIONAL', 'PATRIMONIAL') NOT NULL,\n  impactMargin BOOLEAN DEFAULT FALSE,\n  impactPayroll BOOLEAN DEFAULT FALSE,\n  isActive BOOLEAN DEFAULT TRUE NOT NULL,\n  displayOrder INT DEFAULT 0,\n  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\n  updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n  UNIQUE INDEX code_idx (code),\n  INDEX name_idx (name),\n  INDEX nature_idx (nature),\n  INDEX classification_idx (classification)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute CREATE TABLE IF NOT EXISTS managementAccounts (\n  id INT AUTO_INCREMENT PRIMARY KEY,\n  code VARCHAR(20) NOT NULL,\n  name VARCHAR(100) NOT NULL,\n  description TEXT,\n  nature ENUM('CUSTO', 'DESPESA', 'RECEITA', 'PATRIMONIAL') NOT NULL,\n  costType ENUM('FIXA', 'VARIAVEL'),\n  classification ENUM('OPERACIONAL', 'ADMINISTRATIVA', 'COMERCIAL', 'FINANCEIRA', 'NAO_OPERACIONAL', 'PATRIMONIAL') NOT NULL,\n  impactMargin BOOLEAN DEFAULT FALSE,\n  impactPayroll BOOLEAN DEFAULT FALSE,\n  isActive BOOLEAN DEFAULT TRUE NOT NULL,\n  displayOrder INT DEFAULT 0,\n  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\n  updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n  UNIQUE INDEX code_idx (code),\n  INDEX name_idx (name),\n  INDEX nature_idx (nature),\n  INDEX classification_idx (classification)\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 209
+}
