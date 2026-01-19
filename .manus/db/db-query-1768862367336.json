@@ -1,0 +1,9 @@
+{
+  "query": "INSERT INTO expenses (id, supplierId, purchaseOrderId, docType, docNumber, categoryId, managementAccountId, accountingCode, description, amount, paymentMethod, notes, status, productId, lossQuantity, createdBy, createdAt, updatedAt) VALUES (DEFAULT, NULL, NULL, 'CUPOM', '123', 17, 123, '3.2.01.005', 'Teste', 99.99, 'À Vista', NULL, 'ATIVA', NULL, NULL, '3sp2FmLhkenyiqMFmfLoex', NOW(), NOW());",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute INSERT INTO expenses (id, supplierId, purchaseOrderId, docType, docNumber, categoryId, managementAccountId, accountingCode, description, amount, paymentMethod, notes, status, productId, lossQuantity, createdBy, createdAt, updatedAt) VALUES (DEFAULT, NULL, NULL, 'CUPOM', '123', 17, 123, '3.2.01.005', 'Teste', 99.99, 'À Vista', NULL, 'ATIVA', NULL, NULL, '3sp2FmLhkenyiqMFmfLoex', NOW(), NOW());",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 61
+}

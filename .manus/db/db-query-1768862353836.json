@@ -1,0 +1,34 @@
+{
+  "query": "SHOW COLUMNS FROM expenses WHERE Field IN ('managementAccountId', 'accountingCode', 'categoryId');",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SHOW COLUMNS FROM expenses WHERE Field IN ('managementAccountId', 'accountingCode', 'categoryId');",
+  "rows": [
+    {
+      "Field": "categoryId",
+      "Type": "int(11)",
+      "Null": "NO",
+      "Key": "MUL",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "managementAccountId",
+      "Type": "int(11)",
+      "Null": "YES",
+      "Key": "MUL",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "accountingCode",
+      "Type": "varchar(20)",
+      "Null": "YES",
+      "Key": "MUL",
+      "Default": "NULL",
+      "Extra": ""
+    }
+  ],
+  "messages": [],
+  "stdout": "Field\tType\tNull\tKey\tDefault\tExtra\ncategoryId\tint(11)\tNO\tMUL\tNULL\t\nmanagementAccountId\tint(11)\tYES\tMUL\tNULL\t\naccountingCode\tvarchar(20)\tYES\tMUL\tNULL\t\n",
+  "stderr": "",
+  "execution_time_ms": 52
+}

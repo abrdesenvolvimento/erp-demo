@@ -1084,7 +1084,9 @@ export const appRouter = router({
         supplierId: z.number().optional(),
         docType: z.enum(["NOTA_FISCAL", "CUPOM"]),
         docNumber: z.string().optional(),
-        categoryId: z.number(),
+        categoryId: z.number().optional(),
+        managementAccountId: z.number().optional(),
+        accountingCode: z.string().optional(),
         description: z.string().min(3),
         amount: z.string(),
         paymentMethod: z.string(),
@@ -1095,11 +1097,19 @@ export const appRouter = router({
         notes: z.string().optional(),
       }))
       .mutation(async ({ input }) => {
+        // Se tiver managementAccountId, buscar o código contábil
+        let accountingCode = input.accountingCode;
+        if (input.managementAccountId && !accountingCode) {
+          accountingCode = await db.getAccountingCodeByManagementAccount(input.managementAccountId) || undefined;
+        }
+
         await db.updateExpense(input.id, {
           supplierId: input.supplierId,
           docType: input.docType,
           docNumber: input.docNumber,
           categoryId: input.categoryId,
+          managementAccountId: input.managementAccountId,
+          accountingCode: accountingCode,
           description: input.description,
           amount: input.amount,
           paymentMethod: input.paymentMethod,

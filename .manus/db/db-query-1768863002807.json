@@ -1,0 +1,50 @@
+{
+  "query": "SELECT id, description, amount, managementAccountId, accountingCode, DATE_FORMAT(createdAt, '%Y-%m-%d %H:%i') as created FROM expenses ORDER BY createdAt DESC LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT id, description, amount, managementAccountId, accountingCode, DATE_FORMAT(createdAt, '%Y-%m-%d %H:%i') as created FROM expenses ORDER BY createdAt DESC LIMIT 5;",
+  "rows": [
+    {
+      "id": "660001",
+      "description": "Teste",
+      "amount": "99.99",
+      "managementAccountId": "123",
+      "accountingCode": "3.2.01.005",
+      "created": "2026-01-19 22:39"
+    },
+    {
+      "id": "630005",
+      "description": "Tarifa Sobre Pix conta Nubank ",
+      "amount": "9.90",
+      "managementAccountId": "NULL",
+      "accountingCode": "NULL",
+      "created": "2026-01-19 14:45"
+    },
+    {
+      "id": "630004",
+      "description": "1ª e 2ª Semana de Janeiro 2026",
+      "amount": "1750.00",
+      "managementAccountId": "NULL",
+      "accountingCode": "NULL",
+      "created": "2026-01-19 14:34"
+    },
+    {
+      "id": "630003",
+      "description": "2ª e 3ª Semana de Janeiro 2026",
+      "amount": "1750.00",
+      "managementAccountId": "NULL",
+      "accountingCode": "NULL",
+      "created": "2026-01-19 14:33"
+    },
+    {
+      "id": "630002",
+      "description": "Parcela 02/06 Projeto e Execução de obra ABR",
+      "amount": "5675.00",
+      "managementAccountId": "NULL",
+      "accountingCode": "NULL",
+      "created": "2026-01-19 14:31"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tdescription\tamount\tmanagementAccountId\taccountingCode\tcreated\n660001\tTeste\t99.99\t123\t3.2.01.005\t2026-01-19 22:39\n630005\tTarifa Sobre Pix conta Nubank \t9.90\tNULL\tNULL\t2026-01-19 14:45\n630004\t1ª e 2ª Semana de Janeiro 2026\t1750.00\tNULL\tNULL\t2026-01-19 14:34\n630003\t2ª e 3ª Semana de Janeiro 2026\t1750.00\tNULL\tNULL\t2026-01-19 14:33\n630002\tParcela 02/06 Projeto e Execução de obra ABR\t5675.00\tNULL\tNULL\t2026-01-19 14:31\n",
+  "stderr": "",
+  "execution_time_ms": 55
+}

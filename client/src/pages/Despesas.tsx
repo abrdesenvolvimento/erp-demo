@@ -179,6 +179,7 @@ export default function Despesas() {
         setDocType(expense.expense.docType as "NOTA_FISCAL" | "CUPOM");
         setDocNumber(expense.expense.docNumber || "");
         setCategoryId(expense.expense.categoryId);
+        setManagementAccountId(expense.expense.managementAccountId || undefined);
         setDescription(expense.expense.description);
         setPaymentMethod(expense.expense.paymentMethod);
         setNotes(expense.expense.notes || "");

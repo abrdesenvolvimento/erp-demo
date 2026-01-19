@@ -1,0 +1,90 @@
+{
+  "query": "SELECT id, name FROM managementAccounts ORDER BY id LIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT id, name FROM managementAccounts ORDER BY id LIMIT 20;",
+  "rows": [
+    {
+      "id": "1",
+      "name": "Embalagens"
+    },
+    {
+      "id": "2",
+      "name": "Material de Limpeza"
+    },
+    {
+      "id": "3",
+      "name": "Gás Encanado"
+    },
+    {
+      "id": "4",
+      "name": "Fretes"
+    },
+    {
+      "id": "5",
+      "name": "Aluguel de Equipamentos"
+    },
+    {
+      "id": "6",
+      "name": "Material de Consumo"
+    },
+    {
+      "id": "7",
+      "name": "Terceirizado"
+    },
+    {
+      "id": "8",
+      "name": "PJ"
+    },
+    {
+      "id": "9",
+      "name": "Equipamentos"
+    },
+    {
+      "id": "10",
+      "name": "Perdas Estoque"
+    },
+    {
+      "id": "11",
+      "name": "Perdas Operacionais"
+    },
+    {
+      "id": "12",
+      "name": "Manutenção das Instalações"
+    },
+    {
+      "id": "13",
+      "name": "Aluguel"
+    },
+    {
+      "id": "14",
+      "name": "Energia Elétrica"
+    },
+    {
+      "id": "15",
+      "name": "Água"
+    },
+    {
+      "id": "16",
+      "name": "IPTU"
+    },
+    {
+      "id": "17",
+      "name": "Internet"
+    },
+    {
+      "id": "18",
+      "name": "Telefone"
+    },
+    {
+      "id": "19",
+      "name": "Seguro Empresa"
+    },
+    {
+      "id": "20",
+      "name": "Manutenção de Equipamentos"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\n1\tEmbalagens\n2\tMaterial de Limpeza\n3\tGás Encanado\n4\tFretes\n5\tAluguel de Equipamentos\n6\tMaterial de Consumo\n7\tTerceirizado\n8\tPJ\n9\tEquipamentos\n10\tPerdas Estoque\n11\tPerdas Operacionais\n12\tManutenção das Instalações\n13\tAluguel\n14\tEnergia Elétrica\n15\tÁgua\n16\tIPTU\n17\tInternet\n18\tTelefone\n19\tSeguro Empresa\n20\tManutenção de Equipamentos\n",
+  "stderr": "",
+  "execution_time_ms": 53
+}

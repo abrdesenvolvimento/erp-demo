@@ -312,3 +312,15 @@
 - [ ] Testar fluxo completo de lançamento com contabilização (em andamento)
 - [ ] Validar geração de DRE com novos dados
 - [ ] Migrar despesas existentes para novas contas gerenciais
+
+
+### 26. BUG: Erro ao salvar despesa com conta gerencial (19/01/2026)
+- [x] Erro: "Failed query: insert into expenses" - managementAccountId sendo enviado como número
+- [x] Corrigido: Alterado tipo da coluna managementAccountId de VARCHAR para INT
+
+
+### 27. BUG: Erro ao editar despesa - categoryId undefined (19/01/2026)
+- [x] Endpoint de update espera categoryId obrigatório
+- [x] Atualizado para aceitar managementAccountId e accountingCode
+- [x] categoryId agora é opcional para retrocompatibilidade
+- [x] Frontend carrega managementAccountId ao editar despesa

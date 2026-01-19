@@ -1,0 +1,34 @@
+{
+  "query": "SHOW CREATE TABLE managementAccounts;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SHOW CREATE TABLE managementAccounts;",
+  "rows": [
+    {
+      "Table": "managementAccounts",
+      "Create Table": "CREATE TABLE `managementAccounts` ("
+    }
+  ],
+  "messages": [
+    "  `id` int(11) NOT NULL AUTO_INCREMENT,",
+    "  `code` varchar(20) NOT NULL,",
+    "  `name` varchar(100) NOT NULL,",
+    "  `description` text DEFAULT NULL,",
+    "  `nature` enum('CUSTO','DESPESA','RECEITA','PATRIMONIAL') NOT NULL,",
+    "  `costType` enum('FIXA','VARIAVEL') DEFAULT NULL,",
+    "  `classification` enum('OPERACIONAL','ADMINISTRATIVA','COMERCIAL','FINANCEIRA','NAO_OPERACIONAL','PATRIMONIAL') NOT NULL,",
+    "  `impactMargin` tinyint(1) DEFAULT '0',",
+    "  `impactPayroll` tinyint(1) DEFAULT '0',",
+    "  `isActive` tinyint(1) NOT NULL DEFAULT '1',",
+    "  `displayOrder` int(11) DEFAULT '0',",
+    "  `createdAt` timestamp DEFAULT CURRENT_TIMESTAMP,",
+    "  `updatedAt` timestamp DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,",
+    "  PRIMARY KEY (`id`) /*T![clustered_index] CLUSTERED */,",
+    "  UNIQUE KEY `code_idx` (`code`),",
+    "  KEY `name_idx` (`name`),",
+    "  KEY `nature_idx` (`nature`),",
+    "  KEY `classification_idx` (`classification`)",
+    ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin AUTO_INCREMENT=30001"
+  ],
+  "stdout": "Table\tCreate Table\nmanagementAccounts\tCREATE TABLE `managementAccounts` (\n  `id` int(11) NOT NULL AUTO_INCREMENT,\n  `code` varchar(20) NOT NULL,\n  `name` varchar(100) NOT NULL,\n  `description` text DEFAULT NULL,\n  `nature` enum('CUSTO','DESPESA','RECEITA','PATRIMONIAL') NOT NULL,\n  `costType` enum('FIXA','VARIAVEL') DEFAULT NULL,\n  `classification` enum('OPERACIONAL','ADMINISTRATIVA','COMERCIAL','FINANCEIRA','NAO_OPERACIONAL','PATRIMONIAL') NOT NULL,\n  `impactMargin` tinyint(1) DEFAULT '0',\n  `impactPayroll` tinyint(1) DEFAULT '0',\n  `isActive` tinyint(1) NOT NULL DEFAULT '1',\n  `displayOrder` int(11) DEFAULT '0',\n  `createdAt` timestamp DEFAULT CURRENT_TIMESTAMP,\n  `updatedAt` timestamp DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n  PRIMARY KEY (`id`) /*T![clustered_index] CLUSTERED */,\n  UNIQUE KEY `code_idx` (`code`),\n  KEY `name_idx` (`name`),\n  KEY `nature_idx` (`nature`),\n  KEY `classification_idx` (`classification`)\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin AUTO_INCREMENT=30001\n",
+  "stderr": "",
+  "execution_time_ms": 46
+}
