@@ -1561,11 +1561,13 @@ export async function getExpenses(filters?: {
   let query = db.select({
     expense: expenses,
     category: expenseCategories,
-    supplier: partners
+    supplier: partners,
+    managementAccount: managementAccounts
   })
   .from(expenses)
   .leftJoin(expenseCategories, eq(expenses.categoryId, expenseCategories.id))
-  .leftJoin(partners, eq(expenses.supplierId, partners.id));
+  .leftJoin(partners, eq(expenses.supplierId, partners.id))
+  .leftJoin(managementAccounts, eq(expenses.managementAccountId, managementAccounts.id));
   
   const conditions = [];
   

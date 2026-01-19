@@ -1,0 +1,260 @@
+{
+  "query": "SELECT id, name, code FROM managementAccounts ORDER BY name;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT id, name, code FROM managementAccounts ORDER BY name;",
+  "rows": [
+    {
+      "id": "13",
+      "name": "Aluguel",
+      "code": "DOP001"
+    },
+    {
+      "id": "5",
+      "name": "Aluguel de Equipamentos",
+      "code": "COP005"
+    },
+    {
+      "id": "22",
+      "name": "Consultoria e Assessoria",
+      "code": "DAD001"
+    },
+    {
+      "id": "24",
+      "name": "Contabilidade",
+      "code": "DAD003"
+    },
+    {
+      "id": "21",
+      "name": "Copa e Limpeza",
+      "code": "DOP009"
+    },
+    {
+      "id": "44",
+      "name": "Despesa Bancária",
+      "code": "DFI002"
+    },
+    {
+      "id": "47",
+      "name": "Despesas Extra",
+      "code": "DNO002"
+    },
+    {
+      "id": "45",
+      "name": "Despesas com Juros",
+      "code": "DFI003"
+    },
+    {
+      "id": "1",
+      "name": "Embalagens",
+      "code": "COP001"
+    },
+    {
+      "id": "14",
+      "name": "Energia Elétrica",
+      "code": "DOP002"
+    },
+    {
+      "id": "9",
+      "name": "Equipamentos",
+      "code": "COP009"
+    },
+    {
+      "id": "36",
+      "name": "FGTS",
+      "code": "DAD015"
+    },
+    {
+      "id": "4",
+      "name": "Fretes",
+      "code": "COP004"
+    },
+    {
+      "id": "3",
+      "name": "Gás Encanado",
+      "code": "COP003"
+    },
+    {
+      "id": "34",
+      "name": "Hora Extra",
+      "code": "DAD013"
+    },
+    {
+      "id": "37",
+      "name": "INSS",
+      "code": "DAD016"
+    },
+    {
+      "id": "16",
+      "name": "IPTU",
+      "code": "DOP004"
+    },
+    {
+      "id": "48",
+      "name": "IR / CSLL",
+      "code": "DNO003"
+    },
+    {
+      "id": "50",
+      "name": "Imobilizados Benfeitoria",
+      "code": "PAT002"
+    },
+    {
+      "id": "49",
+      "name": "Imobilizados Equipamentos",
+      "code": "PAT001"
+    },
+    {
+      "id": "41",
+      "name": "Imóvel Alugado",
+      "code": "DAD020"
+    },
+    {
+      "id": "17",
+      "name": "Internet",
+      "code": "DOP005"
+    },
+    {
+      "id": "25",
+      "name": "Jurídico",
+      "code": "DAD004"
+    },
+    {
+      "id": "12",
+      "name": "Manutenção das Instalações",
+      "code": "COP012"
+    },
+    {
+      "id": "20",
+      "name": "Manutenção de Equipamentos",
+      "code": "DOP008"
+    },
+    {
+      "id": "26",
+      "name": "Marcas e Patentes",
+      "code": "DAD005"
+    },
+    {
+      "id": "6",
+      "name": "Material de Consumo",
+      "code": "COP006"
+    },
+    {
+      "id": "39",
+      "name": "Material de Escritório",
+      "code": "DAD018"
+    },
+    {
+      "id": "2",
+      "name": "Material de Limpeza",
+      "code": "COP002"
+    },
+    {
+      "id": "8",
+      "name": "PJ",
+      "code": "COP008"
+    },
+    {
+      "id": "10",
+      "name": "Perdas Estoque",
+      "code": "COP010"
+    },
+    {
+      "id": "11",
+      "name": "Perdas Operacionais",
+      "code": "COP011"
+    },
+    {
+      "id": "31",
+      "name": "Premiação",
+      "code": "DAD010"
+    },
+    {
+      "id": "42",
+      "name": "Propaganda",
+      "code": "DCO001"
+    },
+    {
+      "id": "29",
+      "name": "Pró-Labore",
+      "code": "DAD008"
+    },
+    {
+      "id": "46",
+      "name": "Reclamação Trabalhista",
+      "code": "DNO001"
+    },
+    {
+      "id": "40",
+      "name": "Reembolso de Despesas",
+      "code": "DAD019"
+    },
+    {
+      "id": "30",
+      "name": "Salários",
+      "code": "DAD009"
+    },
+    {
+      "id": "19",
+      "name": "Seguro Empresa",
+      "code": "DOP007"
+    },
+    {
+      "id": "35",
+      "name": "Seguro de Vida",
+      "code": "DAD014"
+    },
+    {
+      "id": "28",
+      "name": "Serviços de RH",
+      "code": "DAD007"
+    },
+    {
+      "id": "23",
+      "name": "Software e Sistemas",
+      "code": "DAD002"
+    },
+    {
+      "id": "43",
+      "name": "Tarifa Cartões",
+      "code": "DFI001"
+    },
+    {
+      "id": "18",
+      "name": "Telefone",
+      "code": "DOP006"
+    },
+    {
+      "id": "7",
+      "name": "Terceirizado",
+      "code": "COP007"
+    },
+    {
+      "id": "27",
+      "name": "Treinamento",
+      "code": "DAD006"
+    },
+    {
+      "id": "33",
+      "name": "Vale Refeição",
+      "code": "DAD012"
+    },
+    {
+      "id": "32",
+      "name": "Vale Transporte",
+      "code": "DAD011"
+    },
+    {
+      "id": "38",
+      "name": "Viagens",
+      "code": "DAD017"
+    },
+    {
+      "id": "15",
+      "name": "Água",
+      "code": "DOP003"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tcode\n13\tAluguel\tDOP001\n5\tAluguel de Equipamentos\tCOP005\n22\tConsultoria e Assessoria\tDAD001\n24\tContabilidade\tDAD003\n21\tCopa e Limpeza\tDOP009\n44\tDespesa Bancária\tDFI002\n47\tDespesas Extra\tDNO002\n45\tDespesas com Juros\tDFI003\n1\tEmbalagens\tCOP001\n14\tEnergia Elétrica\tDOP002\n9\tEquipamentos\tCOP009\n36\tFGTS\tDAD015\n4\tFretes\tCOP004\n3\tGás Encanado\tCOP003\n34\tHora Extra\tDAD013\n37\tINSS\tDAD016\n16\tIPTU\tDOP004\n48\tIR / CSLL\tDNO003\n50\tImobilizados Benfeitoria\tPAT002\n49\tImobilizados Equipamentos\tPAT001\n41\tImóvel Alugado\tDAD020\n17\tInternet\tDOP005\n25\tJurídico\tDAD004\n12\tManutenção das Instalações\tCOP012\n20\tManutenção de Equipamentos\tDOP008\n26\tMarcas e Patentes\tDAD005\n6\tMaterial de Consumo\tCOP006\n39\tMaterial de Escritório\tDAD018\n2\tMaterial de Limpeza\tCOP002\n8\tPJ\tCOP008\n10\tPerdas Estoque\tCOP010\n11\tPerdas Operacionais\tCOP011\n31\tPremiação\tDAD010\n42\tPropaganda\tDCO001\n29\tPró-Labore\tDAD008\n46\tReclamação Trabalhista\tDNO001\n40\tReembolso de Despesas\tDAD019\n30\tSalários\tDAD009\n19\tSeguro Empresa\tDOP007\n35\tSeguro de Vida\tDAD014\n28\tServiços de RH\tDAD007\n23\tSoftware e Sistemas\tDAD002\n43\tTarifa Cartões\tDFI001\n18\tTelefone\tDOP006\n7\tTerceirizado\tCOP007\n27\tTreinamento\tDAD006\n33\tVale Refeição\tDAD012\n32\tVale Transporte\tDAD011\n38\tViagens\tDAD017\n15\tÁgua\tDOP003\n",
+  "stderr": "",
+  "execution_time_ms": 53
+}

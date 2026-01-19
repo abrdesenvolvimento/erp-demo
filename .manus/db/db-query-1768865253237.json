@@ -1,0 +1,226 @@
+{
+  "query": "SELECT e.id, e.description, e.amount, e.categoryId, e.managementAccountId, e.accountingCode, p.name as supplierName\nFROM expenses e\nLEFT JOIN partners p ON e.supplierId = p.id\nWHERE e.status != 'CANCELADA'\nORDER BY e.createdAt DESC\nLIMIT 30;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT e.id, e.description, e.amount, e.categoryId, e.managementAccountId, e.accountingCode, p.name as supplierName\nFROM expenses e\nLEFT JOIN partners p ON e.supplierId = p.id\nWHERE e.status != 'CANCELADA'\nORDER BY e.createdAt DESC\nLIMIT 30;",
+  "rows": [
+    {
+      "id": "630005",
+      "description": "Tarifa Sobre Pix conta Nubank ",
+      "amount": "9.90",
+      "categoryId": "14",
+      "managementAccountId": "NULL",
+      "accountingCode": "NULL",
+      "supplierName": "Itau"
+    },
+    {
+      "id": "630004",
+      "description": "1ª e 2ª Semana de Janeiro 2026",
+      "amount": "1750.00",
+      "categoryId": "5",
+      "managementAccountId": "NULL",
+      "accountingCode": "NULL",
+      "supplierName": "Gabriel Morais Santos"
+    },
+    {
+      "id": "630003",
+      "description": "2ª e 3ª Semana de Janeiro 2026",
+      "amount": "1750.00",
+      "categoryId": "5",
+      "managementAccountId": "NULL",
+      "accountingCode": "NULL",
+      "supplierName": "Ricardo"
+    },
+    {
+      "id": "630002",
+      "description": "Parcela 02/06 Projeto e Execução de obra ABR",
+      "amount": "5675.00",
+      "categoryId": "14",
+      "managementAccountId": "NULL",
+      "accountingCode": "NULL",
+      "supplierName": "Studio Teixeira Arquitetura Ltda"
+    },
+    {
+      "id": "630001",
+      "description": "Aluguel Maquina PciPay",
+      "amount": "53.08",
+      "categoryId": "60001",
+      "managementAccountId": "NULL",
+      "accountingCode": "NULL",
+      "supplierName": "PICPAY"
+    },
+    {
+      "id": "600001",
+      "description": "24/12/2025 Gustavo R$200,00 e 31/12/2025 Caique R$85,00",
+      "amount": "285.00",
+      "categoryId": "14",
+      "managementAccountId": "NULL",
+      "accountingCode": "NULL",
+      "supplierName": "Adega Beira Rio Comércio de Bebidas Ltda"
+    },
+    {
+      "id": "570001",
+      "description": "Conserto Banco Alto",
+      "amount": "30.00",
+      "categoryId": "7",
+      "managementAccountId": "NULL",
+      "accountingCode": "NULL",
+      "supplierName": "Adega Beira Rio Comércio de Bebidas Ltda"
+    },
+    {
+      "id": "540001",
+      "description": "1.000 Copos Totalplast R$0,08*1.000 = R$80,45 / 3 Pacotes Sacola 40x50 R$48*3 = R$144,00 / 2 Pacotes 50x70 R$48,30*2 = R$96,60",
+      "amount": "321.05",
+      "categoryId": "60001",
+      "managementAccountId": "NULL",
+      "accountingCode": "NULL",
+      "supplierName": "Embrasplast Comercio de Utilidades Ltda"
+    },
+    {
+      "id": "510001",
+      "description": "Registro de dominio (ABRWF e ABRASAREUNE)",
+      "amount": "296.00",
+      "categoryId": "14",
+      "managementAccountId": "NULL",
+      "accountingCode": "NULL",
+      "supplierName": "Gabriel Morais Santos"
+    },
+    {
+      "id": "480001",
+      "description": "Parcela 01/06 Projeto e Execução de obra ABR",
+      "amount": "5675.00",
+      "categoryId": "14",
+      "managementAccountId": "NULL",
+      "accountingCode": "NULL",
+      "supplierName": "Studio Teixeira Arquitetura Ltda"
+    },
+    {
+      "id": "450001",
+      "description": "Estrutura e Instalação de Isolamento Estacionamento ABR / 1 Pacote de Cimento / 1 Del Valle Pêssego",
+      "amount": "1260.00",
+      "categoryId": "14",
+      "managementAccountId": "NULL",
+      "accountingCode": "NULL",
+      "supplierName": "Reginaldo Faria Coelho"
+    },
+    {
+      "id": "420001",
+      "description": "19 Metros de Corrente (Estacionamento ABR) R$13,50x19 = R$256,50 / 4 Cadeados 30mm R$22,50x4 = R$90,00",
+      "amount": "346.50",
+      "categoryId": "14",
+      "managementAccountId": "NULL",
+      "accountingCode": "NULL",
+      "supplierName": "Depósito Cruzeiro Do Sul"
+    },
+    {
+      "id": "390007",
+      "description": "Desenvolvimento 01/2026",
+      "amount": "2177.41",
+      "categoryId": "60001",
+      "managementAccountId": "NULL",
+      "accountingCode": "NULL",
+      "supplierName": "Manus IA"
+    },
+    {
+      "id": "390006",
+      "description": "Energia Adega 01/2026",
+      "amount": "2496.47",
+      "categoryId": "2",
+      "managementAccountId": "NULL",
+      "accountingCode": "NULL",
+      "supplierName": "Enel "
+    },
+    {
+      "id": "390005",
+      "description": "1ª Semana de Janeiro 2026",
+      "amount": "875.00",
+      "categoryId": "5",
+      "managementAccountId": "NULL",
+      "accountingCode": "NULL",
+      "supplierName": "Ricardo"
+    },
+    {
+      "id": "390004",
+      "description": "1ª Semana de Janeiro 2026",
+      "amount": "875.00",
+      "categoryId": "5",
+      "managementAccountId": "NULL",
+      "accountingCode": "NULL",
+      "supplierName": "Gabriel Morais Santos"
+    },
+    {
+      "id": "390003",
+      "description": "Contabilidade 01/2026",
+      "amount": "350.00",
+      "categoryId": "6",
+      "managementAccountId": "NULL",
+      "accountingCode": "NULL",
+      "supplierName": "Jaine Barros de Oliveira"
+    },
+    {
+      "id": "390002",
+      "description": "Aluguel 01/2026",
+      "amount": "720.00",
+      "categoryId": "1",
+      "managementAccountId": "NULL",
+      "accountingCode": "NULL",
+      "supplierName": "Jocineide Pereira Costa Silva"
+    },
+    {
+      "id": "390001",
+      "description": "4 Pacotes Sacola 40x50 R$12,99x4 = 51,96",
+      "amount": "51.96",
+      "categoryId": "60001",
+      "managementAccountId": "NULL",
+      "accountingCode": "NULL",
+      "supplierName": "RM Osasco Comercio de Embalagens"
+    },
+    {
+      "id": "360001",
+      "description": "3 Pacotes Sacola 40x50 R$12,99*3 = 38,97 / 2 Pacotes Sacola 25x35 R$5,20*2 = R$10,40",
+      "amount": "49.37",
+      "categoryId": "60001",
+      "managementAccountId": "NULL",
+      "accountingCode": "NULL",
+      "supplierName": "RM Osasco Comercio de Embalagens"
+    },
+    {
+      "id": "330001",
+      "description": "2 Pacotes 5Kg 30x40 / 2 Pacotes 5Kg 40x5 / 3 Pacotes 5Kg 50x70 e 2 Pacotes 5Kg 70x90",
+      "amount": "434.70",
+      "categoryId": "60001",
+      "managementAccountId": "NULL",
+      "accountingCode": "NULL",
+      "supplierName": "Embrasplast Comercio de Utilidades Ltda"
+    },
+    {
+      "id": "300003",
+      "description": "Internet 11 2025",
+      "amount": "99.99",
+      "categoryId": "4",
+      "managementAccountId": "NULL",
+      "accountingCode": "NULL",
+      "supplierName": "Telefônica Brasil S/A"
+    },
+    {
+      "id": "300002",
+      "description": "Contabilidade 12 2025",
+      "amount": "350.00",
+      "categoryId": "6",
+      "managementAccountId": "NULL",
+      "accountingCode": "NULL",
+      "supplierName": "Jaine Barros de Oliveira"
+    },
+    {
+      "id": "300001",
+      "description": "Aluguel 12 2025",
+      "amount": "720.00",
+      "categoryId": "1",
+      "managementAccountId": "NULL",
+      "accountingCode": "NULL",
+      "supplierName": "Jocineide Pereira Costa Silva"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tdescription\tamount\tcategoryId\tmanagementAccountId\taccountingCode\tsupplierName\n630005\tTarifa Sobre Pix conta Nubank \t9.90\t14\tNULL\tNULL\tItau\n630004\t1ª e 2ª Semana de Janeiro 2026\t1750.00\t5\tNULL\tNULL\tGabriel Morais Santos\n630003\t2ª e 3ª Semana de Janeiro 2026\t1750.00\t5\tNULL\tNULL\tRicardo\n630002\tParcela 02/06 Projeto e Execução de obra ABR\t5675.00\t14\tNULL\tNULL\tStudio Teixeira Arquitetura Ltda\n630001\tAluguel Maquina PciPay\t53.08\t60001\tNULL\tNULL\tPICPAY\n600001\t24/12/2025 Gustavo R$200,00 e 31/12/2025 Caique R$85,00\t285.00\t14\tNULL\tNULL\tAdega Beira Rio Comércio de Bebidas Ltda\n570001\tConserto Banco Alto\t30.00\t7\tNULL\tNULL\tAdega Beira Rio Comércio de Bebidas Ltda\n540001\t1.000 Copos Totalplast R$0,08*1.000 = R$80,45 / 3 Pacotes Sacola 40x50 R$48*3 = R$144,00 / 2 Pacotes 50x70 R$48,30*2 = R$96,60\t321.05\t60001\tNULL\tNULL\tEmbrasplast Comercio de Utilidades Ltda\n510001\tRegistro de dominio (ABRWF e ABRASAREUNE)\t296.00\t14\tNULL\tNULL\tGabriel Morais Santos\n480001\tParcela 01/06 Projeto e Execução de obra ABR\t5675.00\t14\tNULL\tNULL\tStudio Teixeira Arquitetura Ltda\n450001\tEstrutura e Instalação de Isolamento Estacionamento ABR / 1 Pacote de Cimento / 1 Del Valle Pêssego\t1260.00\t14\tNULL\tNULL\tReginaldo Faria Coelho\n420001\t19 Metros de Corrente (Estacionamento ABR) R$13,50x19 = R$256,50 / 4 Cadeados 30mm R$22,50x4 = R$90,00\t346.50\t14\tNULL\tNULL\tDepósito Cruzeiro Do Sul\n390007\tDesenvolvimento 01/2026\t2177.41\t60001\tNULL\tNULL\tManus IA\n390006\tEnergia Adega 01/2026\t2496.47\t2\tNULL\tNULL\tEnel \n390005\t1ª Semana de Janeiro 2026\t875.00\t5\tNULL\tNULL\tRicardo\n390004\t1ª Semana de Janeiro 2026\t875.00\t5\tNULL\tNULL\tGabriel Morais Santos\n390003\tContabilidade 01/2026\t350.00\t6\tNULL\tNULL\tJaine Barros de Oliveira\n390002\tAluguel 01/2026\t720.00\t1\tNULL\tNULL\tJocineide Pereira Costa Silva\n390001\t4 Pacotes Sacola 40x50 R$12,99x4 = 51,96\t51.96\t60001\tNULL\tNULL\tRM Osasco Comercio de Embalagens\n360001\t3 Pacotes Sacola 40x50 R$12,99*3 = 38,97 / 2 Pacotes Sacola 25x35 R$5,20*2 = R$10,40\t49.37\t60001\tNULL\tNULL\tRM Osasco Comercio de Embalagens\n330001\t2 Pacotes 5Kg 30x40 / 2 Pacotes 5Kg 40x5 / 3 Pacotes 5Kg 50x70 e 2 Pacotes 5Kg 70x90\t434.70\t60001\tNULL\tNULL\tEmbrasplast Comercio de Utilidades Ltda\n300003\tInternet 11 2025\t99.99\t4\tNULL\tNULL\tTelefônica Brasil S/A\n300002\tContabilidade 12 2025\t350.00\t6\tNULL\tNULL\tJaine Barros de Oliveira\n300001\tAluguel 12 2025\t720.00\t1\tNULL\tNULL\tJocineide Pereira Costa Silva\n",
+  "stderr": "",
+  "execution_time_ms": 57
+}

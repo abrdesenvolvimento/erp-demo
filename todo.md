@@ -324,3 +324,14 @@
 - [x] Atualizado para aceitar managementAccountId e accountingCode
 - [x] categoryId agora é opcional para retrocompatibilidade
 - [x] Frontend carrega managementAccountId ao editar despesa
+
+
+### 28. Listagem de Despesas - Mostrar Conta Gerencial (19/01/2026)
+- [x] Substituir "Categoria: N/A" por "Conta Gerencial: [nome]"
+- [x] Exibir código contábil junto com o nome da conta
+
+### 29. Migração de Despesas Existentes (19/01/2026)
+- [x] Criar script de migração baseado no De-Para
+- [x] Associar despesas de janeiro às novas contas gerenciais (24 despesas migradas)
+- [x] Validar migração
+- [x] Corrigir registro de domínio para Software e Sistemas

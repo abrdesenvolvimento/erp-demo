@@ -1,0 +1,260 @@
+{
+  "query": "SELECT ma.id, ma.name, am.accountingCode \nFROM managementAccounts ma\nLEFT JOIN accountingMappings am ON ma.id = am.managementAccountId\nORDER BY ma.name\nLIMIT 60;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT ma.id, ma.name, am.accountingCode \nFROM managementAccounts ma\nLEFT JOIN accountingMappings am ON ma.id = am.managementAccountId\nORDER BY ma.name\nLIMIT 60;",
+  "rows": [
+    {
+      "id": "13",
+      "name": "Aluguel",
+      "accountingCode": "3.2.01.001"
+    },
+    {
+      "id": "5",
+      "name": "Aluguel de Equipamentos",
+      "accountingCode": "3.1.01.005"
+    },
+    {
+      "id": "22",
+      "name": "Consultoria e Assessoria",
+      "accountingCode": "3.3.01.001"
+    },
+    {
+      "id": "24",
+      "name": "Contabilidade",
+      "accountingCode": "3.3.01.003"
+    },
+    {
+      "id": "21",
+      "name": "Copa e Limpeza",
+      "accountingCode": "3.2.02.002"
+    },
+    {
+      "id": "44",
+      "name": "Despesa Bancária",
+      "accountingCode": "3.5.01.002"
+    },
+    {
+      "id": "47",
+      "name": "Despesas Extra",
+      "accountingCode": "3.6.01.002"
+    },
+    {
+      "id": "45",
+      "name": "Despesas com Juros",
+      "accountingCode": "3.5.01.003"
+    },
+    {
+      "id": "1",
+      "name": "Embalagens",
+      "accountingCode": "3.1.01.001"
+    },
+    {
+      "id": "14",
+      "name": "Energia Elétrica",
+      "accountingCode": "3.2.01.002"
+    },
+    {
+      "id": "9",
+      "name": "Equipamentos",
+      "accountingCode": "3.1.01.009"
+    },
+    {
+      "id": "36",
+      "name": "FGTS",
+      "accountingCode": "3.3.02.008"
+    },
+    {
+      "id": "4",
+      "name": "Fretes",
+      "accountingCode": "3.1.01.004"
+    },
+    {
+      "id": "3",
+      "name": "Gás Encanado",
+      "accountingCode": "3.1.01.003"
+    },
+    {
+      "id": "34",
+      "name": "Hora Extra",
+      "accountingCode": "3.3.02.006"
+    },
+    {
+      "id": "37",
+      "name": "INSS",
+      "accountingCode": "3.3.02.009"
+    },
+    {
+      "id": "16",
+      "name": "IPTU",
+      "accountingCode": "3.2.01.004"
+    },
+    {
+      "id": "48",
+      "name": "IR / CSLL",
+      "accountingCode": "3.6.01.003"
+    },
+    {
+      "id": "50",
+      "name": "Imobilizados Benfeitoria",
+      "accountingCode": "1.2.01.002"
+    },
+    {
+      "id": "49",
+      "name": "Imobilizados Equipamentos",
+      "accountingCode": "1.2.01.001"
+    },
+    {
+      "id": "41",
+      "name": "Imóvel Alugado",
+      "accountingCode": "3.3.03.004"
+    },
+    {
+      "id": "17",
+      "name": "Internet",
+      "accountingCode": "3.2.01.005"
+    },
+    {
+      "id": "25",
+      "name": "Jurídico",
+      "accountingCode": "3.3.01.004"
+    },
+    {
+      "id": "12",
+      "name": "Manutenção das Instalações",
+      "accountingCode": "3.1.03.001"
+    },
+    {
+      "id": "20",
+      "name": "Manutenção de Equipamentos",
+      "accountingCode": "3.2.02.001"
+    },
+    {
+      "id": "26",
+      "name": "Marcas e Patentes",
+      "accountingCode": "3.3.01.005"
+    },
+    {
+      "id": "6",
+      "name": "Material de Consumo",
+      "accountingCode": "3.1.01.006"
+    },
+    {
+      "id": "39",
+      "name": "Material de Escritório",
+      "accountingCode": "3.3.03.002"
+    },
+    {
+      "id": "2",
+      "name": "Material de Limpeza",
+      "accountingCode": "3.1.01.002"
+    },
+    {
+      "id": "8",
+      "name": "PJ",
+      "accountingCode": "3.1.01.008"
+    },
+    {
+      "id": "10",
+      "name": "Perdas Estoque",
+      "accountingCode": "3.1.02.001"
+    },
+    {
+      "id": "11",
+      "name": "Perdas Operacionais",
+      "accountingCode": "3.1.02.002"
+    },
+    {
+      "id": "31",
+      "name": "Premiação",
+      "accountingCode": "3.3.02.003"
+    },
+    {
+      "id": "42",
+      "name": "Propaganda",
+      "accountingCode": "3.4.01.001"
+    },
+    {
+      "id": "29",
+      "name": "Pró-Labore",
+      "accountingCode": "3.3.02.001"
+    },
+    {
+      "id": "46",
+      "name": "Reclamação Trabalhista",
+      "accountingCode": "3.6.01.001"
+    },
+    {
+      "id": "40",
+      "name": "Reembolso de Despesas",
+      "accountingCode": "3.3.03.003"
+    },
+    {
+      "id": "30",
+      "name": "Salários",
+      "accountingCode": "3.3.02.002"
+    },
+    {
+      "id": "19",
+      "name": "Seguro Empresa",
+      "accountingCode": "3.2.01.007"
+    },
+    {
+      "id": "35",
+      "name": "Seguro de Vida",
+      "accountingCode": "3.3.02.007"
+    },
+    {
+      "id": "28",
+      "name": "Serviços de RH",
+      "accountingCode": "3.3.01.007"
+    },
+    {
+      "id": "23",
+      "name": "Software e Sistemas",
+      "accountingCode": "3.3.01.002"
+    },
+    {
+      "id": "43",
+      "name": "Tarifa Cartões",
+      "accountingCode": "3.5.01.001"
+    },
+    {
+      "id": "18",
+      "name": "Telefone",
+      "accountingCode": "3.2.01.006"
+    },
+    {
+      "id": "7",
+      "name": "Terceirizado",
+      "accountingCode": "3.1.01.007"
+    },
+    {
+      "id": "27",
+      "name": "Treinamento",
+      "accountingCode": "3.3.01.006"
+    },
+    {
+      "id": "33",
+      "name": "Vale Refeição",
+      "accountingCode": "3.3.02.005"
+    },
+    {
+      "id": "32",
+      "name": "Vale Transporte",
+      "accountingCode": "3.3.02.004"
+    },
+    {
+      "id": "38",
+      "name": "Viagens",
+      "accountingCode": "3.3.03.001"
+    },
+    {
+      "id": "15",
+      "name": "Água",
+      "accountingCode": "3.2.01.003"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\taccountingCode\n13\tAluguel\t3.2.01.001\n5\tAluguel de Equipamentos\t3.1.01.005\n22\tConsultoria e Assessoria\t3.3.01.001\n24\tContabilidade\t3.3.01.003\n21\tCopa e Limpeza\t3.2.02.002\n44\tDespesa Bancária\t3.5.01.002\n47\tDespesas Extra\t3.6.01.002\n45\tDespesas com Juros\t3.5.01.003\n1\tEmbalagens\t3.1.01.001\n14\tEnergia Elétrica\t3.2.01.002\n9\tEquipamentos\t3.1.01.009\n36\tFGTS\t3.3.02.008\n4\tFretes\t3.1.01.004\n3\tGás Encanado\t3.1.01.003\n34\tHora Extra\t3.3.02.006\n37\tINSS\t3.3.02.009\n16\tIPTU\t3.2.01.004\n48\tIR / CSLL\t3.6.01.003\n50\tImobilizados Benfeitoria\t1.2.01.002\n49\tImobilizados Equipamentos\t1.2.01.001\n41\tImóvel Alugado\t3.3.03.004\n17\tInternet\t3.2.01.005\n25\tJurídico\t3.3.01.004\n12\tManutenção das Instalações\t3.1.03.001\n20\tManutenção de Equipamentos\t3.2.02.001\n26\tMarcas e Patentes\t3.3.01.005\n6\tMaterial de Consumo\t3.1.01.006\n39\tMaterial de Escritório\t3.3.03.002\n2\tMaterial de Limpeza\t3.1.01.002\n8\tPJ\t3.1.01.008\n10\tPerdas Estoque\t3.1.02.001\n11\tPerdas Operacionais\t3.1.02.002\n31\tPremiação\t3.3.02.003\n42\tPropaganda\t3.4.01.001\n29\tPró-Labore\t3.3.02.001\n46\tReclamação Trabalhista\t3.6.01.001\n40\tReembolso de Despesas\t3.3.03.003\n30\tSalários\t3.3.02.002\n19\tSeguro Empresa\t3.2.01.007\n35\tSeguro de Vida\t3.3.02.007\n28\tServiços de RH\t3.3.01.007\n23\tSoftware e Sistemas\t3.3.01.002\n43\tTarifa Cartões\t3.5.01.001\n18\tTelefone\t3.2.01.006\n7\tTerceirizado\t3.1.01.007\n27\tTreinamento\t3.3.01.006\n33\tVale Refeição\t3.3.02.005\n32\tVale Transporte\t3.3.02.004\n38\tViagens\t3.3.03.001\n15\tÁgua\t3.2.01.003\n",
+  "stderr": "",
+  "execution_time_ms": 56
+}
