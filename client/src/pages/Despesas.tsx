@@ -211,10 +211,10 @@ export default function Despesas() {
       return;
     }
     
-    // Verificar se é conta de Perdas (forma de pagamento e valor são automáticos)
-    const isPerdas = selectedManagementAccount?.name === 'Perdas Estoque' || 
-                     selectedManagementAccount?.name === 'Perdas Operacionais' || 
-                     selectedCategory?.name === 'Perdas';
+    // Verificar se é conta de Perdas Estoque (forma de pagamento, valor e baixa de estoque são automáticos)
+    // Perdas Operacionais funciona como despesa normal (para perdas que não são de estoque)
+    const isPerdasEstoque = selectedManagementAccount?.name === 'Perdas Estoque';
+    const isPerdas = isPerdasEstoque || selectedCategory?.name === 'Perdas';
     
     // Para Perdas, validar produto e quantidade
     if (isPerdas) {
@@ -282,8 +282,9 @@ export default function Despesas() {
       }),
       notes,
       // Campos específicos para Perdas
-      productId: isPerdas ? productId : undefined,
-      lossQuantity: isPerdas && lossQuantity ? parseFloat(lossQuantity) : undefined,
+      // Apenas Perdas Estoque registra produto e quantidade para baixa de estoque
+      productId: isPerdasEstoque ? productId : undefined,
+      lossQuantity: isPerdasEstoque && lossQuantity ? parseFloat(lossQuantity) : undefined,
     };
     
     if (isEditing && editingExpenseId) {
@@ -568,8 +569,8 @@ export default function Despesas() {
                   )}
                 </div>
 
-                {/* Produto e Quantidade (apenas para contas de Perdas) */}
-                {(selectedManagementAccount?.name === 'Perdas Estoque' || selectedManagementAccount?.name === 'Perdas Operacionais' || selectedCategory?.name === 'Perdas') && (
+                {/* Produto e Quantidade (apenas para Perdas Estoque - baixa automática de estoque) */}
+                {(selectedManagementAccount?.name === 'Perdas Estoque' || selectedCategory?.name === 'Perdas') && (
                   <div className="bg-card border rounded-lg p-6">
                     <h3 className="text-lg font-semibold mb-4">Produto e Quantidade Perdida *</h3>
                     <div className="space-y-4">
@@ -691,7 +692,7 @@ export default function Despesas() {
                     </div>
                     <div>
                       <Label>Forma de Pagamento *</Label>
-                      {(selectedManagementAccount?.name === 'Perdas Estoque' || selectedManagementAccount?.name === 'Perdas Operacionais' || selectedCategory?.name === 'Perdas') ? (
+                      {(selectedManagementAccount?.name === 'Perdas Estoque' || selectedCategory?.name === 'Perdas') ? (
                         <div className="flex items-center gap-2">
                           <Input value="Perdas" disabled className="bg-muted" />
                           <span className="text-sm text-muted-foreground">(automático)</span>
@@ -715,7 +716,7 @@ export default function Despesas() {
                 </div>
 
                 {/* Datas de Vencimento ou Valor da Perda */}
-                {(selectedManagementAccount?.name === 'Perdas Estoque' || selectedManagementAccount?.name === 'Perdas Operacionais' || selectedCategory?.name === 'Perdas') ? (
+                {(selectedManagementAccount?.name === 'Perdas Estoque' || selectedCategory?.name === 'Perdas') ? (
                   <div className="bg-card border rounded-lg p-6">
                     <h3 className="text-lg font-semibold mb-4">Valor da Perda</h3>
                     <div className="p-4 bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-lg">
