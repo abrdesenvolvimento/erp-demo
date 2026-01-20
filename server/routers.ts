@@ -1031,7 +1031,7 @@ export const appRouter = router({
           supplierId: input.supplierId,
           docType: input.docType,
           docNumber: input.docNumber,
-          categoryId: input.categoryId,
+          categoryId: input.categoryId || 0, // Usar 0 como padrão se não informado
           managementAccountId: input.managementAccountId,
           accountingCode: accountingCode,
           description: input.description,
@@ -1040,6 +1040,8 @@ export const appRouter = router({
           notes: input.notes,
           status: "ATIVA",
           createdBy: ctx.user.id,
+          productId: input.productId,
+          lossQuantity: input.lossQuantity,
         });
         
         // Criar parcelas com valores individuais
@@ -1053,20 +1055,8 @@ export const appRouter = router({
           });
         }
 
-        // Se for Perdas, registrar movimento de estoque
-        if (input.productId && input.lossQuantity && input.lossQuantity > 0) {
-          await db.createProductMovement({
-            productId: input.productId,
-            movementType: 'PERDA',
-            quantity: input.lossQuantity,
-            unitCost: (parseFloat(input.amount) / input.lossQuantity).toFixed(2),
-            totalCost: input.amount,
-            referenceType: 'EXPENSE',
-            referenceId: expenseId,
-            notes: `Perda registrada - ${input.description}`,
-            createdBy: ctx.user.id,
-          });
-        }
+        // NOTA: O movimento de estoque para Perdas já é registrado automaticamente
+        // dentro de db.createExpense quando detecta que é uma conta de Perdas
         
         return { id: expenseId, success: true };
       }),

@@ -25,7 +25,8 @@ const PAYMENT_METHODS = [
   "Crédito R",
   "Crédito ABR",
   "À Vista",
-  "Débito Automático"
+  "Débito Automático",
+  "Perdas"
 ];
 
 export default function Despesas() {
@@ -209,35 +210,57 @@ export default function Despesas() {
       toast.error("Informe a descrição");
       return;
     }
-    // Valor total não é mais obrigatório - será calculado pela soma das parcelas
-    if (!paymentMethod) {
-      toast.error("Selecione a forma de pagamento");
-      return;
-    }
-    if (dueDates.length === 0 || dueDates.some(d => !d.date)) {
-      toast.error("Informe pelo menos uma data de vencimento");
-      return;
-    }
-    if (dueDates.some(d => !d.amount || parseFloat(d.amount) <= 0)) {
-      toast.error("Informe o valor de todas as parcelas");
-      return;
-    }
-
-    // Verificar se é conta de Perdas e exigir produto
+    
+    // Verificar se é conta de Perdas (forma de pagamento e valor são automáticos)
     const isPerdas = selectedManagementAccount?.name === 'Perdas Estoque' || 
                      selectedManagementAccount?.name === 'Perdas Operacionais' || 
                      selectedCategory?.name === 'Perdas';
-    if (isPerdas && !productId) {
-      toast.error("Selecione o produto para lançamento de Perdas");
-      return;
-    }
-    if (isPerdas && (!lossQuantity || parseFloat(lossQuantity) <= 0)) {
-      toast.error("Informe a quantidade perdida");
-      return;
+    
+    // Para Perdas, validar produto e quantidade
+    if (isPerdas) {
+      if (!productId) {
+        toast.error("Selecione o produto para lançamento de Perdas");
+        return;
+      }
+      if (!lossQuantity || parseFloat(lossQuantity) <= 0) {
+        toast.error("Informe a quantidade perdida");
+        return;
+      }
+    } else {
+      // Para despesas normais, validar forma de pagamento e parcelas
+      if (!paymentMethod) {
+        toast.error("Selecione a forma de pagamento");
+        return;
+      }
+      if (dueDates.length === 0 || dueDates.some(d => !d.date)) {
+        toast.error("Informe pelo menos uma data de vencimento");
+        return;
+      }
+      if (dueDates.some(d => !d.amount || parseFloat(d.amount) <= 0)) {
+        toast.error("Informe o valor de todas as parcelas");
+        return;
+      }
     }
     
-    // Calcular valor total somando as parcelas
-    const totalAmount = dueDates.reduce((sum, d) => sum + parseFloat(d.amount), 0).toFixed(2);
+    // Para Perdas, calcular valor automaticamente e usar data de hoje
+    let finalDueDates = dueDates;
+    let finalPaymentMethod = paymentMethod;
+    let totalAmount: string;
+    
+    if (isPerdas && productId && lossQuantity) {
+      const selectedProduct = products.find(p => p.id === productId) as any;
+      const avgCost = parseFloat(selectedProduct?.avgCost || '0');
+      const calculatedValue = avgCost * parseFloat(lossQuantity);
+      totalAmount = calculatedValue.toFixed(2);
+      finalDueDates = [{
+        date: new Date().toISOString().split('T')[0],
+        amount: totalAmount
+      }];
+      finalPaymentMethod = 'Perdas';
+    } else {
+      // Calcular valor total somando as parcelas
+      totalAmount = dueDates.reduce((sum, d) => sum + parseFloat(d.amount), 0).toFixed(2);
+    }
     
     const payload = {
       supplierId,
@@ -248,9 +271,9 @@ export default function Despesas() {
       accountingCode: selectedManagementAccount?.accountingCode,
       description,
       amount: totalAmount,
-      paymentMethod,
-      dueDates: dueDates.map(d => {
-        // Criar data explicitamente em horário de Brasília (meio-dia) para evitar problemas de timezone
+      paymentMethod: finalPaymentMethod,
+      dueDates: finalDueDates.map(d => {
+        // Criar data explícitamente em horário de Brasília (meio-dia) para evitar problemas de timezone
         const [year, month, day] = d.date.split('-');
         return {
           date: new Date(parseInt(year), parseInt(month) - 1, parseInt(day), 12, 0, 0),
@@ -668,101 +691,139 @@ export default function Despesas() {
                     </div>
                     <div>
                       <Label>Forma de Pagamento *</Label>
-                      <Select value={paymentMethod} onValueChange={setPaymentMethod}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione..." />
-                        </SelectTrigger>
-                        <SelectContent position="popper">
-                          {PAYMENT_METHODS.map((method) => (
-                            <SelectItem key={method} value={method}>
-                              {method}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      {(selectedManagementAccount?.name === 'Perdas Estoque' || selectedManagementAccount?.name === 'Perdas Operacionais' || selectedCategory?.name === 'Perdas') ? (
+                        <div className="flex items-center gap-2">
+                          <Input value="Perdas" disabled className="bg-muted" />
+                          <span className="text-sm text-muted-foreground">(automático)</span>
+                        </div>
+                      ) : (
+                        <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione..." />
+                          </SelectTrigger>
+                          <SelectContent position="popper">
+                            {PAYMENT_METHODS.filter(m => m !== 'Perdas').map((method) => (
+                              <SelectItem key={method} value={method}>
+                                {method}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
                     </div>
                   </div>
                 </div>
 
-                {/* Datas de Vencimento */}
-                <div className="bg-card border rounded-lg p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold">Datas de Vencimento *</h3>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          if (!amount || parseFloat(amount) <= 0) {
-                            toast.error("Preencha o valor total da despesa primeiro");
-                            return;
-                          }
-                          if (dueDates.length === 0) {
-                            toast.error("Adicione pelo menos uma parcela");
-                            return;
-                          }
-                          const total = parseFloat(amount);
-                          const count = dueDates.length;
-                          const perInstallment = total / count;
-                          const remainder = total - (Math.floor(perInstallment * 100) / 100) * count;
-                          
-                          const newDueDates = dueDates.map((dd, i) => ({
-                            ...dd,
-                            amount: i === count - 1 
-                              ? (perInstallment + remainder).toFixed(2)
-                              : perInstallment.toFixed(2)
-                          }));
-                          setDueDates(newDueDates);
-                          toast.success(`Valor dividido em ${count} parcelas iguais`);
-                        }}
-                      >
-                        Dividir Igualmente
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={addDueDate}
-                      >
-                        <Plus className="h-4 w-4 mr-2" />
-                        Adicionar Data
-                      </Button>
+                {/* Datas de Vencimento ou Valor da Perda */}
+                {(selectedManagementAccount?.name === 'Perdas Estoque' || selectedManagementAccount?.name === 'Perdas Operacionais' || selectedCategory?.name === 'Perdas') ? (
+                  <div className="bg-card border rounded-lg p-6">
+                    <h3 className="text-lg font-semibold mb-4">Valor da Perda</h3>
+                    <div className="p-4 bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-lg">
+                      <p className="text-sm text-amber-800 dark:text-amber-200 mb-2">
+                        Valor calculado automaticamente com base no custo médio do produto
+                      </p>
+                      {productId && lossQuantity && (() => {
+                        const selectedProduct = products.find(p => p.id === productId) as any;
+                        const avgCost = parseFloat(selectedProduct?.avgCost || '0');
+                        const calculatedValue = avgCost * parseFloat(lossQuantity);
+                        return (
+                          <div className="flex items-center justify-between">
+                            <span className="text-2xl font-bold text-amber-900 dark:text-amber-100">
+                              R$ {calculatedValue.toFixed(2)}
+                            </span>
+                            <span className="text-sm text-muted-foreground">
+                              Data: {new Date().toLocaleDateString('pt-BR')}
+                              <br />
+                              <span className="text-xs">(lançamento automático)</span>
+                            </span>
+                          </div>
+                        );
+                      })()}
+                      {(!productId || !lossQuantity) && (
+                        <p className="text-muted-foreground">Selecione o produto e informe a quantidade para calcular o valor</p>
+                      )}
                     </div>
                   </div>
-                  <div className="space-y-3">
-                    {dueDates.map((dueDate, index) => (
-                      <div key={index} className="flex gap-2">
-                        <div className="flex-1">
-                          <Label>Data Vencimento - Parcela {index + 1}</Label>
-                          <Input
-                            type="date"
-                            value={dueDate.date}
-                            onChange={(e) => updateDueDate(index, 'date', e.target.value)}
-                          />
-                        </div>
-                        <div className="flex-1">
-                          <Label>Valor - Parcela {index + 1}</Label>
-                          <Input
-                            type="number"
-                            step="0.01"
-                            placeholder="0.00"
-                            value={dueDate.amount}
-                            onChange={(e) => updateDueDate(index, 'amount', e.target.value)}
-                          />
-                        </div>
-                        {dueDates.length > 1 && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="mt-6"
-                            onClick={() => removeDueDate(index)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        )}
+                ) : (
+                  <div className="bg-card border rounded-lg p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-semibold">Datas de Vencimento *</h3>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            if (!amount || parseFloat(amount) <= 0) {
+                              toast.error("Preencha o valor total da despesa primeiro");
+                              return;
+                            }
+                            if (dueDates.length === 0) {
+                              toast.error("Adicione pelo menos uma parcela");
+                              return;
+                            }
+                            const total = parseFloat(amount);
+                            const count = dueDates.length;
+                            const perInstallment = total / count;
+                            const remainder = total - (Math.floor(perInstallment * 100) / 100) * count;
+                            
+                            const newDueDates = dueDates.map((dd, i) => ({
+                              ...dd,
+                              amount: i === count - 1 
+                                ? (perInstallment + remainder).toFixed(2)
+                                : perInstallment.toFixed(2)
+                            }));
+                            setDueDates(newDueDates);
+                            toast.success(`Valor dividido em ${count} parcelas iguais`);
+                          }}
+                        >
+                          Dividir Igualmente
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={addDueDate}
+                        >
+                          <Plus className="h-4 w-4 mr-2" />
+                          Adicionar Data
+                        </Button>
                       </div>
-                    ))}
+                    </div>
+                    <div className="space-y-3">
+                      {dueDates.map((dueDate, index) => (
+                        <div key={index} className="flex gap-2">
+                          <div className="flex-1">
+                            <Label>Data Vencimento - Parcela {index + 1}</Label>
+                            <Input
+                              type="date"
+                              value={dueDate.date}
+                              onChange={(e) => updateDueDate(index, 'date', e.target.value)}
+                            />
+                          </div>
+                          <div className="flex-1">
+                            <Label>Valor - Parcela {index + 1}</Label>
+                            <Input
+                              type="number"
+                              step="0.01"
+                              placeholder="0.00"
+                              value={dueDate.amount}
+                              onChange={(e) => updateDueDate(index, 'amount', e.target.value)}
+                            />
+                          </div>
+                          {dueDates.length > 1 && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="mt-6"
+                              onClick={() => removeDueDate(index)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
 
                 {/* Observações */}
                 <div className="bg-card border rounded-lg p-6">

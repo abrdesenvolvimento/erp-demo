@@ -232,13 +232,13 @@
 - [ ] Implementar validação na entrada de estoque (obrigar data de validade para produtos com controle)
 - [ ] Gerar relatório de produtos com dados inconsistentes
 
-### 19. Despesas - Tipo "Perdas" (Crítico)
-- [ ] Quando tipo = "Perdas", forma de pagamento deve ser automática "Perdas"
-- [ ] Valor da parcela deve preencher automaticamente
-- [ ] **BUG**: Perdas não está registrando mesmo com produto e quantidade informados
-- [ ] Verificar se há erro na query de inserção
-- [ ] Testar fluxo completo: produto → quantidade → salvar
-- [ ] Implementar validação de dados obrigatórios
+### 19. Despesas - Tipo "Perdas" (Crítico) - CONCLUÍDO ✅ (19/01/2026)
+- [x] Quando tipo = "Perdas", forma de pagamento deve ser automática "Perdas"
+- [x] Valor da parcela deve preencher automaticamente (quantidade × custo médio)
+- [x] **BUG CORRIGIDO**: Perdas agora registra corretamente com produto e quantidade
+- [x] Baixa automática de estoque implementada
+- [x] Testar fluxo completo: produto → quantidade → salvar → estoque baixado
+- [x] Implementar validação de dados obrigatórios
 
 ### 20. Tela de Fechamento - Novos Quadros de Análise
 - [ ] Quadro: Vendas por Tipo (hoje mostra por Canal: Delivery, Balcão, A Prazo)
@@ -350,3 +350,15 @@
 
 ### 32. Análise de Despesas - Remover código contábil (19/01/2026)
 - [x] Exibir apenas nome da conta gerencial (sem código contábil)
+
+
+### 33. Análise de Despesas - Agrupamento por Tipo de Conta Gerencial (19/01/2026)
+- [ ] Separar despesas por grupo de tipo de conta (Operacional, Administrativa, Financeira)
+- [ ] Avaliar melhor forma de classificar as contas gerenciais
+- [ ] Implementar visualização agrupada no relatório de análise
+
+### 34. BUG: Vendas - Código do Pedido não carrega na edição (19/01/2026)
+- [ ] Ao editar uma venda, o código do pedido digitado originalmente não está sendo trazido
+- [ ] Ao alterar a venda, o código não está aparecendo na tela inicial
+- [ ] Exportação de vendas deve incluir observações da venda
+
