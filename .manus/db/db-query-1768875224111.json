@@ -1,0 +1,38 @@
+{
+  "query": "SELECT \n  ra.code,\n  ra.name,\n  re.entryType,\n  COUNT(*) as qtd_lancamentos,\n  SUM(CAST(re.amount AS DECIMAL(10,2))) as total\nFROM revenueEntries re\nJOIN revenueAccounts ra ON re.revenueAccountId = ra.id\nGROUP BY ra.code, ra.name, re.entryType\nORDER BY ra.code;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  ra.code,\n  ra.name,\n  re.entryType,\n  COUNT(*) as qtd_lancamentos,\n  SUM(CAST(re.amount AS DECIMAL(10,2))) as total\nFROM revenueEntries re\nJOIN revenueAccounts ra ON re.revenueAccountId = ra.id\nGROUP BY ra.code, ra.name, re.entryType\nORDER BY ra.code;",
+  "rows": [
+    {
+      "code": "4.1.01.001",
+      "name": "Receita de Vendas Balcão",
+      "entryType": "CREDITO",
+      "qtd_lancamentos": "118790",
+      "total": "3152184.06"
+    },
+    {
+      "code": "4.1.01.002",
+      "name": "Receita de Vendas Delivery",
+      "entryType": "CREDITO",
+      "qtd_lancamentos": "2071",
+      "total": "83737.20"
+    },
+    {
+      "code": "4.1.01.003",
+      "name": "Receita de Vendas A Prazo",
+      "entryType": "CREDITO",
+      "qtd_lancamentos": "466",
+      "total": "18596.10"
+    },
+    {
+      "code": "4.1.02.001",
+      "name": "Deduções - Descontos Concedidos",
+      "entryType": "DEBITO",
+      "qtd_lancamentos": "114",
+      "total": "1112.56"
+    }
+  ],
+  "messages": [],
+  "stdout": "code\tname\tentryType\tqtd_lancamentos\ttotal\n4.1.01.001\tReceita de Vendas Balcão\tCREDITO\t118790\t3152184.06\n4.1.01.002\tReceita de Vendas Delivery\tCREDITO\t2071\t83737.20\n4.1.01.003\tReceita de Vendas A Prazo\tCREDITO\t466\t18596.10\n4.1.02.001\tDeduções - Descontos Concedidos\tDEBITO\t114\t1112.56\n",
+  "stderr": "",
+  "execution_time_ms": 198
+}

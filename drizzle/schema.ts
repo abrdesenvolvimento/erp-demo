@@ -191,9 +191,11 @@ export const sales = mysqlTable("sales", {
   cancellationReason: text("cancellationReason"),
   createdBy: varchar("createdBy", { length: 64 }).notNull(),
   createdAt: timestamp("createdAt").defaultNow(),
+  revenueAccountId: int("revenueAccountId"),  // FK para conta de receita (atribuída automaticamente)
 }, (table) => ({
   dateIdx: index("date_idx").on(table.saleDate),
   customerIdx: index("customer_idx").on(table.customerId),
+  revenueAccountIdx: index("revenue_account_idx").on(table.revenueAccountId),
 }));
 
 export type Sale = typeof sales.$inferSelect;
@@ -597,3 +599,50 @@ export const chartOfAccounts = mysqlTable("chartOfAccounts", {
 
 export type ChartOfAccount = typeof chartOfAccounts.$inferSelect;
 export type InsertChartOfAccount = typeof chartOfAccounts.$inferInsert;
+
+
+// Contas de Receita (para contabilização automática de vendas)
+export const revenueAccounts = mysqlTable("revenueAccounts", {
+  id: int("id").primaryKey().autoincrement(),
+  code: varchar("code", { length: 20 }).notNull(),  // Código contábil (ex: "4.1.01.001")
+  name: varchar("name", { length: 100 }).notNull(),  // Nome da conta (ex: "Receita de Vendas Balcão")
+  description: text("description"),  // Descrição detalhada
+  accountType: mysqlEnum("accountType", [
+    "RECEITA_BRUTA",      // Receitas de vendas
+    "DEDUCAO",            // Deduções (descontos, taxas)
+    "OUTRAS_RECEITAS"     // Outras receitas (juros, etc.)
+  ]).notNull(),
+  // Mapeamento automático por tipo de venda
+  saleType: mysqlEnum("saleType", ["BALCAO", "DELIVERY", "A_PRAZO"]),  // NULL = não é receita de venda
+  isDefault: boolean("isDefault").default(false),  // Conta padrão para o tipo
+  isActive: boolean("isActive").default(true).notNull(),
+  displayOrder: int("displayOrder").default(0),
+  createdAt: timestamp("createdAt").defaultNow(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow(),
+}, (table) => ({
+  codeIdx: uniqueIndex("revenue_code_idx").on(table.code),
+  saleTypeIdx: index("sale_type_idx").on(table.saleType),
+  accountTypeIdx: index("account_type_idx").on(table.accountType),
+}));
+
+export type RevenueAccount = typeof revenueAccounts.$inferSelect;
+export type InsertRevenueAccount = typeof revenueAccounts.$inferInsert;
+
+// Lançamentos Contábeis de Receita (registro de cada venda para contabilização)
+export const revenueEntries = mysqlTable("revenueEntries", {
+  id: int("id").primaryKey().autoincrement(),
+  saleId: int("saleId").notNull(),  // FK para venda
+  revenueAccountId: int("revenueAccountId").notNull(),  // FK para conta de receita
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),  // Valor do lançamento
+  entryType: mysqlEnum("entryType", ["CREDITO", "DEBITO"]).notNull(),  // Crédito = receita, Débito = dedução
+  description: varchar("description", { length: 200 }),  // Descrição do lançamento
+  entryDate: timestamp("entryDate").notNull(),  // Data do lançamento (data da venda)
+  createdAt: timestamp("createdAt").defaultNow(),
+}, (table) => ({
+  saleIdx: index("sale_idx").on(table.saleId),
+  accountIdx: index("account_idx").on(table.revenueAccountId),
+  dateIdx: index("entry_date_idx").on(table.entryDate),
+}));
+
+export type RevenueEntry = typeof revenueEntries.$inferSelect;
+export type InsertRevenueEntry = typeof revenueEntries.$inferInsert;

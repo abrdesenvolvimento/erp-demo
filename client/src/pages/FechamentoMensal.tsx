@@ -399,12 +399,12 @@ export default function FechamentoMensal() {
 
             </div>
 
-            {/* DRE Simplificado */}
+            {/* DRE Contábil Completo */}
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2">
                   <FileText className="h-5 w-5 text-primary" />
-                  Demonstrativo de Resultado (DRE Simplificado)
+                  Demonstrativo de Resultado do Exercício (DRE)
                 </CardTitle>
                 <CardDescription>
                   {data.period.monthName} de {data.period.year}
@@ -413,45 +413,132 @@ export default function FechamentoMensal() {
               <CardContent>
                 <Table>
                   <TableBody>
+                    {/* RECEITA BRUTA */}
                     <TableRow>
-                      <TableCell className="font-medium">Receita Bruta de Vendas</TableCell>
-                      <TableCell className="text-right font-mono text-lg">
-                        {formatCurrency(data.results.revenue)}
+                      <TableCell className="font-bold text-blue-700">RECEITA BRUTA DE VENDAS</TableCell>
+                      <TableCell className="text-right font-mono text-lg font-bold text-blue-700">
+                        {formatCurrency(data.dre?.receitaBruta?.total || data.results.revenue)}
                       </TableCell>
                     </TableRow>
-                    <TableRow>
-                      <TableCell className="font-medium text-muted-foreground pl-6">
-                        (-) Custo das Mercadorias Vendidas (CMV)
-                      </TableCell>
-                      <TableCell className="text-right font-mono text-red-600">
-                        ({formatCurrency(data.results.cost)})
-                      </TableCell>
-                    </TableRow>
-                    <TableRow className="bg-muted/30">
-                      <TableCell className="font-bold">(=) Lucro Bruto</TableCell>
+                    {data.dre?.receitaBruta && (
+                      <>
+                        <TableRow>
+                          <TableCell className="text-muted-foreground pl-6 text-sm">Vendas Balcão</TableCell>
+                          <TableCell className="text-right font-mono text-sm">
+                            {formatCurrency(data.dre.receitaBruta.balcao)}
+                          </TableCell>
+                        </TableRow>
+                        <TableRow>
+                          <TableCell className="text-muted-foreground pl-6 text-sm">Vendas Delivery</TableCell>
+                          <TableCell className="text-right font-mono text-sm">
+                            {formatCurrency(data.dre.receitaBruta.delivery)}
+                          </TableCell>
+                        </TableRow>
+                        <TableRow>
+                          <TableCell className="text-muted-foreground pl-6 text-sm">Vendas A Prazo</TableCell>
+                          <TableCell className="text-right font-mono text-sm">
+                            {formatCurrency(data.dre.receitaBruta.aPrazo)}
+                          </TableCell>
+                        </TableRow>
+                      </>
+                    )}
+                    
+                    {/* DEDUÇÕES */}
+                    {data.dre?.deducoes && data.dre.deducoes.total > 0 && (
+                      <TableRow>
+                        <TableCell className="text-muted-foreground pl-6">(-) Deduções (Descontos)</TableCell>
+                        <TableCell className="text-right font-mono text-red-600">
+                          ({formatCurrency(data.dre.deducoes.total)})
+                        </TableCell>
+                      </TableRow>
+                    )}
+                    
+                    {/* RECEITA LÍQUIDA */}
+                    <TableRow className="bg-blue-50 dark:bg-blue-950/20">
+                      <TableCell className="font-bold">(=) RECEITA LÍQUIDA</TableCell>
                       <TableCell className="text-right font-mono font-bold text-lg">
-                        {formatCurrency(data.results.grossProfit)}
+                        {formatCurrency(data.dre?.receitaLiquida || data.results.revenue)}
+                      </TableCell>
+                    </TableRow>
+                    
+                    {/* CMV */}
+                    <TableRow>
+                      <TableCell className="text-muted-foreground pl-6">(-) Custo das Mercadorias Vendidas (CMV)</TableCell>
+                      <TableCell className="text-right font-mono text-red-600">
+                        ({formatCurrency(data.dre?.cmv || data.results.cost)})
+                      </TableCell>
+                    </TableRow>
+                    
+                    {/* LUCRO BRUTO */}
+                    <TableRow className="bg-amber-50 dark:bg-amber-950/20">
+                      <TableCell className="font-bold">(=) LUCRO BRUTO</TableCell>
+                      <TableCell className="text-right font-mono font-bold text-lg">
+                        {formatCurrency(data.dre?.lucroBruto || data.results.grossProfit)}
                         <span className="text-sm text-muted-foreground ml-2">
-                          ({data.results.grossMargin}%)
+                          ({data.dre?.margemBruta || data.results.grossMargin}%)
                         </span>
                       </TableCell>
                     </TableRow>
-                    <TableRow>
-                      <TableCell className="font-medium text-muted-foreground pl-6">
-                        (-) Despesas Operacionais
-                      </TableCell>
-                      <TableCell className="text-right font-mono text-red-600">
-                        ({formatCurrency(data.results.operationalExpenses)})
+                    
+                    {/* DESPESAS */}
+                    {data.dre?.despesas && (
+                      <>
+                        <TableRow>
+                          <TableCell className="text-muted-foreground pl-6">(-) Despesas Operacionais</TableCell>
+                          <TableCell className="text-right font-mono text-red-600">
+                            ({formatCurrency(data.dre.despesas.operacionais)})
+                          </TableCell>
+                        </TableRow>
+                        <TableRow>
+                          <TableCell className="text-muted-foreground pl-6">(-) Despesas Administrativas</TableCell>
+                          <TableCell className="text-right font-mono text-red-600">
+                            ({formatCurrency(data.dre.despesas.administrativas)})
+                          </TableCell>
+                        </TableRow>
+                      </>
+                    )}
+                    
+                    {/* RESULTADO OPERACIONAL */}
+                    <TableRow className="bg-muted/30">
+                      <TableCell className="font-bold">(=) RESULTADO OPERACIONAL</TableCell>
+                      <TableCell className={`text-right font-mono font-bold text-lg ${
+                        (data.dre?.resultadoOperacional || 0) >= 0 ? 'text-green-600' : 'text-red-600'
+                      }`}>
+                        {formatCurrency(data.dre?.resultadoOperacional || (data.results.grossProfit - data.results.operationalExpenses))}
                       </TableCell>
                     </TableRow>
-                    <TableRow className={`${data.results.netResult >= 0 ? 'bg-green-50 dark:bg-green-950/20' : 'bg-red-50 dark:bg-red-950/20'}`}>
-                      <TableCell className="font-bold text-lg">(=) Resultado Líquido</TableCell>
+                    
+                    {/* DESPESAS FINANCEIRAS E OUTRAS */}
+                    {data.dre?.despesas && (
+                      <>
+                        {data.dre.despesas.financeiras > 0 && (
+                          <TableRow>
+                            <TableCell className="text-muted-foreground pl-6">(-) Despesas Financeiras</TableCell>
+                            <TableCell className="text-right font-mono text-red-600">
+                              ({formatCurrency(data.dre.despesas.financeiras)})
+                            </TableCell>
+                          </TableRow>
+                        )}
+                        {data.dre.despesas.outras > 0 && (
+                          <TableRow>
+                            <TableCell className="text-muted-foreground pl-6">(-) Outras Despesas</TableCell>
+                            <TableCell className="text-right font-mono text-red-600">
+                              ({formatCurrency(data.dre.despesas.outras)})
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </>
+                    )}
+                    
+                    {/* RESULTADO LÍQUIDO */}
+                    <TableRow className={`${(data.dre?.resultadoLiquido || data.results.netResult) >= 0 ? 'bg-green-50 dark:bg-green-950/20' : 'bg-red-50 dark:bg-red-950/20'}`}>
+                      <TableCell className="font-bold text-lg">(=) RESULTADO LÍQUIDO DO EXERCÍCIO</TableCell>
                       <TableCell className={`text-right font-mono font-bold text-xl ${
-                        data.results.netResult >= 0 ? 'text-green-600' : 'text-red-600'
+                        (data.dre?.resultadoLiquido || data.results.netResult) >= 0 ? 'text-green-600' : 'text-red-600'
                       }`}>
-                        {formatCurrency(data.results.netResult)}
+                        {formatCurrency(data.dre?.resultadoLiquido || data.results.netResult)}
                         <span className="text-sm text-muted-foreground ml-2">
-                          ({data.results.netMargin}%)
+                          ({data.dre?.margemLiquida || data.results.netMargin}%)
                         </span>
                       </TableCell>
                     </TableRow>
@@ -459,6 +546,65 @@ export default function FechamentoMensal() {
                 </Table>
               </CardContent>
             </Card>
+
+            {/* Despesas por Conta Gerencial */}
+            {data.dre?.despesas?.byAccount && data.dre.despesas.byAccount.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Receipt className="h-5 w-5 text-primary" />
+                    Despesas por Conta Gerencial
+                  </CardTitle>
+                  <CardDescription>
+                    Detalhamento contábil das despesas
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Código</TableHead>
+                        <TableHead>Conta</TableHead>
+                        <TableHead>Classificação</TableHead>
+                        <TableHead className="text-right">Valor</TableHead>
+                        <TableHead className="text-right">%</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {data.dre.despesas.byAccount.map((account: any) => (
+                        <TableRow key={account.code}>
+                          <TableCell className="font-mono text-sm">{account.code}</TableCell>
+                          <TableCell className="font-medium">{account.name}</TableCell>
+                          <TableCell className="text-muted-foreground text-sm">
+                            {account.classification === 'OPERACIONAL' ? 'Operacional' :
+                             account.classification === 'ADMINISTRATIVA' ? 'Administrativa' :
+                             account.classification === 'COMERCIAL' ? 'Comercial' :
+                             account.classification === 'FINANCEIRA' ? 'Financeira' :
+                             account.classification === 'NAO_OPERACIONAL' ? 'Não Operacional' :
+                             account.classification}
+                          </TableCell>
+                          <TableCell className="text-right font-mono">
+                            {formatCurrency(account.total)}
+                          </TableCell>
+                          <TableCell className="text-right text-muted-foreground">
+                            {data.dre.despesas.total > 0 
+                              ? ((account.total / data.dre.despesas.total) * 100).toFixed(1) 
+                              : 0}%
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                      <TableRow className="font-bold bg-muted/50">
+                        <TableCell colSpan={3}>Total</TableCell>
+                        <TableCell className="text-right font-mono">
+                          {formatCurrency(data.dre.despesas.total)}
+                        </TableCell>
+                        <TableCell className="text-right">100%</TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            )}
           </div>
             ) : null}
           </>

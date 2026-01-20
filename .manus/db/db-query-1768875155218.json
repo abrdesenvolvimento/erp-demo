@@ -1,0 +1,25 @@
+{
+  "query": "SELECT saleType, COUNT(*) as total, SUM(CAST(finalAmount AS DECIMAL(10,2))) as valor_total \nFROM sales \nWHERE status = 'ACTIVE' AND revenueAccountId IS NULL\nGROUP BY saleType;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT saleType, COUNT(*) as total, SUM(CAST(finalAmount AS DECIMAL(10,2))) as valor_total \nFROM sales \nWHERE status = 'ACTIVE' AND revenueAccountId IS NULL\nGROUP BY saleType;",
+  "rows": [
+    {
+      "saleType": "BALCAO",
+      "total": "118790",
+      "valor_total": "3151394.31"
+    },
+    {
+      "saleType": "DELIVERY",
+      "total": "2071",
+      "valor_total": "83548.14"
+    },
+    {
+      "saleType": "A_PRAZO",
+      "total": "466",
+      "valor_total": "18462.35"
+    }
+  ],
+  "messages": [],
+  "stdout": "saleType\ttotal\tvalor_total\nBALCAO\t118790\t3151394.31\nDELIVERY\t2071\t83548.14\nA_PRAZO\t466\t18462.35\n",
+  "stderr": "",
+  "execution_time_ms": 126
+}

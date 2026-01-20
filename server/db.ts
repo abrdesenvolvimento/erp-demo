@@ -27,7 +27,9 @@ import {
   revenueGoals, RevenueGoal, InsertRevenueGoal,
   managementAccounts, ManagementAccount, InsertManagementAccount,
   accountingMappings, AccountingMapping, InsertAccountingMapping,
-  chartOfAccounts, ChartOfAccount, InsertChartOfAccount
+  chartOfAccounts, ChartOfAccount, InsertChartOfAccount,
+  revenueAccounts, RevenueAccount, InsertRevenueAccount,
+  revenueEntries, RevenueEntry, InsertRevenueEntry
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -613,6 +615,12 @@ export async function createSale(saleData: InsertSale, items: Omit<InsertSaleIte
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
+  // Buscar conta de receita automática pelo tipo de venda
+  const revenueAccount = await getRevenueAccountBySaleType(saleData.saleType);
+  if (revenueAccount) {
+    saleData.revenueAccountId = revenueAccount.id;
+  }
+  
   // Inserir venda
   const saleResult = await db.insert(sales).values(saleData);
   console.log('[createSale] saleResult:', saleResult);
@@ -645,6 +653,20 @@ export async function createSale(saleData: InsertSale, items: Omit<InsertSaleIte
     await db.update(partners)
       .set({ currentBalance: sql`${partners.currentBalance} + ${saleData.finalAmount}` })
       .where(eq(partners.id, saleData.customerId));
+  }
+  
+  // Criar lançamentos contábeis de receita
+  try {
+    await createRevenueEntriesForSale(
+      saleId,
+      saleData.saleType,
+      saleData.finalAmount,
+      saleData.discountAmount || '0',
+      saleData.saleDate || new Date()
+    );
+  } catch (error) {
+    console.error('[createSale] Erro ao criar lançamentos de receita:', error);
+    // Não falhar a venda por causa de erro contábil
   }
   
   return saleId;
@@ -5634,7 +5656,118 @@ export async function getMonthlyClosing(year: number, month: number) {
   const receivablesRows = receivablesResult[0] as unknown as any[];
   const totalReceived = parseFloat(receivablesRows[0]?.totalReceived || '0');
 
-  // 6. Calcular resultados
+  // 6. RECEITAS CONTÁBEIS - Buscar lançamentos de receita
+  const revenueResult = await db.execute(sql.raw(`
+    SELECT 
+      ra.id as accountId,
+      ra.code as accountCode,
+      ra.name as accountName,
+      ra.accountType,
+      ra.saleType,
+      re.entryType,
+      SUM(CAST(re.amount AS DECIMAL(12,2))) as total
+    FROM revenueEntries re
+    INNER JOIN revenueAccounts ra ON re.revenueAccountId = ra.id
+    WHERE DATE(CONVERT_TZ(re.entryDate, '+00:00', '-03:00')) >= '${startDate}'
+      AND DATE(CONVERT_TZ(re.entryDate, '+00:00', '-03:00')) <= '${endDate}'
+    GROUP BY ra.id, ra.code, ra.name, ra.accountType, ra.saleType, re.entryType
+    ORDER BY ra.code
+  `));
+
+  const revenueRows = revenueResult[0] as unknown as any[];
+  let receitaBrutaTotal = 0;
+  let deducoesTotal = 0;
+  const receitaByAccount: Array<{ code: string; name: string; type: string; saleType: string | null; total: number }> = [];
+  const receitaBySaleType: Record<string, number> = { BALCAO: 0, DELIVERY: 0, A_PRAZO: 0 };
+
+  for (const row of revenueRows) {
+    const total = parseFloat(row.total || '0');
+    const accountType = row.accountType;
+    const saleType = row.saleType;
+    
+    if (accountType === 'RECEITA_BRUTA') {
+      receitaBrutaTotal += total;
+      if (saleType && receitaBySaleType[saleType] !== undefined) {
+        receitaBySaleType[saleType] += total;
+      }
+    } else if (accountType === 'DEDUCAO') {
+      deducoesTotal += total;
+    }
+    
+    receitaByAccount.push({
+      code: row.accountCode,
+      name: row.accountName,
+      type: accountType,
+      saleType: saleType,
+      total
+    });
+  }
+
+  const receitaLiquida = receitaBrutaTotal - deducoesTotal;
+
+  // 7. DESPESAS POR CONTA GERENCIAL
+  const expensesByAccountResult = await db.execute(sql.raw(`
+    SELECT 
+      ma.id as accountId,
+      ma.code as accountCode,
+      ma.name as accountName,
+      ma.nature,
+      ma.classification,
+      SUM(CAST(e.amount AS DECIMAL(12,2))) as total,
+      COUNT(*) as count
+    FROM expenses e
+    INNER JOIN managementAccounts ma ON e.managementAccountId = ma.id
+    WHERE e.status != 'CANCELADA'
+      AND DATE(CONVERT_TZ(e.createdAt, '+00:00', '-03:00')) >= '${startDate}'
+      AND DATE(CONVERT_TZ(e.createdAt, '+00:00', '-03:00')) <= '${endDate}'
+    GROUP BY ma.id, ma.code, ma.name, ma.nature, ma.classification
+    ORDER BY ma.code
+  `));
+
+  const expensesByAccountRows = expensesByAccountResult[0] as unknown as any[];
+  const expensesByAccount: Array<{ code: string; name: string; nature: string; classification: string; total: number; count: number }> = [];
+  const expensesByClassification: Record<string, number> = {
+    OPERACIONAL: 0,
+    ADMINISTRATIVA: 0,
+    COMERCIAL: 0,
+    FINANCEIRA: 0,
+    NAO_OPERACIONAL: 0,
+    PATRIMONIAL: 0
+  };
+
+  for (const row of expensesByAccountRows) {
+    const total = parseFloat(row.total || '0');
+    const classification = row.classification || 'OPERACIONAL';
+    
+    expensesByAccount.push({
+      code: row.accountCode,
+      name: row.accountName,
+      nature: row.nature,
+      classification: classification,
+      total,
+      count: parseInt(row.count || '0')
+    });
+    
+    if (expensesByClassification[classification] !== undefined) {
+      expensesByClassification[classification] += total;
+    }
+  }
+
+  // 8. Calcular resultados (DRE)
+  const cmv = totalSales.cost; // CMV já calculado anteriormente
+  const lucroBruto = receitaLiquida - cmv;
+  const margemBruta = receitaLiquida > 0 ? (lucroBruto / receitaLiquida) * 100 : 0;
+  
+  const despesasOperacionais = expensesByClassification.OPERACIONAL + expensesByClassification.COMERCIAL;
+  const despesasAdministrativas = expensesByClassification.ADMINISTRATIVA;
+  const despesasFinanceiras = expensesByClassification.FINANCEIRA;
+  const outrasDespesas = expensesByClassification.NAO_OPERACIONAL + expensesByClassification.PATRIMONIAL;
+  
+  const resultadoOperacional = lucroBruto - despesasOperacionais - despesasAdministrativas;
+  const resultadoLiquido = resultadoOperacional - despesasFinanceiras - outrasDespesas;
+  const margemLiquida = receitaLiquida > 0 ? (resultadoLiquido / receitaLiquida) * 100 : 0;
+
+  // Manter compatibilidade com estrutura antiga
   const grossProfit = totalSales.revenue - totalSales.cost;
   const grossMargin = totalSales.revenue > 0 ? (grossProfit / totalSales.revenue) * 100 : 0;
   const netResult = totalSales.revenue - totalSales.cost - totalExpenses.amount;
@@ -5667,6 +5800,7 @@ export async function getMonthlyClosing(year: number, month: number) {
       expensePayments,
       balance: totalReceived - (purchasePayments + expensePayments),
     },
+    // Estrutura antiga (compatibilidade)
     results: {
       revenue: totalSales.revenue,
       cost: totalSales.cost,
@@ -5675,6 +5809,36 @@ export async function getMonthlyClosing(year: number, month: number) {
       operationalExpenses: totalExpenses.amount,
       netResult,
       netMargin: Math.round(netMargin * 10) / 10,
+    },
+    // NOVA ESTRUTURA: DRE Contábil
+    dre: {
+      receitaBruta: {
+        total: receitaBrutaTotal,
+        balcao: receitaBySaleType.BALCAO,
+        delivery: receitaBySaleType.DELIVERY,
+        aPrazo: receitaBySaleType.A_PRAZO,
+        byAccount: receitaByAccount.filter(a => a.type === 'RECEITA_BRUTA'),
+      },
+      deducoes: {
+        total: deducoesTotal,
+        byAccount: receitaByAccount.filter(a => a.type === 'DEDUCAO'),
+      },
+      receitaLiquida,
+      cmv,
+      lucroBruto,
+      margemBruta: Math.round(margemBruta * 10) / 10,
+      despesas: {
+        operacionais: despesasOperacionais,
+        administrativas: despesasAdministrativas,
+        financeiras: despesasFinanceiras,
+        outras: outrasDespesas,
+        total: totalExpenses.amount,
+        byClassification: expensesByClassification,
+        byAccount: expensesByAccount,
+      },
+      resultadoOperacional,
+      resultadoLiquido,
+      margemLiquida: Math.round(margemLiquida * 10) / 10,
     },
   };
 }
@@ -6064,4 +6228,254 @@ export async function listManagementAccountsGrouped() {
   }
   
   return grouped;
+}
+
+
+// ==================== FUNÇÕES DE RECEITA ====================
+
+// Buscar conta de receita por tipo de venda
+export async function getRevenueAccountBySaleType(saleType: 'BALCAO' | 'DELIVERY' | 'A_PRAZO'): Promise<RevenueAccount | null> {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const result = await db.select()
+    .from(revenueAccounts)
+    .where(and(
+      eq(revenueAccounts.saleType, saleType),
+      eq(revenueAccounts.isDefault, true),
+      eq(revenueAccounts.isActive, true)
+    ))
+    .limit(1);
+  
+  return result[0] || null;
+}
+
+// Buscar conta de dedução por tipo
+export async function getDeductionAccount(type: 'DESCONTO' | 'TAXA_DELIVERY'): Promise<RevenueAccount | null> {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const code = type === 'DESCONTO' ? '4.1.02.001' : '4.1.02.002';
+  
+  const result = await db.select()
+    .from(revenueAccounts)
+    .where(and(
+      eq(revenueAccounts.code, code),
+      eq(revenueAccounts.isActive, true)
+    ))
+    .limit(1);
+  
+  return result[0] || null;
+}
+
+// Listar todas as contas de receita
+export async function listRevenueAccounts(): Promise<RevenueAccount[]> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return await db.select()
+    .from(revenueAccounts)
+    .where(eq(revenueAccounts.isActive, true))
+    .orderBy(revenueAccounts.displayOrder);
+}
+
+// Criar lançamento de receita
+export async function createRevenueEntry(data: InsertRevenueEntry): Promise<number> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.insert(revenueEntries).values(data);
+  return Number((result as any)[0]?.insertId || (result as any).insertId);
+}
+
+// Criar lançamentos de receita para uma venda (receita bruta + deduções)
+export async function createRevenueEntriesForSale(
+  saleId: number,
+  saleType: 'BALCAO' | 'DELIVERY' | 'A_PRAZO',
+  finalAmount: string | number,
+  discountAmount: string | number,
+  saleDate: Date
+): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  // Buscar conta de receita para o tipo de venda
+  const revenueAccount = await getRevenueAccountBySaleType(saleType);
+  if (!revenueAccount) {
+    console.warn(`[createRevenueEntriesForSale] Conta de receita não encontrada para tipo: ${saleType}`);
+    return;
+  }
+  
+  // Calcular receita bruta (valor final + desconto, pois o desconto foi subtraído)
+  const finalAmountNum = typeof finalAmount === 'string' ? parseFloat(finalAmount) : finalAmount;
+  const discountAmountNum = typeof discountAmount === 'string' ? parseFloat(discountAmount) : discountAmount;
+  const grossAmount = finalAmountNum + discountAmountNum;
+  
+  // Lançamento de receita bruta (CRÉDITO)
+  await createRevenueEntry({
+    saleId,
+    revenueAccountId: revenueAccount.id,
+    amount: grossAmount.toFixed(2),
+    entryType: 'CREDITO',
+    description: `Venda #${saleId} - ${saleType}`,
+    entryDate: saleDate
+  });
+  
+  // Se houver desconto, criar lançamento de dedução (DÉBITO)
+  if (discountAmountNum > 0) {
+    const discountAccount = await getDeductionAccount('DESCONTO');
+    if (discountAccount) {
+      await createRevenueEntry({
+        saleId,
+        revenueAccountId: discountAccount.id,
+        amount: discountAmountNum.toFixed(2),
+        entryType: 'DEBITO',
+        description: `Desconto Venda #${saleId}`,
+        entryDate: saleDate
+      });
+    }
+  }
+  
+  // Atualizar revenueAccountId na venda
+  await db.update(sales)
+    .set({ revenueAccountId: revenueAccount.id })
+    .where(eq(sales.id, saleId));
+}
+
+// Buscar lançamentos de receita por período
+export async function getRevenueEntriesByPeriod(dateFrom: string, dateTo: string) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  // Converter para UTC (Brasília = UTC-3)
+  const startDate = `${dateFrom} 03:00:00`;
+  const endDate = `${dateTo} 03:00:00`;
+  
+  return await db.select({
+    id: revenueEntries.id,
+    saleId: revenueEntries.saleId,
+    revenueAccountId: revenueEntries.revenueAccountId,
+    amount: revenueEntries.amount,
+    entryType: revenueEntries.entryType,
+    description: revenueEntries.description,
+    entryDate: revenueEntries.entryDate,
+    accountCode: revenueAccounts.code,
+    accountName: revenueAccounts.name,
+    accountType: revenueAccounts.accountType
+  })
+    .from(revenueEntries)
+    .innerJoin(revenueAccounts, eq(revenueEntries.revenueAccountId, revenueAccounts.id))
+    .where(and(
+      sql`${revenueEntries.entryDate} >= ${startDate}`,
+      sql`${revenueEntries.entryDate} < DATE_ADD(${endDate}, INTERVAL 1 DAY)`
+    ))
+    .orderBy(revenueEntries.entryDate);
+}
+
+// Calcular totais de receita por período (para DRE)
+export async function getRevenueTotalsByPeriod(dateFrom: string, dateTo: string) {
+  const db = await getDb();
+  if (!db) return {
+    receitaBruta: 0,
+    deducoes: 0,
+    receitaLiquida: 0,
+    byAccount: [] as { code: string; name: string; type: string; total: number }[]
+  };
+  
+  // Converter para UTC (Brasília = UTC-3)
+  const startDate = `${dateFrom} 03:00:00`;
+  const endDate = `${dateTo} 03:00:00`;
+  
+  // Buscar totais agrupados por conta
+  const results = await db.select({
+    accountId: revenueAccounts.id,
+    accountCode: revenueAccounts.code,
+    accountName: revenueAccounts.name,
+    accountType: revenueAccounts.accountType,
+    entryType: revenueEntries.entryType,
+    total: sql<string>`SUM(${revenueEntries.amount})`
+  })
+    .from(revenueEntries)
+    .innerJoin(revenueAccounts, eq(revenueEntries.revenueAccountId, revenueAccounts.id))
+    .where(and(
+      sql`${revenueEntries.entryDate} >= ${startDate}`,
+      sql`${revenueEntries.entryDate} < DATE_ADD(${endDate}, INTERVAL 1 DAY)`
+    ))
+    .groupBy(revenueAccounts.id, revenueAccounts.code, revenueAccounts.name, revenueAccounts.accountType, revenueEntries.entryType);
+  
+  let receitaBruta = 0;
+  let deducoes = 0;
+  const byAccount: { code: string; name: string; type: string; total: number }[] = [];
+  
+  for (const row of results) {
+    const total = parseFloat(row.total || '0');
+    
+    if (row.accountType === 'RECEITA_BRUTA') {
+      receitaBruta += total;
+    } else if (row.accountType === 'DEDUCAO') {
+      deducoes += total;
+    }
+    
+    byAccount.push({
+      code: row.accountCode,
+      name: row.accountName,
+      type: row.accountType,
+      total
+    });
+  }
+  
+  return {
+    receitaBruta,
+    deducoes,
+    receitaLiquida: receitaBruta - deducoes,
+    byAccount
+  };
+}
+
+// Calcular CMV (Custo de Mercadoria Vendida) por período
+export async function getCMVByPeriod(dateFrom: string, dateTo: string) {
+  const db = await getDb();
+  if (!db) return { cmvTotal: 0, byProduct: [] as { productId: number; productName: string; quantity: number; avgCost: number; cmv: number }[] };
+  
+  // Converter para UTC (Brasília = UTC-3)
+  const startDate = `${dateFrom} 03:00:00`;
+  const endDate = `${dateTo} 03:00:00`;
+  
+  // Buscar itens de venda com custo médio do produto
+  const results = await db.select({
+    productId: saleItems.productId,
+    productName: products.name,
+    quantity: sql<string>`SUM(${saleItems.quantity})`,
+    avgCost: products.avgCost
+  })
+    .from(saleItems)
+    .innerJoin(sales, eq(saleItems.saleId, sales.id))
+    .innerJoin(products, eq(saleItems.productId, products.id))
+    .where(and(
+      sql`${sales.saleDate} >= ${startDate}`,
+      sql`${sales.saleDate} < DATE_ADD(${endDate}, INTERVAL 1 DAY)`,
+      eq(sales.status, 'ACTIVE')
+    ))
+    .groupBy(saleItems.productId, products.name, products.avgCost);
+  
+  let cmvTotal = 0;
+  const byProduct: { productId: number; productName: string; quantity: number; avgCost: number; cmv: number }[] = [];
+  
+  for (const row of results) {
+    const quantity = parseInt(row.quantity || '0');
+    const avgCost = parseFloat(row.avgCost || '0');
+    const cmv = quantity * avgCost;
+    
+    cmvTotal += cmv;
+    
+    byProduct.push({
+      productId: row.productId,
+      productName: row.productName,
+      quantity,
+      avgCost,
+      cmv
+    });
+  }
+  
+  return { cmvTotal, byProduct };
 }

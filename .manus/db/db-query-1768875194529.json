@@ -1,0 +1,25 @@
+{
+  "query": "SELECT saleType, revenueAccountId, COUNT(*) as total \nFROM sales \nWHERE status = 'ACTIVE'\nGROUP BY saleType, revenueAccountId;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT saleType, revenueAccountId, COUNT(*) as total \nFROM sales \nWHERE status = 'ACTIVE'\nGROUP BY saleType, revenueAccountId;",
+  "rows": [
+    {
+      "saleType": "A_PRAZO",
+      "revenueAccountId": "3",
+      "total": "466"
+    },
+    {
+      "saleType": "BALCAO",
+      "revenueAccountId": "1",
+      "total": "118790"
+    },
+    {
+      "saleType": "DELIVERY",
+      "revenueAccountId": "2",
+      "total": "2071"
+    }
+  ],
+  "messages": [],
+  "stdout": "saleType\trevenueAccountId\ttotal\nA_PRAZO\t3\t466\nBALCAO\t1\t118790\nDELIVERY\t2\t2071\n",
+  "stderr": "",
+  "execution_time_ms": 112
+}

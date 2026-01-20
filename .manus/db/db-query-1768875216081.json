@@ -1,0 +1,9 @@
+{
+  "query": "INSERT INTO revenueEntries (saleId, revenueAccountId, amount, entryType, description, entryDate)\nSELECT \n  s.id as saleId,\n  (SELECT id FROM revenueAccounts WHERE code = '4.1.02.001' LIMIT 1) as revenueAccountId,\n  CAST(s.discountAmount AS DECIMAL(10,2)) as amount,\n  'DEBITO' as entryType,\n  CONCAT('Desconto Venda #', s.id) as description,\n  s.saleDate as entryDate\nFROM sales s\nWHERE s.status = 'ACTIVE' \n  AND CAST(s.discountAmount AS DECIMAL(10,2)) > 0\n  AND s.id NOT IN (SELECT DISTINCT saleId FROM revenueEntries WHERE entryType = 'DEBITO');",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute INSERT INTO revenueEntries (saleId, revenueAccountId, amount, entryType, description, entryDate)\nSELECT \n  s.id as saleId,\n  (SELECT id FROM revenueAccounts WHERE code = '4.1.02.001' LIMIT 1) as revenueAccountId,\n  CAST(s.discountAmount AS DECIMAL(10,2)) as amount,\n  'DEBITO' as entryType,\n  CONCAT('Desconto Venda #', s.id) as description,\n  s.saleDate as entryDate\nFROM sales s\nWHERE s.status = 'ACTIVE' \n  AND CAST(s.discountAmount AS DECIMAL(10,2)) > 0\n  AND s.id NOT IN (SELECT DISTINCT saleId FROM revenueEntries WHERE entryType = 'DEBITO');",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 137
+}

@@ -1,6 +1,6 @@
 # ABRWF - Pendências e Melhorias
 
-**Última atualização:** 08/01/2026
+**Última atualização:** 19/01/2026
 
 ---
 
@@ -362,3 +362,27 @@
 - [ ] Ao alterar a venda, o código não está aparecendo na tela inicial
 - [ ] Exportação de vendas deve incluir observações da venda
 
+
+### 35. BUG: Contas a Pagar - Alteração de data de vencimento (19/01/2026)
+- [ ] Ao alterar data de vencimento de uma despesa, não está refletindo no Contas a Pagar
+- [ ] Verificar se o update está atualizando a tabela de parcelas corretamente
+
+
+
+### 36. Contabilização de Receitas - CONCLUÍDO ✅ (19/01/2026)
+- [x] Criar tabela revenueAccounts (contas de receita)
+- [x] Criar tabela revenueEntries (lançamentos de receita)
+- [x] Contas de receita por canal: Balcão (4.1.01.001), Delivery (4.1.01.002), A Prazo (4.1.01.003)
+- [x] Conta de deduções: Descontos (4.1.02.001)
+- [x] Atribuição automática de conta por tipo de venda (sem intervenção do operador)
+- [x] Lançamentos de receita criados automaticamente ao salvar venda
+- [x] Migração de 19 dias de vendas existentes
+- [x] DRE contábil completo na página de Fechamento
+- [x] Receita Bruta separada por canal
+- [x] Deduções (descontos) contabilizadas
+- [x] Receita Líquida calculada
+- [x] CMV (Custo de Mercadoria Vendida) calculado
+- [x] Lucro Bruto com margem
+- [x] Despesas por classificação (Operacional, Administrativa, Financeira)
+- [x] Despesas por conta gerencial com código contábil
+- [x] Resultado Operacional e Resultado Líquido

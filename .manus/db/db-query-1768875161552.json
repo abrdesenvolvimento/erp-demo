@@ -1,0 +1,28 @@
+{
+  "query": "SELECT id, code, name, saleType FROM revenueAccounts WHERE accountType = 'RECEITA_BRUTA';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT id, code, name, saleType FROM revenueAccounts WHERE accountType = 'RECEITA_BRUTA';",
+  "rows": [
+    {
+      "id": "1",
+      "code": "4.1.01.001",
+      "name": "Receita de Vendas Balcão",
+      "saleType": "BALCAO"
+    },
+    {
+      "id": "2",
+      "code": "4.1.01.002",
+      "name": "Receita de Vendas Delivery",
+      "saleType": "DELIVERY"
+    },
+    {
+      "id": "3",
+      "code": "4.1.01.003",
+      "name": "Receita de Vendas A Prazo",
+      "saleType": "A_PRAZO"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tcode\tname\tsaleType\n1\t4.1.01.001\tReceita de Vendas Balcão\tBALCAO\n2\t4.1.01.002\tReceita de Vendas Delivery\tDELIVERY\n3\t4.1.01.003\tReceita de Vendas A Prazo\tA_PRAZO\n",
+  "stderr": "",
+  "execution_time_ms": 60
+}
