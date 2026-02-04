@@ -1,0 +1,80 @@
+{
+  "query": "SELECT id, code, name, nature, isAnalytical FROM chartOfAccounts WHERE code LIKE '4%' AND isAnalytical = 1 ORDER BY code;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT id, code, name, nature, isAnalytical FROM chartOfAccounts WHERE code LIKE '4%' AND isAnalytical = 1 ORDER BY code;",
+  "rows": [
+    {
+      "id": "54",
+      "code": "4.1.1.01",
+      "name": "Receita de Vendas (Balcão)",
+      "nature": "CREDORA",
+      "isAnalytical": "1"
+    },
+    {
+      "id": "55",
+      "code": "4.1.1.02",
+      "name": "Receita de Vendas (A Prazo)",
+      "nature": "CREDORA",
+      "isAnalytical": "1"
+    },
+    {
+      "id": "56",
+      "code": "4.1.1.03",
+      "name": "Receita de Vendas (Delivery)",
+      "nature": "CREDORA",
+      "isAnalytical": "1"
+    },
+    {
+      "id": "58",
+      "code": "4.1.2.01",
+      "name": "(-) Descontos Concedidos",
+      "nature": "DEVEDORA",
+      "isAnalytical": "1"
+    },
+    {
+      "id": "59",
+      "code": "4.1.2.02",
+      "name": "(-) Taxas de Delivery",
+      "nature": "DEVEDORA",
+      "isAnalytical": "1"
+    },
+    {
+      "id": "62",
+      "code": "4.2.1.01",
+      "name": "Receita de Aluguel",
+      "nature": "CREDORA",
+      "isAnalytical": "1"
+    },
+    {
+      "id": "63",
+      "code": "4.2.1.02",
+      "name": "Receita de Serviços",
+      "nature": "CREDORA",
+      "isAnalytical": "1"
+    },
+    {
+      "id": "64",
+      "code": "4.2.1.03",
+      "name": "Outras Receitas",
+      "nature": "CREDORA",
+      "isAnalytical": "1"
+    },
+    {
+      "id": "67",
+      "code": "4.3.1.01",
+      "name": "Juros Recebidos",
+      "nature": "CREDORA",
+      "isAnalytical": "1"
+    },
+    {
+      "id": "68",
+      "code": "4.3.1.02",
+      "name": "Descontos Obtidos",
+      "nature": "CREDORA",
+      "isAnalytical": "1"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tcode\tname\tnature\tisAnalytical\n54\t4.1.1.01\tReceita de Vendas (Balcão)\tCREDORA\t1\n55\t4.1.1.02\tReceita de Vendas (A Prazo)\tCREDORA\t1\n56\t4.1.1.03\tReceita de Vendas (Delivery)\tCREDORA\t1\n58\t4.1.2.01\t(-) Descontos Concedidos\tDEVEDORA\t1\n59\t4.1.2.02\t(-) Taxas de Delivery\tDEVEDORA\t1\n62\t4.2.1.01\tReceita de Aluguel\tCREDORA\t1\n63\t4.2.1.02\tReceita de Serviços\tCREDORA\t1\n64\t4.2.1.03\tOutras Receitas\tCREDORA\t1\n67\t4.3.1.01\tJuros Recebidos\tCREDORA\t1\n68\t4.3.1.02\tDescontos Obtidos\tCREDORA\t1\n",
+  "stderr": "",
+  "execution_time_ms": 54
+}

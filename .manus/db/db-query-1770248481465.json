@@ -1,0 +1,80 @@
+{
+  "query": "SELECT id, description, amount, competenceMonth, managementAccountId FROM expenses WHERE competenceMonth = '2026-02';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT id, description, amount, competenceMonth, managementAccountId FROM expenses WHERE competenceMonth = '2026-02';",
+  "rows": [
+    {
+      "id": "990001",
+      "description": "Água 01/2026",
+      "amount": "164.06",
+      "competenceMonth": "2026-02",
+      "managementAccountId": "41"
+    },
+    {
+      "id": "1020001",
+      "description": "Aluguel 02/2026",
+      "amount": "720.00",
+      "competenceMonth": "2026-02",
+      "managementAccountId": "13"
+    },
+    {
+      "id": "1020002",
+      "description": "Contabilidade 02/2026",
+      "amount": "350.00",
+      "competenceMonth": "2026-02",
+      "managementAccountId": "22"
+    },
+    {
+      "id": "1020003",
+      "description": "Parcela 04/06 Projeto e Execução de obra ABR",
+      "amount": "17025.00",
+      "competenceMonth": "2026-02",
+      "managementAccountId": "41"
+    },
+    {
+      "id": "1050001",
+      "description": "4ª Semana de Janeiro 2026",
+      "amount": "875.00",
+      "competenceMonth": "2026-02",
+      "managementAccountId": "29"
+    },
+    {
+      "id": "1050002",
+      "description": "4ª Semana de Janeiro 2026",
+      "amount": "875.00",
+      "competenceMonth": "2026-02",
+      "managementAccountId": "29"
+    },
+    {
+      "id": "1050003",
+      "description": "Água 01/2026",
+      "amount": "164.06",
+      "competenceMonth": "2026-02",
+      "managementAccountId": "41"
+    },
+    {
+      "id": "1050004",
+      "description": "Internet 01/2026",
+      "amount": "59.37",
+      "competenceMonth": "2026-02",
+      "managementAccountId": "41"
+    },
+    {
+      "id": "1080001",
+      "description": "Tarifa Maquina de Cartões MCA Dez/25 e Jan/26",
+      "amount": "218.00",
+      "competenceMonth": "2026-02",
+      "managementAccountId": "41"
+    },
+    {
+      "id": "1110001",
+      "description": "Caçamba para Entulho",
+      "amount": "380.00",
+      "competenceMonth": "2026-02",
+      "managementAccountId": "41"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tdescription\tamount\tcompetenceMonth\tmanagementAccountId\n990001\tÁgua 01/2026\t164.06\t2026-02\t41\n1020001\tAluguel 02/2026\t720.00\t2026-02\t13\n1020002\tContabilidade 02/2026\t350.00\t2026-02\t22\n1020003\tParcela 04/06 Projeto e Execução de obra ABR\t17025.00\t2026-02\t41\n1050001\t4ª Semana de Janeiro 2026\t875.00\t2026-02\t29\n1050002\t4ª Semana de Janeiro 2026\t875.00\t2026-02\t29\n1050003\tÁgua 01/2026\t164.06\t2026-02\t41\n1050004\tInternet 01/2026\t59.37\t2026-02\t41\n1080001\tTarifa Maquina de Cartões MCA Dez/25 e Jan/26\t218.00\t2026-02\t41\n1110001\tCaçamba para Entulho\t380.00\t2026-02\t41\n",
+  "stderr": "",
+  "execution_time_ms": 52
+}

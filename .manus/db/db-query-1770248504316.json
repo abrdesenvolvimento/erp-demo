@@ -1,0 +1,16 @@
+{
+  "query": "SELECT DISTINCT status FROM expenses;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT DISTINCT status FROM expenses;",
+  "rows": [
+    {
+      "status": "ATIVA"
+    },
+    {
+      "status": "CANCELADA"
+    }
+  ],
+  "messages": [],
+  "stdout": "status\nATIVA\nCANCELADA\n",
+  "stderr": "",
+  "execution_time_ms": 60
+}

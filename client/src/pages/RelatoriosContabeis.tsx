@@ -43,11 +43,11 @@ type DREItem = {
 };
 
 // Formatação de valores monetários
-const formatCurrency = (value: number) => {
+const formatCurrency = (value: number, divideBy100: boolean = false) => {
   return new Intl.NumberFormat('pt-BR', {
     style: 'currency',
     currency: 'BRL'
-  }).format(value / 100);
+  }).format(divideBy100 ? value / 100 : value);
 };
 
 // Formatação de data
@@ -427,7 +427,7 @@ export default function RelatoriosContabeis() {
                   <div className="flex items-center justify-center py-8">
                     <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                   </div>
-                ) : dreData && (dreData as any).items?.length > 0 ? (
+                ) : dreData && Array.isArray(dreData) && dreData.length > 0 ? (
                   <div className="border rounded-lg overflow-hidden">
                     <Table>
                       <TableHeader>
@@ -437,27 +437,25 @@ export default function RelatoriosContabeis() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {((dreData as any).items as DREItem[]).map((item: DREItem, idx: number) => (
-                          <TableRow 
-                            key={idx}
-                            className={item.level === 1 ? 'bg-muted/50 font-bold' : item.level === 2 ? 'font-medium' : ''}
-                          >
-                            <TableCell style={{ paddingLeft: `${item.level * 16}px` }}>
-                              {item.name}
-                            </TableCell>
-                            <TableCell className={`text-right ${item.value >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                              {formatCurrency(Math.abs(item.value))}
-                            </TableCell>
-                          </TableRow>
+                        {(dreData as any[]).map((item: any, idx: number) => (
+                          item.code !== '' || item.description !== '' ? (
+                            <TableRow 
+                              key={idx}
+                              className={item.isTotal ? 'bg-primary/10 font-bold' : item.level === 1 ? 'bg-muted/50 font-bold' : item.level === 2 ? 'font-medium' : ''}
+                            >
+                              <TableCell style={{ paddingLeft: `${(item.level || 1) * 16}px` }}>
+                                {item.code ? `${item.code} - ` : ''}{item.description}
+                              </TableCell>
+                              <TableCell className={`text-right ${item.value >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                {item.value !== 0 ? formatCurrency(Math.abs(item.value)) : '-'}
+                              </TableCell>
+                            </TableRow>
+                          ) : (
+                            <TableRow key={idx} className="h-4">
+                              <TableCell colSpan={2}></TableCell>
+                            </TableRow>
+                          )
                         ))}
-                        {/* Resultado final */}
-                        <TableRow className="bg-primary/10 font-bold text-lg">
-                          <TableCell>RESULTADO DO PERÍODO</TableCell>
-                          <TableCell className={`text-right ${(dreData as any).result >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                            {formatCurrency(Math.abs((dreData as any).result || 0))}
-                            {(dreData as any).result >= 0 ? ' (Lucro)' : ' (Prejuízo)'}
-                          </TableCell>
-                        </TableRow>
                       </TableBody>
                     </Table>
                   </div>

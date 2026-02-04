@@ -1,0 +1,34 @@
+{
+  "query": "SELECT \n  DATE_FORMAT(postingDate, '%Y-%m') as competenceMonth,\n  status,\n  SUM(totalAmount) as totalCompras,\n  COUNT(*) as qtd\nFROM purchaseOrders\nWHERE status = 'CONFIRMED'\nGROUP BY DATE_FORMAT(postingDate, '%Y-%m'), status\nORDER BY competenceMonth DESC\nLIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  DATE_FORMAT(postingDate, '%Y-%m') as competenceMonth,\n  status,\n  SUM(totalAmount) as totalCompras,\n  COUNT(*) as qtd\nFROM purchaseOrders\nWHERE status = 'CONFIRMED'\nGROUP BY DATE_FORMAT(postingDate, '%Y-%m'), status\nORDER BY competenceMonth DESC\nLIMIT 10;",
+  "rows": [
+    {
+      "competenceMonth": "2026-02",
+      "status": "CONFIRMED",
+      "totalCompras": "2758.73",
+      "qtd": "6"
+    },
+    {
+      "competenceMonth": "2026-01",
+      "status": "CONFIRMED",
+      "totalCompras": "52907.03",
+      "qtd": "77"
+    },
+    {
+      "competenceMonth": "2025-12",
+      "status": "CONFIRMED",
+      "totalCompras": "130131.73",
+      "qtd": "102"
+    },
+    {
+      "competenceMonth": "2025-11",
+      "status": "CONFIRMED",
+      "totalCompras": "23691.73",
+      "qtd": "29"
+    }
+  ],
+  "messages": [],
+  "stdout": "competenceMonth\tstatus\ttotalCompras\tqtd\n2026-02\tCONFIRMED\t2758.73\t6\n2026-01\tCONFIRMED\t52907.03\t77\n2025-12\tCONFIRMED\t130131.73\t102\n2025-11\tCONFIRMED\t23691.73\t29\n",
+  "stderr": "",
+  "execution_time_ms": 61
+}

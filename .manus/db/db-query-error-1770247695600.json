@@ -1,0 +1,8 @@
+{
+  "query": "SELECT \n  DATE_FORMAT(s.saleDate, '%Y-%m') as competenceMonth,\n  s.channelId,\n  COUNT(*) as qtd,\n  SUM(s.total) as totalVendas\nFROM sales s\nWHERE s.status = 'COMPLETED'\nGROUP BY DATE_FORMAT(s.saleDate, '%Y-%m'), s.channelId\nORDER BY competenceMonth DESC, s.channelId\nLIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  DATE_FORMAT(s.saleDate, '%Y-%m') as competenceMonth,\n  s.channelId,\n  COUNT(*) as qtd,\n  SUM(s.total) as totalVendas\nFROM sales s\nWHERE s.status = 'COMPLETED'\nGROUP BY DATE_FORMAT(s.saleDate, '%Y-%m'), s.channelId\nORDER BY competenceMonth DESC, s.channelId\nLIMIT 20;",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 1: Unknown column 's.total' in 'where clause'"
+  ]
+}

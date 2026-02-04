@@ -1,0 +1,9 @@
+{
+  "query": "SELECT \n  DATE_FORMAT(postingDate, '%Y-%m') as competenceMonth,\n  SUM(totalAmount) as totalCompras,\n  COUNT(*) as qtd\nFROM purchaseOrders\nWHERE status = 'RECEIVED'\nGROUP BY DATE_FORMAT(postingDate, '%Y-%m')\nORDER BY competenceMonth DESC\nLIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  DATE_FORMAT(postingDate, '%Y-%m') as competenceMonth,\n  SUM(totalAmount) as totalCompras,\n  COUNT(*) as qtd\nFROM purchaseOrders\nWHERE status = 'RECEIVED'\nGROUP BY DATE_FORMAT(postingDate, '%Y-%m')\nORDER BY competenceMonth DESC\nLIMIT 10;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 53
+}

@@ -1,0 +1,120 @@
+{
+  "query": "SELECT \n  e.id, \n  e.description, \n  e.amount, \n  e.issueDate, \n  e.entryDate, \n  e.competenceMonth,\n  e.managementAccountId,\n  ma.code as managementCode,\n  ma.name as managementName\nFROM expenses e\nLEFT JOIN managementAccounts ma ON e.managementAccountId = ma.id\nWHERE e.competenceMonth = '2026-02'\nORDER BY e.entryDate DESC\nLIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  e.id, \n  e.description, \n  e.amount, \n  e.issueDate, \n  e.entryDate, \n  e.competenceMonth,\n  e.managementAccountId,\n  ma.code as managementCode,\n  ma.name as managementName\nFROM expenses e\nLEFT JOIN managementAccounts ma ON e.managementAccountId = ma.id\nWHERE e.competenceMonth = '2026-02'\nORDER BY e.entryDate DESC\nLIMIT 20;",
+  "rows": [
+    {
+      "id": "1110001",
+      "description": "Caçamba para Entulho",
+      "amount": "380.00",
+      "issueDate": "2026-02-03 16:56:31",
+      "entryDate": "2026-02-03 16:56:31",
+      "competenceMonth": "2026-02",
+      "managementAccountId": "41",
+      "managementCode": "DAD020",
+      "managementName": "Imóvel Alugado"
+    },
+    {
+      "id": "1080001",
+      "description": "Tarifa Maquina de Cartões MCA Dez/25 e Jan/26",
+      "amount": "218.00",
+      "issueDate": "2026-02-02 20:23:49",
+      "entryDate": "2026-02-02 20:23:49",
+      "competenceMonth": "2026-02",
+      "managementAccountId": "41",
+      "managementCode": "DAD020",
+      "managementName": "Imóvel Alugado"
+    },
+    {
+      "id": "1050004",
+      "description": "Internet 01/2026",
+      "amount": "59.37",
+      "issueDate": "2026-02-02 20:05:37",
+      "entryDate": "2026-02-02 20:05:37",
+      "competenceMonth": "2026-02",
+      "managementAccountId": "41",
+      "managementCode": "DAD020",
+      "managementName": "Imóvel Alugado"
+    },
+    {
+      "id": "1050003",
+      "description": "Água 01/2026",
+      "amount": "164.06",
+      "issueDate": "2026-02-02 19:56:03",
+      "entryDate": "2026-02-02 19:56:03",
+      "competenceMonth": "2026-02",
+      "managementAccountId": "41",
+      "managementCode": "DAD020",
+      "managementName": "Imóvel Alugado"
+    },
+    {
+      "id": "1050002",
+      "description": "4ª Semana de Janeiro 2026",
+      "amount": "875.00",
+      "issueDate": "2026-02-02 19:53:02",
+      "entryDate": "2026-02-02 19:53:02",
+      "competenceMonth": "2026-02",
+      "managementAccountId": "29",
+      "managementCode": "DAD008",
+      "managementName": "Pró-Labore"
+    },
+    {
+      "id": "1050001",
+      "description": "4ª Semana de Janeiro 2026",
+      "amount": "875.00",
+      "issueDate": "2026-02-02 19:52:31",
+      "entryDate": "2026-02-02 19:52:31",
+      "competenceMonth": "2026-02",
+      "managementAccountId": "29",
+      "managementCode": "DAD008",
+      "managementName": "Pró-Labore"
+    },
+    {
+      "id": "1020003",
+      "description": "Parcela 04/06 Projeto e Execução de obra ABR",
+      "amount": "17025.00",
+      "issueDate": "2026-02-02 14:41:47",
+      "entryDate": "2026-02-02 14:41:47",
+      "competenceMonth": "2026-02",
+      "managementAccountId": "41",
+      "managementCode": "DAD020",
+      "managementName": "Imóvel Alugado"
+    },
+    {
+      "id": "1020002",
+      "description": "Contabilidade 02/2026",
+      "amount": "350.00",
+      "issueDate": "2026-02-02 14:31:52",
+      "entryDate": "2026-02-02 14:31:52",
+      "competenceMonth": "2026-02",
+      "managementAccountId": "22",
+      "managementCode": "DAD001",
+      "managementName": "Consultoria e Assessoria"
+    },
+    {
+      "id": "1020001",
+      "description": "Aluguel 02/2026",
+      "amount": "720.00",
+      "issueDate": "2026-02-02 14:29:19",
+      "entryDate": "2026-02-02 14:29:19",
+      "competenceMonth": "2026-02",
+      "managementAccountId": "13",
+      "managementCode": "DOP001",
+      "managementName": "Aluguel"
+    },
+    {
+      "id": "990001",
+      "description": "Água 01/2026",
+      "amount": "164.06",
+      "issueDate": "2026-02-02 13:12:54",
+      "entryDate": "2026-02-02 13:12:54",
+      "competenceMonth": "2026-02",
+      "managementAccountId": "41",
+      "managementCode": "DAD020",
+      "managementName": "Imóvel Alugado"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tdescription\tamount\tissueDate\tentryDate\tcompetenceMonth\tmanagementAccountId\tmanagementCode\tmanagementName\n1110001\tCaçamba para Entulho\t380.00\t2026-02-03 16:56:31\t2026-02-03 16:56:31\t2026-02\t41\tDAD020\tImóvel Alugado\n1080001\tTarifa Maquina de Cartões MCA Dez/25 e Jan/26\t218.00\t2026-02-02 20:23:49\t2026-02-02 20:23:49\t2026-02\t41\tDAD020\tImóvel Alugado\n1050004\tInternet 01/2026\t59.37\t2026-02-02 20:05:37\t2026-02-02 20:05:37\t2026-02\t41\tDAD020\tImóvel Alugado\n1050003\tÁgua 01/2026\t164.06\t2026-02-02 19:56:03\t2026-02-02 19:56:03\t2026-02\t41\tDAD020\tImóvel Alugado\n1050002\t4ª Semana de Janeiro 2026\t875.00\t2026-02-02 19:53:02\t2026-02-02 19:53:02\t2026-02\t29\tDAD008\tPró-Labore\n1050001\t4ª Semana de Janeiro 2026\t875.00\t2026-02-02 19:52:31\t2026-02-02 19:52:31\t2026-02\t29\tDAD008\tPró-Labore\n1020003\tParcela 04/06 Projeto e Execução de obra ABR\t17025.00\t2026-02-02 14:41:47\t2026-02-02 14:41:47\t2026-02\t41\tDAD020\tImóvel Alugado\n1020002\tContabilidade 02/2026\t350.00\t2026-02-02 14:31:52\t2026-02-02 14:31:52\t2026-02\t22\tDAD001\tConsultoria e Assessoria\n1020001\tAluguel 02/2026\t720.00\t2026-02-02 14:29:19\t2026-02-02 14:29:19\t2026-02\t13\tDOP001\tAluguel\n990001\tÁgua 01/2026\t164.06\t2026-02-02 13:12:54\t2026-02-02 13:12:54\t2026-02\t41\tDAD020\tImóvel Alugado\n",
+  "stderr": "",
+  "execution_time_ms": 53
+}

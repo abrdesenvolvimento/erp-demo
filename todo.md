@@ -352,6 +352,14 @@ Automatizar importação de pedidos concluídos do iFood via arquivos JSON
   - [x] Clique no código/nome da conta expande/colapsa
 - [ ] Implementar seleção múltipla de contas nos relatórios contábeis
 
+### Contabilização Automática (04/02/2026)
+- [x] Corrigir formatação de moeda no DRE (valores não devem ser divididos por 100)
+- [x] Gerar lançamentos contábeis para vendas (Balcão, A Prazo, Delivery) - 2022-2026
+- [x] Gerar lançamentos contábeis para despesas (Dez/2025, Jan/2026, Fev/2026)
+- [x] Gerar lançamentos contábeis para compras (Nov/2025, Dez/2025, Jan/2026, Fev/2026)
+- [x] DRE completo funcionando com Receitas, Custos e Despesas
+- [ ] Implementar contabilização automática em tempo real (ao criar venda/despesa/compra)
+
 ### Melhorias Contas Gerenciais e Contas a Receber (04/02/2026)
 - [x] Mover amarração contábil para dentro do modal de edição (unificar)
 - [x] Criar contas gerenciais de Receita (8 contas criadas)
@@ -409,3 +417,11 @@ Automatizar importação de pedidos concluídos do iFood via arquivos JSON
   - [x] competenceMonth = mês/ano derivado (ex: "2025-12", "2026-01")
 - [x] Verificar visualização dos dados migrados nas telas
 - [x] Ajustar filtros de data para mostrar todas as despesas por padrão
+
+### Correção Relatórios Contábeis (04/02/2026)
+- [ ] Receitas não estão considerando Vendas (Balcão, A Prazo, Delivery)
+- [ ] Compras e Despesas não aparecem nos relatórios
+- [ ] Implementar contabilização automática de Vendas por canal
+- [ ] Implementar contabilização automática de Compras
+- [ ] Implementar contabilização automática de Despesas
+- [ ] Testar DRE, Balancete e Razão com dados reais

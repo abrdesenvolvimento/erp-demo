@@ -1,0 +1,150 @@
+{
+  "query": "SELECT \n  DATE_FORMAT(s.saleDate, '%Y-%m') as competenceMonth,\n  s.saleType,\n  s.status,\n  COUNT(*) as qtd,\n  SUM(s.subtotal) as totalVendas\nFROM sales s\nGROUP BY DATE_FORMAT(s.saleDate, '%Y-%m'), s.saleType, s.status\nORDER BY competenceMonth DESC, s.saleType\nLIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  DATE_FORMAT(s.saleDate, '%Y-%m') as competenceMonth,\n  s.saleType,\n  s.status,\n  COUNT(*) as qtd,\n  SUM(s.subtotal) as totalVendas\nFROM sales s\nGROUP BY DATE_FORMAT(s.saleDate, '%Y-%m'), s.saleType, s.status\nORDER BY competenceMonth DESC, s.saleType\nLIMIT 20;",
+  "rows": [
+    {
+      "competenceMonth": "2026-02",
+      "saleType": "BALCAO",
+      "status": "ACTIVE",
+      "qtd": "206",
+      "totalVendas": "5281.94"
+    },
+    {
+      "competenceMonth": "2026-02",
+      "saleType": "DELIVERY",
+      "status": "CANCELLED",
+      "qtd": "1",
+      "totalVendas": "12.49"
+    },
+    {
+      "competenceMonth": "2026-02",
+      "saleType": "DELIVERY",
+      "status": "ACTIVE",
+      "qtd": "65",
+      "totalVendas": "2593.83"
+    },
+    {
+      "competenceMonth": "2026-02",
+      "saleType": "A_PRAZO",
+      "status": "ACTIVE",
+      "qtd": "28",
+      "totalVendas": "743.00"
+    },
+    {
+      "competenceMonth": "2026-02",
+      "saleType": "A_PRAZO",
+      "status": "CANCELLED",
+      "qtd": "1",
+      "totalVendas": "12.00"
+    },
+    {
+      "competenceMonth": "2026-01",
+      "saleType": "BALCAO",
+      "status": "ACTIVE",
+      "qtd": "1608",
+      "totalVendas": "59978.75"
+    },
+    {
+      "competenceMonth": "2026-01",
+      "saleType": "BALCAO",
+      "status": "CANCELLED",
+      "qtd": "8",
+      "totalVendas": "306.50"
+    },
+    {
+      "competenceMonth": "2026-01",
+      "saleType": "DELIVERY",
+      "status": "CANCELLED",
+      "qtd": "15",
+      "totalVendas": "583.88"
+    },
+    {
+      "competenceMonth": "2026-01",
+      "saleType": "DELIVERY",
+      "status": "ACTIVE",
+      "qtd": "589",
+      "totalVendas": "23281.66"
+    },
+    {
+      "competenceMonth": "2026-01",
+      "saleType": "A_PRAZO",
+      "status": "CANCELLED",
+      "qtd": "4",
+      "totalVendas": "351.00"
+    },
+    {
+      "competenceMonth": "2026-01",
+      "saleType": "A_PRAZO",
+      "status": "ACTIVE",
+      "qtd": "207",
+      "totalVendas": "7270.40"
+    },
+    {
+      "competenceMonth": "2025-12",
+      "saleType": "BALCAO",
+      "status": "CANCELLED",
+      "qtd": "6",
+      "totalVendas": "47.55"
+    },
+    {
+      "competenceMonth": "2025-12",
+      "saleType": "BALCAO",
+      "status": "ACTIVE",
+      "qtd": "2194",
+      "totalVendas": "92829.80"
+    },
+    {
+      "competenceMonth": "2025-12",
+      "saleType": "DELIVERY",
+      "status": "CANCELLED",
+      "qtd": "5",
+      "totalVendas": "254.20"
+    },
+    {
+      "competenceMonth": "2025-12",
+      "saleType": "DELIVERY",
+      "status": "ACTIVE",
+      "qtd": "1404",
+      "totalVendas": "58077.79"
+    },
+    {
+      "competenceMonth": "2025-12",
+      "saleType": "A_PRAZO",
+      "status": "ACTIVE",
+      "qtd": "287",
+      "totalVendas": "12878.93"
+    },
+    {
+      "competenceMonth": "2025-11",
+      "saleType": "BALCAO",
+      "status": "ACTIVE",
+      "qtd": "2664",
+      "totalVendas": "71546.09"
+    },
+    {
+      "competenceMonth": "2025-11",
+      "saleType": "DELIVERY",
+      "status": "ACTIVE",
+      "qtd": "333",
+      "totalVendas": "12012.20"
+    },
+    {
+      "competenceMonth": "2025-11",
+      "saleType": "A_PRAZO",
+      "status": "ACTIVE",
+      "qtd": "50",
+      "totalVendas": "1165.75"
+    },
+    {
+      "competenceMonth": "2025-10",
+      "saleType": "BALCAO",
+      "status": "ACTIVE",
+      "qtd": "2882",
+      "totalVendas": "65917.65"
+    }
+  ],
+  "messages": [],
+  "stdout": "competenceMonth\tsaleType\tstatus\tqtd\ttotalVendas\n2026-02\tBALCAO\tACTIVE\t206\t5281.94\n2026-02\tDELIVERY\tCANCELLED\t1\t12.49\n2026-02\tDELIVERY\tACTIVE\t65\t2593.83\n2026-02\tA_PRAZO\tACTIVE\t28\t743.00\n2026-02\tA_PRAZO\tCANCELLED\t1\t12.00\n2026-01\tBALCAO\tACTIVE\t1608\t59978.75\n2026-01\tBALCAO\tCANCELLED\t8\t306.50\n2026-01\tDELIVERY\tCANCELLED\t15\t583.88\n2026-01\tDELIVERY\tACTIVE\t589\t23281.66\n2026-01\tA_PRAZO\tCANCELLED\t4\t351.00\n2026-01\tA_PRAZO\tACTIVE\t207\t7270.40\n2025-12\tBALCAO\tCANCELLED\t6\t47.55\n2025-12\tBALCAO\tACTIVE\t2194\t92829.80\n2025-12\tDELIVERY\tCANCELLED\t5\t254.20\n2025-12\tDELIVERY\tACTIVE\t1404\t58077.79\n2025-12\tA_PRAZO\tACTIVE\t287\t12878.93\n2025-11\tBALCAO\tACTIVE\t2664\t71546.09\n2025-11\tDELIVERY\tACTIVE\t333\t12012.20\n2025-11\tA_PRAZO\tACTIVE\t50\t1165.75\n2025-10\tBALCAO\tACTIVE\t2882\t65917.65\n",
+  "stderr": "",
+  "execution_time_ms": 154
+}
