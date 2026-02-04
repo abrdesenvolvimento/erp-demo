@@ -1,0 +1,60 @@
+{
+  "query": "\nSELECT id, name, currentStock FROM products \nWHERE id IN (5280001, 5280002, 5310001, 5310002, 5310003, 4950001, 4950002, 4950003, 4950004, 2070009);\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute \nSELECT id, name, currentStock FROM products \nWHERE id IN (5280001, 5280002, 5310001, 5310002, 5310003, 4950001, 4950002, 4950003, 4950004, 2070009);\n",
+  "rows": [
+    {
+      "id": "5280001",
+      "name": "Produto Teste Cancelamento",
+      "currentStock": "0"
+    },
+    {
+      "id": "5280002",
+      "name": "Produto Teste Cancelamento",
+      "currentStock": "0"
+    },
+    {
+      "id": "5310001",
+      "name": "Produto Teste Cancelamento",
+      "currentStock": "100"
+    },
+    {
+      "id": "5310002",
+      "name": "Produto Teste Cancelamento",
+      "currentStock": "100"
+    },
+    {
+      "id": "5310003",
+      "name": "Produto Teste Cancelamento",
+      "currentStock": "100"
+    },
+    {
+      "id": "4950001",
+      "name": "Cadastrar 4",
+      "currentStock": "0"
+    },
+    {
+      "id": "4950002",
+      "name": "Cadastrar 3",
+      "currentStock": "0"
+    },
+    {
+      "id": "4950003",
+      "name": "Cadastrar 2",
+      "currentStock": "0"
+    },
+    {
+      "id": "4950004",
+      "name": "Nusakinho Alpino 500ml",
+      "currentStock": "5"
+    },
+    {
+      "id": "2070009",
+      "name": "Beck's 350ml",
+      "currentStock": "0"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tcurrentStock\n5280001\tProduto Teste Cancelamento\t0\n5280002\tProduto Teste Cancelamento\t0\n5310001\tProduto Teste Cancelamento\t100\n5310002\tProduto Teste Cancelamento\t100\n5310003\tProduto Teste Cancelamento\t100\n4950001\tCadastrar 4\t0\n4950002\tCadastrar 3\t0\n4950003\tCadastrar 2\t0\n4950004\tNusakinho Alpino 500ml\t5\n2070009\tBeck's 350ml\t0\n",
+  "stderr": "",
+  "execution_time_ms": 67
+}

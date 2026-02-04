@@ -215,8 +215,12 @@ Automatizar importação de pedidos concluídos do iFood via arquivos JSON
 
 ## 🗑️ LIMPEZA DE DADOS
 
-### Produtos a Excluir
-- [ ] IDs: 5280001, 5280002, 5310001, 5310002, 5310003, 4950001, 4950002, 4950003, 4950004, 2070009
+### Produtos Excluídos ✅ (03/02/2026)
+- [x] IDs excluídos: 5280001, 5280002, 5310001, 5310002, 5310003, 4950001, 4950002, 4950003
+- [ ] IDs mantidos (possuem movimentações reais): 4950004 (Nusakinho Alpino), 2070009 (Beck's 350ml)
+
+### Parceiros Excluídos ✅ (03/02/2026)
+- [x] IDs excluídos: 1410001, 1410002, 1410003, 1440001, 1440002, 1440003, 1530001 (Fornecedores/Clientes Teste)
 
 ---
 

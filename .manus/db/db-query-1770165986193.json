@@ -1,0 +1,70 @@
+{
+  "query": "\nSELECT \n  p.id,\n  p.name,\n  (SELECT COUNT(*) FROM saleItems WHERE productId = p.id) as qtd_vendas,\n  (SELECT COUNT(*) FROM purchaseOrderItems WHERE productId = p.id) as qtd_compras\nFROM products p\nWHERE p.id IN (5280001, 5280002, 5310001, 5310002, 5310003, 4950001, 4950002, 4950003, 4950004, 2070009);\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute \nSELECT \n  p.id,\n  p.name,\n  (SELECT COUNT(*) FROM saleItems WHERE productId = p.id) as qtd_vendas,\n  (SELECT COUNT(*) FROM purchaseOrderItems WHERE productId = p.id) as qtd_compras\nFROM products p\nWHERE p.id IN (5280001, 5280002, 5310001, 5310002, 5310003, 4950001, 4950002, 4950003, 4950004, 2070009);\n",
+  "rows": [
+    {
+      "id": "4950004",
+      "name": "Nusakinho Alpino 500ml",
+      "qtd_vendas": "7",
+      "qtd_compras": "2"
+    },
+    {
+      "id": "4950001",
+      "name": "Cadastrar 4",
+      "qtd_vendas": "0",
+      "qtd_compras": "0"
+    },
+    {
+      "id": "4950002",
+      "name": "Cadastrar 3",
+      "qtd_vendas": "0",
+      "qtd_compras": "0"
+    },
+    {
+      "id": "4950003",
+      "name": "Cadastrar 2",
+      "qtd_vendas": "0",
+      "qtd_compras": "0"
+    },
+    {
+      "id": "5280001",
+      "name": "Produto Teste Cancelamento",
+      "qtd_vendas": "0",
+      "qtd_compras": "0"
+    },
+    {
+      "id": "5280002",
+      "name": "Produto Teste Cancelamento",
+      "qtd_vendas": "0",
+      "qtd_compras": "0"
+    },
+    {
+      "id": "5310001",
+      "name": "Produto Teste Cancelamento",
+      "qtd_vendas": "0",
+      "qtd_compras": "0"
+    },
+    {
+      "id": "5310002",
+      "name": "Produto Teste Cancelamento",
+      "qtd_vendas": "0",
+      "qtd_compras": "0"
+    },
+    {
+      "id": "5310003",
+      "name": "Produto Teste Cancelamento",
+      "qtd_vendas": "0",
+      "qtd_compras": "0"
+    },
+    {
+      "id": "2070009",
+      "name": "Beck's 350ml",
+      "qtd_vendas": "23",
+      "qtd_compras": "0"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tqtd_vendas\tqtd_compras\n4950004\tNusakinho Alpino 500ml\t7\t2\n4950001\tCadastrar 4\t0\t0\n4950002\tCadastrar 3\t0\t0\n4950003\tCadastrar 2\t0\t0\n5280001\tProduto Teste Cancelamento\t0\t0\n5280002\tProduto Teste Cancelamento\t0\t0\n5310001\tProduto Teste Cancelamento\t0\t0\n5310002\tProduto Teste Cancelamento\t0\t0\n5310003\tProduto Teste Cancelamento\t0\t0\n2070009\tBeck's 350ml\t23\t0\n",
+  "stderr": "",
+  "execution_time_ms": 98
+}

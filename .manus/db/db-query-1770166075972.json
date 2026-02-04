@@ -1,0 +1,59 @@
+{
+  "query": "\nSELECT p.id, p.name, p.partnerType,\n  (SELECT COUNT(*) FROM sales WHERE customerId = p.id) as vendas,\n  (SELECT COUNT(*) FROM purchaseOrders WHERE supplierId = p.id) as compras\nFROM partners p\nWHERE p.name LIKE '%teste%' OR p.name LIKE '%Teste%' OR p.name LIKE '%TESTE%' OR p.name LIKE '%test%';\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute \nSELECT p.id, p.name, p.partnerType,\n  (SELECT COUNT(*) FROM sales WHERE customerId = p.id) as vendas,\n  (SELECT COUNT(*) FROM purchaseOrders WHERE supplierId = p.id) as compras\nFROM partners p\nWHERE p.name LIKE '%teste%' OR p.name LIKE '%Teste%' OR p.name LIKE '%TESTE%' OR p.name LIKE '%test%';\n",
+  "rows": [
+    {
+      "id": "1410001",
+      "name": "Fornecedor Teste Cancelamento",
+      "partnerType": "SUPPLIER",
+      "vendas": "0",
+      "compras": "0"
+    },
+    {
+      "id": "1410002",
+      "name": "Fornecedor Teste Cancelamento",
+      "partnerType": "SUPPLIER",
+      "vendas": "0",
+      "compras": "0"
+    },
+    {
+      "id": "1410003",
+      "name": "Fornecedor Teste Cancelamento",
+      "partnerType": "SUPPLIER",
+      "vendas": "0",
+      "compras": "0"
+    },
+    {
+      "id": "1440001",
+      "name": "Fornecedor Teste Cancelamento",
+      "partnerType": "SUPPLIER",
+      "vendas": "0",
+      "compras": "0"
+    },
+    {
+      "id": "1440002",
+      "name": "Fornecedor Teste Cancelamento",
+      "partnerType": "SUPPLIER",
+      "vendas": "0",
+      "compras": "0"
+    },
+    {
+      "id": "1440003",
+      "name": "Fornecedor Teste Cancelamento",
+      "partnerType": "SUPPLIER",
+      "vendas": "0",
+      "compras": "0"
+    },
+    {
+      "id": "1530001",
+      "name": "Teste",
+      "partnerType": "CUSTOMER",
+      "vendas": "0",
+      "compras": "0"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tpartnerType\tvendas\tcompras\n1410001\tFornecedor Teste Cancelamento\tSUPPLIER\t0\t0\n1410002\tFornecedor Teste Cancelamento\tSUPPLIER\t0\t0\n1410003\tFornecedor Teste Cancelamento\tSUPPLIER\t0\t0\n1440001\tFornecedor Teste Cancelamento\tSUPPLIER\t0\t0\n1440002\tFornecedor Teste Cancelamento\tSUPPLIER\t0\t0\n1440003\tFornecedor Teste Cancelamento\tSUPPLIER\t0\t0\n1530001\tTeste\tCUSTOMER\t0\t0\n",
+  "stderr": "",
+  "execution_time_ms": 75
+}
