@@ -5,6 +5,7 @@ import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, adminProcedure, consultorProcedure, router } from "./_core/trpc";
 import * as db from "./db";
+import { getNowInBrazil, formatDateForInput } from '../shared/dateUtils';
 
 export const appRouter = router({
   system: systemRouter,
@@ -647,7 +648,8 @@ export const appRouter = router({
           throw new TRPCError({ code: 'BAD_REQUEST', message: 'Data da venda inválida' });
         }
         const saleDate = new Date(sale.saleDate);
-        const now = new Date();
+        // Usar dateUtils para consistência de timezone
+        const now = getNowInBrazil();
         const hoursDiff = (now.getTime() - saleDate.getTime()) / (1000 * 60 * 60);
         
         if (hoursDiff > 24) {
@@ -1314,7 +1316,7 @@ export const appRouter = router({
             const base64 = buffer.toString('base64');
             resolve({
               pdf: base64,
-              filename: `extrato-contas-receber-${customerDetail.customer.name.replace(/\s+/g, '-')}-${new Date().toISOString().split('T')[0]}.pdf`,
+              filename: `extrato-contas-receber-${customerDetail.customer.name.replace(/\s+/g, '-')}-${formatDateForInput(new Date())}.pdf`,
             });
           });
           pdfStream.on('error', reject);

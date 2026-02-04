@@ -1,6 +1,6 @@
 # ABRWF - Pendências e Melhorias
 
-**Última atualização:** 21/01/2026
+**Última atualização:** 03/02/2026
 
 ---
 
@@ -30,8 +30,13 @@
 - [x] Cálculos em centavos para evitar erros de arredondamento
 - [x] Validação: bloqueia edição de valores se houver parcela paga
 
-### BUG-03: Timezone
-- [ ] Verificar se ainda existem módulos ou funções com divergência de timezone
+### BUG-03: Timezone ✅ Fase 1 (03/02/2026)
+- [x] Adicionados helpers de intervalo ao dateUtils (startOfDay, endOfDay, startOfMonth, endOfMonth)
+- [x] Migradas funções críticas de db.ts para usar dateUtils
+- [x] Migradas funções críticas de routers.ts para usar dateUtils
+- [x] Regra de ouro: "datas de negócio em SP via dateUtils; timestamps de sistema em UTC"
+- [ ] Fase 2: Migrar exibição (PDF/backup) - pendente
+- [ ] Fase 3: Manter timestamps técnicos em UTC - pendente
 
 ---
 

@@ -32,6 +32,15 @@ import {
   revenueEntries, RevenueEntry, InsertRevenueEntry
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
+import { 
+  getTodayInBrazil, 
+  getCurrentBrazilDateInfo, 
+  formatDateForInput,
+  startOfMonthBrazil,
+  endOfMonthBrazil,
+  toDateString,
+  getCurrentMonthRangeBrazil
+} from '../shared/dateUtils';
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
@@ -2126,8 +2135,8 @@ export async function updateOverdueExpenseInstallments() {
   const db = await getDb();
   if (!db) return;
   
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  // Usar dateUtils para consistência de timezone
+  const today = getTodayInBrazil();
   
   await db.update(expenseInstallments)
     .set({ status: "VENCIDO" })
@@ -2247,8 +2256,8 @@ export async function listOverdueReceivableInstallments() {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  // Usar dateUtils para consistência de timezone
+  const today = getTodayInBrazil();
   
   return await db.select({
     installment: receivableInstallments,
@@ -2319,8 +2328,8 @@ async function updateReceivableStatus(receivableId: number) {
   let hasPending = false;
   let hasOverdue = false;
   
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  // Usar dateUtils para consistência de timezone
+  const today = getTodayInBrazil();
   
   for (const inst of installments) {
     if (inst.paidAmount) {
@@ -2360,8 +2369,8 @@ export async function updateOverdueReceivableInstallments() {
   const db = await getDb();
   if (!db) return;
   
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  // Usar dateUtils para consistência de timezone
+  const today = getTodayInBrazil();
   
   await db.update(receivableInstallments)
     .set({ status: "VENCIDO" })
@@ -2387,8 +2396,8 @@ export async function getReceivablesSummary() {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  // Usar dateUtils para consistência de timezone
+  const today = getTodayInBrazil();
   
   // Total a receber (parcelas pendentes)
   const pending = await db.select({
@@ -3589,9 +3598,10 @@ export async function getPurchaseTotalCurrentMonth() {
   const db = await getDb();
   if (!db) return "0.00";
   
-  const now = new Date();
-  const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-  const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+  // Usar dateUtils para consistência de timezone
+  const { year, month } = getCurrentBrazilDateInfo();
+  const firstDayOfMonth = new Date(year, month - 1, 1);
+  const lastDayOfMonth = new Date(year, month, 0, 23, 59, 59);
   
   const result = await db.select({
     total: sql<string>`COALESCE(SUM(${purchaseOrders.totalAmount}), 0)`
@@ -3615,9 +3625,10 @@ export async function getPurchaseTotalByDocType() {
   const db = await getDb();
   if (!db) return [];
   
-  const now = new Date();
-  const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-  const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+  // Usar dateUtils para consistência de timezone
+  const { year, month } = getCurrentBrazilDateInfo();
+  const firstDayOfMonth = new Date(year, month - 1, 1);
+  const lastDayOfMonth = new Date(year, month, 0, 23, 59, 59);
   
   const result = await db.select({
     docType: purchaseOrders.docType,
@@ -3644,11 +3655,8 @@ export async function getGrossMarginByCategory() {
   const db = await getDb();
   if (!db) return [];
   
-  // Usar timezone de Brasília para consistencia com Dashboard
-  const today = new Date();
-  const todayBrasilia = new Date(today.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
-  const currentYear = todayBrasilia.getFullYear();
-  const currentMonth = todayBrasilia.getMonth() + 1;
+  // Usar dateUtils para consistência de timezone
+  const { year: currentYear, month: currentMonth } = getCurrentBrazilDateInfo();
   
   // Buscar todas as vendas do mês (exceto canceladas)
   // Usar range amplo e filtrar por timezone depois
@@ -3786,9 +3794,9 @@ export async function getSalesAnalysisByValue(
   const db = await getDb();
   if (!db) return [];
 
-  // Formatar datas para MySQL
-  const startStr = startDate.toISOString().split('T')[0];
-  const endStr = endDate.toISOString().split('T')[0];
+  // Usar dateUtils para consistência de timezone
+  const startStr = toDateString(startDate);
+  const endStr = toDateString(endDate);
 
   // Construir condições WHERE dinâmicas
   // Usar CONVERT_TZ para converter UTC para horário local do Brasil (GMT-3)
@@ -3856,9 +3864,9 @@ export async function getSalesAnalysisByQuantity(
   const db = await getDb();
   if (!db) return [];
 
-  // Formatar datas para MySQL
-  const startStr = startDate.toISOString().split('T')[0];
-  const endStr = endDate.toISOString().split('T')[0];
+  // Usar dateUtils para consistência de timezone
+  const startStr = toDateString(startDate);
+  const endStr = toDateString(endDate);
 
   // Construir condições WHERE dinâmicas
   // Usar CONVERT_TZ para converter UTC para horário local do Brasil (GMT-3)
@@ -3934,9 +3942,9 @@ export async function getSalesAnalysisByCategoryValue(
   const db = await getDb();
   if (!db) return [];
 
-  // Formatar datas para MySQL
-  const startStr = startDate.toISOString().split('T')[0];
-  const endStr = endDate.toISOString().split('T')[0];
+  // Usar dateUtils para consistência de timezone
+  const startStr = toDateString(startDate);
+  const endStr = toDateString(endDate);
 
   // Construir condições WHERE dinâmicas
   // Usar CONVERT_TZ para converter UTC para horário local do Brasil (GMT-3)
@@ -4002,9 +4010,9 @@ export async function getSalesAnalysisByDay(
   const db = await getDb();
   if (!db) return [];
 
-  // Formatar datas para MySQL
-  const startStr = startDate.toISOString().split('T')[0];
-  const endStr = endDate.toISOString().split('T')[0];
+  // Usar dateUtils para consistência de timezone
+  const startStr = toDateString(startDate);
+  const endStr = toDateString(endDate);
 
   // Construir condições WHERE dinâmicas
   // Usar CONVERT_TZ para converter UTC para horário local do Brasil (GMT-3)
@@ -4069,9 +4077,9 @@ export async function getSalesAnalysisByWeek(
   const db = await getDb();
   if (!db) return [];
 
-  // Formatar datas para MySQL
-  const startStr = startDate.toISOString().split('T')[0];
-  const endStr = endDate.toISOString().split('T')[0];
+  // Usar dateUtils para consistência de timezone
+  const startStr = toDateString(startDate);
+  const endStr = toDateString(endDate);
 
   // Construir condições WHERE dinâmicas
   // Usar CONVERT_TZ para converter UTC para horário local do Brasil (GMT-3)
@@ -4138,9 +4146,9 @@ export async function getSalesAnalysisByMonth(
   const db = await getDb();
   if (!db) return [];
 
-  // Formatar datas para MySQL
-  const startStr = startDate.toISOString().split('T')[0];
-  const endStr = endDate.toISOString().split('T')[0];
+  // Usar dateUtils para consistência de timezone
+  const startStr = toDateString(startDate);
+  const endStr = toDateString(endDate);
 
   // Construir condições WHERE dinâmicas
   // Usar CONVERT_TZ para converter UTC para horário local do Brasil (GMT-3)
@@ -4207,9 +4215,9 @@ export async function getSalesByProductAndDate(
   const db = await getDb();
   if (!db) return [];
 
-  // Formatar datas para MySQL
-  const startStr = startDate.toISOString().split('T')[0];
-  const endStr = endDate.toISOString().split('T')[0];
+  // Usar dateUtils para consistência de timezone
+  const startStr = toDateString(startDate);
+  const endStr = toDateString(endDate);
 
   // Construir condições WHERE dinâmicas
   // Usar CONVERT_TZ para converter UTC para horário local do Brasil (GMT-3)
@@ -4274,13 +4282,13 @@ export async function getSalesForExport(filters?: {
 
   let whereConditions = `s.status != 'CANCELLED'`;
 
-  // Filtro de data (saleDate com timezone)
+  // Filtro de data (saleDate com timezone) - usar dateUtils
   if (filters?.startDate) {
-    const startStr = filters.startDate.toISOString().split('T')[0];
+    const startStr = toDateString(filters.startDate);
     whereConditions += ` AND DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) >= '${startStr}'`;
   }
   if (filters?.endDate) {
-    const endStr = filters.endDate.toISOString().split('T')[0];
+    const endStr = toDateString(filters.endDate);
     whereConditions += ` AND DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) <= '${endStr}'`;
   }
 
@@ -4358,8 +4366,8 @@ export async function getPayablesCalendar(year: number, month: number) {
     FROM purchaseInstallments pi
     INNER JOIN purchaseOrders po ON pi.purchaseOrderId = po.id
     INNER JOIN partners p ON po.supplierId = p.id
-    WHERE pi.dueDate >= '${startDate.toISOString().split('T')[0]}'
-      AND pi.dueDate <= '${endDate.toISOString().split('T')[0]}'
+    WHERE pi.dueDate >= '${toDateString(startDate)}'
+      AND pi.dueDate <= '${toDateString(endDate)}'
       AND pi.status IN ('PENDING', 'OVERDUE')
     ORDER BY pi.dueDate ASC, p.name ASC
   `));
@@ -4722,9 +4730,9 @@ export async function getSalesAnalysisSummary(
   const db = await getDb();
   if (!db) return { totalRevenue: 0, totalSales: 0, totalCost: 0 };
 
-  // Formatar datas para MySQL
-  const startStr = startDate.toISOString().split('T')[0];
-  const endStr = endDate.toISOString().split('T')[0];
+  // Usar dateUtils para consistência de timezone
+  const startStr = toDateString(startDate);
+  const endStr = toDateString(endDate);
 
   // Se tem filtro de produto ou subcategoria, usar saleItems para calcular
   const hasProductFilter = (filters?.productIds && filters.productIds.length > 0) || filters?.subcategoryId;
@@ -5477,9 +5485,9 @@ export async function getRevenueGoalProgress(year: number, month: number) {
   const goalsRows = goals[0] as unknown as any[];
   if (goalsRows.length === 0) return null;
 
-  // Buscar faturamento do mês
-  const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
-  const endDate = new Date(year, month, 0).toISOString().split('T')[0]; // Último dia do mês
+  // Buscar faturamento do mês - usar dateUtils para consistência
+  const startDate = startOfMonthBrazil(year, month);
+  const endDate = endOfMonthBrazil(year, month);
 
   const revenue = await db.execute(sql.raw(`
     SELECT 
@@ -5552,8 +5560,9 @@ export async function getMonthlyClosing(year: number, month: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
-  const endDate = new Date(year, month, 0).toISOString().split('T')[0]; // Último dia do mês
+  // Usar dateUtils para consistência de timezone
+  const startDate = startOfMonthBrazil(year, month);
+  const endDate = endOfMonthBrazil(year, month);
 
   // 1. VENDAS - Faturamento por tipo (simplificado para compatibilidade)
   const salesResult = await db.execute(sql.raw(`

@@ -175,6 +175,95 @@ export function getLastDayOfMonth(year: number, month: number): Date {
 }
 
 /**
+ * Obtém início do dia (00:00:00) para uma data em Brasília
+ * Retorna string YYYY-MM-DD HH:MM:SS para uso em queries SQL
+ */
+export function startOfDayBrazil(date?: Date | string): string {
+  const d = date ? (typeof date === 'string' ? new Date(date) : date) : new Date();
+  const dateStr = formatDateForInput(d);
+  return `${dateStr} 00:00:00`;
+}
+
+/**
+ * Obtém fim do dia (23:59:59) para uma data em Brasília
+ * Retorna string YYYY-MM-DD HH:MM:SS para uso em queries SQL
+ */
+export function endOfDayBrazil(date?: Date | string): string {
+  const d = date ? (typeof date === 'string' ? new Date(date) : date) : new Date();
+  const dateStr = formatDateForInput(d);
+  return `${dateStr} 23:59:59`;
+}
+
+/**
+ * Obtém início do mês (dia 1, 00:00:00) em Brasília
+ * Retorna string YYYY-MM-DD para uso em queries SQL
+ */
+export function startOfMonthBrazil(year: number, month: number): string {
+  return `${year}-${String(month).padStart(2, '0')}-01`;
+}
+
+/**
+ * Obtém fim do mês (último dia, 23:59:59) em Brasília
+ * Retorna string YYYY-MM-DD para uso em queries SQL
+ */
+export function endOfMonthBrazil(year: number, month: number): string {
+  const lastDay = new Date(year, month, 0).getDate();
+  return `${year}-${String(month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+}
+
+/**
+ * Obtém intervalo do dia atual em Brasília
+ * Retorna { start: 'YYYY-MM-DD 00:00:00', end: 'YYYY-MM-DD 23:59:59' }
+ */
+export function getTodayRangeBrazil(): { start: string; end: string } {
+  const today = formatDateForInput(new Date());
+  return {
+    start: `${today} 00:00:00`,
+    end: `${today} 23:59:59`
+  };
+}
+
+/**
+ * Obtém intervalo do mês atual em Brasília
+ * Retorna { start: 'YYYY-MM-DD', end: 'YYYY-MM-DD', year, month }
+ */
+export function getCurrentMonthRangeBrazil(): { start: string; end: string; year: number; month: number } {
+  const info = getCurrentBrazilDateInfo();
+  return {
+    start: startOfMonthBrazil(info.year, info.month),
+    end: endOfMonthBrazil(info.year, info.month),
+    year: info.year,
+    month: info.month
+  };
+}
+
+/**
+ * Obtém intervalo de um mês específico em Brasília
+ * Retorna { start: 'YYYY-MM-DD', end: 'YYYY-MM-DD' }
+ */
+export function getMonthRangeBrazil(year: number, month: number): { start: string; end: string } {
+  return {
+    start: startOfMonthBrazil(year, month),
+    end: endOfMonthBrazil(year, month)
+  };
+}
+
+/**
+ * Converte Date para string YYYY-MM-DD (sem timezone conversion)
+ * Use para datas já em Brasília ou quando precisa apenas do formato
+ */
+export function toDateString(date: Date | string): string {
+  if (typeof date === 'string') {
+    // Se já é string no formato YYYY-MM-DD, retorna direto
+    if (/^\d{4}-\d{2}-\d{2}/.test(date)) {
+      return date.split('T')[0].split(' ')[0];
+    }
+    return formatDateForInput(new Date(date));
+  }
+  return formatDateForInput(date);
+}
+
+/**
  * Obtém informações do dia atual em Brasília
  */
 export function getCurrentBrazilDateInfo() {
