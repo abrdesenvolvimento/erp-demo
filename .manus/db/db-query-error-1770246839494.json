@@ -1,0 +1,8 @@
+{
+  "query": "ALTER TABLE expenses \nADD COLUMN issueDate TIMESTAMP NULL AFTER supplierId,\nADD COLUMN entryDate TIMESTAMP NULL AFTER issueDate,\nADD COLUMN competenceMonth VARCHAR(7) NULL AFTER entryDate;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute ALTER TABLE expenses \nADD COLUMN issueDate TIMESTAMP NULL AFTER supplierId,\nADD COLUMN entryDate TIMESTAMP NULL AFTER issueDate,\nADD COLUMN competenceMonth VARCHAR(7) NULL AFTER entryDate;",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 1: Unknown column 'issuedate' in 'expenses'"
+  ]
+}

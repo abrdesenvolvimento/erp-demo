@@ -36,10 +36,9 @@ export default function Despesas() {
   const [isEditing, setIsEditing] = useState(false);
   const [editingExpenseId, setEditingExpenseId] = useState<number | null>(null);
   
-  // Filter state
-  const today = new Date().toISOString().split('T')[0];
-  const [filterStartDate, setFilterStartDate] = useState(today);
-  const [filterEndDate, setFilterEndDate] = useState(today);
+  // Filter state - Iniciar sem filtro de data para mostrar todas as despesas
+  const [filterStartDate, setFilterStartDate] = useState('');
+  const [filterEndDate, setFilterEndDate] = useState('');
   const [filterSupplierId, setFilterSupplierId] = useState<number | undefined>();
   const [filterSupplierOpen, setFilterSupplierOpen] = useState(false);
   const [filterSupplierSearch, setFilterSupplierSearch] = useState("");

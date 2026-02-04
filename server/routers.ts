@@ -1043,6 +1043,9 @@ export const appRouter = router({
 
         const expenseId = await db.createExpense({
           supplierId: input.supplierId,
+          issueDate: input.issueDate,
+          entryDate: input.entryDate,
+          competenceMonth: input.competenceMonth,
           docType: input.docType,
           docNumber: input.docNumber,
           categoryId: input.categoryId || 0, // Usar 0 como padrão se não informado

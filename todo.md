@@ -399,3 +399,13 @@ Automatizar importação de pedidos concluídos do iFood via arquivos JSON
   - [x] Valor (com divisão automática por vencimento)
 - [x] Regra de competência: Data entrada pode ser último dia do mês anterior se lançado até dia 5
   - [x] Mensagem informativa exibida nos dois formulários
+
+### Migração de Dados Existentes (04/02/2026)
+- [x] Analisar dados existentes de Outras Receitas (0 registros)
+- [x] Analisar dados existentes de Despesas (20+ registros)
+- [x] Migrar Despesas: preencher issueDate, entryDate, competenceMonth
+  - [x] issueDate = createdAt (data de emissão)
+  - [x] entryDate = createdAt (data de entrada)
+  - [x] competenceMonth = mês/ano derivado (ex: "2025-12", "2026-01")
+- [x] Verificar visualização dos dados migrados nas telas
+- [x] Ajustar filtros de data para mostrar todas as despesas por padrão

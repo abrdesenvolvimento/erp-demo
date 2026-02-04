@@ -327,6 +327,9 @@ export type InsertExpenseCategory = typeof expenseCategories.$inferInsert;
 export const expenses = mysqlTable("expenses", {
   id: int("id").primaryKey().autoincrement(),
   supplierId: int("supplierId"), // FK para fornecedor (opcional) - PRIMEIRO CAMPO
+  issueDate: timestamp("issueDate"), // Data de emissão do documento
+  entryDate: timestamp("entryDate"), // Data de entrada no sistema (afeta competência)
+  competenceMonth: varchar("competenceMonth", { length: 7 }), // Mês de competência (YYYY-MM)
   purchaseOrderId: int("purchaseOrderId"), // FK para ordem de compra (se origem for Compra)
   docType: mysqlEnum("docType", ["NOTA_FISCAL", "CUPOM", "FATURA", "CONTRATO", "RECIBO", "BOLETO", "OUTROS"]).notNull(), // Tipo de documento
   docNumber: varchar("docNumber", { length: 100 }), // Número do documento
