@@ -1,0 +1,8 @@
+{
+  "query": "SELECT p.id, p.amount, p.dueDate, po.totalAmount, po.freightCost, po.chargesCost \nFROM payables p \nJOIN purchaseOrders po ON p.purchaseOrderId = po.id \nWHERE po.id = '3420001';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT p.id, p.amount, p.dueDate, po.totalAmount, po.freightCost, po.chargesCost \nFROM payables p \nJOIN purchaseOrders po ON p.purchaseOrderId = po.id \nWHERE po.id = '3420001';",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1146 (42S02) at line 1: Table '7rkrces5kipyf8hkunqrck.payables' doesn't exist"
+  ]
+}

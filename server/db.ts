@@ -1261,15 +1261,29 @@ export async function cancelPurchaseOrder(purchaseOrderId: number) {
  * - Atualiza valor total da compra
  * - Atualiza parcelas em Contas a Pagar
  */
-export async function updatePurchaseOrderItems(purchaseOrderId: number, items: Array<{
-  id?: number;
-  productId: number;
-  quantity: string;
-  unitCost: string;
-  expiryDate?: Date | null;
-}>) {
+export async function updatePurchaseOrderItems(
+  purchaseOrderId: number, 
+  items: Array<{
+    id?: number;
+    productId: number;
+    quantity: string;
+    unitCost: string;
+    expiryDate?: Date | null;
+  }>,
+  costs?: {
+    freightCost?: string;
+    chargesCost?: string;
+  }
+) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
+  
+  // Funções auxiliares para cálculo em centavos (evita erros de ponto flutuante)
+  const toCents = (value: string | number | null | undefined): number => {
+    if (value === null || value === undefined) return 0;
+    return Math.round(parseFloat(value.toString()) * 100);
+  };
+  const fromCents = (cents: number): string => (cents / 100).toFixed(2);
   
   // Buscar ordem de compra
   const po = await getPurchaseOrderById(purchaseOrderId);
@@ -1279,6 +1293,11 @@ export async function updatePurchaseOrderItems(purchaseOrderId: number, items: A
   if (po.purchaseOrder.status !== "CONFIRMED") {
     throw new Error("Apenas compras confirmadas podem ser editadas");
   }
+  
+  // Verificar parcelas para regra de recalculo
+  const installments = await getPurchaseInstallments(purchaseOrderId);
+  const hasPaidInstallments = installments.some(i => i.status === "PAID");
+  const pendingInstallments = installments.filter(i => i.status === "PENDING");
   
   // Buscar itens atuais
   const currentItems = await getPurchaseOrderItems(purchaseOrderId);
@@ -1300,12 +1319,12 @@ export async function updatePurchaseOrderItems(purchaseOrderId: number, items: A
   await deletePurchaseOrderItems(purchaseOrderId);
   
   // Adicionar novos itens e atualizar estoque
-  let totalAmount = 0;
+  let totalAmountCents = 0;
   for (const item of items) {
     const quantity = parseFloat(item.quantity);
-    const unitCost = parseFloat(item.unitCost);
-    const totalCost = quantity * unitCost;
-    totalAmount += totalCost;
+    const unitCostCents = toCents(item.unitCost);
+    const totalCostCents = Math.round(quantity * unitCostCents);
+    totalAmountCents += totalCostCents;
     
     // Adicionar item
     await addPurchaseOrderItem({
@@ -1313,7 +1332,7 @@ export async function updatePurchaseOrderItems(purchaseOrderId: number, items: A
       productId: item.productId,
       quantity: item.quantity,
       unitCost: item.unitCost,
-      totalCost: totalCost.toFixed(2),
+      totalCost: fromCents(totalCostCents),
       expiryDate: item.expiryDate || null
     });
     
@@ -1323,17 +1342,17 @@ export async function updatePurchaseOrderItems(purchaseOrderId: number, items: A
     const prod = product[0];
     
     const currentStock = parseFloat(prod.currentStock?.toString() || "0");
-    const currentAvgCost = parseFloat(prod.avgCost?.toString() || "0");
+    const currentAvgCostCents = toCents(prod.avgCost);
     const newStock = currentStock + quantity;
     
-    // Calcular novo custo médio ponderado
-    const newAvgCost = currentStock > 0
-      ? (currentStock * currentAvgCost + quantity * unitCost) / newStock
-      : unitCost;
+    // Calcular novo custo médio ponderado (em centavos)
+    const newAvgCostCents = currentStock > 0
+      ? Math.round((currentStock * currentAvgCostCents + quantity * unitCostCents) / newStock)
+      : unitCostCents;
     
     const updateData: any = {
       currentStock: newStock,
-      avgCost: newAvgCost.toFixed(4)
+      avgCost: (newAvgCostCents / 100).toFixed(4)
     };
     
     if (item.expiryDate) {
@@ -1346,26 +1365,44 @@ export async function updatePurchaseOrderItems(purchaseOrderId: number, items: A
     await updateCompositeProductsUsingComponent(item.productId);
   }
   
-  // Adicionar frete e encargos ao total
-  const freightCost = parseFloat(po.purchaseOrder.freightCost?.toString() || "0");
-  const chargesCost = parseFloat(po.purchaseOrder.chargesCost?.toString() || "0");
-  totalAmount += freightCost + chargesCost;
+  // Patch semantics: usar novos valores se fornecidos, senão manter valores do banco
+  const freightCostCents = costs?.freightCost !== undefined 
+    ? toCents(costs.freightCost) 
+    : toCents(po.purchaseOrder.freightCost);
+  const chargesCostCents = costs?.chargesCost !== undefined 
+    ? toCents(costs.chargesCost) 
+    : toCents(po.purchaseOrder.chargesCost);
+  
+  totalAmountCents += freightCostCents + chargesCostCents;
   
   // Atualizar valor total da compra
-  await updatePurchaseOrder(purchaseOrderId, { totalAmount: totalAmount.toFixed(2) });
+  await updatePurchaseOrder(purchaseOrderId, { totalAmount: fromCents(totalAmountCents) });
   
   // Atualizar parcelas em Contas a Pagar
-  const installments = await getPurchaseInstallments(purchaseOrderId);
-  const installmentCount = installments.length;
-  
-  if (installmentCount > 0) {
-    const installmentAmount = totalAmount / installmentCount;
-    
-    for (const installment of installments) {
-      // Apenas atualizar parcelas pendentes
-      if (installment.status === "PENDING") {
+  // Regra: Se houver parcela paga, apenas recalcula as pendentes proporcionalmente
+  // Se todas pendentes, distribui igualmente
+  if (pendingInstallments.length > 0) {
+    if (hasPaidInstallments) {
+      // Calcular quanto já foi pago
+      const paidInstallments = installments.filter(i => i.status === "PAID");
+      const paidAmountCents = paidInstallments.reduce((sum, i) => sum + toCents(i.amount), 0);
+      
+      // Valor restante a distribuir entre parcelas pendentes
+      const remainingAmountCents = totalAmountCents - paidAmountCents;
+      const installmentAmountCents = Math.round(remainingAmountCents / pendingInstallments.length);
+      
+      for (const installment of pendingInstallments) {
         await db.update(purchaseInstallments)
-          .set({ amount: installmentAmount.toFixed(2) })
+          .set({ amount: fromCents(installmentAmountCents) })
+          .where(eq(purchaseInstallments.id, installment.id));
+      }
+    } else {
+      // Todas pendentes: distribui igualmente
+      const installmentAmountCents = Math.round(totalAmountCents / installments.length);
+      
+      for (const installment of pendingInstallments) {
+        await db.update(purchaseInstallments)
+          .set({ amount: fromCents(installmentAmountCents) })
           .where(eq(purchaseInstallments.id, installment.id));
       }
     }

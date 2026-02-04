@@ -251,6 +251,8 @@ export default function Compras() {
     setDocType(purchase.purchaseOrder.docType as "NOTA_FISCAL" | "CUPOM" | "SEM_DOCUMENTO");
     setDocNumber(purchase.purchaseOrder.docNumber || "");
     setAccessKey(purchase.purchaseOrder.accessKey || ""); // Carregar chave de acesso
+    setFreightCost(purchase.purchaseOrder.freightCost?.toString() || "0");
+    setChargesCost(purchase.purchaseOrder.chargesCost?.toString() || "0");
     setNotes(purchase.purchaseOrder.notes || "");
     
     // Marcar para edição e selecionar compra (itens serão carregados via useQuery)
@@ -275,6 +277,8 @@ export default function Compras() {
         id: editingPurchaseId,
         docType,
         docNumber: docNumber || undefined,
+        freightCost: freightCost || "0",
+        chargesCost: chargesCost || "0",
         items: items.map(item => ({
           productId: item.productId,
           quantity: item.quantity.toString(),

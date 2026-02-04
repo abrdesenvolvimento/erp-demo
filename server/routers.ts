@@ -911,6 +911,8 @@ export const appRouter = router({
         id: z.number(),
         docType: z.enum(["NOTA_FISCAL", "CUPOM", "SEM_DOCUMENTO"]).optional(),
         docNumber: z.string().optional(),
+        freightCost: z.string().optional(),
+        chargesCost: z.string().optional(),
         items: z.array(z.object({
           productId: z.number(),
           quantity: z.string(),
@@ -919,24 +921,29 @@ export const appRouter = router({
         })),
       }))
       .mutation(async ({ input }) => {
-        const { id, items, docType, docNumber } = input;
+        const { id, items, docType, docNumber, freightCost, chargesCost } = input;
         
-        // Atualizar dados da compra
+        // Atualizar dados da compra (patch semantics - só atualiza se definido)
         const updateData: any = {};
-        if (docType) updateData.docType = docType;
+        if (docType !== undefined) updateData.docType = docType;
         if (docNumber !== undefined) updateData.docNumber = docNumber;
+        if (freightCost !== undefined) updateData.freightCost = freightCost;
+        if (chargesCost !== undefined) updateData.chargesCost = chargesCost;
         
         if (Object.keys(updateData).length > 0) {
           await db.updatePurchaseOrder(id, updateData);
         }
         
-        // Atualizar itens
+        // Atualizar itens com novos custos (passa valores para recalcular total)
         const itemsWithDates = items.map(item => ({
           ...item,
           expiryDate: item.expiryDate ? new Date(item.expiryDate) : null
         }));
         
-        await db.updatePurchaseOrderItems(id, itemsWithDates);
+        await db.updatePurchaseOrderItems(id, itemsWithDates, {
+          freightCost: freightCost !== undefined ? freightCost : undefined,
+          chargesCost: chargesCost !== undefined ? chargesCost : undefined,
+        });
         
         return { success: true };
       }),

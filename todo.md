@@ -22,9 +22,13 @@
 - [x] Número do pedido exibido no cabeçalho da venda (modo visualização)
 - [x] Padronizado nome do campo como `platformOrderId` em todas as camadas
 
-### BUG-02: Edição de Compras - Juros
-- [ ] Ao editar uma compra inserindo juros, não está salvando o novo valor dos produtos
-- [ ] Total da nota não atualiza após inserção de juros
+### BUG-02: Edição de Compras - Juros ✅ (03/02/2026)
+- [x] Ao editar compra, frete/juros agora refletem corretamente no total
+- [x] Parcelas em aberto são recalculadas após alteração de valores
+- [x] Implementado patch semantics (não sobrescreve undefined)
+- [x] Transação atômica implementada
+- [x] Cálculos em centavos para evitar erros de arredondamento
+- [x] Validação: bloqueia edição de valores se houver parcela paga
 
 ### BUG-03: Timezone
 - [ ] Verificar se ainda existem módulos ou funções com divergência de timezone
