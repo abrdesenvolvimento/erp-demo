@@ -9,6 +9,15 @@ import { execSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import { google } from 'googleapis';
+import {
+  createBackupLog,
+  updateBackupLogSuccess,
+  updateBackupLogPartial,
+  updateBackupLogFailed,
+  listBackupLogs,
+  getLastSuccessfulBackup
+} from './db';
+import { storagePut, storageGet } from './storage';
 
 const router = Router();
 
@@ -23,29 +32,27 @@ if (!fs.existsSync(BACKUP_DIR)) {
 }
 
 /**
- * Criar cliente OAuth2 autenticado para Google Drive
+ * Criar cliente Service Account autenticado para Google Drive
+ * Migrado de OAuth2 para Service Account em 04/02/2026 (BUG-05)
  */
-function getOAuth2Client() {
+function getServiceAccountAuth() {
   try {
     const credentials = JSON.parse(process.env.GOOGLE_DRIVE_CREDENTIALS || '{}');
     
-    if (!credentials.client_id || !credentials.client_secret || !credentials.refresh_token) {
-      console.log('[Google Drive] ⚠ Credenciais incompletas');
+    // Verificar se é uma Service Account válida
+    if (!credentials.client_email || !credentials.private_key) {
+      console.log('[Google Drive] ⚠ Credenciais de Service Account incompletas');
       return null;
     }
     
-    const oauth2Client = new google.auth.OAuth2(
-      credentials.client_id,
-      credentials.client_secret
-    );
-    
-    oauth2Client.setCredentials({
-      refresh_token: credentials.refresh_token
+    const auth = new google.auth.GoogleAuth({
+      credentials,
+      scopes: ['https://www.googleapis.com/auth/drive'],
     });
     
-    return oauth2Client;
+    return auth;
   } catch (error) {
-    console.error('[Google Drive] Erro ao criar cliente OAuth2:', error);
+    console.error('[Google Drive] Erro ao criar cliente Service Account:', error);
     return null;
   }
 }
@@ -111,9 +118,9 @@ async function backupCode(): Promise<{ file: string; size: number }> {
  */
 async function uploadToGoogleDrive(filePath: string): Promise<{ id: string; link: string } | null> {
   try {
-    const auth = getOAuth2Client();
+    const auth = getServiceAccountAuth();
     if (!auth) {
-      console.log('[Google Drive] ⚠ Cliente OAuth2 não disponível');
+      console.log('[Google Drive] ⚠ Cliente Service Account não disponível');
       return null;
     }
     
@@ -153,6 +160,29 @@ async function uploadToGoogleDrive(filePath: string): Promise<{ id: string; link
 }
 
 /**
+ * Fazer upload para S3 (Manus Storage)
+ * Alternativa ao Google Drive - mais estável para backups automáticos
+ */
+async function uploadToS3(filePath: string): Promise<{ key: string; url: string } | null> {
+  try {
+    const fileName = path.basename(filePath);
+    const s3Key = `backups/${fileName}`;
+    const mimeType = filePath.endsWith('.sql') ? 'text/plain' : 'application/zip';
+    
+    console.log(`[S3] Fazendo upload de ${fileName}...`);
+    
+    const fileBuffer = fs.readFileSync(filePath);
+    const result = await storagePut(s3Key, fileBuffer, mimeType);
+    
+    console.log(`[S3] ✓ Upload concluído: ${result.url}`);
+    return result;
+  } catch (error: any) {
+    console.error('[S3] ✗ Erro ao fazer upload:', error.message);
+    return null;
+  }
+}
+
+/**
  * Limpar backups antigos localmente
  */
 async function cleanOldLocalBackups(): Promise<number> {
@@ -184,9 +214,9 @@ async function cleanOldLocalBackups(): Promise<number> {
  */
 async function cleanOldDriveBackups(): Promise<number> {
   try {
-    const auth = getOAuth2Client();
+    const auth = getServiceAccountAuth();
     if (!auth) {
-      console.log('[Limpeza Drive] ⚠ Cliente OAuth2 não disponível');
+      console.log('[Limpeza Drive] ⚠ Cliente Service Account não disponível');
       return 0;
     }
     
@@ -293,7 +323,15 @@ router.post('/backup', async (req: Request, res: Response) => {
   const startTime = Date.now();
   const results: any[] = [];
   
+  // Determinar origem do backup
+  const triggeredBy = req.body?.triggeredBy || 'webhook';
+  let logId: number | null = null;
+  
   try {
+    // Criar log de backup iniciado
+    logId = await createBackupLog(triggeredBy);
+    console.log(`[Backup] Log criado: ID ${logId}`);
+    
     // 1. Fazer backup do banco de dados
     const dbBackup = await backupDatabase();
     results.push({ name: path.basename(dbBackup.file), size: dbBackup.size, file: dbBackup.file });
@@ -302,9 +340,23 @@ router.post('/backup', async (req: Request, res: Response) => {
     const codeBackup = await backupCode();
     results.push({ name: path.basename(codeBackup.file), size: codeBackup.size, file: codeBackup.file });
     
-    // 3. Fazer upload para Google Drive
-    console.log('\n[Google Drive] Iniciando upload dos arquivos...\n');
+    // 3. Fazer upload para S3 (principal) e Google Drive (fallback)
+    console.log('\n[Upload] Iniciando upload dos arquivos...\n');
     
+    // Upload para S3 (Manus Storage) - principal
+    for (let i = 0; i < results.length; i++) {
+      try {
+        const s3Result = await uploadToS3(results[i].file);
+        if (s3Result) {
+          results[i].s3Key = s3Result.key;
+          results[i].s3Url = s3Result.url;
+        }
+      } catch (error: any) {
+        console.error(`[S3] Erro no upload de ${results[i].name}:`, error.message);
+      }
+    }
+    
+    // Upload para Google Drive (fallback/opcional)
     const hasGoogleDrive = !!(process.env.GOOGLE_DRIVE_CREDENTIALS && process.env.GOOGLE_DRIVE_FOLDER_ID);
     
     if (hasGoogleDrive) {
@@ -315,8 +367,6 @@ router.post('/backup', async (req: Request, res: Response) => {
           results[i].driveId = driveResult.id;
         }
       }
-    } else {
-      console.log('[Google Drive] ⚠ Credenciais não configuradas, pulando upload\n');
     }
     
     // 4. Limpar backups antigos
@@ -329,10 +379,14 @@ router.post('/backup', async (req: Request, res: Response) => {
     
     // 5. Enviar notificação
     const timestamp = new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
-    let content = `**Data/Hora:** ${timestamp}\n\n**Status:** ✅ Concluído com sucesso\n\n**Arquivos Locais:**\n`;
+    const hasS3Success = results.some(r => r.s3Url);
+    let content = `**Data/Hora:** ${timestamp}\n\n**Status:** ✅ Concluído com sucesso\n\n**Arquivos:**\n`;
     
     for (const r of results) {
       content += `- ${r.name} (${(r.size / 1024 / 1024).toFixed(2)} MB)\n`;
+      if (r.s3Url) {
+        content += `  ☁️ S3: ${r.s3Url}\n`;
+      }
       if (r.driveLink) {
         content += `  📁 Google Drive: ${r.driveLink}\n`;
       }
@@ -340,35 +394,74 @@ router.post('/backup', async (req: Request, res: Response) => {
     
     content += `\n**Limpeza:** ${deletedLocal} arquivo(s) local(is) removido(s)`;
     
-    if (process.env.GOOGLE_DRIVE_FOLDER_ID) {
-      content += `\n📂 Pasta: https://drive.google.com/drive/folders/${process.env.GOOGLE_DRIVE_FOLDER_ID}`;
-    }
-    
     await sendManusNotification('Backup Concluído - ABRWF', content);
     
     // Resumo final
-    const duration = ((Date.now() - startTime) / 1000).toFixed(2);
+    const duration = ((Date.now() - startTime) / 1000);
     const totalSize = results.reduce((sum, r) => sum + r.size, 0);
+    
+    // Atualizar log de backup
+    if (logId) {
+      const dbResult = results.find(r => r.name.includes('database'));
+      const codeResult = results.find(r => r.name.includes('code'));
+      const hasCloudSuccess = hasS3Success || results.some(r => r.driveLink);
+      
+      if (hasCloudSuccess) {
+        // Sucesso: S3 ou Google Drive funcionou
+        await updateBackupLogSuccess(logId, {
+          databaseFile: dbResult?.name || '',
+          databaseSize: dbResult?.size || 0,
+          codeFile: codeResult?.name || '',
+          codeSize: codeResult?.size || 0,
+          databaseDriveId: dbResult?.driveId || dbResult?.s3Key,
+          databaseDriveLink: dbResult?.driveLink || dbResult?.s3Url,
+          codeDriveId: codeResult?.driveId || codeResult?.s3Key,
+          codeDriveLink: codeResult?.driveLink || codeResult?.s3Url,
+          localFilesDeleted: deletedLocal,
+          driveFilesDeleted: 0,
+          durationSeconds: duration,
+        });
+      } else {
+        // Parcial: backup local ok, mas cloud falhou
+        await updateBackupLogPartial(logId, {
+          databaseFile: dbResult?.name || '',
+          databaseSize: dbResult?.size || 0,
+          codeFile: codeResult?.name || '',
+          codeSize: codeResult?.size || 0,
+          localFilesDeleted: deletedLocal,
+          durationSeconds: duration,
+          errorMessage: 'Upload para cloud (S3/Drive) falhou',
+        });
+      }
+    }
     
     console.log('\n═══════════════════════════════════════════════════');
     console.log('✓ Backup concluído com sucesso!');
-    console.log(`Duração: ${duration}s`);
+    console.log(`Duração: ${duration.toFixed(2)}s`);
     console.log(`Total: ${(totalSize / 1024 / 1024).toFixed(2)} MB`);
     console.log('═══════════════════════════════════════════════════\n');
     
     res.json({
       success: true,
-      duration: `${duration}s`,
+      logId,
+      duration: `${duration.toFixed(2)}s`,
       totalSize: `${(totalSize / 1024 / 1024).toFixed(2)} MB`,
       files: results.map(r => ({
         name: r.name,
         size: `${(r.size / 1024 / 1024).toFixed(2)} MB`,
+        s3Url: r.s3Url || null,
         driveLink: r.driveLink || null
       }))
     });
     
   } catch (error: any) {
     console.error('\n✗ Erro durante o backup:', error.message);
+    
+    // Atualizar log de backup com falha
+    if (logId) {
+      const duration = (Date.now() - startTime) / 1000;
+      await updateBackupLogFailed(logId, error.message, duration);
+    }
     
     // Enviar notificação de falha
     const timestamp = new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
@@ -412,6 +505,69 @@ router.get('/backup/status', async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * Endpoint de histórico de backups (BUG-05)
+ * GET /api/backup/history
+ */
+router.get('/backup/history', async (req: Request, res: Response) => {
+  try {
+    const logs = await listBackupLogs(20);
+    
+    res.json({
+      success: true,
+      logs: logs.map(log => ({
+        id: log.id,
+        startedAt: log.startedAt,
+        completedAt: log.completedAt,
+        status: log.status,
+        databaseSize: log.databaseSize ? `${(log.databaseSize / 1024 / 1024).toFixed(2)} MB` : null,
+        codeSize: log.codeSize ? `${(log.codeSize / 1024 / 1024).toFixed(2)} MB` : null,
+        driveLinks: {
+          database: log.databaseDriveLink,
+          code: log.codeDriveLink,
+        },
+        duration: log.durationSeconds ? `${log.durationSeconds}s` : null,
+        error: log.errorMessage,
+        triggeredBy: log.triggeredBy,
+      }))
+    });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * Endpoint de último backup bem-sucedido (BUG-05)
+ * GET /api/backup/last-success
+ */
+router.get('/backup/last-success', async (req: Request, res: Response) => {
+  try {
+    const lastBackup = await getLastSuccessfulBackup();
+    
+    if (!lastBackup) {
+      return res.json({ success: true, lastBackup: null });
+    }
+    
+    res.json({
+      success: true,
+      lastBackup: {
+        id: lastBackup.id,
+        startedAt: lastBackup.startedAt,
+        completedAt: lastBackup.completedAt,
+        databaseSize: lastBackup.databaseSize ? `${(lastBackup.databaseSize / 1024 / 1024).toFixed(2)} MB` : null,
+        codeSize: lastBackup.codeSize ? `${(lastBackup.codeSize / 1024 / 1024).toFixed(2)} MB` : null,
+        driveLinks: {
+          database: lastBackup.databaseDriveLink,
+          code: lastBackup.codeDriveLink,
+        },
+        duration: lastBackup.durationSeconds ? `${lastBackup.durationSeconds}s` : null,
+      }
+    });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 

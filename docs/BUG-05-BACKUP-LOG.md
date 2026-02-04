@@ -424,6 +424,36 @@ describe('Google Drive Backup - Service Account', () => {
   - Partes 2-4 (Aurora): 45-60 minutos
 
 ---
+
+## Pivotação: Google Drive → S3
+
+Durante a implementação, descobrimos que **Google Drive não permite upload de Service Accounts para pastas de contas Gmail pessoais**. O erro `storageQuotaExceeded` persiste mesmo com configuração correta (pasta compartilhada como Editor, parents definido corretamente).
+
+### Limitação do Google Drive
+- Service Accounts não têm cota de armazenamento própria
+- Mesmo criando arquivos em pastas de usuários Gmail, o Google rejeita
+- Funciona apenas com Google Workspace ou Shared Drives
+
+### Solução Implementada
+
+**S3 (Manus Storage)** como destino principal de backups:
+- Mais estável e sem limitações de cota
+- Integração já existente no projeto (`storagePut`)
+- URLs públicas via CloudFront
+- Google Drive mantido como fallback (para futuro uso com Google Workspace)
+
+### Resultado Final
+
+| Aspecto | Status |
+|---------|--------|
+| Backup Local | ✅ Funcionando |
+| Upload S3 | ✅ Funcionando |
+| Upload Google Drive | ⚠️ Desabilitado (Gmail pessoal) |
+| Tabela backupLogs | ✅ Criada |
+| Endpoint /api/backup/history | ✅ Funcionando |
+| Endpoint /api/backup/last-success | ✅ Funcionando |
+
+---
 **Autor:** Aurora (Manus AI)
 **Data:** 2026-02-04
-**Status:** ✅ Aprovado por Orion - Aguardando execução da Parte 1 por Gabriel
+**Status:** ✅ IMPLEMENTADO - Backup funcionando com S3

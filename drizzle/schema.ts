@@ -646,3 +646,44 @@ export const revenueEntries = mysqlTable("revenueEntries", {
 
 export type RevenueEntry = typeof revenueEntries.$inferSelect;
 export type InsertRevenueEntry = typeof revenueEntries.$inferInsert;
+
+
+// Logs de backup (BUG-05)
+export const backupLogs = mysqlTable("backupLogs", {
+  id: int("id").primaryKey().autoincrement(),
+  startedAt: timestamp("startedAt").notNull(),
+  completedAt: timestamp("completedAt"),
+  status: mysqlEnum("status", ["running", "success", "partial", "failed"]).notNull(),
+  
+  // Detalhes do backup
+  databaseFile: varchar("databaseFile", { length: 255 }),
+  databaseSize: int("databaseSize"), // bytes
+  codeFile: varchar("codeFile", { length: 255 }),
+  codeSize: int("codeSize"), // bytes
+  
+  // Google Drive
+  databaseDriveId: varchar("databaseDriveId", { length: 100 }),
+  databaseDriveLink: varchar("databaseDriveLink", { length: 500 }),
+  codeDriveId: varchar("codeDriveId", { length: 100 }),
+  codeDriveLink: varchar("codeDriveLink", { length: 500 }),
+  
+  // Limpeza
+  localFilesDeleted: int("localFilesDeleted").default(0),
+  driveFilesDeleted: int("driveFilesDeleted").default(0),
+  
+  // Erro (se houver)
+  errorMessage: text("errorMessage"),
+  
+  // Duração
+  durationSeconds: decimal("durationSeconds", { precision: 10, scale: 2 }),
+  
+  // Metadados
+  triggeredBy: varchar("triggeredBy", { length: 50 }), // "scheduled", "manual", "webhook"
+  serverVersion: varchar("serverVersion", { length: 50 }),
+}, (table) => ({
+  startedAtIdx: index("backup_started_at_idx").on(table.startedAt),
+  statusIdx: index("backup_status_idx").on(table.status),
+}));
+
+export type BackupLog = typeof backupLogs.$inferSelect;
+export type InsertBackupLog = typeof backupLogs.$inferInsert;

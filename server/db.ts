@@ -29,7 +29,8 @@ import {
   accountingMappings, AccountingMapping, InsertAccountingMapping,
   chartOfAccounts, ChartOfAccount, InsertChartOfAccount,
   revenueAccounts, RevenueAccount, InsertRevenueAccount,
-  revenueEntries, RevenueEntry, InsertRevenueEntry
+  revenueEntries, RevenueEntry, InsertRevenueEntry,
+  backupLogs, BackupLog, InsertBackupLog
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 import { 
@@ -6535,4 +6536,148 @@ export async function getCMVByPeriod(dateFrom: string, dateTo: string) {
   }
   
   return { cmvTotal, byProduct };
+}
+
+
+// ==================== BACKUP LOGS (BUG-05) ====================
+
+/**
+ * Criar log de backup iniciado
+ */
+export async function createBackupLog(triggeredBy: string): Promise<number> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.insert(backupLogs).values({
+    startedAt: new Date(),
+    status: "running",
+    triggeredBy,
+  });
+  
+  // @ts-ignore - insertId exists on mysql result
+  return result[0].insertId;
+}
+
+/**
+ * Atualizar log com sucesso
+ */
+export async function updateBackupLogSuccess(
+  logId: number,
+  data: {
+    databaseFile: string;
+    databaseSize: number;
+    codeFile: string;
+    codeSize: number;
+    databaseDriveId?: string;
+    databaseDriveLink?: string;
+    codeDriveId?: string;
+    codeDriveLink?: string;
+    localFilesDeleted: number;
+    driveFilesDeleted: number;
+    durationSeconds: number;
+  }
+): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  
+  await db.update(backupLogs)
+    .set({
+      completedAt: new Date(),
+      status: "success",
+      databaseFile: data.databaseFile,
+      databaseSize: data.databaseSize,
+      codeFile: data.codeFile,
+      codeSize: data.codeSize,
+      databaseDriveId: data.databaseDriveId,
+      databaseDriveLink: data.databaseDriveLink,
+      codeDriveId: data.codeDriveId,
+      codeDriveLink: data.codeDriveLink,
+      localFilesDeleted: data.localFilesDeleted,
+      driveFilesDeleted: data.driveFilesDeleted,
+      durationSeconds: data.durationSeconds.toFixed(2),
+    })
+    .where(eq(backupLogs.id, logId));
+}
+
+/**
+ * Atualizar log com sucesso parcial (backup local ok, drive falhou)
+ */
+export async function updateBackupLogPartial(
+  logId: number,
+  data: {
+    databaseFile: string;
+    databaseSize: number;
+    codeFile: string;
+    codeSize: number;
+    localFilesDeleted: number;
+    durationSeconds: number;
+    errorMessage: string;
+  }
+): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  
+  await db.update(backupLogs)
+    .set({
+      completedAt: new Date(),
+      status: "partial",
+      databaseFile: data.databaseFile,
+      databaseSize: data.databaseSize,
+      codeFile: data.codeFile,
+      codeSize: data.codeSize,
+      localFilesDeleted: data.localFilesDeleted,
+      durationSeconds: data.durationSeconds.toFixed(2),
+      errorMessage: data.errorMessage,
+    })
+    .where(eq(backupLogs.id, logId));
+}
+
+/**
+ * Atualizar log com falha
+ */
+export async function updateBackupLogFailed(
+  logId: number,
+  errorMessage: string,
+  durationSeconds: number
+): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  
+  await db.update(backupLogs)
+    .set({
+      completedAt: new Date(),
+      status: "failed",
+      errorMessage,
+      durationSeconds: durationSeconds.toFixed(2),
+    })
+    .where(eq(backupLogs.id, logId));
+}
+
+/**
+ * Listar últimos backups
+ */
+export async function listBackupLogs(limit: number = 20): Promise<BackupLog[]> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return db.select()
+    .from(backupLogs)
+    .orderBy(desc(backupLogs.startedAt))
+    .limit(limit);
+}
+
+/**
+ * Obter último backup bem-sucedido
+ */
+export async function getLastSuccessfulBackup(): Promise<BackupLog | null> {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const result = await db.select()
+    .from(backupLogs)
+    .where(eq(backupLogs.status, "success"))
+    .orderBy(desc(backupLogs.startedAt))
+    .limit(1);
+  
+  return result[0] || null;
 }

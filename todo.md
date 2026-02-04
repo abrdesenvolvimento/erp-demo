@@ -38,15 +38,17 @@
 - [ ] Fase 2: Migrar exibição (PDF/backup) - pendente
 - [ ] Fase 3: Manter timestamps técnicos em UTC - pendente
 
-### BUG-05: Backup Google Drive + Log (Em Análise)
-- [ ] Migrar de OAuth2 para Service Account (não expira)
-- [ ] Gabriel: Criar Service Account no Google Cloud Console
-- [ ] Gabriel: Compartilhar pasta de backup com email da Service Account
-- [ ] Gabriel: Atualizar GOOGLE_DRIVE_CREDENTIALS com novo JSON
-- [ ] Aurora: Atualizar código para usar GoogleAuth
-- [ ] Aurora: Criar tabela backupLogs para rastreabilidade
-- [ ] Aurora: Implementar endpoints de histórico de backups
-- [ ] Testar backup completo após migração
+### BUG-05: Backup com Log ✅ (04/02/2026)
+- [x] Migrado de OAuth2 para Service Account
+- [x] Gabriel: Criou Service Account no Google Cloud Console
+- [x] Gabriel: Compartilhou pasta de backup com Service Account
+- [x] Gabriel: Atualizou GOOGLE_DRIVE_CREDENTIALS
+- [x] Aurora: Atualizou código para usar GoogleAuth
+- [x] Aurora: Criou tabela backupLogs para rastreabilidade
+- [x] Aurora: Implementou endpoints /api/backup/history e /api/backup/last-success
+- [x] **PIVOTADO:** Google Drive não funciona com Gmail pessoal + Service Account
+- [x] **SOLUÇÃO:** Implementado upload para S3 (Manus Storage) como principal
+- [x] Backup testado e funcionando com sucesso (S3)
 
 ---
 
