@@ -1,98 +1,179 @@
 # ABRWF - Pendências e Melhorias
 
-**Última atualização:** 19/01/2026
+**Última atualização:** 21/01/2026
 
 ---
 
-## 📅 DATAS IMPORTANTES
+## 📋 ESTRUTURA DA EQUIPE
 
-| Data | Evento | Status |
-|------|--------|--------|
-| **18/10/2025** | Início do desenvolvimento do sistema | ✅ Concluído |
-| **08/01/2026** | Sistema completo e publicado em produção | ✅ Concluído |
-| **19/01/2026** | Contabilização completa (Despesas + Receitas + DRE) | ✅ Concluído |
-| **A partir de 20/01/2026** | Fase de melhorias e ajustes pontuais | 🔄 Em andamento |
-
-**Duração do desenvolvimento:** ~82 dias (18/10/2025 a 08/01/2026)
+| Membro | Papel | Responsabilidades |
+|--------|-------|-------------------|
+| **Gabriel** | Product Owner / Desenvolvedor | Idealizar melhorias, identificar problemas, definir prioridades e validar entregas |
+| **ChatGPT** | Co-Desenvolvedor / Apoio Técnico | Aprofundar regras, esclarecer pontos técnicos, sugerir soluções e revisar código |
+| **Aurora (Manus)** | Desenvolvedora Principal | Execução de código, implementação de funcionalidades e evolução técnica |
 
 ---
 
-## 🔴 BUGS PENDENTES (PRIORIDADE ALTA)
+## 🔴 BUGS CRÍTICOS
 
-### BUG 1: Vendas - Código do Pedido não carrega na edição
-- [ ] Ao editar uma venda, o código do pedido digitado originalmente não está sendo trazido
-- [ ] Ao alterar a venda, o código não está aparecendo na tela inicial
-- [ ] Exportação de vendas deve incluir observações da venda
+### BUG-01: Vendas Delivery - Número do Pedido
+- [ ] Ao editar venda Delivery, não traz o número do pedido lançado inicialmente
+- [ ] Ao editar, não está salvando a alteração do número do pedido
 
-### BUG 2: Contas a Pagar - Alteração de data de vencimento
-- [ ] Ao alterar data de vencimento de uma despesa, não está refletindo no Contas a Pagar
-- [ ] Verificar se o update está atualizando a tabela de parcelas corretamente
+### BUG-02: Edição de Compras - Juros
+- [ ] Ao editar uma compra inserindo juros, não está salvando o novo valor dos produtos
+- [ ] Total da nota não atualiza após inserção de juros
 
----
-
-## 📊 CONTABILIZAÇÃO (PRÓXIMOS PASSOS)
-
-### Fase 1: Despesas ✅ CONCLUÍDO (19/01/2026)
-- [x] Plano de contas gerenciais (50 contas importadas)
-- [x] Mapeamento contábil automático
-- [x] Lançamento de despesas com conta gerencial
-- [x] Perdas Estoque com baixa automática de estoque
-- [x] Migração de despesas existentes
-
-### Fase 2: Receitas ✅ CONCLUÍDO (19/01/2026)
-- [x] Contas de receita por canal (Balcão, Delivery, A Prazo)
-- [x] Atribuição automática de conta por tipo de venda
-- [x] Lançamentos de receita automáticos
-- [x] Deduções (descontos) contabilizadas
-- [x] Migração de 19 dias de vendas
-
-### Fase 3: DRE Completo ✅ CONCLUÍDO (19/01/2026)
-- [x] Receita Bruta separada por canal
-- [x] Receita Líquida (após deduções)
-- [x] CMV (Custo de Mercadoria Vendida)
-- [x] Lucro Bruto com margem
-- [x] Despesas por classificação (Operacional, Administrativa, Financeira)
-- [x] Resultado Operacional e Líquido
-
-### Fase 4: Balanço Patrimonial (PENDENTE)
-- [ ] Criar estrutura de contas patrimoniais (Ativo, Passivo, PL)
-- [ ] Integrar Ativo: Estoque, Contas a Receber, Caixa
-- [ ] Integrar Passivo: Contas a Pagar, Fornecedores
-- [ ] Gerar balanço patrimonial simplificado
-
-### Validação com Contador
-- [ ] Confirmar estrutura do plano contábil
-- [ ] Validar se há outras receitas além de vendas
-- [ ] Definir período de início do novo plano
+### BUG-03: Timezone
+- [ ] Verificar se ainda existem módulos ou funções com divergência de timezone
 
 ---
 
-## 📈 ANÁLISES E RELATÓRIOS
+## 🟡 MELHORIAS PRIORITÁRIAS
 
-### Análise de Despesas - Agrupamento por Tipo
-- [ ] Separar despesas por grupo de tipo de conta (Operacional, Administrativa, Financeira)
-- [ ] Avaliar melhor forma de classificar as contas gerenciais
-- [ ] Implementar visualização agrupada no relatório de análise
+### Vendas A Prazo - Alterar Cliente
+- [ ] Possibilitar alteração de cliente em venda a prazo já lançada
+- [ ] Evitar necessidade de cancelar e criar nova venda
 
-### Tela de Fechamento - Novos Quadros
-- [ ] Quadro: Vendas por Categoria de Produtos
-- [ ] Quadro: Compras por Categoria de Produtos
-- [ ] Quadro: Acompanhamento de Margem
-- [ ] Implementar filtros por período e categoria
+### Compras e Despesas - Trava de Edição
+- [ ] Implementar prazo máximo de 3 dias para edição/cancelamento
+- [ ] Importante devido à contabilização implementada
 
-### Exportar Relatórios
-- [ ] Análise de Vendas → Exportar para Excel/PDF
-- [ ] Fechamento Mensal / DRE → Exportar para PDF
-- [ ] Contas a Pagar → Exportar para Excel/PDF
-- [x] Produtos → Já implementado ✅
-- [x] Contas a Receber → PDF para envio ao cliente ✅
+### Compras - Produto Duplicado
+- [ ] Produto já selecionado não deve aparecer novamente no autocomplete
+- [ ] Mesma lógica já existente em outros módulos
 
 ---
 
-## 📱 CATÁLOGO DIGITAL + INTEGRAÇÃO
+## 📊 MÓDULO CONTABILIDADE (NOVO)
 
-### Catálogo Digital ABRWF
-- [ ] Definir escopo da integração catálogo ↔ ERP
+### Estrutura do Módulo
+- [ ] Criar menu específico de Contabilidade no ABRWF
+- [ ] Plano de Contas Contábil
+- [ ] Plano de Contas Gerencial
+- [ ] Associação entre planos
+- [ ] Contas Bancárias
+- [ ] Relatórios oficiais:
+  - [ ] Razão
+  - [ ] Balanço
+  - [ ] DRE (versão final consolidada)
+
+### Outras Receitas (Novo Módulo)
+- [ ] Registro de entradas não vinculadas a vendas de produtos
+- [ ] Tipos: empréstimos bancários, bonificações, acordos, receitas extraordinárias
+- [ ] Classificação gerencial e contábil correta
+
+---
+
+## 📱 IMPORTADOR IFOOD (NOVO MÓDULO)
+
+### Objetivo
+Automatizar importação de pedidos concluídos do iFood via arquivos JSON
+
+### Escopo V1
+- [ ] Importação de pedidos com status CONCLUDED
+- [ ] Deduplicação por id_pedido_ifood
+- [ ] Identificação de produtos por EAN
+- [ ] De/Para para divergências de cadastro
+- [ ] Bloqueio de importação em caso de divergência
+- [ ] Aprovação manual de divergências
+- [ ] Criação automática de vendas e itens
+- [ ] Movimentação de estoque pelo fluxo padrão
+- [ ] Histórico completo de importações
+- [ ] Logs técnicos de cada execução
+- [ ] Garantir idempotência (não duplicar importações)
+
+### Arquivos de Entrada
+- [ ] Pedidos.json (obrigatório)
+- [ ] Itens Pedidos.json (obrigatório)
+- [ ] Inventário Ifood.json (opcional, para De/Para)
+
+### Interface
+- [ ] Menu: Vendas → Importação iFood
+- [ ] Upload dos arquivos JSON
+- [ ] Prévia da importação
+- [ ] Ações: importar, aprovar divergências, resolver De/Para
+- [ ] Histórico de importações
+
+---
+
+## 📈 TELA DE FECHAMENTO (AJUSTES)
+
+### Remover
+- [ ] Despesas por Categoria (não utilizamos mais)
+- [ ] DRE (mover para módulo Contabilidade)
+- [ ] Coluna "Código" do quadro Despesas por Conta Gerencial
+
+### Adicionar
+- [ ] Quadro: Compras por Categoria de Produtos (similar ao Compras por Tipo)
+
+### Manter
+- [ ] Resumo Mensal Comparativo (como está)
+
+### Impressão
+- [ ] Adicionar logo da empresa no cabeçalho
+- [ ] Ajustar layout para impressão A4
+
+---
+
+## 📊 ANÁLISES (MELHORIAS)
+
+### Análise de Faturamento
+- [ ] Calendário: destacar automaticamente feriados nacionais/regionais
+- [ ] Permitir destaque manual de dias específicos (ex: loja fechada)
+- [ ] Visão Mensal: adicionar coluna Faturamento Diário (Total / Dias Corridos)
+
+### Análise por Canal
+- [ ] Adicionar quantidade de vendas em cada card
+- [ ] Adicionar ticket médio das vendas
+
+### Análise de Vendas
+- [ ] Filtro de datas específicas (feriados) para análise e previsão
+
+---
+
+## 🏢 ACESSO POR EMPRESA (FUTURO)
+
+- [ ] Suporte a múltiplas empresas no ABRWF
+- [ ] Isolamento de dados (produtos, vendas, financeiro, contabilidade)
+- [ ] Isolamento em nível de banco e regras de acesso
+- [ ] Evolução futura para ambientes com regras específicas por empresa
+
+---
+
+## 📜 HISTÓRICO E AUDITORIA
+
+### Histórico de Preço
+- [ ] Histórico de alterações de preço de venda e custo médio
+- [ ] Registro automático: data, usuário, valor anterior/novo
+- [ ] Auditoria de margem ao longo do tempo
+
+### Histórico de Log (Auditoria)
+- [ ] Criar tabela de logs no banco de dados
+- [ ] Registrar alterações em: Produtos, Parceiros, Vendas, Compras
+- [ ] Campos: usuário, data/hora, entidade, ação, valor anterior/novo
+- [ ] Tela de consulta de logs com filtros
+
+---
+
+## 🔧 INFRAESTRUTURA
+
+### Backup
+- [ ] Revisar execução automática diária
+- [ ] Corrigir upload para Google Drive (não funcional desde 15/01)
+- [ ] Corrigir envio de e-mail de conclusão
+- [ ] Implementar registro de falhas em log
+
+### API WhatsApp
+- [ ] Concluir integração para automações operacionais e comerciais
+- [ ] Notificações, avisos, confirmações
+- [ ] Integrar com eventos do ABRWF
+
+---
+
+## 📱 CATÁLOGO DIGITAL
+
+- [ ] Definir escopo da integração ERP ↔ Catálogo
 - [ ] Criar endpoint /api/catalogo no ERP
 - [ ] Sincronizar produtos e preços do canal Balcão
 - [ ] Adicionar indicador de disponibilidade (estoque)
@@ -100,77 +181,46 @@
 
 ---
 
-## 📚 DOCUMENTAÇÃO DO SISTEMA ("LIVRO")
+## 📚 DOCUMENTAÇÃO ("LIVRO")
 
-### Visão Geral
-- [ ] Visão geral e arquitetura técnica
-- [ ] Stack tecnológico (React, tRPC, Drizzle, TiDB, etc.)
-- [ ] Fluxogramas de processos principais
+### Documentação Operacional
+- [ ] Visão institucional do sistema
+- [ ] Módulos e funcionalidades
+- [ ] Fluxos operacionais
 
-### Documentação por Módulo
-- [ ] Dashboard
-- [ ] Produtos
-- [ ] Vendas
-- [ ] Parceiros
-- [ ] Compras
-- [ ] Despesas
-- [ ] Contas a Receber
-- [ ] Contas a Pagar
-- [ ] Metas
-- [ ] Fechamento Mensal
-- [ ] Análises
-- [ ] Gerenciamento de Usuários
-
-### Guias e Referências
-- [ ] Guia de uso para cada perfil (Admin, Operacional, Consultor)
-- [ ] Glossário de termos
-- [ ] FAQ / Perguntas Frequentes
+### Documentação Técnica
+- [ ] Arquitetura do sistema
+- [ ] Stack tecnológico
+- [ ] Referência técnica para desenvolvedores
 
 ---
 
-## 🔧 MELHORIAS TÉCNICAS
+## 🎨 INTERFACE E UX
 
-### Histórico de Log (Auditoria)
-- [ ] Criar tabela de logs no banco de dados
-- [ ] Registrar alterações em: Produtos, Parceiros, Vendas, Compras
-- [ ] Campos: usuário, data/hora, ação, dados anteriores, dados novos
-- [ ] Tela de consulta de logs com filtros
+### Dashboard
+- [ ] Card de Controle de Crédito:
+  - [ ] Limite total concedido
+  - [ ] Valor utilizado
+  - [ ] Saldo disponível
+  - [ ] Percentual de utilização
 
-### Performance
-- [ ] Otimizar queries de Análise de Vendas (índices, cache)
-- [ ] Implementar paginação em listagens grandes
-- [ ] Lazy loading de dados pesados
+### Metas
+- [ ] Melhorias visuais/layout para reduzir aspecto "branco"
+- [ ] Manter regras de negócio atuais
 
-### Segurança
-- [ ] Autenticação de dois fatores (2FA)
-- [ ] Sessões com expiração automática
-- [ ] Logs de acesso por usuário
+### Responsividade Mobile
+- [ ] Melhorar responsividade em dispositivos móveis
 
 ---
 
-## 💡 MELHORIAS FUTURAS
+## 🗑️ LIMPEZA DE DADOS
 
-### UX/Interface
-- [ ] Tooltips explicativos nos formulários
-- [ ] Confirmação antes de deletar registros
-- [ ] Melhorar responsividade mobile
-- [ ] Atalhos de teclado para ações frequentes
-
-### Funcionalidades
-- [ ] Comparar quantidade entre canais (Balcão vs Delivery vs A Prazo)
-- [ ] Sistema de comissões por canal delivery
-- [ ] Card de ticket médio no dashboard
-- [ ] Alertas por email para estoque crítico
-- [ ] Notificações push para metas atingidas
-
-### Integrações
-- [ ] Integração com WhatsApp Business API (template pendente aprovação)
-- [ ] Integração com sistemas de delivery (iFood, Rappi)
-- [ ] Importação automática de notas fiscais (XML)
+### Produtos a Excluir
+- [ ] IDs: 5280001, 5280002, 5310001, 5310002, 5310003, 4950001, 4950002, 4950003, 4950004, 2070009
 
 ---
 
-## ✅ CONCLUÍDO RECENTEMENTE
+## ✅ CONCLUÍDO
 
 ### 19/01/2026 - Contabilização Completa
 - [x] Plano de contas gerenciais (50 contas)
@@ -179,28 +229,10 @@
 - [x] Contabilização de receitas por canal
 - [x] DRE completo na página de Fechamento
 - [x] CMV calculado automaticamente
-- [x] Despesas por classificação (Operacional, Administrativa, Financeira)
-
-### 09-11/01/2026 - Integrações e Correções
-- [x] Integração WhatsApp - Envio de extrato de Contas a Receber
-- [x] BUG: Vendas canceladas gerando saldo a receber
-- [x] BUG: PDF mostrando histórico completo ao invés de vendas em aberto
-- [x] Backup automático diário para Google Drive
-- [x] Notificação por email após backup
 
 ### 08/01/2026 - Sistema em Produção
 - [x] Sistema completo publicado
-- [x] Meta tags Open Graph atualizadas
 - [x] Sistema de Metas mensais por canal
 - [x] Fechamento Mensal com DRE
 - [x] Controle de acesso por perfil
-
----
-
-## 📊 ESTATÍSTICAS DO SISTEMA
-
-- **Produtos cadastrados:** ~983
-- **Vendas migradas:** 2022-2026
-- **Usuários ativos:** 3 perfis (Admin, Operacional, Consultor)
-- **Backup:** Diário às 3h (GMT-3)
-- **Uptime:** 99.9%
+- [x] Backup automático diário
