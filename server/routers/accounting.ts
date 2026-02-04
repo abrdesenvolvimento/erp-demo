@@ -299,5 +299,58 @@ export const accountingRouter = router({
     }).optional())
     .query(async ({ input }) => {
       return accounting.getChartOfAccounts(input?.companyId || 1);
+    }),
+
+  // Contas Gerenciais
+  listManagementAccounts: publicProcedure
+    .input(z.object({
+      companyId: z.number().optional().default(1)
+    }).optional())
+    .query(async ({ input }) => {
+      return accounting.listManagementAccounts(input?.companyId || 1);
+    }),
+
+  createManagementAccount: protectedProcedure
+    .input(z.object({
+      code: z.string(),
+      name: z.string(),
+      description: z.string().optional(),
+      nature: z.enum(["CUSTO", "DESPESA", "RECEITA", "PATRIMONIAL"]),
+      costType: z.enum(["FIXA", "VARIAVEL"]).nullable().optional(),
+      classification: z.enum(["OPERACIONAL", "ADMINISTRATIVA", "COMERCIAL", "FINANCEIRA", "NAO_OPERACIONAL", "PATRIMONIAL"]),
+      impactMargin: z.boolean().optional().default(false),
+      impactPayroll: z.boolean().optional().default(false),
+      isActive: z.boolean().optional().default(true)
+    }))
+    .mutation(async ({ input }) => {
+      return accounting.createManagementAccount(input);
+    }),
+
+  updateManagementAccount: protectedProcedure
+    .input(z.object({
+      id: z.number(),
+      code: z.string().optional(),
+      name: z.string().optional(),
+      description: z.string().optional(),
+      nature: z.enum(["CUSTO", "DESPESA", "RECEITA", "PATRIMONIAL"]).optional(),
+      costType: z.enum(["FIXA", "VARIAVEL"]).nullable().optional(),
+      classification: z.enum(["OPERACIONAL", "ADMINISTRATIVA", "COMERCIAL", "FINANCEIRA", "NAO_OPERACIONAL", "PATRIMONIAL"]).optional(),
+      impactMargin: z.boolean().optional(),
+      impactPayroll: z.boolean().optional(),
+      isActive: z.boolean().optional()
+    }))
+    .mutation(async ({ input }) => {
+      const { id, ...data } = input;
+      return accounting.updateManagementAccount(id, data as any);
+    }),
+
+  updateAccountingMapping: protectedProcedure
+    .input(z.object({
+      managementAccountId: z.number(),
+      accountingCode: z.string(),
+      notes: z.string().optional()
+    }))
+    .mutation(async ({ input }) => {
+      return accounting.updateAccountingMapping(input);
     })
 });

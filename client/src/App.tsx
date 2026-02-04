@@ -21,6 +21,7 @@ import FechamentoMensal from "./pages/FechamentoMensal";
 import PlanoContas from "./pages/PlanoContas";
 import RelatoriosContabeis from "./pages/RelatoriosContabeis";
 import OutrasReceitas from "./pages/OutrasReceitas";
+import ContasGerenciais from "./pages/ContasGerenciais";
 import AccessDenied from "./pages/AccessDenied";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
@@ -48,6 +49,7 @@ function Router() {
       <Route path="/plano-contas" component={PlanoContas} />
       <Route path="/relatorios-contabeis" component={RelatoriosContabeis} />
       <Route path="/outras-receitas" component={OutrasReceitas} />
+      <Route path="/contas-gerenciais" component={ContasGerenciais} />
       <Route path="/minha-conta" component={MinhaConta} />
       <Route path="/acesso-negado" component={AccessDenied} />
       <Route path="/404" component={NotFound} />

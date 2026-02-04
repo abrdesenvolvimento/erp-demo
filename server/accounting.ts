@@ -866,3 +866,153 @@ export async function deleteOtherRevenue(id: number) {
   
   return { success: true };
 }
+
+
+// =====================================================
+// CRUD - Contas Gerenciais
+// =====================================================
+
+import { managementAccounts, accountingMappings } from "../drizzle/schema";
+
+export async function listManagementAccounts(companyId: number = 1) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  // Buscar contas gerenciais com suas amarrações
+  const accounts = await db.select({
+    id: managementAccounts.id,
+    code: managementAccounts.code,
+    name: managementAccounts.name,
+    description: managementAccounts.description,
+    nature: managementAccounts.nature,
+    costType: managementAccounts.costType,
+    classification: managementAccounts.classification,
+    impactMargin: managementAccounts.impactMargin,
+    impactPayroll: managementAccounts.impactPayroll,
+    isActive: managementAccounts.isActive,
+    displayOrder: managementAccounts.displayOrder,
+    accountingCode: accountingMappings.accountingCode,
+  })
+  .from(managementAccounts)
+  .leftJoin(accountingMappings, eq(managementAccounts.id, accountingMappings.managementAccountId))
+  .orderBy(asc(managementAccounts.displayOrder), asc(managementAccounts.code));
+  
+  return accounts;
+}
+
+export async function createManagementAccount(data: {
+  code: string;
+  name: string;
+  description?: string;
+  nature: "CUSTO" | "DESPESA" | "RECEITA" | "PATRIMONIAL";
+  costType?: "FIXA" | "VARIAVEL" | null;
+  classification: "OPERACIONAL" | "ADMINISTRATIVA" | "COMERCIAL" | "FINANCEIRA" | "NAO_OPERACIONAL" | "PATRIMONIAL";
+  impactMargin?: boolean;
+  impactPayroll?: boolean;
+  isActive?: boolean;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  // Verificar se código já existe
+  const existing = await db.select()
+    .from(managementAccounts)
+    .where(eq(managementAccounts.code, data.code))
+    .limit(1);
+  
+  if (existing.length > 0) {
+    throw new Error(`Código ${data.code} já existe`);
+  }
+  
+  // Calcular próximo displayOrder
+  const maxOrder = await db.select({ max: sql<number>`MAX(displayOrder)` })
+    .from(managementAccounts);
+  const nextOrder = (maxOrder[0]?.max || 0) + 1;
+  
+  const result = await db.insert(managementAccounts).values({
+    code: data.code,
+    name: data.name,
+    description: data.description || null,
+    nature: data.nature,
+    costType: data.costType || null,
+    classification: data.classification,
+    impactMargin: data.impactMargin ?? false,
+    impactPayroll: data.impactPayroll ?? false,
+    isActive: data.isActive ?? true,
+    displayOrder: nextOrder,
+  });
+  
+  return { success: true, id: result[0].insertId };
+}
+
+export async function updateManagementAccount(id: number, data: {
+  code?: string;
+  name?: string;
+  description?: string;
+  nature?: "CUSTO" | "DESPESA" | "RECEITA" | "PATRIMONIAL";
+  costType?: "FIXA" | "VARIAVEL" | null;
+  classification?: string;
+  impactMargin?: boolean;
+  impactPayroll?: boolean;
+  isActive?: boolean;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const updateData: Record<string, any> = {};
+  
+  if (data.code !== undefined) updateData.code = data.code;
+  if (data.name !== undefined) updateData.name = data.name;
+  if (data.description !== undefined) updateData.description = data.description;
+  if (data.nature !== undefined) updateData.nature = data.nature;
+  if (data.costType !== undefined) updateData.costType = data.costType;
+  if (data.classification !== undefined) updateData.classification = data.classification;
+  if (data.impactMargin !== undefined) updateData.impactMargin = data.impactMargin;
+  if (data.impactPayroll !== undefined) updateData.impactPayroll = data.impactPayroll;
+  if (data.isActive !== undefined) updateData.isActive = data.isActive;
+  
+  if (Object.keys(updateData).length === 0) {
+    return { success: true };
+  }
+  
+  await db.update(managementAccounts)
+    .set(updateData)
+    .where(eq(managementAccounts.id, id));
+  
+  return { success: true };
+}
+
+export async function updateAccountingMapping(data: {
+  managementAccountId: number;
+  accountingCode: string;
+  notes?: string;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  // Verificar se já existe mapeamento
+  const existing = await db.select()
+    .from(accountingMappings)
+    .where(eq(accountingMappings.managementAccountId, data.managementAccountId))
+    .limit(1);
+  
+  if (existing.length > 0) {
+    // Atualizar existente
+    await db.update(accountingMappings)
+      .set({
+        accountingCode: data.accountingCode,
+        notes: data.notes || null,
+      })
+      .where(eq(accountingMappings.managementAccountId, data.managementAccountId));
+  } else {
+    // Criar novo com effectiveDate atual
+    await db.insert(accountingMappings).values({
+      managementAccountId: data.managementAccountId,
+      accountingCode: data.accountingCode,
+      notes: data.notes || null,
+      effectiveDate: new Date(),
+    });
+  }
+  
+  return { success: true };
+}

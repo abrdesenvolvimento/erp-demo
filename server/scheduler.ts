@@ -77,7 +77,6 @@ export function initBackupScheduler(): void {
   // Agendar backup diário às 3h (horário de Brasília)
   // Nota: node-cron usa o timezone do servidor, então configuramos explicitamente
   const backupJob = cron.schedule('0 0 3 * * *', executeScheduledBackup, {
-    scheduled: true,
     timezone: 'America/Sao_Paulo',
   });
 

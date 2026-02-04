@@ -35,12 +35,12 @@ interface Account {
   level: number;
   accountType: string;
   nature: string;
-  isAnalytical: boolean;
-  allowsEntries: boolean;
-  displayOrder: number;
+  isAnalytical: boolean | null;
+  allowsEntries: boolean | null;
+  displayOrder: number | null;
   isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: Date | null;
+  updatedAt: Date | null;
 }
 
 interface TreeNode extends Account {
@@ -321,8 +321,8 @@ export default function PlanoContas() {
       parentCode: account.parentCode || "",
       accountType: account.accountType,
       nature: account.nature,
-      isAnalytical: account.isAnalytical,
-      allowsEntries: account.allowsEntries,
+      isAnalytical: account.isAnalytical ?? true,
+      allowsEntries: account.allowsEntries ?? true,
     });
     setIsDialogOpen(true);
   };

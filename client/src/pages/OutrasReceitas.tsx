@@ -138,14 +138,14 @@ export default function OutrasReceitas() {
   // Clientes
   const clients = useMemo(() => {
     if (!partners) return [];
-    return partners.filter(p => p.type === 'cliente' || p.type === 'ambos');
+    return partners.filter(p => p.partnerType === 'CUSTOMER' || p.partnerType === 'BOTH');
   }, [partners]);
 
   // Totais
   const totals = useMemo(() => {
     if (!revenues) return { total: 0, confirmed: 0, pending: 0 };
     return revenues.reduce((acc, rev) => {
-      const amount = parseFloat(rev.amount as string);
+      const amount = typeof rev.amount === 'number' ? rev.amount : parseFloat(String(rev.amount));
       acc.total += amount;
       if (rev.status === 'CONFIRMED') acc.confirmed += amount;
       if (rev.status === 'PENDING') acc.pending += amount;
@@ -318,10 +318,10 @@ export default function OutrasReceitas() {
                         <TableCell>{formatDate(revenue.date)}</TableCell>
                         <TableCell className="max-w-xs truncate">{revenue.description}</TableCell>
                         <TableCell className="text-sm text-muted-foreground">
-                          {revenue.revenueAccountCode || '-'}
+                          {(revenue as any).revenueAccountCode || '-'}
                         </TableCell>
                         <TableCell className="text-sm text-muted-foreground">
-                          {revenue.bankAccountCode || '-'}
+                          {(revenue as any).bankAccountCode || '-'}
                         </TableCell>
                         <TableCell className="text-right font-medium text-green-600">
                           {formatCurrency(revenue.amount)}

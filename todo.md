@@ -336,3 +336,14 @@ Automatizar importação de pedidos concluídos do iFood via arquivos JSON
 - [x] Menu Contabilidade → Outras Receitas
 - [ ] Integração com contabilização automática (journals) - próxima fase
 
+
+### Correções Módulo Contábil (Feedback Gabriel - 04/02/2026)
+- [x] Implementar módulo de Contas Gerenciais com amarração ao Plano Contábil
+  - [x] Página /contas-gerenciais com listagem de 50 contas gerenciais
+  - [x] CRUD completo (criar, editar contas gerenciais)
+  - [x] Interface de mapeamento para Plano Contábil
+  - [x] Filtros por natureza e classificação
+  - [x] Badges de status (com/sem amarração)
+  - [x] Menu Contabilidade → Contas Gerenciais
+- [ ] Corrigir botões Expandir/Colapsar na árvore do Plano de Contas
+- [ ] Implementar seleção múltipla de contas nos relatórios contábeis

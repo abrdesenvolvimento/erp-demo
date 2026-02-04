@@ -48,6 +48,7 @@ const financeMenuItems = [
 // Submenu de Contabilidade
 const accountingMenuItems = [
   { icon: BookOpen, label: "Plano de Contas", path: "/plano-contas", roles: ["admin", "consultor"] },
+  { icon: Calculator, label: "Contas Gerenciais", path: "/contas-gerenciais", roles: ["admin", "consultor"] },
   { icon: FileText, label: "Relatórios Contábeis", path: "/relatorios-contabeis", roles: ["admin", "consultor"] },
   { icon: Wallet, label: "Outras Receitas", path: "/outras-receitas", roles: ["admin", "consultor"] },
 ];
