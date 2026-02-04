@@ -575,26 +575,33 @@ export type InsertAccountingMapping = typeof accountingMappings.$inferInsert;
 // Plano de Contas Contábil (estrutura hierárquica do plano contábil)
 export const chartOfAccounts = mysqlTable("chartOfAccounts", {
   id: int("id").primaryKey().autoincrement(),
+  companyId: int("companyId").notNull().default(1),
+  parentId: int("parentId"), // ID da conta pai
   code: varchar("code", { length: 20 }).notNull(),  // Código contábil (ex: "3.2.01.001")
   name: varchar("name", { length: 150 }).notNull(),  // Nome da conta
   parentCode: varchar("parentCode", { length: 20 }),  // Código da conta pai (para hierarquia)
   level: int("level").notNull(),  // Nível na hierarquia (1, 2, 3, 4)
   accountType: mysqlEnum("accountType", [
     "ATIVO",
-    "PASSIVO", 
+    "PASSIVO",
+    "PL",
     "PATRIMONIO_LIQUIDO",
     "RECEITA",
     "CUSTO",
     "DESPESA"
   ]).notNull(),
+  nature: mysqlEnum("nature", ["DEVEDORA", "CREDORA"]).notNull().default("DEVEDORA"),
   isAnalytical: boolean("isAnalytical").default(true),  // Conta analítica (permite lançamentos) ou sintética
+  allowsEntries: boolean("allowsEntries").notNull().default(true),
   isActive: boolean("isActive").default(true).notNull(),
+  displayOrder: int("displayOrder").default(0),
   createdAt: timestamp("createdAt").defaultNow(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow(),
 }, (table) => ({
   codeIdx: uniqueIndex("chart_code_idx").on(table.code),
   parentIdx: index("parent_idx").on(table.parentCode),
   typeIdx: index("type_idx").on(table.accountType),
+  companyIdx: index("chart_company_idx").on(table.companyId),
 }));
 
 export type ChartOfAccount = typeof chartOfAccounts.$inferSelect;
@@ -687,3 +694,109 @@ export const backupLogs = mysqlTable("backupLogs", {
 
 export type BackupLog = typeof backupLogs.$inferSelect;
 export type InsertBackupLog = typeof backupLogs.$inferInsert;
+
+// =====================================================
+// MÓDULO CONTÁBIL
+// =====================================================
+
+// Journals (Lotes Contábeis)
+export const journals = mysqlTable("journals", {
+  id: int("id").primaryKey().autoincrement(),
+  companyId: int("companyId").notNull().default(1),
+  competenceMonth: varchar("competenceMonth", { length: 7 }).notNull(), // YYYY-MM
+  description: varchar("description", { length: 255 }),
+  status: mysqlEnum("status", ["DRAFT", "POSTED", "REVERSED"]).notNull().default("DRAFT"),
+  totalDebit: decimal("totalDebit", { precision: 15, scale: 2 }).notNull().default("0.00"),
+  totalCredit: decimal("totalCredit", { precision: 15, scale: 2 }).notNull().default("0.00"),
+  createdBy: varchar("createdBy", { length: 64 }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow(),
+  postedAt: timestamp("postedAt"),
+}, (table) => ({
+  companyIdx: index("journal_company_idx").on(table.companyId),
+  competenceIdx: index("journal_competence_idx").on(table.competenceMonth),
+  statusIdx: index("journal_status_idx").on(table.status),
+}));
+
+export type Journal = typeof journals.$inferSelect;
+export type InsertJournal = typeof journals.$inferInsert;
+
+// Lançamentos Contábeis
+export const accountingEntries = mysqlTable("accountingEntries", {
+  id: int("id").primaryKey().autoincrement(),
+  companyId: int("companyId").notNull().default(1),
+  journalId: int("journalId").notNull(),
+  accountId: int("accountId").notNull(),
+  entryDate: timestamp("entryDate").notNull(),
+  competenceMonth: varchar("competenceMonth", { length: 7 }).notNull(),
+  amount: decimal("amount", { precision: 15, scale: 2 }).notNull(),
+  entryType: mysqlEnum("entryType", ["D", "C"]).notNull(), // Débito ou Crédito
+  description: varchar("description", { length: 255 }),
+  sourceType: varchar("sourceType", { length: 50 }), // sale, purchase, expense, otherRevenue
+  sourceId: int("sourceId"),
+  createdAt: timestamp("createdAt").defaultNow(),
+}, (table) => ({
+  journalIdx: index("entry_journal_idx").on(table.journalId),
+  accountIdx: index("entry_account_idx").on(table.accountId),
+  competenceIdx: index("entry_competence_idx").on(table.competenceMonth),
+  sourceIdx: index("entry_source_idx").on(table.sourceType, table.sourceId),
+}));
+
+export type AccountingEntry = typeof accountingEntries.$inferSelect;
+export type InsertAccountingEntry = typeof accountingEntries.$inferInsert;
+
+// Rastreabilidade de Journals (documentos origem)
+export const journalSources = mysqlTable("journalSources", {
+  id: int("id").primaryKey().autoincrement(),
+  companyId: int("companyId").notNull().default(1),
+  journalId: int("journalId").notNull(),
+  sourceType: varchar("sourceType", { length: 50 }).notNull(), // sale, purchase, expense, otherRevenue
+  sourceId: int("sourceId").notNull(),
+  createdAt: timestamp("createdAt").defaultNow(),
+}, (table) => ({
+  journalIdx: index("source_journal_idx").on(table.journalId),
+  sourceIdx: uniqueIndex("source_unique_idx").on(table.journalId, table.sourceType, table.sourceId),
+}));
+
+export type JournalSource = typeof journalSources.$inferSelect;
+export type InsertJournalSource = typeof journalSources.$inferInsert;
+
+// Períodos Contábeis
+export const accountingPeriods = mysqlTable("accountingPeriods", {
+  id: int("id").primaryKey().autoincrement(),
+  companyId: int("companyId").notNull().default(1),
+  competenceMonth: varchar("competenceMonth", { length: 7 }).notNull(), // YYYY-MM
+  status: mysqlEnum("status", ["OPEN", "CLOSED"]).notNull().default("OPEN"),
+  closedAt: timestamp("closedAt"),
+  closedBy: varchar("closedBy", { length: 64 }),
+  createdAt: timestamp("createdAt").defaultNow(),
+}, (table) => ({
+  companyCompetenceIdx: uniqueIndex("period_company_competence_idx").on(table.companyId, table.competenceMonth),
+}));
+
+export type AccountingPeriod = typeof accountingPeriods.$inferSelect;
+export type InsertAccountingPeriod = typeof accountingPeriods.$inferInsert;
+
+// Outras Receitas
+export const otherRevenues = mysqlTable("otherRevenues", {
+  id: int("id").primaryKey().autoincrement(),
+  companyId: int("companyId").notNull().default(1),
+  date: timestamp("date").notNull(),
+  competenceMonth: varchar("competenceMonth", { length: 7 }).notNull(),
+  description: varchar("description", { length: 255 }).notNull(),
+  amount: decimal("amount", { precision: 15, scale: 2 }).notNull(),
+  revenueAccountId: int("revenueAccountId"), // Conta de receita (grupo 4)
+  bankAccountId: int("bankAccountId"), // Conta de banco (grupo 1.1)
+  partnerId: int("partnerId"), // Cliente/Parceiro opcional
+  notes: text("notes"),
+  status: mysqlEnum("status", ["PENDING", "CONFIRMED", "CANCELLED"]).notNull().default("CONFIRMED"),
+  createdBy: varchar("createdBy", { length: 64 }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow(),
+}, (table) => ({
+  companyIdx: index("other_revenue_company_idx").on(table.companyId),
+  dateIdx: index("other_revenue_date_idx").on(table.date),
+  competenceIdx: index("other_revenue_competence_idx").on(table.competenceMonth),
+}));
+
+export type OtherRevenue = typeof otherRevenues.$inferSelect;
+export type InsertOtherRevenue = typeof otherRevenues.$inferInsert;

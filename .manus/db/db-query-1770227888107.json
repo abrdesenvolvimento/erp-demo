@@ -1,0 +1,31 @@
+{
+  "query": "SELECT table_name FROM information_schema.tables WHERE table_schema = DATABASE() AND (table_name LIKE '%journal%' OR table_name LIKE '%accounting%' OR table_name LIKE '%otherRevenue%' OR table_name LIKE 'chartOfAccounts');",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT table_name FROM information_schema.tables WHERE table_schema = DATABASE() AND (table_name LIKE '%journal%' OR table_name LIKE '%accounting%' OR table_name LIKE '%otherRevenue%' OR table_name LIKE 'chartOfAccounts');",
+  "rows": [
+    {
+      "table_name": "accountingMappings"
+    },
+    {
+      "table_name": "chartOfAccounts"
+    },
+    {
+      "table_name": "journals"
+    },
+    {
+      "table_name": "accountingEntries"
+    },
+    {
+      "table_name": "journalSources"
+    },
+    {
+      "table_name": "accountingPeriods"
+    },
+    {
+      "table_name": "otherRevenues"
+    }
+  ],
+  "messages": [],
+  "stdout": "table_name\naccountingMappings\nchartOfAccounts\njournals\naccountingEntries\njournalSources\naccountingPeriods\notherRevenues\n",
+  "stderr": "",
+  "execution_time_ms": 88
+}

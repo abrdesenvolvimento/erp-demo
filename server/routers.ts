@@ -6,9 +6,11 @@ import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, adminProcedure, consultorProcedure, router } from "./_core/trpc";
 import * as db from "./db";
 import { getNowInBrazil, formatDateForInput } from '../shared/dateUtils';
+import { accountingRouter } from './routers/accounting';
 
 export const appRouter = router({
   system: systemRouter,
+  accounting: accountingRouter,
 
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),

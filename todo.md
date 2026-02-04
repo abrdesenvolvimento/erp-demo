@@ -290,25 +290,27 @@ Automatizar importação de pedidos concluídos do iFood via arquivos JSON
 - [x] Definir arquitetura: journals, journalSources, accountingEntries, accountingPeriods
 - [x] Definir Plano de Contas com 6 grupos (padrão brasileiro)
 
-**Fase 1: Estrutura de Banco de Dados**
-- [ ] Atualizar schema chartOfAccounts (companyId, parentId, nature)
-- [ ] Criar tabela journals (lotes contábeis)
-- [ ] Criar tabela accountingEntries (lançamentos)
-- [ ] Criar tabela journalSources (rastreabilidade)
-- [ ] Criar tabela accountingPeriods (períodos contábeis)
-- [ ] Criar tabela otherRevenues (outras receitas)
-- [ ] Executar migração pnpm db:push
+**Fase 1: Estrutura de Banco de Dados** ✅ (04/02/2026)
+- [x] Atualizar schema chartOfAccounts (companyId, parentId, nature)
+- [x] Criar tabela journals (lotes contábeis)
+- [x] Criar tabela accountingEntries (lançamentos)
+- [x] Criar tabela journalSources (rastreabilidade)
+- [x] Criar tabela accountingPeriods (períodos contábeis)
+- [x] Criar tabela otherRevenues (outras receitas)
+- [x] Executar migração via SQL direto
 
-**Fase 2: Popular Plano de Contas**
-- [ ] Script de seed com estrutura de 6 grupos
-- [ ] Popular contas analíticas essenciais
-- [ ] Criar período contábil 2026-02
+**Fase 2: Popular Plano de Contas** ✅ (04/02/2026)
+- [x] Script de seed com estrutura de 6 grupos (110 contas)
+- [x] Popular contas analíticas essenciais (62 contas)
+- [x] Criar período contábil 2026-02
 
-**Fase 3: Backend - CRUD e Contabilização**
-- [ ] CRUD de contas contábeis
-- [ ] Função contabilizarReceitas()
-- [ ] Validações de partida dobrada
-- [ ] Testes
+**Fase 3: Backend - CRUD e Contabilização** ✅ (04/02/2026)
+- [x] CRUD de contas contábeis (server/accounting.ts)
+- [x] Funções de journals e lançamentos
+- [x] Validações de partida dobrada
+- [x] Funções de relatórios (Razão, Balancete, DRE)
+- [x] Router tRPC (server/routers/accounting.ts)
+- [x] Testes (11 testes passando)
 
 **Fase 4: Frontend - Plano de Contas**
 - [ ] Visualização em árvore
