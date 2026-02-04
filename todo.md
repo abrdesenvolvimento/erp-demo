@@ -374,3 +374,28 @@ Automatizar importação de pedidos concluídos do iFood via arquivos JSON
   - [x] Adicionar campo de Conta Gerencial de Receita com autocomplete (8 contas)
   - [x] Adicionar Conta de Banco com autocomplete
   - [x] Interface similar ao módulo de Despesas
+
+### Padronização Formulários Outras Receitas e Despesas (04/02/2026)
+- [x] Renomear "Colapsar" para "Recolher" no Plano de Contas
+- [x] Padronizar formulário de Outras Receitas:
+  - [x] Fornecedor (obrigatório, autocomplete)
+  - [x] Data Emissão + Data Entrada + Competência (derivada automaticamente)
+  - [x] Tipo Documento (Contrato, Fatura, NF, Cupom, Recibo, Boleto, Outros) + Nº Documento
+  - [x] Conta Gerencial de Receita (autocomplete filtrado)
+  - [x] Descrição (obrigatório)
+  - [x] Data Crédito (quando a receita entrou em caixa)
+  - [x] Forma de Recebimento (obrigatório)
+  - [x] Observação (opcional)
+  - [x] Valor + Status
+- [x] Padronizar formulário de Despesas:
+  - [x] Fornecedor (autocomplete)
+  - [x] Data Emissão + Data Entrada + Competência (derivada automaticamente)
+  - [x] Tipo Documento (Fatura, NF, Cupom, Contrato, Recibo, Boleto, Outros) + Nº Documento
+  - [x] Conta Gerencial (filtrada por Despesa/Custo)
+  - [x] Descrição (obrigatório)
+  - [x] Data Vencimento (com parcelamento)
+  - [x] Forma de Pagamento (Crédito G, Crédito R, Crédito ABR, Boleto, A Vista, Débito Automático)
+  - [x] Observação (opcional)
+  - [x] Valor (com divisão automática por vencimento)
+- [x] Regra de competência: Data entrada pode ser último dia do mês anterior se lançado até dia 5
+  - [x] Mensagem informativa exibida nos dois formulários

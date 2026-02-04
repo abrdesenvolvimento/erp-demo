@@ -785,7 +785,7 @@ export async function listOtherRevenues(competenceMonth?: string, companyId: num
   const results = await db.select()
     .from(otherRevenues)
     .where(and(...conditions))
-    .orderBy(desc(otherRevenues.date));
+    .orderBy(desc(otherRevenues.revenueDate));
   
   // Converter amount de centavos para reais
   return results.map(r => ({
@@ -795,15 +795,19 @@ export async function listOtherRevenues(competenceMonth?: string, companyId: num
 }
 
 export async function createOtherRevenue(data: {
-  date: Date;
+  partnerId: number;
+  issueDate: Date;
+  entryDate: Date;
   competenceMonth: string;
+  documentType?: string;
+  documentNumber?: string;
+  managementAccountId: number;
   description: string;
-  amount: number; // Em centavos
-  revenueAccountCode?: string;
-  bankAccountCode?: string;
-  partnerId?: number;
+  creditDate?: Date;
+  paymentMethod: string;
   notes?: string;
-  status?: "PENDING" | "CONFIRMED" | "CANCELLED";
+  amount: number;
+  status?: "ACTIVE" | "CANCELLED";
   companyId?: number;
   createdBy: string;
 }) {
@@ -812,15 +816,20 @@ export async function createOtherRevenue(data: {
   
   const [result] = await db.insert(otherRevenues).values({
     companyId: data.companyId || 1,
-    date: data.date,
+    partnerId: data.partnerId,
+    issueDate: data.issueDate,
+    entryDate: data.entryDate,
+    revenueDate: data.entryDate, // Campo legado - usar entryDate
     competenceMonth: data.competenceMonth,
+    documentType: data.documentType || null,
+    documentNumber: data.documentNumber || null,
+    managementAccountId: data.managementAccountId,
     description: data.description,
-    amount: (data.amount / 100).toFixed(2), // Converter centavos para decimal
-    revenueAccountId: null, // TODO: buscar ID pelo código
-    bankAccountId: null, // TODO: buscar ID pelo código
-    partnerId: data.partnerId || null,
+    amount: data.amount.toFixed(2),
+    creditDate: data.creditDate || null,
+    paymentMethod: data.paymentMethod,
     notes: data.notes || null,
-    status: data.status || "CONFIRMED",
+    status: data.status || "ACTIVE",
     createdBy: data.createdBy,
   });
   
@@ -828,26 +837,39 @@ export async function createOtherRevenue(data: {
 }
 
 export async function updateOtherRevenue(id: number, data: {
-  date?: Date;
-  competenceMonth?: string;
-  description?: string;
-  amount?: number;
-  revenueAccountCode?: string;
-  bankAccountCode?: string;
   partnerId?: number;
+  issueDate?: Date;
+  entryDate?: Date;
+  competenceMonth?: string;
+  documentType?: string;
+  documentNumber?: string;
+  managementAccountId?: number;
+  description?: string;
+  creditDate?: Date;
+  paymentMethod?: string;
   notes?: string;
-  status?: "PENDING" | "CONFIRMED" | "CANCELLED";
+  amount?: number;
+  status?: "ACTIVE" | "CANCELLED";
 }) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
   const updateData: Record<string, any> = {};
-  if (data.date) updateData.date = data.date;
-  if (data.competenceMonth) updateData.competenceMonth = data.competenceMonth;
-  if (data.description) updateData.description = data.description;
-  if (data.amount !== undefined) updateData.amount = (data.amount / 100).toFixed(2);
   if (data.partnerId !== undefined) updateData.partnerId = data.partnerId;
+  if (data.issueDate) updateData.issueDate = data.issueDate;
+  if (data.entryDate) {
+    updateData.entryDate = data.entryDate;
+    updateData.revenueDate = data.entryDate; // Manter campo legado sincronizado
+  }
+  if (data.competenceMonth) updateData.competenceMonth = data.competenceMonth;
+  if (data.documentType !== undefined) updateData.documentType = data.documentType;
+  if (data.documentNumber !== undefined) updateData.documentNumber = data.documentNumber;
+  if (data.managementAccountId !== undefined) updateData.managementAccountId = data.managementAccountId;
+  if (data.description) updateData.description = data.description;
+  if (data.creditDate !== undefined) updateData.creditDate = data.creditDate;
+  if (data.paymentMethod !== undefined) updateData.paymentMethod = data.paymentMethod;
   if (data.notes !== undefined) updateData.notes = data.notes;
+  if (data.amount !== undefined) updateData.amount = data.amount.toFixed(2);
   if (data.status) updateData.status = data.status;
   
   await db.update(otherRevenues)

@@ -47,11 +47,19 @@ export default function Despesas() {
   const [filterMinValue, setFilterMinValue] = useState("");
   const [filterMaxValue, setFilterMaxValue] = useState("");
   
+  // Form state - Datas
+  const [issueDate, setIssueDate] = useState(new Date().toISOString().split('T')[0]);
+  const [entryDate, setEntryDate] = useState(new Date().toISOString().split('T')[0]);
+  const [competenceMonth, setCompetenceMonth] = useState(() => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  });
+  
   // Form state
   const [supplierOpen, setSupplierOpen] = useState(false);
   const [supplierSearch, setSupplierSearch] = useState("");
   const [supplierId, setSupplierId] = useState<number | undefined>();
-  const [docType, setDocType] = useState<"NOTA_FISCAL" | "CUPOM">("CUPOM");
+  const [docType, setDocType] = useState<"NOTA_FISCAL" | "CUPOM" | "FATURA" | "CONTRATO" | "RECIBO" | "BOLETO" | "OUTROS">("FATURA");
   const [docNumber, setDocNumber] = useState("");
   const [categoryOpen, setCategoryOpen] = useState(false);
   const [categorySearch, setCategorySearch] = useState("");
@@ -130,9 +138,13 @@ export default function Despesas() {
   });
   
   const resetForm = () => {
+    setIssueDate(new Date().toISOString().split('T')[0]);
+    setEntryDate(new Date().toISOString().split('T')[0]);
+    const now = new Date();
+    setCompetenceMonth(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`);
     setSupplierId(undefined);
     setSupplierSearch("");
-    setDocType("CUPOM");
+    setDocType("FATURA");
     setDocNumber("");
     setCategoryId(undefined);
     setCategorySearch("");
@@ -264,6 +276,9 @@ export default function Despesas() {
     
     const payload = {
       supplierId,
+      issueDate: new Date(issueDate + 'T12:00:00'),
+      entryDate: new Date(entryDate + 'T12:00:00'),
+      competenceMonth,
       docType,
       docNumber,
       categoryId,
@@ -456,24 +471,74 @@ export default function Despesas() {
                   </Popover>
                 </div>
 
+                {/* Datas */}
+                <div className="bg-card border rounded-lg p-6">
+                  <h3 className="text-lg font-semibold mb-4">Datas</h3>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div>
+                      <Label>Data Emissão *</Label>
+                      <Input
+                        type="date"
+                        value={issueDate}
+                        onChange={(e) => setIssueDate(e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <Label>Data Entrada *</Label>
+                      <Input
+                        type="date"
+                        value={entryDate}
+                        onChange={(e) => {
+                          setEntryDate(e.target.value);
+                          // Atualizar competência automaticamente
+                          const d = new Date(e.target.value);
+                          setCompetenceMonth(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
+                        }}
+                      />
+                      {new Date().getDate() <= 5 && (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Até dia 5, pode usar data do mês anterior
+                        </p>
+                      )}
+                    </div>
+                    <div>
+                      <Label>Competência</Label>
+                      <div className="h-10 px-3 py-2 border rounded-md bg-muted flex items-center">
+                        <span className="font-medium">
+                          {(() => {
+                            const [year, month] = competenceMonth.split('-');
+                            const date = new Date(parseInt(year), parseInt(month) - 1, 1);
+                            return date.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' });
+                          })()}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Documento */}
                 <div className="bg-card border rounded-lg p-6">
                   <h3 className="text-lg font-semibold mb-4">Documento</h3>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <Label>Tipo de Documento *</Label>
+                      <Label>Tipo de Documento</Label>
                       <Select value={docType} onValueChange={(v: any) => setDocType(v)}>
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent position="popper">
+                          <SelectItem value="FATURA">Fatura</SelectItem>
                           <SelectItem value="NOTA_FISCAL">Nota Fiscal</SelectItem>
                           <SelectItem value="CUPOM">Cupom</SelectItem>
+                          <SelectItem value="CONTRATO">Contrato</SelectItem>
+                          <SelectItem value="RECIBO">Recibo</SelectItem>
+                          <SelectItem value="BOLETO">Boleto</SelectItem>
+                          <SelectItem value="OUTROS">Outros</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
                     <div>
-                      <Label>Número do Documento</Label>
+                      <Label>Nº Documento</Label>
                       <Input
                         value={docNumber}
                         onChange={(e) => setDocNumber(e.target.value)}

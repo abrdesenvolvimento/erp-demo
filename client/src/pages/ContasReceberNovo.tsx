@@ -681,7 +681,7 @@ export default function ContasReceberNovo() {
                               <div>
                                 <div className="font-medium">{customer.customerName}</div>
                                 <div className="text-xs text-muted-foreground">
-                                  {customer.transactionCount} transações
+                                  {customer.salesCount} transações
                                 </div>
                               </div>
                               <div className="text-right">

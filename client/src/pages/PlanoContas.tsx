@@ -461,7 +461,7 @@ export default function PlanoContas() {
                   Expandir
                 </Button>
                 <Button variant="outline" size="sm" onClick={collapseAll}>
-                  Colapsar
+                  Recolher
                 </Button>
               </div>
             </div>

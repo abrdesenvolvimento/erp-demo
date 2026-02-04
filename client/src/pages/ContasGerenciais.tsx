@@ -209,15 +209,6 @@ export default function ContasGerenciais() {
     setIsModalOpen(true);
   };
 
-  const handleOpenMapping = (account: ManagementAccount) => {
-    setMappingAccount(account);
-    setMappingData({
-      accountingCode: account.accountingCode || "",
-      notes: "",
-    });
-    setIsMappingModalOpen(true);
-  };
-
   const handleSubmit = () => {
     if (!formData.code || !formData.name) {
       toast.error("Código e nome são obrigatórios");
@@ -232,19 +223,6 @@ export default function ContasGerenciais() {
     } else {
       createMutation.mutate(formData);
     }
-  };
-
-  const handleSubmitMapping = () => {
-    if (!mappingAccount || !mappingData.accountingCode) {
-      toast.error("Selecione uma conta contábil");
-      return;
-    }
-
-    updateMappingMutation.mutate({
-      managementAccountId: mappingAccount.id,
-      accountingCode: mappingData.accountingCode,
-      notes: mappingData.notes || undefined,
-    });
   };
 
   const getNatureColor = (nature: string) => {

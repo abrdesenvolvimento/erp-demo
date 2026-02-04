@@ -246,21 +246,27 @@ export const accountingRouter = router({
 
   createOtherRevenue: protectedProcedure
     .input(z.object({
-      date: z.string(),
+      partnerId: z.number(),
+      issueDate: z.string(),
+      entryDate: z.string(),
       competenceMonth: z.string(),
+      documentType: z.string().optional(),
+      documentNumber: z.string().optional(),
+      managementAccountId: z.number(),
       description: z.string(),
-      amount: z.number(),
-      revenueAccountCode: z.string().optional(),
-      bankAccountCode: z.string().optional(),
-      partnerId: z.number().optional(),
+      creditDate: z.string().optional(),
+      paymentMethod: z.string(),
       notes: z.string().optional(),
-      status: z.enum(["PENDING", "CONFIRMED", "CANCELLED"]).optional().default("CONFIRMED"),
+      amount: z.number(),
+      status: z.enum(["ACTIVE", "CANCELLED"]).optional().default("ACTIVE"),
       companyId: z.number().optional().default(1)
     }))
     .mutation(async ({ input, ctx }) => {
       return accounting.createOtherRevenue({
         ...input,
-        date: new Date(input.date),
+        issueDate: new Date(input.issueDate),
+        entryDate: new Date(input.entryDate),
+        creditDate: input.creditDate ? new Date(input.creditDate) : undefined,
         createdBy: ctx.user.id
       });
     }),
@@ -268,21 +274,27 @@ export const accountingRouter = router({
   updateOtherRevenue: protectedProcedure
     .input(z.object({
       id: z.number(),
-      date: z.string().optional(),
-      competenceMonth: z.string().optional(),
-      description: z.string().optional(),
-      amount: z.number().optional(),
-      revenueAccountCode: z.string().optional(),
-      bankAccountCode: z.string().optional(),
       partnerId: z.number().optional(),
+      issueDate: z.string().optional(),
+      entryDate: z.string().optional(),
+      competenceMonth: z.string().optional(),
+      documentType: z.string().optional(),
+      documentNumber: z.string().optional(),
+      managementAccountId: z.number().optional(),
+      description: z.string().optional(),
+      creditDate: z.string().optional(),
+      paymentMethod: z.string().optional(),
       notes: z.string().optional(),
-      status: z.enum(["PENDING", "CONFIRMED", "CANCELLED"]).optional()
+      amount: z.number().optional(),
+      status: z.enum(["ACTIVE", "CANCELLED"]).optional()
     }))
     .mutation(async ({ input }) => {
-      const { id, date, ...rest } = input;
+      const { id, issueDate, entryDate, creditDate, ...rest } = input;
       return accounting.updateOtherRevenue(id, {
         ...rest,
-        date: date ? new Date(date) : undefined
+        issueDate: issueDate ? new Date(issueDate) : undefined,
+        entryDate: entryDate ? new Date(entryDate) : undefined,
+        creditDate: creditDate ? new Date(creditDate) : undefined
       });
     }),
 

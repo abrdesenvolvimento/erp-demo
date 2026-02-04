@@ -1014,7 +1014,10 @@ export const appRouter = router({
     create: adminProcedure
       .input(z.object({
         supplierId: z.number().optional(),
-        docType: z.enum(["NOTA_FISCAL", "CUPOM"]),
+        issueDate: z.date().optional(),
+        entryDate: z.date().optional(),
+        competenceMonth: z.string().optional(),
+        docType: z.enum(["NOTA_FISCAL", "CUPOM", "FATURA", "CONTRATO", "RECIBO", "BOLETO", "OUTROS"]),
         docNumber: z.string().optional(),
         categoryId: z.number().optional(),
         managementAccountId: z.number().optional(),
@@ -1083,7 +1086,10 @@ export const appRouter = router({
       .input(z.object({
         id: z.number(),
         supplierId: z.number().optional(),
-        docType: z.enum(["NOTA_FISCAL", "CUPOM"]),
+        issueDate: z.date().optional(),
+        entryDate: z.date().optional(),
+        competenceMonth: z.string().optional(),
+        docType: z.enum(["NOTA_FISCAL", "CUPOM", "FATURA", "CONTRATO", "RECIBO", "BOLETO", "OUTROS"]),
         docNumber: z.string().optional(),
         categoryId: z.number().optional(),
         managementAccountId: z.number().optional(),

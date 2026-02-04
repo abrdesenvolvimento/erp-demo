@@ -12,7 +12,7 @@ import { trpc } from "@/lib/trpc";
 import { useState, useMemo } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Plus, Pencil, Trash2, Loader2, DollarSign, Calendar, Building2, FileText, Check, ChevronsUpDown, Search } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, DollarSign, Calendar, Building2, FileText, Check, ChevronsUpDown } from "lucide-react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { toast } from "sonner";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
@@ -33,63 +33,115 @@ const formatDate = (date: Date | string) => {
   return format(new Date(date), 'dd/MM/yyyy', { locale: ptBR });
 };
 
+// Obter mês de competência a partir de uma data
+const getCompetenceMonth = (date: string) => {
+  const d = new Date(date);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+};
+
 // Obter mês de competência atual
 const getCurrentCompetenceMonth = () => {
   const date = new Date();
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
 };
 
+// Formatar competência para exibição
+const formatCompetence = (competence: string) => {
+  const [year, month] = competence.split('-');
+  const date = new Date(parseInt(year), parseInt(month) - 1, 1);
+  return format(date, 'MMM/yy', { locale: ptBR });
+};
+
+// Verificar se pode usar competência do mês anterior (até dia 5)
+const canUseLastMonthCompetence = () => {
+  const today = new Date();
+  return today.getDate() <= 5;
+};
+
+// Obter último dia do mês anterior
+const getLastDayOfPreviousMonth = () => {
+  const today = new Date();
+  const lastDay = new Date(today.getFullYear(), today.getMonth(), 0);
+  return lastDay.toISOString().split('T')[0];
+};
+
 // Status badge
 const StatusBadge = ({ status }: { status: string }) => {
   const variants: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
-    PENDING: { label: "Pendente", variant: "secondary" },
-    CONFIRMED: { label: "Confirmado", variant: "default" },
+    ACTIVE: { label: "Ativo", variant: "default" },
     CANCELLED: { label: "Cancelado", variant: "destructive" },
   };
   const { label, variant } = variants[status] || { label: status, variant: "outline" };
   return <Badge variant={variant}>{label}</Badge>;
 };
 
+// Tipos de documento
+const DOCUMENT_TYPES = [
+  { value: "CONTRATO", label: "Contrato" },
+  { value: "NOTA_FISCAL", label: "Nota Fiscal" },
+  { value: "CUPOM", label: "Cupom" },
+  { value: "FATURA", label: "Fatura" },
+  { value: "RECIBO", label: "Recibo" },
+  { value: "BOLETO", label: "Boleto" },
+  { value: "OUTROS", label: "Outros" },
+];
+
+// Formas de recebimento
+const PAYMENT_METHODS = [
+  { value: "CREDITO_CONTA", label: "Crédito em Conta" },
+  { value: "PIX", label: "PIX" },
+  { value: "BOLETO", label: "Boleto" },
+  { value: "DINHEIRO", label: "Dinheiro" },
+  { value: "CHEQUE", label: "Cheque" },
+  { value: "TRANSFERENCIA", label: "Transferência Bancária" },
+  { value: "CARTAO_CREDITO", label: "Cartão de Crédito" },
+  { value: "CARTAO_DEBITO", label: "Cartão de Débito" },
+];
+
 interface OtherRevenueForm {
   id?: number;
-  date: string;
-  competenceMonth: string;
-  description: string;
-  amount: string;
-  revenueAccountCode: string;
-  bankAccountCode: string;
   partnerId: string;
+  issueDate: string;
+  entryDate: string;
+  competenceMonth: string;
+  documentType: string;
+  documentNumber: string;
+  managementAccountId: string;
+  description: string;
+  creditDate: string;
+  paymentMethod: string;
   notes: string;
-  status: "PENDING" | "CONFIRMED" | "CANCELLED";
+  amount: string;
+  status: "ACTIVE" | "CANCELLED";
 }
 
-const emptyForm: OtherRevenueForm = {
-  date: new Date().toISOString().split('T')[0],
-  competenceMonth: getCurrentCompetenceMonth(),
-  description: "",
-  amount: "",
-  revenueAccountCode: "",
-  bankAccountCode: "",
+const getEmptyForm = (): OtherRevenueForm => ({
   partnerId: "",
+  issueDate: new Date().toISOString().split('T')[0],
+  entryDate: new Date().toISOString().split('T')[0],
+  competenceMonth: getCurrentCompetenceMonth(),
+  documentType: "",
+  documentNumber: "",
+  managementAccountId: "",
+  description: "",
+  creditDate: "",
+  paymentMethod: "",
   notes: "",
-  status: "CONFIRMED",
-};
+  amount: "",
+  status: "ACTIVE",
+});
 
 export default function OutrasReceitas() {
   const { user } = useAuth();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [selectedRevenue, setSelectedRevenue] = useState<OtherRevenueForm>(emptyForm);
+  const [selectedRevenue, setSelectedRevenue] = useState<OtherRevenueForm>(getEmptyForm());
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [filterMonth, setFilterMonth] = useState(getCurrentCompetenceMonth());
 
   // Estados para autocomplete
-  const [revenueAccountOpen, setRevenueAccountOpen] = useState(false);
-  const [revenueAccountSearch, setRevenueAccountSearch] = useState("");
-  const [bankAccountOpen, setBankAccountOpen] = useState(false);
-  const [bankAccountSearch, setBankAccountSearch] = useState("");
-  const [clientOpen, setClientOpen] = useState(false);
-  const [clientSearch, setClientSearch] = useState("");
+  const [partnerOpen, setPartnerOpen] = useState(false);
+  const [partnerSearch, setPartnerSearch] = useState("");
   const [managementAccountOpen, setManagementAccountOpen] = useState(false);
   const [managementAccountSearch, setManagementAccountSearch] = useState("");
 
@@ -97,7 +149,6 @@ export default function OutrasReceitas() {
   const { data: revenues, isLoading, refetch } = trpc.accounting.listOtherRevenues.useQuery({ 
     competenceMonth: filterMonth 
   });
-  const { data: chartOfAccounts } = trpc.accounting.listChartOfAccounts.useQuery();
   const { data: partners } = trpc.partners.list.useQuery();
   const { data: managementAccounts = [] } = trpc.accounting.listManagementAccounts.useQuery();
 
@@ -107,7 +158,7 @@ export default function OutrasReceitas() {
       toast.success("Receita criada com sucesso!");
       refetch();
       setIsDialogOpen(false);
-      setSelectedRevenue(emptyForm);
+      setSelectedRevenue(getEmptyForm());
     },
     onError: (error) => {
       toast.error(`Erro ao criar receita: ${error.message}`);
@@ -119,7 +170,7 @@ export default function OutrasReceitas() {
       toast.success("Receita atualizada com sucesso!");
       refetch();
       setIsDialogOpen(false);
-      setSelectedRevenue(emptyForm);
+      setSelectedRevenue(getEmptyForm());
     },
     onError: (error) => {
       toast.error(`Erro ao atualizar receita: ${error.message}`);
@@ -138,57 +189,53 @@ export default function OutrasReceitas() {
     },
   });
 
-  // Contas de receita (grupo 4) e banco (grupo 1.1)
-  const revenueAccounts = useMemo(() => {
-    if (!chartOfAccounts) return [];
-    return chartOfAccounts.filter(acc => acc.code.startsWith('4') && acc.isAnalytical);
-  }, [chartOfAccounts]);
-
-  const bankAccounts = useMemo(() => {
-    if (!chartOfAccounts) return [];
-    return chartOfAccounts.filter(acc => acc.code.startsWith('1.1') && acc.isAnalytical);
-  }, [chartOfAccounts]);
-
-  // Clientes
-  const clients = useMemo(() => {
+  // Parceiros (fornecedores/clientes)
+  const allPartners = useMemo(() => {
     if (!partners) return [];
-    return partners.filter(p => p.partnerType === 'CUSTOMER' || p.partnerType === 'BOTH');
+    return partners.filter(p => p.active !== false);
   }, [partners]);
 
   // Contas gerenciais de receita (nature = RECEITA)
   const revenueManagementAccounts = useMemo(() => {
-    return managementAccounts.filter(acc => acc.nature === 'RECEITA' && acc.isActive);
+    return managementAccounts.filter(acc => acc.nature === 'RECEITA' && acc.isActive !== false);
   }, [managementAccounts]);
 
   // Totais
   const totals = useMemo(() => {
-    if (!revenues) return { total: 0, confirmed: 0, pending: 0 };
+    if (!revenues) return { total: 0, active: 0, cancelled: 0 };
     return revenues.reduce((acc, rev) => {
       const amount = typeof rev.amount === 'number' ? rev.amount : parseFloat(String(rev.amount));
-      acc.total += amount;
-      if (rev.status === 'CONFIRMED') acc.confirmed += amount;
-      if (rev.status === 'PENDING') acc.pending += amount;
+      if (rev.status === 'ACTIVE') {
+        acc.total += amount;
+        acc.active += amount;
+      } else {
+        acc.cancelled += amount;
+      }
       return acc;
-    }, { total: 0, confirmed: 0, pending: 0 });
+    }, { total: 0, active: 0, cancelled: 0 });
   }, [revenues]);
 
   // Handlers
   const handleNew = () => {
-    setSelectedRevenue(emptyForm);
+    setSelectedRevenue(getEmptyForm());
     setIsDialogOpen(true);
   };
 
   const handleEdit = (revenue: any) => {
     setSelectedRevenue({
       id: revenue.id,
-      date: new Date(revenue.date).toISOString().split('T')[0],
-      competenceMonth: revenue.competenceMonth,
-      description: revenue.description,
-      amount: revenue.amount.toString(),
-      revenueAccountCode: revenue.revenueAccountCode || "",
-      bankAccountCode: revenue.bankAccountCode || "",
       partnerId: revenue.partnerId?.toString() || "",
+      issueDate: revenue.issueDate ? new Date(revenue.issueDate).toISOString().split('T')[0] : new Date(revenue.revenueDate).toISOString().split('T')[0],
+      entryDate: revenue.entryDate ? new Date(revenue.entryDate).toISOString().split('T')[0] : new Date(revenue.revenueDate).toISOString().split('T')[0],
+      competenceMonth: revenue.competenceMonth,
+      documentType: revenue.documentType || "",
+      documentNumber: revenue.documentNumber || "",
+      managementAccountId: revenue.managementAccountId?.toString() || "",
+      description: revenue.description,
+      creditDate: revenue.creditDate ? new Date(revenue.creditDate).toISOString().split('T')[0] : "",
+      paymentMethod: revenue.paymentMethod || "",
       notes: revenue.notes || "",
+      amount: revenue.amount.toString(),
       status: revenue.status,
     });
     setIsDialogOpen(true);
@@ -199,16 +246,52 @@ export default function OutrasReceitas() {
     setIsDeleteDialogOpen(true);
   };
 
+  // Atualizar competência quando entryDate muda
+  const handleEntryDateChange = (newEntryDate: string) => {
+    const competence = getCompetenceMonth(newEntryDate);
+    setSelectedRevenue({ 
+      ...selectedRevenue, 
+      entryDate: newEntryDate,
+      competenceMonth: competence
+    });
+  };
+
   const handleSubmit = () => {
+    // Validações
+    if (!selectedRevenue.partnerId) {
+      toast.error("Fornecedor é obrigatório");
+      return;
+    }
+    if (!selectedRevenue.description) {
+      toast.error("Descrição é obrigatória");
+      return;
+    }
+    if (!selectedRevenue.amount || parseFloat(selectedRevenue.amount) <= 0) {
+      toast.error("Valor deve ser maior que zero");
+      return;
+    }
+    if (!selectedRevenue.managementAccountId) {
+      toast.error("Conta Gerencial é obrigatória");
+      return;
+    }
+    if (!selectedRevenue.paymentMethod) {
+      toast.error("Forma de Recebimento é obrigatória");
+      return;
+    }
+
     const data = {
-      date: selectedRevenue.date,
+      partnerId: parseInt(selectedRevenue.partnerId),
+      issueDate: selectedRevenue.issueDate,
+      entryDate: selectedRevenue.entryDate,
       competenceMonth: selectedRevenue.competenceMonth,
+      documentType: selectedRevenue.documentType || undefined,
+      documentNumber: selectedRevenue.documentNumber || undefined,
+      managementAccountId: parseInt(selectedRevenue.managementAccountId),
       description: selectedRevenue.description,
-      amount: parseFloat(selectedRevenue.amount) * 100, // Converter para centavos
-      revenueAccountCode: selectedRevenue.revenueAccountCode || undefined,
-      bankAccountCode: selectedRevenue.bankAccountCode || undefined,
-      partnerId: selectedRevenue.partnerId ? parseInt(selectedRevenue.partnerId) : undefined,
+      creditDate: selectedRevenue.creditDate || undefined,
+      paymentMethod: selectedRevenue.paymentMethod,
       notes: selectedRevenue.notes || undefined,
+      amount: parseFloat(selectedRevenue.amount),
       status: selectedRevenue.status,
     };
 
@@ -237,6 +320,20 @@ export default function OutrasReceitas() {
     }
     return months;
   }, []);
+
+  // Obter nome do parceiro
+  const getPartnerName = (partnerId: number | null) => {
+    if (!partnerId || !partners) return "-";
+    const partner = partners.find(p => p.id === partnerId);
+    return partner?.name || "-";
+  };
+
+  // Obter nome da conta gerencial
+  const getManagementAccountName = (accountId: number | null) => {
+    if (!accountId) return "-";
+    const account = managementAccounts.find(a => a.id === accountId);
+    return account ? `${account.code} - ${account.name}` : "-";
+  };
 
   return (
     <DashboardLayout>
@@ -287,18 +384,18 @@ export default function OutrasReceitas() {
 
           <Card>
             <CardContent className="pt-4">
-              <div className="text-sm text-muted-foreground">Confirmado</div>
+              <div className="text-sm text-muted-foreground">Receitas Ativas</div>
               <div className="text-2xl font-bold text-blue-600">
-                {formatCurrency(totals.confirmed)}
+                {formatCurrency(totals.active)}
               </div>
             </CardContent>
           </Card>
 
           <Card>
             <CardContent className="pt-4">
-              <div className="text-sm text-muted-foreground">Pendente</div>
-              <div className="text-2xl font-bold text-yellow-600">
-                {formatCurrency(totals.pending)}
+              <div className="text-sm text-muted-foreground">Canceladas</div>
+              <div className="text-2xl font-bold text-red-600">
+                {formatCurrency(totals.cancelled)}
               </div>
             </CardContent>
           </Card>
@@ -322,10 +419,11 @@ export default function OutrasReceitas() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Data</TableHead>
+                      <TableHead>Fornecedor</TableHead>
+                      <TableHead>Data Emissão</TableHead>
+                      <TableHead>Competência</TableHead>
                       <TableHead>Descrição</TableHead>
-                      <TableHead>Conta Receita</TableHead>
-                      <TableHead>Conta Banco</TableHead>
+                      <TableHead>Conta Gerencial</TableHead>
                       <TableHead className="text-right">Valor</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead className="text-right">Ações</TableHead>
@@ -334,13 +432,18 @@ export default function OutrasReceitas() {
                   <TableBody>
                     {revenues.map((revenue) => (
                       <TableRow key={revenue.id}>
-                        <TableCell>{formatDate(revenue.date)}</TableCell>
+                        <TableCell className="font-medium">
+                          {getPartnerName(revenue.partnerId)}
+                        </TableCell>
+                        <TableCell>
+                          {revenue.issueDate ? formatDate(revenue.issueDate) : formatDate(revenue.revenueDate)}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline">{formatCompetence(revenue.competenceMonth)}</Badge>
+                        </TableCell>
                         <TableCell className="max-w-xs truncate">{revenue.description}</TableCell>
                         <TableCell className="text-sm text-muted-foreground">
-                          {(revenue as any).revenueAccountCode || '-'}
-                        </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
-                          {(revenue as any).bankAccountCode || '-'}
+                          {getManagementAccountName(revenue.managementAccountId)}
                         </TableCell>
                         <TableCell className="text-right font-medium text-green-600">
                           {formatCurrency(revenue.amount)}
@@ -349,7 +452,7 @@ export default function OutrasReceitas() {
                           <StatusBadge status={revenue.status} />
                         </TableCell>
                         <TableCell className="text-right">
-                          <div className="flex items-center justify-end gap-2">
+                          <div className="flex justify-end gap-2">
                             <Button
                               variant="ghost"
                               size="icon"
@@ -374,19 +477,19 @@ export default function OutrasReceitas() {
               </div>
             ) : (
               <div className="text-center py-8 text-muted-foreground">
-                <DollarSign className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>Nenhuma receita encontrada para este período</p>
-                <Button variant="outline" className="mt-4" onClick={handleNew}>
-                  Adicionar primeira receita
+                <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p>Nenhuma receita encontrada para este período.</p>
+                <Button variant="link" onClick={handleNew}>
+                  Cadastrar nova receita
                 </Button>
               </div>
             )}
           </CardContent>
         </Card>
 
-        {/* Dialog de Criação/Edição */}
+        {/* Modal de Criar/Editar */}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
                 {selectedRevenue.id ? "Editar Receita" : "Nova Receita"}
@@ -396,80 +499,137 @@ export default function OutrasReceitas() {
               </DialogDescription>
             </DialogHeader>
 
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-4 py-4">
+              {/* Fornecedor */}
+              <div>
+                <Label>Fornecedor *</Label>
+                <Popover open={partnerOpen} onOpenChange={setPartnerOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={partnerOpen}
+                      className="w-full justify-between"
+                    >
+                      {selectedRevenue.partnerId
+                        ? (() => {
+                            const partner = allPartners.find((p) => p.id.toString() === selectedRevenue.partnerId);
+                            return partner ? partner.name : "Selecione...";
+                          })()
+                        : "Selecione o fornecedor..."}
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[450px] p-0" align="start">
+                    <Command shouldFilter={false}>
+                      <CommandInput
+                        placeholder="Buscar fornecedor..."
+                        value={partnerSearch}
+                        onValueChange={setPartnerSearch}
+                      />
+                      <CommandList className="max-h-[300px]">
+                        <CommandEmpty>Nenhum fornecedor encontrado.</CommandEmpty>
+                        <CommandGroup>
+                          {allPartners
+                            .filter((partner) =>
+                              partner.name.toLowerCase().includes(partnerSearch.toLowerCase())
+                            )
+                            .map((partner) => (
+                              <CommandItem
+                                key={partner.id}
+                                value={partner.id.toString()}
+                                onSelect={() => {
+                                  setSelectedRevenue({ ...selectedRevenue, partnerId: partner.id.toString() });
+                                  setPartnerOpen(false);
+                                  setPartnerSearch("");
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    selectedRevenue.partnerId === partner.id.toString() ? "opacity-100" : "opacity-0"
+                                  )}
+                                />
+                                <div className="flex-1">
+                                  <div className="font-medium">{partner.name}</div>
+                                  <div className="text-xs text-muted-foreground">
+                                    {partner.partnerType === 'SUPPLIER' ? 'Fornecedor' : 
+                                     partner.partnerType === 'CUSTOMER' ? 'Cliente' : 'Fornecedor/Cliente'}
+                                  </div>
+                                </div>
+                              </CommandItem>
+                            ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              {/* Datas */}
+              <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <Label>Data *</Label>
+                  <Label>Data Emissão *</Label>
                   <Input
                     type="date"
-                    value={selectedRevenue.date}
-                    onChange={(e) => setSelectedRevenue({ ...selectedRevenue, date: e.target.value })}
+                    value={selectedRevenue.issueDate}
+                    onChange={(e) => setSelectedRevenue({ ...selectedRevenue, issueDate: e.target.value })}
                   />
                 </div>
                 <div>
-                  <Label>Competência *</Label>
+                  <Label>Data Entrada *</Label>
+                  <Input
+                    type="date"
+                    value={selectedRevenue.entryDate}
+                    onChange={(e) => handleEntryDateChange(e.target.value)}
+                  />
+                  {canUseLastMonthCompetence() && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Até dia 5, pode usar data do mês anterior
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <Label>Competência</Label>
+                  <div className="h-10 px-3 py-2 border rounded-md bg-muted flex items-center">
+                    <span className="font-medium">{formatCompetence(selectedRevenue.competenceMonth)}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Tipo e Número do Documento */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Tipo Documento</Label>
                   <Select
-                    value={selectedRevenue.competenceMonth}
-                    onValueChange={(v) => setSelectedRevenue({ ...selectedRevenue, competenceMonth: v })}
+                    value={selectedRevenue.documentType}
+                    onValueChange={(v) => setSelectedRevenue({ ...selectedRevenue, documentType: v })}
                   >
                     <SelectTrigger>
-                      <SelectValue />
+                      <SelectValue placeholder="Selecione..." />
                     </SelectTrigger>
                     <SelectContent>
-                      {monthOptions.map(opt => (
-                        <SelectItem key={opt.value} value={opt.value}>
-                          {opt.label}
+                      {DOCUMENT_TYPES.map(type => (
+                        <SelectItem key={type.value} value={type.value}>
+                          {type.label}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
-              </div>
-
-              <div>
-                <Label>Descrição *</Label>
-                <Input
-                  value={selectedRevenue.description}
-                  onChange={(e) => setSelectedRevenue({ ...selectedRevenue, description: e.target.value })}
-                  placeholder="Ex: Aluguel de espaço, Bonificação fornecedor..."
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label>Valor (R$) *</Label>
+                  <Label>Nº Documento</Label>
                   <Input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={selectedRevenue.amount}
-                    onChange={(e) => setSelectedRevenue({ ...selectedRevenue, amount: e.target.value })}
-                    placeholder="0,00"
+                    value={selectedRevenue.documentNumber}
+                    onChange={(e) => setSelectedRevenue({ ...selectedRevenue, documentNumber: e.target.value })}
+                    placeholder="Ex: 123456"
                   />
                 </div>
-                <div>
-                  <Label>Status</Label>
-                  <Select
-                    value={selectedRevenue.status}
-                    onValueChange={(v: "PENDING" | "CONFIRMED" | "CANCELLED") => 
-                      setSelectedRevenue({ ...selectedRevenue, status: v })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="CONFIRMED">Confirmado</SelectItem>
-                      <SelectItem value="PENDING">Pendente</SelectItem>
-                      <SelectItem value="CANCELLED">Cancelado</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
               </div>
 
-              {/* Conta Gerencial de Receita com Autocomplete */}
+              {/* Conta Gerencial */}
               <div>
-                <Label>Conta Gerencial de Receita *</Label>
+                <Label>Conta Gerencial *</Label>
                 <Popover open={managementAccountOpen} onOpenChange={setManagementAccountOpen}>
                   <PopoverTrigger asChild>
                     <Button
@@ -478,10 +638,10 @@ export default function OutrasReceitas() {
                       aria-expanded={managementAccountOpen}
                       className="w-full justify-between"
                     >
-                      {selectedRevenue.revenueAccountCode
+                      {selectedRevenue.managementAccountId
                         ? (() => {
-                            const acc = revenueManagementAccounts.find((a) => a.accountingCode === selectedRevenue.revenueAccountCode);
-                            return acc ? `${acc.name} (${acc.accountingCode})` : "Selecione...";
+                            const acc = revenueManagementAccounts.find((a) => a.id.toString() === selectedRevenue.managementAccountId);
+                            return acc ? `${acc.name} (${acc.code})` : "Selecione...";
                           })()
                         : "Selecione uma conta gerencial..."}
                       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -500,15 +660,14 @@ export default function OutrasReceitas() {
                           {revenueManagementAccounts
                             .filter((acc) =>
                               acc.name.toLowerCase().includes(managementAccountSearch.toLowerCase()) ||
-                              acc.code.toLowerCase().includes(managementAccountSearch.toLowerCase()) ||
-                              (acc.accountingCode && acc.accountingCode.toLowerCase().includes(managementAccountSearch.toLowerCase()))
+                              acc.code.toLowerCase().includes(managementAccountSearch.toLowerCase())
                             )
                             .map((acc) => (
                               <CommandItem
                                 key={acc.id}
                                 value={acc.id.toString()}
                                 onSelect={() => {
-                                  setSelectedRevenue({ ...selectedRevenue, revenueAccountCode: acc.accountingCode || "" });
+                                  setSelectedRevenue({ ...selectedRevenue, managementAccountId: acc.id.toString() });
                                   setManagementAccountOpen(false);
                                   setManagementAccountSearch("");
                                 }}
@@ -516,14 +675,16 @@ export default function OutrasReceitas() {
                                 <Check
                                   className={cn(
                                     "mr-2 h-4 w-4",
-                                    selectedRevenue.revenueAccountCode === acc.accountingCode ? "opacity-100" : "opacity-0"
+                                    selectedRevenue.managementAccountId === acc.id.toString() ? "opacity-100" : "opacity-0"
                                   )}
                                 />
                                 <div className="flex-1">
                                   <div className="font-medium">{acc.name}</div>
                                   <div className="text-xs text-muted-foreground flex gap-2">
                                     <span className="font-mono bg-muted px-1 rounded">{acc.code}</span>
-                                    <span className="text-green-600">{acc.accountingCode}</span>
+                                    {acc.accountingCode && (
+                                      <span className="text-green-600">• {acc.accountingCode}</span>
+                                    )}
                                   </div>
                                 </div>
                               </CommandItem>
@@ -535,156 +696,91 @@ export default function OutrasReceitas() {
                 </Popover>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                {/* Conta de Banco com Autocomplete */}
-                <div>
-                  <Label>Conta de Banco</Label>
-                  <Popover open={bankAccountOpen} onOpenChange={setBankAccountOpen}>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        role="combobox"
-                        aria-expanded={bankAccountOpen}
-                        className="w-full justify-between"
-                      >
-                        {selectedRevenue.bankAccountCode
-                          ? (() => {
-                              const acc = bankAccounts.find((a) => a.code === selectedRevenue.bankAccountCode);
-                              return acc ? `${acc.code} - ${acc.name}` : "Selecione...";
-                            })()
-                          : "Selecione..."}
-                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-[350px] p-0" align="start">
-                      <Command shouldFilter={false}>
-                        <CommandInput
-                          placeholder="Buscar conta de banco..."
-                          value={bankAccountSearch}
-                          onValueChange={setBankAccountSearch}
-                        />
-                        <CommandList className="max-h-[250px]">
-                          <CommandEmpty>Nenhuma conta encontrada.</CommandEmpty>
-                          <CommandGroup>
-                            {bankAccounts
-                              .filter((acc) =>
-                                acc.code.toLowerCase().includes(bankAccountSearch.toLowerCase()) ||
-                                acc.name.toLowerCase().includes(bankAccountSearch.toLowerCase())
-                              )
-                              .map((acc) => (
-                                <CommandItem
-                                  key={acc.code}
-                                  value={acc.code}
-                                  onSelect={() => {
-                                    setSelectedRevenue({ ...selectedRevenue, bankAccountCode: acc.code });
-                                    setBankAccountOpen(false);
-                                    setBankAccountSearch("");
-                                  }}
-                                >
-                                  <Check
-                                    className={cn(
-                                      "mr-2 h-4 w-4",
-                                      selectedRevenue.bankAccountCode === acc.code ? "opacity-100" : "opacity-0"
-                                    )}
-                                  />
-                                  <div className="flex-1">
-                                    <div className="font-medium">{acc.code}</div>
-                                    <div className="text-xs text-muted-foreground">{acc.name}</div>
-                                  </div>
-                                </CommandItem>
-                              ))}
-                          </CommandGroup>
-                        </CommandList>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
-                </div>
+              {/* Descrição */}
+              <div>
+                <Label>Descrição *</Label>
+                <Input
+                  value={selectedRevenue.description}
+                  onChange={(e) => setSelectedRevenue({ ...selectedRevenue, description: e.target.value })}
+                  placeholder="Ex: Empréstimo Pronampe 2024 - Parcelamento 12x"
+                />
+              </div>
 
-                {/* Cliente/Parceiro com Autocomplete */}
+              {/* Data Crédito e Forma de Recebimento */}
+              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label>Cliente/Parceiro</Label>
-                  <Popover open={clientOpen} onOpenChange={setClientOpen}>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        role="combobox"
-                        aria-expanded={clientOpen}
-                        className="w-full justify-between"
-                      >
-                        {selectedRevenue.partnerId
-                          ? (() => {
-                              const client = clients.find((c) => c.id.toString() === selectedRevenue.partnerId);
-                              return client ? client.name : "Selecione...";
-                            })()
-                          : "Selecione (opcional)..."}
-                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-[350px] p-0" align="start">
-                      <Command shouldFilter={false}>
-                        <CommandInput
-                          placeholder="Buscar cliente..."
-                          value={clientSearch}
-                          onValueChange={setClientSearch}
-                        />
-                        <CommandList className="max-h-[250px]">
-                          <CommandEmpty>Nenhum cliente encontrado.</CommandEmpty>
-                          <CommandGroup>
-                            <CommandItem
-                              value="none"
-                              onSelect={() => {
-                                setSelectedRevenue({ ...selectedRevenue, partnerId: "" });
-                                setClientOpen(false);
-                                setClientSearch("");
-                              }}
-                            >
-                              <Check
-                                className={cn(
-                                  "mr-2 h-4 w-4",
-                                  !selectedRevenue.partnerId ? "opacity-100" : "opacity-0"
-                                )}
-                              />
-                              <span className="text-muted-foreground">Nenhum (opcional)</span>
-                            </CommandItem>
-                            {clients
-                              .filter((client) =>
-                                client.name.toLowerCase().includes(clientSearch.toLowerCase())
-                              )
-                              .map((client) => (
-                                <CommandItem
-                                  key={client.id}
-                                  value={client.id.toString()}
-                                  onSelect={() => {
-                                    setSelectedRevenue({ ...selectedRevenue, partnerId: client.id.toString() });
-                                    setClientOpen(false);
-                                    setClientSearch("");
-                                  }}
-                                >
-                                  <Check
-                                    className={cn(
-                                      "mr-2 h-4 w-4",
-                                      selectedRevenue.partnerId === client.id.toString() ? "opacity-100" : "opacity-0"
-                                    )}
-                                  />
-                                  <span>{client.name}</span>
-                                </CommandItem>
-                              ))}
-                          </CommandGroup>
-                        </CommandList>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
+                  <Label>Data de Crédito</Label>
+                  <Input
+                    type="date"
+                    value={selectedRevenue.creditDate}
+                    onChange={(e) => setSelectedRevenue({ ...selectedRevenue, creditDate: e.target.value })}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Quando a receita entrou em caixa
+                  </p>
+                </div>
+                <div>
+                  <Label>Forma de Recebimento *</Label>
+                  <Select
+                    value={selectedRevenue.paymentMethod}
+                    onValueChange={(v) => setSelectedRevenue({ ...selectedRevenue, paymentMethod: v })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {PAYMENT_METHODS.map(method => (
+                        <SelectItem key={method.value} value={method.value}>
+                          {method.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 
+              {/* Observação */}
               <div>
-                <Label>Observações</Label>
+                <Label>Observação</Label>
                 <Textarea
                   value={selectedRevenue.notes}
                   onChange={(e) => setSelectedRevenue({ ...selectedRevenue, notes: e.target.value })}
                   placeholder="Informações adicionais..."
-                  rows={3}
+                  rows={2}
                 />
+              </div>
+
+              {/* Valor */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Valor (R$) *</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={selectedRevenue.amount}
+                    onChange={(e) => setSelectedRevenue({ ...selectedRevenue, amount: e.target.value })}
+                    placeholder="0,00"
+                    className="text-lg font-semibold"
+                  />
+                </div>
+                <div>
+                  <Label>Status</Label>
+                  <Select
+                    value={selectedRevenue.status}
+                    onValueChange={(v: "ACTIVE" | "CANCELLED") => 
+                      setSelectedRevenue({ ...selectedRevenue, status: v })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ACTIVE">Ativo</SelectItem>
+                      <SelectItem value="CANCELLED">Cancelado</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
 
@@ -694,7 +790,7 @@ export default function OutrasReceitas() {
               </Button>
               <Button 
                 onClick={handleSubmit}
-                disabled={!selectedRevenue.description || !selectedRevenue.amount || createMutation.isPending || updateMutation.isPending}
+                disabled={createMutation.isPending || updateMutation.isPending}
               >
                 {(createMutation.isPending || updateMutation.isPending) && (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -705,7 +801,7 @@ export default function OutrasReceitas() {
           </DialogContent>
         </Dialog>
 
-        {/* Dialog de Confirmação de Exclusão */}
+        {/* Modal de Confirmação de Exclusão */}
         <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
           <DialogContent>
             <DialogHeader>

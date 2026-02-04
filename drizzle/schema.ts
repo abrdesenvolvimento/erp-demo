@@ -328,7 +328,7 @@ export const expenses = mysqlTable("expenses", {
   id: int("id").primaryKey().autoincrement(),
   supplierId: int("supplierId"), // FK para fornecedor (opcional) - PRIMEIRO CAMPO
   purchaseOrderId: int("purchaseOrderId"), // FK para ordem de compra (se origem for Compra)
-  docType: mysqlEnum("docType", ["NOTA_FISCAL", "CUPOM"]).notNull(), // Tipo de documento
+  docType: mysqlEnum("docType", ["NOTA_FISCAL", "CUPOM", "FATURA", "CONTRATO", "RECIBO", "BOLETO", "OUTROS"]).notNull(), // Tipo de documento
   docNumber: varchar("docNumber", { length: 100 }), // Número do documento
   categoryId: int("categoryId").notNull(),  // Categoria antiga (mantida para compatibilidade)
   managementAccountId: int("managementAccountId"),  // FK para conta gerencial (novo sistema)
@@ -781,22 +781,35 @@ export type InsertAccountingPeriod = typeof accountingPeriods.$inferInsert;
 export const otherRevenues = mysqlTable("otherRevenues", {
   id: int("id").primaryKey().autoincrement(),
   companyId: int("companyId").notNull().default(1),
-  date: timestamp("date").notNull(),
-  competenceMonth: varchar("competenceMonth", { length: 7 }).notNull(),
-  description: varchar("description", { length: 255 }).notNull(),
-  amount: decimal("amount", { precision: 15, scale: 2 }).notNull(),
-  revenueAccountId: int("revenueAccountId"), // Conta de receita (grupo 4)
-  bankAccountId: int("bankAccountId"), // Conta de banco (grupo 1.1)
-  partnerId: int("partnerId"), // Cliente/Parceiro opcional
+  partnerId: int("partnerId"), // Fornecedor
+  issueDate: timestamp("issueDate"), // Data Emissão
+  entryDate: timestamp("entryDate"), // Data Entrada (contabilização)
+  revenueDate: timestamp("revenueDate").notNull(), // Campo legado (manter)
+  competenceMonth: varchar("competenceMonth", { length: 7 }).notNull(), // Competência
+  documentType: varchar("documentType", { length: 50 }), // Tipo Documento
+  documentNumber: varchar("documentNumber", { length: 50 }), // Nº Documento
+  managementAccountId: int("managementAccountId").notNull(), // Conta Gerencial de Receita
+  description: varchar("description", { length: 255 }).notNull(), // Descrição
+  amount: decimal("amount", { precision: 15, scale: 2 }).notNull(), // Valor
+  creditDate: timestamp("creditDate"), // Data Crédito
+  paymentMethod: varchar("paymentMethod", { length: 50 }), // Forma de Recebimento
+  isPaid: boolean("isPaid").default(false),
+  paidAt: timestamp("paidAt"),
+  isRecurring: boolean("isRecurring").default(false),
+  recurrenceType: mysqlEnum("recurrenceType", ["MENSAL", "TRIMESTRAL", "ANUAL"]),
+  recurrenceEndDate: timestamp("recurrenceEndDate"),
+  status: mysqlEnum("status", ["ACTIVE", "CANCELLED"]).notNull().default("ACTIVE"),
   notes: text("notes"),
-  status: mysqlEnum("status", ["PENDING", "CONFIRMED", "CANCELLED"]).notNull().default("CONFIRMED"),
+  isAccounted: boolean("isAccounted").default(false),
+  accountedJournalId: int("accountedJournalId"),
   createdBy: varchar("createdBy", { length: 64 }).notNull(),
   createdAt: timestamp("createdAt").defaultNow(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow(),
 }, (table) => ({
   companyIdx: index("other_revenue_company_idx").on(table.companyId),
-  dateIdx: index("other_revenue_date_idx").on(table.date),
+  revenueDateIdx: index("other_revenue_date_idx").on(table.revenueDate),
   competenceIdx: index("other_revenue_competence_idx").on(table.competenceMonth),
+  statusIdx: index("other_revenue_status_idx").on(table.status),
 }));
 
 export type OtherRevenue = typeof otherRevenues.$inferSelect;
