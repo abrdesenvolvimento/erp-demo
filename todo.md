@@ -1,6 +1,6 @@
 # ABRWF - Pendências e Melhorias
 
-**Última atualização:** 03/02/2026
+**Última atualização:** 04/02/2026
 
 ---
 
@@ -50,9 +50,10 @@
 - [ ] Implementar prazo máximo de 3 dias para edição/cancelamento
 - [ ] Importante devido à contabilização implementada
 
-### Compras - Produto Duplicado
-- [ ] Produto já selecionado não deve aparecer novamente no autocomplete
-- [ ] Mesma lógica já existente em outros módulos
+### Compras - Produto Duplicado ✅ (04/02/2026)
+- [x] Produto já selecionado não aparece mais no autocomplete
+- [x] Implementado com useMemo para performance
+- [x] Funciona em criação e edição de compras
 
 ---
 

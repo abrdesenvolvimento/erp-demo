@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { formatDateForInput, getTodayInBrazil, parseDateInBrazil, addDays } from "@shared/dateUtils";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -110,6 +110,13 @@ export default function Compras() {
     { search: searchTerm },
     { enabled: searchTerm.length >= 2 }
   );
+  
+  // BUG-04: Filtrar produtos já adicionados à compra
+  const filteredSearchResults = useMemo(() => {
+    const selectedProductIds = new Set(items.map(item => item.productId));
+    return searchResults.filter(product => !selectedProductIds.has(product.id));
+  }, [searchResults, items]);
+  
   const { data: purchaseDetails = [] } = trpc.purchases.getItems.useQuery(
     { purchaseOrderId: selectedPurchaseId || 0 },
     { enabled: selectedPurchaseId !== null }
@@ -607,9 +614,9 @@ export default function Compras() {
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                           />
-                          {searchTerm && searchResults.length > 0 && (
+                          {searchTerm && filteredSearchResults.length > 0 && (
                             <div className="absolute top-full left-0 right-0 mt-1 bg-card border rounded-lg shadow-lg z-10 max-h-48 overflow-y-auto">
-                              {searchResults.map((product) => (
+                              {filteredSearchResults.map((product) => (
                                 <button
                                   key={product.id}
                                   onClick={() => handleAddItem(product)}
