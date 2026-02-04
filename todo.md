@@ -38,6 +38,16 @@
 - [ ] Fase 2: Migrar exibição (PDF/backup) - pendente
 - [ ] Fase 3: Manter timestamps técnicos em UTC - pendente
 
+### BUG-05: Backup Google Drive + Log (Em Análise)
+- [ ] Migrar de OAuth2 para Service Account (não expira)
+- [ ] Gabriel: Criar Service Account no Google Cloud Console
+- [ ] Gabriel: Compartilhar pasta de backup com email da Service Account
+- [ ] Gabriel: Atualizar GOOGLE_DRIVE_CREDENTIALS com novo JSON
+- [ ] Aurora: Atualizar código para usar GoogleAuth
+- [ ] Aurora: Criar tabela backupLogs para rastreabilidade
+- [ ] Aurora: Implementar endpoints de histórico de backups
+- [ ] Testar backup completo após migração
+
 ---
 
 ## 🟡 MELHORIAS PRIORITÁRIAS
