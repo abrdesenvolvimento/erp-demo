@@ -283,3 +283,15 @@ Automatizar importação de pedidos concluídos do iFood via arquivos JSON
 - [x] Fechamento Mensal com DRE
 - [x] Controle de acesso por perfil
 - [x] Backup automático diário
+
+### Módulo Contábil (Em Andamento)
+- [x] Analisar estrutura contábil existente
+- [x] Criar documentação técnica para revisão do Orion (`/docs/MODULO-CONTABIL.md`)
+- [ ] Plano Contábil: CRUD + visualização hierárquica
+- [ ] Plano Gerencial: CRUD + amarrações com Plano Contábil
+- [ ] Contas Contábeis de Banco (nova funcionalidade)
+- [ ] Preparar estrutura para Outras Receitas
+- [ ] Relatório: Razão Contábil
+- [ ] Relatório: Balanço Patrimonial
+- [ ] Relatório: DRE (Demonstração do Resultado do Exercício)
+
