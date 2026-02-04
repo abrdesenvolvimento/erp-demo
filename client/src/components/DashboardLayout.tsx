@@ -22,7 +22,7 @@ import {
 import { APP_LOGO, APP_TITLE, getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
-import { LayoutDashboard, LogOut, PanelLeft, Users, Package, ShoppingCart, BarChart3, ShoppingBag, Receipt, DollarSign, CreditCard, UserCircle, Shield, TrendingUp, Bike, ChevronDown, ChevronRight, PieChart, GitCompare, Wallet, Target, FileText } from "lucide-react";
+import { LayoutDashboard, LogOut, PanelLeft, Users, Package, ShoppingCart, BarChart3, ShoppingBag, Receipt, DollarSign, CreditCard, UserCircle, Shield, TrendingUp, Bike, ChevronDown, ChevronRight, PieChart, GitCompare, Wallet, Target, FileText, BookOpen, Calculator } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
@@ -45,6 +45,13 @@ const financeMenuItems = [
   { icon: CreditCard, label: "Contas a Pagar", path: "/contas-pagar", roles: ["admin", "consultor"] },
 ];
 
+// Submenu de Contabilidade
+const accountingMenuItems = [
+  { icon: BookOpen, label: "Plano de Contas", path: "/plano-contas", roles: ["admin", "consultor"] },
+  { icon: FileText, label: "Relatórios Contábeis", path: "/relatorios-contabeis", roles: ["admin", "consultor"] },
+  { icon: Wallet, label: "Outras Receitas", path: "/outras-receitas", roles: ["admin", "consultor"] },
+];
+
 // Submenu de Análises
 const analysisMenuItems = [
   { icon: TrendingUp, label: "Análise de Vendas", path: "/analise-vendas", roles: ["admin"] },
@@ -64,6 +71,7 @@ const getMenuItemsForRole = (items: typeof mainMenuItems, role?: string) => {
 const SIDEBAR_WIDTH_KEY = "sidebar-width";
 const ANALYSIS_SUBMENU_KEY = "analysis-submenu-expanded";
 const FINANCE_SUBMENU_KEY = "finance-submenu-expanded";
+const ACCOUNTING_SUBMENU_KEY = "accounting-submenu-expanded";
 const DEFAULT_WIDTH = 280;
 const MIN_WIDTH = 200;
 const MAX_WIDTH = 480;
@@ -167,10 +175,17 @@ function DashboardLayoutContent({
     return saved === 'true';
   });
   
+  // Estado do submenu de contabilidade
+  const [accountingExpanded, setAccountingExpanded] = useState(() => {
+    const saved = localStorage.getItem(ACCOUNTING_SUBMENU_KEY);
+    return saved === 'true';
+  });
+  
   // Filtra itens por role
   const filteredMainItems = getMenuItemsForRole(mainMenuItems, user?.role);
   const filteredAnalysisItems = getMenuItemsForRole(analysisMenuItems, user?.role);
   const filteredFinanceItems = getMenuItemsForRole(financeMenuItems, user?.role);
+  const filteredAccountingItems = getMenuItemsForRole(accountingMenuItems, user?.role);
   
   // Verifica se algum item de análise está ativo
   const isAnalysisActive = filteredAnalysisItems.some(item => item.path === location);
@@ -178,8 +193,11 @@ function DashboardLayoutContent({
   // Verifica se algum item financeiro está ativo
   const isFinanceActive = filteredFinanceItems.some(item => item.path === location);
   
+  // Verifica se algum item de contabilidade está ativo
+  const isAccountingActive = filteredAccountingItems.some(item => item.path === location);
+  
   // Encontra o item ativo atual
-  const allItems = [...filteredMainItems, ...filteredAnalysisItems, ...filteredFinanceItems];
+  const allItems = [...filteredMainItems, ...filteredAnalysisItems, ...filteredFinanceItems, ...filteredAccountingItems];
   const activeMenuItem = allItems.find(item => item.path === location);
   
   const isMobile = useIsMobile();
@@ -192,6 +210,10 @@ function DashboardLayoutContent({
   useEffect(() => {
     localStorage.setItem(FINANCE_SUBMENU_KEY, financeExpanded.toString());
   }, [financeExpanded]);
+  
+  useEffect(() => {
+    localStorage.setItem(ACCOUNTING_SUBMENU_KEY, accountingExpanded.toString());
+  }, [accountingExpanded]);
 
   // Expande automaticamente o submenu se um item de análise estiver ativo
   useEffect(() => {
@@ -206,6 +228,13 @@ function DashboardLayoutContent({
       setFinanceExpanded(true);
     }
   }, [isFinanceActive]);
+  
+  // Expande automaticamente o submenu se um item de contabilidade estiver ativo
+  useEffect(() => {
+    if (isAccountingActive && !accountingExpanded) {
+      setAccountingExpanded(true);
+    }
+  }, [isAccountingActive]);
 
   useEffect(() => {
     if (isCollapsed) {
@@ -280,6 +309,15 @@ function DashboardLayoutContent({
       return item.path === '/compras' || item.path === '/despesas';
     }
     return true;
+  });
+  
+  // Filtra itens de contabilidade por role
+  const visibleAccountingItems = filteredAccountingItems.filter(item => {
+    // Admin e Consultor podem ver todos os itens de contabilidade
+    if (user?.role === 'admin' || user?.role === 'consultor') {
+      return true;
+    }
+    return false;
   });
 
   return (
@@ -402,6 +440,77 @@ function DashboardLayoutContent({
 
                   {/* Quando colapsado, mostra itens como tooltip */}
                   {isCollapsed && visibleFinanceItems.map(item => {
+                    const isActive = location === item.path;
+                    return (
+                      <SidebarMenuItem key={item.path}>
+                        <SidebarMenuButton
+                          isActive={isActive}
+                          onClick={() => setLocation(item.path)}
+                          tooltip={item.label}
+                          className={`h-10 transition-all font-normal`}
+                        >
+                          <item.icon
+                            className={`h-4 w-4 ${isActive ? "text-primary" : ""}`}
+                          />
+                          <span>{item.label}</span>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })}
+                </>
+              )}
+
+              {/* Submenu de Contabilidade */}
+              {visibleAccountingItems.length > 0 && (
+                <>
+                  {/* Separador visual */}
+                  <div className="my-2 mx-2 border-t border-border/50" />
+                  
+                  {/* Cabeçalho do submenu */}
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      onClick={() => setAccountingExpanded(!accountingExpanded)}
+                      tooltip="Contabilidade"
+                      className={`h-10 transition-all font-medium ${isAccountingActive ? "bg-accent text-accent-foreground" : ""}`}
+                    >
+                      <Calculator className={`h-4 w-4 ${isAccountingActive ? "text-primary" : ""}`} />
+                      <span className="flex-1">Contabilidade</span>
+                      {!isCollapsed && (
+                        accountingExpanded ? (
+                          <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                        ) : (
+                          <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                        )
+                      )}
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+
+                  {/* Itens do submenu */}
+                  {accountingExpanded && !isCollapsed && (
+                    <div className="ml-4 border-l border-border/50 pl-2">
+                      {visibleAccountingItems.map(item => {
+                        const isActive = location === item.path;
+                        return (
+                          <SidebarMenuItem key={item.path}>
+                            <SidebarMenuButton
+                              isActive={isActive}
+                              onClick={() => setLocation(item.path)}
+                              tooltip={item.label}
+                              className={`h-9 transition-all font-normal text-sm`}
+                            >
+                              <item.icon
+                                className={`h-4 w-4 ${isActive ? "text-primary" : ""}`}
+                              />
+                              <span>{item.label}</span>
+                            </SidebarMenuButton>
+                          </SidebarMenuItem>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* Quando colapsado, mostra itens como tooltip */}
+                  {isCollapsed && visibleAccountingItems.map(item => {
                     const isActive = location === item.path;
                     return (
                       <SidebarMenuItem key={item.path}>

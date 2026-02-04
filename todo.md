@@ -312,17 +312,27 @@ Automatizar importação de pedidos concluídos do iFood via arquivos JSON
 - [x] Router tRPC (server/routers/accounting.ts)
 - [x] Testes (11 testes passando)
 
-**Fase 4: Frontend - Plano de Contas**
-- [ ] Visualização em árvore
-- [ ] Formulário de criação/edição
-- [ ] Gestão de amarrações
+**Fase 4: Frontend - Plano de Contas** ✅ (04/02/2026)
+- [x] Visualização em árvore hierárquica
+- [x] Formulário de criação/edição (modal)
+- [x] Busca, Expandir/Colapsar
+- [x] Estatísticas (total, analíticas, sintéticas)
+- [x] Submenu Contabilidade na sidebar
 
-**Fase 5: Relatórios**
-- [ ] Razão Contábil
-- [ ] Balanço Patrimonial
-- [ ] DRE
+**Fase 5: Relatórios** ✅ (04/02/2026)
+- [x] Razão Contábil (extrato por conta com saldo corrente)
+- [x] Balancete de Verificação (saldos de todas as contas)
+- [x] DRE (Receitas - Custos - Despesas = Resultado)
+- [x] Página /relatorios-contabeis com 3 abas
+- [x] Filtros de período e conta
+- [x] Menu Contabilidade → Relatórios Contábeis
 
-**Fase 6: Outras Receitas**
-- [ ] CRUD completo
-- [ ] Integração com contabilização
+**Fase 6: Outras Receitas** ✅ (04/02/2026)
+- [x] CRUD completo (criar, editar, excluir)
+- [x] Página /outras-receitas com filtro de competência
+- [x] Cards de totais (Total, Confirmado, Pendente)
+- [x] Integração com Plano de Contas (Conta de Receita, Conta de Banco)
+- [x] Vinculação com Cliente/Parceiro (opcional)
+- [x] Menu Contabilidade → Outras Receitas
+- [ ] Integração com contabilização automática (journals) - próxima fase
 

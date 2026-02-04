@@ -765,3 +765,104 @@ export async function getDRE(
   
   return dre;
 }
+
+
+// =====================================================
+// CRUD - Outras Receitas
+// =====================================================
+
+import { otherRevenues, InsertOtherRevenue, OtherRevenue } from "../drizzle/schema";
+
+export async function listOtherRevenues(competenceMonth?: string, companyId: number = 1) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const conditions = [eq(otherRevenues.companyId, companyId)];
+  if (competenceMonth) {
+    conditions.push(eq(otherRevenues.competenceMonth, competenceMonth));
+  }
+  
+  const results = await db.select()
+    .from(otherRevenues)
+    .where(and(...conditions))
+    .orderBy(desc(otherRevenues.date));
+  
+  // Converter amount de centavos para reais
+  return results.map(r => ({
+    ...r,
+    amount: Number(r.amount) / 100
+  }));
+}
+
+export async function createOtherRevenue(data: {
+  date: Date;
+  competenceMonth: string;
+  description: string;
+  amount: number; // Em centavos
+  revenueAccountCode?: string;
+  bankAccountCode?: string;
+  partnerId?: number;
+  notes?: string;
+  status?: "PENDING" | "CONFIRMED" | "CANCELLED";
+  companyId?: number;
+  createdBy: string;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const [result] = await db.insert(otherRevenues).values({
+    companyId: data.companyId || 1,
+    date: data.date,
+    competenceMonth: data.competenceMonth,
+    description: data.description,
+    amount: (data.amount / 100).toFixed(2), // Converter centavos para decimal
+    revenueAccountId: null, // TODO: buscar ID pelo código
+    bankAccountId: null, // TODO: buscar ID pelo código
+    partnerId: data.partnerId || null,
+    notes: data.notes || null,
+    status: data.status || "CONFIRMED",
+    createdBy: data.createdBy,
+  });
+  
+  return { id: result.insertId };
+}
+
+export async function updateOtherRevenue(id: number, data: {
+  date?: Date;
+  competenceMonth?: string;
+  description?: string;
+  amount?: number;
+  revenueAccountCode?: string;
+  bankAccountCode?: string;
+  partnerId?: number;
+  notes?: string;
+  status?: "PENDING" | "CONFIRMED" | "CANCELLED";
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const updateData: Record<string, any> = {};
+  if (data.date) updateData.date = data.date;
+  if (data.competenceMonth) updateData.competenceMonth = data.competenceMonth;
+  if (data.description) updateData.description = data.description;
+  if (data.amount !== undefined) updateData.amount = (data.amount / 100).toFixed(2);
+  if (data.partnerId !== undefined) updateData.partnerId = data.partnerId;
+  if (data.notes !== undefined) updateData.notes = data.notes;
+  if (data.status) updateData.status = data.status;
+  
+  await db.update(otherRevenues)
+    .set(updateData)
+    .where(eq(otherRevenues.id, id));
+  
+  return { success: true };
+}
+
+export async function deleteOtherRevenue(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.delete(otherRevenues)
+    .where(eq(otherRevenues.id, id));
+  
+  return { success: true };
+}

@@ -232,5 +232,72 @@ export const accountingRouter = router({
       .query(async ({ input }) => {
         return accounting.getDRE(input.competenceMonth, input.companyId);
       })
-  })
+  }),
+
+  // Outras Receitas
+  listOtherRevenues: publicProcedure
+    .input(z.object({
+      competenceMonth: z.string().optional(),
+      companyId: z.number().optional().default(1)
+    }).optional())
+    .query(async ({ input }) => {
+      return accounting.listOtherRevenues(input?.competenceMonth, input?.companyId || 1);
+    }),
+
+  createOtherRevenue: protectedProcedure
+    .input(z.object({
+      date: z.string(),
+      competenceMonth: z.string(),
+      description: z.string(),
+      amount: z.number(),
+      revenueAccountCode: z.string().optional(),
+      bankAccountCode: z.string().optional(),
+      partnerId: z.number().optional(),
+      notes: z.string().optional(),
+      status: z.enum(["PENDING", "CONFIRMED", "CANCELLED"]).optional().default("CONFIRMED"),
+      companyId: z.number().optional().default(1)
+    }))
+    .mutation(async ({ input, ctx }) => {
+      return accounting.createOtherRevenue({
+        ...input,
+        date: new Date(input.date),
+        createdBy: ctx.user.id
+      });
+    }),
+
+  updateOtherRevenue: protectedProcedure
+    .input(z.object({
+      id: z.number(),
+      date: z.string().optional(),
+      competenceMonth: z.string().optional(),
+      description: z.string().optional(),
+      amount: z.number().optional(),
+      revenueAccountCode: z.string().optional(),
+      bankAccountCode: z.string().optional(),
+      partnerId: z.number().optional(),
+      notes: z.string().optional(),
+      status: z.enum(["PENDING", "CONFIRMED", "CANCELLED"]).optional()
+    }))
+    .mutation(async ({ input }) => {
+      const { id, date, ...rest } = input;
+      return accounting.updateOtherRevenue(id, {
+        ...rest,
+        date: date ? new Date(date) : undefined
+      });
+    }),
+
+  deleteOtherRevenue: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ input }) => {
+      return accounting.deleteOtherRevenue(input.id);
+    }),
+
+  // Listar Plano de Contas (atalho para frontend)
+  listChartOfAccounts: publicProcedure
+    .input(z.object({
+      companyId: z.number().optional().default(1)
+    }).optional())
+    .query(async ({ input }) => {
+      return accounting.getChartOfAccounts(input?.companyId || 1);
+    })
 });
