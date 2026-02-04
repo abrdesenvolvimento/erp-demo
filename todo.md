@@ -58,12 +58,15 @@
 - [x] Endpoints: /api/scheduler/status e /api/scheduler/trigger
 - [x] Testes criados e passando
 
-### Sprint 1.5 - Documentação Multiempresa ✅ (04/02/2026)
+### Sprint 1.5 - Documentação Multiempresa ✅ v1.1 (04/02/2026)
 - [x] Documentar modelo de dados multiempresa (tabela `companies`)
-- [x] Mapear impactos em 31 tabelas existentes
-- [x] Definir estratégia de migração em 4 fases
-- [x] Estimar esforço: 36-58 horas
+- [x] Mapear impactos em 23 tabelas com companyId
+- [x] Definir estratégia de migração em 6 fases (V1 + V2)
+- [x] Estimar esforço: V1 (36-58h) + V2 (12-24h)
 - [x] Documento: `/docs/ARQUITETURA-MULTIEMPRESA.md`
+- [x] **v1.1:** categories/subcategories com companyId (estruturas diferentes por empresa)
+- [x] **v1.1:** Nova tabela `branches` para filiais (1 empresa → N filiais)
+- [x] **v1.1:** Faseamento V1 (companyId) + V2 (branchId)
 - [x] **AGUARDANDO:** Estabilização de Competência, Fechamento e Contábil
 
 ---
