@@ -362,3 +362,11 @@ Automatizar importação de pedidos concluídos do iFood via arquivos JSON
 - [x] Melhorar Contas a Receber similar ao de Despesas:
   - [x] Campo de Conta Gerencial com autocomplete no modal Lançar Débito
   - [ ] Seleção de Cliente com autocomplete (próxima fase)
+
+### Melhorias Autocomplete e Outras Receitas (04/02/2026)
+- [x] Adicionar autocomplete na seleção de Conta Contábil no modal de Contas Gerenciais
+- [x] Melhorar módulo Outras Receitas:
+  - [x] Adicionar seleção de Cliente com autocomplete
+  - [x] Adicionar campo de Conta Gerencial de Receita com autocomplete (8 contas)
+  - [x] Adicionar Conta de Banco com autocomplete
+  - [x] Interface similar ao módulo de Despesas

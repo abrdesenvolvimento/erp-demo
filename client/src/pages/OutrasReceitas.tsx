@@ -12,9 +12,12 @@ import { trpc } from "@/lib/trpc";
 import { useState, useMemo } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Plus, Pencil, Trash2, Loader2, DollarSign, Calendar, Building2, FileText } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, DollarSign, Calendar, Building2, FileText, Check, ChevronsUpDown, Search } from "lucide-react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { toast } from "sonner";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 
 // Formatação de valores monetários
 const formatCurrency = (value: number | string) => {
@@ -80,12 +83,23 @@ export default function OutrasReceitas() {
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [filterMonth, setFilterMonth] = useState(getCurrentCompetenceMonth());
 
+  // Estados para autocomplete
+  const [revenueAccountOpen, setRevenueAccountOpen] = useState(false);
+  const [revenueAccountSearch, setRevenueAccountSearch] = useState("");
+  const [bankAccountOpen, setBankAccountOpen] = useState(false);
+  const [bankAccountSearch, setBankAccountSearch] = useState("");
+  const [clientOpen, setClientOpen] = useState(false);
+  const [clientSearch, setClientSearch] = useState("");
+  const [managementAccountOpen, setManagementAccountOpen] = useState(false);
+  const [managementAccountSearch, setManagementAccountSearch] = useState("");
+
   // Queries
   const { data: revenues, isLoading, refetch } = trpc.accounting.listOtherRevenues.useQuery({ 
     competenceMonth: filterMonth 
   });
   const { data: chartOfAccounts } = trpc.accounting.listChartOfAccounts.useQuery();
   const { data: partners } = trpc.partners.list.useQuery();
+  const { data: managementAccounts = [] } = trpc.accounting.listManagementAccounts.useQuery();
 
   // Mutations
   const createMutation = trpc.accounting.createOtherRevenue.useMutation({
@@ -140,6 +154,11 @@ export default function OutrasReceitas() {
     if (!partners) return [];
     return partners.filter(p => p.partnerType === 'CUSTOMER' || p.partnerType === 'BOTH');
   }, [partners]);
+
+  // Contas gerenciais de receita (nature = RECEITA)
+  const revenueManagementAccounts = useMemo(() => {
+    return managementAccounts.filter(acc => acc.nature === 'RECEITA' && acc.isActive);
+  }, [managementAccounts]);
 
   // Totais
   const totals = useMemo(() => {
@@ -448,62 +467,214 @@ export default function OutrasReceitas() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Conta de Receita</Label>
-                  <Select
-                    value={selectedRevenue.revenueAccountCode}
-                    onValueChange={(v) => setSelectedRevenue({ ...selectedRevenue, revenueAccountCode: v })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {revenueAccounts.map(acc => (
-                        <SelectItem key={acc.code} value={acc.code}>
-                          {acc.code} - {acc.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label>Conta de Banco</Label>
-                  <Select
-                    value={selectedRevenue.bankAccountCode}
-                    onValueChange={(v) => setSelectedRevenue({ ...selectedRevenue, bankAccountCode: v })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {bankAccounts.map(acc => (
-                        <SelectItem key={acc.code} value={acc.code}>
-                          {acc.code} - {acc.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+              {/* Conta Gerencial de Receita com Autocomplete */}
+              <div>
+                <Label>Conta Gerencial de Receita *</Label>
+                <Popover open={managementAccountOpen} onOpenChange={setManagementAccountOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={managementAccountOpen}
+                      className="w-full justify-between"
+                    >
+                      {selectedRevenue.revenueAccountCode
+                        ? (() => {
+                            const acc = revenueManagementAccounts.find((a) => a.accountingCode === selectedRevenue.revenueAccountCode);
+                            return acc ? `${acc.name} (${acc.accountingCode})` : "Selecione...";
+                          })()
+                        : "Selecione uma conta gerencial..."}
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[450px] p-0" align="start">
+                    <Command shouldFilter={false}>
+                      <CommandInput
+                        placeholder="Buscar conta gerencial..."
+                        value={managementAccountSearch}
+                        onValueChange={setManagementAccountSearch}
+                      />
+                      <CommandList className="max-h-[300px]">
+                        <CommandEmpty>Nenhuma conta gerencial encontrada.</CommandEmpty>
+                        <CommandGroup>
+                          {revenueManagementAccounts
+                            .filter((acc) =>
+                              acc.name.toLowerCase().includes(managementAccountSearch.toLowerCase()) ||
+                              acc.code.toLowerCase().includes(managementAccountSearch.toLowerCase()) ||
+                              (acc.accountingCode && acc.accountingCode.toLowerCase().includes(managementAccountSearch.toLowerCase()))
+                            )
+                            .map((acc) => (
+                              <CommandItem
+                                key={acc.id}
+                                value={acc.id.toString()}
+                                onSelect={() => {
+                                  setSelectedRevenue({ ...selectedRevenue, revenueAccountCode: acc.accountingCode || "" });
+                                  setManagementAccountOpen(false);
+                                  setManagementAccountSearch("");
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    selectedRevenue.revenueAccountCode === acc.accountingCode ? "opacity-100" : "opacity-0"
+                                  )}
+                                />
+                                <div className="flex-1">
+                                  <div className="font-medium">{acc.name}</div>
+                                  <div className="text-xs text-muted-foreground flex gap-2">
+                                    <span className="font-mono bg-muted px-1 rounded">{acc.code}</span>
+                                    <span className="text-green-600">{acc.accountingCode}</span>
+                                  </div>
+                                </div>
+                              </CommandItem>
+                            ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
               </div>
 
-              <div>
-                <Label>Cliente/Parceiro</Label>
-                <Select
-                  value={selectedRevenue.partnerId}
-                  onValueChange={(v) => setSelectedRevenue({ ...selectedRevenue, partnerId: v })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione (opcional)..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {clients.map(client => (
-                      <SelectItem key={client.id} value={client.id.toString()}>
-                        {client.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <div className="grid grid-cols-2 gap-4">
+                {/* Conta de Banco com Autocomplete */}
+                <div>
+                  <Label>Conta de Banco</Label>
+                  <Popover open={bankAccountOpen} onOpenChange={setBankAccountOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={bankAccountOpen}
+                        className="w-full justify-between"
+                      >
+                        {selectedRevenue.bankAccountCode
+                          ? (() => {
+                              const acc = bankAccounts.find((a) => a.code === selectedRevenue.bankAccountCode);
+                              return acc ? `${acc.code} - ${acc.name}` : "Selecione...";
+                            })()
+                          : "Selecione..."}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[350px] p-0" align="start">
+                      <Command shouldFilter={false}>
+                        <CommandInput
+                          placeholder="Buscar conta de banco..."
+                          value={bankAccountSearch}
+                          onValueChange={setBankAccountSearch}
+                        />
+                        <CommandList className="max-h-[250px]">
+                          <CommandEmpty>Nenhuma conta encontrada.</CommandEmpty>
+                          <CommandGroup>
+                            {bankAccounts
+                              .filter((acc) =>
+                                acc.code.toLowerCase().includes(bankAccountSearch.toLowerCase()) ||
+                                acc.name.toLowerCase().includes(bankAccountSearch.toLowerCase())
+                              )
+                              .map((acc) => (
+                                <CommandItem
+                                  key={acc.code}
+                                  value={acc.code}
+                                  onSelect={() => {
+                                    setSelectedRevenue({ ...selectedRevenue, bankAccountCode: acc.code });
+                                    setBankAccountOpen(false);
+                                    setBankAccountSearch("");
+                                  }}
+                                >
+                                  <Check
+                                    className={cn(
+                                      "mr-2 h-4 w-4",
+                                      selectedRevenue.bankAccountCode === acc.code ? "opacity-100" : "opacity-0"
+                                    )}
+                                  />
+                                  <div className="flex-1">
+                                    <div className="font-medium">{acc.code}</div>
+                                    <div className="text-xs text-muted-foreground">{acc.name}</div>
+                                  </div>
+                                </CommandItem>
+                              ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                </div>
+
+                {/* Cliente/Parceiro com Autocomplete */}
+                <div>
+                  <Label>Cliente/Parceiro</Label>
+                  <Popover open={clientOpen} onOpenChange={setClientOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={clientOpen}
+                        className="w-full justify-between"
+                      >
+                        {selectedRevenue.partnerId
+                          ? (() => {
+                              const client = clients.find((c) => c.id.toString() === selectedRevenue.partnerId);
+                              return client ? client.name : "Selecione...";
+                            })()
+                          : "Selecione (opcional)..."}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[350px] p-0" align="start">
+                      <Command shouldFilter={false}>
+                        <CommandInput
+                          placeholder="Buscar cliente..."
+                          value={clientSearch}
+                          onValueChange={setClientSearch}
+                        />
+                        <CommandList className="max-h-[250px]">
+                          <CommandEmpty>Nenhum cliente encontrado.</CommandEmpty>
+                          <CommandGroup>
+                            <CommandItem
+                              value="none"
+                              onSelect={() => {
+                                setSelectedRevenue({ ...selectedRevenue, partnerId: "" });
+                                setClientOpen(false);
+                                setClientSearch("");
+                              }}
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  !selectedRevenue.partnerId ? "opacity-100" : "opacity-0"
+                                )}
+                              />
+                              <span className="text-muted-foreground">Nenhum (opcional)</span>
+                            </CommandItem>
+                            {clients
+                              .filter((client) =>
+                                client.name.toLowerCase().includes(clientSearch.toLowerCase())
+                              )
+                              .map((client) => (
+                                <CommandItem
+                                  key={client.id}
+                                  value={client.id.toString()}
+                                  onSelect={() => {
+                                    setSelectedRevenue({ ...selectedRevenue, partnerId: client.id.toString() });
+                                    setClientOpen(false);
+                                    setClientSearch("");
+                                  }}
+                                >
+                                  <Check
+                                    className={cn(
+                                      "mr-2 h-4 w-4",
+                                      selectedRevenue.partnerId === client.id.toString() ? "opacity-100" : "opacity-0"
+                                    )}
+                                  />
+                                  <span>{client.name}</span>
+                                </CommandItem>
+                              ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                </div>
               </div>
 
               <div>

@@ -41,7 +41,12 @@ import {
   FileText,
   CheckCircle,
   XCircle,
+  Check,
+  ChevronsUpDown,
 } from "lucide-react";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 
 type ManagementAccount = {
   id: number;
@@ -88,6 +93,10 @@ export default function ContasGerenciais() {
   const [isMappingModalOpen, setIsMappingModalOpen] = useState(false);
   const [editingAccount, setEditingAccount] = useState<ManagementAccount | null>(null);
   const [mappingAccount, setMappingAccount] = useState<ManagementAccount | null>(null);
+
+  // Estados para autocomplete de conta contábil
+  const [accountingCodeOpen, setAccountingCodeOpen] = useState(false);
+  const [accountingCodeSearch, setAccountingCodeSearch] = useState("");
 
   // Form state
   const [formData, setFormData] = useState({
@@ -549,22 +558,81 @@ export default function ContasGerenciais() {
 
               <div className="space-y-2">
                 <Label htmlFor="accountingCode">Conta Contábil (Amarração)</Label>
-                <Select
-                  value={formData.accountingCode || "none"}
-                  onValueChange={(v) => setFormData({ ...formData, accountingCode: v === "none" ? "" : v })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione a conta contábil..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Sem amarração</SelectItem>
-                    {analyticalAccounts.map((acc: any) => (
-                      <SelectItem key={acc.code} value={acc.code}>
-                        {acc.code} - {acc.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Popover open={accountingCodeOpen} onOpenChange={setAccountingCodeOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={accountingCodeOpen}
+                      className="w-full justify-between"
+                    >
+                      {formData.accountingCode
+                        ? (() => {
+                            const acc = analyticalAccounts.find((a: any) => a.code === formData.accountingCode);
+                            return acc ? `${acc.code} - ${acc.name}` : "Selecione...";
+                          })()
+                        : "Selecione a conta contábil..."}
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[450px] p-0" align="start">
+                    <Command shouldFilter={false}>
+                      <CommandInput
+                        placeholder="Buscar conta contábil..."
+                        value={accountingCodeSearch}
+                        onValueChange={setAccountingCodeSearch}
+                      />
+                      <CommandList className="max-h-[300px]">
+                        <CommandEmpty>Nenhuma conta encontrada.</CommandEmpty>
+                        <CommandGroup>
+                          <CommandItem
+                            value="none"
+                            onSelect={() => {
+                              setFormData({ ...formData, accountingCode: "" });
+                              setAccountingCodeOpen(false);
+                              setAccountingCodeSearch("");
+                            }}
+                          >
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4",
+                                !formData.accountingCode ? "opacity-100" : "opacity-0"
+                              )}
+                            />
+                            <span className="text-muted-foreground">Sem amarração</span>
+                          </CommandItem>
+                          {analyticalAccounts
+                            .filter((acc: any) =>
+                              acc.code.toLowerCase().includes(accountingCodeSearch.toLowerCase()) ||
+                              acc.name.toLowerCase().includes(accountingCodeSearch.toLowerCase())
+                            )
+                            .map((acc: any) => (
+                              <CommandItem
+                                key={acc.code}
+                                value={acc.code}
+                                onSelect={() => {
+                                  setFormData({ ...formData, accountingCode: acc.code });
+                                  setAccountingCodeOpen(false);
+                                  setAccountingCodeSearch("");
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    formData.accountingCode === acc.code ? "opacity-100" : "opacity-0"
+                                  )}
+                                />
+                                <div className="flex-1">
+                                  <div className="font-medium">{acc.code}</div>
+                                  <div className="text-xs text-muted-foreground">{acc.name}</div>
+                                </div>
+                              </CommandItem>
+                            ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
                 {formData.accountingCode && (
                   <p className="text-xs text-muted-foreground">
                     Conta contábil vinculada: {formData.accountingCode}
