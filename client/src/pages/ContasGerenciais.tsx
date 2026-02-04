@@ -100,12 +100,7 @@ export default function ContasGerenciais() {
     impactMargin: false,
     impactPayroll: false,
     isActive: true,
-  });
-
-  // Mapping form state
-  const [mappingData, setMappingData] = useState({
-    accountingCode: "",
-    notes: "",
+    accountingCode: "" as string,
   });
 
   // Queries
@@ -178,6 +173,7 @@ export default function ContasGerenciais() {
       impactMargin: false,
       impactPayroll: false,
       isActive: true,
+      accountingCode: "",
     });
     setEditingAccount(null);
   };
@@ -199,6 +195,7 @@ export default function ContasGerenciais() {
       impactMargin: account.impactMargin ?? false,
       impactPayroll: account.impactPayroll ?? false,
       isActive: account.isActive,
+      accountingCode: account.accountingCode || "",
     });
     setIsModalOpen(true);
   };
@@ -431,24 +428,15 @@ export default function ContasGerenciais() {
                         )}
                       </TableCell>
                       <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleOpenMapping(account)}
-                            title="Amarrar conta contábil"
-                          >
-                            <Link2 className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleOpenEdit(account)}
-                            title="Editar conta"
-                          >
-                            <Edit2 className="h-4 w-4" />
-                          </Button>
-                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleOpenEdit(account)}
+                          title="Editar conta"
+                        >
+                          <Edit2 className="h-4 w-4 mr-1" />
+                          Editar
+                        </Button>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -559,6 +547,31 @@ export default function ContasGerenciais() {
                 />
               </div>
 
+              <div className="space-y-2">
+                <Label htmlFor="accountingCode">Conta Contábil (Amarração)</Label>
+                <Select
+                  value={formData.accountingCode || "none"}
+                  onValueChange={(v) => setFormData({ ...formData, accountingCode: v === "none" ? "" : v })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione a conta contábil..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Sem amarração</SelectItem>
+                    {analyticalAccounts.map((acc: any) => (
+                      <SelectItem key={acc.code} value={acc.code}>
+                        {acc.code} - {acc.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {formData.accountingCode && (
+                  <p className="text-xs text-muted-foreground">
+                    Conta contábil vinculada: {formData.accountingCode}
+                  </p>
+                )}
+              </div>
+
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Switch
@@ -594,64 +607,7 @@ export default function ContasGerenciais() {
           </DialogContent>
         </Dialog>
 
-        {/* Mapping Modal */}
-        <Dialog open={isMappingModalOpen} onOpenChange={setIsMappingModalOpen}>
-          <DialogContent className="max-w-lg">
-            <DialogHeader>
-              <DialogTitle>Amarração Contábil</DialogTitle>
-            </DialogHeader>
-            {mappingAccount && (
-              <div className="space-y-4">
-                <div className="p-4 bg-muted rounded-lg">
-                  <p className="text-sm text-muted-foreground">Conta Gerencial</p>
-                  <p className="font-medium">
-                    {mappingAccount.code} - {mappingAccount.name}
-                  </p>
-                  <Badge className={`mt-2 ${getNatureColor(mappingAccount.nature)}`}>
-                    {NATURE_OPTIONS.find((o) => o.value === mappingAccount.nature)?.label}
-                  </Badge>
-                </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="accountingCode">Conta Contábil *</Label>
-                  <Select
-                    value={mappingData.accountingCode}
-                    onValueChange={(v) => setMappingData({ ...mappingData, accountingCode: v })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione a conta contábil..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {analyticalAccounts.map((acc: any) => (
-                        <SelectItem key={acc.code} value={acc.code}>
-                          {acc.code} - {acc.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="notes">Observações</Label>
-                  <Textarea
-                    id="notes"
-                    placeholder="Observações sobre a amarração..."
-                    value={mappingData.notes}
-                    onChange={(e) => setMappingData({ ...mappingData, notes: e.target.value })}
-                  />
-                </div>
-              </div>
-            )}
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsMappingModalOpen(false)}>
-                Cancelar
-              </Button>
-              <Button onClick={handleSubmitMapping} disabled={updateMappingMutation.isPending}>
-                Salvar Amarração
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
       </div>
     </DashboardLayout>
   );

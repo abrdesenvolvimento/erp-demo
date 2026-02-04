@@ -469,6 +469,7 @@ export const customerDebits = mysqlTable("customerDebits", {
   debitDate: timestamp("debitDate").notNull(),
   debitAmount: decimal("debitAmount", { precision: 10, scale: 2 }).notNull(),
   description: text("description").notNull(), // Ex: "Empréstimo em dinheiro", "Taxa de serviço"
+  managementAccountId: int("managementAccountId").references(() => managementAccounts.id), // Conta gerencial para classificação contábil
   notes: text("notes"),
   createdBy: varchar("createdBy", { length: 64 }),
   createdAt: timestamp("createdAt").defaultNow(),

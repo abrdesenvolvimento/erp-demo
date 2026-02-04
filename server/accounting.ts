@@ -955,6 +955,7 @@ export async function updateManagementAccount(id: number, data: {
   impactMargin?: boolean;
   impactPayroll?: boolean;
   isActive?: boolean;
+  accountingCode?: string | null;
 }) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
@@ -971,13 +972,30 @@ export async function updateManagementAccount(id: number, data: {
   if (data.impactPayroll !== undefined) updateData.impactPayroll = data.impactPayroll;
   if (data.isActive !== undefined) updateData.isActive = data.isActive;
   
-  if (Object.keys(updateData).length === 0) {
+  if (Object.keys(updateData).length === 0 && data.accountingCode === undefined) {
     return { success: true };
   }
   
-  await db.update(managementAccounts)
-    .set(updateData)
-    .where(eq(managementAccounts.id, id));
+  // Atualizar dados básicos da conta gerencial
+  if (Object.keys(updateData).length > 0) {
+    await db.update(managementAccounts)
+      .set(updateData)
+      .where(eq(managementAccounts.id, id));
+  }
+  
+  // Se accountingCode foi passado, atualizar mapeamento
+  if (data.accountingCode !== undefined) {
+    if (data.accountingCode) {
+      await updateAccountingMapping({
+        managementAccountId: id,
+        accountingCode: data.accountingCode
+      });
+    } else {
+      // Remover mapeamento se accountingCode for null/vazio
+      await db.delete(accountingMappings)
+        .where(eq(accountingMappings.managementAccountId, id));
+    }
+  }
   
   return { success: true };
 }

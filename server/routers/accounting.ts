@@ -337,7 +337,8 @@ export const accountingRouter = router({
       classification: z.enum(["OPERACIONAL", "ADMINISTRATIVA", "COMERCIAL", "FINANCEIRA", "NAO_OPERACIONAL", "PATRIMONIAL"]).optional(),
       impactMargin: z.boolean().optional(),
       impactPayroll: z.boolean().optional(),
-      isActive: z.boolean().optional()
+      isActive: z.boolean().optional(),
+      accountingCode: z.string().nullable().optional()
     }))
     .mutation(async ({ input }) => {
       const { id, ...data } = input;

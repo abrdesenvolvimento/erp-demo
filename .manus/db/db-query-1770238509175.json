@@ -1,0 +1,31 @@
+{
+  "query": "SHOW TABLES LIKE '%account%';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SHOW TABLES LIKE '%account%';",
+  "rows": [
+    {
+      "Tables_in_7RkrCeS5KipYf8hkuNqrCk (%account%)": "accountingEntries"
+    },
+    {
+      "Tables_in_7RkrCeS5KipYf8hkuNqrCk (%account%)": "accountingMappings"
+    },
+    {
+      "Tables_in_7RkrCeS5KipYf8hkuNqrCk (%account%)": "accountingPeriods"
+    },
+    {
+      "Tables_in_7RkrCeS5KipYf8hkuNqrCk (%account%)": "accountsPayable"
+    },
+    {
+      "Tables_in_7RkrCeS5KipYf8hkuNqrCk (%account%)": "chartOfAccounts"
+    },
+    {
+      "Tables_in_7RkrCeS5KipYf8hkuNqrCk (%account%)": "managementAccounts"
+    },
+    {
+      "Tables_in_7RkrCeS5KipYf8hkuNqrCk (%account%)": "revenueAccounts"
+    }
+  ],
+  "messages": [],
+  "stdout": "Tables_in_7RkrCeS5KipYf8hkuNqrCk (%account%)\naccountingEntries\naccountingMappings\naccountingPeriods\naccountsPayable\nchartOfAccounts\nmanagementAccounts\nrevenueAccounts\n",
+  "stderr": "",
+  "execution_time_ms": 46
+}

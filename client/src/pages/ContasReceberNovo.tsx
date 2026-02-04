@@ -7,7 +7,10 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, DollarSign, Plus, FileDown, Loader2, MessageCircle } from "lucide-react";
+import { ArrowLeft, DollarSign, Plus, FileDown, Loader2, MessageCircle, Search, Check } from "lucide-react";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 
 import { getTodayInBrazil, getNowInBrazil, formatDateBR, formatDateTimeBR } from "@shared/dateUtils";
 import { toast } from "sonner";
@@ -28,6 +31,14 @@ export default function ContasReceberNovo() {
   const [showWhatsAppModal, setShowWhatsAppModal] = useState(false);
   const [whatsAppPhone, setWhatsAppPhone] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
+
+  // Estados para autocomplete de conta gerencial
+  const [managementAccountOpen, setManagementAccountOpen] = useState(false);
+  const [managementAccountSearch, setManagementAccountSearch] = useState("");
+  const [managementAccountId, setManagementAccountId] = useState<number | undefined>();
+
+  // Buscar contas gerenciais de receita
+  const { data: managementAccounts = [] } = trpc.managementAccounts.list.useQuery({ nature: 'RECEITA' });
 
   // Buscar lista de clientes com saldo
   const { data: customers, isLoading: loadingCustomers, refetch: refetchCustomers } = 
@@ -136,6 +147,8 @@ export default function ContasReceberNovo() {
       description: "",
       notes: ""
     });
+    setManagementAccountId(undefined);
+    setManagementAccountSearch("");
   };
 
   const handlePaymentSubmit = () => {
@@ -183,6 +196,7 @@ export default function ContasReceberNovo() {
       debitDate: isToday ? getNowInBrazil() : new Date(debitForm.debitDate + "T12:00:00"),
       debitAmount: debitForm.debitAmount,
       description: debitForm.description,
+      managementAccountId: managementAccountId,
       notes: debitForm.notes || undefined
     });
   };
@@ -448,6 +462,68 @@ export default function ContasReceberNovo() {
                   value={debitForm.description}
                   onChange={(e) => setDebitForm({ ...debitForm, description: e.target.value })}
                 />
+              </div>
+              {/* Conta Gerencial com Autocomplete */}
+              <div>
+                <Label>Conta Gerencial (opcional)</Label>
+                <Popover open={managementAccountOpen} onOpenChange={setManagementAccountOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={managementAccountOpen}
+                      className="w-full justify-between"
+                    >
+                      {managementAccountId
+                        ? managementAccounts.find(a => a.id === managementAccountId)?.name || "Selecione..."
+                        : "Selecione uma conta gerencial..."}
+                      <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[400px] p-0" align="start">
+                    <Command shouldFilter={false}>
+                      <CommandInput
+                        placeholder="Buscar conta gerencial..."
+                        value={managementAccountSearch}
+                        onValueChange={setManagementAccountSearch}
+                      />
+                      <CommandList className="max-h-[300px]">
+                        <CommandEmpty>Nenhuma conta encontrada.</CommandEmpty>
+                        <CommandGroup>
+                          {managementAccounts
+                            .filter(a => 
+                              a.name.toLowerCase().includes(managementAccountSearch.toLowerCase()) ||
+                              a.code.toLowerCase().includes(managementAccountSearch.toLowerCase())
+                            )
+                            .map((account) => (
+                              <CommandItem
+                                key={account.id}
+                                value={account.id.toString()}
+                                onSelect={() => {
+                                  setManagementAccountId(account.id);
+                                  setManagementAccountOpen(false);
+                                  setManagementAccountSearch("");
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    managementAccountId === account.id ? "opacity-100" : "opacity-0"
+                                  )}
+                                />
+                                <div className="flex-1">
+                                  <div className="font-medium">{account.name}</div>
+                                  <div className="text-xs text-muted-foreground">
+                                    {account.code} • {account.accountingCode || 'Sem amarração'}
+                                  </div>
+                                </div>
+                              </CommandItem>
+                            ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
               </div>
               <div>
                 <Label>Observações (opcional)</Label>

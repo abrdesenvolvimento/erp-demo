@@ -347,3 +347,18 @@ Automatizar importação de pedidos concluídos do iFood via arquivos JSON
   - [x] Menu Contabilidade → Contas Gerenciais
 - [ ] Corrigir botões Expandir/Colapsar na árvore do Plano de Contas
 - [ ] Implementar seleção múltipla de contas nos relatórios contábeis
+
+### Melhorias Contas Gerenciais e Contas a Receber (04/02/2026)
+- [x] Mover amarração contábil para dentro do modal de edição (unificar)
+- [x] Criar contas gerenciais de Receita (8 contas criadas)
+  - ROP001 - Receita de Vendas (Balcão)
+  - ROP002 - Receita de Vendas (A Prazo)
+  - ROP003 - Receita de Vendas (Delivery)
+  - ROR001 - Receita de Aluguel
+  - ROR002 - Receita de Serviços
+  - ROR003 - Outras Receitas
+  - RFI001 - Juros Recebidos
+  - RFI002 - Descontos Obtidos
+- [x] Melhorar Contas a Receber similar ao de Despesas:
+  - [x] Campo de Conta Gerencial com autocomplete no modal Lançar Débito
+  - [ ] Seleção de Cliente com autocomplete (próxima fase)

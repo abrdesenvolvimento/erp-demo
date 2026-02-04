@@ -3570,6 +3570,7 @@ export async function registerManualDebit(data: {
   debitDate: Date;
   debitAmount: string;
   description: string;
+  managementAccountId?: number;
   notes?: string;
   createdBy: string;
 }) {
@@ -3581,6 +3582,7 @@ export async function registerManualDebit(data: {
     debitDate: data.debitDate,
     debitAmount: data.debitAmount,
     description: data.description,
+    managementAccountId: data.managementAccountId ?? null,
     notes: data.notes ?? null,
     createdBy: data.createdBy
   });

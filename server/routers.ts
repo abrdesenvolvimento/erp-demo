@@ -1604,6 +1604,7 @@ export const appRouter = router({
         debitDate: z.date(),
         debitAmount: z.string(),
         description: z.string(),
+        managementAccountId: z.number().optional(),
         notes: z.string().optional(),
       }))
       .mutation(async ({ input, ctx }) => {

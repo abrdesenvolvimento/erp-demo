@@ -1,0 +1,50 @@
+{
+  "query": "SELECT code, name FROM chartOfAccounts WHERE code LIKE '4.%' AND allowsEntries = 1 ORDER BY code;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT code, name FROM chartOfAccounts WHERE code LIKE '4.%' AND allowsEntries = 1 ORDER BY code;",
+  "rows": [
+    {
+      "code": "4.1.1.01",
+      "name": "Receita de Vendas (Balcão)"
+    },
+    {
+      "code": "4.1.1.02",
+      "name": "Receita de Vendas (A Prazo)"
+    },
+    {
+      "code": "4.1.1.03",
+      "name": "Receita de Vendas (Delivery)"
+    },
+    {
+      "code": "4.1.2.01",
+      "name": "(-) Descontos Concedidos"
+    },
+    {
+      "code": "4.1.2.02",
+      "name": "(-) Taxas de Delivery"
+    },
+    {
+      "code": "4.2.1.01",
+      "name": "Receita de Aluguel"
+    },
+    {
+      "code": "4.2.1.02",
+      "name": "Receita de Serviços"
+    },
+    {
+      "code": "4.2.1.03",
+      "name": "Outras Receitas"
+    },
+    {
+      "code": "4.3.1.01",
+      "name": "Juros Recebidos"
+    },
+    {
+      "code": "4.3.1.02",
+      "name": "Descontos Obtidos"
+    }
+  ],
+  "messages": [],
+  "stdout": "code\tname\n4.1.1.01\tReceita de Vendas (Balcão)\n4.1.1.02\tReceita de Vendas (A Prazo)\n4.1.1.03\tReceita de Vendas (Delivery)\n4.1.2.01\t(-) Descontos Concedidos\n4.1.2.02\t(-) Taxas de Delivery\n4.2.1.01\tReceita de Aluguel\n4.2.1.02\tReceita de Serviços\n4.2.1.03\tOutras Receitas\n4.3.1.01\tJuros Recebidos\n4.3.1.02\tDescontos Obtidos\n",
+  "stderr": "",
+  "execution_time_ms": 61
+}
