@@ -284,14 +284,43 @@ Automatizar importação de pedidos concluídos do iFood via arquivos JSON
 - [x] Controle de acesso por perfil
 - [x] Backup automático diário
 
-### Módulo Contábil (Em Andamento)
+### Módulo Contábil v2.0 (Em Andamento)
 - [x] Analisar estrutura contábil existente
-- [x] Criar documentação técnica para revisão do Orion (`/docs/MODULO-CONTABIL.md`)
-- [ ] Plano Contábil: CRUD + visualização hierárquica
-- [ ] Plano Gerencial: CRUD + amarrações com Plano Contábil
-- [ ] Contas Contábeis de Banco (nova funcionalidade)
-- [ ] Preparar estrutura para Outras Receitas
-- [ ] Relatório: Razão Contábil
-- [ ] Relatório: Balanço Patrimonial
-- [ ] Relatório: DRE (Demonstração do Resultado do Exercício)
+- [x] Criar documentação técnica consolidada (`/docs/MODULO-CONTABIL.md`)
+- [x] Definir arquitetura: journals, journalSources, accountingEntries, accountingPeriods
+- [x] Definir Plano de Contas com 6 grupos (padrão brasileiro)
+
+**Fase 1: Estrutura de Banco de Dados**
+- [ ] Atualizar schema chartOfAccounts (companyId, parentId, nature)
+- [ ] Criar tabela journals (lotes contábeis)
+- [ ] Criar tabela accountingEntries (lançamentos)
+- [ ] Criar tabela journalSources (rastreabilidade)
+- [ ] Criar tabela accountingPeriods (períodos contábeis)
+- [ ] Criar tabela otherRevenues (outras receitas)
+- [ ] Executar migração pnpm db:push
+
+**Fase 2: Popular Plano de Contas**
+- [ ] Script de seed com estrutura de 6 grupos
+- [ ] Popular contas analíticas essenciais
+- [ ] Criar período contábil 2026-02
+
+**Fase 3: Backend - CRUD e Contabilização**
+- [ ] CRUD de contas contábeis
+- [ ] Função contabilizarReceitas()
+- [ ] Validações de partida dobrada
+- [ ] Testes
+
+**Fase 4: Frontend - Plano de Contas**
+- [ ] Visualização em árvore
+- [ ] Formulário de criação/edição
+- [ ] Gestão de amarrações
+
+**Fase 5: Relatórios**
+- [ ] Razão Contábil
+- [ ] Balanço Patrimonial
+- [ ] DRE
+
+**Fase 6: Outras Receitas**
+- [ ] CRUD completo
+- [ ] Integração com contabilização
 
