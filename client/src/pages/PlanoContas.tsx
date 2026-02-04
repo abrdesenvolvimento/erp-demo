@@ -124,28 +124,47 @@ function TreeNodeComponent({
   return (
     <div className="select-none">
       <div
-        className={`flex items-center gap-2 py-1.5 px-2 rounded-md hover:bg-muted/50 cursor-pointer group ${
+        className={`flex items-center gap-2 py-1.5 px-2 rounded-md hover:bg-muted/50 group ${
           isMatch ? "bg-yellow-100" : ""
         } ${!node.isActive ? "opacity-50" : ""}`}
         style={{ paddingLeft: `${(node.level - 1) * 20 + 8}px` }}
       >
         {/* Botão de expandir/colapsar */}
         <button
-          onClick={() => hasChildren && toggleNode(node.code)}
-          className={`w-5 h-5 flex items-center justify-center ${
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (hasChildren) toggleNode(node.code);
+          }}
+          className={`w-5 h-5 flex items-center justify-center cursor-pointer ${
             hasChildren ? "text-muted-foreground hover:text-foreground" : "invisible"
           }`}
         >
           {hasChildren && (isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />)}
         </button>
 
-        {/* Código */}
-        <span className={`font-mono text-sm ${getTypeColor(node.accountType)}`}>
+        {/* Código - clicável para expandir */}
+        <span 
+          className={`font-mono text-sm cursor-pointer ${getTypeColor(node.accountType)}`}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (hasChildren) toggleNode(node.code);
+          }}
+        >
           {node.code}
         </span>
 
-        {/* Nome */}
-        <span className={`flex-1 text-sm ${node.isAnalytical ? "font-normal" : "font-medium"}`}>
+        {/* Nome - clicável para expandir */}
+        <span 
+          className={`flex-1 text-sm cursor-pointer ${node.isAnalytical ? "font-normal" : "font-medium"}`}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (hasChildren) toggleNode(node.code);
+          }}
+        >
           {node.name}
         </span>
 

@@ -1,0 +1,16 @@
+{
+  "query": "SELECT code, name, parentCode, level FROM chartOfAccounts WHERE parentCode = '1' OR code = '1' ORDER BY code LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT code, name, parentCode, level FROM chartOfAccounts WHERE parentCode = '1' OR code = '1' ORDER BY code LIMIT 10;",
+  "rows": [
+    {
+      "code": "1",
+      "name": "ATIVO",
+      "parentCode": "NULL",
+      "level": "1"
+    }
+  ],
+  "messages": [],
+  "stdout": "code\tname\tparentCode\tlevel\n1\tATIVO\tNULL\t1\n",
+  "stderr": "",
+  "execution_time_ms": 52
+}

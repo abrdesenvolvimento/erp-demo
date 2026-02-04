@@ -1,0 +1,30 @@
+{
+  "query": "SELECT level, COUNT(*) as total, SUM(CASE WHEN parentCode IS NULL THEN 1 ELSE 0 END) as sem_parent FROM chartOfAccounts GROUP BY level ORDER BY level;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT level, COUNT(*) as total, SUM(CASE WHEN parentCode IS NULL THEN 1 ELSE 0 END) as sem_parent FROM chartOfAccounts GROUP BY level ORDER BY level;",
+  "rows": [
+    {
+      "level": "1",
+      "total": "6",
+      "sem_parent": "6"
+    },
+    {
+      "level": "2",
+      "total": "16",
+      "sem_parent": "0"
+    },
+    {
+      "level": "3",
+      "total": "26",
+      "sem_parent": "0"
+    },
+    {
+      "level": "4",
+      "total": "62",
+      "sem_parent": "0"
+    }
+  ],
+  "messages": [],
+  "stdout": "level\ttotal\tsem_parent\n1\t6\t6\n2\t16\t0\n3\t26\t0\n4\t62\t0\n",
+  "stderr": "",
+  "execution_time_ms": 51
+}

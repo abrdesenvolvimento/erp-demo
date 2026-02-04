@@ -1,0 +1,70 @@
+{
+  "query": "SELECT code, name, COALESCE(parentCode, 'NULL') as parentCode, level FROM chartOfAccounts WHERE level = 2 ORDER BY code LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT code, name, COALESCE(parentCode, 'NULL') as parentCode, level FROM chartOfAccounts WHERE level = 2 ORDER BY code LIMIT 10;",
+  "rows": [
+    {
+      "code": "1.1",
+      "name": "ATIVO CIRCULANTE",
+      "parentCode": "NULL",
+      "level": "2"
+    },
+    {
+      "code": "1.2",
+      "name": "ATIVO NÃO CIRCULANTE",
+      "parentCode": "NULL",
+      "level": "2"
+    },
+    {
+      "code": "2.1",
+      "name": "PASSIVO CIRCULANTE",
+      "parentCode": "NULL",
+      "level": "2"
+    },
+    {
+      "code": "2.2",
+      "name": "PASSIVO NÃO CIRCULANTE",
+      "parentCode": "NULL",
+      "level": "2"
+    },
+    {
+      "code": "3.1",
+      "name": "CAPITAL SOCIAL",
+      "parentCode": "NULL",
+      "level": "2"
+    },
+    {
+      "code": "3.2",
+      "name": "RESULTADOS ACUMULADOS",
+      "parentCode": "NULL",
+      "level": "2"
+    },
+    {
+      "code": "4.1",
+      "name": "RECEITA OPERACIONAL BRUTA",
+      "parentCode": "NULL",
+      "level": "2"
+    },
+    {
+      "code": "4.2",
+      "name": "OUTRAS RECEITAS OPERACIONAIS",
+      "parentCode": "NULL",
+      "level": "2"
+    },
+    {
+      "code": "4.3",
+      "name": "RECEITAS FINANCEIRAS",
+      "parentCode": "NULL",
+      "level": "2"
+    },
+    {
+      "code": "5.1",
+      "name": "CUSTO DAS MERCADORIAS VENDIDAS",
+      "parentCode": "NULL",
+      "level": "2"
+    }
+  ],
+  "messages": [],
+  "stdout": "code\tname\tparentCode\tlevel\n1.1\tATIVO CIRCULANTE\tNULL\t2\n1.2\tATIVO NÃO CIRCULANTE\tNULL\t2\n2.1\tPASSIVO CIRCULANTE\tNULL\t2\n2.2\tPASSIVO NÃO CIRCULANTE\tNULL\t2\n3.1\tCAPITAL SOCIAL\tNULL\t2\n3.2\tRESULTADOS ACUMULADOS\tNULL\t2\n4.1\tRECEITA OPERACIONAL BRUTA\tNULL\t2\n4.2\tOUTRAS RECEITAS OPERACIONAIS\tNULL\t2\n4.3\tRECEITAS FINANCEIRAS\tNULL\t2\n5.1\tCUSTO DAS MERCADORIAS VENDIDAS\tNULL\t2\n",
+  "stderr": "",
+  "execution_time_ms": 52
+}

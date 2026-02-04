@@ -345,7 +345,11 @@ Automatizar importação de pedidos concluídos do iFood via arquivos JSON
   - [x] Filtros por natureza e classificação
   - [x] Badges de status (com/sem amarração)
   - [x] Menu Contabilidade → Contas Gerenciais
-- [ ] Corrigir botões Expandir/Colapsar na árvore do Plano de Contas
+- [x] Corrigir botões Expandir/Colapsar na árvore do Plano de Contas
+  - [x] Botão Expandir expande toda a árvore
+  - [x] Botão Colapsar colapsa para níveis 1 e 2
+  - [x] Clique no ícone de seta expande/colapsa individualmente
+  - [x] Clique no código/nome da conta expande/colapsa
 - [ ] Implementar seleção múltipla de contas nos relatórios contábeis
 
 ### Melhorias Contas Gerenciais e Contas a Receber (04/02/2026)
@@ -361,7 +365,7 @@ Automatizar importação de pedidos concluídos do iFood via arquivos JSON
   - RFI002 - Descontos Obtidos
 - [x] Melhorar Contas a Receber similar ao de Despesas:
   - [x] Campo de Conta Gerencial com autocomplete no modal Lançar Débito
-  - [ ] Seleção de Cliente com autocomplete (próxima fase)
+  - [x] Seleção de Cliente com autocomplete na tela principal
 
 ### Melhorias Autocomplete e Outras Receitas (04/02/2026)
 - [x] Adicionar autocomplete na seleção de Conta Contábil no modal de Contas Gerenciais

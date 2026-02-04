@@ -1,0 +1,9 @@
+{
+  "query": "UPDATE chartOfAccounts SET parentCode = SUBSTRING_INDEX(code, '.', 2) WHERE level = 3 AND parentCode IS NULL;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute UPDATE chartOfAccounts SET parentCode = SUBSTRING_INDEX(code, '.', 2) WHERE level = 3 AND parentCode IS NULL;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 57
+}
