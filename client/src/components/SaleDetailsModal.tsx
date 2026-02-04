@@ -34,7 +34,7 @@ export function SaleDetailsModal({ saleId, open, onClose }: SaleDetailsModalProp
   const [editedItems, setEditedItems] = useState<any[]>([]);
   const [editedDiscount, setEditedDiscount] = useState("0");
   const [editedSurcharge, setEditedSurcharge] = useState("0");
-  const [editedOrderNumber, setEditedOrderNumber] = useState("");
+  const [editedPlatformOrderId, setEditedPlatformOrderId] = useState("");
   const [productSearch, setProductSearch] = useState("");
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [newItemQuantity, setNewItemQuantity] = useState(1);
@@ -93,7 +93,7 @@ export function SaleDetailsModal({ saleId, open, onClose }: SaleDetailsModalProp
     setEditedItems(saleData.items || []);
     setEditedDiscount(saleData.discountAmount?.toString() || "0");
     setEditedSurcharge(saleData.surchargeAmount?.toString() || "0");
-    setEditedOrderNumber((saleData as any).orderNumber || "");
+    setEditedPlatformOrderId(saleData.platformOrderId || "");
     setIsEditing(true);
   };
 
@@ -102,7 +102,7 @@ export function SaleDetailsModal({ saleId, open, onClose }: SaleDetailsModalProp
     setEditedItems([]);
     setEditedDiscount("0");
     setEditedSurcharge("0");
-    setEditedOrderNumber("");
+    setEditedPlatformOrderId("");
   };
 
   const handleSaveEdit = () => {
@@ -129,7 +129,7 @@ export function SaleDetailsModal({ saleId, open, onClose }: SaleDetailsModalProp
       }),
       discountAmount: discount > 0 ? discount.toFixed(2) : undefined,
       surchargeAmount: surcharge > 0 ? surcharge.toFixed(2) : undefined,
-      ...(saleData?.saleType === 'DELIVERY' && { orderNumber: editedOrderNumber }),
+      ...(saleData?.saleType === 'DELIVERY' && { platformOrderId: editedPlatformOrderId }),
     });
   };
 
@@ -528,6 +528,12 @@ export function SaleDetailsModal({ saleId, open, onClose }: SaleDetailsModalProp
                   <p className="font-semibold">{saleData.customerId}</p>
                 </div>
               )}
+              {saleData.saleType === 'DELIVERY' && saleData.platformOrderId && (
+                <div>
+                  <p className="text-sm text-muted-foreground">Nº Pedido</p>
+                  <p className="font-semibold">{saleData.platformOrderId}</p>
+                </div>
+              )}
             </div>
 
             <Separator />
@@ -543,8 +549,8 @@ export function SaleDetailsModal({ saleId, open, onClose }: SaleDetailsModalProp
                   <input
                     type="text"
                     placeholder="Ex: 12345"
-                    value={editedOrderNumber}
-                    onChange={(e) => setEditedOrderNumber(e.target.value)}
+                    value={editedPlatformOrderId}
+                    onChange={(e) => setEditedPlatformOrderId(e.target.value)}
                     className="w-full px-3 py-2 border rounded-md"
                   />
                 </div>

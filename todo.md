@@ -16,9 +16,11 @@
 
 ## 🔴 BUGS CRÍTICOS
 
-### BUG-01: Vendas Delivery - Número do Pedido
-- [ ] Ao editar venda Delivery, não traz o número do pedido lançado inicialmente
-- [ ] Ao editar, não está salvando a alteração do número do pedido
+### BUG-01: Vendas Delivery - Número do Pedido ✅ (03/02/2026)
+- [x] Ao editar venda Delivery, agora traz o número do pedido lançado inicialmente
+- [x] Ao editar, salva corretamente a alteração do número do pedido (patch semantics)
+- [x] Número do pedido exibido no cabeçalho da venda (modo visualização)
+- [x] Padronizado nome do campo como `platformOrderId` em todas as camadas
 
 ### BUG-02: Edição de Compras - Juros
 - [ ] Ao editar uma compra inserindo juros, não está salvando o novo valor dos produtos

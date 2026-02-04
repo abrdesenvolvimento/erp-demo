@@ -631,10 +631,10 @@ export const appRouter = router({
         })),
         discountAmount: z.string().optional(),
         surchargeAmount: z.string().optional(),
-        orderNumber: z.string().optional(), // Número do pedido delivery
+        platformOrderId: z.string().optional(), // Número do pedido delivery (padronizado)
       }))
       .mutation(async ({ input, ctx }) => {
-        const { saleId, items, discountAmount, surchargeAmount, orderNumber } = input;
+        const { saleId, items, discountAmount, surchargeAmount, platformOrderId } = input;
         
         // 1. Buscar venda existente
         const sale = await db.getSale(saleId);
@@ -708,13 +708,13 @@ export const appRouter = router({
         const surcharge = parseFloat(surchargeAmount || sale.surchargeAmount || '0');
         const finalAmount = (parseFloat(subtotal) - discount + surcharge).toFixed(2);
         
-        // 9. Atualizar venda
+        // 9. Atualizar venda (patch semantics: só atualiza platformOrderId se foi passado)
         await db.updateSale(saleId, {
           subtotal,
           discountAmount: discount.toFixed(2),
           surchargeAmount: surcharge.toFixed(2),
           finalAmount,
-          ...(orderNumber !== undefined && { orderNumber }),
+          ...(platformOrderId !== undefined && { platformOrderId }),
         });
         
         // 10. Atualizar recebível (se for venda A_PRAZO)

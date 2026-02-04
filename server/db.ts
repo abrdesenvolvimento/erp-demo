@@ -3182,12 +3182,23 @@ export async function updateSale(saleId: number, data: {
   discountAmount?: string;
   surchargeAmount?: string;
   finalAmount?: string;
+  platformOrderId?: string;
 }) {
   const database = await getDb();
   if (!database) throw new Error("Database not available");
   
+  // Patch semantics: só inclui campos que foram explicitamente passados (não undefined)
+  const updateData: Record<string, any> = {};
+  if (data.subtotal !== undefined) updateData.subtotal = data.subtotal;
+  if (data.discountAmount !== undefined) updateData.discountAmount = data.discountAmount;
+  if (data.surchargeAmount !== undefined) updateData.surchargeAmount = data.surchargeAmount;
+  if (data.finalAmount !== undefined) updateData.finalAmount = data.finalAmount;
+  if (data.platformOrderId !== undefined) updateData.platformOrderId = data.platformOrderId;
+  
+  if (Object.keys(updateData).length === 0) return;
+  
   await database.update(sales)
-    .set(data)
+    .set(updateData)
     .where(eq(sales.id, saleId));
 }
 
