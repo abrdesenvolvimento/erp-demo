@@ -50,6 +50,22 @@
 - [x] **SOLUÇÃO:** Implementado upload para S3 (Manus Storage) como principal
 - [x] Backup testado e funcionando com sucesso (S3)
 
+### Backup Automático - Scheduler ✅ (04/02/2026)
+- [x] Implementado node-cron para agendamento interno
+- [x] Configurado execução diária às 3h (horário de Brasília)
+- [x] Log de cada execução na tabela backupLogs (triggeredBy: 'scheduled')
+- [x] Notificação automática em caso de falha
+- [x] Endpoints: /api/scheduler/status e /api/scheduler/trigger
+- [x] Testes criados e passando
+
+### Sprint 1.5 - Documentação Multiempresa ✅ (04/02/2026)
+- [x] Documentar modelo de dados multiempresa (tabela `companies`)
+- [x] Mapear impactos em 31 tabelas existentes
+- [x] Definir estratégia de migração em 4 fases
+- [x] Estimar esforço: 36-58 horas
+- [x] Documento: `/docs/ARQUITETURA-MULTIEMPRESA.md`
+- [x] **AGUARDANDO:** Estabilização de Competência, Fechamento e Contábil
+
 ---
 
 ## 🟡 MELHORIAS PRIORITÁRIAS

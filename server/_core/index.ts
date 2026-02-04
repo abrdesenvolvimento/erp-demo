@@ -8,6 +8,7 @@ import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import backupRouter from "../backupEndpoint";
+import { initBackupScheduler, getSchedulerStatus, triggerManualBackup } from "../scheduler";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -38,6 +39,21 @@ async function startServer() {
   registerOAuthRoutes(app);
   // Backup endpoint under /api/backup
   app.use('/api', backupRouter);
+  
+  // Scheduler endpoints
+  app.get('/api/scheduler/status', (req, res) => {
+    res.json(getSchedulerStatus());
+  });
+  
+  app.post('/api/scheduler/trigger', async (req, res) => {
+    try {
+      await triggerManualBackup();
+      res.json({ success: true, message: 'Backup triggered' });
+    } catch (error: any) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+  
   // tRPC API
   app.use(
     "/api/trpc",
@@ -62,6 +78,9 @@ async function startServer() {
 
   server.listen(port, () => {
     console.log(`Server running on http://localhost:${port}/`);
+    
+    // Inicializar scheduler de backup após servidor estar rodando
+    initBackupScheduler();
   });
 }
 
