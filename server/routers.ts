@@ -2314,6 +2314,158 @@ export const appRouter = router({
         return { success: true };
       }),
   }),
+
+  // ==================== GOVERNANÇA CONTÁBIL ====================
+  governance: router({
+    // Buscar configurações de governança
+    getSettings: adminProcedure
+      .input(z.object({ companyId: z.number().optional() }).optional())
+      .query(async ({ input }) => {
+        return await db.getGovernanceSettings(input?.companyId || 1);
+      }),
+
+    // Atualizar configurações de governança
+    updateSettings: adminProcedure
+      .input(z.object({
+        companyId: z.number().optional(),
+        salesEditWindowHours: z.number().min(1).max(720).optional(),
+        expensesEditWindowDays: z.number().min(1).max(30).optional(),
+        purchasesEditWindowDays: z.number().min(1).max(30).optional(),
+        allowRetroactivePosting: z.boolean().optional(),
+        retroactiveLimitDay: z.number().min(1).max(15).optional(),
+        maxReopenCount: z.number().min(1).max(5).optional(),
+        reopenWindowHours: z.number().min(1).max(168).optional(),
+        maxReopenDaysAfterClose: z.number().min(1).max(90).optional(),
+        autoAccountingEnabled: z.boolean().optional(),
+        autoAccountingDay: z.number().min(0).max(6).optional(),
+        autoAccountingHour: z.number().min(0).max(23).optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const { companyId, ...settings } = input;
+        await db.updateGovernanceSettings(
+          companyId || 1,
+          settings,
+          ctx.user.id,
+          ctx.user.name || undefined
+        );
+        return { success: true };
+      }),
+
+    // Listar períodos contábeis
+    listPeriods: protectedProcedure
+      .input(z.object({ companyId: z.number().optional() }).optional())
+      .query(async ({ input }) => {
+        return await db.listAccountingPeriods(input?.companyId || 1);
+      }),
+
+    // Buscar período específico
+    getPeriod: protectedProcedure
+      .input(z.object({
+        companyId: z.number().optional(),
+        competenceMonth: z.string(),
+      }))
+      .query(async ({ input }) => {
+        return await db.getAccountingPeriod(input.companyId || 1, input.competenceMonth);
+      }),
+
+    // Fechar período contábil
+    closePeriod: adminProcedure
+      .input(z.object({
+        companyId: z.number().optional(),
+        competenceMonth: z.string(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const result = await db.closeAccountingPeriod(
+          input.companyId || 1,
+          input.competenceMonth,
+          ctx.user.id,
+          ctx.user.name || undefined
+        );
+        if (!result.success) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: result.error });
+        }
+        return result;
+      }),
+
+    // Reabrir período contábil
+    reopenPeriod: adminProcedure
+      .input(z.object({
+        companyId: z.number().optional(),
+        competenceMonth: z.string(),
+        reason: z.string().min(20, "Justificativa deve ter pelo menos 20 caracteres"),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const result = await db.reopenAccountingPeriod(
+          input.companyId || 1,
+          input.competenceMonth,
+          input.reason,
+          ctx.user.id,
+          ctx.user.name || undefined
+        );
+        if (!result.success) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: result.error });
+        }
+        return result;
+      }),
+
+    // Verificar se entidade pode ser editada
+    canEdit: protectedProcedure
+      .input(z.object({
+        entityType: z.enum(['sale', 'expense', 'purchase']),
+        entityId: z.number(),
+        companyId: z.number().optional(),
+      }))
+      .query(async ({ input }) => {
+        return await db.canEditEntity(
+          input.entityType,
+          input.entityId,
+          input.companyId || 1
+        );
+      }),
+
+    // Buscar histórico de auditoria
+    getAuditHistory: adminProcedure
+      .input(z.object({
+        companyId: z.number().optional(),
+        action: z.string().optional(),
+        entityType: z.string().optional(),
+        startDate: z.date().optional(),
+        endDate: z.date().optional(),
+        limit: z.number().min(1).max(500).optional(),
+      }).optional())
+      .query(async ({ input }) => {
+        return await db.getGovernanceAuditHistory(
+          input?.companyId || 1,
+          {
+            action: input?.action,
+            entityType: input?.entityType,
+            startDate: input?.startDate,
+            endDate: input?.endDate,
+          },
+          input?.limit || 100
+        );
+      }),
+
+    // Buscar histórico de batches de contabilização
+    getBatchHistory: adminProcedure
+      .input(z.object({
+        companyId: z.number().optional(),
+        limit: z.number().min(1).max(100).optional(),
+      }).optional())
+      .query(async ({ input }) => {
+        return await db.getAccountingBatchHistory(
+          input?.companyId || 1,
+          input?.limit || 20
+        );
+      }),
+
+    // Buscar último batch de contabilização
+    getLastBatch: protectedProcedure
+      .input(z.object({ companyId: z.number().optional() }).optional())
+      .query(async ({ input }) => {
+        return await db.getLastAccountingBatch(input?.companyId || 1);
+      }),
+  }),
 });
 export type AppRouter = typeof appRouter;;
 

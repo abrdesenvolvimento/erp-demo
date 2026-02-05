@@ -1,0 +1,36 @@
+Página de Governança Contábil - Implementada em 05/02/2026
+
+=== ABA PERÍODOS ===
+- Lista períodos contábeis com status (Aberto/Fechado/Reaberto)
+- Botão Fechar para períodos abertos
+- Botão Reabrir para períodos fechados (com limite de reaberturas)
+- Exibe data de fechamento e expiração de reabertura
+
+=== ABA CONFIGURAÇÕES ===
+
+Janelas de Edição:
+- Vendas (horas): 72 (padrão 3 dias)
+- Despesas (dias): 3
+- Compras (dias): 3
+
+Competência Retroativa:
+- Permitir Retroação: Sim
+- Limite (dia do mês): 5 (até dia 5 pode retroagir ao mês anterior)
+
+Reabertura de Períodos:
+- Máximo de Reaberturas: 2
+- Janela de Reabertura (horas): 48
+- Prazo Máximo (dias após fechamento): 30
+
+Contabilização Automática:
+- Habilitada: Sim
+- Dia da Semana: Domingo
+- Horário: 03:00
+
+=== ABA HISTÓRICO ===
+- Log de auditoria de todas as ações de governança
+- Registra: alterações de config, fechamento/reabertura de períodos, bloqueios de edição
+
+=== BOTÃO CONTABILIZAR AGORA ===
+- Permite execução manual da contabilização em lote
+- Seleciona competência específica

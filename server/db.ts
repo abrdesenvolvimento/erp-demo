@@ -33,7 +33,11 @@ import {
   backupLogs, BackupLog, InsertBackupLog,
   journals, Journal, InsertJournal,
   accountingEntries, AccountingEntry, InsertAccountingEntry,
-  journalSources, JournalSource, InsertJournalSource
+  journalSources, JournalSource, InsertJournalSource,
+  accountingPeriods, AccountingPeriod, InsertAccountingPeriod,
+  governanceSettings, GovernanceSettings, InsertGovernanceSettings,
+  governanceAuditLog, GovernanceAuditLog, InsertGovernanceAuditLog,
+  accountingBatchLog, AccountingBatchLog, InsertAccountingBatchLog
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 import { 
@@ -7544,4 +7548,489 @@ export async function accountCustomerPayment(data: {
     entries,
     createdBy: data.createdBy,
   });
+}
+
+
+// =====================================================
+// GOVERNANÇA CONTÁBIL
+// =====================================================
+
+// Buscar configurações de governança
+export async function getGovernanceSettings(companyId: number = 1): Promise<GovernanceSettings | null> {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const result = await db.select()
+    .from(governanceSettings)
+    .where(eq(governanceSettings.companyId, companyId))
+    .limit(1);
+  
+  return result[0] || null;
+}
+
+// Atualizar configurações de governança
+export async function updateGovernanceSettings(
+  companyId: number,
+  settings: Partial<InsertGovernanceSettings>,
+  userId: string,
+  userName?: string
+): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  // Buscar configurações atuais para log
+  const current = await getGovernanceSettings(companyId);
+  
+  // Atualizar
+  await db.update(governanceSettings)
+    .set({
+      ...settings,
+      updatedBy: userId,
+    })
+    .where(eq(governanceSettings.companyId, companyId));
+  
+  // Registrar no log de auditoria
+  await db.insert(governanceAuditLog).values({
+    companyId,
+    action: "SETTINGS_CHANGED",
+    previousValue: current ? JSON.stringify(current) : null,
+    newValue: JSON.stringify(settings),
+    userId,
+    userName,
+  });
+}
+
+// Buscar período contábil
+export async function getAccountingPeriod(companyId: number, competenceMonth: string): Promise<AccountingPeriod | null> {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const result = await db.select()
+    .from(accountingPeriods)
+    .where(and(
+      eq(accountingPeriods.companyId, companyId),
+      eq(accountingPeriods.competenceMonth, competenceMonth)
+    ))
+    .limit(1);
+  
+  return result[0] || null;
+}
+
+// Listar períodos contábeis
+export async function listAccountingPeriods(companyId: number = 1): Promise<AccountingPeriod[]> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return db.select()
+    .from(accountingPeriods)
+    .where(eq(accountingPeriods.companyId, companyId))
+    .orderBy(desc(accountingPeriods.competenceMonth));
+}
+
+// Criar período contábil se não existir
+export async function ensureAccountingPeriod(companyId: number, competenceMonth: string): Promise<AccountingPeriod> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  let period = await getAccountingPeriod(companyId, competenceMonth);
+  
+  if (!period) {
+    await db.insert(accountingPeriods).values({
+      companyId,
+      competenceMonth,
+      status: "OPEN",
+    });
+    period = await getAccountingPeriod(companyId, competenceMonth);
+  }
+  
+  return period!;
+}
+
+// Fechar período contábil
+export async function closeAccountingPeriod(
+  companyId: number,
+  competenceMonth: string,
+  userId: string,
+  userName?: string
+): Promise<{ success: boolean; error?: string }> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const period = await getAccountingPeriod(companyId, competenceMonth);
+  
+  if (!period) {
+    return { success: false, error: "Período não encontrado" };
+  }
+  
+  if (period.status === "CLOSED") {
+    return { success: false, error: "Período já está fechado" };
+  }
+  
+  // Fechar período
+  await db.update(accountingPeriods)
+    .set({
+      status: "CLOSED",
+      closedAt: new Date(),
+      closedBy: userId,
+    })
+    .where(eq(accountingPeriods.id, period.id));
+  
+  // Registrar no log
+  await db.insert(governanceAuditLog).values({
+    companyId,
+    action: "PERIOD_CLOSED",
+    entityType: "period",
+    entityId: period.id,
+    previousValue: JSON.stringify({ status: period.status }),
+    newValue: JSON.stringify({ status: "CLOSED" }),
+    userId,
+    userName,
+  });
+  
+  return { success: true };
+}
+
+// Reabrir período contábil
+export async function reopenAccountingPeriod(
+  companyId: number,
+  competenceMonth: string,
+  reason: string,
+  userId: string,
+  userName?: string
+): Promise<{ success: boolean; error?: string; expiresAt?: Date }> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  // Buscar configurações
+  const settings = await getGovernanceSettings(companyId);
+  if (!settings) {
+    return { success: false, error: "Configurações de governança não encontradas" };
+  }
+  
+  const period = await getAccountingPeriod(companyId, competenceMonth);
+  
+  if (!period) {
+    return { success: false, error: "Período não encontrado" };
+  }
+  
+  if (period.status === "OPEN") {
+    return { success: false, error: "Período já está aberto" };
+  }
+  
+  // Verificar limite de reaberturas
+  if (period.reopenCount >= settings.maxReopenCount) {
+    return { success: false, error: `Limite de ${settings.maxReopenCount} reaberturas atingido para este período` };
+  }
+  
+  // Verificar prazo máximo após fechamento
+  if (period.closedAt) {
+    const daysSinceClosed = Math.floor((Date.now() - period.closedAt.getTime()) / (1000 * 60 * 60 * 24));
+    if (daysSinceClosed > settings.maxReopenDaysAfterClose) {
+      return { success: false, error: `Prazo máximo de ${settings.maxReopenDaysAfterClose} dias após fechamento excedido` };
+    }
+  }
+  
+  // Calcular data de expiração
+  const expiresAt = new Date(Date.now() + settings.reopenWindowHours * 60 * 60 * 1000);
+  
+  // Reabrir período
+  await db.update(accountingPeriods)
+    .set({
+      status: "REOPENED",
+      reopenedAt: new Date(),
+      reopenedBy: userId,
+      reopenReason: reason,
+      reopenCount: period.reopenCount + 1,
+      reopenExpiresAt: expiresAt,
+    })
+    .where(eq(accountingPeriods.id, period.id));
+  
+  // Registrar no log
+  await db.insert(governanceAuditLog).values({
+    companyId,
+    action: "PERIOD_REOPENED",
+    entityType: "period",
+    entityId: period.id,
+    previousValue: JSON.stringify({ status: period.status }),
+    newValue: JSON.stringify({ status: "REOPENED", reason, expiresAt }),
+    reason,
+    userId,
+    userName,
+  });
+  
+  return { success: true, expiresAt };
+}
+
+// Verificar se período permite edição
+export async function isPeriodEditable(companyId: number, competenceMonth: string): Promise<{ editable: boolean; reason?: string }> {
+  const period = await getAccountingPeriod(companyId, competenceMonth);
+  
+  if (!period) {
+    // Período não existe, está aberto por padrão
+    return { editable: true };
+  }
+  
+  if (period.status === "OPEN") {
+    return { editable: true };
+  }
+  
+  if (period.status === "REOPENED") {
+    // Verificar se ainda está dentro da janela de reabertura
+    if (period.reopenExpiresAt && new Date() < period.reopenExpiresAt) {
+      return { editable: true };
+    }
+    return { editable: false, reason: "Janela de reabertura expirada" };
+  }
+  
+  return { editable: false, reason: "Período fechado" };
+}
+
+// Verificar se entidade pode ser editada (compra, despesa, venda)
+export async function canEditEntity(
+  entityType: "sale" | "expense" | "purchase",
+  entityId: number,
+  companyId: number = 1
+): Promise<{ canEdit: boolean; reason?: string }> {
+  const db = await getDb();
+  if (!db) return { canEdit: false, reason: "Database not available" };
+  
+  const settings = await getGovernanceSettings(companyId);
+  if (!settings) {
+    return { canEdit: false, reason: "Configurações de governança não encontradas" };
+  }
+  
+  // Buscar entidade
+  let entity: any = null;
+  let createdAt: Date | null = null;
+  let competenceMonth: string | null = null;
+  
+  if (entityType === "sale") {
+    const result = await db.select().from(sales).where(eq(sales.id, entityId)).limit(1);
+    entity = result[0];
+    createdAt = entity?.createdAt;
+    // Vendas usam saleDate para competência
+    if (entity?.saleDate) {
+      const d = new Date(entity.saleDate);
+      competenceMonth = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    }
+  } else if (entityType === "expense") {
+    const result = await db.select().from(expenses).where(eq(expenses.id, entityId)).limit(1);
+    entity = result[0];
+    createdAt = entity?.entryDate || entity?.createdAt;
+    competenceMonth = entity?.competenceMonth;
+  } else if (entityType === "purchase") {
+    const result = await db.select().from(purchaseOrders).where(eq(purchaseOrders.id, entityId)).limit(1);
+    entity = result[0];
+    createdAt = entity?.createdAt;
+    if (entity?.postingDate) {
+      const d = new Date(entity.postingDate);
+      competenceMonth = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    }
+  }
+  
+  if (!entity) {
+    return { canEdit: false, reason: "Entidade não encontrada" };
+  }
+  
+  // Verificar se competência está fechada
+  if (competenceMonth) {
+    const periodCheck = await isPeriodEditable(companyId, competenceMonth);
+    if (!periodCheck.editable) {
+      return { canEdit: false, reason: `Competência ${competenceMonth} ${periodCheck.reason}` };
+    }
+  }
+  
+  // Verificar se já foi contabilizado (journal POSTED)
+  const journalSource = await db.select()
+    .from(journalSources)
+    .where(and(
+      eq(journalSources.sourceType, entityType),
+      eq(journalSources.sourceId, entityId)
+    ))
+    .limit(1);
+  
+  if (journalSource[0]) {
+    const journal = await db.select()
+      .from(journals)
+      .where(eq(journals.id, journalSource[0].journalId))
+      .limit(1);
+    
+    if (journal[0]?.status === "POSTED") {
+      return { canEdit: false, reason: "Registro já contabilizado (journal POSTED)" };
+    }
+  }
+  
+  // Verificar janela de edição
+  if (createdAt) {
+    const now = new Date();
+    const diffMs = now.getTime() - createdAt.getTime();
+    
+    if (entityType === "sale") {
+      const windowMs = settings.salesEditWindowHours * 60 * 60 * 1000;
+      if (diffMs > windowMs) {
+        return { canEdit: false, reason: `Prazo de ${settings.salesEditWindowHours}h para edição expirado` };
+      }
+    } else if (entityType === "expense") {
+      const windowMs = settings.expensesEditWindowDays * 24 * 60 * 60 * 1000;
+      if (diffMs > windowMs) {
+        return { canEdit: false, reason: `Prazo de ${settings.expensesEditWindowDays} dias para edição expirado` };
+      }
+    } else if (entityType === "purchase") {
+      const windowMs = settings.purchasesEditWindowDays * 24 * 60 * 60 * 1000;
+      if (diffMs > windowMs) {
+        return { canEdit: false, reason: `Prazo de ${settings.purchasesEditWindowDays} dias para edição expirado` };
+      }
+    }
+  }
+  
+  return { canEdit: true };
+}
+
+// Registrar bloqueio de edição no log
+export async function logEditBlocked(
+  companyId: number,
+  entityType: string,
+  entityId: number,
+  reason: string,
+  userId: string,
+  userName?: string
+): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  
+  await db.insert(governanceAuditLog).values({
+    companyId,
+    action: "EDIT_BLOCKED",
+    entityType,
+    entityId,
+    reason,
+    userId,
+    userName,
+  });
+}
+
+// Fechar períodos reabertos expirados (executar periodicamente)
+export async function closeExpiredReopenedPeriods(): Promise<number> {
+  const db = await getDb();
+  if (!db) return 0;
+  
+  const now = new Date();
+  
+  // Buscar períodos reabertos com janela expirada
+  const expiredPeriods = await db.select()
+    .from(accountingPeriods)
+    .where(and(
+      eq(accountingPeriods.status, "REOPENED"),
+      lt(accountingPeriods.reopenExpiresAt, now)
+    ));
+  
+  for (const period of expiredPeriods) {
+    await db.update(accountingPeriods)
+      .set({
+        status: "CLOSED",
+        closedAt: now,
+        closedBy: "SYSTEM",
+      })
+      .where(eq(accountingPeriods.id, period.id));
+    
+    await db.insert(governanceAuditLog).values({
+      companyId: period.companyId,
+      action: "PERIOD_AUTO_CLOSED",
+      entityType: "period",
+      entityId: period.id,
+      previousValue: JSON.stringify({ status: "REOPENED" }),
+      newValue: JSON.stringify({ status: "CLOSED", reason: "Janela de reabertura expirada" }),
+      reason: "Fechamento automático - janela de reabertura expirada",
+      userId: "SYSTEM",
+    });
+  }
+  
+  return expiredPeriods.length;
+}
+
+// Registrar execução de contabilização em lote
+export async function logAccountingBatch(data: InsertAccountingBatchLog): Promise<number> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.insert(accountingBatchLog).values(data);
+  return Number(result[0].insertId);
+}
+
+// Atualizar log de contabilização em lote
+export async function updateAccountingBatchLog(
+  id: number,
+  data: Partial<InsertAccountingBatchLog>
+): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  
+  await db.update(accountingBatchLog)
+    .set(data)
+    .where(eq(accountingBatchLog.id, id));
+}
+
+// Buscar último batch de contabilização
+export async function getLastAccountingBatch(companyId: number = 1): Promise<AccountingBatchLog | null> {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const result = await db.select()
+    .from(accountingBatchLog)
+    .where(eq(accountingBatchLog.companyId, companyId))
+    .orderBy(desc(accountingBatchLog.startedAt))
+    .limit(1);
+  
+  return result[0] || null;
+}
+
+// Buscar histórico de batches de contabilização
+export async function getAccountingBatchHistory(
+  companyId: number = 1,
+  limit: number = 20
+): Promise<AccountingBatchLog[]> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return db.select()
+    .from(accountingBatchLog)
+    .where(eq(accountingBatchLog.companyId, companyId))
+    .orderBy(desc(accountingBatchLog.startedAt))
+    .limit(limit);
+}
+
+// Buscar log de auditoria de governança
+export async function getGovernanceAuditHistory(
+  companyId: number = 1,
+  filters?: {
+    action?: string;
+    entityType?: string;
+    startDate?: Date;
+    endDate?: Date;
+  },
+  limit: number = 100
+): Promise<GovernanceAuditLog[]> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const conditions: SQL[] = [eq(governanceAuditLog.companyId, companyId)];
+  
+  if (filters?.action) {
+    conditions.push(eq(governanceAuditLog.action, filters.action as any));
+  }
+  if (filters?.entityType) {
+    conditions.push(eq(governanceAuditLog.entityType, filters.entityType));
+  }
+  if (filters?.startDate) {
+    conditions.push(gte(governanceAuditLog.createdAt, filters.startDate));
+  }
+  if (filters?.endDate) {
+    conditions.push(lte(governanceAuditLog.createdAt, filters.endDate));
+  }
+  
+  return db.select()
+    .from(governanceAuditLog)
+    .where(and(...conditions))
+    .orderBy(desc(governanceAuditLog.createdAt))
+    .limit(limit);
 }

@@ -1,6 +1,6 @@
 # ABRWF - Pendências e Melhorias
 
-**Última atualização:** 04/02/2026
+**Última atualização:** 05/02/2026
 
 ---
 
@@ -88,23 +88,34 @@
 
 ---
 
-## 📊 MÓDULO CONTABILIDADE (NOVO)
+## 📊 MÓDULO CONTABILIDADE ✅ (05/02/2026)
 
-### Estrutura do Módulo
-- [ ] Criar menu específico de Contabilidade no ABRWF
-- [ ] Plano de Contas Contábil
-- [ ] Plano de Contas Gerencial
-- [ ] Associação entre planos
-- [ ] Contas Bancárias
-- [ ] Relatórios oficiais:
-  - [ ] Razão
-  - [ ] Balanço
-  - [ ] DRE (versão final consolidada)
+### Estrutura do Módulo ✅
+- [x] Menu específico de Contabilidade no ABRWF
+- [x] Plano de Contas Contábil (110 contas em 6 grupos)
+- [x] Plano de Contas Gerencial (58 contas)
+- [x] Associação entre planos (amarração contábil)
+- [x] Contas Bancárias
+- [x] Relatórios oficiais:
+  - [x] Razão (extrato por conta com saldo corrente)
+  - [x] Balancete (saldos de todas as contas)
+  - [x] DRE (Receitas - Custos - Despesas = Resultado)
 
-### Outras Receitas (Novo Módulo)
-- [ ] Registro de entradas não vinculadas a vendas de produtos
-- [ ] Tipos: empréstimos bancários, bonificações, acordos, receitas extraordinárias
-- [ ] Classificação gerencial e contábil correta
+### Outras Receitas ✅ (04/02/2026)
+- [x] Registro de entradas não vinculadas a vendas de produtos
+- [x] Tipos: empréstimos bancários, bonificações, acordos, receitas extraordinárias
+- [x] Classificação gerencial e contábil correta
+- [x] CRUD completo com formulário padronizado
+- [ ] Integração com contabilização automática (journals) - próxima fase
+
+### Contabilização Automática ✅ (05/02/2026)
+- [x] Estrutura de lançamentos (createAccountingEntries, postJournal, addJournalSource)
+- [x] Compras: D-Estoque / C-Fornecedores (confirmação) + D-Fornecedores / C-Caixa (pagamento)
+- [x] Despesas: D-Conta Gerencial / C-Contas a Pagar (criação) + D-Contas a Pagar / C-Caixa (pagamento)
+- [x] Vendas: D-Caixa ou Clientes / C-Receita de Vendas + D-CMV / C-Estoque
+- [x] Recebimentos: D-Caixa / C-Clientes
+- [x] Juros e Descontos integrados nos pagamentos
+- [x] Retroação Janeiro/Fevereiro 2026 executada (83 compras, 2.723 vendas, 49 recebimentos)
 
 ---
 
@@ -201,11 +212,12 @@ Automatizar importação de pedidos concluídos do iFood via arquivos JSON
 
 ## 🔧 INFRAESTRUTURA
 
-### Backup
-- [ ] Revisar execução automática diária
-- [ ] Corrigir upload para Google Drive (não funcional desde 15/01)
-- [ ] Corrigir envio de e-mail de conclusão
-- [ ] Implementar registro de falhas em log
+### Backup ✅ (04/02/2026)
+- [x] Execução automática diária às 3h (node-cron)
+- [x] Upload para S3 (Manus Storage)
+- [x] Registro em tabela backupLogs
+- [x] Notificação em caso de falha
+- [ ] Implementar retenção automática (manter últimos 30 dias)
 
 ### API WhatsApp
 - [ ] Concluir integração para automações operacionais e comerciais
@@ -267,279 +279,181 @@ Automatizar importação de pedidos concluídos do iFood via arquivos JSON
 
 ---
 
-## ✅ CONCLUÍDO
+## ✅ CONCLUÍDO (05/02/2026)
 
-### 19/01/2026 - Contabilização Completa
-- [x] Plano de contas gerenciais (50 contas)
-- [x] Contabilização de despesas com código contábil
-- [x] Perdas Estoque com baixa automática
-- [x] Contabilização de receitas por canal
-- [x] DRE completo na página de Fechamento
-- [x] CMV calculado automaticamente
+### Contabilização Automática Completa ✅
+- [x] Estrutura de lançamentos (createAccountingEntries, postJournal, addJournalSource)
+- [x] Contabilização de Compras (confirmação e pagamento)
+- [x] Contabilização de Despesas (criação e pagamento)
+- [x] Contabilização de Vendas (Balcão, Delivery, A Prazo) com CMV
+- [x] Contabilização de Recebimentos de Clientes
+- [x] Juros e Descontos integrados nos pagamentos
+- [x] Retroação Janeiro/Fevereiro 2026 (83 compras, 2.723 vendas, 49 recebimentos)
+- [x] Balancete e Razão verificados e funcionando
 
-### 08/01/2026 - Sistema em Produção
-- [x] Sistema completo publicado
-- [x] Sistema de Metas mensais por canal
-- [x] Fechamento Mensal com DRE
-- [x] Controle de acesso por perfil
-- [x] Backup automático diário
+### Baixa Automática e Juros ✅
+- [x] Baixa automática para Compras À Vista
+- [x] Baixa automática para Despesas À Vista
+- [x] Campos de Juros e Desconto nas parcelas (purchaseInstallments, expenseInstallments)
+- [x] Modal de pagamento com campos separados para Juros (+) e Desconto (-)
+- [x] Cálculo do total efetivo (base + juros - desconto)
 
-### Módulo Contábil v2.0 (Em Andamento)
-- [x] Analisar estrutura contábil existente
-- [x] Criar documentação técnica consolidada (`/docs/MODULO-CONTABIL.md`)
-- [x] Definir arquitetura: journals, journalSources, accountingEntries, accountingPeriods
-- [x] Definir Plano de Contas com 6 grupos (padrão brasileiro)
+### Módulo Contábil v2.0 ✅
+- [x] Plano de Contas Contábil (110 contas em 6 grupos)
+- [x] Plano de Contas Gerencial (58 contas)
+- [x] Amarração entre planos
+- [x] Relatórios: Razão, Balancete, DRE
+- [x] Outras Receitas (CRUD completo)
+- [x] Contas Gerenciais (CRUD completo)
 
-**Fase 1: Estrutura de Banco de Dados** ✅ (04/02/2026)
-- [x] Atualizar schema chartOfAccounts (companyId, parentId, nature)
-- [x] Criar tabela journals (lotes contábeis)
-- [x] Criar tabela accountingEntries (lançamentos)
-- [x] Criar tabela journalSources (rastreabilidade)
-- [x] Criar tabela accountingPeriods (períodos contábeis)
-- [x] Criar tabela otherRevenues (outras receitas)
-- [x] Executar migração via SQL direto
+### Correções e Melhorias ✅
+- [x] Fornecedor obrigatório em Despesas
+- [x] Cards de resumo movidos para cima do título
+- [x] Formatação de moeda corrigida (separador de milhar)
+- [x] Balancete revisado (soma apenas contas analíticas)
+- [x] Razão com autocomplete e seleção múltipla de contas
 
-**Fase 2: Popular Plano de Contas** ✅ (04/02/2026)
-- [x] Script de seed com estrutura de 6 grupos (110 contas)
-- [x] Popular contas analíticas essenciais (62 contas)
-- [x] Criar período contábil 2026-02
+---
 
-**Fase 3: Backend - CRUD e Contabilização** ✅ (04/02/2026)
-- [x] CRUD de contas contábeis (server/accounting.ts)
-- [x] Funções de journals e lançamentos
-- [x] Validações de partida dobrada
-- [x] Funções de relatórios (Razão, Balancete, DRE)
-- [x] Router tRPC (server/routers/accounting.ts)
-- [x] Testes (11 testes passando)
+## 🚀 SUGESTÕES DE PRÓXIMOS PASSOS (Aurora)
 
-**Fase 4: Frontend - Plano de Contas** ✅ (04/02/2026)
-- [x] Visualização em árvore hierárquica
-- [x] Formulário de criação/edição (modal)
-- [x] Busca, Expandir/Colapsar
-- [x] Estatísticas (total, analíticas, sintéticas)
-- [x] Submenu Contabilidade na sidebar
+### 1. Relatório de Juros e Descontos
+- [ ] Criar relatório que mostre total de juros pagos por período
+- [ ] Mostrar total de descontos obtidos por período
+- [ ] Comparativo mensal de despesas financeiras
+- [ ] Identificar fornecedores com maior incidência de juros
+- [ ] Facilitar análise financeira e tomada de decisão
 
-**Fase 5: Relatórios** ✅ (04/02/2026)
-- [x] Razão Contábil (extrato por conta com saldo corrente)
-- [x] Balancete de Verificação (saldos de todas as contas)
-- [x] DRE (Receitas - Custos - Despesas = Resultado)
-- [x] Página /relatorios-contabeis com 3 abas
-- [x] Filtros de período e conta
-- [x] Menu Contabilidade → Relatórios Contábeis
+### 2. Alertas de Vencimento
+- [ ] Implementar notificações automáticas para parcelas próximas do vencimento
+- [ ] Configurar antecedência do alerta (ex: 3 dias, 7 dias)
+- [ ] Enviar alertas via WhatsApp (integração existente)
+- [ ] Dashboard com parcelas vencendo nos próximos dias
+- [ ] Ajudar a evitar pagamento de juros por atraso
 
-**Fase 6: Outras Receitas** ✅ (04/02/2026)
-- [x] CRUD completo (criar, editar, excluir)
-- [x] Página /outras-receitas com filtro de competência
-- [x] Cards de totais (Total, Confirmado, Pendente)
-- [x] Integração com Plano de Contas (Conta de Receita, Conta de Banco)
-- [x] Vinculação com Cliente/Parceiro (opcional)
-- [x] Menu Contabilidade → Outras Receitas
-- [ ] Integração com contabilização automática (journals) - próxima fase
+### 3. Conciliação Bancária
+- [ ] Desenvolver funcionalidade para importar extratos bancários (OFX/CSV)
+- [ ] Conciliar automaticamente com lançamentos do sistema
+- [ ] Identificar lançamentos não conciliados
+- [ ] Gerar relatório de conciliação
+- [ ] Integrar com contabilização automática
 
+---
 
-### Correções Módulo Contábil (Feedback Gabriel - 04/02/2026)
-- [x] Implementar módulo de Contas Gerenciais com amarração ao Plano Contábil
-  - [x] Página /contas-gerenciais com listagem de 50 contas gerenciais
-  - [x] CRUD completo (criar, editar contas gerenciais)
-  - [x] Interface de mapeamento para Plano Contábil
-  - [x] Filtros por natureza e classificação
-  - [x] Badges de status (com/sem amarração)
-  - [x] Menu Contabilidade → Contas Gerenciais
-- [x] Corrigir botões Expandir/Colapsar na árvore do Plano de Contas
-  - [x] Botão Expandir expande toda a árvore
-  - [x] Botão Colapsar colapsa para níveis 1 e 2
-  - [x] Clique no ícone de seta expande/colapsa individualmente
-  - [x] Clique no código/nome da conta expande/colapsa
-- [ ] Implementar seleção múltipla de contas nos relatórios contábeis
+## 📅 HISTÓRICO DE SESSÕES
 
-### Contabilização Automática (04/02/2026)
-- [x] Corrigir formatação de moeda no DRE (valores não devem ser divididos por 100)
-- [x] Gerar lançamentos contábeis para vendas (Balcão, A Prazo, Delivery) - apenas 2026+
-- [x] Gerar lançamentos contábeis para despesas - apenas 2026+
-- [x] Gerar lançamentos contábeis para compras - apenas 2026+
-- [x] DRE completo funcionando com Receitas, Custos e Despesas
-- [x] Corrigir divergências de valores (usar mesma lógica de timezone da Análise de Faturamento)
-- [x] Distribuir despesas nas contas corretas (não mais todas em Aluguel)
-- [x] Corrigir CMV para usar custo dos produtos vendidos (igual à Análise de Vendas)
-- [ ] Implementar contabilização automática em tempo real (ao criar venda/despesa/compra)
+### 05/02/2026
+- Implementada contabilização automática completa
+- Retroação de Janeiro/Fevereiro 2026 executada
+- Baixa automática para compras e despesas À Vista
+- Campos de juros e desconto no pagamento
 
-### Melhorias Contas Gerenciais e Contas a Receber (04/02/2026)
-- [x] Mover amarração contábil para dentro do modal de edição (unificar)
-- [x] Criar contas gerenciais de Receita (8 contas criadas)
-  - ROP001 - Receita de Vendas (Balcão)
-  - ROP002 - Receita de Vendas (A Prazo)
-  - ROP003 - Receita de Vendas (Delivery)
-  - ROR001 - Receita de Aluguel
-  - ROR002 - Receita de Serviços
-  - ROR003 - Outras Receitas
-  - RFI001 - Juros Recebidos
-  - RFI002 - Descontos Obtidos
-- [x] Melhorar Contas a Receber similar ao de Despesas:
-  - [x] Campo de Conta Gerencial com autocomplete no modal Lançar Débito
-  - [x] Seleção de Cliente com autocomplete na tela principal
+### 04/02/2026
+- Módulo Contábil v2.0 completo
+- Backup automático com S3
+- Correções em Despesas, Outras Receitas e Relatórios
 
-### Melhorias Autocomplete e Outras Receitas (04/02/2026)
-- [x] Adicionar autocomplete na seleção de Conta Contábil no modal de Contas Gerenciais
-- [x] Melhorar módulo Outras Receitas:
-  - [x] Adicionar seleção de Cliente com autocomplete
-  - [x] Adicionar campo de Conta Gerencial de Receita com autocomplete (8 contas)
-  - [x] Adicionar Conta de Banco com autocomplete
-  - [x] Interface similar ao módulo de Despesas
-
-### Padronização Formulários Outras Receitas e Despesas (04/02/2026)
-- [x] Renomear "Colapsar" para "Recolher" no Plano de Contas
-- [x] Padronizar formulário de Outras Receitas:
-  - [x] Fornecedor (obrigatório, autocomplete)
-  - [x] Data Emissão + Data Entrada + Competência (derivada automaticamente)
-  - [x] Tipo Documento (Contrato, Fatura, NF, Cupom, Recibo, Boleto, Outros) + Nº Documento
-  - [x] Conta Gerencial de Receita (autocomplete filtrado)
-  - [x] Descrição (obrigatório)
-  - [x] Data Crédito (quando a receita entrou em caixa)
-  - [x] Forma de Recebimento (obrigatório)
-  - [x] Observação (opcional)
-  - [x] Valor + Status
-- [x] Padronizar formulário de Despesas:
-  - [x] Fornecedor (autocomplete)
-  - [x] Data Emissão + Data Entrada + Competência (derivada automaticamente)
-  - [x] Tipo Documento (Fatura, NF, Cupom, Contrato, Recibo, Boleto, Outros) + Nº Documento
-  - [x] Conta Gerencial (filtrada por Despesa/Custo)
-  - [x] Descrição (obrigatório)
-  - [x] Data Vencimento (com parcelamento)
-  - [x] Forma de Pagamento (Crédito G, Crédito R, Crédito ABR, Boleto, A Vista, Débito Automático)
-  - [x] Observação (opcional)
-  - [x] Valor (com divisão automática por vencimento)
-- [x] Regra de competência: Data entrada pode ser último dia do mês anterior se lançado até dia 5
-  - [x] Mensagem informativa exibida nos dois formulários
-
-### Migração de Dados Existentes (04/02/2026)
-- [x] Analisar dados existentes de Outras Receitas (0 registros)
-- [x] Analisar dados existentes de Despesas (20+ registros)
-- [x] Migrar Despesas: preencher issueDate, entryDate, competenceMonth
-  - [x] issueDate = createdAt (data de emissão)
-  - [x] entryDate = createdAt (data de entrada)
-  - [x] competenceMonth = mês/ano derivado (ex: "2025-12", "2026-01")
-- [x] Verificar visualização dos dados migrados nas telas
-- [x] Ajustar filtros de data para mostrar todas as despesas por padrão
-
-### Correção Relatórios Contábeis (04/02/2026)
-- [ ] Receitas não estão considerando Vendas (Balcão, A Prazo, Delivery)
-- [ ] Compras e Despesas não aparecem nos relatórios
-- [ ] Implementar contabilização automática de Vendas por canal
-- [ ] Implementar contabilização automática de Compras
-- [ ] Implementar contabilização automática de Despesas
-- [ ] Testar DRE, Balancete e Razão com dados reais
-
-### Correções Contabilização (04/02/2026 - Feedback Gabriel)
-- [ ] Limitar contabilização a partir de 2026 (remover 2022-2025)
-- [ ] Corrigir divergência Balcão Jan/2026: Sistema R$ 56.493,25 vs DRE R$ 59.978,75
-- [ ] Corrigir divergência A Prazo Jan/2026: Sistema R$ 7.115,40 vs DRE R$ 7.270,40
-- [ ] Corrigir divergência Delivery Jan/2026: Sistema R$ 23.522,32 vs DRE R$ 23.281,66
-- [ ] Corrigir divergência Custo Jan/2026: Sistema R$ 60.193,90 vs DRE R$ 52.907,03
-- [ ] Corrigir mapeamento de despesas (todas indo para Aluguel 6.1.1.01)
-- [ ] Investigar possível duplicação de lançamentos
+### 03/02/2026
+- Correções de bugs críticos (Delivery, Compras, Timezone)
+- Limpeza de dados de teste
+- Documentação multiempresa
 
 
-### Revisão Mapeamento Despesas (04/02/2026)
-- [x] Investigar diferença de R$ 1.183,27 nas despesas de Janeiro/2026
-- [x] Verificar despesas mapeadas para Custos (5.x) ao invés de Despesas (6.x)
-- [x] Manter mapeamento atual (conceito contábil correto)
+---
 
-### Reorganização Módulo Outras Receitas (04/02/2026)
-- [x] Mover Outras Receitas para menu Financeiro
-- [x] Simplificar tela removendo cards (similar a Despesas)
-- [x] Melhorar filtros (data inicial/final, parceiro, conta gerencial, valor mínimo/máximo)
+## 🔒 GOVERNANÇA CONTÁBIL (Novo - 05/02/2026)
 
-### Correções Relatórios Contábeis (04/02/2026)
-- [x] Razão: trocar select por autocomplete na conta
-- [x] Razão: permitir seleção múltipla de contas
-- [x] Razão: corrigir cálculo dos cards (Total Débitos, Total Créditos, Saldo Final)
-- [x] Razão: corrigir "R$ NaN C" no saldo das linhas (usando runningBalance)
-- [x] Balancete: verificar duplicação de valores no totalizador
-- [x] Balancete: somar apenas contas analíticas (não sintéticas)
+### 1. Travas de Edição e Exclusão
 
-### Padronização Despesas com Outras Receitas (04/02/2026)
-- [x] Despesas: adicionar cards de resumo (Total Ativo, Total Cancelado, Quantidade)
-- [x] Despesas: adicionar filtro de Conta Gerencial (só descrição, sem código)
-- [x] Despesas: adicionar filtro de Número de Documento
+#### 1.1 Compras e Despesas
+- [x] Edição/exclusão permitidas até 3 dias após data de entrada (configurável)
+- [x] Após prazo: bloquear edição e exclusão (canEditEntity)
+- [x] Se competência FECHADA → bloqueio imediato
+- [x] Se journal POSTED → bloqueio imediato
+- [ ] Correções somente via estorno ou lançamento de ajuste
 
-### Correções Despesas e Balancete (04/02/2026 - Feedback Gabriel)
-- [ ] Tornar fornecedor obrigatório em Despesas
-- [ ] Mover cards de valores para cima do título em Despesas
-- [ ] Mover cards de valores para cima do título em Outras Receitas
-- [ ] Corrigir formatação de moeda (usar separador de milhar: R$ 62.084,58)
-- [ ] Revisar Balancete para garantir não duplicação de valores
+#### 1.2 Vendas
+- [x] Edição/exclusão permitidas até 72 horas após a venda (configurável)
+- [x] Após 72h: bloquear edição e exclusão
+- [x] Se journal POSTED → bloqueio absoluto
+- [x] Se competência FECHADA → bloqueio absoluto
+- [ ] Correções via estorno + novo lançamento
 
-### Integração Despesas → Contas a Pagar (04/02/2026)
-- [x] Investigar bug: despesas não gerando parcelas no Contas a Pagar (já estava funcionando)
-- [x] Verificar que parcelas de despesas aparecem no Contas a Pagar
-- [x] Implementar baixa automática para pagamentos À Vista (status PAGO + paymentDate)
-- [x] Criar documento de mapeamento contábil (/docs/MAPEAMENTO-CONTABIL.md)
+### 2. Troca de Cliente em Venda
+- [ ] Venda não contabilizada: permitir troca com log
+- [ ] Venda contabilizada (journal POSTED): apenas via estorno + nova venda
+- [ ] Competência fechada: bloquear em qualquer cenário
 
-### Documento de Mapeamento Contábil (04/02/2026)
-- [x] Criar documento /docs/MAPEAMENTO-CONTABIL.md
-- [x] Definir eventos que geram lançamentos contábeis (Vendas, Compras, Despesas, Outras Receitas, Contas a Receber/Pagar)
-- [x] Definir contas de débito/crédito para cada evento
-- [x] Definir momento do lançamento (criação vs pagamento)
-- [x] Documentar regra de rateio de frete/desconto/acréscimo em compras
-- [x] Documentar regra de baixa automática para À Vista
-- [ ] Regras especiais (cancelamento, estorno)
+### 3. Motor de Contabilização em Lote
 
-### Baixa Automática e Juros no Contas a Pagar (05/02/2026)
-- [x] Implementar baixa automática para Compras À Vista
-  - [x] Parcela criada com status PAID quando paymentMethod = "À Vista"
-  - [x] paidDate, paidAmount e paymentMethod preenchidos automaticamente
-- [x] Implementar registro de juros no pagamento (Contas a Pagar)
-  - [x] Adicionados campos interestAmount e discountAmount em purchaseInstallments
-  - [x] Adicionados campos interestAmount e discountAmount em expenseInstallments
-  - [x] Atualizada função payPurchaseInstallment para calcular valor efetivo
-  - [x] Atualizada função payExpenseInstallment para calcular valor efetivo
-  - [x] Atualizado router payInstallment com novos campos
-  - [x] Atualizado modal de pagamento com campos separados para Juros e Desconto
-  - [x] Exibição do total efetivo (base + juros - desconto)
-- [x] Testar fluxos completos (modal de pagamento funcionando)
-- [ ] Validar contabilização automática com juros/descontos
+#### 3.1 Execução Automática (Semanal)
+- [x] Configuração de dia/hora da execução (autoAccountingDay/Hour)
+- [ ] Executar 1x por semana (Domingo → Segunda, 03:00) - implementar scheduler
+- [ ] Agrupar journals por período semanal
 
-### Próximos Passos - Contabilização Automática
-- [ ] Definir contas contábeis para juros pagos (despesa financeira)
-- [ ] Definir contas contábeis para descontos obtidos (receita financeira)
-- [ ] Implementar lançamentos automáticos no pagamento
+#### 3.2 Execução Manual ("Contabilizar Agora")
+- [x] Botão "Contabilizar Agora" na interface (GovernancaContabil.tsx)
+- [x] Seleção de competência específica
+- [x] Disponível apenas para admin
+- [ ] Implementar execução do batch (runAccountingBatch)
 
+#### 3.3 Regras do Motor
+- [x] Idempotência: UNIQUE em journalSources (companyId, sourceType, sourceId)
+- [x] Controle secundário: isAccounted + accountedJournalId
+- [x] Nunca contabilizar competência FECHADA
+- [x] Log completo (accountingBatchLog + governanceAuditLog)
+- [ ] Transação atômica (tudo ou nada)
+- [ ] Criar journal como DRAFT → validar → POSTED
+- [ ] Notificação de falha
 
-## Contabilização Automática (05/02/2026)
+### 4. Parametrização por Empresa
+- [x] salesEditWindowHours = 72 (default) - configurável
+- [x] expensesEditWindowDays = 3 (default) - configurável
+- [x] purchasesEditWindowDays = 3 (default) - configurável
+- [x] allowRetroactivePosting = true (default) - configurável
+- [x] retroactiveLimitDay = 5 (default) - configurável
+- [x] Somente admin pode alterar
+- [x] Log de alterações obrigatório (governanceAuditLog)
 
-### Fase 1: Revisão do Plano de Contas
-- [ ] Revisar estrutura de contas contábeis existentes
-- [ ] Verificar amarração entre contas gerenciais e contábeis
-- [ ] Identificar contas necessárias para lançamentos automáticos
+### 5. Regras Imutáveis (não parametrizáveis)
+- [ ] Competência fechada nunca pode ser editada/violada
+- [ ] Journals POSTED e accountingEntries são imutáveis
+- [ ] Correção sempre via estorno/ajuste
 
-### Fase 2: Estrutura de Lançamentos
-- [x] Criar função genérica para geração de lançamentos contábeis (createAccountingEntries)
-- [x] Implementar validações de débito/crédito (postJournal)
-- [x] Criar histórico padrão para cada tipo de lançamento (addJournalSource)
-
-### Fase 3: Contabilização de Compras
-- [x] Lançamento na criação: D-Estoque / C-Fornecedores (accountPurchaseConfirmation)
-- [x] Lançamento no pagamento: D-Fornecedores / C-Banco/Caixa (accountPurchasePayment)
-- [x] Lançamento de juros: D-Juros Pagos / C-Banco (integrado no pagamento)
-- [x] Lançamento de desconto: D-Banco / C-Descontos Obtidos (integrado no pagamento)
-
-### Fase 4: Contabilização de Despesas
-- [x] Lançamento na criação: D-Despesa / C-Contas a Pagar (accountExpenseCreation)
-- [x] Lançamento no pagamento: D-Contas a Pagar / C-Banco/Caixa (accountExpensePayment)
-- [x] Lançamento de juros: D-Juros Pagos / C-Banco (integrado no pagamento)
-- [x] Lançamento de desconto: D-Banco / C-Descontos Obtidos (integrado no pagamento)
-
-### Fase 5: Contabilização de Vendas
-- [x] Lançamento na venda: D-Caixa ou Clientes / C-Receita de Vendas (accountSale)
-- [x] Lançamento do CMV: D-CMV / C-Estoque (integrado na venda)
-- [x] Lançamento no recebimento: D-Banco/Caixa / C-Clientes (accountCustomerPayment)
-- [ ] Baixa do estoque: D-CMV / C-Estoque
+### 6. Abertura de Períodos ✅
+- [x] Funcionalidade de reabertura implementada (reopenAccountingPeriod)
+- [x] Apenas para admin com justificativa obrigatória (mínimo 20 caracteres)
+- [x] Log completo de quem abriu, quando e por quê (governanceAuditLog)
+- [x] Prazo máximo de reabertura: 30 dias após fechamento (configurável)
+- [x] Máximo de 2 reaberturas por período (configurável)
+- [x] Janela de reabertura de 48h (fecha automaticamente)
+- [ ] Notificar owner quando período for reaberto
 
 
-### Retroação Contábil - Janeiro e Fevereiro 2026
-- [x] Criar script de retroação para compras confirmadas (83 compras)
-- [x] Criar script de retroação para pagamentos de compras (~150 pagamentos)
-- [x] Criar script de retroação para vendas (Balcão, Delivery, A Prazo) (2.723 vendas)
-- [x] Criar script de retroação para CMV das vendas (integrado nas vendas)
-- [x] Criar script de retroação para recebimentos de clientes (49 recebimentos)
-- [x] Executar e validar retroação (Balancete e Razão verificados)
+---
+
+## 👥 REVISÃO DE PERFIS E FUNÇÕES (Futuro - Pós Governança Contábil)
+
+### Contexto
+Com a implementação de governança contábil (travas, contabilização, abertura de períodos), o perfil "Admin" atual concentra muitas responsabilidades. Precisamos pensar em uma estrutura mais granular.
+
+### Perfis Atuais
+- Consultor (somente leitura)
+- Vendedor (vendas e consultas)
+- Admin (acesso total)
+
+### Proposta de Revisão
+- [ ] Avaliar criação de novos perfis ou funções específicas
+- [ ] Possíveis funções a considerar:
+  - Financeiro (Contas a Pagar/Receber, Despesas, Outras Receitas)
+  - Contabilidade (Plano de Contas, Relatórios, Fechamento, Abertura de Períodos)
+  - Compras (Pedidos de Compra, Fornecedores)
+  - Estoque (Movimentações, Inventário, Perdas)
+  - Gerente (Análises, Metas, Fechamento sem contabilidade)
+- [ ] Definir matriz de permissões por função
+- [ ] Avaliar se perfil ou função (ou ambos)
+- [ ] Implementar controle granular de acesso
+- [ ] Manter log de alterações de perfil/função
+
+### Observação
+Não liberar acesso Admin para todos os usuários. Funções específicas permitem delegar responsabilidades sem expor configurações críticas do sistema.

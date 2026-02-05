@@ -51,6 +51,7 @@ const accountingMenuItems = [
   { icon: BookOpen, label: "Plano de Contas", path: "/plano-contas", roles: ["admin", "consultor"] },
   { icon: Calculator, label: "Contas Gerenciais", path: "/contas-gerenciais", roles: ["admin", "consultor"] },
   { icon: FileText, label: "Relatórios Contábeis", path: "/relatorios-contabeis", roles: ["admin", "consultor"] },
+  { icon: Shield, label: "Governança Contábil", path: "/governanca-contabil", roles: ["admin"] },
 ];
 
 // Submenu de Análises

@@ -776,9 +776,15 @@ export const accountingPeriods = mysqlTable("accountingPeriods", {
   id: int("id").primaryKey().autoincrement(),
   companyId: int("companyId").notNull().default(1),
   competenceMonth: varchar("competenceMonth", { length: 7 }).notNull(), // YYYY-MM
-  status: mysqlEnum("status", ["OPEN", "CLOSED"]).notNull().default("OPEN"),
+  status: mysqlEnum("status", ["OPEN", "CLOSED", "REOPENED"]).notNull().default("OPEN"),
   closedAt: timestamp("closedAt"),
   closedBy: varchar("closedBy", { length: 64 }),
+  // Campos de reabertura
+  reopenedAt: timestamp("reopenedAt"),
+  reopenedBy: varchar("reopenedBy", { length: 64 }),
+  reopenReason: text("reopenReason"),
+  reopenCount: int("reopenCount").default(0).notNull(), // Máximo 2 reaberturas
+  reopenExpiresAt: timestamp("reopenExpiresAt"), // Fecha automaticamente após 48h
   createdAt: timestamp("createdAt").defaultNow(),
 }, (table) => ({
   companyCompetenceIdx: uniqueIndex("period_company_competence_idx").on(table.companyId, table.competenceMonth),
@@ -824,3 +830,103 @@ export const otherRevenues = mysqlTable("otherRevenues", {
 
 export type OtherRevenue = typeof otherRevenues.$inferSelect;
 export type InsertOtherRevenue = typeof otherRevenues.$inferInsert;
+
+
+// =====================================================
+// GOVERNANÇA CONTÁBIL
+// =====================================================
+
+// Configurações de Governança por Empresa
+export const governanceSettings = mysqlTable("governanceSettings", {
+  id: int("id").primaryKey().autoincrement(),
+  companyId: int("companyId").notNull().default(1),
+  // Janelas de edição
+  salesEditWindowHours: int("salesEditWindowHours").default(72).notNull(), // 72h para vendas
+  expensesEditWindowDays: int("expensesEditWindowDays").default(3).notNull(), // 3 dias para despesas
+  purchasesEditWindowDays: int("purchasesEditWindowDays").default(3).notNull(), // 3 dias para compras
+  // Competência retroativa
+  allowRetroactivePosting: boolean("allowRetroactivePosting").default(true).notNull(),
+  retroactiveLimitDay: int("retroactiveLimitDay").default(5).notNull(), // Até dia 5 pode retroagir
+  // Reabertura de períodos
+  maxReopenCount: int("maxReopenCount").default(2).notNull(), // Máximo de reaberturas
+  reopenWindowHours: int("reopenWindowHours").default(48).notNull(), // Janela de 48h após reabertura
+  maxReopenDaysAfterClose: int("maxReopenDaysAfterClose").default(30).notNull(), // Máximo 30 dias após fechamento
+  // Contabilização automática
+  autoAccountingEnabled: boolean("autoAccountingEnabled").default(true).notNull(),
+  autoAccountingDay: int("autoAccountingDay").default(0).notNull(), // 0 = Domingo
+  autoAccountingHour: int("autoAccountingHour").default(3).notNull(), // 03:00
+  // Auditoria
+  updatedBy: varchar("updatedBy", { length: 64 }),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow(),
+  createdAt: timestamp("createdAt").defaultNow(),
+}, (table) => ({
+  companyIdx: uniqueIndex("governance_company_idx").on(table.companyId),
+}));
+
+export type GovernanceSettings = typeof governanceSettings.$inferSelect;
+export type InsertGovernanceSettings = typeof governanceSettings.$inferInsert;
+
+// Log de Alterações de Governança
+export const governanceAuditLog = mysqlTable("governanceAuditLog", {
+  id: int("id").primaryKey().autoincrement(),
+  companyId: int("companyId").notNull().default(1),
+  action: mysqlEnum("action", [
+    "SETTINGS_CHANGED",
+    "PERIOD_CLOSED",
+    "PERIOD_REOPENED",
+    "PERIOD_AUTO_CLOSED",
+    "ACCOUNTING_BATCH_RUN",
+    "ACCOUNTING_MANUAL_RUN",
+    "EDIT_BLOCKED",
+    "DELETE_BLOCKED"
+  ]).notNull(),
+  entityType: varchar("entityType", { length: 50 }), // sale, expense, purchase, period
+  entityId: int("entityId"),
+  previousValue: text("previousValue"), // JSON com valores anteriores
+  newValue: text("newValue"), // JSON com valores novos
+  reason: text("reason"), // Justificativa (obrigatória para reabertura)
+  userId: varchar("userId", { length: 64 }).notNull(),
+  userName: varchar("userName", { length: 255 }),
+  createdAt: timestamp("createdAt").defaultNow(),
+}, (table) => ({
+  companyIdx: index("gov_audit_company_idx").on(table.companyId),
+  actionIdx: index("gov_audit_action_idx").on(table.action),
+  entityIdx: index("gov_audit_entity_idx").on(table.entityType, table.entityId),
+  dateIdx: index("gov_audit_date_idx").on(table.createdAt),
+}));
+
+export type GovernanceAuditLog = typeof governanceAuditLog.$inferSelect;
+export type InsertGovernanceAuditLog = typeof governanceAuditLog.$inferInsert;
+
+// Log de Execução de Contabilização em Lote
+export const accountingBatchLog = mysqlTable("accountingBatchLog", {
+  id: int("id").primaryKey().autoincrement(),
+  companyId: int("companyId").notNull().default(1),
+  competenceMonth: varchar("competenceMonth", { length: 7 }).notNull(),
+  batchType: mysqlEnum("batchType", ["SCHEDULED", "MANUAL"]).notNull(),
+  status: mysqlEnum("status", ["RUNNING", "SUCCESS", "FAILED", "PARTIAL"]).notNull(),
+  // Contadores
+  salesProcessed: int("salesProcessed").default(0),
+  expensesProcessed: int("expensesProcessed").default(0),
+  purchasesProcessed: int("purchasesProcessed").default(0),
+  otherRevenuesProcessed: int("otherRevenuesProcessed").default(0),
+  journalsCreated: int("journalsCreated").default(0),
+  entriesCreated: int("entriesCreated").default(0),
+  // Erros
+  errorCount: int("errorCount").default(0),
+  errorDetails: text("errorDetails"), // JSON com detalhes dos erros
+  // Timing
+  startedAt: timestamp("startedAt").defaultNow(),
+  completedAt: timestamp("completedAt"),
+  durationMs: int("durationMs"),
+  // Usuário (para manual)
+  triggeredBy: varchar("triggeredBy", { length: 64 }),
+}, (table) => ({
+  companyIdx: index("batch_company_idx").on(table.companyId),
+  competenceIdx: index("batch_competence_idx").on(table.competenceMonth),
+  statusIdx: index("batch_status_idx").on(table.status),
+  dateIdx: index("batch_date_idx").on(table.startedAt),
+}));
+
+export type AccountingBatchLog = typeof accountingBatchLog.$inferSelect;
+export type InsertAccountingBatchLog = typeof accountingBatchLog.$inferInsert;
