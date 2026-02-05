@@ -468,3 +468,14 @@ Automatizar importação de pedidos concluídos do iFood via arquivos JSON
 - [ ] Mover cards de valores para cima do título em Outras Receitas
 - [ ] Corrigir formatação de moeda (usar separador de milhar: R$ 62.084,58)
 - [ ] Revisar Balancete para garantir não duplicação de valores
+
+### Integração Despesas → Contas a Pagar (04/02/2026)
+- [x] Investigar bug: despesas não gerando parcelas no Contas a Pagar (já estava funcionando)
+- [x] Verificar que parcelas de despesas aparecem no Contas a Pagar
+- [x] Implementar baixa automática para pagamentos À Vista (status PAGO + paymentDate)
+- [ ] Criar documento de mapeamento contábilContábil (04/02/2026)
+- [ ] Criar documento /docs/MAPEAMENTO-CONTABIL.md
+- [ ] Definir eventos que geram lançamentos contábeis
+- [ ] Definir contas de débito/crédito para cada evento
+- [ ] Definir momento do lançamento (criação vs pagamento)
+- [ ] Regras especiais (cancelamento, estorno)

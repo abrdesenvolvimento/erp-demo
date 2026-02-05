@@ -1,0 +1,230 @@
+{
+  "query": "\nSELECT \n  ei.id,\n  ei.expenseId,\n  ei.installmentNumber,\n  ei.amount,\n  ei.dueDate,\n  ei.status,\n  e.description,\n  e.paymentMethod,\n  p.name as supplierName\nFROM expenseInstallments ei\nJOIN expenses e ON ei.expenseId = e.id\nLEFT JOIN partners p ON e.supplierId = p.id\nWHERE e.status = 'ATIVA'\nORDER BY ei.dueDate DESC\nLIMIT 20;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute \nSELECT \n  ei.id,\n  ei.expenseId,\n  ei.installmentNumber,\n  ei.amount,\n  ei.dueDate,\n  ei.status,\n  e.description,\n  e.paymentMethod,\n  p.name as supplierName\nFROM expenseInstallments ei\nJOIN expenses e ON ei.expenseId = e.id\nLEFT JOIN partners p ON e.supplierId = p.id\nWHERE e.status = 'ATIVA'\nORDER BY ei.dueDate DESC\nLIMIT 20;\n",
+  "rows": [
+    {
+      "id": "450004",
+      "expenseId": "420001",
+      "installmentNumber": "2",
+      "amount": "173.25",
+      "dueDate": "2026-03-08 15:00:00",
+      "status": "PENDENTE",
+      "description": "19 Metros de Corrente (Estacionamento ABR) R$13,50x19 = R$256,50 / 4 Cadeados 30mm R$22,50x4 = R$90,00",
+      "paymentMethod": "Crédito G",
+      "supplierName": "Depósito Cruzeiro Do Sul"
+    },
+    {
+      "id": "1080004",
+      "expenseId": "1050003",
+      "installmentNumber": "1",
+      "amount": "164.06",
+      "dueDate": "2026-03-06 15:00:00",
+      "status": "PENDENTE",
+      "description": "Água 01/2026",
+      "paymentMethod": "Crédito G",
+      "supplierName": "Sabesp"
+    },
+    {
+      "id": "780001",
+      "expenseId": "750001",
+      "installmentNumber": "1",
+      "amount": "55.38",
+      "dueDate": "2026-02-20 15:00:00",
+      "status": "PENDENTE",
+      "description": "Plano de Domínio Adicional (abrasareune.com.br)",
+      "paymentMethod": "Crédito G",
+      "supplierName": "Local Web S/A"
+    },
+    {
+      "id": "570003",
+      "expenseId": "540001",
+      "installmentNumber": "1",
+      "amount": "321.05",
+      "dueDate": "2026-02-16 15:00:00",
+      "status": "PENDENTE",
+      "description": "1.000 Copos Totalplast R$0,08*1.000 = R$80,45 / 3 Pacotes Sacola 40x50 R$48*3 = R$144,00 / 2 Pacotes 50x70 R$48,30*2 = R$96,60",
+      "paymentMethod": "Crédito R",
+      "supplierName": "Embrasplast Comercio de Utilidades Ltda"
+    },
+    {
+      "id": "840001",
+      "expenseId": "810001",
+      "installmentNumber": "1",
+      "amount": "363.73",
+      "dueDate": "2026-02-10 15:00:00",
+      "status": "PENDENTE",
+      "description": "Despesas com materias de consumo geral da loja: Sacos de lixo, canudos, produtos de limpeza, papel toalha.",
+      "paymentMethod": "Boleto",
+      "supplierName": "Lotus Central De Dist De Higienicos LTDA"
+    },
+    {
+      "id": "540001",
+      "expenseId": "510001",
+      "installmentNumber": "1",
+      "amount": "296.00",
+      "dueDate": "2026-02-10 15:00:00",
+      "status": "PENDENTE",
+      "description": "Registro de dominio (ABRWF e ABRASAREUNE)",
+      "paymentMethod": "Crédito ABR",
+      "supplierName": "Gabriel Morais Santos"
+    },
+    {
+      "id": "420007",
+      "expenseId": "390007",
+      "installmentNumber": "1",
+      "amount": "2177.41",
+      "dueDate": "2026-02-06 15:00:00",
+      "status": "PENDENTE",
+      "description": "Desenvolvimento 01/2026",
+      "paymentMethod": "Crédito G",
+      "supplierName": "Manus IA"
+    },
+    {
+      "id": "420001",
+      "expenseId": "390001",
+      "installmentNumber": "1",
+      "amount": "51.96",
+      "dueDate": "2026-02-06 15:00:00",
+      "status": "PENDENTE",
+      "description": "4 Pacotes Sacola 40x50 R$12,99x4 = 51,96",
+      "paymentMethod": "Crédito G",
+      "supplierName": "RM Osasco Comercio de Embalagens"
+    },
+    {
+      "id": "450003",
+      "expenseId": "420001",
+      "installmentNumber": "1",
+      "amount": "173.25",
+      "dueDate": "2026-02-06 15:00:00",
+      "status": "PENDENTE",
+      "description": "19 Metros de Corrente (Estacionamento ABR) R$13,50x19 = R$256,50 / 4 Cadeados 30mm R$22,50x4 = R$90,00",
+      "paymentMethod": "Crédito G",
+      "supplierName": "Depósito Cruzeiro Do Sul"
+    },
+    {
+      "id": "1140001",
+      "expenseId": "1110001",
+      "installmentNumber": "1",
+      "amount": "380.00",
+      "dueDate": "2026-02-03 15:00:00",
+      "status": "PENDENTE",
+      "description": "Caçamba para Entulho",
+      "paymentMethod": "À Vista",
+      "supplierName": "Independence Entulho"
+    },
+    {
+      "id": "1080001",
+      "expenseId": "1050001",
+      "installmentNumber": "1",
+      "amount": "875.00",
+      "dueDate": "2026-02-02 15:00:00",
+      "status": "PENDENTE",
+      "description": "4ª Semana de Janeiro 2026",
+      "paymentMethod": "À Vista",
+      "supplierName": "Gabriel Morais Santos"
+    },
+    {
+      "id": "1050002",
+      "expenseId": "1020002",
+      "installmentNumber": "1",
+      "amount": "350.00",
+      "dueDate": "2026-02-02 15:00:00",
+      "status": "PENDENTE",
+      "description": "Contabilidade 02/2026",
+      "paymentMethod": "À Vista",
+      "supplierName": "Jaine Barros de Oliveira"
+    },
+    {
+      "id": "1080002",
+      "expenseId": "1050002",
+      "installmentNumber": "1",
+      "amount": "875.00",
+      "dueDate": "2026-02-02 15:00:00",
+      "status": "PENDENTE",
+      "description": "4ª Semana de Janeiro 2026",
+      "paymentMethod": "À Vista",
+      "supplierName": "Ricardo"
+    },
+    {
+      "id": "1050001",
+      "expenseId": "1020001",
+      "installmentNumber": "1",
+      "amount": "720.00",
+      "dueDate": "2026-02-02 15:00:00",
+      "status": "PENDENTE",
+      "description": "Aluguel 02/2026",
+      "paymentMethod": "À Vista",
+      "supplierName": "Jocineide Pereira Costa Silva"
+    },
+    {
+      "id": "1080005",
+      "expenseId": "1050004",
+      "installmentNumber": "1",
+      "amount": "59.37",
+      "dueDate": "2026-02-02 15:00:00",
+      "status": "PENDENTE",
+      "description": "Internet 01/2026",
+      "paymentMethod": "À Vista",
+      "supplierName": "Telefônica Brasil S/A"
+    },
+    {
+      "id": "1110001",
+      "expenseId": "1080001",
+      "installmentNumber": "1",
+      "amount": "218.00",
+      "dueDate": "2026-02-02 15:00:00",
+      "status": "PENDENTE",
+      "description": "Tarifa Maquina de Cartões MCA Dez/25 e Jan/26",
+      "paymentMethod": "À Vista",
+      "supplierName": "Itau"
+    },
+    {
+      "id": "1050003",
+      "expenseId": "1020003",
+      "installmentNumber": "1",
+      "amount": "17025.00",
+      "dueDate": "2026-02-02 15:00:00",
+      "status": "PENDENTE",
+      "description": "Parcela 04/06 Projeto e Execução de obra ABR",
+      "paymentMethod": "À Vista",
+      "supplierName": "Studio Teixeira Arquitetura Ltda"
+    },
+    {
+      "id": "990002",
+      "expenseId": "960002",
+      "installmentNumber": "1",
+      "amount": "35.00",
+      "dueDate": "2026-01-31 15:00:00",
+      "status": "PENDENTE",
+      "description": "Cópia de Chaves",
+      "paymentMethod": "À Vista",
+      "supplierName": "Adega Beira Rio Comércio de Bebidas Ltda"
+    },
+    {
+      "id": "990001",
+      "expenseId": "960001",
+      "installmentNumber": "1",
+      "amount": "50.00",
+      "dueDate": "2026-01-31 15:00:00",
+      "status": "PENDENTE",
+      "description": "Reforço Banco Alto",
+      "paymentMethod": "À Vista",
+      "supplierName": "Adega Beira Rio Comércio de Bebidas Ltda"
+    },
+    {
+      "id": "960002",
+      "expenseId": "930002",
+      "installmentNumber": "1",
+      "amount": "380.00",
+      "dueDate": "2026-01-30 15:00:00",
+      "status": "PENDENTE",
+      "description": "Caçamba para Entulho",
+      "paymentMethod": "À Vista",
+      "supplierName": "Independence Entulho"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\texpenseId\tinstallmentNumber\tamount\tdueDate\tstatus\tdescription\tpaymentMethod\tsupplierName\n450004\t420001\t2\t173.25\t2026-03-08 15:00:00\tPENDENTE\t19 Metros de Corrente (Estacionamento ABR) R$13,50x19 = R$256,50 / 4 Cadeados 30mm R$22,50x4 = R$90,00\tCrédito G\tDepósito Cruzeiro Do Sul\n1080004\t1050003\t1\t164.06\t2026-03-06 15:00:00\tPENDENTE\tÁgua 01/2026\tCrédito G\tSabesp\n780001\t750001\t1\t55.38\t2026-02-20 15:00:00\tPENDENTE\tPlano de Domínio Adicional (abrasareune.com.br)\tCrédito G\tLocal Web S/A\n570003\t540001\t1\t321.05\t2026-02-16 15:00:00\tPENDENTE\t1.000 Copos Totalplast R$0,08*1.000 = R$80,45 / 3 Pacotes Sacola 40x50 R$48*3 = R$144,00 / 2 Pacotes 50x70 R$48,30*2 = R$96,60\tCrédito R\tEmbrasplast Comercio de Utilidades Ltda\n840001\t810001\t1\t363.73\t2026-02-10 15:00:00\tPENDENTE\tDespesas com materias de consumo geral da loja: Sacos de lixo, canudos, produtos de limpeza, papel toalha.\tBoleto\tLotus Central De Dist De Higienicos LTDA\n540001\t510001\t1\t296.00\t2026-02-10 15:00:00\tPENDENTE\tRegistro de dominio (ABRWF e ABRASAREUNE)\tCrédito ABR\tGabriel Morais Santos\n420007\t390007\t1\t2177.41\t2026-02-06 15:00:00\tPENDENTE\tDesenvolvimento 01/2026\tCrédito G\tManus IA\n420001\t390001\t1\t51.96\t2026-02-06 15:00:00\tPENDENTE\t4 Pacotes Sacola 40x50 R$12,99x4 = 51,96\tCrédito G\tRM Osasco Comercio de Embalagens\n450003\t420001\t1\t173.25\t2026-02-06 15:00:00\tPENDENTE\t19 Metros de Corrente (Estacionamento ABR) R$13,50x19 = R$256,50 / 4 Cadeados 30mm R$22,50x4 = R$90,00\tCrédito G\tDepósito Cruzeiro Do Sul\n1140001\t1110001\t1\t380.00\t2026-02-03 15:00:00\tPENDENTE\tCaçamba para Entulho\tÀ Vista\tIndependence Entulho\n1080001\t1050001\t1\t875.00\t2026-02-02 15:00:00\tPENDENTE\t4ª Semana de Janeiro 2026\tÀ Vista\tGabriel Morais Santos\n1050002\t1020002\t1\t350.00\t2026-02-02 15:00:00\tPENDENTE\tContabilidade 02/2026\tÀ Vista\tJaine Barros de Oliveira\n1080002\t1050002\t1\t875.00\t2026-02-02 15:00:00\tPENDENTE\t4ª Semana de Janeiro 2026\tÀ Vista\tRicardo\n1050001\t1020001\t1\t720.00\t2026-02-02 15:00:00\tPENDENTE\tAluguel 02/2026\tÀ Vista\tJocineide Pereira Costa Silva\n1080005\t1050004\t1\t59.37\t2026-02-02 15:00:00\tPENDENTE\tInternet 01/2026\tÀ Vista\tTelefônica Brasil S/A\n1110001\t1080001\t1\t218.00\t2026-02-02 15:00:00\tPENDENTE\tTarifa Maquina de Cartões MCA Dez/25 e Jan/26\tÀ Vista\tItau\n1050003\t1020003\t1\t17025.00\t2026-02-02 15:00:00\tPENDENTE\tParcela 04/06 Projeto e Execução de obra ABR\tÀ Vista\tStudio Teixeira Arquitetura Ltda\n990002\t960002\t1\t35.00\t2026-01-31 15:00:00\tPENDENTE\tCópia de Chaves\tÀ Vista\tAdega Beira Rio Comércio de Bebidas Ltda\n990001\t960001\t1\t50.00\t2026-01-31 15:00:00\tPENDENTE\tReforço Banco Alto\tÀ Vista\tAdega Beira Rio Comércio de Bebidas Ltda\n960002\t930002\t1\t380.00\t2026-01-30 15:00:00\tPENDENTE\tCaçamba para Entulho\tÀ Vista\tIndependence Entulho\n",
+  "stderr": "",
+  "execution_time_ms": 973
+}

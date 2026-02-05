@@ -1062,13 +1062,19 @@ export const appRouter = router({
         });
         
         // Criar parcelas com valores individuais
+        // Se for À Vista, criar já com status PAGO e data de pagamento
+        const isAVista = input.paymentMethod === 'À Vista';
+        
         for (let i = 0; i < input.dueDates.length; i++) {
           await db.createExpenseInstallment({
             expenseId,
             installmentNumber: i + 1,
             amount: input.dueDates[i].amount,
             dueDate: input.dueDates[i].date,
-            status: "PENDENTE",
+            status: isAVista ? "PAGO" : "PENDENTE",
+            paymentDate: isAVista ? input.dueDates[i].date : undefined,
+            paymentAmount: isAVista ? input.dueDates[i].amount : undefined,
+            paymentMethod: isAVista ? input.paymentMethod : undefined,
           });
         }
 
