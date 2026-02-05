@@ -462,3 +462,10 @@ Com a implementação de governança contábil (travas, contabilização, abertu
 
 ### Observação
 Não liberar acesso Admin para todos os usuários. Funções específicas permitem delegar responsabilidades sem expor configurações críticas do sistema.
+
+
+### Ajustes Troca de Cliente (05/02/2026) ✅
+- [x] Mover funcionalidade de troca de cliente para dentro do modo de edição da venda
+- [x] Filtrar apenas clientes no autocomplete (type: "CLIENTE")
+- [x] Campo destacado com fundo amarelo para vendas A Prazo
+- [x] Testado e validado
