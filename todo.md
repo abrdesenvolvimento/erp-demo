@@ -360,7 +360,7 @@ Automatizar importação de pedidos concluídos do iFood via arquivos JSON
 - [x] DRE completo funcionando com Receitas, Custos e Despesas
 - [x] Corrigir divergências de valores (usar mesma lógica de timezone da Análise de Faturamento)
 - [x] Distribuir despesas nas contas corretas (não mais todas em Aluguel)
-- [ ] Verificar valor de CMV vs Compras no sistema (R$ 52.907 vs R$ 60.193)
+- [x] Corrigir CMV para usar custo dos produtos vendidos (igual à Análise de Vendas)
 - [ ] Implementar contabilização automática em tempo real (ao criar venda/despesa/compra)
 
 ### Melhorias Contas Gerenciais e Contas a Receber (04/02/2026)
