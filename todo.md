@@ -473,9 +473,13 @@ Automatizar importação de pedidos concluídos do iFood via arquivos JSON
 - [x] Investigar bug: despesas não gerando parcelas no Contas a Pagar (já estava funcionando)
 - [x] Verificar que parcelas de despesas aparecem no Contas a Pagar
 - [x] Implementar baixa automática para pagamentos À Vista (status PAGO + paymentDate)
-- [ ] Criar documento de mapeamento contábilContábil (04/02/2026)
-- [ ] Criar documento /docs/MAPEAMENTO-CONTABIL.md
-- [ ] Definir eventos que geram lançamentos contábeis
-- [ ] Definir contas de débito/crédito para cada evento
-- [ ] Definir momento do lançamento (criação vs pagamento)
+- [x] Criar documento de mapeamento contábil (/docs/MAPEAMENTO-CONTABIL.md)
+
+### Documento de Mapeamento Contábil (04/02/2026)
+- [x] Criar documento /docs/MAPEAMENTO-CONTABIL.md
+- [x] Definir eventos que geram lançamentos contábeis (Vendas, Compras, Despesas, Outras Receitas, Contas a Receber/Pagar)
+- [x] Definir contas de débito/crédito para cada evento
+- [x] Definir momento do lançamento (criação vs pagamento)
+- [x] Documentar regra de rateio de frete/desconto/acréscimo em compras
+- [x] Documentar regra de baixa automática para À Vista
 - [ ] Regras especiais (cancelamento, estorno)
