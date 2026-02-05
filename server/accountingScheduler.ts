@@ -8,8 +8,12 @@ import {
   getGovernanceSettings, 
   logAccountingBatch,
   getAccountingPeriod,
-  closeExpiredReopenedPeriods
+  closeExpiredReopenedPeriods,
+  postJournal
 } from './db';
+import { getDb } from './db';
+import { journals } from '../drizzle/schema';
+import { eq, and } from 'drizzle-orm';
 import { notifyOwner } from './_core/notification';
 
 // Flag para evitar execuções simultâneas
@@ -61,18 +65,39 @@ export async function runAccountingBatch(
       throw new Error(`Período ${competenceMonth} está fechado. Não é possível contabilizar.`);
     }
 
-    // A contabilização automática já está implementada nas funções individuais
-    // (accountSale, accountPurchaseConfirmation, accountPurchasePayment, etc.)
-    // Este batch serve para:
-    // 1. Verificar registros que não foram contabilizados
-    // 2. Reprocessar em caso de falha
-    // 3. Gerar relatório consolidado
+    // Buscar todos os journals DRAFT da competência e postá-los
+    const db = await getDb();
+    if (!db) throw new Error('Database not available');
 
-    // Por enquanto, apenas registramos o log de execução
-    // A contabilização real já acontece em tempo real nas transações
+    // Buscar journals DRAFT da competência
+    const draftJournals = await db
+      .select({ id: journals.id })
+      .from(journals)
+      .where(and(
+        eq(journals.competenceMonth, competenceMonth),
+        eq(journals.status, 'DRAFT')
+      ));
 
-    console.log('[Accounting] Contabilização em tempo real já ativa');
-    console.log('[Accounting] Este batch verifica consistência e registra execução');
+    console.log(`[Accounting] Encontrados ${draftJournals.length} journals DRAFT para postar`);
+
+    // Postar cada journal
+    for (const journal of draftJournals) {
+      try {
+        const postResult = await postJournal(journal.id);
+        if (postResult.success) {
+          result.journalsCreated++;
+          console.log(`[Accounting] ✓ Journal ${journal.id} postado`);
+        } else {
+          result.errors.push(`Journal ${journal.id}: ${postResult.error}`);
+          console.error(`[Accounting] ✗ Erro ao postar journal ${journal.id}: ${postResult.error}`);
+        }
+      } catch (err: any) {
+        result.errors.push(`Journal ${journal.id}: ${err.message}`);
+        console.error(`[Accounting] ✗ Erro ao postar journal ${journal.id}:`, err.message);
+      }
+    }
+
+    console.log(`[Accounting] ${result.journalsCreated} journals postados com sucesso`);
 
     // Registrar log do batch
     await logAccountingBatch({

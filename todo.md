@@ -469,3 +469,10 @@ Não liberar acesso Admin para todos os usuários. Funções específicas permit
 - [x] Filtrar apenas clientes no autocomplete (type: "CLIENTE")
 - [x] Campo destacado com fundo amarelo para vendas A Prazo
 - [x] Testado e validado
+
+
+### Ajuste Fluxo de Contabilização (05/02/2026) ✅
+- [x] Alterar criação de journals para status DRAFT (não POSTED)
+- [x] Ajustar contabilização em lote para mudar status para POSTED
+- [x] Atualizar regra de edição para considerar DRAFT vs POSTED
+- [ ] Testar e validar o novo fluxo

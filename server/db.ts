@@ -7123,12 +7123,8 @@ export async function createAccountingEntries(data: {
       sourceId: data.sourceId,
     });
     
-    // 4. Postar journal
-    const postResult = await postJournal(journalId);
-    if (!postResult.success) {
-      console.error(`[Contabilização] Erro ao postar journal ${journalId}: ${postResult.error}`);
-      return { success: false, journalId, error: postResult.error };
-    }
+    // 4. Journal permanece como DRAFT até contabilização em lote
+    // NÃO chamar postJournal automaticamente - isso será feito pelo batch
     
     return { success: true, journalId };
   } catch (error) {
