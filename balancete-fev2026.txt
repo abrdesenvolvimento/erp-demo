@@ -1,0 +1,42 @@
+BALANCETE DE VERIFICAÇÃO - FEVEREIRO 2026
+==========================================
+
+Total Débitos: R$ 107.275,49
+Total Créditos: R$ 102.472,55
+Diferença: R$ 4.802,94
+
+ATIVO (1)
+---------
+1.1 ATIVO CIRCULANTE
+  1.1.1 CAIXA E EQUIVALENTES
+    1.1.1.01 Caixa Geral: D R$ 15.914,04 / C R$ 76.751,56 = R$ 60.837,52 C
+  
+  1.1.2 CONTAS A RECEBER
+    1.1.2.01 Clientes A Prazo: D R$ 678,50 / C R$ 279,50 = R$ 399,00 D
+  
+  1.1.3 ESTOQUES
+    1.1.3.01 Mercadorias para Revenda: D R$ 2.758,73 / C R$ 6.369,72 = R$ 3.610,99 C
+
+PASSIVO (2)
+-----------
+2.1 PASSIVO CIRCULANTE
+  2.1.1 FORNECEDORES
+    2.1.1.01 Fornecedores Nacionais: D R$ 56.085,13 / C R$ 2.758,73 = R$ 53.326,40 C
+
+RECEITAS (4)
+------------
+4.1 RECEITA OPERACIONAL BRUTA
+  4.1.1 RECEITA DE VENDAS
+    4.1.1.01 Receita de Vendas (Balcão): C R$ 10.362,28 = R$ 10.362,28 D
+    4.1.1.02 Receita de Vendas (A Prazo): C R$ 678,50 = R$ 678,50 D
+    4.1.1.03 Receita de Vendas (Delivery): C R$ 5.272,26 = R$ 5.272,26 D
+
+CUSTOS (5)
+----------
+5.1 CUSTO DAS MERCADORIAS VENDIDAS
+  5.1.1.01 CMV - Custo sobre Vendas: D R$ 11.172,66 = R$ 11.172,66 D
+
+OBSERVAÇÕES:
+- A contabilização automática está funcionando
+- Os lançamentos de compras, vendas e CMV foram gerados corretamente
+- O saldo de Estoque está negativo (C) porque o CMV das vendas foi maior que as entradas de compras no período

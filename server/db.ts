@@ -30,7 +30,10 @@ import {
   chartOfAccounts, ChartOfAccount, InsertChartOfAccount,
   revenueAccounts, RevenueAccount, InsertRevenueAccount,
   revenueEntries, RevenueEntry, InsertRevenueEntry,
-  backupLogs, BackupLog, InsertBackupLog
+  backupLogs, BackupLog, InsertBackupLog,
+  journals, Journal, InsertJournal,
+  accountingEntries, AccountingEntry, InsertAccountingEntry,
+  journalSources, JournalSource, InsertJournalSource
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 import { 
@@ -665,7 +668,7 @@ export async function createSale(saleData: InsertSale, items: Omit<InsertSaleIte
       .where(eq(partners.id, saleData.customerId));
   }
   
-  // Criar lançamentos contábeis de receita
+  // Criar lançamentos contábeis de receita (sistema legado)
   try {
     await createRevenueEntriesForSale(
       saleId,
@@ -677,6 +680,63 @@ export async function createSale(saleData: InsertSale, items: Omit<InsertSaleIte
   } catch (error) {
     console.error('[createSale] Erro ao criar lançamentos de receita:', error);
     // Não falhar a venda por causa de erro contábil
+  }
+  
+  // ========== CONTABILIZAÇÃO AUTOMÁTICA ==========
+  // D - Caixa ou Clientes / C - Receita de Vendas
+  // D - CMV / C - Estoque
+  try {
+    // Calcular CMV (custo médio dos produtos vendidos)
+    let cmvTotal = 0;
+    for (const item of items) {
+      const product = await db.select({ avgCost: products.avgCost })
+        .from(products)
+        .where(eq(products.id, item.productId))
+        .limit(1);
+      if (product[0]) {
+        const avgCost = parseFloat(product[0].avgCost || '0');
+        cmvTotal += avgCost * item.quantity;
+      }
+    }
+    
+    // Determinar tipo de canal
+    let channelType: "BALCAO" | "DELIVERY" | "A_PRAZO" = "BALCAO";
+    if (saleData.saleType === "A_PRAZO") {
+      channelType = "A_PRAZO";
+    } else if (saleData.saleType === "DELIVERY") {
+      channelType = "DELIVERY";
+    }
+    
+    // Buscar nome do cliente se for venda a prazo
+    let customerName: string | undefined;
+    if (saleData.customerId) {
+      const customer = await db.select({ name: partners.name, tradeName: partners.tradeName })
+        .from(partners)
+        .where(eq(partners.id, saleData.customerId))
+        .limit(1);
+      if (customer[0]) {
+        customerName = customer[0].tradeName || customer[0].name || undefined;
+      }
+    }
+    
+    const accountingResult = await accountSale({
+      saleId,
+      totalAmount: saleData.finalAmount,
+      cmvAmount: cmvTotal.toFixed(2),
+      channelType,
+      customerName,
+      entryDate: saleData.saleDate || new Date(),
+      createdBy: saleData.createdBy || "system",
+    });
+    
+    if (accountingResult.success) {
+      console.log(`[createSale] Contabilização criada - Journal #${accountingResult.journalId}`);
+    } else {
+      console.warn(`[createSale] Erro na contabilização: ${accountingResult.error}`);
+    }
+  } catch (accountingError) {
+    console.error(`[createSale] Erro ao contabilizar:`, accountingError);
+    // Não bloqueia a venda - apenas loga o erro
   }
   
   return saleId;
@@ -1178,6 +1238,31 @@ export async function confirmPurchaseOrder(purchaseOrderId: number) {
   // NOTA: Compras de produtos NÃO devem gerar despesas operacionais.
   // Elas já são registradas em Contas a Pagar (purchaseInstallments).
   // Despesas operacionais são para custos fixos (aluguel, energia, etc).
+  
+  // ========== CONTABILIZAÇÃO AUTOMÁTICA ==========
+  // D - Estoque de Mercadorias
+  // C - Fornecedores
+  const totalAmount = (subtotal + netAdjustment).toFixed(2);
+  try {
+    const accountingResult = await accountPurchaseConfirmation({
+      purchaseOrderId,
+      totalAmount,
+      supplierId: purchaseOrderData.purchaseOrder.supplierId,
+      supplierName: purchaseOrderData.supplier?.tradeName || purchaseOrderData.supplier?.name || "Fornecedor",
+      docNumber: purchaseOrderData.purchaseOrder.docNumber || undefined,
+      entryDate: purchaseOrderData.purchaseOrder.purchaseDate || new Date(),
+      createdBy: purchaseOrderData.purchaseOrder.createdBy || "system",
+    });
+    
+    if (accountingResult.success) {
+      console.log(`[confirmPurchaseOrder] Contabilização criada - Journal #${accountingResult.journalId}`);
+    } else {
+      console.warn(`[confirmPurchaseOrder] Erro na contabilização: ${accountingResult.error}`);
+    }
+  } catch (accountingError) {
+    console.error(`[confirmPurchaseOrder] Erro ao contabilizar:`, accountingError);
+    // Não bloqueia a confirmação - apenas loga o erro
+  }
 }
 
 /**
@@ -2099,6 +2184,38 @@ export async function payPurchaseInstallment(data: {
     })
     .where(eq(purchaseInstallments.id, data.installmentId));
   
+  // ========== CONTABILIZAÇÃO AUTOMÁTICA ==========
+  // D - Fornecedores (valor original)
+  // D - Juros Pagos (se houver)
+  // C - Caixa/Banco (valor efetivo)
+  // C - Descontos Obtidos (se houver)
+  try {
+    // Buscar dados da compra para obter informações do fornecedor
+    const purchaseOrder = await getPurchaseOrderById(installment[0].purchaseOrderId);
+    
+    const accountingResult = await accountPurchasePayment({
+      purchaseOrderId: installment[0].purchaseOrderId,
+      installmentId: data.installmentId,
+      originalAmount: paidAmount.toFixed(2),
+      paidAmount: effectivePaid.toFixed(2),
+      interestAmount: interestAmount > 0 ? interestAmount.toFixed(2) : undefined,
+      discountAmount: discountAmount > 0 ? discountAmount.toFixed(2) : undefined,
+      supplierName: purchaseOrder?.supplier?.tradeName || purchaseOrder?.supplier?.name || "Fornecedor",
+      docNumber: purchaseOrder?.purchaseOrder.docNumber || undefined,
+      entryDate: data.paidDate,
+      createdBy: "system",
+    });
+    
+    if (accountingResult.success) {
+      console.log(`[payPurchaseInstallment] Contabilização criada - Journal #${accountingResult.journalId}`);
+    } else {
+      console.warn(`[payPurchaseInstallment] Erro na contabilização: ${accountingResult.error}`);
+    }
+  } catch (accountingError) {
+    console.error(`[payPurchaseInstallment] Erro ao contabilizar:`, accountingError);
+    // Não bloqueia o pagamento - apenas loga o erro
+  }
+  
   return { success: true, interestAmount, discountAmount };
 }
 
@@ -2148,6 +2265,37 @@ export async function payExpenseInstallment(data: {
   
   // Atualizar status da despesa
   await updateExpenseStatus(installment[0].expenseId);
+  
+  // ========== CONTABILIZAÇÃO AUTOMÁTICA ==========
+  // D - Contas a Pagar (valor original)
+  // D - Juros Pagos (se houver)
+  // C - Caixa/Banco (valor efetivo)
+  // C - Descontos Obtidos (se houver)
+  try {
+    // Buscar dados da despesa para obter descrição
+    const expense = await getExpenseById(installment[0].expenseId);
+    
+    const accountingResult = await accountExpensePayment({
+      expenseId: installment[0].expenseId,
+      installmentId: data.installmentId,
+      originalAmount: paidAmount.toFixed(2),
+      paidAmount: effectivePaid.toFixed(2),
+      interestAmount: interestAmount > 0 ? interestAmount.toFixed(2) : undefined,
+      discountAmount: discountAmount > 0 ? discountAmount.toFixed(2) : undefined,
+      description: expense?.description || `Despesa #${installment[0].expenseId}`,
+      entryDate: data.paidDate,
+      createdBy: "system",
+    });
+    
+    if (accountingResult.success) {
+      console.log(`[payExpenseInstallment] Contabilização criada - Journal #${accountingResult.journalId}`);
+    } else {
+      console.warn(`[payExpenseInstallment] Erro na contabilização: ${accountingResult.error}`);
+    }
+  } catch (accountingError) {
+    console.error(`[payExpenseInstallment] Erro ao contabilizar:`, accountingError);
+    // Não bloqueia o pagamento - apenas loga o erro
+  }
   
   return { success: true, interestAmount, discountAmount };
 }
@@ -2737,16 +2885,40 @@ export async function registerCustomerPayment(data: {
   }
   
   // Atualizar saldo do cliente
-  const currentBalance = await db.select({ balance: partners.currentBalance })
+  const currentBalance = await db.select({ balance: partners.currentBalance, name: partners.name, tradeName: partners.tradeName })
     .from(partners)
     .where(eq(partners.id, data.customerId))
     .limit(1);
   
   const newBalance = parseFloat(currentBalance[0]?.balance || "0") - amount;
+  const customerName = currentBalance[0]?.tradeName || currentBalance[0]?.name || `Cliente #${data.customerId}`;
   
   await db.update(partners)
     .set({ currentBalance: newBalance.toFixed(2) })
     .where(eq(partners.id, data.customerId));
+  
+  // ========== CONTABILIZAÇÃO AUTOMÁTICA ==========
+  // D - Caixa/Banco
+  // C - Clientes
+  try {
+    const accountingResult = await accountCustomerPayment({
+      paymentId: Date.now(), // ID único para o pagamento
+      customerId: data.customerId,
+      customerName,
+      amount: (amount - remainingAmount).toFixed(2), // Valor efetivamente aplicado
+      entryDate: data.paidDate,
+      createdBy: "system",
+    });
+    
+    if (accountingResult.success) {
+      console.log(`[registerCustomerPayment] Contabilização criada - Journal #${accountingResult.journalId}`);
+    } else {
+      console.warn(`[registerCustomerPayment] Erro na contabilização: ${accountingResult.error}`);
+    }
+  } catch (accountingError) {
+    console.error(`[registerCustomerPayment] Erro ao contabilizar:`, accountingError);
+    // Não bloqueia o recebimento - apenas loga o erro
+  }
   
   return { success: true, appliedAmount: amount - remainingAmount };
 }
@@ -6703,4 +6875,673 @@ export async function getLastSuccessfulBackup(): Promise<BackupLog | null> {
     .limit(1);
   
   return result[0] || null;
+}
+
+
+// =====================================================
+// CONTABILIZAÇÃO AUTOMÁTICA
+// =====================================================
+
+/**
+ * Códigos de contas contábeis padrão para contabilização automática
+ * Baseado no documento MAPEAMENTO-CONTABIL.md
+ */
+export const ACCOUNTING_CODES = {
+  // ATIVO
+  CAIXA_GERAL: "1.1.1.01",
+  CLIENTES_A_PRAZO: "1.1.2.01",
+  ESTOQUE_MERCADORIAS: "1.1.3.01",
+  
+  // PASSIVO
+  FORNECEDORES: "2.1.1.01",
+  CONTAS_A_PAGAR: "2.1.2.01",
+  
+  // RECEITAS
+  RECEITA_VENDAS_BALCAO: "4.1.1.01",
+  RECEITA_VENDAS_A_PRAZO: "4.1.1.02",
+  RECEITA_VENDAS_DELIVERY: "4.1.1.03",
+  DESCONTOS_OBTIDOS: "4.3.1.02",
+  
+  // CUSTOS
+  CMV: "5.1.1.01",
+  
+  // DESPESAS
+  JUROS_PAGOS: "6.3.1.01",
+  DESCONTOS_CONCEDIDOS: "6.2.1.01",
+};
+
+/**
+ * Buscar ID da conta contábil pelo código
+ */
+export async function getAccountIdByCode(code: string): Promise<number | null> {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const result = await db.select({ id: chartOfAccounts.id })
+    .from(chartOfAccounts)
+    .where(eq(chartOfAccounts.code, code))
+    .limit(1);
+  
+  return result.length > 0 ? result[0].id : null;
+}
+
+/**
+ * Criar um novo journal (lote contábil)
+ */
+export async function createJournal(data: {
+  competenceMonth: string;
+  description: string;
+  createdBy: string;
+}): Promise<number> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.insert(journals).values({
+    companyId: 1,
+    competenceMonth: data.competenceMonth,
+    description: data.description,
+    status: "DRAFT",
+    totalDebit: "0.00",
+    totalCredit: "0.00",
+    createdBy: data.createdBy,
+  });
+  
+  return (result[0] as any).insertId;
+}
+
+/**
+ * Adicionar lançamento contábil a um journal
+ */
+export async function addAccountingEntry(data: {
+  journalId: number;
+  accountId: number;
+  entryDate: Date;
+  competenceMonth: string;
+  amount: string;
+  entryType: "D" | "C";
+  description: string;
+  sourceType?: string;
+  sourceId?: number;
+}): Promise<number> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.insert(accountingEntries).values({
+    companyId: 1,
+    journalId: data.journalId,
+    accountId: data.accountId,
+    entryDate: data.entryDate,
+    competenceMonth: data.competenceMonth,
+    amount: data.amount,
+    entryType: data.entryType,
+    description: data.description,
+    sourceType: data.sourceType,
+    sourceId: data.sourceId,
+  });
+  
+  return (result[0] as any).insertId;
+}
+
+/**
+ * Registrar origem do journal (rastreabilidade)
+ */
+export async function addJournalSource(data: {
+  journalId: number;
+  sourceType: string;
+  sourceId: number;
+}): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.insert(journalSources).values({
+    companyId: 1,
+    journalId: data.journalId,
+    sourceType: data.sourceType,
+    sourceId: data.sourceId,
+  });
+}
+
+/**
+ * Atualizar totais do journal e postar
+ */
+export async function postJournal(journalId: number): Promise<{ success: boolean; error?: string }> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  // Calcular totais
+  const entries = await db.select({
+    entryType: accountingEntries.entryType,
+    amount: accountingEntries.amount,
+  })
+  .from(accountingEntries)
+  .where(eq(accountingEntries.journalId, journalId));
+  
+  let totalDebit = 0;
+  let totalCredit = 0;
+  
+  for (const entry of entries) {
+    const amount = parseFloat(entry.amount);
+    if (entry.entryType === "D") {
+      totalDebit += amount;
+    } else {
+      totalCredit += amount;
+    }
+  }
+  
+  // Validar partida dobrada
+  if (Math.abs(totalDebit - totalCredit) > 0.01) {
+    return { 
+      success: false, 
+      error: `Partida dobrada inválida: Débito (${totalDebit.toFixed(2)}) ≠ Crédito (${totalCredit.toFixed(2)})` 
+    };
+  }
+  
+  // Atualizar journal
+  await db.update(journals)
+    .set({
+      totalDebit: totalDebit.toFixed(2),
+      totalCredit: totalCredit.toFixed(2),
+      status: "POSTED",
+      postedAt: new Date(),
+    })
+    .where(eq(journals.id, journalId));
+  
+  return { success: true };
+}
+
+/**
+ * Interface para lançamentos contábeis
+ */
+interface AccountingLedgerEntry {
+  accountCode: string;
+  accountId?: number;
+  amount: string;
+  type: "D" | "C";
+  description: string;
+}
+
+/**
+ * Criar lançamentos contábeis completos (journal + entries + source)
+ */
+export async function createAccountingEntries(data: {
+  competenceMonth: string;
+  entryDate: Date;
+  description: string;
+  sourceType: string;
+  sourceId: number;
+  entries: AccountingLedgerEntry[];
+  createdBy: string;
+}): Promise<{ success: boolean; journalId?: number; error?: string }> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  try {
+    // 1. Criar journal
+    const journalId = await createJournal({
+      competenceMonth: data.competenceMonth,
+      description: data.description,
+      createdBy: data.createdBy,
+    });
+    
+    // 2. Adicionar lançamentos
+    for (const entry of data.entries) {
+      // Buscar ID da conta se não fornecido
+      let accountId = entry.accountId;
+      if (!accountId) {
+        accountId = await getAccountIdByCode(entry.accountCode);
+        if (!accountId) {
+          // Conta não encontrada - log e continua (não bloqueia)
+          console.warn(`[Contabilização] Conta não encontrada: ${entry.accountCode}`);
+          continue;
+        }
+      }
+      
+      await addAccountingEntry({
+        journalId,
+        accountId,
+        entryDate: data.entryDate,
+        competenceMonth: data.competenceMonth,
+        amount: entry.amount,
+        entryType: entry.type,
+        description: entry.description,
+        sourceType: data.sourceType,
+        sourceId: data.sourceId,
+      });
+    }
+    
+    // 3. Registrar origem
+    await addJournalSource({
+      journalId,
+      sourceType: data.sourceType,
+      sourceId: data.sourceId,
+    });
+    
+    // 4. Postar journal
+    const postResult = await postJournal(journalId);
+    if (!postResult.success) {
+      console.error(`[Contabilização] Erro ao postar journal ${journalId}: ${postResult.error}`);
+      return { success: false, journalId, error: postResult.error };
+    }
+    
+    return { success: true, journalId };
+  } catch (error) {
+    console.error("[Contabilização] Erro ao criar lançamentos:", error);
+    return { success: false, error: String(error) };
+  }
+}
+
+/**
+ * Contabilizar compra confirmada
+ * D - Estoque de Mercadorias
+ * C - Fornecedores
+ */
+export async function accountPurchaseConfirmation(data: {
+  purchaseOrderId: number;
+  totalAmount: string;
+  supplierId: number;
+  supplierName: string;
+  docNumber?: string;
+  entryDate: Date;
+  createdBy: string;
+}): Promise<{ success: boolean; journalId?: number; error?: string }> {
+  const competenceMonth = data.entryDate.toISOString().slice(0, 7);
+  
+  return createAccountingEntries({
+    competenceMonth,
+    entryDate: data.entryDate,
+    description: `Compra NF ${data.docNumber || data.purchaseOrderId} - ${data.supplierName}`,
+    sourceType: "purchase",
+    sourceId: data.purchaseOrderId,
+    entries: [
+      {
+        accountCode: ACCOUNTING_CODES.ESTOQUE_MERCADORIAS,
+        amount: data.totalAmount,
+        type: "D",
+        description: `Entrada estoque - NF ${data.docNumber || data.purchaseOrderId}`,
+      },
+      {
+        accountCode: ACCOUNTING_CODES.FORNECEDORES,
+        amount: data.totalAmount,
+        type: "C",
+        description: `Fornecedor ${data.supplierName} - NF ${data.docNumber || data.purchaseOrderId}`,
+      },
+    ],
+    createdBy: data.createdBy,
+  });
+}
+
+/**
+ * Contabilizar pagamento de compra
+ * D - Fornecedores (valor original)
+ * D - Juros Pagos (se houver juros)
+ * C - Caixa/Banco (valor total pago)
+ * C - Descontos Obtidos (se houver desconto)
+ */
+export async function accountPurchasePayment(data: {
+  purchaseOrderId: number;
+  installmentId: number;
+  originalAmount: string;
+  paidAmount: string;
+  interestAmount?: string;
+  discountAmount?: string;
+  supplierName: string;
+  docNumber?: string;
+  entryDate: Date;
+  createdBy: string;
+}): Promise<{ success: boolean; journalId?: number; error?: string }> {
+  const competenceMonth = data.entryDate.toISOString().slice(0, 7);
+  const entries: AccountingLedgerEntry[] = [];
+  
+  const originalAmount = parseFloat(data.originalAmount);
+  const interestAmount = data.interestAmount ? parseFloat(data.interestAmount) : 0;
+  const discountAmount = data.discountAmount ? parseFloat(data.discountAmount) : 0;
+  const effectivePaid = originalAmount + interestAmount - discountAmount;
+  
+  // D - Fornecedores (valor original)
+  entries.push({
+    accountCode: ACCOUNTING_CODES.FORNECEDORES,
+    amount: originalAmount.toFixed(2),
+    type: "D",
+    description: `Pgto fornecedor ${data.supplierName} - NF ${data.docNumber || data.purchaseOrderId}`,
+  });
+  
+  // D - Juros Pagos (se houver)
+  if (interestAmount > 0) {
+    entries.push({
+      accountCode: ACCOUNTING_CODES.JUROS_PAGOS,
+      amount: interestAmount.toFixed(2),
+      type: "D",
+      description: `Juros pgto NF ${data.docNumber || data.purchaseOrderId}`,
+    });
+  }
+  
+  // C - Caixa/Banco (valor efetivamente pago)
+  entries.push({
+    accountCode: ACCOUNTING_CODES.CAIXA_GERAL,
+    amount: effectivePaid.toFixed(2),
+    type: "C",
+    description: `Pgto NF ${data.docNumber || data.purchaseOrderId} - ${data.supplierName}`,
+  });
+  
+  // C - Descontos Obtidos (se houver)
+  if (discountAmount > 0) {
+    entries.push({
+      accountCode: ACCOUNTING_CODES.DESCONTOS_OBTIDOS,
+      amount: discountAmount.toFixed(2),
+      type: "C",
+      description: `Desconto pgto NF ${data.docNumber || data.purchaseOrderId}`,
+    });
+  }
+  
+  return createAccountingEntries({
+    competenceMonth,
+    entryDate: data.entryDate,
+    description: `Pgto Compra NF ${data.docNumber || data.purchaseOrderId} - ${data.supplierName}`,
+    sourceType: "purchase_payment",
+    sourceId: data.installmentId,
+    entries,
+    createdBy: data.createdBy,
+  });
+}
+
+/**
+ * Contabilizar despesa criada
+ * D - Conta Gerencial (via amarração)
+ * C - Contas a Pagar
+ */
+export async function accountExpenseCreation(data: {
+  expenseId: number;
+  amount: string;
+  managementAccountId: number;
+  supplierName?: string;
+  description: string;
+  entryDate: Date;
+  createdBy: string;
+}): Promise<{ success: boolean; journalId?: number; error?: string }> {
+  const competenceMonth = data.entryDate.toISOString().slice(0, 7);
+  
+  // Buscar código contábil da conta gerencial
+  const accountingCode = await getAccountingCodeByManagementAccount(data.managementAccountId);
+  if (!accountingCode) {
+    return { success: false, error: "Conta gerencial sem amarração contábil" };
+  }
+  
+  return createAccountingEntries({
+    competenceMonth,
+    entryDate: data.entryDate,
+    description: `Despesa: ${data.description}`,
+    sourceType: "expense",
+    sourceId: data.expenseId,
+    entries: [
+      {
+        accountCode: accountingCode,
+        amount: data.amount,
+        type: "D",
+        description: `Despesa: ${data.description}`,
+      },
+      {
+        accountCode: ACCOUNTING_CODES.CONTAS_A_PAGAR,
+        amount: data.amount,
+        type: "C",
+        description: `Despesa a pagar: ${data.description}`,
+      },
+    ],
+    createdBy: data.createdBy,
+  });
+}
+
+/**
+ * Contabilizar pagamento de despesa
+ * D - Contas a Pagar (valor original)
+ * D - Juros Pagos (se houver juros)
+ * C - Caixa/Banco (valor total pago)
+ * C - Descontos Obtidos (se houver desconto)
+ */
+export async function accountExpensePayment(data: {
+  expenseId: number;
+  installmentId: number;
+  originalAmount: string;
+  paidAmount: string;
+  interestAmount?: string;
+  discountAmount?: string;
+  description: string;
+  entryDate: Date;
+  createdBy: string;
+}): Promise<{ success: boolean; journalId?: number; error?: string }> {
+  const competenceMonth = data.entryDate.toISOString().slice(0, 7);
+  const entries: AccountingLedgerEntry[] = [];
+  
+  const originalAmount = parseFloat(data.originalAmount);
+  const interestAmount = data.interestAmount ? parseFloat(data.interestAmount) : 0;
+  const discountAmount = data.discountAmount ? parseFloat(data.discountAmount) : 0;
+  const effectivePaid = originalAmount + interestAmount - discountAmount;
+  
+  // D - Contas a Pagar (valor original)
+  entries.push({
+    accountCode: ACCOUNTING_CODES.CONTAS_A_PAGAR,
+    amount: originalAmount.toFixed(2),
+    type: "D",
+    description: `Pgto despesa: ${data.description}`,
+  });
+  
+  // D - Juros Pagos (se houver)
+  if (interestAmount > 0) {
+    entries.push({
+      accountCode: ACCOUNTING_CODES.JUROS_PAGOS,
+      amount: interestAmount.toFixed(2),
+      type: "D",
+      description: `Juros pgto despesa: ${data.description}`,
+    });
+  }
+  
+  // C - Caixa/Banco (valor efetivamente pago)
+  entries.push({
+    accountCode: ACCOUNTING_CODES.CAIXA_GERAL,
+    amount: effectivePaid.toFixed(2),
+    type: "C",
+    description: `Pgto despesa: ${data.description}`,
+  });
+  
+  // C - Descontos Obtidos (se houver)
+  if (discountAmount > 0) {
+    entries.push({
+      accountCode: ACCOUNTING_CODES.DESCONTOS_OBTIDOS,
+      amount: discountAmount.toFixed(2),
+      type: "C",
+      description: `Desconto pgto despesa: ${data.description}`,
+    });
+  }
+  
+  return createAccountingEntries({
+    competenceMonth,
+    entryDate: data.entryDate,
+    description: `Pgto Despesa: ${data.description}`,
+    sourceType: "expense_payment",
+    sourceId: data.installmentId,
+    entries,
+    createdBy: data.createdBy,
+  });
+}
+
+/**
+ * Verificar se uma transação já foi contabilizada
+ */
+export async function isTransactionAccounted(sourceType: string, sourceId: number): Promise<boolean> {
+  const db = await getDb();
+  if (!db) return false;
+  
+  const result = await db.select({ id: journalSources.id })
+    .from(journalSources)
+    .where(and(
+      eq(journalSources.sourceType, sourceType),
+      eq(journalSources.sourceId, sourceId)
+    ))
+    .limit(1);
+  
+  return result.length > 0;
+}
+
+
+/**
+ * Contabilizar venda realizada
+ * Dependendo do canal:
+ * - Balcão/Delivery: D-Caixa / C-Receita de Vendas
+ * - A Prazo: D-Clientes / C-Receita de Vendas
+ * Sempre: D-CMV / C-Estoque
+ */
+export async function accountSale(data: {
+  saleId: number;
+  totalAmount: string;
+  cmvAmount: string;
+  channelType: "BALCAO" | "DELIVERY" | "A_PRAZO";
+  customerName?: string;
+  entryDate: Date;
+  createdBy: string;
+}): Promise<{ success: boolean; journalId?: number; error?: string }> {
+  const competenceMonth = data.entryDate.toISOString().slice(0, 7);
+  const entries: AccountingLedgerEntry[] = [];
+  
+  // Determinar contas baseado no tipo de canal
+  let debitAccount: string;
+  let creditAccount: string;
+  
+  switch (data.channelType) {
+    case "BALCAO":
+      debitAccount = ACCOUNTING_CODES.CAIXA_GERAL;
+      creditAccount = ACCOUNTING_CODES.RECEITA_VENDAS_BALCAO;
+      break;
+    case "DELIVERY":
+      debitAccount = ACCOUNTING_CODES.CAIXA_GERAL;
+      creditAccount = ACCOUNTING_CODES.RECEITA_VENDAS_DELIVERY;
+      break;
+    case "A_PRAZO":
+      debitAccount = ACCOUNTING_CODES.CLIENTES_A_PRAZO;
+      creditAccount = ACCOUNTING_CODES.RECEITA_VENDAS_A_PRAZO;
+      break;
+    default:
+      debitAccount = ACCOUNTING_CODES.CAIXA_GERAL;
+      creditAccount = ACCOUNTING_CODES.RECEITA_VENDAS_BALCAO;
+  }
+  
+  // Lançamento da receita
+  // D - Caixa ou Clientes
+  entries.push({
+    accountCode: debitAccount,
+    amount: data.totalAmount,
+    type: "D",
+    description: `Venda #${data.saleId}${data.customerName ? ` - ${data.customerName}` : ""}`,
+  });
+  
+  // C - Receita de Vendas
+  entries.push({
+    accountCode: creditAccount,
+    amount: data.totalAmount,
+    type: "C",
+    description: `Receita venda #${data.saleId}`,
+  });
+  
+  // Lançamento do CMV (se houver)
+  const cmv = parseFloat(data.cmvAmount);
+  if (cmv > 0) {
+    // D - CMV
+    entries.push({
+      accountCode: ACCOUNTING_CODES.CMV,
+      amount: data.cmvAmount,
+      type: "D",
+      description: `CMV venda #${data.saleId}`,
+    });
+    
+    // C - Estoque
+    entries.push({
+      accountCode: ACCOUNTING_CODES.ESTOQUE_MERCADORIAS,
+      amount: data.cmvAmount,
+      type: "C",
+      description: `Baixa estoque venda #${data.saleId}`,
+    });
+  }
+  
+  return createAccountingEntries({
+    competenceMonth,
+    entryDate: data.entryDate,
+    description: `Venda #${data.saleId}${data.customerName ? ` - ${data.customerName}` : ""}`,
+    sourceType: "sale",
+    sourceId: data.saleId,
+    entries,
+    createdBy: data.createdBy,
+  });
+}
+
+/**
+ * Contabilizar recebimento de cliente (Contas a Receber)
+ * D - Caixa/Banco
+ * C - Clientes
+ * D - Descontos Concedidos (se houver)
+ * C - Juros Recebidos (se houver)
+ */
+export async function accountCustomerPayment(data: {
+  paymentId: number;
+  customerId: number;
+  customerName: string;
+  amount: string;
+  interestAmount?: string;
+  discountAmount?: string;
+  entryDate: Date;
+  createdBy: string;
+}): Promise<{ success: boolean; journalId?: number; error?: string }> {
+  const competenceMonth = data.entryDate.toISOString().slice(0, 7);
+  const entries: AccountingLedgerEntry[] = [];
+  
+  const amount = parseFloat(data.amount);
+  const interestAmount = data.interestAmount ? parseFloat(data.interestAmount) : 0;
+  const discountAmount = data.discountAmount ? parseFloat(data.discountAmount) : 0;
+  
+  // Valor que entra no caixa = valor recebido + juros
+  const cashReceived = amount + interestAmount;
+  
+  // D - Caixa (valor efetivamente recebido)
+  entries.push({
+    accountCode: ACCOUNTING_CODES.CAIXA_GERAL,
+    amount: cashReceived.toFixed(2),
+    type: "D",
+    description: `Recebimento ${data.customerName}`,
+  });
+  
+  // C - Clientes (valor original + desconto concedido)
+  const clienteCredit = amount + discountAmount;
+  entries.push({
+    accountCode: ACCOUNTING_CODES.CLIENTES_A_PRAZO,
+    amount: clienteCredit.toFixed(2),
+    type: "C",
+    description: `Baixa débito ${data.customerName}`,
+  });
+  
+  // D - Descontos Concedidos (se houver)
+  if (discountAmount > 0) {
+    entries.push({
+      accountCode: ACCOUNTING_CODES.DESCONTOS_CONCEDIDOS,
+      amount: discountAmount.toFixed(2),
+      type: "D",
+      description: `Desconto concedido ${data.customerName}`,
+    });
+  }
+  
+  // C - Juros Recebidos (se houver)
+  if (interestAmount > 0) {
+    entries.push({
+      accountCode: "4.3.1.01", // Juros Recebidos
+      amount: interestAmount.toFixed(2),
+      type: "C",
+      description: `Juros recebidos ${data.customerName}`,
+    });
+  }
+  
+  return createAccountingEntries({
+    competenceMonth,
+    entryDate: data.entryDate,
+    description: `Recebimento cliente ${data.customerName}`,
+    sourceType: "customer_payment",
+    sourceId: data.paymentId,
+    entries,
+    createdBy: data.createdBy,
+  });
 }

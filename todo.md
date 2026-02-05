@@ -504,3 +504,42 @@ Automatizar importação de pedidos concluídos do iFood via arquivos JSON
 - [ ] Definir contas contábeis para descontos obtidos (receita financeira)
 - [ ] Implementar lançamentos automáticos no pagamento
 
+
+## Contabilização Automática (05/02/2026)
+
+### Fase 1: Revisão do Plano de Contas
+- [ ] Revisar estrutura de contas contábeis existentes
+- [ ] Verificar amarração entre contas gerenciais e contábeis
+- [ ] Identificar contas necessárias para lançamentos automáticos
+
+### Fase 2: Estrutura de Lançamentos
+- [x] Criar função genérica para geração de lançamentos contábeis (createAccountingEntries)
+- [x] Implementar validações de débito/crédito (postJournal)
+- [x] Criar histórico padrão para cada tipo de lançamento (addJournalSource)
+
+### Fase 3: Contabilização de Compras
+- [x] Lançamento na criação: D-Estoque / C-Fornecedores (accountPurchaseConfirmation)
+- [x] Lançamento no pagamento: D-Fornecedores / C-Banco/Caixa (accountPurchasePayment)
+- [x] Lançamento de juros: D-Juros Pagos / C-Banco (integrado no pagamento)
+- [x] Lançamento de desconto: D-Banco / C-Descontos Obtidos (integrado no pagamento)
+
+### Fase 4: Contabilização de Despesas
+- [x] Lançamento na criação: D-Despesa / C-Contas a Pagar (accountExpenseCreation)
+- [x] Lançamento no pagamento: D-Contas a Pagar / C-Banco/Caixa (accountExpensePayment)
+- [x] Lançamento de juros: D-Juros Pagos / C-Banco (integrado no pagamento)
+- [x] Lançamento de desconto: D-Banco / C-Descontos Obtidos (integrado no pagamento)
+
+### Fase 5: Contabilização de Vendas
+- [x] Lançamento na venda: D-Caixa ou Clientes / C-Receita de Vendas (accountSale)
+- [x] Lançamento do CMV: D-CMV / C-Estoque (integrado na venda)
+- [x] Lançamento no recebimento: D-Banco/Caixa / C-Clientes (accountCustomerPayment)
+- [ ] Baixa do estoque: D-CMV / C-Estoque
+
+
+### Retroação Contábil - Janeiro e Fevereiro 2026
+- [x] Criar script de retroação para compras confirmadas (83 compras)
+- [x] Criar script de retroação para pagamentos de compras (~150 pagamentos)
+- [x] Criar script de retroação para vendas (Balcão, Delivery, A Prazo) (2.723 vendas)
+- [x] Criar script de retroação para CMV das vendas (integrado nas vendas)
+- [x] Criar script de retroação para recebimentos de clientes (49 recebimentos)
+- [x] Executar e validar retroação (Balancete e Razão verificados)

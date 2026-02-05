@@ -1087,6 +1087,32 @@ export const appRouter = router({
         // NOTA: O movimento de estoque para Perdas já é registrado automaticamente
         // dentro de db.createExpense quando detecta que é uma conta de Perdas
         
+        // ========== CONTABILIZAÇÃO AUTOMÁTICA ==========
+        // D - Conta Gerencial (via amarração)
+        // C - Contas a Pagar
+        if (input.managementAccountId) {
+          try {
+            const accountingResult = await db.accountExpenseCreation({
+              expenseId,
+              amount: input.amount,
+              managementAccountId: input.managementAccountId,
+              supplierName: undefined, // Será buscado se necessário
+              description: input.description,
+              entryDate: input.entryDate || input.issueDate || new Date(),
+              createdBy: ctx.user.id,
+            });
+            
+            if (accountingResult.success) {
+              console.log(`[expenses.create] Contabilização criada - Journal #${accountingResult.journalId}`);
+            } else {
+              console.warn(`[expenses.create] Erro na contabilização: ${accountingResult.error}`);
+            }
+          } catch (accountingError) {
+            console.error(`[expenses.create] Erro ao contabilizar:`, accountingError);
+            // Não bloqueia a criação - apenas loga o erro
+          }
+        }
+        
         return { id: expenseId, success: true };
       }),
     
