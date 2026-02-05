@@ -52,9 +52,9 @@ export function SaleDetailsModal({ saleId, open, onClose }: SaleDetailsModalProp
     { enabled: !!saleId && open }
   );
 
-  // Query de clientes para troca de cliente (apenas clientes, não fornecedores)
+  // Query de clientes para troca de cliente (clientes e parceiros BOTH)
   const { data: customers } = trpc.partners.list.useQuery(
-    { type: "CLIENTE" },
+    { partnerType: "CUSTOMER" },
     { enabled: showChangeCustomerDialog || (isEditing && saleData?.saleType === 'A_PRAZO') }
   );
 
