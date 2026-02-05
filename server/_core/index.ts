@@ -9,6 +9,7 @@ import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import backupRouter from "../backupEndpoint";
 import { initBackupScheduler, getSchedulerStatus, triggerManualBackup } from "../scheduler";
+import { initAccountingScheduler, getAccountingSchedulerStatus, runAccountingBatch, updateAccountingSchedule } from "../accountingScheduler";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -54,6 +55,35 @@ async function startServer() {
     }
   });
   
+  // Accounting scheduler endpoints
+  app.get('/api/accounting-scheduler/status', async (req, res) => {
+    const status = await getAccountingSchedulerStatus();
+    res.json(status);
+  });
+  
+  app.post('/api/accounting-scheduler/trigger', async (req, res) => {
+    try {
+      const { competenceMonth } = req.body;
+      if (!competenceMonth) {
+        return res.status(400).json({ success: false, error: 'competenceMonth is required' });
+      }
+      const result = await runAccountingBatch(competenceMonth, 'manual', 'api');
+      res.json(result);
+    } catch (error: any) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+  
+  app.post('/api/accounting-scheduler/update-schedule', async (req, res) => {
+    try {
+      await updateAccountingSchedule();
+      const status = await getAccountingSchedulerStatus();
+      res.json({ success: true, ...status });
+    } catch (error: any) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+  
   // tRPC API
   app.use(
     "/api/trpc",
@@ -79,8 +109,9 @@ async function startServer() {
   server.listen(port, () => {
     console.log(`Server running on http://localhost:${port}/`);
     
-    // Inicializar scheduler de backup após servidor estar rodando
+    // Inicializar schedulers após servidor estar rodando
     initBackupScheduler();
+    initAccountingScheduler();
   });
 }
 

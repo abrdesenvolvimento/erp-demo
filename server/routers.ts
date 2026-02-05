@@ -770,6 +770,41 @@ export const appRouter = router({
       .query(async ({ input }) => {
         return await db.getSalesForExport(input);
       }),
+
+    // Trocar cliente em venda a prazo
+    changeCustomer: adminProcedure
+      .input(z.object({
+        saleId: z.number(),
+        newCustomerId: z.number(),
+        reason: z.string().min(10, "Justificativa deve ter pelo menos 10 caracteres"),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const result = await db.changeSaleCustomer(
+          input.saleId,
+          input.newCustomerId,
+          input.reason,
+          ctx.user.id,
+          ctx.user.name || undefined
+        );
+        
+        if (!result.success) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: result.error || "Erro ao trocar cliente",
+          });
+        }
+        
+        return { success: true };
+      }),
+
+    // Histórico de alterações de cliente
+    customerChangeHistory: protectedProcedure
+      .input(z.object({
+        saleId: z.number(),
+      }))
+      .query(async ({ input }) => {
+        return await db.getSaleCustomerChangeHistory(input.saleId);
+      }),
   }),
 
   // ==================== COMPRAS ====================

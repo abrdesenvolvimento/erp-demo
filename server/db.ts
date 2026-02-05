@@ -8034,3 +8034,116 @@ export async function getGovernanceAuditHistory(
     .orderBy(desc(governanceAuditLog.createdAt))
     .limit(limit);
 }
+
+
+/**
+ * Trocar cliente em uma venda a prazo
+ * Regras de governança:
+ * - Venda não contabilizada: permitir troca com log
+ * - Venda contabilizada (journal POSTED): bloquear
+ * - Competência fechada: bloquear em qualquer cenário
+ */
+export async function changeSaleCustomer(
+  saleId: number,
+  newCustomerId: number,
+  reason: string,
+  userId: string,
+  userName?: string
+): Promise<{ success: boolean; error?: string }> {
+  const db = await getDb();
+  if (!db) return { success: false, error: "Database not available" };
+
+  // Buscar venda
+  const sale = await getSale(saleId);
+  if (!sale) {
+    return { success: false, error: "Venda não encontrada" };
+  }
+
+  // Verificar se é venda a prazo
+  if (sale.saleType !== "A_PRAZO") {
+    return { success: false, error: "Apenas vendas a prazo podem ter o cliente alterado" };
+  }
+
+  // Verificar se já tem cliente
+  const oldCustomerId = sale.customerId;
+  if (!oldCustomerId) {
+    return { success: false, error: "Venda não possui cliente associado" };
+  }
+
+  // Verificar se o novo cliente é diferente
+  if (oldCustomerId === newCustomerId) {
+    return { success: false, error: "O novo cliente é o mesmo da venda atual" };
+  }
+
+  // Buscar novo cliente para validar
+  const newCustomer = await getPartner(newCustomerId);
+  if (!newCustomer) {
+    return { success: false, error: "Novo cliente não encontrado" };
+  }
+  if (newCustomer.type !== "CLIENTE") {
+    return { success: false, error: "O parceiro selecionado não é um cliente" };
+  }
+
+  // Verificar governança
+  const canEditResult = await canEditEntity("sale", saleId, 1);
+  if (!canEditResult.canEdit) {
+    // Registrar tentativa bloqueada
+    await logEditBlocked(1, "sale_customer_change", saleId, canEditResult.reason || "Bloqueado", userId, userName);
+    return { success: false, error: canEditResult.reason };
+  }
+
+  // Buscar cliente antigo para log
+  const oldCustomer = await getPartner(oldCustomerId);
+
+  // Atualizar venda
+  await db.update(sales)
+    .set({ customerId: newCustomerId })
+    .where(eq(sales.id, saleId));
+
+  // Atualizar recebível associado
+  const receivable = await getReceivableBySaleId(saleId);
+  if (receivable) {
+    await db.update(receivables)
+      .set({ customerId: newCustomerId })
+      .where(eq(receivables.id, receivable.id));
+  }
+
+  // Registrar no log de auditoria
+  await db.insert(governanceAuditLog).values({
+    companyId: 1,
+    action: "CUSTOMER_CHANGED",
+    entityType: "sale",
+    entityId: saleId,
+    reason,
+    details: JSON.stringify({
+      oldCustomerId,
+      oldCustomerName: oldCustomer?.name,
+      newCustomerId,
+      newCustomerName: newCustomer.name,
+      saleAmount: sale.finalAmount,
+    }),
+    userId,
+    userName,
+  });
+
+  return { success: true };
+}
+
+/**
+ * Buscar histórico de alterações de cliente em vendas
+ */
+export async function getSaleCustomerChangeHistory(saleId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  return db.select()
+    .from(governanceAuditLog)
+    .where(
+      and(
+        eq(governanceAuditLog.entityType, "sale"),
+        eq(governanceAuditLog.entityId, saleId),
+        eq(governanceAuditLog.action, "CUSTOMER_CHANGED")
+      )
+    )
+    .orderBy(desc(governanceAuditLog.createdAt));
+}

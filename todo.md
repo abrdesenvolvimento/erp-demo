@@ -379,23 +379,28 @@ Automatizar importação de pedidos concluídos do iFood via arquivos JSON
 - [x] Se competência FECHADA → bloqueio absoluto
 - [ ] Correções via estorno + novo lançamento
 
-### 2. Troca de Cliente em Venda
-- [ ] Venda não contabilizada: permitir troca com log
-- [ ] Venda contabilizada (journal POSTED): apenas via estorno + nova venda
-- [ ] Competência fechada: bloquear em qualquer cenário
+### 2. Troca de Cliente em Venda ✅
+- [x] Venda não contabilizada: permitir troca com log (changeSaleCustomer)
+- [x] Venda contabilizada (journal POSTED): bloqueio automático
+- [x] Competência fechada: bloqueio automático
+- [x] Botão "Trocar Cliente" no modal de detalhes da venda
+- [x] Justificativa obrigatória (mínimo 10 caracteres)
+- [x] Atualização automática do recebível associado
+- [x] Log completo no governanceAuditLog
 
 ### 3. Motor de Contabilização em Lote
 
-#### 3.1 Execução Automática (Semanal)
+#### 3.1 Execução Automática (Semanal) ✅
 - [x] Configuração de dia/hora da execução (autoAccountingDay/Hour)
-- [ ] Executar 1x por semana (Domingo → Segunda, 03:00) - implementar scheduler
-- [ ] Agrupar journals por período semanal
+- [x] Executar 1x por semana (Domingo 03:00 - accountingScheduler.ts)
+- [x] Scheduler inicializado automaticamente com o servidor
+- [x] Próxima execução: 08/02/2026 05:00
 
-#### 3.2 Execução Manual ("Contabilizar Agora")
+#### 3.2 Execução Manual ("Contabilizar Agora") ✅
 - [x] Botão "Contabilizar Agora" na interface (GovernancaContabil.tsx)
 - [x] Seleção de competência específica
 - [x] Disponível apenas para admin
-- [ ] Implementar execução do batch (runAccountingBatch)
+- [x] Implementado execução do batch (runAccountingBatch)
 
 #### 3.3 Regras do Motor
 - [x] Idempotência: UNIQUE em journalSources (companyId, sourceType, sourceId)

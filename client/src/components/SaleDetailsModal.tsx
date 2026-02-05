@@ -2,7 +2,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { Printer, X, Edit, Ban, Plus } from "lucide-react";
+import { Printer, X, Edit, Ban, Plus, Users } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -31,6 +31,10 @@ export function SaleDetailsModal({ saleId, open, onClose }: SaleDetailsModalProp
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [cancellationReason, setCancellationReason] = useState("");
   const [isEditing, setIsEditing] = useState(false);
+  const [showChangeCustomerDialog, setShowChangeCustomerDialog] = useState(false);
+  const [newCustomerId, setNewCustomerId] = useState<number | null>(null);
+  const [customerChangeReason, setCustomerChangeReason] = useState("");
+  const [customerSearch, setCustomerSearch] = useState("");
   const [editedItems, setEditedItems] = useState<any[]>([]);
   const [editedDiscount, setEditedDiscount] = useState("0");
   const [editedSurcharge, setEditedSurcharge] = useState("0");
@@ -40,6 +44,12 @@ export function SaleDetailsModal({ saleId, open, onClose }: SaleDetailsModalProp
   const [newItemQuantity, setNewItemQuantity] = useState(1);
 
   const { data: products } = trpc.products.list.useQuery({ includePrices: true });
+
+  // Query de clientes para troca de cliente
+  const { data: customers } = trpc.partners.list.useQuery(
+    { type: "CLIENTE" },
+    { enabled: showChangeCustomerDialog }
+  );
 
   const { data: saleData, isLoading } = trpc.sales.get.useQuery(
     { id: saleId! },
@@ -69,6 +79,22 @@ export function SaleDetailsModal({ saleId, open, onClose }: SaleDetailsModalProp
     },
     onError: (error) => {
       toast.error(error.message || "Erro ao atualizar venda");
+    },
+  });
+
+  const changeCustomerMutation = trpc.sales.changeCustomer.useMutation({
+    onSuccess: () => {
+      toast.success("Cliente alterado com sucesso!");
+      utils.sales.list.invalidate();
+      utils.sales.get.invalidate({ id: saleId! });
+      utils.accountReceivable.customers.invalidate();
+      setShowChangeCustomerDialog(false);
+      setNewCustomerId(null);
+      setCustomerChangeReason("");
+      setCustomerSearch("");
+    },
+    onError: (error) => {
+      toast.error(error.message || "Erro ao alterar cliente");
     },
   });
 
@@ -467,6 +493,17 @@ export function SaleDetailsModal({ saleId, open, onClose }: SaleDetailsModalProp
                     <Edit className="w-4 h-4 mr-2" />
                     Editar
                   </Button>
+                  {saleData?.saleType === 'A_PRAZO' && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowChangeCustomerDialog(true)}
+                      disabled={isLoading || !saleData}
+                    >
+                      <Users className="w-4 h-4 mr-2" />
+                      Trocar Cliente
+                    </Button>
+                  )}
                   <Button
                     variant="destructive"
                     size="sm"
@@ -837,6 +874,104 @@ export function SaleDetailsModal({ saleId, open, onClose }: SaleDetailsModalProp
               disabled={cancelMutation.isPending}
             >
               {cancelMutation.isPending ? "Cancelando..." : "Confirmar Cancelamento"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Dialog de troca de cliente */}
+      <AlertDialog open={showChangeCustomerDialog} onOpenChange={setShowChangeCustomerDialog}>
+        <AlertDialogContent className="max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Trocar Cliente da Venda #{saleId}</AlertDialogTitle>
+            <AlertDialogDescription>
+              Selecione o novo cliente para esta venda a prazo. O recebível será transferido automaticamente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-4 my-4">
+            <div>
+              <label className="text-sm font-medium mb-2 block">Cliente Atual</label>
+              <div className="p-2 bg-muted rounded-md text-sm">
+                {saleData?.customerId ? `ID: ${saleData.customerId}` : 'Não informado'}
+              </div>
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-2 block">Novo Cliente *</label>
+              <input
+                type="text"
+                placeholder="Buscar cliente por nome..."
+                value={customerSearch}
+                onChange={(e) => setCustomerSearch(e.target.value)}
+                className="w-full px-3 py-2 border rounded-md"
+              />
+              {customerSearch && customers && customers.length > 0 && (
+                <div className="mt-1 max-h-40 overflow-y-auto border rounded-md bg-white">
+                  {customers
+                    .filter((c: any) => 
+                      c.name.toLowerCase().includes(customerSearch.toLowerCase()) &&
+                      c.id !== saleData?.customerId
+                    )
+                    .slice(0, 10)
+                    .map((customer: any) => (
+                      <div
+                        key={customer.id}
+                        onClick={() => {
+                          setNewCustomerId(customer.id);
+                          setCustomerSearch(customer.name);
+                        }}
+                        className={`px-3 py-2 cursor-pointer hover:bg-muted ${
+                          newCustomerId === customer.id ? 'bg-primary/10' : ''
+                        }`}
+                      >
+                        <div className="font-medium">{customer.name}</div>
+                        {customer.phone && (
+                          <div className="text-xs text-muted-foreground">{customer.phone}</div>
+                        )}
+                      </div>
+                    ))}
+                </div>
+              )}
+              {newCustomerId && (
+                <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded-md text-sm text-green-700">
+                  Cliente selecionado: {customerSearch}
+                </div>
+              )}
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-2 block">Justificativa *</label>
+              <Textarea
+                placeholder="Descreva o motivo da troca de cliente (mínimo 10 caracteres)..."
+                value={customerChangeReason}
+                onChange={(e) => setCustomerChangeReason(e.target.value)}
+                rows={3}
+              />
+              {customerChangeReason.length > 0 && customerChangeReason.length < 10 && (
+                <p className="text-xs text-red-500 mt-1">
+                  Mínimo 10 caracteres ({10 - customerChangeReason.length} restantes)
+                </p>
+              )}
+            </div>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => {
+              setNewCustomerId(null);
+              setCustomerChangeReason("");
+              setCustomerSearch("");
+            }}>
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (!newCustomerId || customerChangeReason.length < 10) return;
+                changeCustomerMutation.mutate({
+                  saleId: saleId!,
+                  newCustomerId,
+                  reason: customerChangeReason,
+                });
+              }}
+              disabled={!newCustomerId || customerChangeReason.length < 10 || changeCustomerMutation.isPending}
+            >
+              {changeCustomerMutation.isPending ? "Alterando..." : "Confirmar Troca"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

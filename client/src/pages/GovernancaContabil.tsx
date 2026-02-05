@@ -59,6 +59,7 @@ export default function GovernancaContabil() {
   const [showCloseDialog, setShowCloseDialog] = useState(false);
   const [showReopenDialog, setShowReopenDialog] = useState(false);
   const [showAccountingDialog, setShowAccountingDialog] = useState(false);
+  const [isAccountingRunning, setIsAccountingRunning] = useState(false);
   const [accountingMonth, setAccountingMonth] = useState(() => {
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
@@ -789,14 +790,36 @@ export default function GovernancaContabil() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowAccountingDialog(false)}>
+            <Button variant="outline" onClick={() => setShowAccountingDialog(false)} disabled={isAccountingRunning}>
               Cancelar
             </Button>
-            <Button onClick={() => {
-              toast.info("Funcionalidade em desenvolvimento. A contabilização automática já está ativa para novas transações.");
-              setShowAccountingDialog(false);
-            }}>
-              Executar Contabilização
+            <Button 
+              onClick={async () => {
+                setIsAccountingRunning(true);
+                try {
+                  const response = await fetch('/api/accounting-scheduler/trigger', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ competenceMonth: accountingMonth }),
+                  });
+                  const result = await response.json();
+                  if (result.success) {
+                    toast.success(`Contabilização concluída! Journals: ${result.journalsCreated}, Lançamentos: ${result.entriesCreated}`);
+                    utils.governance.getBatchHistory.invalidate();
+                    utils.governance.getLastBatch.invalidate();
+                  } else {
+                    toast.error(`Erro: ${result.errors?.join(', ') || result.error || 'Falha desconhecida'}`);
+                  }
+                } catch (error: any) {
+                  toast.error(`Erro ao executar contabilização: ${error.message}`);
+                } finally {
+                  setIsAccountingRunning(false);
+                  setShowAccountingDialog(false);
+                }
+              }}
+              disabled={isAccountingRunning}
+            >
+              {isAccountingRunning ? "Executando..." : "Executar Contabilização"}
             </Button>
           </DialogFooter>
         </DialogContent>
