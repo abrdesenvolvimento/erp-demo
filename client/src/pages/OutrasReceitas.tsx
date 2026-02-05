@@ -1,6 +1,5 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -12,7 +11,7 @@ import { trpc } from "@/lib/trpc";
 import { useState, useMemo } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Plus, Pencil, Trash2, Loader2, DollarSign, Calendar, Building2, FileText, Check, ChevronsUpDown } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, FileText, Check, ChevronLeft, X } from "lucide-react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { toast } from "sonner";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
@@ -52,27 +51,14 @@ const formatCompetence = (competence: string) => {
   return format(date, 'MMM/yy', { locale: ptBR });
 };
 
-// Verificar se pode usar competência do mês anterior (até dia 5)
-const canUseLastMonthCompetence = () => {
-  const today = new Date();
-  return today.getDate() <= 5;
-};
-
-// Obter último dia do mês anterior
-const getLastDayOfPreviousMonth = () => {
-  const today = new Date();
-  const lastDay = new Date(today.getFullYear(), today.getMonth(), 0);
-  return lastDay.toISOString().split('T')[0];
-};
-
 // Status badge
 const StatusBadge = ({ status }: { status: string }) => {
-  const variants: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
-    ACTIVE: { label: "Ativo", variant: "default" },
-    CANCELLED: { label: "Cancelado", variant: "destructive" },
+  const variants: Record<string, { label: string; className: string }> = {
+    ACTIVE: { label: "Ativo", className: "bg-green-100 text-green-700" },
+    CANCELLED: { label: "Cancelado", className: "bg-red-100 text-red-700" },
   };
-  const { label, variant } = variants[status] || { label: status, variant: "outline" };
-  return <Badge variant={variant}>{label}</Badge>;
+  const { label, className } = variants[status] || { label: status, className: "bg-gray-100 text-gray-700" };
+  return <span className={cn("text-xs px-2 py-1 rounded-full", className)}>{label}</span>;
 };
 
 // Tipos de documento
@@ -133,13 +119,25 @@ const getEmptyForm = (): OtherRevenueForm => ({
 
 export default function OutrasReceitas() {
   const { user } = useAuth();
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedRevenue, setSelectedRevenue] = useState<OtherRevenueForm>(getEmptyForm());
   const [deleteId, setDeleteId] = useState<number | null>(null);
-  const [filterMonth, setFilterMonth] = useState(getCurrentCompetenceMonth());
 
-  // Estados para autocomplete
+  // Filtros ampliados
+  const [filterStartDate, setFilterStartDate] = useState('');
+  const [filterEndDate, setFilterEndDate] = useState('');
+  const [filterPartnerId, setFilterPartnerId] = useState<number | undefined>();
+  const [filterPartnerOpen, setFilterPartnerOpen] = useState(false);
+  const [filterPartnerSearch, setFilterPartnerSearch] = useState("");
+  const [filterManagementAccountId, setFilterManagementAccountId] = useState<number | undefined>();
+  const [filterManagementAccountOpen, setFilterManagementAccountOpen] = useState(false);
+  const [filterManagementAccountSearch, setFilterManagementAccountSearch] = useState("");
+  const [filterMinValue, setFilterMinValue] = useState("");
+  const [filterMaxValue, setFilterMaxValue] = useState("");
+
+  // Estados para autocomplete no formulário
   const [partnerOpen, setPartnerOpen] = useState(false);
   const [partnerSearch, setPartnerSearch] = useState("");
   const [managementAccountOpen, setManagementAccountOpen] = useState(false);
@@ -147,7 +145,10 @@ export default function OutrasReceitas() {
 
   // Queries
   const { data: revenues, isLoading, refetch } = trpc.accounting.listOtherRevenues.useQuery({ 
-    competenceMonth: filterMonth 
+    startDate: filterStartDate || undefined,
+    endDate: filterEndDate || undefined,
+    partnerId: filterPartnerId,
+    managementAccountId: filterManagementAccountId,
   });
   const { data: partners } = trpc.partners.list.useQuery();
   const { data: managementAccounts = [] } = trpc.accounting.listManagementAccounts.useQuery();
@@ -157,7 +158,7 @@ export default function OutrasReceitas() {
     onSuccess: () => {
       toast.success("Receita criada com sucesso!");
       refetch();
-      setIsDialogOpen(false);
+      setIsCreating(false);
       setSelectedRevenue(getEmptyForm());
     },
     onError: (error) => {
@@ -169,7 +170,8 @@ export default function OutrasReceitas() {
     onSuccess: () => {
       toast.success("Receita atualizada com sucesso!");
       refetch();
-      setIsDialogOpen(false);
+      setIsCreating(false);
+      setIsEditing(false);
       setSelectedRevenue(getEmptyForm());
     },
     onError: (error) => {
@@ -200,10 +202,26 @@ export default function OutrasReceitas() {
     return managementAccounts.filter(acc => acc.nature === 'RECEITA' && acc.isActive !== false);
   }, [managementAccounts]);
 
+  // Filtrar receitas localmente
+  const filteredRevenues = useMemo(() => {
+    if (!revenues) return [];
+    return revenues.filter(rev => {
+      // Filtro de valor mínimo
+      if (filterMinValue && parseFloat(String(rev.amount)) < parseFloat(filterMinValue)) {
+        return false;
+      }
+      // Filtro de valor máximo
+      if (filterMaxValue && parseFloat(String(rev.amount)) > parseFloat(filterMaxValue)) {
+        return false;
+      }
+      return true;
+    });
+  }, [revenues, filterMinValue, filterMaxValue]);
+
   // Totais
   const totals = useMemo(() => {
-    if (!revenues) return { total: 0, active: 0, cancelled: 0 };
-    return revenues.reduce((acc, rev) => {
+    if (!filteredRevenues) return { total: 0, active: 0, cancelled: 0 };
+    return filteredRevenues.reduce((acc, rev) => {
       const amount = typeof rev.amount === 'number' ? rev.amount : parseFloat(String(rev.amount));
       if (rev.status === 'ACTIVE') {
         acc.total += amount;
@@ -213,12 +231,13 @@ export default function OutrasReceitas() {
       }
       return acc;
     }, { total: 0, active: 0, cancelled: 0 });
-  }, [revenues]);
+  }, [filteredRevenues]);
 
   // Handlers
   const handleNew = () => {
     setSelectedRevenue(getEmptyForm());
-    setIsDialogOpen(true);
+    setIsCreating(true);
+    setIsEditing(false);
   };
 
   const handleEdit = (revenue: any) => {
@@ -238,7 +257,8 @@ export default function OutrasReceitas() {
       amount: revenue.amount.toString(),
       status: revenue.status,
     });
-    setIsDialogOpen(true);
+    setIsCreating(true);
+    setIsEditing(true);
   };
 
   const handleDelete = (id: number) => {
@@ -259,7 +279,7 @@ export default function OutrasReceitas() {
   const handleSubmit = () => {
     // Validações
     if (!selectedRevenue.partnerId) {
-      toast.error("Fornecedor é obrigatório");
+      toast.error("Parceiro é obrigatório");
       return;
     }
     if (!selectedRevenue.description) {
@@ -292,7 +312,6 @@ export default function OutrasReceitas() {
       paymentMethod: selectedRevenue.paymentMethod,
       notes: selectedRevenue.notes || undefined,
       amount: parseFloat(selectedRevenue.amount),
-      status: selectedRevenue.status,
     };
 
     if (selectedRevenue.id) {
@@ -308,18 +327,11 @@ export default function OutrasReceitas() {
     }
   };
 
-  // Gerar opções de meses
-  const monthOptions = useMemo(() => {
-    const months = [];
-    const now = new Date();
-    for (let i = -6; i <= 6; i++) {
-      const date = new Date(now.getFullYear(), now.getMonth() + i, 1);
-      const value = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-      const label = format(date, 'MMMM/yyyy', { locale: ptBR });
-      months.push({ value, label });
-    }
-    return months;
-  }, []);
+  const resetForm = () => {
+    setSelectedRevenue(getEmptyForm());
+    setPartnerSearch("");
+    setManagementAccountSearch("");
+  };
 
   // Obter nome do parceiro
   const getPartnerName = (partnerId: number | null) => {
@@ -335,230 +347,180 @@ export default function OutrasReceitas() {
     return account ? `${account.code} - ${account.name}` : "-";
   };
 
-  return (
-    <DashboardLayout>
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold">Outras Receitas</h1>
-            <p className="text-muted-foreground">Receitas não vinculadas a vendas de produtos</p>
+  // Filtros de parceiros e contas gerenciais
+  const filteredPartners = allPartners.filter(p => 
+    p.name.toLowerCase().includes(partnerSearch.toLowerCase()) ||
+    p.docNumber?.toLowerCase().includes(partnerSearch.toLowerCase())
+  );
+
+  const filteredManagementAccounts = revenueManagementAccounts.filter(a => 
+    a.name.toLowerCase().includes(managementAccountSearch.toLowerCase()) ||
+    a.code.toLowerCase().includes(managementAccountSearch.toLowerCase())
+  );
+
+  const selectedPartner = allPartners.find(p => p.id === parseInt(selectedRevenue.partnerId));
+  const selectedManagementAccount = managementAccounts.find(a => a.id === parseInt(selectedRevenue.managementAccountId));
+
+  // Tela de criação/edição
+  if (isCreating) {
+    return (
+      <DashboardLayout>
+        <div className="h-full flex flex-col">
+          {/* Header */}
+          <div className="border-b bg-background sticky top-0 z-10">
+            <div className="container py-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => {
+                      if (selectedRevenue.description || selectedRevenue.amount) {
+                        if (confirm("Deseja descartar as alterações?")) {
+                          setIsCreating(false);
+                          setIsEditing(false);
+                          resetForm();
+                        }
+                      } else {
+                        setIsCreating(false);
+                        setIsEditing(false);
+                        resetForm();
+                      }
+                    }}
+                  >
+                    <ChevronLeft className="h-5 w-5" />
+                  </Button>
+                  <div>
+                    <h1 className="text-2xl font-bold">{isEditing ? "Editar Receita" : "Nova Receita"}</h1>
+                    <p className="text-sm text-muted-foreground">
+                      {isEditing ? "Edite os dados da receita" : "Registre uma nova receita"}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setIsCreating(false);
+                      setIsEditing(false);
+                      resetForm();
+                    }}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    onClick={handleSubmit}
+                    disabled={createMutation.isPending || updateMutation.isPending}
+                  >
+                    {(createMutation.isPending || updateMutation.isPending) && (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    )}
+                    {isEditing ? "Salvar Alterações" : "Registrar Receita"}
+                  </Button>
+                </div>
+              </div>
+            </div>
           </div>
-          <Button onClick={handleNew} className="flex items-center gap-2">
-            <Plus className="h-4 w-4" />
-            Nova Receita
-          </Button>
-        </div>
 
-        {/* Filtros e Totais */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card>
-            <CardContent className="pt-4">
-              <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4 text-muted-foreground" />
-                <Label>Competência</Label>
+          {/* Formulário */}
+          <div className="flex-1 overflow-auto">
+            <div className="container py-6 space-y-6">
+              {/* Dados do Documento */}
+              <div className="bg-card border rounded-lg p-6">
+                <h3 className="text-lg font-semibold mb-4">Dados do Documento</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div>
+                    <Label>Data de Emissão</Label>
+                    <Input
+                      type="date"
+                      value={selectedRevenue.issueDate}
+                      onChange={(e) => setSelectedRevenue({ ...selectedRevenue, issueDate: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <Label>Data de Lançamento</Label>
+                    <Input
+                      type="date"
+                      value={selectedRevenue.entryDate}
+                      onChange={(e) => handleEntryDateChange(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <Label>Competência</Label>
+                    <Input
+                      type="month"
+                      value={selectedRevenue.competenceMonth}
+                      onChange={(e) => setSelectedRevenue({ ...selectedRevenue, competenceMonth: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <Label>Tipo de Documento</Label>
+                    <Select 
+                      value={selectedRevenue.documentType} 
+                      onValueChange={(v) => setSelectedRevenue({ ...selectedRevenue, documentType: v })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {DOCUMENT_TYPES.map(dt => (
+                          <SelectItem key={dt.value} value={dt.value}>{dt.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Número do Documento</Label>
+                    <Input
+                      value={selectedRevenue.documentNumber}
+                      onChange={(e) => setSelectedRevenue({ ...selectedRevenue, documentNumber: e.target.value })}
+                      placeholder="Ex: 123456"
+                    />
+                  </div>
+                </div>
               </div>
-              <Select value={filterMonth} onValueChange={setFilterMonth}>
-                <SelectTrigger className="mt-2">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {monthOptions.map(opt => (
-                    <SelectItem key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </CardContent>
-          </Card>
 
-          <Card>
-            <CardContent className="pt-4">
-              <div className="text-sm text-muted-foreground">Total do Período</div>
-              <div className="text-2xl font-bold text-green-600">
-                {formatCurrency(totals.total)}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-4">
-              <div className="text-sm text-muted-foreground">Receitas Ativas</div>
-              <div className="text-2xl font-bold text-blue-600">
-                {formatCurrency(totals.active)}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-4">
-              <div className="text-sm text-muted-foreground">Canceladas</div>
-              <div className="text-2xl font-bold text-red-600">
-                {formatCurrency(totals.cancelled)}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Tabela */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Receitas do Período</CardTitle>
-            <CardDescription>
-              {revenues?.length || 0} receita(s) encontrada(s)
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-              </div>
-            ) : revenues && revenues.length > 0 ? (
-              <div className="border rounded-lg overflow-hidden">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Fornecedor</TableHead>
-                      <TableHead>Data Emissão</TableHead>
-                      <TableHead>Competência</TableHead>
-                      <TableHead>Descrição</TableHead>
-                      <TableHead>Conta Gerencial</TableHead>
-                      <TableHead className="text-right">Valor</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="text-right">Ações</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {revenues.map((revenue) => (
-                      <TableRow key={revenue.id}>
-                        <TableCell className="font-medium">
-                          {getPartnerName(revenue.partnerId)}
-                        </TableCell>
-                        <TableCell>
-                          {revenue.issueDate ? formatDate(revenue.issueDate) : formatDate(revenue.revenueDate)}
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="outline">{formatCompetence(revenue.competenceMonth)}</Badge>
-                        </TableCell>
-                        <TableCell className="max-w-xs truncate">{revenue.description}</TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
-                          {getManagementAccountName(revenue.managementAccountId)}
-                        </TableCell>
-                        <TableCell className="text-right font-medium text-green-600">
-                          {formatCurrency(revenue.amount)}
-                        </TableCell>
-                        <TableCell>
-                          <StatusBadge status={revenue.status} />
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end gap-2">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleEdit(revenue)}
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleDelete(revenue.id)}
-                              className="text-destructive hover:text-destructive"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            ) : (
-              <div className="text-center py-8 text-muted-foreground">
-                <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>Nenhuma receita encontrada para este período.</p>
-                <Button variant="link" onClick={handleNew}>
-                  Cadastrar nova receita
-                </Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Modal de Criar/Editar */}
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>
-                {selectedRevenue.id ? "Editar Receita" : "Nova Receita"}
-              </DialogTitle>
-              <DialogDescription>
-                Preencha os dados da receita. Campos com * são obrigatórios.
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="space-y-4 py-4">
-              {/* Fornecedor */}
-              <div>
-                <Label>Fornecedor *</Label>
+              {/* Parceiro */}
+              <div className="bg-card border rounded-lg p-6">
+                <h3 className="text-lg font-semibold mb-4">Parceiro *</h3>
                 <Popover open={partnerOpen} onOpenChange={setPartnerOpen}>
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
                       role="combobox"
-                      aria-expanded={partnerOpen}
                       className="w-full justify-between"
                     >
-                      {selectedRevenue.partnerId
-                        ? (() => {
-                            const partner = allPartners.find((p) => p.id.toString() === selectedRevenue.partnerId);
-                            return partner ? partner.name : "Selecione...";
-                          })()
-                        : "Selecione o fornecedor..."}
-                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      {selectedPartner ? selectedPartner.name : "Selecione o parceiro..."}
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-[450px] p-0" align="start">
+                  <PopoverContent className="w-full p-0" align="start">
                     <Command shouldFilter={false}>
                       <CommandInput
-                        placeholder="Buscar fornecedor..."
+                        placeholder="Buscar parceiro..."
                         value={partnerSearch}
                         onValueChange={setPartnerSearch}
                       />
-                      <CommandList className="max-h-[300px]">
-                        <CommandEmpty>Nenhum fornecedor encontrado.</CommandEmpty>
+                      <CommandList>
+                        <CommandEmpty>Nenhum parceiro encontrado.</CommandEmpty>
                         <CommandGroup>
-                          {allPartners
-                            .filter((partner) =>
-                              partner.name.toLowerCase().includes(partnerSearch.toLowerCase())
-                            )
-                            .map((partner) => (
-                              <CommandItem
-                                key={partner.id}
-                                value={partner.id.toString()}
-                                onSelect={() => {
-                                  setSelectedRevenue({ ...selectedRevenue, partnerId: partner.id.toString() });
-                                  setPartnerOpen(false);
-                                  setPartnerSearch("");
-                                }}
-                              >
-                                <Check
-                                  className={cn(
-                                    "mr-2 h-4 w-4",
-                                    selectedRevenue.partnerId === partner.id.toString() ? "opacity-100" : "opacity-0"
-                                  )}
-                                />
-                                <div className="flex-1">
-                                  <div className="font-medium">{partner.name}</div>
-                                  <div className="text-xs text-muted-foreground">
-                                    {partner.partnerType === 'SUPPLIER' ? 'Fornecedor' : 
-                                     partner.partnerType === 'CUSTOMER' ? 'Cliente' : 'Fornecedor/Cliente'}
-                                  </div>
-                                </div>
-                              </CommandItem>
-                            ))}
+                          {filteredPartners.map((partner) => (
+                            <CommandItem
+                              key={partner.id}
+                              value={partner.name}
+                              onSelect={() => {
+                                setSelectedRevenue({ ...selectedRevenue, partnerId: partner.id.toString() });
+                                setPartnerOpen(false);
+                              }}
+                            >
+                              <Check className={cn("mr-2 h-4 w-4", selectedRevenue.partnerId === partner.id.toString() ? "opacity-100" : "opacity-0")} />
+                              <div>
+                                <div>{partner.name}</div>
+                                {partner.docNumber && (
+                                  <div className="text-xs text-muted-foreground">{partner.docNumber}</div>
+                                )}
+                              </div>
+                            </CommandItem>
+                          ))}
                         </CommandGroup>
                       </CommandList>
                     </Command>
@@ -566,129 +528,49 @@ export default function OutrasReceitas() {
                 </Popover>
               </div>
 
-              {/* Datas */}
-              <div className="grid grid-cols-3 gap-4">
-                <div>
-                  <Label>Data Emissão *</Label>
-                  <Input
-                    type="date"
-                    value={selectedRevenue.issueDate}
-                    onChange={(e) => setSelectedRevenue({ ...selectedRevenue, issueDate: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <Label>Data Entrada *</Label>
-                  <Input
-                    type="date"
-                    value={selectedRevenue.entryDate}
-                    onChange={(e) => handleEntryDateChange(e.target.value)}
-                  />
-                  {canUseLastMonthCompetence() && (
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Até dia 5, pode usar data do mês anterior
-                    </p>
-                  )}
-                </div>
-                <div>
-                  <Label>Competência</Label>
-                  <div className="h-10 px-3 py-2 border rounded-md bg-muted flex items-center">
-                    <span className="font-medium">{formatCompetence(selectedRevenue.competenceMonth)}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Tipo e Número do Documento */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Tipo Documento</Label>
-                  <Select
-                    value={selectedRevenue.documentType}
-                    onValueChange={(v) => setSelectedRevenue({ ...selectedRevenue, documentType: v })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {DOCUMENT_TYPES.map(type => (
-                        <SelectItem key={type.value} value={type.value}>
-                          {type.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label>Nº Documento</Label>
-                  <Input
-                    value={selectedRevenue.documentNumber}
-                    onChange={(e) => setSelectedRevenue({ ...selectedRevenue, documentNumber: e.target.value })}
-                    placeholder="Ex: 123456"
-                  />
-                </div>
-              </div>
-
               {/* Conta Gerencial */}
-              <div>
-                <Label>Conta Gerencial *</Label>
+              <div className="bg-card border rounded-lg p-6">
+                <h3 className="text-lg font-semibold mb-4">Conta Gerencial *</h3>
                 <Popover open={managementAccountOpen} onOpenChange={setManagementAccountOpen}>
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
                       role="combobox"
-                      aria-expanded={managementAccountOpen}
                       className="w-full justify-between"
                     >
-                      {selectedRevenue.managementAccountId
-                        ? (() => {
-                            const acc = revenueManagementAccounts.find((a) => a.id.toString() === selectedRevenue.managementAccountId);
-                            return acc ? `${acc.name} (${acc.code})` : "Selecione...";
-                          })()
-                        : "Selecione uma conta gerencial..."}
-                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      {selectedManagementAccount 
+                        ? `${selectedManagementAccount.code} - ${selectedManagementAccount.name}` 
+                        : "Selecione a conta gerencial..."}
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-[450px] p-0" align="start">
+                  <PopoverContent className="w-full p-0" align="start">
                     <Command shouldFilter={false}>
                       <CommandInput
                         placeholder="Buscar conta gerencial..."
                         value={managementAccountSearch}
                         onValueChange={setManagementAccountSearch}
                       />
-                      <CommandList className="max-h-[300px]">
-                        <CommandEmpty>Nenhuma conta gerencial encontrada.</CommandEmpty>
+                      <CommandList>
+                        <CommandEmpty>Nenhuma conta encontrada.</CommandEmpty>
                         <CommandGroup>
-                          {revenueManagementAccounts
-                            .filter((acc) =>
-                              acc.name.toLowerCase().includes(managementAccountSearch.toLowerCase()) ||
-                              acc.code.toLowerCase().includes(managementAccountSearch.toLowerCase())
-                            )
-                            .map((acc) => (
-                              <CommandItem
-                                key={acc.id}
-                                value={acc.id.toString()}
-                                onSelect={() => {
-                                  setSelectedRevenue({ ...selectedRevenue, managementAccountId: acc.id.toString() });
-                                  setManagementAccountOpen(false);
-                                  setManagementAccountSearch("");
-                                }}
-                              >
-                                <Check
-                                  className={cn(
-                                    "mr-2 h-4 w-4",
-                                    selectedRevenue.managementAccountId === acc.id.toString() ? "opacity-100" : "opacity-0"
-                                  )}
-                                />
-                                <div className="flex-1">
-                                  <div className="font-medium">{acc.name}</div>
-                                  <div className="text-xs text-muted-foreground flex gap-2">
-                                    <span className="font-mono bg-muted px-1 rounded">{acc.code}</span>
-                                    {acc.accountingCode && (
-                                      <span className="text-green-600">• {acc.accountingCode}</span>
-                                    )}
-                                  </div>
-                                </div>
-                              </CommandItem>
-                            ))}
+                          {filteredManagementAccounts.map((account) => (
+                            <CommandItem
+                              key={account.id}
+                              value={account.name}
+                              onSelect={() => {
+                                setSelectedRevenue({ ...selectedRevenue, managementAccountId: account.id.toString() });
+                                setManagementAccountOpen(false);
+                              }}
+                            >
+                              <Check className={cn("mr-2 h-4 w-4", selectedRevenue.managementAccountId === account.id.toString() ? "opacity-100" : "opacity-0")} />
+                              <div>
+                                <div>{account.code} - {account.name}</div>
+                                {account.accountingCode && (
+                                  <div className="text-xs text-muted-foreground">Conta contábil: {account.accountingCode}</div>
+                                )}
+                              </div>
+                            </CommandItem>
+                          ))}
                         </CommandGroup>
                       </CommandList>
                     </Command>
@@ -696,110 +578,342 @@ export default function OutrasReceitas() {
                 </Popover>
               </div>
 
-              {/* Descrição */}
-              <div>
-                <Label>Descrição *</Label>
-                <Input
-                  value={selectedRevenue.description}
-                  onChange={(e) => setSelectedRevenue({ ...selectedRevenue, description: e.target.value })}
-                  placeholder="Ex: Empréstimo Pronampe 2024 - Parcelamento 12x"
-                />
+              {/* Informações da Receita */}
+              <div className="bg-card border rounded-lg p-6">
+                <h3 className="text-lg font-semibold mb-4">Informações da Receita</h3>
+                <div className="space-y-4">
+                  <div>
+                    <Label>Descrição *</Label>
+                    <Input
+                      value={selectedRevenue.description}
+                      onChange={(e) => setSelectedRevenue({ ...selectedRevenue, description: e.target.value })}
+                      placeholder="Ex: Aluguel de espaço para evento"
+                    />
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label>Valor *</Label>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        value={selectedRevenue.amount}
+                        onChange={(e) => setSelectedRevenue({ ...selectedRevenue, amount: e.target.value })}
+                        placeholder="0,00"
+                      />
+                    </div>
+                    <div>
+                      <Label>Forma de Recebimento *</Label>
+                      <Select 
+                        value={selectedRevenue.paymentMethod} 
+                        onValueChange={(v) => setSelectedRevenue({ ...selectedRevenue, paymentMethod: v })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {PAYMENT_METHODS.map(pm => (
+                            <SelectItem key={pm.value} value={pm.value}>{pm.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <div>
+                    <Label>Data de Crédito</Label>
+                    <Input
+                      type="date"
+                      value={selectedRevenue.creditDate}
+                      onChange={(e) => setSelectedRevenue({ ...selectedRevenue, creditDate: e.target.value })}
+                    />
+                  </div>
+                </div>
               </div>
 
-              {/* Data Crédito e Forma de Recebimento */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Data de Crédito</Label>
-                  <Input
-                    type="date"
-                    value={selectedRevenue.creditDate}
-                    onChange={(e) => setSelectedRevenue({ ...selectedRevenue, creditDate: e.target.value })}
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Quando a receita entrou em caixa
-                  </p>
-                </div>
-                <div>
-                  <Label>Forma de Recebimento *</Label>
-                  <Select
-                    value={selectedRevenue.paymentMethod}
-                    onValueChange={(v) => setSelectedRevenue({ ...selectedRevenue, paymentMethod: v })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {PAYMENT_METHODS.map(method => (
-                        <SelectItem key={method.value} value={method.value}>
-                          {method.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              {/* Observação */}
-              <div>
-                <Label>Observação</Label>
+              {/* Observações */}
+              <div className="bg-card border rounded-lg p-6">
+                <h3 className="text-lg font-semibold mb-4">Observações</h3>
                 <Textarea
                   value={selectedRevenue.notes}
                   onChange={(e) => setSelectedRevenue({ ...selectedRevenue, notes: e.target.value })}
-                  placeholder="Informações adicionais..."
-                  rows={2}
+                  placeholder="Informações adicionais sobre a receita..."
+                  rows={4}
                 />
               </div>
-
-              {/* Valor */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Valor (R$) *</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={selectedRevenue.amount}
-                    onChange={(e) => setSelectedRevenue({ ...selectedRevenue, amount: e.target.value })}
-                    placeholder="0,00"
-                    className="text-lg font-semibold"
-                  />
-                </div>
-                <div>
-                  <Label>Status</Label>
-                  <Select
-                    value={selectedRevenue.status}
-                    onValueChange={(v: "ACTIVE" | "CANCELLED") => 
-                      setSelectedRevenue({ ...selectedRevenue, status: v })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="ACTIVE">Ativo</SelectItem>
-                      <SelectItem value="CANCELLED">Cancelado</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
             </div>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-                Cancelar
-              </Button>
-              <Button 
-                onClick={handleSubmit}
-                disabled={createMutation.isPending || updateMutation.isPending}
+  // Tela de listagem
+  return (
+    <DashboardLayout>
+      <div className="container py-6">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-3xl font-bold">Outras Receitas</h1>
+            <p className="text-muted-foreground">
+              Receitas não vinculadas a vendas de produtos
+            </p>
+          </div>
+          <Button onClick={handleNew}>
+            <Plus className="h-4 w-4 mr-2" />
+            Nova Receita
+          </Button>
+        </div>
+
+        {/* Filtros */}
+        <div className="bg-card border rounded-lg p-6 mb-6">
+          <h2 className="text-lg font-semibold mb-4">Filtros</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div>
+              <Label>Data Inicial</Label>
+              <Input
+                type="date"
+                value={filterStartDate}
+                onChange={(e) => setFilterStartDate(e.target.value)}
+              />
+            </div>
+            <div>
+              <Label>Data Final</Label>
+              <Input
+                type="date"
+                value={filterEndDate}
+                onChange={(e) => setFilterEndDate(e.target.value)}
+              />
+            </div>
+            <div>
+              <Label>Parceiro</Label>
+              <Popover open={filterPartnerOpen} onOpenChange={setFilterPartnerOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    className="w-full justify-between"
+                  >
+                    {filterPartnerId
+                      ? allPartners.find((p) => p.id === filterPartnerId)?.name
+                      : "Todos"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-full p-0">
+                  <Command shouldFilter={false}>
+                    <CommandInput
+                      placeholder="Buscar parceiro..."
+                      value={filterPartnerSearch}
+                      onValueChange={setFilterPartnerSearch}
+                    />
+                    <CommandList>
+                      <CommandEmpty>Nenhum parceiro encontrado.</CommandEmpty>
+                      <CommandGroup>
+                        <CommandItem
+                          onSelect={() => {
+                            setFilterPartnerId(undefined);
+                            setFilterPartnerOpen(false);
+                          }}
+                        >
+                          <Check className={cn("mr-2 h-4 w-4", !filterPartnerId ? "opacity-100" : "opacity-0")} />
+                          Todos
+                        </CommandItem>
+                        {allPartners
+                          .filter(p => p.name.toLowerCase().includes(filterPartnerSearch.toLowerCase()))
+                          .map((partner) => (
+                            <CommandItem
+                              key={partner.id}
+                              value={partner.name}
+                              onSelect={() => {
+                                setFilterPartnerId(partner.id);
+                                setFilterPartnerOpen(false);
+                              }}
+                            >
+                              <Check className={cn("mr-2 h-4 w-4", filterPartnerId === partner.id ? "opacity-100" : "opacity-0")} />
+                              {partner.name}
+                            </CommandItem>
+                          ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+            </div>
+            <div>
+              <Label>Conta Gerencial</Label>
+              <Popover open={filterManagementAccountOpen} onOpenChange={setFilterManagementAccountOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    className="w-full justify-between"
+                  >
+                    {filterManagementAccountId
+                      ? revenueManagementAccounts.find((a) => a.id === filterManagementAccountId)?.name
+                      : "Todas"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-full p-0">
+                  <Command shouldFilter={false}>
+                    <CommandInput
+                      placeholder="Buscar conta..."
+                      value={filterManagementAccountSearch}
+                      onValueChange={setFilterManagementAccountSearch}
+                    />
+                    <CommandList>
+                      <CommandEmpty>Nenhuma conta encontrada.</CommandEmpty>
+                      <CommandGroup>
+                        <CommandItem
+                          onSelect={() => {
+                            setFilterManagementAccountId(undefined);
+                            setFilterManagementAccountOpen(false);
+                          }}
+                        >
+                          <Check className={cn("mr-2 h-4 w-4", !filterManagementAccountId ? "opacity-100" : "opacity-0")} />
+                          Todas
+                        </CommandItem>
+                        {revenueManagementAccounts
+                          .filter(a => a.name.toLowerCase().includes(filterManagementAccountSearch.toLowerCase()))
+                          .map((account) => (
+                            <CommandItem
+                              key={account.id}
+                              value={account.name}
+                              onSelect={() => {
+                                setFilterManagementAccountId(account.id);
+                                setFilterManagementAccountOpen(false);
+                              }}
+                            >
+                              <Check className={cn("mr-2 h-4 w-4", filterManagementAccountId === account.id ? "opacity-100" : "opacity-0")} />
+                              {account.code} - {account.name}
+                            </CommandItem>
+                          ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+            </div>
+            <div>
+              <Label>Valor Mínimo</Label>
+              <Input
+                type="number"
+                placeholder="R$ 0,00"
+                value={filterMinValue}
+                onChange={(e) => setFilterMinValue(e.target.value)}
+              />
+            </div>
+            <div>
+              <Label>Valor Máximo</Label>
+              <Input
+                type="number"
+                placeholder="R$ 9999,99"
+                value={filterMaxValue}
+                onChange={(e) => setFilterMaxValue(e.target.value)}
+              />
+            </div>
+            <div className="flex items-end">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setFilterStartDate('');
+                  setFilterEndDate('');
+                  setFilterPartnerId(undefined);
+                  setFilterManagementAccountId(undefined);
+                  setFilterMinValue("");
+                  setFilterMaxValue("");
+                }}
+                className="w-full"
               >
-                {(createMutation.isPending || updateMutation.isPending) && (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                )}
-                {selectedRevenue.id ? "Salvar" : "Criar"}
+                Limpar Filtros
               </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+            </div>
+          </div>
+        </div>
+
+        {/* Resumo */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <div className="bg-card border rounded-lg p-4">
+            <div className="text-sm text-muted-foreground">Total Ativo</div>
+            <div className="text-2xl font-bold text-green-600">{formatCurrency(totals.active)}</div>
+          </div>
+          <div className="bg-card border rounded-lg p-4">
+            <div className="text-sm text-muted-foreground">Total Cancelado</div>
+            <div className="text-2xl font-bold text-red-600">{formatCurrency(totals.cancelled)}</div>
+          </div>
+          <div className="bg-card border rounded-lg p-4">
+            <div className="text-sm text-muted-foreground">Receitas Encontradas</div>
+            <div className="text-2xl font-bold">{filteredRevenues.length}</div>
+          </div>
+        </div>
+
+        {/* Lista de receitas */}
+        <div className="bg-card border rounded-lg">
+          <div className="p-6">
+            <h2 className="text-lg font-semibold mb-4">Receitas Cadastradas</h2>
+            {isLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              </div>
+            ) : filteredRevenues.length === 0 ? (
+              <div className="text-center py-12 text-muted-foreground">
+                <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p>Nenhuma receita encontrada</p>
+                <Button variant="link" onClick={handleNew}>
+                  Cadastrar nova receita
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {filteredRevenues.map((revenue) => (
+                  <div
+                    key={revenue.id}
+                    className="border rounded-lg p-4 hover:bg-accent/50 transition-colors"
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="font-semibold">{revenue.description}</h3>
+                          <StatusBadge status={revenue.status} />
+                        </div>
+                        <div className="text-sm text-muted-foreground space-y-1">
+                          <div>Conta Gerencial: {getManagementAccountName(revenue.managementAccountId)}</div>
+                          <div>Parceiro: {getPartnerName(revenue.partnerId)}</div>
+                          <div>
+                            Competência: {formatCompetence(revenue.competenceMonth)} | 
+                            Data: {revenue.issueDate ? formatDate(revenue.issueDate) : formatDate(revenue.revenueDate)}
+                          </div>
+                          {revenue.paymentMethod && (
+                            <div>Forma de Recebimento: {PAYMENT_METHODS.find(p => p.value === revenue.paymentMethod)?.label || revenue.paymentMethod}</div>
+                          )}
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-xl font-bold text-green-600">
+                          {formatCurrency(revenue.amount)}
+                        </div>
+                        <div className="flex gap-1 mt-2 justify-end">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleEdit(revenue)}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleDelete(revenue.id)}
+                            className="text-destructive hover:text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
 
         {/* Modal de Confirmação de Exclusão */}
         <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
@@ -814,14 +928,12 @@ export default function OutrasReceitas() {
               <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
                 Cancelar
               </Button>
-              <Button 
-                variant="destructive" 
+              <Button
+                variant="destructive"
                 onClick={confirmDelete}
                 disabled={deleteMutation.isPending}
               >
-                {deleteMutation.isPending && (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                )}
+                {deleteMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                 Excluir
               </Button>
             </DialogFooter>

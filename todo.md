@@ -438,3 +438,13 @@ Automatizar importação de pedidos concluídos do iFood via arquivos JSON
 - [ ] Corrigir mapeamento de despesas (todas indo para Aluguel 6.1.1.01)
 - [ ] Investigar possível duplicação de lançamentos
 
+
+### Revisão Mapeamento Despesas (04/02/2026)
+- [x] Investigar diferença de R$ 1.183,27 nas despesas de Janeiro/2026
+- [x] Verificar despesas mapeadas para Custos (5.x) ao invés de Despesas (6.x)
+- [x] Manter mapeamento atual (conceito contábil correto)
+
+### Reorganização Módulo Outras Receitas (04/02/2026)
+- [x] Mover Outras Receitas para menu Financeiro
+- [x] Simplificar tela removendo cards (similar a Despesas)
+- [x] Melhorar filtros (data inicial/final, parceiro, conta gerencial, valor mínimo/máximo)

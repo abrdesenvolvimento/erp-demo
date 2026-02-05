@@ -41,6 +41,7 @@ const mainMenuItems = [
 const financeMenuItems = [
   { icon: ShoppingBag, label: "Compras", path: "/compras", roles: ["admin", "consultor"] },
   { icon: Receipt, label: "Despesas", path: "/despesas", roles: ["admin", "consultor"] },
+  { icon: Wallet, label: "Outras Receitas", path: "/outras-receitas", roles: ["admin", "consultor"] },
   { icon: DollarSign, label: "Contas a Receber", path: "/contas-receber", roles: ["admin", "operacional", "consultor"] },
   { icon: CreditCard, label: "Contas a Pagar", path: "/contas-pagar", roles: ["admin", "consultor"] },
 ];
@@ -50,7 +51,6 @@ const accountingMenuItems = [
   { icon: BookOpen, label: "Plano de Contas", path: "/plano-contas", roles: ["admin", "consultor"] },
   { icon: Calculator, label: "Contas Gerenciais", path: "/contas-gerenciais", roles: ["admin", "consultor"] },
   { icon: FileText, label: "Relatórios Contábeis", path: "/relatorios-contabeis", roles: ["admin", "consultor"] },
-  { icon: Wallet, label: "Outras Receitas", path: "/outras-receitas", roles: ["admin", "consultor"] },
 ];
 
 // Submenu de Análises
