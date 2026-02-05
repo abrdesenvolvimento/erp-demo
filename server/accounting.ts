@@ -833,7 +833,31 @@ export async function createOtherRevenue(data: {
     createdBy: data.createdBy,
   });
   
-  return { id: result.insertId };
+  const otherRevenueId = result.insertId;
+  
+  // Contabilizar automaticamente
+  const { accountOtherRevenue } = await import("./db");
+  const accountingResult = await accountOtherRevenue({
+    otherRevenueId,
+    amount: data.amount.toFixed(2),
+    managementAccountId: data.managementAccountId,
+    description: data.description,
+    entryDate: data.entryDate,
+    isPaid: !!data.creditDate, // Se tem data de crédito, considera recebido
+    createdBy: data.createdBy,
+  });
+  
+  // Atualizar registro com referência ao journal
+  if (accountingResult.success && accountingResult.journalId) {
+    await db.update(otherRevenues)
+      .set({
+        isAccounted: true,
+        accountedJournalId: accountingResult.journalId,
+      })
+      .where(eq(otherRevenues.id, otherRevenueId));
+  }
+  
+  return { id: otherRevenueId, journalId: accountingResult.journalId };
 }
 
 export async function updateOtherRevenue(id: number, data: {

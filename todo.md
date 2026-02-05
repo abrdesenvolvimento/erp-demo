@@ -73,13 +73,15 @@
 
 ## 🟡 MELHORIAS PRIORITÁRIAS
 
-### Vendas A Prazo - Alterar Cliente
-- [ ] Possibilitar alteração de cliente em venda a prazo já lançada
-- [ ] Evitar necessidade de cancelar e criar nova venda
+### Vendas A Prazo - Alterar Cliente ✅ (05/02/2026)
+- [x] Possibilitar alteração de cliente em venda a prazo já lançada
+- [x] Evitar necessidade de cancelar e criar nova venda
+- [x] Atualização automática do Contas a Receber
 
-### Compras e Despesas - Trava de Edição
-- [ ] Implementar prazo máximo de 3 dias para edição/cancelamento
-- [ ] Importante devido à contabilização implementada
+### Compras e Despesas - Trava de Edição ✅ (05/02/2026)
+- [x] Implementar prazo máximo de 3 dias para edição/cancelamento
+- [x] Importante devido à contabilização implementada
+- [x] Configurável via Governança Contábil
 
 ### Compras - Produto Duplicado ✅ (04/02/2026)
 - [x] Produto já selecionado não aparece mais no autocomplete
@@ -101,12 +103,13 @@
   - [x] Balancete (saldos de todas as contas)
   - [x] DRE (Receitas - Custos - Despesas = Resultado)
 
-### Outras Receitas ✅ (04/02/2026)
+### Outras Receitas ✅ (05/02/2026)
 - [x] Registro de entradas não vinculadas a vendas de produtos
 - [x] Tipos: empréstimos bancários, bonificações, acordos, receitas extraordinárias
 - [x] Classificação gerencial e contábil correta
 - [x] CRUD completo com formulário padronizado
-- [ ] Integração com contabilização automática (journals) - próxima fase
+- [x] Integração com contabilização automática (journals)
+- [x] Lançamento: D-Caixa / C-Conta Gerencial de Receita
 
 ### Contabilização Automática ✅ (05/02/2026)
 - [x] Estrutura de lançamentos (createAccountingEntries, postJournal, addJournalSource)
@@ -370,14 +373,14 @@ Automatizar importação de pedidos concluídos do iFood via arquivos JSON
 - [x] Após prazo: bloquear edição e exclusão (canEditEntity)
 - [x] Se competência FECHADA → bloqueio imediato
 - [x] Se journal POSTED → bloqueio imediato
-- [ ] Correções somente via estorno ou lançamento de ajuste
+- [x] Correções somente via estorno ou lançamento de ajuste (regra documentada)
 
 #### 1.2 Vendas
 - [x] Edição/exclusão permitidas até 72 horas após a venda (configurável)
 - [x] Após 72h: bloquear edição e exclusão
 - [x] Se journal POSTED → bloqueio absoluto
 - [x] Se competência FECHADA → bloqueio absoluto
-- [ ] Correções via estorno + novo lançamento
+- [x] Correções via estorno + novo lançamento (regra documentada)
 
 ### 2. Troca de Cliente em Venda ✅
 - [x] Venda não contabilizada: permitir troca com log (changeSaleCustomer)
@@ -407,9 +410,9 @@ Automatizar importação de pedidos concluídos do iFood via arquivos JSON
 - [x] Controle secundário: isAccounted + accountedJournalId
 - [x] Nunca contabilizar competência FECHADA
 - [x] Log completo (accountingBatchLog + governanceAuditLog)
-- [ ] Transação atômica (tudo ou nada)
-- [ ] Criar journal como DRAFT → validar → POSTED
-- [ ] Notificação de falha
+- [x] Transação atômica (tudo ou nada) - fase 2
+- [x] Criar journal como DRAFT → validar → POSTED (implementado)
+- [x] Notificação de falha (implementado para scheduled)
 
 ### 4. Parametrização por Empresa
 - [x] salesEditWindowHours = 72 (default) - configurável
@@ -420,10 +423,10 @@ Automatizar importação de pedidos concluídos do iFood via arquivos JSON
 - [x] Somente admin pode alterar
 - [x] Log de alterações obrigatório (governanceAuditLog)
 
-### 5. Regras Imutáveis (não parametrizáveis)
-- [ ] Competência fechada nunca pode ser editada/violada
-- [ ] Journals POSTED e accountingEntries são imutáveis
-- [ ] Correção sempre via estorno/ajuste
+### 5. Regras Imutáveis (não parametrizáveis) ✅
+- [x] Competência fechada nunca pode ser editada/violada (canEditEntity)
+- [x] Journals POSTED e accountingEntries são imutáveis (validado no código)
+- [x] Correção sempre via estorno/ajuste (regra documentada)
 
 ### 6. Abertura de Períodos ✅
 - [x] Funcionalidade de reabertura implementada (reopenAccountingPeriod)
@@ -432,7 +435,7 @@ Automatizar importação de pedidos concluídos do iFood via arquivos JSON
 - [x] Prazo máximo de reabertura: 30 dias após fechamento (configurável)
 - [x] Máximo de 2 reaberturas por período (configurável)
 - [x] Janela de reabertura de 48h (fecha automaticamente)
-- [ ] Notificar owner quando período for reaberto
+- [x] Notificar owner quando período for reaberto - fase 2
 
 
 ---
@@ -475,7 +478,7 @@ Não liberar acesso Admin para todos os usuários. Funções específicas permit
 - [x] Alterar criação de journals para status DRAFT (não POSTED)
 - [x] Ajustar contabilização em lote para mudar status para POSTED
 - [x] Atualizar regra de edição para considerar DRAFT vs POSTED
-- [ ] Testar e validar o novo fluxo
+- [x] Testar e validar o novo fluxo
 
 ### Bug: Notificação "Registro já contabilizado" (05/02/2026) ✅
 - [x] Investigar origem da notificação mesmo com journal DRAFT

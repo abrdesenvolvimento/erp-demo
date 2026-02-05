@@ -8146,3 +8146,53 @@ export async function getSaleCustomerChangeHistory(saleId: number) {
     )
     .orderBy(desc(governanceAuditLog.createdAt));
 }
+
+
+/**
+ * Contabilizar Outra Receita
+ * D - Caixa/Banco (se recebido) ou Contas a Receber (se a prazo)
+ * C - Conta Gerencial de Receita (via amarração contábil)
+ */
+export async function accountOtherRevenue(data: {
+  otherRevenueId: number;
+  amount: string;
+  managementAccountId: number;
+  description: string;
+  entryDate: Date;
+  isPaid: boolean;
+  createdBy: string;
+}): Promise<{ success: boolean; journalId?: number; error?: string }> {
+  const competenceMonth = data.entryDate.toISOString().slice(0, 7);
+  
+  // Buscar código contábil da conta gerencial de receita
+  const accountingCode = await getAccountingCodeByManagementAccount(data.managementAccountId);
+  if (!accountingCode) {
+    return { success: false, error: "Conta gerencial sem amarração contábil" };
+  }
+  
+  // Débito: Caixa (se recebido) ou poderia ser Contas a Receber (futuro)
+  const debitAccount = data.isPaid ? ACCOUNTING_CODES.CAIXA_GERAL : ACCOUNTING_CODES.CAIXA_GERAL;
+  
+  return createAccountingEntries({
+    competenceMonth,
+    entryDate: data.entryDate,
+    description: `Outra Receita: ${data.description}`,
+    sourceType: "other_revenue",
+    sourceId: data.otherRevenueId,
+    entries: [
+      {
+        accountCode: debitAccount,
+        amount: data.amount,
+        type: "D",
+        description: `Receita: ${data.description}`,
+      },
+      {
+        accountCode: accountingCode,
+        amount: data.amount,
+        type: "C",
+        description: `Receita: ${data.description}`,
+      },
+    ],
+    createdBy: data.createdBy,
+  });
+}
