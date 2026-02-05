@@ -1,0 +1,8 @@
+{
+  "query": "SELECT \n  c.name as canal,\n  COUNT(*) as qtd_vendas,\n  SUM(s.totalAmount) as total_vendas,\n  SUM(CASE WHEN s.status = 'CANCELLED' THEN s.totalAmount ELSE 0 END) as total_cancelado,\n  SUM(CASE WHEN s.status != 'CANCELLED' THEN s.totalAmount ELSE 0 END) as total_ativo\nFROM sales s\nJOIN channels c ON s.channelId = c.id\nWHERE DATE_FORMAT(s.saleDate, '%Y-%m') = '2026-01'\nGROUP BY c.id, c.name\nORDER BY c.id;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  c.name as canal,\n  COUNT(*) as qtd_vendas,\n  SUM(s.totalAmount) as total_vendas,\n  SUM(CASE WHEN s.status = 'CANCELLED' THEN s.totalAmount ELSE 0 END) as total_cancelado,\n  SUM(CASE WHEN s.status != 'CANCELLED' THEN s.totalAmount ELSE 0 END) as total_ativo\nFROM sales s\nJOIN channels c ON s.channelId = c.id\nWHERE DATE_FORMAT(s.saleDate, '%Y-%m') = '2026-01'\nGROUP BY c.id, c.name\nORDER BY c.id;",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1146 (42S02) at line 1: Table '7rkrces5kipyf8hkunqrck.channels' doesn't exist"
+  ]
+}

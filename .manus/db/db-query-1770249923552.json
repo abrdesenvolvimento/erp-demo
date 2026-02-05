@@ -1,0 +1,31 @@
+{
+  "query": "SELECT \n  saleType,\n  COUNT(*) as qtd_vendas,\n  SUM(finalAmount) as total_vendas,\n  SUM(CASE WHEN status = 'CANCELLED' THEN finalAmount ELSE 0 END) as total_cancelado,\n  SUM(CASE WHEN status != 'CANCELLED' THEN finalAmount ELSE 0 END) as total_ativo\nFROM sales\nWHERE DATE_FORMAT(saleDate, '%Y-%m') = '2026-01'\nGROUP BY saleType\nORDER BY saleType;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  saleType,\n  COUNT(*) as qtd_vendas,\n  SUM(finalAmount) as total_vendas,\n  SUM(CASE WHEN status = 'CANCELLED' THEN finalAmount ELSE 0 END) as total_cancelado,\n  SUM(CASE WHEN status != 'CANCELLED' THEN finalAmount ELSE 0 END) as total_ativo\nFROM sales\nWHERE DATE_FORMAT(saleDate, '%Y-%m') = '2026-01'\nGROUP BY saleType\nORDER BY saleType;",
+  "rows": [
+    {
+      "saleType": "BALCAO",
+      "qtd_vendas": "1616",
+      "total_vendas": "60276.60",
+      "total_cancelado": "306.50",
+      "total_ativo": "59970.10"
+    },
+    {
+      "saleType": "DELIVERY",
+      "qtd_vendas": "604",
+      "total_vendas": "23839.80",
+      "total_cancelado": "583.88",
+      "total_ativo": "23255.92"
+    },
+    {
+      "saleType": "A_PRAZO",
+      "qtd_vendas": "211",
+      "total_vendas": "7628.40",
+      "total_cancelado": "351.00",
+      "total_ativo": "7277.40"
+    }
+  ],
+  "messages": [],
+  "stdout": "saleType\tqtd_vendas\ttotal_vendas\ttotal_cancelado\ttotal_ativo\nBALCAO\t1616\t60276.60\t306.50\t59970.10\nDELIVERY\t604\t23839.80\t583.88\t23255.92\nA_PRAZO\t211\t7628.40\t351.00\t7277.40\n",
+  "stderr": "",
+  "execution_time_ms": 136
+}

@@ -1,0 +1,442 @@
+{
+  "query": "SELECT \n  ma.id as mgmt_id,\n  ma.code as mgmt_code,\n  ma.name as mgmt_name,\n  ma.nature,\n  am.accountingCode,\n  ca.id as acct_id,\n  ca.name as acct_name\nFROM managementAccounts ma\nLEFT JOIN accountingMappings am ON ma.id = am.managementAccountId\nLEFT JOIN chartOfAccounts ca ON am.accountingCode = ca.code\nWHERE ma.nature IN ('DESPESA', 'CUSTO')\nORDER BY ma.code;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  ma.id as mgmt_id,\n  ma.code as mgmt_code,\n  ma.name as mgmt_name,\n  ma.nature,\n  am.accountingCode,\n  ca.id as acct_id,\n  ca.name as acct_name\nFROM managementAccounts ma\nLEFT JOIN accountingMappings am ON ma.id = am.managementAccountId\nLEFT JOIN chartOfAccounts ca ON am.accountingCode = ca.code\nWHERE ma.nature IN ('DESPESA', 'CUSTO')\nORDER BY ma.code;",
+  "rows": [
+    {
+      "mgmt_id": "1",
+      "mgmt_code": "COP001",
+      "mgmt_name": "Embalagens",
+      "nature": "CUSTO",
+      "accountingCode": "3.1.01.001",
+      "acct_id": "NULL",
+      "acct_name": "NULL"
+    },
+    {
+      "mgmt_id": "2",
+      "mgmt_code": "COP002",
+      "mgmt_name": "Material de Limpeza",
+      "nature": "CUSTO",
+      "accountingCode": "3.1.01.002",
+      "acct_id": "NULL",
+      "acct_name": "NULL"
+    },
+    {
+      "mgmt_id": "3",
+      "mgmt_code": "COP003",
+      "mgmt_name": "Gás Encanado",
+      "nature": "CUSTO",
+      "accountingCode": "3.1.01.003",
+      "acct_id": "NULL",
+      "acct_name": "NULL"
+    },
+    {
+      "mgmt_id": "4",
+      "mgmt_code": "COP004",
+      "mgmt_name": "Fretes",
+      "nature": "CUSTO",
+      "accountingCode": "3.1.01.004",
+      "acct_id": "NULL",
+      "acct_name": "NULL"
+    },
+    {
+      "mgmt_id": "5",
+      "mgmt_code": "COP005",
+      "mgmt_name": "Aluguel de Equipamentos",
+      "nature": "CUSTO",
+      "accountingCode": "3.1.01.005",
+      "acct_id": "NULL",
+      "acct_name": "NULL"
+    },
+    {
+      "mgmt_id": "6",
+      "mgmt_code": "COP006",
+      "mgmt_name": "Material de Consumo",
+      "nature": "CUSTO",
+      "accountingCode": "3.1.01.006",
+      "acct_id": "NULL",
+      "acct_name": "NULL"
+    },
+    {
+      "mgmt_id": "7",
+      "mgmt_code": "COP007",
+      "mgmt_name": "Terceirizado",
+      "nature": "CUSTO",
+      "accountingCode": "3.1.01.007",
+      "acct_id": "NULL",
+      "acct_name": "NULL"
+    },
+    {
+      "mgmt_id": "8",
+      "mgmt_code": "COP008",
+      "mgmt_name": "PJ",
+      "nature": "CUSTO",
+      "accountingCode": "3.1.01.008",
+      "acct_id": "NULL",
+      "acct_name": "NULL"
+    },
+    {
+      "mgmt_id": "9",
+      "mgmt_code": "COP009",
+      "mgmt_name": "Equipamentos",
+      "nature": "CUSTO",
+      "accountingCode": "3.1.01.009",
+      "acct_id": "NULL",
+      "acct_name": "NULL"
+    },
+    {
+      "mgmt_id": "10",
+      "mgmt_code": "COP010",
+      "mgmt_name": "Perdas Estoque",
+      "nature": "CUSTO",
+      "accountingCode": "3.1.02.001",
+      "acct_id": "NULL",
+      "acct_name": "NULL"
+    },
+    {
+      "mgmt_id": "11",
+      "mgmt_code": "COP011",
+      "mgmt_name": "Perdas Operacionais",
+      "nature": "CUSTO",
+      "accountingCode": "3.1.02.002",
+      "acct_id": "NULL",
+      "acct_name": "NULL"
+    },
+    {
+      "mgmt_id": "12",
+      "mgmt_code": "COP012",
+      "mgmt_name": "Manutenção das Instalações",
+      "nature": "CUSTO",
+      "accountingCode": "3.1.03.001",
+      "acct_id": "NULL",
+      "acct_name": "NULL"
+    },
+    {
+      "mgmt_id": "22",
+      "mgmt_code": "DAD001",
+      "mgmt_name": "Consultoria e Assessoria",
+      "nature": "DESPESA",
+      "accountingCode": "3.3.01.001",
+      "acct_id": "NULL",
+      "acct_name": "NULL"
+    },
+    {
+      "mgmt_id": "23",
+      "mgmt_code": "DAD002",
+      "mgmt_name": "Software e Sistemas",
+      "nature": "DESPESA",
+      "accountingCode": "3.3.01.002",
+      "acct_id": "NULL",
+      "acct_name": "NULL"
+    },
+    {
+      "mgmt_id": "24",
+      "mgmt_code": "DAD003",
+      "mgmt_name": "Contabilidade",
+      "nature": "DESPESA",
+      "accountingCode": "3.3.01.003",
+      "acct_id": "NULL",
+      "acct_name": "NULL"
+    },
+    {
+      "mgmt_id": "25",
+      "mgmt_code": "DAD004",
+      "mgmt_name": "Jurídico",
+      "nature": "DESPESA",
+      "accountingCode": "3.3.01.004",
+      "acct_id": "NULL",
+      "acct_name": "NULL"
+    },
+    {
+      "mgmt_id": "26",
+      "mgmt_code": "DAD005",
+      "mgmt_name": "Marcas e Patentes",
+      "nature": "DESPESA",
+      "accountingCode": "3.3.01.005",
+      "acct_id": "NULL",
+      "acct_name": "NULL"
+    },
+    {
+      "mgmt_id": "27",
+      "mgmt_code": "DAD006",
+      "mgmt_name": "Treinamento",
+      "nature": "DESPESA",
+      "accountingCode": "3.3.01.006",
+      "acct_id": "NULL",
+      "acct_name": "NULL"
+    },
+    {
+      "mgmt_id": "28",
+      "mgmt_code": "DAD007",
+      "mgmt_name": "Serviços de RH",
+      "nature": "DESPESA",
+      "accountingCode": "3.3.01.007",
+      "acct_id": "NULL",
+      "acct_name": "NULL"
+    },
+    {
+      "mgmt_id": "29",
+      "mgmt_code": "DAD008",
+      "mgmt_name": "Pró-Labore",
+      "nature": "DESPESA",
+      "accountingCode": "3.3.02.001",
+      "acct_id": "NULL",
+      "acct_name": "NULL"
+    },
+    {
+      "mgmt_id": "30",
+      "mgmt_code": "DAD009",
+      "mgmt_name": "Salários",
+      "nature": "DESPESA",
+      "accountingCode": "3.3.02.002",
+      "acct_id": "NULL",
+      "acct_name": "NULL"
+    },
+    {
+      "mgmt_id": "31",
+      "mgmt_code": "DAD010",
+      "mgmt_name": "Premiação",
+      "nature": "DESPESA",
+      "accountingCode": "3.3.02.003",
+      "acct_id": "NULL",
+      "acct_name": "NULL"
+    },
+    {
+      "mgmt_id": "32",
+      "mgmt_code": "DAD011",
+      "mgmt_name": "Vale Transporte",
+      "nature": "DESPESA",
+      "accountingCode": "3.3.02.004",
+      "acct_id": "NULL",
+      "acct_name": "NULL"
+    },
+    {
+      "mgmt_id": "33",
+      "mgmt_code": "DAD012",
+      "mgmt_name": "Vale Refeição",
+      "nature": "DESPESA",
+      "accountingCode": "3.3.02.005",
+      "acct_id": "NULL",
+      "acct_name": "NULL"
+    },
+    {
+      "mgmt_id": "34",
+      "mgmt_code": "DAD013",
+      "mgmt_name": "Hora Extra",
+      "nature": "DESPESA",
+      "accountingCode": "3.3.02.006",
+      "acct_id": "NULL",
+      "acct_name": "NULL"
+    },
+    {
+      "mgmt_id": "35",
+      "mgmt_code": "DAD014",
+      "mgmt_name": "Seguro de Vida",
+      "nature": "DESPESA",
+      "accountingCode": "3.3.02.007",
+      "acct_id": "NULL",
+      "acct_name": "NULL"
+    },
+    {
+      "mgmt_id": "36",
+      "mgmt_code": "DAD015",
+      "mgmt_name": "FGTS",
+      "nature": "DESPESA",
+      "accountingCode": "3.3.02.008",
+      "acct_id": "NULL",
+      "acct_name": "NULL"
+    },
+    {
+      "mgmt_id": "37",
+      "mgmt_code": "DAD016",
+      "mgmt_name": "INSS",
+      "nature": "DESPESA",
+      "accountingCode": "3.3.02.009",
+      "acct_id": "NULL",
+      "acct_name": "NULL"
+    },
+    {
+      "mgmt_id": "38",
+      "mgmt_code": "DAD017",
+      "mgmt_name": "Viagens",
+      "nature": "DESPESA",
+      "accountingCode": "3.3.03.001",
+      "acct_id": "NULL",
+      "acct_name": "NULL"
+    },
+    {
+      "mgmt_id": "39",
+      "mgmt_code": "DAD018",
+      "mgmt_name": "Material de Escritório",
+      "nature": "DESPESA",
+      "accountingCode": "3.3.03.002",
+      "acct_id": "NULL",
+      "acct_name": "NULL"
+    },
+    {
+      "mgmt_id": "40",
+      "mgmt_code": "DAD019",
+      "mgmt_name": "Reembolso de Despesas",
+      "nature": "DESPESA",
+      "accountingCode": "3.3.03.003",
+      "acct_id": "NULL",
+      "acct_name": "NULL"
+    },
+    {
+      "mgmt_id": "41",
+      "mgmt_code": "DAD020",
+      "mgmt_name": "Imóvel Alugado",
+      "nature": "DESPESA",
+      "accountingCode": "3.3.03.004",
+      "acct_id": "NULL",
+      "acct_name": "NULL"
+    },
+    {
+      "mgmt_id": "42",
+      "mgmt_code": "DCO001",
+      "mgmt_name": "Propaganda",
+      "nature": "DESPESA",
+      "accountingCode": "3.4.01.001",
+      "acct_id": "NULL",
+      "acct_name": "NULL"
+    },
+    {
+      "mgmt_id": "43",
+      "mgmt_code": "DFI001",
+      "mgmt_name": "Tarifa Cartões",
+      "nature": "CUSTO",
+      "accountingCode": "3.5.01.001",
+      "acct_id": "NULL",
+      "acct_name": "NULL"
+    },
+    {
+      "mgmt_id": "44",
+      "mgmt_code": "DFI002",
+      "mgmt_name": "Despesa Bancária",
+      "nature": "DESPESA",
+      "accountingCode": "3.5.01.002",
+      "acct_id": "NULL",
+      "acct_name": "NULL"
+    },
+    {
+      "mgmt_id": "45",
+      "mgmt_code": "DFI003",
+      "mgmt_name": "Despesas com Juros",
+      "nature": "DESPESA",
+      "accountingCode": "3.5.01.003",
+      "acct_id": "NULL",
+      "acct_name": "NULL"
+    },
+    {
+      "mgmt_id": "46",
+      "mgmt_code": "DNO001",
+      "mgmt_name": "Reclamação Trabalhista",
+      "nature": "DESPESA",
+      "accountingCode": "3.6.01.001",
+      "acct_id": "NULL",
+      "acct_name": "NULL"
+    },
+    {
+      "mgmt_id": "47",
+      "mgmt_code": "DNO002",
+      "mgmt_name": "Despesas Extra",
+      "nature": "DESPESA",
+      "accountingCode": "3.6.01.002",
+      "acct_id": "NULL",
+      "acct_name": "NULL"
+    },
+    {
+      "mgmt_id": "48",
+      "mgmt_code": "DNO003",
+      "mgmt_name": "IR / CSLL",
+      "nature": "DESPESA",
+      "accountingCode": "3.6.01.003",
+      "acct_id": "NULL",
+      "acct_name": "NULL"
+    },
+    {
+      "mgmt_id": "13",
+      "mgmt_code": "DOP001",
+      "mgmt_name": "Aluguel",
+      "nature": "DESPESA",
+      "accountingCode": "3.2.01.001",
+      "acct_id": "NULL",
+      "acct_name": "NULL"
+    },
+    {
+      "mgmt_id": "14",
+      "mgmt_code": "DOP002",
+      "mgmt_name": "Energia Elétrica",
+      "nature": "DESPESA",
+      "accountingCode": "3.2.01.002",
+      "acct_id": "NULL",
+      "acct_name": "NULL"
+    },
+    {
+      "mgmt_id": "15",
+      "mgmt_code": "DOP003",
+      "mgmt_name": "Água",
+      "nature": "DESPESA",
+      "accountingCode": "3.2.01.003",
+      "acct_id": "NULL",
+      "acct_name": "NULL"
+    },
+    {
+      "mgmt_id": "16",
+      "mgmt_code": "DOP004",
+      "mgmt_name": "IPTU",
+      "nature": "DESPESA",
+      "accountingCode": "3.2.01.004",
+      "acct_id": "NULL",
+      "acct_name": "NULL"
+    },
+    {
+      "mgmt_id": "17",
+      "mgmt_code": "DOP005",
+      "mgmt_name": "Internet",
+      "nature": "DESPESA",
+      "accountingCode": "3.2.01.005",
+      "acct_id": "NULL",
+      "acct_name": "NULL"
+    },
+    {
+      "mgmt_id": "18",
+      "mgmt_code": "DOP006",
+      "mgmt_name": "Telefone",
+      "nature": "DESPESA",
+      "accountingCode": "3.2.01.006",
+      "acct_id": "NULL",
+      "acct_name": "NULL"
+    },
+    {
+      "mgmt_id": "19",
+      "mgmt_code": "DOP007",
+      "mgmt_name": "Seguro Empresa",
+      "nature": "DESPESA",
+      "accountingCode": "3.2.01.007",
+      "acct_id": "NULL",
+      "acct_name": "NULL"
+    },
+    {
+      "mgmt_id": "20",
+      "mgmt_code": "DOP008",
+      "mgmt_name": "Manutenção de Equipamentos",
+      "nature": "DESPESA",
+      "accountingCode": "3.2.02.001",
+      "acct_id": "NULL",
+      "acct_name": "NULL"
+    },
+    {
+      "mgmt_id": "21",
+      "mgmt_code": "DOP009",
+      "mgmt_name": "Copa e Limpeza",
+      "nature": "DESPESA",
+      "accountingCode": "3.2.02.002",
+      "acct_id": "NULL",
+      "acct_name": "NULL"
+    }
+  ],
+  "messages": [],
+  "stdout": "mgmt_id\tmgmt_code\tmgmt_name\tnature\taccountingCode\tacct_id\tacct_name\n1\tCOP001\tEmbalagens\tCUSTO\t3.1.01.001\tNULL\tNULL\n2\tCOP002\tMaterial de Limpeza\tCUSTO\t3.1.01.002\tNULL\tNULL\n3\tCOP003\tGás Encanado\tCUSTO\t3.1.01.003\tNULL\tNULL\n4\tCOP004\tFretes\tCUSTO\t3.1.01.004\tNULL\tNULL\n5\tCOP005\tAluguel de Equipamentos\tCUSTO\t3.1.01.005\tNULL\tNULL\n6\tCOP006\tMaterial de Consumo\tCUSTO\t3.1.01.006\tNULL\tNULL\n7\tCOP007\tTerceirizado\tCUSTO\t3.1.01.007\tNULL\tNULL\n8\tCOP008\tPJ\tCUSTO\t3.1.01.008\tNULL\tNULL\n9\tCOP009\tEquipamentos\tCUSTO\t3.1.01.009\tNULL\tNULL\n10\tCOP010\tPerdas Estoque\tCUSTO\t3.1.02.001\tNULL\tNULL\n11\tCOP011\tPerdas Operacionais\tCUSTO\t3.1.02.002\tNULL\tNULL\n12\tCOP012\tManutenção das Instalações\tCUSTO\t3.1.03.001\tNULL\tNULL\n22\tDAD001\tConsultoria e Assessoria\tDESPESA\t3.3.01.001\tNULL\tNULL\n23\tDAD002\tSoftware e Sistemas\tDESPESA\t3.3.01.002\tNULL\tNULL\n24\tDAD003\tContabilidade\tDESPESA\t3.3.01.003\tNULL\tNULL\n25\tDAD004\tJurídico\tDESPESA\t3.3.01.004\tNULL\tNULL\n26\tDAD005\tMarcas e Patentes\tDESPESA\t3.3.01.005\tNULL\tNULL\n27\tDAD006\tTreinamento\tDESPESA\t3.3.01.006\tNULL\tNULL\n28\tDAD007\tServiços de RH\tDESPESA\t3.3.01.007\tNULL\tNULL\n29\tDAD008\tPró-Labore\tDESPESA\t3.3.02.001\tNULL\tNULL\n30\tDAD009\tSalários\tDESPESA\t3.3.02.002\tNULL\tNULL\n31\tDAD010\tPremiação\tDESPESA\t3.3.02.003\tNULL\tNULL\n32\tDAD011\tVale Transporte\tDESPESA\t3.3.02.004\tNULL\tNULL\n33\tDAD012\tVale Refeição\tDESPESA\t3.3.02.005\tNULL\tNULL\n34\tDAD013\tHora Extra\tDESPESA\t3.3.02.006\tNULL\tNULL\n35\tDAD014\tSeguro de Vida\tDESPESA\t3.3.02.007\tNULL\tNULL\n36\tDAD015\tFGTS\tDESPESA\t3.3.02.008\tNULL\tNULL\n37\tDAD016\tINSS\tDESPESA\t3.3.02.009\tNULL\tNULL\n38\tDAD017\tViagens\tDESPESA\t3.3.03.001\tNULL\tNULL\n39\tDAD018\tMaterial de Escritório\tDESPESA\t3.3.03.002\tNULL\tNULL\n40\tDAD019\tReembolso de Despesas\tDESPESA\t3.3.03.003\tNULL\tNULL\n41\tDAD020\tImóvel Alugado\tDESPESA\t3.3.03.004\tNULL\tNULL\n42\tDCO001\tPropaganda\tDESPESA\t3.4.01.001\tNULL\tNULL\n43\tDFI001\tTarifa Cartões\tCUSTO\t3.5.01.001\tNULL\tNULL\n44\tDFI002\tDespesa Bancária\tDESPESA\t3.5.01.002\tNULL\tNULL\n45\tDFI003\tDespesas com Juros\tDESPESA\t3.5.01.003\tNULL\tNULL\n46\tDNO001\tReclamação Trabalhista\tDESPESA\t3.6.01.001\tNULL\tNULL\n47\tDNO002\tDespesas Extra\tDESPESA\t3.6.01.002\tNULL\tNULL\n48\tDNO003\tIR / CSLL\tDESPESA\t3.6.01.003\tNULL\tNULL\n13\tDOP001\tAluguel\tDESPESA\t3.2.01.001\tNULL\tNULL\n14\tDOP002\tEnergia Elétrica\tDESPESA\t3.2.01.002\tNULL\tNULL\n15\tDOP003\tÁgua\tDESPESA\t3.2.01.003\tNULL\tNULL\n16\tDOP004\tIPTU\tDESPESA\t3.2.01.004\tNULL\tNULL\n17\tDOP005\tInternet\tDESPESA\t3.2.01.005\tNULL\tNULL\n18\tDOP006\tTelefone\tDESPESA\t3.2.01.006\tNULL\tNULL\n19\tDOP007\tSeguro Empresa\tDESPESA\t3.2.01.007\tNULL\tNULL\n20\tDOP008\tManutenção de Equipamentos\tDESPESA\t3.2.02.001\tNULL\tNULL\n21\tDOP009\tCopa e Limpeza\tDESPESA\t3.2.02.002\tNULL\tNULL\n",
+  "stderr": "",
+  "execution_time_ms": 53
+}

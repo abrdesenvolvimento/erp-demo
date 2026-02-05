@@ -354,10 +354,13 @@ Automatizar importação de pedidos concluídos do iFood via arquivos JSON
 
 ### Contabilização Automática (04/02/2026)
 - [x] Corrigir formatação de moeda no DRE (valores não devem ser divididos por 100)
-- [x] Gerar lançamentos contábeis para vendas (Balcão, A Prazo, Delivery) - 2022-2026
-- [x] Gerar lançamentos contábeis para despesas (Dez/2025, Jan/2026, Fev/2026)
-- [x] Gerar lançamentos contábeis para compras (Nov/2025, Dez/2025, Jan/2026, Fev/2026)
+- [x] Gerar lançamentos contábeis para vendas (Balcão, A Prazo, Delivery) - apenas 2026+
+- [x] Gerar lançamentos contábeis para despesas - apenas 2026+
+- [x] Gerar lançamentos contábeis para compras - apenas 2026+
 - [x] DRE completo funcionando com Receitas, Custos e Despesas
+- [x] Corrigir divergências de valores (usar mesma lógica de timezone da Análise de Faturamento)
+- [x] Distribuir despesas nas contas corretas (não mais todas em Aluguel)
+- [ ] Verificar valor de CMV vs Compras no sistema (R$ 52.907 vs R$ 60.193)
 - [ ] Implementar contabilização automática em tempo real (ao criar venda/despesa/compra)
 
 ### Melhorias Contas Gerenciais e Contas a Receber (04/02/2026)
@@ -425,3 +428,13 @@ Automatizar importação de pedidos concluídos do iFood via arquivos JSON
 - [ ] Implementar contabilização automática de Compras
 - [ ] Implementar contabilização automática de Despesas
 - [ ] Testar DRE, Balancete e Razão com dados reais
+
+### Correções Contabilização (04/02/2026 - Feedback Gabriel)
+- [ ] Limitar contabilização a partir de 2026 (remover 2022-2025)
+- [ ] Corrigir divergência Balcão Jan/2026: Sistema R$ 56.493,25 vs DRE R$ 59.978,75
+- [ ] Corrigir divergência A Prazo Jan/2026: Sistema R$ 7.115,40 vs DRE R$ 7.270,40
+- [ ] Corrigir divergência Delivery Jan/2026: Sistema R$ 23.522,32 vs DRE R$ 23.281,66
+- [ ] Corrigir divergência Custo Jan/2026: Sistema R$ 60.193,90 vs DRE R$ 52.907,03
+- [ ] Corrigir mapeamento de despesas (todas indo para Aluguel 6.1.1.01)
+- [ ] Investigar possível duplicação de lançamentos
+

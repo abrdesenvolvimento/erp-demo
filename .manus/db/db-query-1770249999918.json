@@ -1,0 +1,70 @@
+{
+  "query": "-- Primeiro, deletar os lançamentos contábeis de 2022-2025\nDELETE FROM accountingEntries WHERE competenceMonth < '2026-01';\n\n-- Deletar journals de teste\nDELETE FROM journals WHERE description LIKE '%teste%' OR description LIKE '%Teste%';\n\n-- Deletar journals de 2022-2025\nDELETE FROM journals WHERE competenceMonth < '2026-01';\n\n-- Verificar o que sobrou\nSELECT competenceMonth, description, totalDebit, totalCredit FROM journals ORDER BY competenceMonth, description;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute -- Primeiro, deletar os lançamentos contábeis de 2022-2025\nDELETE FROM accountingEntries WHERE competenceMonth < '2026-01';\n\n-- Deletar journals de teste\nDELETE FROM journals WHERE description LIKE '%teste%' OR description LIKE '%Teste%';\n\n-- Deletar journals de 2022-2025\nDELETE FROM journals WHERE competenceMonth < '2026-01';\n\n-- Verificar o que sobrou\nSELECT competenceMonth, description, totalDebit, totalCredit FROM journals ORDER BY competenceMonth, description;",
+  "rows": [
+    {
+      "competenceMonth": "2026-01",
+      "description": "Compras - 2026-01",
+      "totalDebit": "52907.03",
+      "totalCredit": "52907.03"
+    },
+    {
+      "competenceMonth": "2026-01",
+      "description": "Despesas - 2026-01",
+      "totalDebit": "39813.46",
+      "totalCredit": "39813.46"
+    },
+    {
+      "competenceMonth": "2026-01",
+      "description": "Vendas A_PRAZO - 2026-01",
+      "totalDebit": "7270.40",
+      "totalCredit": "7270.40"
+    },
+    {
+      "competenceMonth": "2026-01",
+      "description": "Vendas BALCAO - 2026-01",
+      "totalDebit": "59978.75",
+      "totalCredit": "59978.75"
+    },
+    {
+      "competenceMonth": "2026-01",
+      "description": "Vendas DELIVERY - 2026-01",
+      "totalDebit": "23281.66",
+      "totalCredit": "23281.66"
+    },
+    {
+      "competenceMonth": "2026-02",
+      "description": "Compras - 2026-02",
+      "totalDebit": "2758.73",
+      "totalCredit": "2758.73"
+    },
+    {
+      "competenceMonth": "2026-02",
+      "description": "Despesas - 2026-02",
+      "totalDebit": "20666.43",
+      "totalCredit": "20666.43"
+    },
+    {
+      "competenceMonth": "2026-02",
+      "description": "Vendas A_PRAZO - 2026-02",
+      "totalDebit": "743.00",
+      "totalCredit": "743.00"
+    },
+    {
+      "competenceMonth": "2026-02",
+      "description": "Vendas BALCAO - 2026-02",
+      "totalDebit": "5281.94",
+      "totalCredit": "5281.94"
+    },
+    {
+      "competenceMonth": "2026-02",
+      "description": "Vendas DELIVERY - 2026-02",
+      "totalDebit": "2593.83",
+      "totalCredit": "2593.83"
+    }
+  ],
+  "messages": [],
+  "stdout": "competenceMonth\tdescription\ttotalDebit\ttotalCredit\n2026-01\tCompras - 2026-01\t52907.03\t52907.03\n2026-01\tDespesas - 2026-01\t39813.46\t39813.46\n2026-01\tVendas A_PRAZO - 2026-01\t7270.40\t7270.40\n2026-01\tVendas BALCAO - 2026-01\t59978.75\t59978.75\n2026-01\tVendas DELIVERY - 2026-01\t23281.66\t23281.66\n2026-02\tCompras - 2026-02\t2758.73\t2758.73\n2026-02\tDespesas - 2026-02\t20666.43\t20666.43\n2026-02\tVendas A_PRAZO - 2026-02\t743.00\t743.00\n2026-02\tVendas BALCAO - 2026-02\t5281.94\t5281.94\n2026-02\tVendas DELIVERY - 2026-02\t2593.83\t2593.83\n",
+  "stderr": "",
+  "execution_time_ms": 100
+}

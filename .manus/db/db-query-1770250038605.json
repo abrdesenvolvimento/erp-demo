@@ -1,0 +1,45 @@
+{
+  "query": "SELECT id, code, name FROM chartOfAccounts WHERE code LIKE '3.%' ORDER BY code LIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT id, code, name FROM chartOfAccounts WHERE code LIKE '3.%' ORDER BY code LIMIT 20;",
+  "rows": [
+    {
+      "id": "44",
+      "code": "3.1",
+      "name": "CAPITAL SOCIAL"
+    },
+    {
+      "id": "45",
+      "code": "3.1.1",
+      "name": "CAPITAL INTEGRALIZADO"
+    },
+    {
+      "id": "46",
+      "code": "3.1.1.01",
+      "name": "Capital Integralizado"
+    },
+    {
+      "id": "47",
+      "code": "3.2",
+      "name": "RESULTADOS ACUMULADOS"
+    },
+    {
+      "id": "48",
+      "code": "3.2.1",
+      "name": "LUCROS E PREJUÍZOS"
+    },
+    {
+      "id": "49",
+      "code": "3.2.1.01",
+      "name": "Lucros Acumulados"
+    },
+    {
+      "id": "50",
+      "code": "3.2.1.02",
+      "name": "Prejuízos Acumulados"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tcode\tname\n44\t3.1\tCAPITAL SOCIAL\n45\t3.1.1\tCAPITAL INTEGRALIZADO\n46\t3.1.1.01\tCapital Integralizado\n47\t3.2\tRESULTADOS ACUMULADOS\n48\t3.2.1\tLUCROS E PREJUÍZOS\n49\t3.2.1.01\tLucros Acumulados\n50\t3.2.1.02\tPrejuízos Acumulados\n",
+  "stderr": "",
+  "execution_time_ms": 48
+}

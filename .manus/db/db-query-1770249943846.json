@@ -1,0 +1,178 @@
+{
+  "query": "SELECT \n  j.id,\n  j.competenceMonth,\n  j.description,\n  j.totalDebit,\n  j.totalCredit,\n  COUNT(ae.id) as qtd_entries\nFROM journals j\nLEFT JOIN accountingEntries ae ON j.id = ae.journalId\nWHERE j.competenceMonth >= '2026-01'\nGROUP BY j.id, j.competenceMonth, j.description, j.totalDebit, j.totalCredit\nORDER BY j.competenceMonth, j.description;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  j.id,\n  j.competenceMonth,\n  j.description,\n  j.totalDebit,\n  j.totalCredit,\n  COUNT(ae.id) as qtd_entries\nFROM journals j\nLEFT JOIN accountingEntries ae ON j.id = ae.journalId\nWHERE j.competenceMonth >= '2026-01'\nGROUP BY j.id, j.competenceMonth, j.description, j.totalDebit, j.totalCredit\nORDER BY j.competenceMonth, j.description;",
+  "rows": [
+    {
+      "id": "60064",
+      "competenceMonth": "2026-01",
+      "description": "Compras - 2026-01",
+      "totalDebit": "52907.03",
+      "totalCredit": "52907.03",
+      "qtd_entries": "2"
+    },
+    {
+      "id": "60060",
+      "competenceMonth": "2026-01",
+      "description": "Despesas - 2026-01",
+      "totalDebit": "39813.46",
+      "totalCredit": "39813.46",
+      "qtd_entries": "68"
+    },
+    {
+      "id": "60055",
+      "competenceMonth": "2026-01",
+      "description": "Vendas A_PRAZO - 2026-01",
+      "totalDebit": "7270.40",
+      "totalCredit": "7270.40",
+      "qtd_entries": "2"
+    },
+    {
+      "id": "60053",
+      "competenceMonth": "2026-01",
+      "description": "Vendas BALCAO - 2026-01",
+      "totalDebit": "59978.75",
+      "totalCredit": "59978.75",
+      "qtd_entries": "2"
+    },
+    {
+      "id": "60054",
+      "competenceMonth": "2026-01",
+      "description": "Vendas DELIVERY - 2026-01",
+      "totalDebit": "23281.66",
+      "totalCredit": "23281.66",
+      "qtd_entries": "2"
+    },
+    {
+      "id": "60065",
+      "competenceMonth": "2026-02",
+      "description": "Compras - 2026-02",
+      "totalDebit": "2758.73",
+      "totalCredit": "2758.73",
+      "qtd_entries": "2"
+    },
+    {
+      "id": "60061",
+      "competenceMonth": "2026-02",
+      "description": "Despesas - 2026-02",
+      "totalDebit": "20666.43",
+      "totalCredit": "20666.43",
+      "qtd_entries": "18"
+    },
+    {
+      "id": "1",
+      "competenceMonth": "2026-02",
+      "description": "Journal de teste",
+      "totalDebit": "100.00",
+      "totalCredit": "100.00",
+      "qtd_entries": "2"
+    },
+    {
+      "id": "3",
+      "competenceMonth": "2026-02",
+      "description": "Journal de teste",
+      "totalDebit": "100.00",
+      "totalCredit": "100.00",
+      "qtd_entries": "2"
+    },
+    {
+      "id": "5",
+      "competenceMonth": "2026-02",
+      "description": "Journal de teste",
+      "totalDebit": "100.00",
+      "totalCredit": "100.00",
+      "qtd_entries": "2"
+    },
+    {
+      "id": "4",
+      "competenceMonth": "2026-02",
+      "description": "Journal teste partida dobrada",
+      "totalDebit": "0.00",
+      "totalCredit": "0.00",
+      "qtd_entries": "0"
+    },
+    {
+      "id": "2",
+      "competenceMonth": "2026-02",
+      "description": "Journal teste partida dobrada",
+      "totalDebit": "0.00",
+      "totalCredit": "0.00",
+      "qtd_entries": "0"
+    },
+    {
+      "id": "6",
+      "competenceMonth": "2026-02",
+      "description": "Journal teste partida dobrada",
+      "totalDebit": "0.00",
+      "totalCredit": "0.00",
+      "qtd_entries": "0"
+    },
+    {
+      "id": "30001",
+      "competenceMonth": "2026-02",
+      "description": "Teste de contabilização",
+      "totalDebit": "0.00",
+      "totalCredit": "0.00",
+      "qtd_entries": "0"
+    },
+    {
+      "id": "30004",
+      "competenceMonth": "2026-02",
+      "description": "Teste de contabilização",
+      "totalDebit": "100.00",
+      "totalCredit": "100.00",
+      "qtd_entries": "2"
+    },
+    {
+      "id": "30002",
+      "competenceMonth": "2026-02",
+      "description": "Teste de contabilização",
+      "totalDebit": "100.00",
+      "totalCredit": "100.00",
+      "qtd_entries": "2"
+    },
+    {
+      "id": "30005",
+      "competenceMonth": "2026-02",
+      "description": "Teste partida dobrada inválida",
+      "totalDebit": "0.00",
+      "totalCredit": "0.00",
+      "qtd_entries": "0"
+    },
+    {
+      "id": "30003",
+      "competenceMonth": "2026-02",
+      "description": "Teste partida dobrada inválida",
+      "totalDebit": "0.00",
+      "totalCredit": "0.00",
+      "qtd_entries": "0"
+    },
+    {
+      "id": "60058",
+      "competenceMonth": "2026-02",
+      "description": "Vendas A_PRAZO - 2026-02",
+      "totalDebit": "743.00",
+      "totalCredit": "743.00",
+      "qtd_entries": "2"
+    },
+    {
+      "id": "60056",
+      "competenceMonth": "2026-02",
+      "description": "Vendas BALCAO - 2026-02",
+      "totalDebit": "5281.94",
+      "totalCredit": "5281.94",
+      "qtd_entries": "2"
+    },
+    {
+      "id": "60057",
+      "competenceMonth": "2026-02",
+      "description": "Vendas DELIVERY - 2026-02",
+      "totalDebit": "2593.83",
+      "totalCredit": "2593.83",
+      "qtd_entries": "2"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tcompetenceMonth\tdescription\ttotalDebit\ttotalCredit\tqtd_entries\n60064\t2026-01\tCompras - 2026-01\t52907.03\t52907.03\t2\n60060\t2026-01\tDespesas - 2026-01\t39813.46\t39813.46\t68\n60055\t2026-01\tVendas A_PRAZO - 2026-01\t7270.40\t7270.40\t2\n60053\t2026-01\tVendas BALCAO - 2026-01\t59978.75\t59978.75\t2\n60054\t2026-01\tVendas DELIVERY - 2026-01\t23281.66\t23281.66\t2\n60065\t2026-02\tCompras - 2026-02\t2758.73\t2758.73\t2\n60061\t2026-02\tDespesas - 2026-02\t20666.43\t20666.43\t18\n1\t2026-02\tJournal de teste\t100.00\t100.00\t2\n3\t2026-02\tJournal de teste\t100.00\t100.00\t2\n5\t2026-02\tJournal de teste\t100.00\t100.00\t2\n4\t2026-02\tJournal teste partida dobrada\t0.00\t0.00\t0\n2\t2026-02\tJournal teste partida dobrada\t0.00\t0.00\t0\n6\t2026-02\tJournal teste partida dobrada\t0.00\t0.00\t0\n30001\t2026-02\tTeste de contabilização\t0.00\t0.00\t0\n30004\t2026-02\tTeste de contabilização\t100.00\t100.00\t2\n30002\t2026-02\tTeste de contabilização\t100.00\t100.00\t2\n30005\t2026-02\tTeste partida dobrada inválida\t0.00\t0.00\t0\n30003\t2026-02\tTeste partida dobrada inválida\t0.00\t0.00\t0\n60058\t2026-02\tVendas A_PRAZO - 2026-02\t743.00\t743.00\t2\n60056\t2026-02\tVendas BALCAO - 2026-02\t5281.94\t5281.94\t2\n60057\t2026-02\tVendas DELIVERY - 2026-02\t2593.83\t2593.83\t2\n",
+  "stderr": "",
+  "execution_time_ms": 55
+}

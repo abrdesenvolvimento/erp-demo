@@ -1,0 +1,13 @@
+{
+  "query": "-- Deletar lançamentos contábeis de 2026\nDELETE FROM accountingEntries WHERE competenceMonth >= '2026-01';\n\n-- Deletar journals de 2026\nDELETE FROM journals WHERE competenceMonth >= '2026-01';\n\n-- Verificar que está limpo\nSELECT COUNT(*) as total FROM journals;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute -- Deletar lançamentos contábeis de 2026\nDELETE FROM accountingEntries WHERE competenceMonth >= '2026-01';\n\n-- Deletar journals de 2026\nDELETE FROM journals WHERE competenceMonth >= '2026-01';\n\n-- Verificar que está limpo\nSELECT COUNT(*) as total FROM journals;",
+  "rows": [
+    {
+      "total": "0"
+    }
+  ],
+  "messages": [],
+  "stdout": "total\n0\n",
+  "stderr": "",
+  "execution_time_ms": 78
+}
