@@ -878,7 +878,8 @@ export const governanceAuditLog = mysqlTable("governanceAuditLog", {
     "ACCOUNTING_BATCH_RUN",
     "ACCOUNTING_MANUAL_RUN",
     "EDIT_BLOCKED",
-    "DELETE_BLOCKED"
+    "DELETE_BLOCKED",
+    "CUSTOMER_CHANGED"
   ]).notNull(),
   entityType: varchar("entityType", { length: 50 }), // sale, expense, purchase, period
   entityId: int("entityId"),

@@ -476,3 +476,16 @@ Não liberar acesso Admin para todos os usuários. Funções específicas permit
 - [x] Ajustar contabilização em lote para mudar status para POSTED
 - [x] Atualizar regra de edição para considerar DRAFT vs POSTED
 - [ ] Testar e validar o novo fluxo
+
+### Bug: Notificação "Registro já contabilizado" (05/02/2026) ✅
+- [x] Investigar origem da notificação mesmo com journal DRAFT
+- [x] Causa: venda criada antes do servidor ser reiniciado com a correção
+- [x] Solução: atualizado journal 4775737 para DRAFT manualmente
+- [x] Servidor reiniciado para aplicar correções
+
+### Bug: Erro insert governanceAuditLog (05/02/2026) ✅
+- [x] Investigar erro de insert no governanceAuditLog ao salvar alterações
+- [x] Causa: CUSTOMER_CHANGED não existia no enum action
+- [x] Solução: adicionado CUSTOMER_CHANGED ao enum no schema e no banco
+- [x] Servidor reiniciado
+

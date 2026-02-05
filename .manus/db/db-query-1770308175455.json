@@ -1,0 +1,18 @@
+{
+  "query": "SELECT s.id as saleId, s.saleDate, s.status, js.journalId, j.status as journalStatus, j.description \nFROM sales s \nLEFT JOIN journalSources js ON js.sourceType = 'sale' AND js.sourceId = s.id \nLEFT JOIN journals j ON j.id = js.journalId \nWHERE s.id = 48510001;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT s.id as saleId, s.saleDate, s.status, js.journalId, j.status as journalStatus, j.description \nFROM sales s \nLEFT JOIN journalSources js ON js.sourceType = 'sale' AND js.sourceId = s.id \nLEFT JOIN journals j ON j.id = js.journalId \nWHERE s.id = 48510001;",
+  "rows": [
+    {
+      "saleId": "48510001",
+      "saleDate": "2026-02-05 15:49:02",
+      "status": "ACTIVE",
+      "journalId": "4775737",
+      "journalStatus": "POSTED",
+      "description": "Venda #48510001 - Ricardo"
+    }
+  ],
+  "messages": [],
+  "stdout": "saleId\tsaleDate\tstatus\tjournalId\tjournalStatus\tdescription\n48510001\t2026-02-05 15:49:02\tACTIVE\t4775737\tPOSTED\tVenda #48510001 - Ricardo\n",
+  "stderr": "",
+  "execution_time_ms": 59
+}
