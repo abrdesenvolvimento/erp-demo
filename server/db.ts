@@ -2063,6 +2063,8 @@ export async function payPurchaseInstallment(data: {
   paidDate: Date;
   paidAmount: string;
   paymentMethod: string;
+  interestAmount?: string;
+  discountAmount?: string;
   notes?: string;
 }) {
   const db = await getDb();
@@ -2078,16 +2080,26 @@ export async function payPurchaseInstallment(data: {
   
   const installmentAmount = parseFloat(installment[0].amount);
   const paidAmount = parseFloat(data.paidAmount);
+  const interestAmount = data.interestAmount ? parseFloat(data.interestAmount) : 0;
+  const discountAmount = data.discountAmount ? parseFloat(data.discountAmount) : 0;
+  
+  // Valor efetivo pago (valor original + juros - desconto)
+  const effectivePaid = paidAmount + interestAmount - discountAmount;
   
   // Atualizar parcela
   await db.update(purchaseInstallments)
     .set({
       paidDate: data.paidDate,
+      paidAmount: effectivePaid.toFixed(2),
+      paymentMethod: data.paymentMethod,
+      interestAmount: interestAmount > 0 ? interestAmount.toFixed(2) : null,
+      discountAmount: discountAmount > 0 ? discountAmount.toFixed(2) : null,
+      notes: data.notes || null,
       status: paidAmount >= installmentAmount ? "PAID" : "PENDING"
     })
     .where(eq(purchaseInstallments.id, data.installmentId));
   
-  return { success: true };
+  return { success: true, interestAmount, discountAmount };
 }
 
 // Pagar parcela de despesa
@@ -2096,6 +2108,8 @@ export async function payExpenseInstallment(data: {
   paidDate: Date;
   paidAmount: string;
   paymentMethod: string;
+  interestAmount?: string;
+  discountAmount?: string;
   notes?: string;
 }) {
   const db = await getDb();
@@ -2111,8 +2125,13 @@ export async function payExpenseInstallment(data: {
   
   const installmentAmount = parseFloat(installment[0].amount);
   const paidAmount = parseFloat(data.paidAmount);
+  const interestAmount = data.interestAmount ? parseFloat(data.interestAmount) : 0;
+  const discountAmount = data.discountAmount ? parseFloat(data.discountAmount) : 0;
   const alreadyPaid = parseFloat(installment[0].paymentAmount || "0");
-  const newPaidAmount = alreadyPaid + paidAmount;
+  
+  // Valor efetivo pago (valor original + juros - desconto)
+  const effectivePaid = paidAmount + interestAmount - discountAmount;
+  const newPaidAmount = alreadyPaid + effectivePaid;
   
   // Atualizar parcela
   await db.update(expenseInstallments)
@@ -2120,6 +2139,8 @@ export async function payExpenseInstallment(data: {
       paymentDate: data.paidDate,
       paymentAmount: newPaidAmount.toFixed(2),
       paymentMethod: data.paymentMethod,
+      interestAmount: interestAmount > 0 ? interestAmount.toFixed(2) : null,
+      discountAmount: discountAmount > 0 ? discountAmount.toFixed(2) : null,
       notes: data.notes,
       status: newPaidAmount >= installmentAmount ? "PAGO" : "PENDENTE"
     })
@@ -2128,7 +2149,7 @@ export async function payExpenseInstallment(data: {
   // Atualizar status da despesa
   await updateExpenseStatus(installment[0].expenseId);
   
-  return { success: true };
+  return { success: true, interestAmount, discountAmount };
 }
 
 // Atualizar status de parcelas vencidas

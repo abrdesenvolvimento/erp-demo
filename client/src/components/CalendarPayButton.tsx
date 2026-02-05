@@ -33,7 +33,8 @@ export function CalendarPayButton({ item, onPaymentSuccess }: CalendarPayButtonP
   const [paymentForm, setPaymentForm] = useState({
     paidDate: new Date().toISOString().split('T')[0],
     paidAmount: amount.toString(),
-    additionalAmount: "",
+    interestAmount: "",
+    discountAmount: "",
     paymentMethod: item.paymentMethod || "",
     notes: "",
   });
@@ -53,7 +54,8 @@ export function CalendarPayButton({ item, onPaymentSuccess }: CalendarPayButtonP
 
   const handlePayment = () => {
     const paidAmount = parseFloat(paymentForm.paidAmount);
-    const additionalAmount = paymentForm.additionalAmount ? parseFloat(paymentForm.additionalAmount) : 0;
+    const interestAmount = paymentForm.interestAmount ? parseFloat(paymentForm.interestAmount) : 0;
+    const discountAmount = paymentForm.discountAmount ? parseFloat(paymentForm.discountAmount) : 0;
 
     if (isNaN(paidAmount) || paidAmount <= 0) {
       toast.error("Valor pago inválido");
@@ -64,11 +66,25 @@ export function CalendarPayButton({ item, onPaymentSuccess }: CalendarPayButtonP
       installmentId: item.installmentId,
       type: 'purchase' as const,
       paidDate: new Date(paymentForm.paidDate),
-      paidAmount: (paidAmount + additionalAmount).toString(),
+      paidAmount: paidAmount.toString(),
       paymentMethod: paymentForm.paymentMethod,
+      interestAmount: interestAmount > 0 ? interestAmount.toString() : undefined,
+      discountAmount: discountAmount > 0 ? discountAmount.toString() : undefined,
       notes: paymentForm.notes,
     });
   };
+
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(value);
+  };
+
+  const baseAmount = parseFloat(paymentForm.paidAmount) || 0;
+  const interestAmount = parseFloat(paymentForm.interestAmount) || 0;
+  const discountAmount = parseFloat(paymentForm.discountAmount) || 0;
+  const totalEffective = baseAmount + interestAmount - discountAmount;
 
   return (
     <>
@@ -108,7 +124,7 @@ export function CalendarPayButton({ item, onPaymentSuccess }: CalendarPayButtonP
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="paidAmount" className="text-right">
-                Valor Pago
+                Valor Base
               </Label>
               <Input
                 id="paidAmount"
@@ -120,19 +136,61 @@ export function CalendarPayButton({ item, onPaymentSuccess }: CalendarPayButtonP
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="additionalAmount" className="text-right">
-                Juros/Multa
+              <Label htmlFor="interestAmount" className="text-right">
+                Juros/Multa (+)
               </Label>
               <Input
-                id="additionalAmount"
+                id="interestAmount"
                 type="number"
                 step="0.01"
                 placeholder="0.00"
-                value={paymentForm.additionalAmount}
-                onChange={(e) => setPaymentForm({ ...paymentForm, additionalAmount: e.target.value })}
+                value={paymentForm.interestAmount}
+                onChange={(e) => setPaymentForm({ ...paymentForm, interestAmount: e.target.value })}
                 className="col-span-3"
               />
             </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="discountAmount" className="text-right">
+                Desconto (-)
+              </Label>
+              <Input
+                id="discountAmount"
+                type="number"
+                step="0.01"
+                placeholder="0.00"
+                value={paymentForm.discountAmount}
+                onChange={(e) => setPaymentForm({ ...paymentForm, discountAmount: e.target.value })}
+                className="col-span-3"
+              />
+            </div>
+            
+            {/* Resumo do pagamento */}
+            {(baseAmount > 0 || interestAmount > 0 || discountAmount > 0) && (
+              <div className="col-span-4 bg-muted p-3 rounded-md">
+                <div className="flex justify-between text-sm">
+                  <span>Valor Base:</span>
+                  <span>{formatCurrency(baseAmount)}</span>
+                </div>
+                {interestAmount > 0 && (
+                  <div className="flex justify-between text-sm text-red-600">
+                    <span>+ Juros/Multa:</span>
+                    <span>{formatCurrency(interestAmount)}</span>
+                  </div>
+                )}
+                {discountAmount > 0 && (
+                  <div className="flex justify-between text-sm text-green-600">
+                    <span>- Desconto:</span>
+                    <span>{formatCurrency(discountAmount)}</span>
+                  </div>
+                )}
+                <hr className="my-2" />
+                <div className="flex justify-between font-medium">
+                  <span>Total Efetivo:</span>
+                  <span className="text-lg">{formatCurrency(totalEffective)}</span>
+                </div>
+              </div>
+            )}
+            
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="paymentMethod" className="text-right">
                 Forma Pagamento

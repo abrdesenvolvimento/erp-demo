@@ -63,7 +63,8 @@ export default function ContasPagar() {
       setPaymentForm({
         paidDate: new Date().toISOString().split('T')[0],
         paidAmount: calendarPayItem.amount.toString(),
-        additionalAmount: "",
+        interestAmount: "",
+        discountAmount: "",
         paymentMethod: calendarPayItem.paymentMethod || "",
         notes: "",
       });
@@ -97,7 +98,8 @@ export default function ContasPagar() {
             setPaymentForm({
               paidDate: new Date().toISOString().split('T')[0],
               paidAmount: item.amount.toString(),
-              additionalAmount: "",
+              interestAmount: "",
+              discountAmount: "",
               paymentMethod: item.paymentMethod || "",
               notes: "",
             });
@@ -128,7 +130,8 @@ export default function ContasPagar() {
     setPaymentForm({
       paidDate: new Date().toISOString().split('T')[0],
       paidAmount: item.amount.toString(),
-      additionalAmount: "",
+      interestAmount: "",
+      discountAmount: "",
       paymentMethod: "",
       notes: ""
     });
@@ -141,7 +144,8 @@ export default function ContasPagar() {
   const [paymentForm, setPaymentForm] = useState({
     paidDate: new Date().toISOString().split('T')[0],
     paidAmount: "",
-    additionalAmount: "",
+    interestAmount: "",
+    discountAmount: "",
     paymentMethod: "",
     notes: ""
   });
@@ -191,7 +195,8 @@ export default function ContasPagar() {
     setPaymentForm({
       paidDate: new Date().toISOString().split('T')[0],
       paidAmount: "",
-      additionalAmount: "",
+      interestAmount: "",
+      discountAmount: "",
       paymentMethod: "",
       notes: ""
     });
@@ -211,7 +216,8 @@ export default function ContasPagar() {
     setPaymentForm({
       paidDate: new Date().toISOString().split('T')[0],
       paidAmount: installment.pendingAmount,
-      additionalAmount: "",
+      interestAmount: "",
+      discountAmount: "",
       paymentMethod: "",
       notes: ""
     });
@@ -241,7 +247,9 @@ export default function ContasPagar() {
       return;
     }
     
-    const totalAmount = parseFloat(paymentForm.paidAmount) + (parseFloat(paymentForm.additionalAmount) || 0);
+    const baseAmount = parseFloat(paymentForm.paidAmount) || 0;
+    const interestAmount = parseFloat(paymentForm.interestAmount) || 0;
+    const discountAmount = parseFloat(paymentForm.discountAmount) || 0;
     
     // Criar data explicitamente em horário de Brasília (meio-dia) para evitar problemas de timezone
     const [year, month, day] = paymentForm.paidDate.split('-');
@@ -251,8 +259,10 @@ export default function ContasPagar() {
       installmentId: selectedInstallment.id,
       type: selectedInstallment.type || 'expense',
       paidDate,
-      paidAmount: totalAmount.toFixed(2),
+      paidAmount: baseAmount.toFixed(2),
       paymentMethod: paymentForm.paymentMethod,
+      interestAmount: interestAmount > 0 ? interestAmount.toFixed(2) : undefined,
+      discountAmount: discountAmount > 0 ? discountAmount.toFixed(2) : undefined,
       notes: paymentForm.notes || undefined
     });
   };
@@ -461,27 +471,61 @@ export default function ContasPagar() {
                 </div>
                 
                 <div>
-                  <Label htmlFor="additionalAmount">Acréscimo (Juros/Multa)</Label>
+                  <Label htmlFor="interestAmount">Juros/Multa (+)</Label>
                   <Input
-                    id="additionalAmount"
+                    id="interestAmount"
                     type="number"
                     step="0.01"
                     placeholder="0.00"
-                    value={paymentForm.additionalAmount}
-                    onChange={(e) => setPaymentForm({ ...paymentForm, additionalAmount: e.target.value })}
+                    value={paymentForm.interestAmount}
+                    onChange={(e) => setPaymentForm({ ...paymentForm, interestAmount: e.target.value })}
                   />
+                  <p className="text-xs text-muted-foreground mt-1">Valor adicional por atraso</p>
                 </div>
               </div>
               
-              {(paymentForm.paidAmount || paymentForm.additionalAmount) && (
+              <div>
+                <Label htmlFor="discountAmount">Desconto (-)</Label>
+                <Input
+                  id="discountAmount"
+                  type="number"
+                  step="0.01"
+                  placeholder="0.00"
+                  value={paymentForm.discountAmount}
+                  onChange={(e) => setPaymentForm({ ...paymentForm, discountAmount: e.target.value })}
+                />
+                <p className="text-xs text-muted-foreground mt-1">Desconto obtido no pagamento</p>
+              </div>
+              
+              {(paymentForm.paidAmount || paymentForm.interestAmount || paymentForm.discountAmount) && (
                 <div className="bg-muted p-3 rounded-md">
-                  <p className="text-sm font-medium">Total a Pagar:</p>
-                  <p className="text-2xl font-bold">
-                    {formatCurrency(
-                      (parseFloat(paymentForm.paidAmount) || 0) + 
-                      (parseFloat(paymentForm.additionalAmount) || 0)
-                    )}
-                  </p>
+                  <div className="flex justify-between text-sm">
+                    <span>Valor Base:</span>
+                    <span>{formatCurrency(parseFloat(paymentForm.paidAmount) || 0)}</span>
+                  </div>
+                  {parseFloat(paymentForm.interestAmount) > 0 && (
+                    <div className="flex justify-between text-sm text-red-600">
+                      <span>+ Juros/Multa:</span>
+                      <span>{formatCurrency(parseFloat(paymentForm.interestAmount))}</span>
+                    </div>
+                  )}
+                  {parseFloat(paymentForm.discountAmount) > 0 && (
+                    <div className="flex justify-between text-sm text-green-600">
+                      <span>- Desconto:</span>
+                      <span>{formatCurrency(parseFloat(paymentForm.discountAmount))}</span>
+                    </div>
+                  )}
+                  <hr className="my-2" />
+                  <div className="flex justify-between">
+                    <span className="font-medium">Total Efetivo:</span>
+                    <span className="text-xl font-bold">
+                      {formatCurrency(
+                        (parseFloat(paymentForm.paidAmount) || 0) + 
+                        (parseFloat(paymentForm.interestAmount) || 0) -
+                        (parseFloat(paymentForm.discountAmount) || 0)
+                      )}
+                    </span>
+                  </div>
                 </div>
               )}
 

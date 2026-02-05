@@ -883,13 +883,19 @@ export const appRouter = router({
         }
         
         // Adicionar parcelas
+        // Se for À Vista, criar já com status PAID e data de pagamento
+        const isAVista = purchaseData.paymentMethod === 'À Vista';
+        
         for (let i = 0; i < installments.length; i++) {
           await db.addPurchaseInstallment({
             purchaseOrderId,
             installmentNumber: i + 1,
             dueDate: new Date(installments[i].dueDate),
             amount: installments[i].amount.toFixed(2),
-            status: "PENDING",
+            status: isAVista ? "PAID" : "PENDING",
+            paidDate: isAVista ? new Date(installments[i].dueDate) : undefined,
+            paidAmount: isAVista ? installments[i].amount.toFixed(2) : undefined,
+            paymentMethod: isAVista ? purchaseData.paymentMethod : undefined,
           });
         }
         
@@ -1547,6 +1553,8 @@ export const appRouter = router({
         paidDate: z.date(),
         paidAmount: z.string(),
         paymentMethod: z.string(),
+        interestAmount: z.string().optional(),
+        discountAmount: z.string().optional(),
         notes: z.string().optional(),
       }))
       .mutation(async ({ input }) => {

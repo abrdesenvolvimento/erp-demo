@@ -483,3 +483,24 @@ Automatizar importação de pedidos concluídos do iFood via arquivos JSON
 - [x] Documentar regra de rateio de frete/desconto/acréscimo em compras
 - [x] Documentar regra de baixa automática para À Vista
 - [ ] Regras especiais (cancelamento, estorno)
+
+### Baixa Automática e Juros no Contas a Pagar (05/02/2026)
+- [x] Implementar baixa automática para Compras À Vista
+  - [x] Parcela criada com status PAID quando paymentMethod = "À Vista"
+  - [x] paidDate, paidAmount e paymentMethod preenchidos automaticamente
+- [x] Implementar registro de juros no pagamento (Contas a Pagar)
+  - [x] Adicionados campos interestAmount e discountAmount em purchaseInstallments
+  - [x] Adicionados campos interestAmount e discountAmount em expenseInstallments
+  - [x] Atualizada função payPurchaseInstallment para calcular valor efetivo
+  - [x] Atualizada função payExpenseInstallment para calcular valor efetivo
+  - [x] Atualizado router payInstallment com novos campos
+  - [x] Atualizado modal de pagamento com campos separados para Juros e Desconto
+  - [x] Exibição do total efetivo (base + juros - desconto)
+- [x] Testar fluxos completos (modal de pagamento funcionando)
+- [ ] Validar contabilização automática com juros/descontos
+
+### Próximos Passos - Contabilização Automática
+- [ ] Definir contas contábeis para juros pagos (despesa financeira)
+- [ ] Definir contas contábeis para descontos obtidos (receita financeira)
+- [ ] Implementar lançamentos automáticos no pagamento
+
