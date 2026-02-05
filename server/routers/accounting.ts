@@ -215,6 +215,54 @@ export const accountingRouter = router({
         );
       }),
     
+    razaoMultiple: publicProcedure
+      .input(z.object({
+        accountIds: z.array(z.number()),
+        startDate: z.string().transform(s => new Date(s)),
+        endDate: z.string().transform(s => new Date(s)),
+        companyId: z.number().optional().default(1)
+      }))
+      .query(async ({ input }) => {
+        if (input.accountIds.length === 0) {
+          return { entries: [], totalDebits: 0, totalCredits: 0, balance: 0 };
+        }
+        
+        const results = await Promise.all(
+          input.accountIds.map(accountId =>
+            accounting.getRazao(accountId, input.startDate, input.endDate, input.companyId)
+          )
+        );
+        
+        let totalDebits = 0;
+        let totalCredits = 0;
+        const allEntries: any[] = [];
+        
+        results.forEach(result => {
+          const entries = result.entries || [];
+          const account = result.account;
+          
+          entries.forEach((entry: any) => {
+            allEntries.push({
+              ...entry,
+              accountCode: account?.code || '',
+              accountName: account?.name || ''
+            });
+            totalDebits += entry.debit || 0;
+            totalCredits += entry.credit || 0;
+          });
+        });
+        
+        // Ordenar por data
+        allEntries.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+        
+        return {
+          entries: allEntries,
+          totalDebits,
+          totalCredits,
+          balance: totalDebits - totalCredits
+        };
+      }),
+    
     balancete: publicProcedure
       .input(z.object({
         competenceMonth: z.string(),

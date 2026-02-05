@@ -1,4 +1,3 @@
-import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -6,11 +5,12 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 import { trpc } from "@/lib/trpc";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { FileText, Loader2, DollarSign, Calculator } from "lucide-react";
+import { FileText, Loader2, DollarSign, Calculator, X, Search } from "lucide-react";
 import DashboardLayout from "@/components/DashboardLayout";
 
 // Tipos
@@ -19,7 +19,9 @@ type RazaoEntry = {
   description: string;
   debit: number;
   credit: number;
-  runningBalance: number;
+  balance: number;
+  accountCode?: string;
+  accountName?: string;
 };
 
 type BalanceteItem = {
@@ -35,19 +37,19 @@ type BalanceteItem = {
   balance: number;
 };
 
-type DREItem = {
+type Account = {
+  id: number;
   code: string;
   name: string;
-  value: number;
-  level: number;
+  isAnalytical?: boolean;
 };
 
 // Formatação de valores monetários
-const formatCurrency = (value: number, divideBy100: boolean = false) => {
+const formatCurrency = (value: number) => {
   return new Intl.NumberFormat('pt-BR', {
     style: 'currency',
     currency: 'BRL'
-  }).format(divideBy100 ? value / 100 : value);
+  }).format(value);
 };
 
 // Formatação de data
@@ -68,14 +70,126 @@ const generatePeriods = () => {
   return periods;
 };
 
+// Componente de Autocomplete para Contas
+function AccountAutocomplete({
+  accounts,
+  selectedIds,
+  onSelect,
+  onRemove,
+  placeholder = "Buscar conta...",
+  multiple = false
+}: {
+  accounts: Account[];
+  selectedIds: number[];
+  onSelect: (id: number) => void;
+  onRemove: (id: number) => void;
+  placeholder?: string;
+  multiple?: boolean;
+}) {
+  const [search, setSearch] = useState("");
+  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Fechar dropdown ao clicar fora
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const filteredAccounts = useMemo(() => {
+    if (!accounts || accounts.length === 0) return [];
+    if (!search) return accounts.slice(0, 20);
+    const searchLower = search.toLowerCase();
+    return accounts.filter(acc => 
+      acc.code.toLowerCase().includes(searchLower) ||
+      acc.name.toLowerCase().includes(searchLower)
+    ).slice(0, 20);
+  }, [accounts, search]);
+
+  const selectedAccounts = useMemo(() => {
+    if (!accounts || accounts.length === 0) return [];
+    return accounts.filter(acc => selectedIds.includes(acc.id));
+  }, [accounts, selectedIds]);
+
+  const handleSelect = (acc: Account) => {
+    onSelect(acc.id);
+    setSearch("");
+    // Sempre fechar o dropdown após seleção para melhor UX
+    setIsOpen(false);
+  };
+
+  return (
+    <div ref={containerRef} className="relative">
+      {/* Tags das contas selecionadas */}
+      {selectedAccounts.length > 0 && (
+        <div className="flex flex-wrap gap-1 mb-2">
+          {selectedAccounts.map(acc => (
+            <Badge key={acc.id} variant="secondary" className="flex items-center gap-1">
+              {acc.code} - {acc.name.substring(0, 20)}{acc.name.length > 20 ? '...' : ''}
+              <button
+                type="button"
+                onClick={() => onRemove(acc.id)}
+                className="ml-1 hover:text-destructive"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </Badge>
+          ))}
+        </div>
+      )}
+
+      {/* Campo de busca */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          type="text"
+          placeholder={placeholder}
+          value={search}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setIsOpen(true);
+          }}
+          onFocus={() => setIsOpen(true)}
+          className="pl-9"
+        />
+      </div>
+
+      {/* Dropdown de sugestões */}
+      {isOpen && filteredAccounts.length > 0 && (
+        <div className="absolute z-50 w-full mt-1 bg-background border rounded-md shadow-lg max-h-60 overflow-auto">
+          {filteredAccounts.map(acc => (
+            <button
+              key={acc.id}
+              type="button"
+              onClick={() => handleSelect(acc)}
+              disabled={selectedIds.includes(acc.id)}
+              className={`w-full px-3 py-2 text-left text-sm hover:bg-muted transition-colors ${
+                selectedIds.includes(acc.id) ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
+            >
+              <span className="font-mono text-muted-foreground">{acc.code}</span>
+              <span className="ml-2">{acc.name}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function RelatoriosContabeis() {
-  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("razao");
   
-  // Filtros do Razão
-  const [razaoAccountId, setRazaoAccountId] = useState<number | null>(null);
+  // Filtros do Razão - agora suporta múltiplas contas
+  const [razaoAccountIds, setRazaoAccountIds] = useState<number[]>([]);
   const [razaoStartDate, setRazaoStartDate] = useState(() => {
     const date = new Date();
+    date.setMonth(0); // Janeiro
     date.setDate(1);
     return date.toISOString().split('T')[0];
   });
@@ -95,13 +209,14 @@ export default function RelatoriosContabeis() {
   // Queries
   const { data: chartOfAccounts } = trpc.accounting.listChartOfAccounts.useQuery();
   
-  const { data: razaoData, isLoading: razaoLoading } = trpc.accounting.reports.razao.useQuery(
+  // Query para múltiplas contas no Razão usando o novo endpoint
+  const { data: razaoData, isLoading: razaoLoading } = trpc.accounting.reports.razaoMultiple.useQuery(
     { 
-      accountId: razaoAccountId!, 
+      accountIds: razaoAccountIds, 
       startDate: razaoStartDate, 
       endDate: razaoEndDate 
     },
-    { enabled: !!razaoAccountId }
+    { enabled: razaoAccountIds.length > 0 }
   );
   
   const { data: balanceteData, isLoading: balanceteLoading } = trpc.accounting.reports.balancete.useQuery(
@@ -114,23 +229,41 @@ export default function RelatoriosContabeis() {
     { enabled: !!selectedPeriod }
   );
 
-  // Contas analíticas para o select do Razão
+  // Contas analíticas para o autocomplete do Razão
   const analyticalAccounts = useMemo(() => {
     if (!chartOfAccounts) return [];
-    return chartOfAccounts
+    return (chartOfAccounts as Account[])
       .filter((acc) => acc.isAnalytical)
       .sort((a, b) => a.code.localeCompare(b.code));
   }, [chartOfAccounts]);
 
-  // Calcular totais do Balancete
+  // Calcular totais do Balancete - APENAS CONTAS ANALÍTICAS
   const balanceteTotals = useMemo(() => {
-    if (!balanceteData) return { totalDebits: 0, totalCredits: 0, totalBalance: 0 };
-    return (balanceteData as BalanceteItem[]).reduce((acc: { totalDebits: number; totalCredits: number; totalBalance: number }, item: BalanceteItem) => ({
-      totalDebits: acc.totalDebits + item.debit,
-      totalCredits: acc.totalCredits + item.credit,
-      totalBalance: acc.totalBalance + item.balance
-    }), { totalDebits: 0, totalCredits: 0, totalBalance: 0 });
+    if (!balanceteData) return { totalDebits: 0, totalCredits: 0, difference: 0 };
+    
+    // Somar apenas contas analíticas para evitar duplicação
+    const analyticalOnly = (balanceteData as BalanceteItem[]).filter(item => item.isAnalytical);
+    
+    const totalDebits = analyticalOnly.reduce((sum, item) => sum + item.debit, 0);
+    const totalCredits = analyticalOnly.reduce((sum, item) => sum + item.credit, 0);
+    
+    return {
+      totalDebits,
+      totalCredits,
+      difference: Math.abs(totalDebits - totalCredits)
+    };
   }, [balanceteData]);
+
+  // Handlers para seleção de contas
+  const handleSelectAccount = (id: number) => {
+    if (!razaoAccountIds.includes(id)) {
+      setRazaoAccountIds([...razaoAccountIds, id]);
+    }
+  };
+
+  const handleRemoveAccount = (id: number) => {
+    setRazaoAccountIds(razaoAccountIds.filter(accId => accId !== id));
+  };
 
   return (
     <DashboardLayout>
@@ -174,21 +307,14 @@ export default function RelatoriosContabeis() {
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <div className="md:col-span-2">
                     <Label>Conta Contábil</Label>
-                    <Select 
-                      value={razaoAccountId?.toString() || ""} 
-                      onValueChange={(v) => setRazaoAccountId(parseInt(v))}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione uma conta" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {analyticalAccounts.map((acc) => (
-                          <SelectItem key={acc.id} value={acc.id.toString()}>
-                            {acc.code} - {acc.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <AccountAutocomplete
+                      accounts={analyticalAccounts}
+                      selectedIds={razaoAccountIds}
+                      onSelect={handleSelectAccount}
+                      onRemove={handleRemoveAccount}
+                      placeholder="Buscar conta..."
+                      multiple={true}
+                    />
                   </div>
                   <div>
                     <Label>Data Início</Label>
@@ -213,7 +339,7 @@ export default function RelatoriosContabeis() {
                   <div className="flex items-center justify-center py-8">
                     <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                   </div>
-                ) : razaoData && (razaoData as any).entries?.length > 0 ? (
+                ) : razaoData && razaoData.entries && razaoData.entries.length > 0 ? (
                   <>
                     {/* Resumo */}
                     <div className="grid grid-cols-3 gap-4">
@@ -221,7 +347,7 @@ export default function RelatoriosContabeis() {
                         <CardContent className="pt-4">
                           <div className="text-sm text-muted-foreground">Total Débitos</div>
                           <div className="text-xl font-bold text-red-600">
-                            {formatCurrency((razaoData as any).totalDebits || 0)}
+                            {formatCurrency(razaoData.totalDebits)}
                           </div>
                         </CardContent>
                       </Card>
@@ -229,15 +355,15 @@ export default function RelatoriosContabeis() {
                         <CardContent className="pt-4">
                           <div className="text-sm text-muted-foreground">Total Créditos</div>
                           <div className="text-xl font-bold text-green-600">
-                            {formatCurrency((razaoData as any).totalCredits || 0)}
+                            {formatCurrency(razaoData.totalCredits)}
                           </div>
                         </CardContent>
                       </Card>
                       <Card>
                         <CardContent className="pt-4">
                           <div className="text-sm text-muted-foreground">Saldo Final</div>
-                          <div className={`text-xl font-bold ${(razaoData as any).balance >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
-                            {formatCurrency(Math.abs((razaoData as any).balance || 0))} {(razaoData as any).balance >= 0 ? 'D' : 'C'}
+                          <div className={`text-xl font-bold ${razaoData.balance >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
+                            {formatCurrency(Math.abs(razaoData.balance))} {razaoData.balance >= 0 ? 'D' : 'C'}
                           </div>
                         </CardContent>
                       </Card>
@@ -249,6 +375,7 @@ export default function RelatoriosContabeis() {
                         <TableHeader>
                           <TableRow>
                             <TableHead>Data</TableHead>
+                            {razaoAccountIds.length > 1 && <TableHead>Conta</TableHead>}
                             <TableHead>Histórico</TableHead>
                             <TableHead className="text-right">Débito</TableHead>
                             <TableHead className="text-right">Crédito</TableHead>
@@ -256,9 +383,14 @@ export default function RelatoriosContabeis() {
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {((razaoData as any).entries as RazaoEntry[]).map((entry: RazaoEntry, idx: number) => (
+                          {razaoData.entries.map((entry: RazaoEntry, idx: number) => (
                             <TableRow key={idx}>
                               <TableCell>{formatDate(entry.date)}</TableCell>
+                              {razaoAccountIds.length > 1 && (
+                                <TableCell className="font-mono text-xs">
+                                  {entry.accountCode}
+                                </TableCell>
+                              )}
                               <TableCell>{entry.description}</TableCell>
                               <TableCell className="text-right text-red-600">
                                 {entry.debit > 0 ? formatCurrency(entry.debit) : '-'}
@@ -267,7 +399,9 @@ export default function RelatoriosContabeis() {
                                 {entry.credit > 0 ? formatCurrency(entry.credit) : '-'}
                               </TableCell>
                               <TableCell className="text-right font-medium">
-                                {formatCurrency(Math.abs(entry.runningBalance))} {entry.runningBalance >= 0 ? 'D' : 'C'}
+                                {typeof entry.balance === 'number' && !isNaN(entry.balance)
+                                  ? `${formatCurrency(Math.abs(entry.balance))} ${entry.balance >= 0 ? 'D' : 'C'}`
+                                  : '-'}
                               </TableCell>
                             </TableRow>
                           ))}
@@ -275,13 +409,13 @@ export default function RelatoriosContabeis() {
                       </Table>
                     </div>
                   </>
-                ) : razaoAccountId ? (
+                ) : razaoAccountIds.length > 0 ? (
                   <div className="text-center py-8 text-muted-foreground">
                     Nenhum lançamento encontrado para o período selecionado
                   </div>
                 ) : (
                   <div className="text-center py-8 text-muted-foreground">
-                    Selecione uma conta contábil para visualizar o razão
+                    Selecione uma ou mais contas contábeis para visualizar o razão
                   </div>
                 )}
               </CardContent>
@@ -324,7 +458,7 @@ export default function RelatoriosContabeis() {
                   </div>
                 ) : balanceteData && (balanceteData as BalanceteItem[]).length > 0 ? (
                   <>
-                    {/* Resumo */}
+                    {/* Resumo - Agora soma apenas contas analíticas */}
                     <div className="grid grid-cols-3 gap-4">
                       <Card>
                         <CardContent className="pt-4">
@@ -345,8 +479,8 @@ export default function RelatoriosContabeis() {
                       <Card>
                         <CardContent className="pt-4">
                           <div className="text-sm text-muted-foreground">Diferença</div>
-                          <div className={`text-xl font-bold ${balanceteTotals.totalDebits === balanceteTotals.totalCredits ? 'text-green-600' : 'text-red-600'}`}>
-                            {formatCurrency(Math.abs(balanceteTotals.totalDebits - balanceteTotals.totalCredits))}
+                          <div className={`text-xl font-bold ${balanceteTotals.difference === 0 ? 'text-green-600' : 'text-red-600'}`}>
+                            {formatCurrency(balanceteTotals.difference)}
                           </div>
                         </CardContent>
                       </Card>
@@ -366,9 +500,11 @@ export default function RelatoriosContabeis() {
                         </TableHeader>
                         <TableBody>
                           {(balanceteData as BalanceteItem[]).map((item: BalanceteItem, idx: number) => (
-                            <TableRow key={idx}>
+                            <TableRow key={idx} className={!item.isAnalytical ? 'bg-muted/30 font-medium' : ''}>
                               <TableCell className="font-mono">{item.code}</TableCell>
-                              <TableCell>{item.name}</TableCell>
+                              <TableCell style={{ paddingLeft: `${(item.level - 1) * 16 + 16}px` }}>
+                                {item.name}
+                              </TableCell>
                               <TableCell className="text-right text-red-600">
                                 {item.debit > 0 ? formatCurrency(item.debit) : '-'}
                               </TableCell>

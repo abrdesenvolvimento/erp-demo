@@ -45,6 +45,9 @@ export default function Despesas() {
   const [filterDocNumber, setFilterDocNumber] = useState("");
   const [filterMinValue, setFilterMinValue] = useState("");
   const [filterMaxValue, setFilterMaxValue] = useState("");
+  const [filterManagementAccountId, setFilterManagementAccountId] = useState<number | undefined>();
+  const [filterManagementAccountOpen, setFilterManagementAccountOpen] = useState(false);
+  const [filterManagementAccountSearch, setFilterManagementAccountSearch] = useState("");
   
   // Form state - Datas
   const [issueDate, setIssueDate] = useState(new Date().toISOString().split('T')[0]);
@@ -927,6 +930,34 @@ export default function Despesas() {
           )}
         </div>
 
+        {/* Cards de Resumo */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <div className="bg-card border rounded-lg p-4">
+            <div className="text-sm text-muted-foreground">Total Ativo</div>
+            <div className="text-2xl font-bold text-green-600">
+              R$ {expenses
+                .filter(e => e.expense.status === 'ATIVA')
+                .reduce((sum, e) => sum + parseFloat(e.expense.amount), 0)
+                .toFixed(2)}
+            </div>
+          </div>
+          <div className="bg-card border rounded-lg p-4">
+            <div className="text-sm text-muted-foreground">Total Cancelado</div>
+            <div className="text-2xl font-bold text-red-600">
+              R$ {expenses
+                .filter(e => e.expense.status === 'CANCELADA')
+                .reduce((sum, e) => sum + parseFloat(e.expense.amount), 0)
+                .toFixed(2)}
+            </div>
+          </div>
+          <div className="bg-card border rounded-lg p-4">
+            <div className="text-sm text-muted-foreground">Despesas Encontradas</div>
+            <div className="text-2xl font-bold">
+              {expenses.length}
+            </div>
+          </div>
+        </div>
+
         {/* Filtros */}
         <div className="bg-card border rounded-lg p-6 mb-6">
           <h2 className="text-lg font-semibold mb-4">Filtros</h2>
@@ -1002,7 +1033,61 @@ export default function Despesas() {
               </Popover>
             </div>
             <div>
-              <Label>Número de Nota</Label>
+              <Label>Conta Gerencial</Label>
+              <Popover open={filterManagementAccountOpen} onOpenChange={setFilterManagementAccountOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    className="w-full justify-between"
+                  >
+                    {filterManagementAccountId
+                      ? managementAccounts.find((a) => a.id === filterManagementAccountId)?.name
+                      : "Todas"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-full p-0">
+                  <Command shouldFilter={false}>
+                    <CommandInput
+                      placeholder="Buscar conta gerencial..."
+                      value={filterManagementAccountSearch}
+                      onValueChange={setFilterManagementAccountSearch}
+                    />
+                    <CommandList>
+                      <CommandEmpty>Nenhuma conta encontrada.</CommandEmpty>
+                      <CommandGroup>
+                        <CommandItem
+                          onSelect={() => {
+                            setFilterManagementAccountId(undefined);
+                            setFilterManagementAccountOpen(false);
+                          }}
+                        >
+                          <Check className={cn("mr-2 h-4 w-4", !filterManagementAccountId ? "opacity-100" : "opacity-0")} />
+                          Todas
+                        </CommandItem>
+                        {managementAccounts
+                          .filter(a => a.name.toLowerCase().includes(filterManagementAccountSearch.toLowerCase()))
+                          .map((account) => (
+                            <CommandItem
+                              key={account.id}
+                              value={account.name}
+                              onSelect={() => {
+                                setFilterManagementAccountId(account.id);
+                                setFilterManagementAccountOpen(false);
+                              }}
+                            >
+                              <Check className={cn("mr-2 h-4 w-4", filterManagementAccountId === account.id ? "opacity-100" : "opacity-0")} />
+                              {account.name}
+                            </CommandItem>
+                          ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+            </div>
+            <div>
+              <Label>Número de Documento</Label>
               <Input
                 placeholder="Ex: 123456"
                 value={filterDocNumber}
@@ -1031,9 +1116,10 @@ export default function Despesas() {
               <Button
                 variant="outline"
                 onClick={() => {
-                  setFilterStartDate(today);
-                  setFilterEndDate(today);
+                  setFilterStartDate('');
+                  setFilterEndDate('');
                   setFilterSupplierId(undefined);
+                  setFilterManagementAccountId(undefined);
                   setFilterDocNumber("");
                   setFilterMinValue("");
                   setFilterMaxValue("");
@@ -1060,6 +1146,10 @@ export default function Despesas() {
                   .filter(item => {
                     // Filtro de número de nota
                     if (filterDocNumber && !item.expense.docNumber?.includes(filterDocNumber)) {
+                      return false;
+                    }
+                    // Filtro de conta gerencial
+                    if (filterManagementAccountId && item.expense.managementAccountId !== filterManagementAccountId) {
                       return false;
                     }
                     // Filtro de valor mínimo

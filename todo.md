@@ -448,3 +448,16 @@ Automatizar importação de pedidos concluídos do iFood via arquivos JSON
 - [x] Mover Outras Receitas para menu Financeiro
 - [x] Simplificar tela removendo cards (similar a Despesas)
 - [x] Melhorar filtros (data inicial/final, parceiro, conta gerencial, valor mínimo/máximo)
+
+### Correções Relatórios Contábeis (04/02/2026)
+- [x] Razão: trocar select por autocomplete na conta
+- [x] Razão: permitir seleção múltipla de contas
+- [x] Razão: corrigir cálculo dos cards (Total Débitos, Total Créditos, Saldo Final)
+- [x] Razão: corrigir "R$ NaN C" no saldo das linhas (usando runningBalance)
+- [x] Balancete: verificar duplicação de valores no totalizador
+- [x] Balancete: somar apenas contas analíticas (não sintéticas)
+
+### Padronização Despesas com Outras Receitas (04/02/2026)
+- [x] Despesas: adicionar cards de resumo (Total Ativo, Total Cancelado, Quantidade)
+- [x] Despesas: adicionar filtro de Conta Gerencial (só descrição, sem código)
+- [x] Despesas: adicionar filtro de Número de Documento
