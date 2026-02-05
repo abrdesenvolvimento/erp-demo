@@ -8083,7 +8083,7 @@ export async function changeSaleCustomer(
   if (!newCustomer) {
     return { success: false, error: "Novo cliente não encontrado" };
   }
-  if (newCustomer.type !== "CLIENTE") {
+  if (newCustomer.partnerType !== "CUSTOMER" && newCustomer.partnerType !== "BOTH") {
     return { success: false, error: "O parceiro selecionado não é um cliente" };
   }
 
