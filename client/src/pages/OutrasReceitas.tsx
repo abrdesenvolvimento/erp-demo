@@ -650,6 +650,22 @@ export default function OutrasReceitas() {
   return (
     <DashboardLayout>
       <div className="container py-6">
+        {/* Cards de Resumo - Acima do título */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <div className="bg-card border rounded-lg p-4">
+            <div className="text-sm text-muted-foreground">Total Ativo</div>
+            <div className="text-2xl font-bold text-green-600">{formatCurrency(totals.active)}</div>
+          </div>
+          <div className="bg-card border rounded-lg p-4">
+            <div className="text-sm text-muted-foreground">Total Cancelado</div>
+            <div className="text-2xl font-bold text-red-600">{formatCurrency(totals.cancelled)}</div>
+          </div>
+          <div className="bg-card border rounded-lg p-4">
+            <div className="text-sm text-muted-foreground">Receitas Encontradas</div>
+            <div className="text-2xl font-bold">{filteredRevenues.length}</div>
+          </div>
+        </div>
+
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-3xl font-bold">Outras Receitas</h1>
@@ -825,22 +841,6 @@ export default function OutrasReceitas() {
                 Limpar Filtros
               </Button>
             </div>
-          </div>
-        </div>
-
-        {/* Resumo */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <div className="bg-card border rounded-lg p-4">
-            <div className="text-sm text-muted-foreground">Total Ativo</div>
-            <div className="text-2xl font-bold text-green-600">{formatCurrency(totals.active)}</div>
-          </div>
-          <div className="bg-card border rounded-lg p-4">
-            <div className="text-sm text-muted-foreground">Total Cancelado</div>
-            <div className="text-2xl font-bold text-red-600">{formatCurrency(totals.cancelled)}</div>
-          </div>
-          <div className="bg-card border rounded-lg p-4">
-            <div className="text-sm text-muted-foreground">Receitas Encontradas</div>
-            <div className="text-2xl font-bold">{filteredRevenues.length}</div>
           </div>
         </div>
 

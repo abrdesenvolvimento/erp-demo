@@ -461,3 +461,10 @@ Automatizar importação de pedidos concluídos do iFood via arquivos JSON
 - [x] Despesas: adicionar cards de resumo (Total Ativo, Total Cancelado, Quantidade)
 - [x] Despesas: adicionar filtro de Conta Gerencial (só descrição, sem código)
 - [x] Despesas: adicionar filtro de Número de Documento
+
+### Correções Despesas e Balancete (04/02/2026 - Feedback Gabriel)
+- [ ] Tornar fornecedor obrigatório em Despesas
+- [ ] Mover cards de valores para cima do título em Despesas
+- [ ] Mover cards de valores para cima do título em Outras Receitas
+- [ ] Corrigir formatação de moeda (usar separador de milhar: R$ 62.084,58)
+- [ ] Revisar Balancete para garantir não duplicação de valores

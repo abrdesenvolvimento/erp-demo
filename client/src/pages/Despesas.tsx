@@ -215,6 +215,11 @@ export default function Despesas() {
   };
   
   const handleSubmit = () => {
+    // Validar fornecedor (obrigatório)
+    if (!supplierId) {
+      toast.error("Selecione o fornecedor");
+      return;
+    }
     // Validar conta gerencial (novo sistema) ou categoria (sistema antigo)
     if (!managementAccountId && !categoryId) {
       toast.error("Selecione a conta gerencial");
@@ -915,6 +920,34 @@ export default function Despesas() {
   return (
     <DashboardLayout>
       <div className="container py-6">
+        {/* Cards de Resumo - Acima do título */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <div className="bg-card border rounded-lg p-4">
+            <div className="text-sm text-muted-foreground">Total Ativo</div>
+            <div className="text-2xl font-bold text-green-600">
+              R$ {expenses
+                .filter(e => e.expense.status === 'ATIVA')
+                .reduce((sum, e) => sum + parseFloat(e.expense.amount), 0)
+                .toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </div>
+          </div>
+          <div className="bg-card border rounded-lg p-4">
+            <div className="text-sm text-muted-foreground">Total Cancelado</div>
+            <div className="text-2xl font-bold text-red-600">
+              R$ {expenses
+                .filter(e => e.expense.status === 'CANCELADA')
+                .reduce((sum, e) => sum + parseFloat(e.expense.amount), 0)
+                .toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </div>
+          </div>
+          <div className="bg-card border rounded-lg p-4">
+            <div className="text-sm text-muted-foreground">Despesas Encontradas</div>
+            <div className="text-2xl font-bold">
+              {expenses.length}
+            </div>
+          </div>
+        </div>
+
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-3xl font-bold">Despesas Operacionais</h1>
@@ -928,34 +961,6 @@ export default function Despesas() {
             Nova Despesa
           </Button>
           )}
-        </div>
-
-        {/* Cards de Resumo */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <div className="bg-card border rounded-lg p-4">
-            <div className="text-sm text-muted-foreground">Total Ativo</div>
-            <div className="text-2xl font-bold text-green-600">
-              R$ {expenses
-                .filter(e => e.expense.status === 'ATIVA')
-                .reduce((sum, e) => sum + parseFloat(e.expense.amount), 0)
-                .toFixed(2)}
-            </div>
-          </div>
-          <div className="bg-card border rounded-lg p-4">
-            <div className="text-sm text-muted-foreground">Total Cancelado</div>
-            <div className="text-2xl font-bold text-red-600">
-              R$ {expenses
-                .filter(e => e.expense.status === 'CANCELADA')
-                .reduce((sum, e) => sum + parseFloat(e.expense.amount), 0)
-                .toFixed(2)}
-            </div>
-          </div>
-          <div className="bg-card border rounded-lg p-4">
-            <div className="text-sm text-muted-foreground">Despesas Encontradas</div>
-            <div className="text-2xl font-bold">
-              {expenses.length}
-            </div>
-          </div>
         </div>
 
         {/* Filtros */}
