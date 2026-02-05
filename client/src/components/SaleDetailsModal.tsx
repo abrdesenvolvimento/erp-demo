@@ -572,8 +572,8 @@ export function SaleDetailsModal({ saleId, open, onClose }: SaleDetailsModalProp
               </div>
               {saleData.customerId && (
                 <div>
-                  <p className="text-sm text-muted-foreground">Cliente ID</p>
-                  <p className="font-semibold">{saleData.customerId}</p>
+                  <p className="text-sm text-muted-foreground">Cliente</p>
+                  <p className="font-semibold">{saleData.customerName || `ID: ${saleData.customerId}`}</p>
                 </div>
               )}
               {saleData.saleType === 'DELIVERY' && saleData.platformOrderId && (
