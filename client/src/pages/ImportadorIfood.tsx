@@ -68,6 +68,8 @@ export default function ImportadorIfood() {
     items: ProcessedItem[];
   } | null>(null);
   const [updatingPrice, setUpdatingPrice] = useState(false);
+  const [deletingImport, setDeletingImport] = useState(false);
+  const [deleteConfirmModal, setDeleteConfirmModal] = useState<{ logId: number; ordersCount: number } | null>(null);
   
   // Queries
   const mappingsQuery = trpc.ifoodImport.listMappings.useQuery({ search: searchMapping, limit: 100 });
@@ -82,6 +84,7 @@ export default function ImportadorIfood() {
   const importOrdersMutation = trpc.ifoodImport.importOrders.useMutation();
   const updateMappingMutation = trpc.ifoodImport.updateMapping.useMutation();
   const updateChannelPriceMutation = trpc.ifoodImport.updateChannelPrice.useMutation();
+  const deleteImportMutation = trpc.ifoodImport.deleteImport.useMutation();
   
   const utils = trpc.useUtils();
 
@@ -660,6 +663,7 @@ export default function ImportadorIfood() {
                       <TableHead>Pedidos Importados</TableHead>
                       <TableHead>Valor Total</TableHead>
                       <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -673,11 +677,26 @@ export default function ImportadorIfood() {
                             {log.status}
                           </Badge>
                         </TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            type="button"
+                            disabled={deletingImport}
+                            onClick={() => setDeleteConfirmModal({ logId: log.id, ordersCount: log.importedOrders || 0 })}
+                          >
+                            {deletingImport ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <Trash2 className="w-4 h-4" />
+                            )}
+                          </Button>
+                        </TableCell>
                       </TableRow>
                     ))}
                     {(!historyQuery.data || historyQuery.data.length === 0) && (
                       <TableRow>
-                        <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
+                        <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
                           Nenhuma importação realizada ainda
                         </TableCell>
                       </TableRow>
@@ -852,6 +871,57 @@ export default function ImportadorIfood() {
             <DialogFooter>
               <Button variant="outline" onClick={() => setEditingMapping(null)}>
                 Cancelar
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Modal de Confirmação de Exclusão */}
+        <Dialog open={!!deleteConfirmModal} onOpenChange={() => setDeleteConfirmModal(null)}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Confirmar Exclusão</DialogTitle>
+              <DialogDescription>
+                Tem certeza que deseja excluir esta importação?
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="py-4">
+              <p className="text-sm text-muted-foreground">
+                Isso irá reverter <span className="font-bold text-foreground">{deleteConfirmModal?.ordersCount || 0} vendas</span> e restaurar o estoque dos produtos.
+              </p>
+              <p className="text-sm text-destructive mt-2 font-medium">
+                Esta ação não pode ser desfeita.
+              </p>
+            </div>
+
+            <DialogFooter className="gap-2">
+              <Button variant="outline" onClick={() => setDeleteConfirmModal(null)}>
+                Cancelar
+              </Button>
+              <Button
+                variant="destructive"
+                disabled={deletingImport}
+                onClick={async () => {
+                  if (!deleteConfirmModal) return;
+                  setDeletingImport(true);
+                  try {
+                    const result = await deleteImportMutation.mutateAsync({ logId: deleteConfirmModal.logId });
+                    toast.success(`Importação excluída com sucesso! ${result.deletedOrders} vendas revertidas.`);
+                    historyQuery.refetch();
+                    setDeleteConfirmModal(null);
+                  } catch (error: any) {
+                    toast.error(error.message || "Erro ao excluir importação");
+                  } finally {
+                    setDeletingImport(false);
+                  }
+                }}
+              >
+                {deletingImport ? (
+                  <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Excluindo...</>
+                ) : (
+                  "Excluir Importação"
+                )}
               </Button>
             </DialogFooter>
           </DialogContent>

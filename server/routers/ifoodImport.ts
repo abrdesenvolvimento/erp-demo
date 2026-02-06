@@ -600,7 +600,7 @@ export const ifoodImportRouter = router({
             saleDate: new Date(order.orderDate),
             customerId: IFOOD_CUSTOMER_ID,
             channelId: IFOOD_CHANNEL_ID,
-            platformOrderId: order.ifoodOrderId,
+            platformOrderId: order.ifoodOrderCode,
             subtotal: subtotal.toFixed(2),
             discountAmount: "0.00",
             surchargeAmount: "0.00",
@@ -743,5 +743,87 @@ export const ifoodImportRouter = router({
         log,
         orders,
       };
+    }),
+
+  // Excluir importação (reverter vendas, itens, movimentações e registros)
+  deleteImport: adminProcedure
+    .input(z.object({ logId: z.number() }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("Database not available");
+
+      // Buscar log de importação
+      const [log] = await db.select()
+        .from(ifoodImportLogs)
+        .where(eq(ifoodImportLogs.id, input.logId))
+        .limit(1);
+
+      if (!log) {
+        throw new Error("Log de importação não encontrado");
+      }
+
+      // Buscar pedidos importados
+      const importedOrders = await db.select()
+        .from(ifoodImportedOrders)
+        .where(eq(ifoodImportedOrders.importLogId, input.logId));
+
+      if (importedOrders.length === 0) {
+        // Apenas excluir o log se não houver pedidos
+        await db.delete(ifoodImportLogs)
+          .where(eq(ifoodImportLogs.id, input.logId));
+        return { success: true, deletedOrders: 0 };
+      }
+
+      let deletedCount = 0;
+
+      for (const order of importedOrders) {
+        if (order.saleId) {
+          // Buscar itens da venda para reverter estoque
+          const items = await db.select()
+            .from(saleItems)
+            .where(eq(saleItems.saleId, order.saleId));
+
+          // Reverter estoque de cada item
+          for (const item of items) {
+            // Atualizar estoque do produto (adicionar de volta)
+            await db.update(products)
+              .set({
+                currentStock: sql`${products.currentStock} + ${item.quantity}`,
+              })
+              .where(eq(products.id, item.productId));
+
+            // Excluir movimentação de estoque relacionada
+            await db.delete(productMovements)
+              .where(and(
+                eq(productMovements.productId, item.productId),
+                like(productMovements.documentNumber, `IFOOD-${order.ifoodOrderCode}%`)
+              ));
+          }
+
+          // Excluir itens da venda
+          await db.delete(saleItems)
+            .where(eq(saleItems.saleId, order.saleId));
+
+          // Excluir venda
+          await db.delete(sales)
+            .where(eq(sales.id, order.saleId));
+        }
+
+        deletedCount++;
+      }
+
+      // Excluir divergências de preço relacionadas
+      await db.delete(ifoodPriceDivergences)
+        .where(eq(ifoodPriceDivergences.importLogId, input.logId));
+
+      // Excluir pedidos importados
+      await db.delete(ifoodImportedOrders)
+        .where(eq(ifoodImportedOrders.importLogId, input.logId));
+
+      // Excluir log de importação
+      await db.delete(ifoodImportLogs)
+        .where(eq(ifoodImportLogs.id, input.logId));
+
+      return { success: true, deletedOrders: deletedCount };
     }),
 });

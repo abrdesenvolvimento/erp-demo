@@ -186,7 +186,13 @@ Automatizar importação de pedidos concluídos do iFood via arquivos JSON
 - [x] Corrigir INSERT no ifoodImportLogs com valores explícitos (importedAt, createdAt, errorMessage=null)
 - [x] Corrigir forma de obter insertId do Drizzle/MySQL
 - [x] Adicionar logs de erro completos (code/sqlMessage/errno)
-- [x] Corrigir modal de divergência de valor (aumentar largura)
+- [x] Corrigir modal de divergência de valor (aumentar largura para max-w-4xl)
+
+### Correções Adicionais (06/02/2026)
+- [x] Usar codigo_do_pedido_no_ifood em vez de id_pedido_ifood no número do pedido (platformOrderId)
+- [x] Implementar funcionalidade de exclusão de importações duplicadas
+- [x] Modal de confirmação de exclusão com detalhes (quantidade de vendas a reverter)
+- [x] Reversão automática de vendas, itens e movimentações de estoque
 
 ---
 
