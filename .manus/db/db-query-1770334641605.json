@@ -1,0 +1,60 @@
+{
+  "query": "SELECT ifoodSku, productId, ifoodProductName FROM ifoodProductMappings LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT ifoodSku, productId, ifoodProductName FROM ifoodProductMappings LIMIT 10;",
+  "rows": [
+    {
+      "ifoodSku": "70847022015",
+      "productId": "NULL",
+      "ifoodProductName": "Energético Monster Original 473ml."
+    },
+    {
+      "ifoodSku": "70847022206",
+      "productId": "1020010",
+      "ifoodProductName": "Energético Monster Ultra 473ml"
+    },
+    {
+      "ifoodSku": "70847022305",
+      "productId": "NULL",
+      "ifoodProductName": "Monster Energy Absolutely Zero 473ml"
+    },
+    {
+      "ifoodSku": "70847033301",
+      "productId": "NULL",
+      "ifoodProductName": "Energético Monster Mango Loco 473ml"
+    },
+    {
+      "ifoodSku": "70847033929",
+      "productId": "NULL",
+      "ifoodProductName": "Energético Monster Ultra Violet Zero Açúcar 473ml"
+    },
+    {
+      "ifoodSku": "70847034803",
+      "productId": "NULL",
+      "ifoodProductName": "Energético Monster Dragon Ice Tea Lemon 473ml"
+    },
+    {
+      "ifoodSku": "7891050005519",
+      "productId": "NULL",
+      "ifoodProductName": "Whisky 12 Anos Chivas Regal 1l"
+    },
+    {
+      "ifoodSku": "8218400032800",
+      "productId": "NULL",
+      "ifoodProductName": "Jack Daniel's Honey 1L"
+    },
+    {
+      "ifoodSku": "82184004364",
+      "productId": "NULL",
+      "ifoodProductName": "Licor Fino de Whisky Jack Daniels Apple Garrafa 1l"
+    },
+    {
+      "ifoodSku": "82184200698",
+      "productId": "NULL",
+      "ifoodProductName": "Jack Daniels 1l"
+    }
+  ],
+  "messages": [],
+  "stdout": "ifoodSku\tproductId\tifoodProductName\n70847022015\tNULL\tEnergético Monster Original 473ml.\n70847022206\t1020010\tEnergético Monster Ultra 473ml\n70847022305\tNULL\tMonster Energy Absolutely Zero 473ml\n70847033301\tNULL\tEnergético Monster Mango Loco 473ml\n70847033929\tNULL\tEnergético Monster Ultra Violet Zero Açúcar 473ml\n70847034803\tNULL\tEnergético Monster Dragon Ice Tea Lemon 473ml\n7891050005519\tNULL\tWhisky 12 Anos Chivas Regal 1l\n8218400032800\tNULL\tJack Daniel's Honey 1L\n82184004364\tNULL\tLicor Fino de Whisky Jack Daniels Apple Garrafa 1l\n82184200698\tNULL\tJack Daniels 1l\n",
+  "stderr": "",
+  "execution_time_ms": 59
+}

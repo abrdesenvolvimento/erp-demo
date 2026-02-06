@@ -1,0 +1,15 @@
+{
+  "query": "SELECT \n  COUNT(*) as total_mapeamentos,\n  SUM(CASE WHEN productId IS NOT NULL THEN 1 ELSE 0 END) as com_produto_vinculado,\n  SUM(CASE WHEN productId IS NULL THEN 1 ELSE 0 END) as sem_produto_vinculado\nFROM ifoodProductMappings;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  COUNT(*) as total_mapeamentos,\n  SUM(CASE WHEN productId IS NOT NULL THEN 1 ELSE 0 END) as com_produto_vinculado,\n  SUM(CASE WHEN productId IS NULL THEN 1 ELSE 0 END) as sem_produto_vinculado\nFROM ifoodProductMappings;",
+  "rows": [
+    {
+      "total_mapeamentos": "381",
+      "com_produto_vinculado": "1",
+      "sem_produto_vinculado": "380"
+    }
+  ],
+  "messages": [],
+  "stdout": "total_mapeamentos\tcom_produto_vinculado\tsem_produto_vinculado\n381\t1\t380\n",
+  "stderr": "",
+  "execution_time_ms": 58
+}

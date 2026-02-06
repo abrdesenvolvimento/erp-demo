@@ -103,13 +103,21 @@
   - [x] Balancete (saldos de todas as contas)
   - [x] DRE (Receitas - Custos - Despesas = Resultado)
 
+<<<<<<< Updated upstream
 ### Outras Receitas ✅ (05/02/2026)
+=======
+### Outras Receitas ✅ (04/02/2026)
+>>>>>>> Stashed changes
 - [x] Registro de entradas não vinculadas a vendas de produtos
 - [x] Tipos: empréstimos bancários, bonificações, acordos, receitas extraordinárias
 - [x] Classificação gerencial e contábil correta
 - [x] CRUD completo com formulário padronizado
+<<<<<<< Updated upstream
 - [x] Integração com contabilização automática (journals)
 - [x] Lançamento: D-Caixa / C-Conta Gerencial de Receita
+=======
+- [ ] Integração com contabilização automática (journals) - próxima fase
+>>>>>>> Stashed changes
 
 ### Contabilização Automática ✅ (05/02/2026)
 - [x] Estrutura de lançamentos (createAccountingEntries, postJournal, addJournalSource)
@@ -146,11 +154,39 @@ Automatizar importação de pedidos concluídos do iFood via arquivos JSON
 - [ ] Inventário Ifood.json (opcional, para De/Para)
 
 ### Interface
-- [ ] Menu: Vendas → Importação iFood
-- [ ] Upload dos arquivos JSON
-- [ ] Prévia da importação
-- [ ] Ações: importar, aprovar divergências, resolver De/Para
-- [ ] Histórico de importações
+- [x] Menu: Vendas → Importação iFood
+- [x] Upload dos arquivos JSON
+- [x] Prévia da importação
+- [x] Ações: importar, aprovar divergências, resolver De/Para
+- [x] Histórico de importações
+
+### Reescrita Completa (05/02/2026) - Seguindo Documentação Orion
+- [ ] Reescrever backend com lógica correta de mapeamento (De/Para via EAN/SKU)
+- [ ] Implementar validação de preços com tolerância
+- [ ] Implementar status: OK, PRODUCT_NOT_FOUND, PRICE_DIVERGENCE, BLOCKED, IMPORTED
+- [ ] Reescrever frontend seguindo wireframe do Gabriel
+- [ ] Cards: Total Pedidos, Aprovados, Não Localizado, Divergência Valor
+- [ ] Tabela: Seleção, Código, Data, Itens, Total, Status, Ação
+- [ ] Botões: Importar (individual), Verificar De/Para, Verificar Valor
+- [ ] Botão Atualizar Importação (reprocessa sem reimportar)
+- [ ] Botão Importar Seleção (lote)
+- [ ] Modal De/Para: vincular produto existente ou criar novo
+- [ ] Modal Verificar Valor: comparação detalhada de preços
+- [ ] Testar fluxo completo com arquivos de teste
+
+### Correções Adicionais (05/02/2026)
+- [x] Coluna Pedido: usar campo codigo_do_pedido_no_ifood
+- [x] Modal Divergência de Valor: mostrar detalhes e opção de corrigir preço do canal
+- [ ] Garantir que pedidos cancelados NÃO aparecem na lista (remover completamente)
+- [ ] Campo Data: usar campo inicio_da_entrega em vez do campo atual
+- [x] Corrigir erro de insert no ifoodImportLogs (parâmetros incorretos)
+
+### Correções Recomendadas por Orion (05/02/2026)
+- [x] Verificar estrutura da tabela ifoodImportLogs com SHOW CREATE TABLE
+- [x] Corrigir INSERT no ifoodImportLogs com valores explícitos (importedAt, createdAt, errorMessage=null)
+- [x] Corrigir forma de obter insertId do Drizzle/MySQL
+- [x] Adicionar logs de erro completos (code/sqlMessage/errno)
+- [x] Corrigir modal de divergência de valor (aumentar largura)
 
 ---
 
@@ -360,6 +396,7 @@ Automatizar importação de pedidos concluídos do iFood via arquivos JSON
 - Correções de bugs críticos (Delivery, Compras, Timezone)
 - Limpeza de dados de teste
 - Documentação multiempresa
+<<<<<<< Updated upstream
 
 
 ---
@@ -492,3 +529,5 @@ Não liberar acesso Admin para todos os usuários. Funções específicas permit
 - [x] Solução: adicionado CUSTOMER_CHANGED ao enum no schema e no banco
 - [x] Servidor reiniciado
 
+=======
+>>>>>>> Stashed changes

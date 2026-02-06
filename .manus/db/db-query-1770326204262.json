@@ -1,0 +1,64 @@
+{
+  "query": "SELECT ifoodSku, ifoodProductName, productId, situation FROM ifoodProductMappings WHERE ifoodSku IN ('7892021040713', '7891991303347', '7894900061512', '7891991295086', '70847033301', '7622210673831', '7896010002362', '7896045505319', '7804300123512', '7891149102808');",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT ifoodSku, ifoodProductName, productId, situation FROM ifoodProductMappings WHERE ifoodSku IN ('7892021040713', '7891991303347', '7894900061512', '7891991295086', '70847033301', '7622210673831', '7896010002362', '7896045505319', '7804300123512', '7891149102808');",
+  "rows": [
+    {
+      "ifoodSku": "7892021040713",
+      "ifoodProductName": "Skol 269ml",
+      "productId": "NULL",
+      "situation": "EAN Diferente do Fabricante Em São Paulo"
+    },
+    {
+      "ifoodSku": "7891991303347",
+      "ifoodProductName": "Cerveja Munich Helles Puro Malte Spaten 269ml",
+      "productId": "NULL",
+      "situation": "Ok"
+    },
+    {
+      "ifoodSku": "7894900061512",
+      "ifoodProductName": "Refrigerante de Limão Sem Açúcar Sprite 2l",
+      "productId": "NULL",
+      "situation": "Ok"
+    },
+    {
+      "ifoodSku": "7891991295086",
+      "ifoodProductName": "Original 269ml",
+      "productId": "NULL",
+      "situation": "Ok"
+    },
+    {
+      "ifoodSku": "70847033301",
+      "ifoodProductName": "Energético Monster Mango Loco 473ml",
+      "productId": "NULL",
+      "situation": "EAN Diferente do Fabricante Em São Paulo"
+    },
+    {
+      "ifoodSku": "7896010002362",
+      "ifoodProductName": "Smirnoff 998ml",
+      "productId": "NULL",
+      "situation": "EAN Diferente do Fabricante Em São Paulo"
+    },
+    {
+      "ifoodSku": "7896045505319",
+      "ifoodProductName": "Cerveja Amstel Lata 269ml",
+      "productId": "NULL",
+      "situation": "Ok"
+    },
+    {
+      "ifoodSku": "7804300123512",
+      "ifoodProductName": "Vinho Santa Helena Reservado Carmenère 750ml",
+      "productId": "NULL",
+      "situation": "Ok"
+    },
+    {
+      "ifoodSku": "7891149102808",
+      "ifoodProductName": "Refrigerante de Uva Sukita Pet 2l",
+      "productId": "NULL",
+      "situation": "Ok"
+    }
+  ],
+  "messages": [],
+  "stdout": "ifoodSku\tifoodProductName\tproductId\tsituation\n7892021040713\tSkol 269ml\tNULL\tEAN Diferente do Fabricante Em São Paulo\n7891991303347\tCerveja Munich Helles Puro Malte Spaten 269ml\tNULL\tOk\n7894900061512\tRefrigerante de Limão Sem Açúcar Sprite 2l\tNULL\tOk\n7891991295086\tOriginal 269ml\tNULL\tOk\n70847033301\tEnergético Monster Mango Loco 473ml\tNULL\tEAN Diferente do Fabricante Em São Paulo\n7896010002362\tSmirnoff 998ml\tNULL\tEAN Diferente do Fabricante Em São Paulo\n7896045505319\tCerveja Amstel Lata 269ml\tNULL\tOk\n7804300123512\tVinho Santa Helena Reservado Carmenère 750ml\tNULL\tOk\n7891149102808\tRefrigerante de Uva Sukita Pet 2l\tNULL\tOk\n",
+  "stderr": "",
+  "execution_time_ms": 58
+}

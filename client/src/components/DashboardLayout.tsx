@@ -22,7 +22,7 @@ import {
 import { APP_LOGO, APP_TITLE, getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
-import { LayoutDashboard, LogOut, PanelLeft, Users, Package, ShoppingCart, BarChart3, ShoppingBag, Receipt, DollarSign, CreditCard, UserCircle, Shield, TrendingUp, Bike, ChevronDown, ChevronRight, PieChart, GitCompare, Wallet, Target, FileText, BookOpen, Calculator } from "lucide-react";
+import { LayoutDashboard, LogOut, PanelLeft, Users, Package, ShoppingCart, BarChart3, ShoppingBag, Receipt, DollarSign, CreditCard, UserCircle, Shield, TrendingUp, Bike, ChevronDown, ChevronRight, PieChart, GitCompare, Wallet, Target, FileText, BookOpen, Calculator, Upload } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
@@ -33,6 +33,7 @@ const mainMenuItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/", roles: ["admin", "operacional", "consultor"] },
   { icon: Package, label: "Produtos", path: "/produtos", roles: ["admin", "operacional", "consultor"] },
   { icon: ShoppingCart, label: "Vendas", path: "/vendas", roles: ["admin", "operacional", "consultor"] },
+  { icon: Upload, label: "Importar iFood", path: "/importar-ifood", roles: ["admin"] },
   { icon: Users, label: "Parceiros", path: "/parceiros", roles: ["admin", "operacional", "consultor"] },
   { icon: Shield, label: "Gerenciar Usuários", path: "/usuarios", roles: ["admin"] },
 ];

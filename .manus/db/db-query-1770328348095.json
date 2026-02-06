@@ -1,0 +1,164 @@
+{
+  "query": "SELECT \n  ipm.ifoodSku,\n  ipm.ifoodProductName,\n  ipm.productId,\n  ipm.situation,\n  p.name as productName\nFROM ifoodProductMappings ipm\nLEFT JOIN products p ON ipm.productId = p.id\nWHERE ipm.ifoodSku IN (\n  '70847022015', '70847033301', '7622210673831', '7622210674050', '7804300121853',\n  '7804300123512', '7891149102808', '7891149105564', '7891991295086', '7891991303347',\n  '7892021040713', '7894900011159', '7894900027013', '7894900061512', '7894900701517',\n  '7894900701609', '7896010002362', '7896045505319', '7896855901417', '7896855901431',\n  '7897395099329', '7898605254132', '9002490100049', '9002490264093', '99958853'\n)\nORDER BY ipm.productId IS NULL DESC, ipm.ifoodProductName;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  ipm.ifoodSku,\n  ipm.ifoodProductName,\n  ipm.productId,\n  ipm.situation,\n  p.name as productName\nFROM ifoodProductMappings ipm\nLEFT JOIN products p ON ipm.productId = p.id\nWHERE ipm.ifoodSku IN (\n  '70847022015', '70847033301', '7622210673831', '7622210674050', '7804300121853',\n  '7804300123512', '7891149102808', '7891149105564', '7891991295086', '7891991303347',\n  '7892021040713', '7894900011159', '7894900027013', '7894900061512', '7894900701517',\n  '7894900701609', '7896010002362', '7896045505319', '7896855901417', '7896855901431',\n  '7897395099329', '7898605254132', '9002490100049', '9002490264093', '99958853'\n)\nORDER BY ipm.productId IS NULL DESC, ipm.ifoodProductName;",
+  "rows": [
+    {
+      "ifoodSku": "7891149105564",
+      "ifoodProductName": "Beats Senses Lata 269ml",
+      "productId": "NULL",
+      "situation": "Ok",
+      "productName": "NULL"
+    },
+    {
+      "ifoodSku": "99958853",
+      "ifoodProductName": "Bebida Mista Fruit Mix 51 Ice 275ml",
+      "productId": "NULL",
+      "situation": "EAN Não Existe",
+      "productName": "NULL"
+    },
+    {
+      "ifoodSku": "7896045505319",
+      "ifoodProductName": "Cerveja Amstel Lata 269ml",
+      "productId": "NULL",
+      "situation": "Ok",
+      "productName": "NULL"
+    },
+    {
+      "ifoodSku": "7898605254132",
+      "ifoodProductName": "Cerveja Colorado, Appia, 350ml, Lata",
+      "productId": "NULL",
+      "situation": "Ok",
+      "productName": "NULL"
+    },
+    {
+      "ifoodSku": "7891991303347",
+      "ifoodProductName": "Cerveja Munich Helles Puro Malte Spaten 269ml",
+      "productId": "NULL",
+      "situation": "Ok",
+      "productName": "NULL"
+    },
+    {
+      "ifoodSku": "7897395099329",
+      "ifoodProductName": "Cerveja Puro Malte Petra Lata 350ml",
+      "productId": "NULL",
+      "situation": "Ok",
+      "productName": "NULL"
+    },
+    {
+      "ifoodSku": "7894900027013",
+      "ifoodProductName": "Coca Cola 2l",
+      "productId": "NULL",
+      "situation": "Ok",
+      "productName": "NULL"
+    },
+    {
+      "ifoodSku": "7894900011159",
+      "ifoodProductName": "Coca-Cola Original Lata 310ml",
+      "productId": "NULL",
+      "situation": "Ok",
+      "productName": "NULL"
+    },
+    {
+      "ifoodSku": "70847033301",
+      "ifoodProductName": "Energético Monster Mango Loco 473ml",
+      "productId": "NULL",
+      "situation": "EAN Diferente do Fabricante Em São Paulo",
+      "productName": "NULL"
+    },
+    {
+      "ifoodSku": "70847022015",
+      "ifoodProductName": "Energético Monster Original 473ml.",
+      "productId": "NULL",
+      "situation": "EAN Diferente do Fabricante Em São Paulo",
+      "productName": "NULL"
+    },
+    {
+      "ifoodSku": "9002490264093",
+      "ifoodProductName": "Energético Red Bull Cereja e Frutas Silvestres 250ml",
+      "productId": "NULL",
+      "situation": "Ok",
+      "productName": "NULL"
+    },
+    {
+      "ifoodSku": "7891991295086",
+      "ifoodProductName": "Original 269ml",
+      "productId": "NULL",
+      "situation": "Ok",
+      "productName": "NULL"
+    },
+    {
+      "ifoodSku": "9002490100049",
+      "ifoodProductName": "Red Bull 250ml",
+      "productId": "NULL",
+      "situation": "EAN Não Existe",
+      "productName": "NULL"
+    },
+    {
+      "ifoodSku": "7894900701517",
+      "ifoodProductName": "Refrigerante Coca-Cola Sem Açúcar Pet 2l",
+      "productId": "NULL",
+      "situation": "Ok",
+      "productName": "NULL"
+    },
+    {
+      "ifoodSku": "7894900061512",
+      "ifoodProductName": "Refrigerante de Limão Sem Açúcar Sprite 2l",
+      "productId": "NULL",
+      "situation": "Ok",
+      "productName": "NULL"
+    },
+    {
+      "ifoodSku": "7891149102808",
+      "ifoodProductName": "Refrigerante de Uva Sukita Pet 2l",
+      "productId": "NULL",
+      "situation": "Ok",
+      "productName": "NULL"
+    },
+    {
+      "ifoodSku": "7892021040713",
+      "ifoodProductName": "Skol 269ml",
+      "productId": "NULL",
+      "situation": "EAN Diferente do Fabricante Em São Paulo",
+      "productName": "NULL"
+    },
+    {
+      "ifoodSku": "7896010002362",
+      "ifoodProductName": "Smirnoff 998ml",
+      "productId": "NULL",
+      "situation": "EAN Diferente do Fabricante Em São Paulo",
+      "productName": "NULL"
+    },
+    {
+      "ifoodSku": "7896855901431",
+      "ifoodProductName": "Vinho Branco Suave de Mesa Nacional Pérgola 1l",
+      "productId": "NULL",
+      "situation": "Ok",
+      "productName": "NULL"
+    },
+    {
+      "ifoodSku": "7896855901417",
+      "ifoodProductName": "Vinho Pérgola Tinto Suave 1l.",
+      "productId": "NULL",
+      "situation": "Ok",
+      "productName": "NULL"
+    },
+    {
+      "ifoodSku": "7804300123512",
+      "ifoodProductName": "Vinho Santa Helena Reservado Carmenère 750ml",
+      "productId": "NULL",
+      "situation": "Ok",
+      "productName": "NULL"
+    },
+    {
+      "ifoodSku": "7804300121853",
+      "ifoodProductName": "Vinho Santa Helena Reservado Chardonnay 750ml",
+      "productId": "NULL",
+      "situation": "Ok",
+      "productName": "NULL"
+    }
+  ],
+  "messages": [],
+  "stdout": "ifoodSku\tifoodProductName\tproductId\tsituation\tproductName\n7891149105564\tBeats Senses Lata 269ml\tNULL\tOk\tNULL\n99958853\tBebida Mista Fruit Mix 51 Ice 275ml\tNULL\tEAN Não Existe\tNULL\n7896045505319\tCerveja Amstel Lata 269ml\tNULL\tOk\tNULL\n7898605254132\tCerveja Colorado, Appia, 350ml, Lata\tNULL\tOk\tNULL\n7891991303347\tCerveja Munich Helles Puro Malte Spaten 269ml\tNULL\tOk\tNULL\n7897395099329\tCerveja Puro Malte Petra Lata 350ml\tNULL\tOk\tNULL\n7894900027013\tCoca Cola 2l\tNULL\tOk\tNULL\n7894900011159\tCoca-Cola Original Lata 310ml\tNULL\tOk\tNULL\n70847033301\tEnergético Monster Mango Loco 473ml\tNULL\tEAN Diferente do Fabricante Em São Paulo\tNULL\n70847022015\tEnergético Monster Original 473ml.\tNULL\tEAN Diferente do Fabricante Em São Paulo\tNULL\n9002490264093\tEnergético Red Bull Cereja e Frutas Silvestres 250ml\tNULL\tOk\tNULL\n7891991295086\tOriginal 269ml\tNULL\tOk\tNULL\n9002490100049\tRed Bull 250ml\tNULL\tEAN Não Existe\tNULL\n7894900701517\tRefrigerante Coca-Cola Sem Açúcar Pet 2l\tNULL\tOk\tNULL\n7894900061512\tRefrigerante de Limão Sem Açúcar Sprite 2l\tNULL\tOk\tNULL\n7891149102808\tRefrigerante de Uva Sukita Pet 2l\tNULL\tOk\tNULL\n7892021040713\tSkol 269ml\tNULL\tEAN Diferente do Fabricante Em São Paulo\tNULL\n7896010002362\tSmirnoff 998ml\tNULL\tEAN Diferente do Fabricante Em São Paulo\tNULL\n7896855901431\tVinho Branco Suave de Mesa Nacional Pérgola 1l\tNULL\tOk\tNULL\n7896855901417\tVinho Pérgola Tinto Suave 1l.\tNULL\tOk\tNULL\n7804300123512\tVinho Santa Helena Reservado Carmenère 750ml\tNULL\tOk\tNULL\n7804300121853\tVinho Santa Helena Reservado Chardonnay 750ml\tNULL\tOk\tNULL\n",
+  "stderr": "",
+  "execution_time_ms": 65
+}

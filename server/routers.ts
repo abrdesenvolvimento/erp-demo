@@ -7,10 +7,12 @@ import { publicProcedure, protectedProcedure, adminProcedure, consultorProcedure
 import * as db from "./db";
 import { getNowInBrazil, formatDateForInput } from '../shared/dateUtils';
 import { accountingRouter } from './routers/accounting';
+import { ifoodImportRouter } from './routers/ifoodImport';
 
 export const appRouter = router({
   system: systemRouter,
   accounting: accountingRouter,
+  ifoodImport: ifoodImportRouter,
 
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),

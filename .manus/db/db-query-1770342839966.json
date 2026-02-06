@@ -1,0 +1,33 @@
+{
+  "query": "SHOW CREATE TABLE ifoodImportLogs;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SHOW CREATE TABLE ifoodImportLogs;",
+  "rows": [
+    {
+      "Table": "ifoodImportLogs",
+      "Create Table": "CREATE TABLE `ifoodImportLogs` ("
+    }
+  ],
+  "messages": [
+    "  `id` int(11) NOT NULL AUTO_INCREMENT,",
+    "  `importedAt` timestamp DEFAULT CURRENT_TIMESTAMP,",
+    "  `ordersFileName` varchar(255) DEFAULT NULL,",
+    "  `itemsFileName` varchar(255) DEFAULT NULL,",
+    "  `periodStart` timestamp NULL DEFAULT NULL,",
+    "  `periodEnd` timestamp NULL DEFAULT NULL,",
+    "  `totalOrders` int(11) DEFAULT '0',",
+    "  `importedOrders` int(11) DEFAULT '0',",
+    "  `skippedOrders` int(11) DEFAULT '0',",
+    "  `ordersWithDivergence` int(11) DEFAULT '0',",
+    "  `totalValue` decimal(12,2) DEFAULT '0',",
+    "  `status` enum('PROCESSING','SUCCESS','PARTIAL','ERROR') NOT NULL DEFAULT 'PROCESSING',",
+    "  `errorMessage` text DEFAULT NULL,",
+    "  `createdBy` varchar(64) DEFAULT NULL,",
+    "  PRIMARY KEY (`id`) /*T![clustered_index] CLUSTERED */,",
+    "  KEY `ifood_import_date_idx` (`importedAt`),",
+    "  KEY `ifood_import_status_idx` (`status`)",
+    ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin"
+  ],
+  "stdout": "Table\tCreate Table\nifoodImportLogs\tCREATE TABLE `ifoodImportLogs` (\n  `id` int(11) NOT NULL AUTO_INCREMENT,\n  `importedAt` timestamp DEFAULT CURRENT_TIMESTAMP,\n  `ordersFileName` varchar(255) DEFAULT NULL,\n  `itemsFileName` varchar(255) DEFAULT NULL,\n  `periodStart` timestamp NULL DEFAULT NULL,\n  `periodEnd` timestamp NULL DEFAULT NULL,\n  `totalOrders` int(11) DEFAULT '0',\n  `importedOrders` int(11) DEFAULT '0',\n  `skippedOrders` int(11) DEFAULT '0',\n  `ordersWithDivergence` int(11) DEFAULT '0',\n  `totalValue` decimal(12,2) DEFAULT '0',\n  `status` enum('PROCESSING','SUCCESS','PARTIAL','ERROR') NOT NULL DEFAULT 'PROCESSING',\n  `errorMessage` text DEFAULT NULL,\n  `createdBy` varchar(64) DEFAULT NULL,\n  PRIMARY KEY (`id`) /*T![clustered_index] CLUSTERED */,\n  KEY `ifood_import_date_idx` (`importedAt`),\n  KEY `ifood_import_status_idx` (`status`)\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin\n",
+  "stderr": "",
+  "execution_time_ms": 127
+}

@@ -1,0 +1,28 @@
+{
+  "query": "SELECT * FROM users WHERE name LIKE '%Gabriel%' OR email LIKE '%adegabeirario%';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT * FROM users WHERE name LIKE '%Gabriel%' OR email LIKE '%adegabeirario%';",
+  "rows": [
+    {
+      "id": "3sp2FmLhkenyjqMFmfLoex",
+      "name": "Gabriel Morais",
+      "email": "comercial@adegabeirario.com.br",
+      "loginMethod": "email",
+      "role": "admin",
+      "createdAt": "2025-10-18 23:01:31",
+      "lastSignedIn": "2026-02-05 21:59:30"
+    },
+    {
+      "id": "j8R68T3wPMAkij5Kb9Zef8",
+      "name": "Gabriel Morais",
+      "email": "gmsantos.96@gmail.com",
+      "loginMethod": "google",
+      "role": "operacional",
+      "createdAt": "2025-11-21 17:21:23",
+      "lastSignedIn": "2026-01-18 17:07:53"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\temail\tloginMethod\trole\tcreatedAt\tlastSignedIn\n3sp2FmLhkenyjqMFmfLoex\tGabriel Morais\tcomercial@adegabeirario.com.br\temail\tadmin\t2025-10-18 23:01:31\t2026-02-05 21:59:30\nj8R68T3wPMAkij5Kb9Zef8\tGabriel Morais\tgmsantos.96@gmail.com\tgoogle\toperacional\t2025-11-21 17:21:23\t2026-01-18 17:07:53\n",
+  "stderr": "",
+  "execution_time_ms": 57
+}

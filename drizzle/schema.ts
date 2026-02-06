@@ -931,3 +931,76 @@ export const accountingBatchLog = mysqlTable("accountingBatchLog", {
 
 export type AccountingBatchLog = typeof accountingBatchLog.$inferSelect;
 export type InsertAccountingBatchLog = typeof accountingBatchLog.$inferInsert;
+
+// ==================== IMPORTADOR IFOOD ====================
+
+// Mapeamento De/Para de Produtos iFood
+export const ifoodProductMappings = mysqlTable("ifoodProductMappings", {
+  id: int("id").primaryKey().autoincrement(),
+  ifoodSku: varchar("ifoodSku", { length: 50 }).notNull(),
+  ifoodProductName: varchar("ifoodProductName", { length: 255 }).notNull(),
+  correctEan: varchar("correctEan", { length: 20 }),
+  productId: int("productId"),
+  situation: varchar("situation", { length: 100 }),
+  active: boolean("active").default(true).notNull(),
+  createdBy: varchar("createdBy", { length: 64 }),
+  updatedBy: varchar("updatedBy", { length: 64 }),
+  createdAt: timestamp("createdAt").defaultNow(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow(),
+}, (table) => ({
+  skuIdx: uniqueIndex("ifood_sku_idx").on(table.ifoodSku),
+}));
+export type IfoodProductMapping = typeof ifoodProductMappings.$inferSelect;
+export type InsertIfoodProductMapping = typeof ifoodProductMappings.$inferInsert;
+
+// Log de Importações iFood
+export const ifoodImportLogs = mysqlTable("ifoodImportLogs", {
+  id: int("id").primaryKey().autoincrement(),
+  importedAt: timestamp("importedAt").defaultNow(),
+  ordersFileName: varchar("ordersFileName", { length: 255 }),
+  itemsFileName: varchar("itemsFileName", { length: 255 }),
+  periodStart: timestamp("periodStart"),
+  periodEnd: timestamp("periodEnd"),
+  totalOrders: int("totalOrders").default(0),
+  importedOrders: int("importedOrders").default(0),
+  skippedOrders: int("skippedOrders").default(0),
+  ordersWithDivergence: int("ordersWithDivergence").default(0),
+  totalValue: decimal("totalValue", { precision: 12, scale: 2 }).default("0"),
+  status: mysqlEnum("status", ["PROCESSING", "SUCCESS", "PARTIAL", "ERROR"]).default("PROCESSING").notNull(),
+  errorMessage: text("errorMessage"),
+  createdBy: varchar("createdBy", { length: 64 }),
+}, (table) => ({
+  importDateIdx: index("ifood_import_date_idx").on(table.importedAt),
+  importStatusIdx: index("ifood_import_status_idx").on(table.status),
+}));
+export type IfoodImportLog = typeof ifoodImportLogs.$inferSelect;
+export type InsertIfoodImportLog = typeof ifoodImportLogs.$inferInsert;
+
+// Pedidos Importados do iFood
+export const ifoodImportedOrders = mysqlTable("ifoodImportedOrders", {
+  id: int("id").primaryKey().autoincrement(),
+  ifoodOrderId: varchar("ifoodOrderId", { length: 64 }).notNull(),
+  ifoodOrderCode: varchar("ifoodOrderCode", { length: 20 }),
+  saleId: int("saleId"),
+  importLogId: int("importLogId"),
+  importedAt: timestamp("importedAt").defaultNow(),
+}, (table) => ({
+  orderIdIdx: uniqueIndex("ifood_order_id_idx").on(table.ifoodOrderId),
+}));
+export type IfoodImportedOrder = typeof ifoodImportedOrders.$inferSelect;
+export type InsertIfoodImportedOrder = typeof ifoodImportedOrders.$inferInsert;
+
+// Divergências de Preço iFood
+export const ifoodPriceDivergences = mysqlTable("ifoodPriceDivergences", {
+  id: int("id").primaryKey().autoincrement(),
+  importLogId: int("importLogId"),
+  ifoodOrderId: varchar("ifoodOrderId", { length: 64 }),
+  productId: int("productId"),
+  ifoodSku: varchar("ifoodSku", { length: 50 }),
+  ifoodPrice: decimal("ifoodPrice", { precision: 10, scale: 2 }),
+  abrwfPrice: decimal("abrwfPrice", { precision: 10, scale: 2 }),
+  divergencePercent: decimal("divergencePercent", { precision: 5, scale: 2 }),
+  createdAt: timestamp("createdAt").defaultNow(),
+});
+export type IfoodPriceDivergence = typeof ifoodPriceDivergences.$inferSelect;
+export type InsertIfoodPriceDivergence = typeof ifoodPriceDivergences.$inferInsert;

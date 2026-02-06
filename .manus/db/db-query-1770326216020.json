@@ -1,0 +1,14 @@
+{
+  "query": "SELECT COUNT(*) as total, SUM(CASE WHEN productId IS NOT NULL THEN 1 ELSE 0 END) as com_produto FROM ifoodProductMappings;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT COUNT(*) as total, SUM(CASE WHEN productId IS NOT NULL THEN 1 ELSE 0 END) as com_produto FROM ifoodProductMappings;",
+  "rows": [
+    {
+      "total": "381",
+      "com_produto": "1"
+    }
+  ],
+  "messages": [],
+  "stdout": "total\tcom_produto\n381\t1\n",
+  "stderr": "",
+  "execution_time_ms": 59
+}

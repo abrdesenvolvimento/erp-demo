@@ -1,0 +1,160 @@
+{
+  "query": "SELECT ifoodSku, ifoodProductName, productId FROM ifoodProductMappings WHERE productId IS NULL LIMIT 30;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT ifoodSku, ifoodProductName, productId FROM ifoodProductMappings WHERE productId IS NULL LIMIT 30;",
+  "rows": [
+    {
+      "ifoodSku": "70847022015",
+      "ifoodProductName": "Energético Monster Original 473ml.",
+      "productId": "NULL"
+    },
+    {
+      "ifoodSku": "70847022305",
+      "ifoodProductName": "Monster Energy Absolutely Zero 473ml",
+      "productId": "NULL"
+    },
+    {
+      "ifoodSku": "70847033301",
+      "ifoodProductName": "Energético Monster Mango Loco 473ml",
+      "productId": "NULL"
+    },
+    {
+      "ifoodSku": "70847033929",
+      "ifoodProductName": "Energético Monster Ultra Violet Zero Açúcar 473ml",
+      "productId": "NULL"
+    },
+    {
+      "ifoodSku": "70847034803",
+      "ifoodProductName": "Energético Monster Dragon Ice Tea Lemon 473ml",
+      "productId": "NULL"
+    },
+    {
+      "ifoodSku": "7891050005519",
+      "ifoodProductName": "Whisky 12 Anos Chivas Regal 1l",
+      "productId": "NULL"
+    },
+    {
+      "ifoodSku": "8218400032800",
+      "ifoodProductName": "Jack Daniel's Honey 1L",
+      "productId": "NULL"
+    },
+    {
+      "ifoodSku": "82184004364",
+      "ifoodProductName": "Licor Fino de Whisky Jack Daniels Apple Garrafa 1l",
+      "productId": "NULL"
+    },
+    {
+      "ifoodSku": "82184200698",
+      "ifoodProductName": "Jack Daniels 1l",
+      "productId": "NULL"
+    },
+    {
+      "ifoodSku": "87000005525",
+      "ifoodProductName": "Whisky Bulleit Bourbon Frontier 750ml",
+      "productId": "NULL"
+    },
+    {
+      "ifoodSku": "8807616186",
+      "ifoodProductName": "Vodka Ciroc 750ml",
+      "productId": "NULL"
+    },
+    {
+      "ifoodSku": "88076175051",
+      "ifoodProductName": "Vodka Ciroc Red Berry Garrafa 750ml",
+      "productId": "NULL"
+    },
+    {
+      "ifoodSku": "9002490250454",
+      "ifoodProductName": "Red Bull Sem Açúcar 250ml",
+      "productId": "NULL"
+    },
+    {
+      "ifoodSku": "9002490100049",
+      "ifoodProductName": "Red Bull 250ml",
+      "productId": "NULL"
+    },
+    {
+      "ifoodSku": "798190225388",
+      "ifoodProductName": "Xeque Mate 355ml",
+      "productId": "NULL"
+    },
+    {
+      "ifoodSku": "1220000250031",
+      "ifoodProductName": "Energético Monster Pacific Punch 473ml",
+      "productId": "NULL"
+    },
+    {
+      "ifoodSku": "12200002501542",
+      "ifoodProductName": "Energético Monster Juice Khaotic Tropical Orange 473ml",
+      "productId": "NULL"
+    },
+    {
+      "ifoodSku": "1220000250222",
+      "ifoodProductName": "Energético Monster Ultra Watermelon Zero Açúcar 473ml",
+      "productId": "NULL"
+    },
+    {
+      "ifoodSku": "201087624",
+      "ifoodProductName": "Combo Heineken 269ml Com 6 Unidades",
+      "productId": "NULL"
+    },
+    {
+      "ifoodSku": "201087631",
+      "ifoodProductName": "Combo Original 350ml Com 6 Unidades",
+      "productId": "NULL"
+    },
+    {
+      "ifoodSku": "201087632",
+      "ifoodProductName": "Combo Brahma 350ml Com 6 Unidades",
+      "productId": "NULL"
+    },
+    {
+      "ifoodSku": "201130375",
+      "ifoodProductName": "Combo 24 Cervejas Puro Malte Ultra Amstel 275ml",
+      "productId": "NULL"
+    },
+    {
+      "ifoodSku": "201130376",
+      "ifoodProductName": "Combo 24 Cervejas Puro Malte Ultra Amstel 269ml",
+      "productId": "NULL"
+    },
+    {
+      "ifoodSku": "201130377",
+      "ifoodProductName": "Combo de Cervejas Puro Malte Amstel 269ml com 24 Unidades",
+      "productId": "NULL"
+    },
+    {
+      "ifoodSku": "201130378",
+      "ifoodProductName": "Combo 24 Cervejas Puro Malte Amstel 350ml",
+      "productId": "NULL"
+    },
+    {
+      "ifoodSku": "201130381",
+      "ifoodProductName": "Combo 24 Cervejas Puro Malte Amstel 473ml",
+      "productId": "NULL"
+    },
+    {
+      "ifoodSku": "201131868",
+      "ifoodProductName": "Combo 24 Cervejas Puro Malte Amstel 269ml",
+      "productId": "NULL"
+    },
+    {
+      "ifoodSku": "7035542004202",
+      "ifoodProductName": "Licor Fino de Laranja Cointreau Garrafa 700ml",
+      "productId": "NULL"
+    },
+    {
+      "ifoodSku": "3700123302360",
+      "ifoodProductName": "Água Mineral Sem Gás Pureza Vital Nestlé 510ml",
+      "productId": "NULL"
+    },
+    {
+      "ifoodSku": "7893218000343",
+      "ifoodProductName": "White Horse 1L",
+      "productId": "NULL"
+    }
+  ],
+  "messages": [],
+  "stdout": "ifoodSku\tifoodProductName\tproductId\n70847022015\tEnergético Monster Original 473ml.\tNULL\n70847022305\tMonster Energy Absolutely Zero 473ml\tNULL\n70847033301\tEnergético Monster Mango Loco 473ml\tNULL\n70847033929\tEnergético Monster Ultra Violet Zero Açúcar 473ml\tNULL\n70847034803\tEnergético Monster Dragon Ice Tea Lemon 473ml\tNULL\n7891050005519\tWhisky 12 Anos Chivas Regal 1l\tNULL\n8218400032800\tJack Daniel's Honey 1L\tNULL\n82184004364\tLicor Fino de Whisky Jack Daniels Apple Garrafa 1l\tNULL\n82184200698\tJack Daniels 1l\tNULL\n87000005525\tWhisky Bulleit Bourbon Frontier 750ml\tNULL\n8807616186\tVodka Ciroc 750ml\tNULL\n88076175051\tVodka Ciroc Red Berry Garrafa 750ml\tNULL\n9002490250454\tRed Bull Sem Açúcar 250ml\tNULL\n9002490100049\tRed Bull 250ml\tNULL\n798190225388\tXeque Mate 355ml\tNULL\n1220000250031\tEnergético Monster Pacific Punch 473ml\tNULL\n12200002501542\tEnergético Monster Juice Khaotic Tropical Orange 473ml\tNULL\n1220000250222\tEnergético Monster Ultra Watermelon Zero Açúcar 473ml\tNULL\n201087624\tCombo Heineken 269ml Com 6 Unidades\tNULL\n201087631\tCombo Original 350ml Com 6 Unidades\tNULL\n201087632\tCombo Brahma 350ml Com 6 Unidades\tNULL\n201130375\tCombo 24 Cervejas Puro Malte Ultra Amstel 275ml\tNULL\n201130376\tCombo 24 Cervejas Puro Malte Ultra Amstel 269ml\tNULL\n201130377\tCombo de Cervejas Puro Malte Amstel 269ml com 24 Unidades\tNULL\n201130378\tCombo 24 Cervejas Puro Malte Amstel 350ml\tNULL\n201130381\tCombo 24 Cervejas Puro Malte Amstel 473ml\tNULL\n201131868\tCombo 24 Cervejas Puro Malte Amstel 269ml\tNULL\n7035542004202\tLicor Fino de Laranja Cointreau Garrafa 700ml\tNULL\n3700123302360\tÁgua Mineral Sem Gás Pureza Vital Nestlé 510ml\tNULL\n7893218000343\tWhite Horse 1L\tNULL\n",
+  "stderr": "",
+  "execution_time_ms": 55
+}

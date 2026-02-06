@@ -1,0 +1,22 @@
+{
+  "query": "SELECT id, name, email, role FROM users WHERE name LIKE '%Gabriel%' OR email LIKE '%adegabeirario%';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT id, name, email, role FROM users WHERE name LIKE '%Gabriel%' OR email LIKE '%adegabeirario%';",
+  "rows": [
+    {
+      "id": "3sp2FmLhkenyjqMFmfLoex",
+      "name": "Gabriel Morais",
+      "email": "comercial@adegabeirario.com.br",
+      "role": "admin"
+    },
+    {
+      "id": "j8R68T3wPMAkij5Kb9Zef8",
+      "name": "Gabriel Morais",
+      "email": "gmsantos.96@gmail.com",
+      "role": "operacional"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\temail\trole\n3sp2FmLhkenyjqMFmfLoex\tGabriel Morais\tcomercial@adegabeirario.com.br\tadmin\nj8R68T3wPMAkij5Kb9Zef8\tGabriel Morais\tgmsantos.96@gmail.com\toperacional\n",
+  "stderr": "",
+  "execution_time_ms": 92
+}
