@@ -135,22 +135,23 @@
 ### Objetivo
 Automatizar importação de pedidos concluídos do iFood via arquivos JSON
 
-### Escopo V1
-- [ ] Importação de pedidos com status CONCLUDED
-- [ ] Deduplicação por id_pedido_ifood
-- [ ] Identificação de produtos por EAN
-- [ ] De/Para para divergências de cadastro
-- [ ] Bloqueio de importação em caso de divergência
-- [ ] Aprovação manual de divergências
-- [ ] Criação automática de vendas e itens
-- [ ] Movimentação de estoque pelo fluxo padrão
-- [ ] Histórico completo de importações
-- [ ] Logs técnicos de cada execução
-- [ ] Garantir idempotência (não duplicar importações)
+### Escopo V1 ✅ CONCLUÍDO (06/02/2026)
+- [x] Importação de pedidos com status CONCLUDED
+- [x] Deduplicação por id_pedido_ifood
+- [x] Identificação de produtos por EAN
+- [x] De/Para para divergências de cadastro
+- [x] Bloqueio de importação em caso de divergência
+- [x] Aprovação manual de divergências
+- [x] Criação automática de vendas e itens
+- [x] Movimentação de estoque pelo fluxo padrão
+- [x] Histórico completo de importações
+- [x] Logs técnicos de cada execução
+- [x] Garantir idempotência (não duplicar importações)
+- [x] Exclusão de importações com reversão automática
 
 ### Arquivos de Entrada
-- [ ] Pedidos.json (obrigatório)
-- [ ] Itens Pedidos.json (obrigatório)
+- [x] Pedidos.json (obrigatório)
+- [x] Itens Pedidos.json (obrigatório)
 - [ ] Inventário Ifood.json (opcional, para De/Para)
 
 ### Interface
@@ -161,18 +162,18 @@ Automatizar importação de pedidos concluídos do iFood via arquivos JSON
 - [x] Histórico de importações
 
 ### Reescrita Completa (05/02/2026) - Seguindo Documentação Orion
-- [ ] Reescrever backend com lógica correta de mapeamento (De/Para via EAN/SKU)
-- [ ] Implementar validação de preços com tolerância
-- [ ] Implementar status: OK, PRODUCT_NOT_FOUND, PRICE_DIVERGENCE, BLOCKED, IMPORTED
-- [ ] Reescrever frontend seguindo wireframe do Gabriel
-- [ ] Cards: Total Pedidos, Aprovados, Não Localizado, Divergência Valor
-- [ ] Tabela: Seleção, Código, Data, Itens, Total, Status, Ação
-- [ ] Botões: Importar (individual), Verificar De/Para, Verificar Valor
-- [ ] Botão Atualizar Importação (reprocessa sem reimportar)
-- [ ] Botão Importar Seleção (lote)
-- [ ] Modal De/Para: vincular produto existente ou criar novo
-- [ ] Modal Verificar Valor: comparação detalhada de preços
-- [ ] Testar fluxo completo com arquivos de teste
+- [x] Reescrever backend com lógica correta de mapeamento (De/Para via EAN/SKU)
+- [x] Implementar validação de preços com tolerância
+- [x] Implementar status: OK, PRODUCT_NOT_FOUND, PRICE_DIVERGENCE, BLOCKED, IMPORTED
+- [x] Reescrever frontend seguindo wireframe do Gabriel
+- [x] Cards: Total Pedidos, Aprovados, Não Localizado, Divergência Valor
+- [x] Tabela: Seleção, Código, Data, Itens, Total, Status, Ação
+- [x] Botões: Importar (individual), Verificar De/Para, Verificar Valor
+- [x] Botão Atualizar Importação (reprocessa sem reimportar)
+- [x] Botão Importar Seleção (lote)
+- [x] Modal De/Para: vincular produto existente ou criar novo
+- [x] Modal Verificar Valor: comparação detalhada de preços (funcionalidade OK, layout pendente)
+- [x] Testar fluxo completo com arquivos de teste
 
 ### Correções Adicionais (05/02/2026)
 - [x] Coluna Pedido: usar campo codigo_do_pedido_no_ifood
@@ -193,6 +194,8 @@ Automatizar importação de pedidos concluídos do iFood via arquivos JSON
 - [x] Implementar funcionalidade de exclusão de importações duplicadas
 - [x] Modal de confirmação de exclusão com detalhes (quantidade de vendas a reverter)
 - [x] Reversão automática de vendas, itens e movimentações de estoque
+- [x] Atualização de preço do canal funcionando corretamente
+- [ ] Modal de divergência de valor ainda com layout quebrado (coluna Ação sobreposta)
 
 ---
 
