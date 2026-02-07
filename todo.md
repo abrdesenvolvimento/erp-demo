@@ -199,6 +199,30 @@ Automatizar importação de pedidos concluídos do iFood via arquivos JSON
 
 ---
 
+## 💰 CONTAS A PAGAR - INTEGRAÇÃO COM DESPESAS ✅ (07/02/2026)
+
+### Objetivo
+Integrar o módulo de Despesas com o módulo Contas a Pagar, garantindo que despesas apareçam automaticamente no Contas a Pagar assim como as compras.
+
+### Implementação ✅
+- [x] Adicionada coluna `expenseId` na tabela `accountsPayable`
+- [x] Criada função `createAccountPayable` no db.ts
+- [x] Criada função `getAccountsPayableByExpenseId` no db.ts
+- [x] Integração implementada no routers.ts (criação de parcelas de despesas)
+- [x] Função `getSupplierPayableDetail` já busca parcelas de despesas e compras
+- [x] Testado manualmente: despesa criada → registros aparecem no Contas a Pagar
+
+### Resultado
+Quando uma despesa é criada com parcelas, o sistema automaticamente:
+1. Cria os registros na tabela `expenseInstallments`
+2. Cria os registros correspondentes na tabela `accountsPayable` com `expenseId` preenchido
+3. Os registros aparecem na listagem do Contas a Pagar junto com as compras
+
+### Observação
+Despesas criadas ANTES desta implementação (07/02/2026) não possuem registros no Contas a Pagar. Apenas novas despesas terão a integração automática.
+
+---
+
 ## 📈 TELA DE FECHAMENTO (AJUSTES)
 
 ### Remover
@@ -540,3 +564,9 @@ Não liberar acesso Admin para todos os usuários. Funções específicas permit
 
 =======
 >>>>>>> Stashed changes
+
+### Investigação: Despesas não sendo enviadas para Contas a Pagar (06/02/2026)
+- [ ] Verificar o fluxo de criação de despesas no backend
+- [ ] Verificar se há integração entre despesas e contas a pagar
+- [ ] Identificar o problema e implementar correção
+- [ ] Testar o fluxo completo de despesas para Contas a Pagar

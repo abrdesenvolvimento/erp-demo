@@ -1119,6 +1119,18 @@ export const appRouter = router({
             paymentAmount: isAVista ? input.dueDates[i].amount : undefined,
             paymentMethod: isAVista ? input.paymentMethod : undefined,
           });
+          
+          // Criar registro em Contas a Pagar para cada parcela
+          await db.createAccountPayable({
+            description: `${input.description} - Parcela ${i + 1}/${input.dueDates.length}`,
+            amount: input.dueDates[i].amount,
+            dueDate: input.dueDates[i].date,
+            status: isAVista ? "PAID" : "PENDING",
+            paidDate: isAVista ? input.dueDates[i].date : undefined,
+            supplierId: input.supplierId,
+            expenseId: expenseId,
+            notes: input.notes,
+          });
         }
 
         // NOTA: O movimento de estoque para Perdas já é registrado automaticamente

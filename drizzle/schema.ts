@@ -273,6 +273,7 @@ export const accountsPayable = mysqlTable("accountsPayable", {
   status: mysqlEnum("status", ["PENDING", "PAID", "OVERDUE", "CANCELLED"]).default("PENDING").notNull(),
   supplierId: int("supplierId"),
   purchaseOrderId: int("purchaseOrderId"),
+  expenseId: int("expenseId"),
   notes: text("notes"),
   createdAt: timestamp("createdAt").defaultNow(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow(),

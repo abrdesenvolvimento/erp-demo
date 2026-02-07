@@ -8196,3 +8196,28 @@ export async function accountOtherRevenue(data: {
     createdBy: data.createdBy,
   });
 }
+
+// ============================================================
+// CONTAS A PAGAR
+// ============================================================
+
+/**
+ * Criar registro no Contas a Pagar vinculado a uma despesa
+ */
+export async function createAccountPayable(data: InsertAccountPayable) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.insert(accountsPayable).values(data);
+  return Number((result as any).insertId);
+}
+
+/**
+ * Buscar registros do Contas a Pagar por expenseId
+ */
+export async function getAccountsPayableByExpenseId(expenseId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return await db.select().from(accountsPayable).where(eq(accountsPayable.expenseId, expenseId));
+}
