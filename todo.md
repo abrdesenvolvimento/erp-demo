@@ -594,3 +594,34 @@ Não liberar acesso Admin para todos os usuários. Funções específicas permit
 - [x] Exemplo: alterar de fev/26 para jan/26, salva, mas continua em fev/26
 - [x] **RESOLVIDO:** Adicionado issueDate, entryDate e competenceMonth na chamada de updateExpense no routers.ts
 
+
+### BUG-09: Contabilização não reconhece despesa após alterar competenceMonth
+- [ ] Despesa foi movida manualmente de fev/26 para jan/26 no banco (entryDate e competenceMonth)
+- [ ] Após recontabilizar janeiro, a despesa não aparece no relatório contábil
+- [ ] Conta "Simples Nacional a Recolher" continua com R$ 0,00 em janeiro
+- [ ] Precisa verificar qual campo a contabilização usa para filtrar despesas por mês
+- [ ] Pode estar usando createdAt, issueDate ou outro campo em vez de competenceMonth
+
+
+## 🔧 FEATURE: Reprocessamento de Lançamentos Contábeis ao Editar Despesas ✅ (08/02/2026)
+
+### Objetivo
+Permitir que despesas editadas sejam recontabilizadas no mês correto, deletando o journal antigo e criando um novo com a competência atualizada.
+
+### Implementação
+- [x] Criar função `deleteExpenseJournal` no db.ts para deletar journal e lançamentos de uma despesa
+- [x] Integrar reprocessamento no mutation `expenses.update` do routers.ts
+- [x] Detectar mudança de competência ao editar despesa
+- [x] Deletar journal antigo automaticamente
+- [x] Recriar journal com nova competência usando `accountExpenseCreation`
+- [x] Verificado: journal existente da despesa de impostos (journal #1, competência 2026-01, status DRAFT)
+- [ ] Aguardando teste do usuário: editar despesa pelo sistema para acionar reprocessamento
+- [ ] Após edição, verificar se journal antigo foi deletado e novo criado
+- [ ] Contabilizar janeiro novamente e confirmar que despesa aparece no relatório
+
+### Como Funciona
+1. Ao editar uma despesa, o sistema compara `competenceMonth` antigo vs novo
+2. Se mudou, deleta o journal antigo (tabelas: journals, journalSources, accountingLedger)
+3. Recria o journal com a nova competência usando a mesma lógica da criação
+4. Na próxima contabilização, o journal aparecerá no mês correto
+

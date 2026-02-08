@@ -1,0 +1,21 @@
+{
+  "query": "SELECT id, description, docNumber, issueDate, entryDate, competenceMonth, amount, createdAt, updatedAt FROM expenses WHERE docNumber = '07202603437463826'",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT id, description, docNumber, issueDate, entryDate, competenceMonth, amount, createdAt, updatedAt FROM expenses WHERE docNumber = '07202603437463826'",
+  "rows": [
+    {
+      "id": "1170001",
+      "description": "DAS Faturamento 01/2026",
+      "docNumber": "07202603437463826",
+      "issueDate": "2026-02-03 15:00:00",
+      "entryDate": "2026-01-31 15:00:00",
+      "competenceMonth": "2026-01",
+      "amount": "2396.17",
+      "createdAt": "2026-02-06 03:02:00",
+      "updatedAt": "2026-02-08 13:53:21"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tdescription\tdocNumber\tissueDate\tentryDate\tcompetenceMonth\tamount\tcreatedAt\tupdatedAt\n1170001\tDAS Faturamento 01/2026\t07202603437463826\t2026-02-03 15:00:00\t2026-01-31 15:00:00\t2026-01\t2396.17\t2026-02-06 03:02:00\t2026-02-08 13:53:21\n",
+  "stderr": "",
+  "execution_time_ms": 356
+}

@@ -1200,6 +1200,26 @@ export const appRouter = router({
           accountingCode = await db.getAccountingCodeByManagementAccount(input.managementAccountId) || undefined;
         }
 
+        // Buscar despesa atual para comparar competência
+        const currentExpense = await db.getExpenseById(input.id);
+        const oldCompetence = currentExpense?.competenceMonth;
+        const newCompetence = input.competenceMonth;
+        
+        // Se competência mudou, reprocessar contabilização
+        const competenceChanged = oldCompetence && newCompetence && oldCompetence !== newCompetence;
+        
+        if (competenceChanged) {
+          console.log(`[UPDATE EXPENSE] Competência alterada: ${oldCompetence} → ${newCompetence}`);
+          
+          try {
+            // Deletar journal antigo
+            await db.deleteExpenseJournal(input.id);
+            console.log(`[UPDATE EXPENSE] Journal antigo deletado`);
+          } catch (error: any) {
+            console.warn(`[UPDATE EXPENSE] Erro ao deletar journal antigo: ${error.message}`);
+          }
+        }
+        
         await db.updateExpense(input.id, {
           supplierId: input.supplierId,
           issueDate: input.issueDate,
@@ -1215,6 +1235,28 @@ export const appRouter = router({
           paymentMethod: input.paymentMethod,
           notes: input.notes,
         });
+        
+        // Se competência mudou E tem conta gerencial, recriar journal
+        if (competenceChanged && input.managementAccountId) {
+          try {
+            const accountingResult = await db.accountExpenseCreation({
+              expenseId: input.id,
+              amount: input.amount,
+              managementAccountId: input.managementAccountId,
+              description: input.description,
+              entryDate: input.entryDate || input.issueDate || new Date(),
+              createdBy: 'system',
+            });
+            
+            if (accountingResult.success) {
+              console.log(`[UPDATE EXPENSE] Novo journal criado - Journal #${accountingResult.journalId}`);
+            } else {
+              console.warn(`[UPDATE EXPENSE] Erro ao criar novo journal: ${accountingResult.error}`);
+            }
+          } catch (accountingError: any) {
+            console.error(`[UPDATE EXPENSE] Erro ao recriar journal:`, accountingError.message);
+          }
+        }
         
         // Atualizar parcelas: deletar antigas e criar novas
         await db.deleteExpenseInstallments(input.id);

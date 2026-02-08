@@ -8221,3 +8221,41 @@ export async function getAccountsPayableByExpenseId(expenseId: number) {
   
   return await db.select().from(accountsPayable).where(eq(accountsPayable.expenseId, expenseId));
 }
+
+/**
+ * Deletar journal de uma despesa (usado ao editar despesa com mudança de competência)
+ */
+export async function deleteExpenseJournal(expenseId: number): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  // Buscar journal source da despesa
+  const journalSource = await db.select()
+    .from(journalSources)
+    .where(and(
+      eq(journalSources.sourceType, 'expense'),
+      eq(journalSources.sourceId, expenseId)
+    ))
+    .limit(1);
+  
+  if (journalSource.length === 0) {
+    console.log(`[deleteExpenseJournal] Nenhum journal encontrado para despesa #${expenseId}`);
+    return;
+  }
+  
+  const journalId = journalSource[0].journalId;
+  
+  // Deletar lançamentos contábeis do journal
+  await db.delete(accountingLedger)
+    .where(eq(accountingLedger.journalId, journalId));
+  
+  // Deletar journal source
+  await db.delete(journalSources)
+    .where(eq(journalSources.id, journalSource[0].id));
+  
+  // Deletar journal
+  await db.delete(journals)
+    .where(eq(journals.id, journalId));
+  
+  console.log(`[deleteExpenseJournal] Journal #${journalId} deletado para despesa #${expenseId}`);
+}

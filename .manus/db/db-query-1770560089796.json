@@ -1,0 +1,20 @@
+{
+  "query": "SELECT js.*, j.competenceMonth, j.status \nFROM journalSources js \nLEFT JOIN journals j ON js.journalId = j.id \nWHERE js.sourceType = 'expense' AND js.sourceId = (SELECT id FROM expenses WHERE docNumber = '07202603437463826')",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT js.*, j.competenceMonth, j.status \nFROM journalSources js \nLEFT JOIN journals j ON js.journalId = j.id \nWHERE js.sourceType = 'expense' AND js.sourceId = (SELECT id FROM expenses WHERE docNumber = '07202603437463826')",
+  "rows": [
+    {
+      "id": "120024",
+      "companyId": "1",
+      "journalId": "4895760",
+      "sourceType": "expense",
+      "sourceId": "1170001",
+      "createdAt": "2026-02-06 03:02:00",
+      "competenceMonth": "2026-02",
+      "status": "POSTED"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tcompanyId\tjournalId\tsourceType\tsourceId\tcreatedAt\tcompetenceMonth\tstatus\n120024\t1\t4895760\texpense\t1170001\t2026-02-06 03:02:00\t2026-02\tPOSTED\n",
+  "stderr": "",
+  "execution_time_ms": 425
+}
