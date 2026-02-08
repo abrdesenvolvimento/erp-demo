@@ -625,3 +625,27 @@ Permitir que despesas editadas sejam recontabilizadas no mês correto, deletando
 3. Recria o journal com a nova competência usando a mesma lógica da criação
 4. Na próxima contabilização, o journal aparecerá no mês correto
 
+
+
+## 🔧 FEATURE: Reprocessamento Contábil Completo ao Editar Despesas
+
+### Requisito do Usuário
+Ao editar qualquer campo de uma despesa (data, valor, fornecedor, vencimento, observação, conta gerencial), o sistema deve:
+1. Deletar o journal antigo (se existir)
+2. Recriar o journal com os novos dados
+3. Permitir que a próxima contabilização reflita as alterações corretamente
+
+### Implementação
+- [x] Corrigir caso atual: deletar journalSource órfão da despesa de impostos
+- [x] Modificar lógica de update para SEMPRE reprocessar journal (não apenas quando competência muda)
+- [x] Sistema agora deleta e recria journal em TODA edição de despesa
+- [ ] Aguardando teste: editar despesa de impostos pelo sistema para recriar journal
+- [ ] Verificar que journal foi recriado com competência 2026-01
+- [ ] Contabilizar janeiro e confirmar que despesa aparece no relatório
+
+### Campos que Impactam Contabilização
+- Data de Entrada (competenceMonth)
+- Valor (amount)
+- Conta Gerencial (managementAccountId) → altera código contábil
+- Fornecedor (supplierId) → altera descrição
+- Descrição (description)

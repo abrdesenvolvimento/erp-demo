@@ -1,0 +1,18 @@
+{
+  "query": "-- Deletar journalSource órfão\nDELETE FROM journalSources WHERE id = 1;\n\n-- Buscar dados da despesa para recriar journal\nSELECT id, amount, managementAccountId, description, entryDate, competenceMonth \nFROM expenses \nWHERE docNumber = '07202603437463826'",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute -- Deletar journalSource órfão\nDELETE FROM journalSources WHERE id = 1;\n\n-- Buscar dados da despesa para recriar journal\nSELECT id, amount, managementAccountId, description, entryDate, competenceMonth \nFROM expenses \nWHERE docNumber = '07202603437463826'",
+  "rows": [
+    {
+      "id": "1170001",
+      "amount": "2396.17",
+      "managementAccountId": "60001",
+      "description": "DAS Faturamento 01/2026",
+      "entryDate": "2026-01-31 15:00:00",
+      "competenceMonth": "2026-01"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tamount\tmanagementAccountId\tdescription\tentryDate\tcompetenceMonth\n1170001\t2396.17\t60001\tDAS Faturamento 01/2026\t2026-01-31 15:00:00\t2026-01\n",
+  "stderr": "",
+  "execution_time_ms": 404
+}

@@ -1200,24 +1200,19 @@ export const appRouter = router({
           accountingCode = await db.getAccountingCodeByManagementAccount(input.managementAccountId) || undefined;
         }
 
-        // Buscar despesa atual para comparar competência
+        // Buscar despesa atual
         const currentExpense = await db.getExpenseById(input.id);
-        const oldCompetence = currentExpense?.competenceMonth;
-        const newCompetence = input.competenceMonth;
         
-        // Se competência mudou, reprocessar contabilização
-        const competenceChanged = oldCompetence && newCompetence && oldCompetence !== newCompetence;
+        // SEMPRE reprocessar journal ao editar despesa
+        // Qualquer alteração (data, valor, fornecedor, conta gerencial) requer novo journal
+        console.log(`[UPDATE EXPENSE] Reprocessando journal da despesa #${input.id}`);
         
-        if (competenceChanged) {
-          console.log(`[UPDATE EXPENSE] Competência alterada: ${oldCompetence} → ${newCompetence}`);
-          
-          try {
-            // Deletar journal antigo
-            await db.deleteExpenseJournal(input.id);
-            console.log(`[UPDATE EXPENSE] Journal antigo deletado`);
-          } catch (error: any) {
-            console.warn(`[UPDATE EXPENSE] Erro ao deletar journal antigo: ${error.message}`);
-          }
+        try {
+          // Deletar journal antigo (se existir)
+          await db.deleteExpenseJournal(input.id);
+          console.log(`[UPDATE EXPENSE] Journal antigo deletado`);
+        } catch (error: any) {
+          console.warn(`[UPDATE EXPENSE] Erro ao deletar journal antigo: ${error.message}`);
         }
         
         await db.updateExpense(input.id, {
@@ -1236,8 +1231,8 @@ export const appRouter = router({
           notes: input.notes,
         });
         
-        // Se competência mudou E tem conta gerencial, recriar journal
-        if (competenceChanged && input.managementAccountId) {
+        // Recriar journal com os novos dados (se tem conta gerencial)
+        if (input.managementAccountId) {
           try {
             const accountingResult = await db.accountExpenseCreation({
               expenseId: input.id,

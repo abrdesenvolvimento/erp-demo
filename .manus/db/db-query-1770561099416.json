@@ -1,0 +1,28 @@
+{
+  "query": "SELECT js.*, j.* \nFROM journalSources js \nLEFT JOIN journals j ON js.journalId = j.id \nWHERE js.sourceType = 'expense' \nAND js.sourceId IN (SELECT id FROM expenses WHERE docNumber = '07202603437463826')\nORDER BY js.id DESC",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT js.*, j.* \nFROM journalSources js \nLEFT JOIN journals j ON js.journalId = j.id \nWHERE js.sourceType = 'expense' \nAND js.sourceId IN (SELECT id FROM expenses WHERE docNumber = '07202603437463826')\nORDER BY js.id DESC",
+  "rows": [
+    {
+      "id": "4895760",
+      "companyId": "1",
+      "journalId": "4895760",
+      "sourceType": "expense",
+      "sourceId": "1170001",
+      "createdAt": "2026-02-06 03:02:00",
+      "creationDate": "2026-02-06 03:02:00",
+      "competenceMonth": "2026-02",
+      "description": "Despesa: DAS Faturamento 01/2026",
+      "status": "POSTED",
+      "totalDebit": "2396.17",
+      "totalCredit": "2396.17",
+      "postedAt": "2026-02-06 03:44:06",
+      "reversedAt": "NULL",
+      "reversalJournalId": "NULL",
+      "createdBy": "3sp2FmLhkenyjqMFmfLoex"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tcompanyId\tjournalId\tsourceType\tsourceId\tcreatedAt\tid\tcompanyId\tcreationDate\tcompetenceMonth\tdescription\tstatus\ttotalDebit\ttotalCredit\tpostedAt\treversedAt\treversalJournalId\tcreatedBy\tcreatedAt\n120024\t1\t4895760\texpense\t1170001\t2026-02-06 03:02:00\t4895760\t1\t2026-02-06 03:02:00\t2026-02\tDespesa: DAS Faturamento 01/2026\tPOSTED\t2396.17\t2396.17\t2026-02-06 03:44:06\tNULL\tNULL\t3sp2FmLhkenyjqMFmfLoex\t2026-02-06 03:02:00\n",
+  "stderr": "",
+  "execution_time_ms": 364
+}
