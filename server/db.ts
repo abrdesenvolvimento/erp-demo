@@ -8223,39 +8223,46 @@ export async function getAccountsPayableByExpenseId(expenseId: number) {
 }
 
 /**
- * Deletar journal de uma despesa (usado ao editar despesa com mudança de competência)
+ * Deletar TODOS os journals de uma despesa (usado ao editar despesa)
+ * IMPORTANTE: Deleta todos os journals, não apenas o primeiro
  */
 export async function deleteExpenseJournal(expenseId: number): Promise<void> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
-  // Buscar journal source da despesa
-  const journalSource = await db.select()
+  // Buscar TODOS os journal sources da despesa (sem LIMIT)
+  const journalSources_list = await db.select()
     .from(journalSources)
     .where(and(
       eq(journalSources.sourceType, 'expense'),
       eq(journalSources.sourceId, expenseId)
-    ))
-    .limit(1);
+    ));
   
-  if (journalSource.length === 0) {
+  if (journalSources_list.length === 0) {
     console.log(`[deleteExpenseJournal] Nenhum journal encontrado para despesa #${expenseId}`);
     return;
   }
   
-  const journalId = journalSource[0].journalId;
+  console.log(`[deleteExpenseJournal] Encontrados ${journalSources_list.length} journal(s) para despesa #${expenseId}`);
   
-  // Deletar lançamentos contábeis do journal
-  await db.delete(accountingLedger)
-    .where(eq(accountingLedger.journalId, journalId));
+  // Deletar cada journal encontrado
+  for (const source of journalSources_list) {
+    const journalId = source.journalId;
+    
+    // Deletar lançamentos contábeis do journal
+    await db.delete(accountingEntries)
+      .where(eq(accountingEntries.journalId, journalId));
+    
+    // Deletar journal source
+    await db.delete(journalSources)
+      .where(eq(journalSources.id, source.id));
+    
+    // Deletar journal
+    await db.delete(journals)
+      .where(eq(journals.id, journalId));
+    
+    console.log(`[deleteExpenseJournal] Journal #${journalId} deletado`);
+  }
   
-  // Deletar journal source
-  await db.delete(journalSources)
-    .where(eq(journalSources.id, journalSource[0].id));
-  
-  // Deletar journal
-  await db.delete(journals)
-    .where(eq(journals.id, journalId));
-  
-  console.log(`[deleteExpenseJournal] Journal #${journalId} deletado para despesa #${expenseId}`);
+  console.log(`[deleteExpenseJournal] Total: ${journalSources_list.length} journal(s) deletado(s) para despesa #${expenseId}`);
 }

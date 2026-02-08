@@ -649,3 +649,18 @@ Ao editar qualquer campo de uma despesa (data, valor, fornecedor, vencimento, ob
 - Conta Gerencial (managementAccountId) → altera código contábil
 - Fornecedor (supplierId) → altera descrição
 - Descrição (description)
+
+
+## 🔴 BUG-10: Journal Duplicado Após Reprocessamento
+
+### Problema
+Despesa de impostos aparece tanto em janeiro quanto em fevereiro após edição e reprocessamento. Isso indica que o journal antigo de fevereiro não foi deletado corretamente.
+
+### Investigação e Correção
+- [x] Verificado: existiam 2 journals para a mesma despesa (fevereiro e janeiro)
+- [x] Identificado: deleteExpenseJournal usava LIMIT 1, deletava apenas o primeiro
+- [x] Corrigido: função agora deleta TODOS os journals da despesa (sem LIMIT)
+- [x] Corrigido: nome da tabela de accountingLedger para accountingEntries
+- [x] Deletados manualmente os journals duplicados da despesa de impostos
+- [ ] Aguardando teste: editar despesa pelo sistema e verificar que não duplica
+- [ ] Contabilizar janeiro e confirmar que aparece apenas em janeiro

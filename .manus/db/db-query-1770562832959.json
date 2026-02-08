@@ -1,0 +1,28 @@
+{
+  "query": "SELECT js.id as sourceId, js.journalId, j.competenceMonth, j.status, j.description, j.createdAt, j.postedAt\nFROM journalSources js \nLEFT JOIN journals j ON js.journalId = j.id \nWHERE js.sourceType = 'expense' \nAND js.sourceId = (SELECT id FROM expenses WHERE docNumber = '07202603437463826')\nORDER BY j.createdAt DESC",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT js.id as sourceId, js.journalId, j.competenceMonth, j.status, j.description, j.createdAt, j.postedAt\nFROM journalSources js \nLEFT JOIN journals j ON js.journalId = j.id \nWHERE js.sourceType = 'expense' \nAND js.sourceId = (SELECT id FROM expenses WHERE docNumber = '07202603437463826')\nORDER BY j.createdAt DESC",
+  "rows": [
+    {
+      "sourceId": "1080005",
+      "journalId": "5855741",
+      "competenceMonth": "2026-01",
+      "status": "POSTED",
+      "description": "Despesa: DAS Faturamento 01/2026 ",
+      "createdAt": "2026-02-08 14:58:10",
+      "postedAt": "2026-02-08 14:58:41"
+    },
+    {
+      "sourceId": "120024",
+      "journalId": "4895760",
+      "competenceMonth": "2026-02",
+      "status": "POSTED",
+      "description": "Despesa: DAS Faturamento 01/2026",
+      "createdAt": "2026-02-06 03:02:00",
+      "postedAt": "2026-02-06 03:44:06"
+    }
+  ],
+  "messages": [],
+  "stdout": "sourceId\tjournalId\tcompetenceMonth\tstatus\tdescription\tcreatedAt\tpostedAt\n1080005\t5855741\t2026-01\tPOSTED\tDespesa: DAS Faturamento 01/2026 \t2026-02-08 14:58:10\t2026-02-08 14:58:41\n120024\t4895760\t2026-02\tPOSTED\tDespesa: DAS Faturamento 01/2026\t2026-02-06 03:02:00\t2026-02-06 03:44:06\n",
+  "stderr": "",
+  "execution_time_ms": 364
+}

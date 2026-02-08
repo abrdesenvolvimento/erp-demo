@@ -1,0 +1,9 @@
+{
+  "query": "-- Deletar lançamentos contábeis dos journals\nDELETE FROM accountingEntries WHERE journalId IN (\n  SELECT journalId FROM journalSources \n  WHERE sourceType = 'expense' \n  AND sourceId = (SELECT id FROM expenses WHERE docNumber = '07202603437463826')\n);\n\n-- Deletar journal sources\nDELETE FROM journalSources \nWHERE sourceType = 'expense' \nAND sourceId = (SELECT id FROM expenses WHERE docNumber = '07202603437463826');\n\n-- Deletar journals órfãos\nDELETE FROM journals WHERE id IN (\n  SELECT DISTINCT j.id FROM journals j\n  LEFT JOIN journalSources js ON j.id = js.journalId\n  WHERE js.id IS NULL\n)",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute -- Deletar lançamentos contábeis dos journals\nDELETE FROM accountingEntries WHERE journalId IN (\n  SELECT journalId FROM journalSources \n  WHERE sourceType = 'expense' \n  AND sourceId = (SELECT id FROM expenses WHERE docNumber = '07202603437463826')\n);\n\n-- Deletar journal sources\nDELETE FROM journalSources \nWHERE sourceType = 'expense' \nAND sourceId = (SELECT id FROM expenses WHERE docNumber = '07202603437463826');\n\n-- Deletar journals órfãos\nDELETE FROM journals WHERE id IN (\n  SELECT DISTINCT j.id FROM journals j\n  LEFT JOIN journalSources js ON j.id = js.journalId\n  WHERE js.id IS NULL\n)",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 601
+}

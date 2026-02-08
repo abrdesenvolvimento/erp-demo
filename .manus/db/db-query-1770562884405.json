@@ -1,0 +1,18 @@
+{
+  "query": "-- Buscar IDs dos journals\nSELECT js.id as sourceId, js.journalId \nFROM journalSources js \nWHERE js.sourceType = 'expense' \nAND js.sourceId = (SELECT id FROM expenses WHERE docNumber = '07202603437463826')",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute -- Buscar IDs dos journals\nSELECT js.id as sourceId, js.journalId \nFROM journalSources js \nWHERE js.sourceType = 'expense' \nAND js.sourceId = (SELECT id FROM expenses WHERE docNumber = '07202603437463826')",
+  "rows": [
+    {
+      "sourceId": "120024",
+      "journalId": "4895760"
+    },
+    {
+      "sourceId": "1080005",
+      "journalId": "5855741"
+    }
+  ],
+  "messages": [],
+  "stdout": "sourceId\tjournalId\n120024\t4895760\n1080005\t5855741\n",
+  "stderr": "",
+  "execution_time_ms": 362
+}
