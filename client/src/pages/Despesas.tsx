@@ -199,6 +199,19 @@ export default function Despesas() {
         setPaymentMethod(expense.expense.paymentMethod);
         setNotes(expense.expense.notes || "");
         
+        // Carregar datas
+        if (expense.expense.issueDate) {
+          setIssueDate(new Date(expense.expense.issueDate).toISOString().split('T')[0]);
+        }
+        if (expense.expense.entryDate) {
+          setEntryDate(new Date(expense.expense.entryDate).toISOString().split('T')[0]);
+          // Calcular mês de competência baseado na data de entrada
+          const entryDateObj = new Date(expense.expense.entryDate);
+          const year = entryDateObj.getFullYear();
+          const month = String(entryDateObj.getMonth() + 1).padStart(2, '0');
+          setCompetenceMonth(`${year}-${month}`);
+        }
+        
         // Carregar parcelas
         setDueDates(expenseDetails.map((inst: any) => ({
           date: new Date(inst.dueDate).toISOString().split('T')[0],
@@ -207,6 +220,16 @@ export default function Despesas() {
       }
     }
   }, [isEditing, editingExpenseId, expenseDetails, expenses]);
+  
+  // Recalcular mês de competência automaticamente quando a data de entrada mudar
+  useEffect(() => {
+    if (entryDate) {
+      const entryDateObj = new Date(entryDate + 'T00:00:00');
+      const year = entryDateObj.getFullYear();
+      const month = String(entryDateObj.getMonth() + 1).padStart(2, '0');
+      setCompetenceMonth(`${year}-${month}`);
+    }
+  }, [entryDate]);
   
   const updateDueDate = (index: number, field: 'date' | 'amount', value: string) => {
     const newDueDates = [...dueDates];

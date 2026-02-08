@@ -570,3 +570,19 @@ Não liberar acesso Admin para todos os usuários. Funções específicas permit
 - [ ] Verificar se há integração entre despesas e contas a pagar
 - [ ] Identificar o problema e implementar correção
 - [ ] Testar o fluxo completo de despesas para Contas a Pagar
+
+## 🔴 BUGS - EDIÇÃO DE DESPESAS (07/02/2026)
+
+### BUG-06: Datas resetando ao editar despesa ✅ (07/02/2026)
+- [x] Ao clicar em editar despesa, Data de Emissão e Data de Entrada aparecem com data atual
+- [x] Deveria trazer as datas originais da despesa (issueDate e entryDate)
+- [x] Problema: modal de edição não estava carregando as datas corretamente
+- [x] **RESOLVIDO:** Adicionado carregamento de issueDate e entryDate no useEffect de edição
+
+### BUG-07: Mês de Competência não recalcula ao alterar data ✅ (07/02/2026)
+- [x] Ao editar Data de Entrada de uma despesa, o Mês de Competência não é recalculado
+- [x] Exemplo: despesa em jan/26, ao editar Data de Entrada continua mostrando fev/26
+- [x] Deveria recalcular automaticamente baseado na nova Data de Entrada
+- [x] Importante para retroação de lançamentos (permitida até dia 10 do mês seguinte)
+- [x] **RESOLVIDO:** Adicionado useEffect que recalcula automaticamente o mês de competência ao alterar entryDate
+
