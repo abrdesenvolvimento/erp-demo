@@ -586,3 +586,11 @@ Não liberar acesso Admin para todos os usuários. Funções específicas permit
 - [x] Importante para retroação de lançamentos (permitida até dia 10 do mês seguinte)
 - [x] **RESOLVIDO:** Adicionado useEffect que recalcula automaticamente o mês de competência ao alterar entryDate
 
+
+### BUG-08: EntryDate não está sendo salva ao editar despesa ✅ (07/02/2026)
+- [x] Frontend recalcula mês de competência corretamente ao alterar data de entrada
+- [x] Mas ao salvar, o backend não estava atualizando o campo entryDate no banco
+- [x] Resultado: mês de competência voltava ao valor antigo após salvar
+- [x] Exemplo: alterar de fev/26 para jan/26, salva, mas continua em fev/26
+- [x] **RESOLVIDO:** Adicionado issueDate, entryDate e competenceMonth na chamada de updateExpense no routers.ts
+

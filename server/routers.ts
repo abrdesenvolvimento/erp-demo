@@ -1202,6 +1202,9 @@ export const appRouter = router({
 
         await db.updateExpense(input.id, {
           supplierId: input.supplierId,
+          issueDate: input.issueDate,
+          entryDate: input.entryDate,
+          competenceMonth: input.competenceMonth,
           docType: input.docType,
           docNumber: input.docNumber,
           categoryId: input.categoryId,
