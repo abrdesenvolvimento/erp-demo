@@ -284,3 +284,22 @@ export function getCurrentBrazilDateInfo() {
     date: new Date(parseInt(year), parseInt(month) - 1, parseInt(day), 0, 0, 0, 0)
   };
 }
+
+/**
+ * Obtém o mês de competência (YYYY-MM) de uma data usando timezone de Brasília
+ * IMPORTANTE: Usar esta função em vez de date.toISOString().slice(0,7) 
+ * que usa UTC e pode retornar mês errado para datas próximas à meia-noite
+ */
+export function getCompetenceMonthBrazil(date: Date | string): string {
+  const d = typeof date === 'string' ? new Date(date) : date;
+  
+  const brasiliaStr = d.toLocaleString('en-US', { 
+    timeZone: BRAZIL_TIMEZONE,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  });
+  
+  const [month, , year] = brasiliaStr.split('/');
+  return `${year}-${month}`;
+}

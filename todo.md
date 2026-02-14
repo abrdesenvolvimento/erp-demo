@@ -103,21 +103,13 @@
   - [x] Balancete (saldos de todas as contas)
   - [x] DRE (Receitas - Custos - Despesas = Resultado)
 
-<<<<<<< Updated upstream
 ### Outras Receitas ✅ (05/02/2026)
-=======
-### Outras Receitas ✅ (04/02/2026)
->>>>>>> Stashed changes
 - [x] Registro de entradas não vinculadas a vendas de produtos
 - [x] Tipos: empréstimos bancários, bonificações, acordos, receitas extraordinárias
 - [x] Classificação gerencial e contábil correta
 - [x] CRUD completo com formulário padronizado
-<<<<<<< Updated upstream
 - [x] Integração com contabilização automática (journals)
 - [x] Lançamento: D-Caixa / C-Conta Gerencial de Receita
-=======
-- [ ] Integração com contabilização automática (journals) - próxima fase
->>>>>>> Stashed changes
 
 ### Contabilização Automática ✅ (05/02/2026)
 - [x] Estrutura de lançamentos (createAccountingEntries, postJournal, addJournalSource)
@@ -664,3 +656,98 @@ Despesa de impostos aparece tanto em janeiro quanto em fevereiro após edição 
 - [x] Deletados manualmente os journals duplicados da despesa de impostos
 - [ ] Aguardando teste: editar despesa pelo sistema e verificar que não duplica
 - [ ] Contabilizar janeiro e confirmar que aparece apenas em janeiro
+
+
+---
+
+## 🔴 PROBLEMAS DE CONTABILIZAÇÃO - JANEIRO/2026 (14/02/2026)
+
+### PROB-01: Receitas indo para conta errada
+- [ ] Receitas de vendas estão sendo contabilizadas em "Outras Receitas Operacionais" (4.2)
+- [ ] Deveriam ir para "Receita Operacional Bruta" (4.1)
+- [ ] Investigar mapeamento de contas no accountSale
+- [ ] Corrigir código de conta de receita de vendas
+
+### PROB-02: Despesas com valores incorretos
+- [ ] Aluguel aparecendo como R$ 20.000,00 (valor incorreto)
+- [ ] Faltam outras despesas operacionais no DRE
+- [ ] Investigar contabilização de despesas (accountExpenseCreation)
+- [ ] Verificar se todas as despesas de janeiro foram processadas
+
+### PROB-03: Compra duplicada #3960002
+- [ ] Excluir compra #3960002 (Comercial Bolsão - R$ 237,63)
+- [ ] Reverter lançamentos contábeis da compra
+- [ ] Reverter parcelas no Contas a Pagar
+- [ ] Implementar endpoint de exclusão de compras confirmadas
+
+### PROB-04: Impossível cancelar despesa paga à vista
+- [ ] Despesa duplicada precisa ser excluída
+- [ ] Sistema não permite cancelar despesas pagas à vista
+- [ ] Adicionar funcionalidade para cancelar/excluir despesas pagas
+- [ ] Implementar reversão de lançamentos contábeis
+
+### PROB-04: Reprocessamento de janeiro
+- [x] Reprocessamento executado com sucesso (2357 vendas)
+- [ ] Valores no DRE ainda incorretos após reprocessamento
+- [ ] Necessário limpar journals antigos antes de reprocessar
+- [ ] Implementar limpeza de journals por competência
+
+
+## 🔴 DIVERGÊNCIAS DE CONTABILIZAÇÃO - DOCUMENTO DE APONTAMENTOS (14/02/2026)
+
+### PROB-05: Receita Balcão diverge
+- [ ] Contabilizado: R$ 54.453,10 | Esperado: R$ 56.493,25 | Diff: -R$ 2.040,15
+- [ ] Investigar vendas de janeiro que não foram contabilizadas
+
+### PROB-06: Receita A Prazo diverge
+- [ ] Contabilizado: R$ 7.199,40 | Esperado: R$ 7.115,40 | Diff: +R$ 84,00
+
+### PROB-07: Receita Delivery diverge
+- [ ] Contabilizado: R$ 23.839,80 | Esperado: R$ 23.522,32 | Diff: +R$ 317,48
+
+### PROB-08: Total receita vendas diverge
+- [ ] Contabilizado: R$ 85.492,30 | Esperado: R$ 87.130,97 | Diff: -R$ 1.638,67
+- [ ] Verificar se todas as 2369 vendas foram processadas (script processou 2383)
+
+### PROB-09: Despesas divergem do total esperado R$ 39.813,46
+- [ ] Verificar quais despesas foram contabilizadas e quais faltam
+
+### PROB-10: CMV diverge
+- [ ] Análise de Vendas: R$ 60.678,05 | Balancete: R$ 59.541,59
+- [ ] Identificar origem da diferença
+
+### PROB-11: Outras Receitas R$ 81.725,68
+- [ ] Valor parece muito alto, investigar composição
+
+### MELHORIA: Total de compras por mês na tela de Compras
+- [ ] Adicionar card ou resumo com total de compras no período filtrado
+
+---
+
+## 🔧 CORREÇÃO TIMEZONE CONTÁBIL ✅ (14/02/2026)
+
+### Problema Identificado
+- Funções de contabilização (`accountSale`, `accountExpenseCreation`, etc.) usavam `data.entryDate.toISOString().slice(0, 7)` para calcular competenceMonth
+- `toISOString()` converte para UTC, causando mês errado para vendas próximas à meia-noite
+- Exemplo: venda 31/dez 22h (Brasília) = 01/jan 01h UTC → competência ficava 2026-01 em vez de 2025-12
+
+### Correções Implementadas
+- [x] Criada função `getCompetenceMonthBrazil()` em `shared/dateUtils.ts`
+- [x] Substituídas 7 ocorrências de `toISOString().slice(0, 7)` por `getCompetenceMonthBrazil()` em `server/db.ts`
+- [x] Funções corrigidas: `accountSale`, `accountPurchaseConfirmation`, `accountPurchasePayment`, `accountExpenseCreation`, `accountExpensePayment`, `accountCustomerPayment`, `accountOtherRevenue`
+
+### Reprocessamento Janeiro 2026
+- [x] Outras Receitas: Journal #8470565 POSTED com R$ 121.480,34 (D-Caixa / C-4.2.1.03)
+- [x] Vendas: 2.369 journals POSTED com R$ 87.130,97 (Balcão R$ 56.493,25 + A Prazo R$ 7.115,40 + Delivery R$ 23.522,32)
+- [x] Despesas: 38 journals POSTED
+- [x] CMV: R$ 60.678,05
+- [x] Balancete equilibrado: D = C = R$ 332.074,44
+- [x] DRE resultado líquido: R$ 87.544,35
+
+### Valores Validados
+| Item | Valor | Status |
+|------|-------|--------|
+| Receita Vendas | R$ 87.130,97 | ✅ Correto |
+| Outras Receitas | R$ 121.480,34 | ✅ Correto |
+| CMV | R$ 60.678,05 | ✅ Correto |
+| Balancete D=C | R$ 332.074,44 | ✅ Equilibrado |

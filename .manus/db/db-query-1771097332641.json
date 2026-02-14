@@ -1,0 +1,18 @@
+{
+  "query": "SELECT j.status, COUNT(*) as total \nFROM journals j \nWHERE j.competenceMonth = '2026-01' \nGROUP BY j.status;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT j.status, COUNT(*) as total \nFROM journals j \nWHERE j.competenceMonth = '2026-01' \nGROUP BY j.status;",
+  "rows": [
+    {
+      "status": "POSTED",
+      "total": "6"
+    },
+    {
+      "status": "DRAFT",
+      "total": "2267"
+    }
+  ],
+  "messages": [],
+  "stdout": "status\ttotal\nPOSTED\t6\nDRAFT\t2267\n",
+  "stderr": "",
+  "execution_time_ms": 66
+}

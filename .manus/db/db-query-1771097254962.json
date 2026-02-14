@@ -1,0 +1,30 @@
+{
+  "query": "SELECT \n  ae.id,\n  ae.accountId,\n  coa.code as conta_code,\n  coa.name as conta_name,\n  ae.entryType,\n  ae.amount,\n  js.sourceType,\n  js.sourceId\nFROM accountingEntries ae\nINNER JOIN journals j ON ae.journalId = j.id\nINNER JOIN chartOfAccounts coa ON ae.accountId = coa.id\nLEFT JOIN journalSources js ON js.journalId = j.id\nWHERE ae.competenceMonth = '2026-01'\n  AND j.status = 'POSTED'\n  AND coa.code LIKE '4%'\nLIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  ae.id,\n  ae.accountId,\n  coa.code as conta_code,\n  coa.name as conta_name,\n  ae.entryType,\n  ae.amount,\n  js.sourceType,\n  js.sourceId\nFROM accountingEntries ae\nINNER JOIN journals j ON ae.journalId = j.id\nINNER JOIN chartOfAccounts coa ON ae.accountId = coa.id\nLEFT JOIN journalSources js ON js.journalId = j.id\nWHERE ae.competenceMonth = '2026-01'\n  AND j.status = 'POSTED'\n  AND coa.code LIKE '4%'\nLIMIT 10;",
+  "rows": [
+    {
+      "id": "1260046",
+      "accountId": "64",
+      "conta_code": "4.2.1.03",
+      "conta_name": "Outras Receitas",
+      "entryType": "C",
+      "amount": "69245.34",
+      "sourceType": "other_revenue",
+      "sourceId": "30001"
+    },
+    {
+      "id": "1260048",
+      "accountId": "64",
+      "conta_code": "4.2.1.03",
+      "conta_name": "Outras Receitas",
+      "entryType": "C",
+      "amount": "12480.34",
+      "sourceType": "other_revenue",
+      "sourceId": "30002"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\taccountId\tconta_code\tconta_name\tentryType\tamount\tsourceType\tsourceId\n1260046\t64\t4.2.1.03\tOutras Receitas\tC\t69245.34\tother_revenue\t30001\n1260048\t64\t4.2.1.03\tOutras Receitas\tC\t12480.34\tother_revenue\t30002\n",
+  "stderr": "",
+  "execution_time_ms": 104
+}

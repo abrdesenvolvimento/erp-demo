@@ -1,0 +1,154 @@
+{
+  "query": "SELECT id, code, name, level, parentCode, isAnalytical FROM chartOfAccounts WHERE code LIKE '4%' ORDER BY code;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT id, code, name, level, parentCode, isAnalytical FROM chartOfAccounts WHERE code LIKE '4%' ORDER BY code;",
+  "rows": [
+    {
+      "id": "51",
+      "code": "4",
+      "name": "RECEITAS",
+      "level": "1",
+      "parentCode": "NULL",
+      "isAnalytical": "0"
+    },
+    {
+      "id": "52",
+      "code": "4.1",
+      "name": "RECEITA OPERACIONAL BRUTA",
+      "level": "2",
+      "parentCode": "4",
+      "isAnalytical": "0"
+    },
+    {
+      "id": "53",
+      "code": "4.1.1",
+      "name": "RECEITA DE VENDAS",
+      "level": "3",
+      "parentCode": "4.1",
+      "isAnalytical": "0"
+    },
+    {
+      "id": "54",
+      "code": "4.1.1.01",
+      "name": "Receita de Vendas (Balcão)",
+      "level": "4",
+      "parentCode": "4.1.1",
+      "isAnalytical": "1"
+    },
+    {
+      "id": "55",
+      "code": "4.1.1.02",
+      "name": "Receita de Vendas (A Prazo)",
+      "level": "4",
+      "parentCode": "4.1.1",
+      "isAnalytical": "1"
+    },
+    {
+      "id": "56",
+      "code": "4.1.1.03",
+      "name": "Receita de Vendas (Delivery)",
+      "level": "4",
+      "parentCode": "4.1.1",
+      "isAnalytical": "1"
+    },
+    {
+      "id": "57",
+      "code": "4.1.2",
+      "name": "DEDUÇÕES DA RECEITA",
+      "level": "3",
+      "parentCode": "4.1",
+      "isAnalytical": "0"
+    },
+    {
+      "id": "58",
+      "code": "4.1.2.01",
+      "name": "(-) Descontos Concedidos",
+      "level": "4",
+      "parentCode": "4.1.2",
+      "isAnalytical": "1"
+    },
+    {
+      "id": "59",
+      "code": "4.1.2.02",
+      "name": "(-) Taxas de Delivery",
+      "level": "4",
+      "parentCode": "4.1.2",
+      "isAnalytical": "1"
+    },
+    {
+      "id": "60",
+      "code": "4.2",
+      "name": "OUTRAS RECEITAS OPERACIONAIS",
+      "level": "2",
+      "parentCode": "4",
+      "isAnalytical": "0"
+    },
+    {
+      "id": "61",
+      "code": "4.2.1",
+      "name": "OUTRAS RECEITAS",
+      "level": "3",
+      "parentCode": "4.2",
+      "isAnalytical": "0"
+    },
+    {
+      "id": "62",
+      "code": "4.2.1.01",
+      "name": "Receita de Aluguel",
+      "level": "4",
+      "parentCode": "4.2.1",
+      "isAnalytical": "1"
+    },
+    {
+      "id": "63",
+      "code": "4.2.1.02",
+      "name": "Receita de Serviços",
+      "level": "4",
+      "parentCode": "4.2.1",
+      "isAnalytical": "1"
+    },
+    {
+      "id": "64",
+      "code": "4.2.1.03",
+      "name": "Outras Receitas",
+      "level": "4",
+      "parentCode": "4.2.1",
+      "isAnalytical": "1"
+    },
+    {
+      "id": "65",
+      "code": "4.3",
+      "name": "RECEITAS FINANCEIRAS",
+      "level": "2",
+      "parentCode": "4",
+      "isAnalytical": "0"
+    },
+    {
+      "id": "66",
+      "code": "4.3.1",
+      "name": "RECEITAS FINANCEIRAS",
+      "level": "3",
+      "parentCode": "4.3",
+      "isAnalytical": "0"
+    },
+    {
+      "id": "67",
+      "code": "4.3.1.01",
+      "name": "Juros Recebidos",
+      "level": "4",
+      "parentCode": "4.3.1",
+      "isAnalytical": "1"
+    },
+    {
+      "id": "68",
+      "code": "4.3.1.02",
+      "name": "Descontos Obtidos",
+      "level": "4",
+      "parentCode": "4.3.1",
+      "isAnalytical": "1"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tcode\tname\tlevel\tparentCode\tisAnalytical\n51\t4\tRECEITAS\t1\tNULL\t0\n52\t4.1\tRECEITA OPERACIONAL BRUTA\t2\t4\t0\n53\t4.1.1\tRECEITA DE VENDAS\t3\t4.1\t0\n54\t4.1.1.01\tReceita de Vendas (Balcão)\t4\t4.1.1\t1\n55\t4.1.1.02\tReceita de Vendas (A Prazo)\t4\t4.1.1\t1\n56\t4.1.1.03\tReceita de Vendas (Delivery)\t4\t4.1.1\t1\n57\t4.1.2\tDEDUÇÕES DA RECEITA\t3\t4.1\t0\n58\t4.1.2.01\t(-) Descontos Concedidos\t4\t4.1.2\t1\n59\t4.1.2.02\t(-) Taxas de Delivery\t4\t4.1.2\t1\n60\t4.2\tOUTRAS RECEITAS OPERACIONAIS\t2\t4\t0\n61\t4.2.1\tOUTRAS RECEITAS\t3\t4.2\t0\n62\t4.2.1.01\tReceita de Aluguel\t4\t4.2.1\t1\n63\t4.2.1.02\tReceita de Serviços\t4\t4.2.1\t1\n64\t4.2.1.03\tOutras Receitas\t4\t4.2.1\t1\n65\t4.3\tRECEITAS FINANCEIRAS\t2\t4\t0\n66\t4.3.1\tRECEITAS FINANCEIRAS\t3\t4.3\t0\n67\t4.3.1.01\tJuros Recebidos\t4\t4.3.1\t1\n68\t4.3.1.02\tDescontos Obtidos\t4\t4.3.1\t1\n",
+  "stderr": "",
+  "execution_time_ms": 58
+}

@@ -108,6 +108,20 @@ export default function GovernancaContabil() {
     },
   });
   
+  // [TEMP] Mutation para reprocessar janeiro
+  const reprocessJanuary = trpc.accounting.reprocessJanuary.useMutation({
+    onSuccess: (data) => {
+      toast.success(`Reprocessamento concluído! Vendas: ${data.salesCount}, Compras: ${data.purchasesCount}, Despesas: ${data.expensesCount}`);
+      utils.governance.listPeriods.invalidate();
+    },
+    onError: (error) => {
+      toast.error(`Erro ao reprocessar: ${error.message}`);
+    },
+    onMutate: () => {
+      toast.info('Reprocessando janeiro... Aguarde (pode demorar 5-10 min)');
+    }
+  });
+  
   // Handlers
   const handleClosePeriod = () => {
     if (!selectedPeriod) return;
@@ -193,13 +207,24 @@ export default function GovernancaContabil() {
               Gerencie períodos contábeis, travas de edição e contabilização em lote
             </p>
           </div>
-          <Button
-            onClick={() => setShowAccountingDialog(true)}
-            className="gap-2"
-          >
-            <Play className="w-4 h-4" />
-            Contabilizar Agora
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              onClick={() => setShowAccountingDialog(true)}
+              className="gap-2"
+            >
+              <Play className="w-4 h-4" />
+              Contabilizar Agora
+            </Button>
+            <Button
+              onClick={() => reprocessJanuary.mutate()}
+              disabled={reprocessJanuary.isPending}
+              variant="outline"
+              className="gap-2 border-orange-500 text-orange-600 hover:bg-orange-50"
+            >
+              <RefreshCw className={`w-4 h-4 ${reprocessJanuary.isPending ? 'animate-spin' : ''}`} />
+              [TEMP] Reprocessar Janeiro
+            </Button>
+          </div>
         </div>
         
         {/* Tabs */}

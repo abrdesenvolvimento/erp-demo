@@ -1,0 +1,8 @@
+{
+  "query": "\nSELECT id, description, amount, revenueDate, competenceMonth, status, receivingMethod, managementAccountId\nFROM otherRevenues\nWHERE competenceMonth = '2026-01'\nORDER BY id;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute \nSELECT id, description, amount, revenueDate, competenceMonth, status, receivingMethod, managementAccountId\nFROM otherRevenues\nWHERE competenceMonth = '2026-01'\nORDER BY id;\n",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 2: Unknown column 'receivingmethod' in 'field list'"
+  ]
+}

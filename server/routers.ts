@@ -953,6 +953,13 @@ export const appRouter = router({
         return { success: true };
       }),
     
+    // [TEMP] Deletar compra completamente (incluindo journals) - usar apenas para correções
+    deleteCompletely: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        return await db.deletePurchaseCompletely(input.id);
+      }),
+    
     update: adminProcedure
       .input(z.object({
         id: z.number(),

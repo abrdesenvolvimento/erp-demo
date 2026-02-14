@@ -1,0 +1,31 @@
+{
+  "query": "\nSELECT \n  saleType,\n  COUNT(*) as qty,\n  SUM(CAST(finalAmount AS DECIMAL(15,2))) as total,\n  SUM(CASE WHEN status = 'CANCELADA' THEN 1 ELSE 0 END) as cancelled_count,\n  SUM(CASE WHEN status = 'CANCELADA' THEN CAST(finalAmount AS DECIMAL(15,2)) ELSE 0 END) as cancelled_total\nFROM sales \nWHERE saleDate >= '2026-01-01 03:00:00' \n  AND saleDate < '2026-02-01 03:00:00'\nGROUP BY saleType\nORDER BY saleType;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute \nSELECT \n  saleType,\n  COUNT(*) as qty,\n  SUM(CAST(finalAmount AS DECIMAL(15,2))) as total,\n  SUM(CASE WHEN status = 'CANCELADA' THEN 1 ELSE 0 END) as cancelled_count,\n  SUM(CASE WHEN status = 'CANCELADA' THEN CAST(finalAmount AS DECIMAL(15,2)) ELSE 0 END) as cancelled_total\nFROM sales \nWHERE saleDate >= '2026-01-01 03:00:00' \n  AND saleDate < '2026-02-01 03:00:00'\nGROUP BY saleType\nORDER BY saleType;\n",
+  "rows": [
+    {
+      "saleType": "BALCAO",
+      "qty": "1575",
+      "total": "56653.25",
+      "cancelled_count": "0",
+      "cancelled_total": "0.00"
+    },
+    {
+      "saleType": "DELIVERY",
+      "qty": "615",
+      "total": "24106.20",
+      "cancelled_count": "0",
+      "cancelled_total": "0.00"
+    },
+    {
+      "saleType": "A_PRAZO",
+      "qty": "205",
+      "total": "7466.40",
+      "cancelled_count": "0",
+      "cancelled_total": "0.00"
+    }
+  ],
+  "messages": [],
+  "stdout": "saleType\tqty\ttotal\tcancelled_count\tcancelled_total\nBALCAO\t1575\t56653.25\t0\t0.00\nDELIVERY\t615\t24106.20\t0\t0.00\nA_PRAZO\t205\t7466.40\t0\t0.00\n",
+  "stderr": "",
+  "execution_time_ms": 68
+}

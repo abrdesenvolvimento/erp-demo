@@ -1,0 +1,28 @@
+{
+  "query": "SELECT code, name, accountType, parentCode FROM chartOfAccounts WHERE code LIKE '4.1.1.%' ORDER BY code;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT code, name, accountType, parentCode FROM chartOfAccounts WHERE code LIKE '4.1.1.%' ORDER BY code;",
+  "rows": [
+    {
+      "code": "4.1.1.01",
+      "name": "Receita de Vendas (Balcão)",
+      "accountType": "RECEITA",
+      "parentCode": "4.1.1"
+    },
+    {
+      "code": "4.1.1.02",
+      "name": "Receita de Vendas (A Prazo)",
+      "accountType": "RECEITA",
+      "parentCode": "4.1.1"
+    },
+    {
+      "code": "4.1.1.03",
+      "name": "Receita de Vendas (Delivery)",
+      "accountType": "RECEITA",
+      "parentCode": "4.1.1"
+    }
+  ],
+  "messages": [],
+  "stdout": "code\tname\taccountType\tparentCode\n4.1.1.01\tReceita de Vendas (Balcão)\tRECEITA\t4.1.1\n4.1.1.02\tReceita de Vendas (A Prazo)\tRECEITA\t4.1.1\n4.1.1.03\tReceita de Vendas (Delivery)\tRECEITA\t4.1.1\n",
+  "stderr": "",
+  "execution_time_ms": 57
+}

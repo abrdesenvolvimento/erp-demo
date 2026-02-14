@@ -1,0 +1,17 @@
+{
+  "query": "SELECT \n  ae.accountId,\n  coa.code,\n  coa.name,\n  COUNT(*) as qtd_lancamentos,\n  SUM(ae.amount) as total\nFROM accountingEntries ae\nINNER JOIN journals j ON ae.journalId = j.id\nINNER JOIN chartOfAccounts coa ON ae.accountId = coa.id\nWHERE ae.competenceMonth = '2026-01'\n  AND j.status = 'POSTED'\n  AND coa.code LIKE '4%'\nGROUP BY ae.accountId, coa.code, coa.name\nORDER BY coa.code;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  ae.accountId,\n  coa.code,\n  coa.name,\n  COUNT(*) as qtd_lancamentos,\n  SUM(ae.amount) as total\nFROM accountingEntries ae\nINNER JOIN journals j ON ae.journalId = j.id\nINNER JOIN chartOfAccounts coa ON ae.accountId = coa.id\nWHERE ae.competenceMonth = '2026-01'\n  AND j.status = 'POSTED'\n  AND coa.code LIKE '4%'\nGROUP BY ae.accountId, coa.code, coa.name\nORDER BY coa.code;",
+  "rows": [
+    {
+      "accountId": "64",
+      "code": "4.2.1.03",
+      "name": "Outras Receitas",
+      "qtd_lancamentos": "2",
+      "total": "81725.68"
+    }
+  ],
+  "messages": [],
+  "stdout": "accountId\tcode\tname\tqtd_lancamentos\ttotal\n64\t4.2.1.03\tOutras Receitas\t2\t81725.68\n",
+  "stderr": "",
+  "execution_time_ms": 99
+}

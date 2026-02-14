@@ -1,0 +1,136 @@
+{
+  "query": "SELECT code, name, accountType, level, parentCode FROM chartOfAccounts WHERE code LIKE '4%' ORDER BY code;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT code, name, accountType, level, parentCode FROM chartOfAccounts WHERE code LIKE '4%' ORDER BY code;",
+  "rows": [
+    {
+      "code": "4",
+      "name": "RECEITAS",
+      "accountType": "RECEITA",
+      "level": "1",
+      "parentCode": "NULL"
+    },
+    {
+      "code": "4.1",
+      "name": "RECEITA OPERACIONAL BRUTA",
+      "accountType": "RECEITA",
+      "level": "2",
+      "parentCode": "4"
+    },
+    {
+      "code": "4.1.1",
+      "name": "RECEITA DE VENDAS",
+      "accountType": "RECEITA",
+      "level": "3",
+      "parentCode": "4.1"
+    },
+    {
+      "code": "4.1.1.01",
+      "name": "Receita de Vendas (Balcão)",
+      "accountType": "RECEITA",
+      "level": "4",
+      "parentCode": "4.1.1"
+    },
+    {
+      "code": "4.1.1.02",
+      "name": "Receita de Vendas (A Prazo)",
+      "accountType": "RECEITA",
+      "level": "4",
+      "parentCode": "4.1.1"
+    },
+    {
+      "code": "4.1.1.03",
+      "name": "Receita de Vendas (Delivery)",
+      "accountType": "RECEITA",
+      "level": "4",
+      "parentCode": "4.1.1"
+    },
+    {
+      "code": "4.1.2",
+      "name": "DEDUÇÕES DA RECEITA",
+      "accountType": "RECEITA",
+      "level": "3",
+      "parentCode": "4.1"
+    },
+    {
+      "code": "4.1.2.01",
+      "name": "(-) Descontos Concedidos",
+      "accountType": "RECEITA",
+      "level": "4",
+      "parentCode": "4.1.2"
+    },
+    {
+      "code": "4.1.2.02",
+      "name": "(-) Taxas de Delivery",
+      "accountType": "RECEITA",
+      "level": "4",
+      "parentCode": "4.1.2"
+    },
+    {
+      "code": "4.2",
+      "name": "OUTRAS RECEITAS OPERACIONAIS",
+      "accountType": "RECEITA",
+      "level": "2",
+      "parentCode": "4"
+    },
+    {
+      "code": "4.2.1",
+      "name": "OUTRAS RECEITAS",
+      "accountType": "RECEITA",
+      "level": "3",
+      "parentCode": "4.2"
+    },
+    {
+      "code": "4.2.1.01",
+      "name": "Receita de Aluguel",
+      "accountType": "RECEITA",
+      "level": "4",
+      "parentCode": "4.2.1"
+    },
+    {
+      "code": "4.2.1.02",
+      "name": "Receita de Serviços",
+      "accountType": "RECEITA",
+      "level": "4",
+      "parentCode": "4.2.1"
+    },
+    {
+      "code": "4.2.1.03",
+      "name": "Outras Receitas",
+      "accountType": "RECEITA",
+      "level": "4",
+      "parentCode": "4.2.1"
+    },
+    {
+      "code": "4.3",
+      "name": "RECEITAS FINANCEIRAS",
+      "accountType": "RECEITA",
+      "level": "2",
+      "parentCode": "4"
+    },
+    {
+      "code": "4.3.1",
+      "name": "RECEITAS FINANCEIRAS",
+      "accountType": "RECEITA",
+      "level": "3",
+      "parentCode": "4.3"
+    },
+    {
+      "code": "4.3.1.01",
+      "name": "Juros Recebidos",
+      "accountType": "RECEITA",
+      "level": "4",
+      "parentCode": "4.3.1"
+    },
+    {
+      "code": "4.3.1.02",
+      "name": "Descontos Obtidos",
+      "accountType": "RECEITA",
+      "level": "4",
+      "parentCode": "4.3.1"
+    }
+  ],
+  "messages": [],
+  "stdout": "code\tname\taccountType\tlevel\tparentCode\n4\tRECEITAS\tRECEITA\t1\tNULL\n4.1\tRECEITA OPERACIONAL BRUTA\tRECEITA\t2\t4\n4.1.1\tRECEITA DE VENDAS\tRECEITA\t3\t4.1\n4.1.1.01\tReceita de Vendas (Balcão)\tRECEITA\t4\t4.1.1\n4.1.1.02\tReceita de Vendas (A Prazo)\tRECEITA\t4\t4.1.1\n4.1.1.03\tReceita de Vendas (Delivery)\tRECEITA\t4\t4.1.1\n4.1.2\tDEDUÇÕES DA RECEITA\tRECEITA\t3\t4.1\n4.1.2.01\t(-) Descontos Concedidos\tRECEITA\t4\t4.1.2\n4.1.2.02\t(-) Taxas de Delivery\tRECEITA\t4\t4.1.2\n4.2\tOUTRAS RECEITAS OPERACIONAIS\tRECEITA\t2\t4\n4.2.1\tOUTRAS RECEITAS\tRECEITA\t3\t4.2\n4.2.1.01\tReceita de Aluguel\tRECEITA\t4\t4.2.1\n4.2.1.02\tReceita de Serviços\tRECEITA\t4\t4.2.1\n4.2.1.03\tOutras Receitas\tRECEITA\t4\t4.2.1\n4.3\tRECEITAS FINANCEIRAS\tRECEITA\t2\t4\n4.3.1\tRECEITAS FINANCEIRAS\tRECEITA\t3\t4.3\n4.3.1.01\tJuros Recebidos\tRECEITA\t4\t4.3.1\n4.3.1.02\tDescontos Obtidos\tRECEITA\t4\t4.3.1\n",
+  "stderr": "",
+  "execution_time_ms": 51
+}

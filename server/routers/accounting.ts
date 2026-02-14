@@ -413,5 +413,159 @@ export const accountingRouter = router({
     }))
     .mutation(async ({ input }) => {
       return accounting.updateAccountingMapping(input);
-    })
+    }),
+
+  // [TEMP] Reprocessar janeiro - endpoint temporário para recuperar journals deletados
+  reprocessJanuary: protectedProcedure.mutation(async () => {
+    const { reprocessSaleAccounting, reprocessPurchaseAccounting, reprocessExpenseAccounting } = await import('../db');
+    const { getDb } = await import('../db');
+    const { sales, purchaseOrders, expenses } = await import('../../drizzle/schema');
+    
+    console.log('[Reprocessamento] Iniciando reprocessamento de janeiro/2026...');
+    
+    const db = await getDb();
+    if (!db) throw new Error('Database not available');
+    
+    let salesCount = 0;
+    let purchasesCount = 0;
+    let expensesCount = 0;
+    
+    try {
+      // 1. Buscar TODAS as vendas
+      console.log('[Reprocessamento] Buscando vendas...');
+      const allSales = await db.select().from(sales);
+      console.log(`[Reprocessamento] Total de vendas no banco: ${allSales.length}`);
+      
+      // Filtrar vendas de janeiro/2026
+      const januarySales = allSales.filter(s => {
+        if (!s.saleDate) return false;
+        const year = s.saleDate.getFullYear();
+        const month = s.saleDate.getMonth() + 1;
+        return year === 2026 && month === 1 && s.status === 'ACTIVE';
+      });
+      
+      console.log(`[Reprocessamento] Vendas de janeiro encontradas: ${januarySales.length}`);
+      
+      // Processar cada venda
+      for (const sale of januarySales) {
+        const result = await reprocessSaleAccounting(sale.id);
+        if (result.success) {
+          salesCount++;
+          if (salesCount % 100 === 0) {
+            console.log(`[Reprocessamento] Processadas ${salesCount} vendas...`);
+          }
+        } else {
+          console.error(`[Reprocessamento] Erro ao reprocessar venda ${sale.id}: ${result.error}`);
+        }
+      }
+      
+      // 2. Buscar TODAS as compras
+      console.log('[Reprocessamento] Buscando compras...');
+      const allPurchases = await db.select().from(purchaseOrders);
+      console.log(`[Reprocessamento] Total de compras no banco: ${allPurchases.length}`);
+      
+      // Filtrar compras de janeiro/2026
+      const januaryPurchases = allPurchases.filter(p => {
+        if (!p.confirmedAt) return false;
+        const year = p.confirmedAt.getFullYear();
+        const month = p.confirmedAt.getMonth() + 1;
+        return year === 2026 && month === 1 && p.status === 'CONFIRMED';
+      });
+      
+      console.log(`[Reprocessamento] Compras de janeiro encontradas: ${januaryPurchases.length}`);
+      
+      // Processar cada compra
+      for (const purchase of januaryPurchases) {
+        const result = await reprocessPurchaseAccounting(purchase.id);
+        if (result.success) {
+          purchasesCount++;
+        } else {
+          console.error(`[Reprocessamento] Erro ao reprocessar compra ${purchase.id}: ${result.error}`);
+        }
+      }
+      
+      // 3. Buscar TODAS as despesas
+      console.log('[Reprocessamento] Buscando despesas...');
+      const allExpenses = await db.select().from(expenses);
+      console.log(`[Reprocessamento] Total de despesas no banco: ${allExpenses.length}`);
+      
+      // Filtrar despesas de janeiro/2026
+      const januaryExpenses = allExpenses.filter(e => {
+        if (!e.competenceDate) return false;
+        const year = e.competenceDate.getFullYear();
+        const month = e.competenceDate.getMonth() + 1;
+        return year === 2026 && month === 1 && e.status === 'ACTIVE';
+      });
+      
+      console.log(`[Reprocessamento] Despesas de janeiro encontradas: ${januaryExpenses.length}`);
+      
+      // Processar cada despesa
+      for (const expense of januaryExpenses) {
+        const result = await reprocessExpenseAccounting(expense.id);
+        if (result.success) {
+          expensesCount++;
+        } else {
+          console.error(`[Reprocessamento] Erro ao reprocessar despesa ${expense.id}: ${result.error}`);
+        }
+      }
+      
+      console.log('[Reprocessamento] Concluído!');
+      console.log(`[Reprocessamento] Vendas: ${salesCount}, Compras: ${purchasesCount}, Despesas: ${expensesCount}`);
+      
+      return {
+        success: true,
+        salesCount,
+        purchasesCount,
+        expensesCount
+      };
+    } catch (error) {
+      console.error('[Reprocessamento] Erro geral:', error);
+      throw error;
+    }
+  }),
+
+  // [TEMP] Debug journals de janeiro
+  debugJanuaryJournals: publicProcedure.query(async () => {
+    const { getDb } = await import('../db');
+    const { journals, accountingEntries, journalSources, chartOfAccounts } = await import('../../drizzle/schema');
+    const { eq, and, sql } = await import('drizzle-orm');
+    
+    const db = await getDb();
+    if (!db) throw new Error('Database not available');
+    
+    // Contar journals por status
+    const statusCounts = await db.execute(sql`
+      SELECT j.status, COUNT(DISTINCT j.id) as total_journals, COUNT(ae.id) as total_entries
+      FROM journals j 
+      LEFT JOIN accountingEntries ae ON ae.journalId = j.id
+      WHERE j.competenceMonth = '2026-01' 
+      GROUP BY j.status
+    `);
+    
+    // Contar por sourceType
+    const sourceCounts = await db.execute(sql`
+      SELECT js.sourceType, j.status, COUNT(DISTINCT j.id) as total
+      FROM journals j 
+      LEFT JOIN journalSources js ON js.journalId = j.id
+      WHERE j.competenceMonth = '2026-01' 
+      GROUP BY js.sourceType, j.status
+    `);
+    
+    // Amostra de entries de receita
+    const revenueEntries = await db.execute(sql`
+      SELECT ae.id, ae.accountId, coa.code, coa.name, ae.entryType, ae.amount, j.status
+      FROM accountingEntries ae
+      INNER JOIN journals j ON ae.journalId = j.id
+      INNER JOIN chartOfAccounts coa ON ae.accountId = coa.id
+      WHERE ae.competenceMonth = '2026-01'
+        AND coa.code LIKE '4%'
+      LIMIT 20
+    `);
+    
+    return {
+      statusCounts: statusCounts[0],
+      sourceCounts: sourceCounts[0],
+      revenueEntries: revenueEntries[0]
+    };
+  })
 });

@@ -47,7 +47,8 @@ import {
   startOfMonthBrazil,
   endOfMonthBrazil,
   toDateString,
-  getCurrentMonthRangeBrazil
+  getCurrentMonthRangeBrazil,
+  getCompetenceMonthBrazil
 } from '../shared/dateUtils';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -7147,7 +7148,7 @@ export async function accountPurchaseConfirmation(data: {
   entryDate: Date;
   createdBy: string;
 }): Promise<{ success: boolean; journalId?: number; error?: string }> {
-  const competenceMonth = data.entryDate.toISOString().slice(0, 7);
+  const competenceMonth = getCompetenceMonthBrazil(data.entryDate);
   
   return createAccountingEntries({
     competenceMonth,
@@ -7192,7 +7193,7 @@ export async function accountPurchasePayment(data: {
   entryDate: Date;
   createdBy: string;
 }): Promise<{ success: boolean; journalId?: number; error?: string }> {
-  const competenceMonth = data.entryDate.toISOString().slice(0, 7);
+  const competenceMonth = getCompetenceMonthBrazil(data.entryDate);
   const entries: AccountingLedgerEntry[] = [];
   
   const originalAmount = parseFloat(data.originalAmount);
@@ -7261,7 +7262,7 @@ export async function accountExpenseCreation(data: {
   entryDate: Date;
   createdBy: string;
 }): Promise<{ success: boolean; journalId?: number; error?: string }> {
-  const competenceMonth = data.entryDate.toISOString().slice(0, 7);
+  const competenceMonth = getCompetenceMonthBrazil(data.entryDate);
   
   // Buscar código contábil da conta gerencial
   const accountingCode = await getAccountingCodeByManagementAccount(data.managementAccountId);
@@ -7311,7 +7312,7 @@ export async function accountExpensePayment(data: {
   entryDate: Date;
   createdBy: string;
 }): Promise<{ success: boolean; journalId?: number; error?: string }> {
-  const competenceMonth = data.entryDate.toISOString().slice(0, 7);
+  const competenceMonth = getCompetenceMonthBrazil(data.entryDate);
   const entries: AccountingLedgerEntry[] = [];
   
   const originalAmount = parseFloat(data.originalAmount);
@@ -7401,7 +7402,7 @@ export async function accountSale(data: {
   entryDate: Date;
   createdBy: string;
 }): Promise<{ success: boolean; journalId?: number; error?: string }> {
-  const competenceMonth = data.entryDate.toISOString().slice(0, 7);
+  const competenceMonth = getCompetenceMonthBrazil(data.entryDate);
   const entries: AccountingLedgerEntry[] = [];
   
   // Determinar contas baseado no tipo de canal
@@ -7491,7 +7492,7 @@ export async function accountCustomerPayment(data: {
   entryDate: Date;
   createdBy: string;
 }): Promise<{ success: boolean; journalId?: number; error?: string }> {
-  const competenceMonth = data.entryDate.toISOString().slice(0, 7);
+  const competenceMonth = getCompetenceMonthBrazil(data.entryDate);
   const entries: AccountingLedgerEntry[] = [];
   
   const amount = parseFloat(data.amount);
@@ -8162,7 +8163,7 @@ export async function accountOtherRevenue(data: {
   isPaid: boolean;
   createdBy: string;
 }): Promise<{ success: boolean; journalId?: number; error?: string }> {
-  const competenceMonth = data.entryDate.toISOString().slice(0, 7);
+  const competenceMonth = getCompetenceMonthBrazil(data.entryDate);
   
   // Buscar código contábil da conta gerencial de receita
   const accountingCode = await getAccountingCodeByManagementAccount(data.managementAccountId);
@@ -8265,4 +8266,205 @@ export async function deleteExpenseJournal(expenseId: number): Promise<void> {
   }
   
   console.log(`[deleteExpenseJournal] Total: ${journalSources_list.length} journal(s) deletado(s) para despesa #${expenseId}`);
+}
+
+/**
+ * Reprocessar contabilização de uma venda (wrapper que busca dados e chama accountSale)
+ * Usado para reprocessamento em lote de vendas
+ */
+export async function reprocessSaleAccounting(saleId: number): Promise<{ success: boolean; error?: string }> {
+  try {
+    const db = await getDb();
+    if (!db) throw new Error("Database not available");
+    
+    // Buscar venda completa
+    const sale = await getSale(saleId);
+    if (!sale) {
+      return { success: false, error: `Venda #${saleId} não encontrada` };
+    }
+    
+    // Buscar itens da venda para calcular CMV
+    const items = await db.select().from(saleItems).where(eq(saleItems.saleId, saleId));
+    
+    // Calcular CMV total
+    let cmvTotal = 0;
+    for (const item of items) {
+      const product = await db.select().from(products).where(eq(products.id, item.productId)).limit(1);
+      if (product.length > 0) {
+        const avgCost = parseFloat(product[0].avgCost || "0");
+        cmvTotal += avgCost * parseFloat(item.quantity);
+      }
+    }
+    
+    // Chamar accountSale com todos os parâmetros
+    return await accountSale({
+      saleId: sale.id,
+      totalAmount: sale.finalAmount,
+      cmvAmount: cmvTotal.toFixed(2),
+      channelType: sale.saleType,
+      customerName: sale.customerName || undefined,
+      entryDate: new Date(sale.saleDate),
+      createdBy: sale.createdBy
+    });
+  } catch (error) {
+    console.error(`[reprocessSaleAccounting] Erro ao reprocessar venda #${saleId}:`, error);
+    return { success: false, error: error instanceof Error ? error.message : String(error) };
+  }
+}
+
+/**
+ * Reprocessar contabilização de uma compra (wrapper)
+ */
+export async function reprocessPurchaseAccounting(purchaseId: number): Promise<{ success: boolean; error?: string }> {
+  try {
+    const db = await getDb();
+    if (!db) throw new Error("Database not available");
+    
+    // Buscar compra completa
+    const purchase = await db.select().from(purchaseOrders).where(eq(purchaseOrders.id, purchaseId)).limit(1);
+    if (purchase.length === 0) {
+      return { success: false, error: `Compra #${purchaseId} não encontrada` };
+    }
+    
+    const po = purchase[0];
+    
+    // Chamar accountPurchaseConfirmation com todos os parâmetros
+    return await accountPurchaseConfirmation({
+      purchaseOrderId: po.id,
+      supplierId: po.supplierId,
+      supplierName: "", // Buscar do banco se necessário
+      totalAmount: po.totalAmount,
+      entryDate: po.confirmedAt!,
+      createdBy: po.createdBy
+    });
+  } catch (error) {
+    console.error(`[reprocessPurchaseAccounting] Erro ao reprocessar compra #${purchaseId}:`, error);
+    return { success: false, error: error instanceof Error ? error.message : String(error) };
+  }
+}
+
+/**
+ * Reprocessar contabilização de uma despesa (wrapper)
+ */
+export async function reprocessExpenseAccounting(expenseId: number): Promise<{ success: boolean; error?: string }> {
+  try {
+    const db = await getDb();
+    if (!db) throw new Error("Database not available");
+    
+    // Buscar despesa completa
+    const expense = await db.select().from(expenses).where(eq(expenses.id, expenseId)).limit(1);
+    if (expense.length === 0) {
+      return { success: false, error: `Despesa #${expenseId} não encontrada` };
+    }
+    
+    const exp = expense[0];
+    
+    // Chamar accountExpenseCreation com todos os parâmetros
+    return await accountExpenseCreation({
+      expenseId: exp.id,
+      managementAccountId: exp.managementAccountId!,
+      amount: exp.amount,
+      description: exp.description,
+      entryDate: exp.entryDate || exp.issueDate || new Date(),
+      createdBy: exp.createdBy
+    });
+  } catch (error) {
+    console.error(`[reprocessExpenseAccounting] Erro ao reprocessar despesa #${expenseId}:`, error);
+    return { success: false, error: error instanceof Error ? error.message : String(error) };
+  }
+}
+
+
+/**
+ * Deletar compra completamente (PERIGOSO - usar apenas para correções)
+ * Deleta journals, parcelas, itens e a compra
+ * Reverte estoque
+ */
+export async function deletePurchaseCompletely(purchaseOrderId: number): Promise<{ success: boolean; error?: string }> {
+  try {
+    const db = await getDb();
+    if (!db) throw new Error("Database not available");
+    
+    console.log(`[deletePurchaseCompletely] Iniciando exclusão da compra #${purchaseOrderId}...`);
+    
+    // 1. Buscar compra
+    const po = await getPurchaseOrderById(purchaseOrderId);
+    if (!po) {
+      return { success: false, error: "Compra não encontrada" };
+    }
+    
+    // 2. Deletar journals contábeis (confirmação + pagamentos)
+    console.log(`[deletePurchaseCompletely] Deletando journals...`);
+    
+    // Journal de confirmação
+    const confirmationJournals = await db.select()
+      .from(journalSources)
+      .where(and(
+        eq(journalSources.sourceType, 'purchase'),
+        eq(journalSources.sourceId, purchaseOrderId)
+      ));
+    
+    for (const js of confirmationJournals) {
+      await db.delete(accountingEntries).where(eq(accountingEntries.journalId, js.journalId));
+      await db.delete(journalSources).where(eq(journalSources.id, js.id));
+      await db.delete(journals).where(eq(journals.id, js.journalId));
+      console.log(`[deletePurchaseCompletely] Journal #${js.journalId} deletado`);
+    }
+    
+    // Journals de pagamentos
+    const installments = await getPurchaseInstallments(purchaseOrderId);
+    for (const inst of installments) {
+      const paymentJournals = await db.select()
+        .from(journalSources)
+        .where(and(
+          eq(journalSources.sourceType, 'purchase_payment'),
+          eq(journalSources.sourceId, inst.id)
+        ));
+      
+      for (const js of paymentJournals) {
+        await db.delete(accountingEntries).where(eq(accountingEntries.journalId, js.journalId));
+        await db.delete(journalSources).where(eq(journalSources.id, js.id));
+        await db.delete(journals).where(eq(journals.id, js.journalId));
+        console.log(`[deletePurchaseCompletely] Journal de pagamento #${js.journalId} deletado`);
+      }
+    }
+    
+    // 3. Deletar parcelas do Contas a Pagar
+    console.log(`[deletePurchaseCompletely] Deletando parcelas do Contas a Pagar...`);
+    await db.delete(accountsPayable).where(eq(accountsPayable.purchaseOrderId, purchaseOrderId));
+    
+    // 4. Deletar parcelas
+    console.log(`[deletePurchaseCompletely] Deletando parcelas...`);
+    await db.delete(purchaseInstallments).where(eq(purchaseInstallments.purchaseOrderId, purchaseOrderId));
+    
+    // 5. Reverter estoque
+    console.log(`[deletePurchaseCompletely] Revertendo estoque...`);
+    const items = await getPurchaseOrderItems(purchaseOrderId);
+    for (const item of items) {
+      const product = await db.select().from(products).where(eq(products.id, item.productId || 0)).limit(1);
+      if (product.length === 0) continue;
+      const prod = product[0];
+      
+      const currentStock = parseFloat(prod.currentStock?.toString() || "0");
+      const quantityPurchased = parseFloat(item.quantity.toString());
+      const newStock = currentStock - quantityPurchased;
+      
+      await updateProduct(prod.id, { currentStock: newStock.toString() });
+      console.log(`[deletePurchaseCompletely] Estoque do produto #${prod.id} revertido: ${currentStock} → ${newStock}`);
+    }
+    
+    // 6. Deletar itens
+    console.log(`[deletePurchaseCompletely] Deletando itens...`);
+    await deletePurchaseOrderItems(purchaseOrderId);
+    
+    // 7. Deletar compra
+    console.log(`[deletePurchaseCompletely] Deletando compra...`);
+    await db.delete(purchaseOrders).where(eq(purchaseOrders.id, purchaseOrderId));
+    
+    console.log(`[deletePurchaseCompletely] Compra #${purchaseOrderId} deletada com sucesso!`);
+    return { success: true };
+  } catch (error) {
+    console.error(`[deletePurchaseCompletely] Erro ao deletar compra #${purchaseOrderId}:`, error);
+    return { success: false, error: error instanceof Error ? error.message : String(error) };
+  }
 }

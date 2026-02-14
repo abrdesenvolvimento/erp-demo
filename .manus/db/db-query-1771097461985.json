@@ -1,0 +1,31 @@
+{
+  "query": "SELECT \n  j.status, \n  COUNT(DISTINCT j.id) as total_journals,\n  COUNT(ae.id) as total_entries,\n  js.sourceType,\n  COUNT(DISTINCT js.sourceId) as total_sources\nFROM journals j \nLEFT JOIN accountingEntries ae ON ae.journalId = j.id\nLEFT JOIN journalSources js ON js.journalId = j.id\nWHERE j.competenceMonth = '2026-01' \nGROUP BY j.status, js.sourceType\nORDER BY j.status, js.sourceType;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  j.status, \n  COUNT(DISTINCT j.id) as total_journals,\n  COUNT(ae.id) as total_entries,\n  js.sourceType,\n  COUNT(DISTINCT js.sourceId) as total_sources\nFROM journals j \nLEFT JOIN accountingEntries ae ON ae.journalId = j.id\nLEFT JOIN journalSources js ON js.journalId = j.id\nWHERE j.competenceMonth = '2026-01' \nGROUP BY j.status, js.sourceType\nORDER BY j.status, js.sourceType;",
+  "rows": [
+    {
+      "status": "DRAFT",
+      "total_journals": "2267",
+      "total_entries": "9066",
+      "sourceType": "sale",
+      "total_sources": "2267"
+    },
+    {
+      "status": "POSTED",
+      "total_journals": "4",
+      "total_entries": "8",
+      "sourceType": "expense",
+      "total_sources": "4"
+    },
+    {
+      "status": "POSTED",
+      "total_journals": "2",
+      "total_entries": "4",
+      "sourceType": "other_revenue",
+      "total_sources": "2"
+    }
+  ],
+  "messages": [],
+  "stdout": "status\ttotal_journals\ttotal_entries\tsourceType\ttotal_sources\nDRAFT\t2267\t9066\tsale\t2267\nPOSTED\t4\t8\texpense\t4\nPOSTED\t2\t4\tother_revenue\t2\n",
+  "stderr": "",
+  "execution_time_ms": 80
+}

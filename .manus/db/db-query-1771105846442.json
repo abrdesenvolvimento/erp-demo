@@ -1,0 +1,18 @@
+{
+  "query": "\nSELECT j.id, j.description, j.status, j.competenceMonth, j.createdAt,\n  GROUP_CONCAT(CONCAT(ae.entryType, ':', ae.amount) SEPARATOR ' | ') as entries\nFROM journals j\nLEFT JOIN accountingEntries ae ON ae.journalId = j.id\nWHERE j.competenceMonth = '2026-01'\n  AND (j.description LIKE '%Outra Receita%' OR j.description LIKE '%Outras Receitas%' OR j.description LIKE '%Pronampe%')\nGROUP BY j.id\nORDER BY j.id\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute \nSELECT j.id, j.description, j.status, j.competenceMonth, j.createdAt,\n  GROUP_CONCAT(CONCAT(ae.entryType, ':', ae.amount) SEPARATOR ' | ') as entries\nFROM journals j\nLEFT JOIN accountingEntries ae ON ae.journalId = j.id\nWHERE j.competenceMonth = '2026-01'\n  AND (j.description LIKE '%Outra Receita%' OR j.description LIKE '%Outras Receitas%' OR j.description LIKE '%Pronampe%')\nGROUP BY j.id\nORDER BY j.id\n",
+  "rows": [
+    {
+      "id": "8470565",
+      "description": "Outra Receita: 2 Contatos Pronampe 2024 (2902619176 e 2875991123) Pagamento em 12x",
+      "status": "POSTED",
+      "competenceMonth": "2026-01",
+      "createdAt": "2026-02-14 21:50:00",
+      "entries": "D:121480.34 | C:121480.34"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tdescription\tstatus\tcompetenceMonth\tcreatedAt\tentries\n8470565\tOutra Receita: 2 Contatos Pronampe 2024 (2902619176 e 2875991123) Pagamento em 12x\tPOSTED\t2026-01\t2026-02-14 21:50:00\tD:121480.34 | C:121480.34\n",
+  "stderr": "",
+  "execution_time_ms": 74
+}

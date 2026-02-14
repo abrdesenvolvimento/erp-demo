@@ -1,0 +1,21 @@
+{
+  "query": "SELECT \n  ae.accountId,\n  coa.code,\n  coa.name,\n  coa.level,\n  coa.parentCode,\n  coa.isAnalytical,\n  COUNT(*) as qtd_lancamentos,\n  SUM(CASE WHEN ae.entryType = 'C' THEN ae.amount ELSE 0 END) as total_credito,\n  SUM(CASE WHEN ae.entryType = 'D' THEN ae.amount ELSE 0 END) as total_debito\nFROM accountingEntries ae\nINNER JOIN journals j ON ae.journalId = j.id\nINNER JOIN chartOfAccounts coa ON ae.accountId = coa.id\nWHERE ae.competenceMonth = '2026-01'\n  AND j.status = 'POSTED'\n  AND coa.code LIKE '4%'\nGROUP BY ae.accountId, coa.code, coa.name, coa.level, coa.parentCode, coa.isAnalytical\nORDER BY coa.code;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  ae.accountId,\n  coa.code,\n  coa.name,\n  coa.level,\n  coa.parentCode,\n  coa.isAnalytical,\n  COUNT(*) as qtd_lancamentos,\n  SUM(CASE WHEN ae.entryType = 'C' THEN ae.amount ELSE 0 END) as total_credito,\n  SUM(CASE WHEN ae.entryType = 'D' THEN ae.amount ELSE 0 END) as total_debito\nFROM accountingEntries ae\nINNER JOIN journals j ON ae.journalId = j.id\nINNER JOIN chartOfAccounts coa ON ae.accountId = coa.id\nWHERE ae.competenceMonth = '2026-01'\n  AND j.status = 'POSTED'\n  AND coa.code LIKE '4%'\nGROUP BY ae.accountId, coa.code, coa.name, coa.level, coa.parentCode, coa.isAnalytical\nORDER BY coa.code;",
+  "rows": [
+    {
+      "accountId": "64",
+      "code": "4.2.1.03",
+      "name": "Outras Receitas",
+      "level": "4",
+      "parentCode": "4.2.1",
+      "isAnalytical": "1",
+      "qtd_lancamentos": "2",
+      "total_credito": "81725.68",
+      "total_debito": "0.00"
+    }
+  ],
+  "messages": [],
+  "stdout": "accountId\tcode\tname\tlevel\tparentCode\tisAnalytical\tqtd_lancamentos\ttotal_credito\ttotal_debito\n64\t4.2.1.03\tOutras Receitas\t4\t4.2.1\t1\t2\t81725.68\t0.00\n",
+  "stderr": "",
+  "execution_time_ms": 100
+}

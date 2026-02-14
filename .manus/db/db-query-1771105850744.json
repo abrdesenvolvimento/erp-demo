@@ -1,0 +1,30 @@
+{
+  "query": "\nSELECT j.id, j.description, j.status, j.competenceMonth,\n  ae.entryType, ae.amount, ca.code as accountCode, ca.name as accountName\nFROM journals j\nLEFT JOIN accountingEntries ae ON ae.journalId = j.id\nLEFT JOIN chartOfAccounts ca ON ae.accountId = ca.id\nWHERE j.competenceMonth = '2026-01'\n  AND (j.description LIKE '%Outra Receita%' OR j.description LIKE '%Outras Receitas%')\nORDER BY j.id, ae.entryType\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute \nSELECT j.id, j.description, j.status, j.competenceMonth,\n  ae.entryType, ae.amount, ca.code as accountCode, ca.name as accountName\nFROM journals j\nLEFT JOIN accountingEntries ae ON ae.journalId = j.id\nLEFT JOIN chartOfAccounts ca ON ae.accountId = ca.id\nWHERE j.competenceMonth = '2026-01'\n  AND (j.description LIKE '%Outra Receita%' OR j.description LIKE '%Outras Receitas%')\nORDER BY j.id, ae.entryType\n",
+  "rows": [
+    {
+      "id": "8470565",
+      "description": "Outra Receita: 2 Contatos Pronampe 2024 (2902619176 e 2875991123) Pagamento em 12x",
+      "status": "POSTED",
+      "competenceMonth": "2026-01",
+      "entryType": "D",
+      "amount": "121480.34",
+      "accountCode": "1.1.1.01",
+      "accountName": "Caixa Geral"
+    },
+    {
+      "id": "8470565",
+      "description": "Outra Receita: 2 Contatos Pronampe 2024 (2902619176 e 2875991123) Pagamento em 12x",
+      "status": "POSTED",
+      "competenceMonth": "2026-01",
+      "entryType": "C",
+      "amount": "121480.34",
+      "accountCode": "4.2.1.03",
+      "accountName": "Outras Receitas"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tdescription\tstatus\tcompetenceMonth\tentryType\tamount\taccountCode\taccountName\n8470565\tOutra Receita: 2 Contatos Pronampe 2024 (2902619176 e 2875991123) Pagamento em 12x\tPOSTED\t2026-01\tD\t121480.34\t1.1.1.01\tCaixa Geral\n8470565\tOutra Receita: 2 Contatos Pronampe 2024 (2902619176 e 2875991123) Pagamento em 12x\tPOSTED\t2026-01\tC\t121480.34\t4.2.1.03\tOutras Receitas\n",
+  "stderr": "",
+  "execution_time_ms": 96
+}
