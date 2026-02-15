@@ -774,3 +774,9 @@ Despesa de impostos aparece tanto em janeiro quanto em fevereiro após edição 
 ### Correção Modal Importador iFood
 - [x] Corrigir layout do modal de divergência de valor (aumentado para max-w-5xl, colunas com largura %)
 - [ ] Testar modal com dados reais
+
+
+### Correção Modal Importador iFood - Botão Ação Cortado (15/02/2026)
+- [x] Ajustar largura das colunas e container para botão "Corrigir Preço" ficar visível
+- [x] Remover scroll horizontal, otimizar espaçamento, reduzir tamanho de fontes e botão
+- [x] Testar com dados reais

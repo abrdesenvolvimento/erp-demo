@@ -710,7 +710,7 @@ export default function ImportadorIfood() {
 
         {/* Modal de Divergência de Valor */}
         <Dialog open={!!divergenceModal} onOpenChange={() => setDivergenceModal(null)}>
-          <DialogContent className="max-w-5xl w-[95vw] z-50">
+          <DialogContent className="max-w-6xl w-[98vw] max-h-[90vh] overflow-y-auto z-50">
             <DialogHeader>
               <DialogTitle>Divergência de Valor - Pedido #{divergenceModal?.order.ifoodOrderCode}</DialogTitle>
               <DialogDescription>
@@ -720,30 +720,30 @@ export default function ImportadorIfood() {
             
             {divergenceModal && (
               <div className="space-y-4">
-                <div className="overflow-x-auto">
+                <div className="w-full">
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead className="w-[35%]">Produto</TableHead>
+                        <TableHead className="w-[40%]">Produto</TableHead>
                         <TableHead className="text-right w-[15%]">Preço iFood</TableHead>
                         <TableHead className="text-right w-[15%]">Preço ABRWF</TableHead>
                         <TableHead className="text-center w-[15%]">Diferença</TableHead>
-                        <TableHead className="text-center w-[20%]">Ação</TableHead>
+                        <TableHead className="text-center w-[15%]">Ação</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {divergenceModal.items.map((item, idx) => (
                         <TableRow key={idx}>
                           <TableCell>
-                            <div>
-                              <p className="font-medium">{item.ifoodProductName}</p>
-                              <p className="text-sm text-muted-foreground">SKU: {item.ifoodSku}</p>
+                            <div className="max-w-[300px]">
+                              <p className="font-medium text-sm truncate" title={item.ifoodProductName}>{item.ifoodProductName}</p>
+                              <p className="text-xs text-muted-foreground">SKU: {item.ifoodSku}</p>
                             </div>
                           </TableCell>
-                          <TableCell className="text-right font-mono">
+                          <TableCell className="text-right font-mono text-sm">
                             {formatCurrency(item.ifoodPrice)}
                           </TableCell>
-                          <TableCell className="text-right font-mono">
+                          <TableCell className="text-right font-mono text-sm">
                             {item.abrwfPrice ? formatCurrency(item.abrwfPrice) : 'N/A'}
                           </TableCell>
                           <TableCell className="text-center">
@@ -759,7 +759,7 @@ export default function ImportadorIfood() {
                                 size="sm"
                                 variant="outline"
                                 disabled={updatingPrice}
-                                className="whitespace-nowrap"
+                                className="whitespace-nowrap text-xs px-2 py-1 h-7"
                                 onClick={async () => {
                                 setUpdatingPrice(true);
                                 try {
