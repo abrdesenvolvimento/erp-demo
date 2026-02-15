@@ -1,0 +1,19 @@
+{
+  "query": "SHOW TABLES LIKE '%receivable%'",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SHOW TABLES LIKE '%receivable%'",
+  "rows": [
+    {
+      "Tables_in_7RkrCeS5KipYf8hkuNqrCk (%receivable%)": "receivableInstallments"
+    },
+    {
+      "Tables_in_7RkrCeS5KipYf8hkuNqrCk (%receivable%)": "receivablePayments"
+    },
+    {
+      "Tables_in_7RkrCeS5KipYf8hkuNqrCk (%receivable%)": "receivables"
+    }
+  ],
+  "messages": [],
+  "stdout": "Tables_in_7RkrCeS5KipYf8hkuNqrCk (%receivable%)\nreceivableInstallments\nreceivablePayments\nreceivables\n",
+  "stderr": "",
+  "execution_time_ms": 49
+}

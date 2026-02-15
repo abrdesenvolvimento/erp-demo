@@ -758,3 +758,19 @@ Despesa de impostos aparece tanto em janeiro quanto em fevereiro após edição 
 - [x] Corrigir journals: Despesas 2.1.2.01→1.1.1.01 (Caixa) | Vendas 1.1.4.01→1.1.3.01 (Estoque)
 - [x] Corrigir código accountExpenseCreation: CONTAS_A_PAGAR → CAIXA_GERAL
 - [x] Revalidar Balancete: D=C=R$ 332.074,44 ✓ Equilibrado
+
+
+---
+
+## 🔧 TAREFAS PENDENTES (14/02/2026)
+
+### Exclusão de Vendas Indevidas
+- [x] Excluir venda #49560015 (Pedido 9789, R$ 38,07)
+- [x] Excluir venda #49020030 (Pedido 139, R$ 30,51)
+- [x] Excluir venda #48990012 (Pedido 3080, R$ 31,47)
+- [x] Reverter journals contábeis das 3 vendas (2 journals deletados)
+- [x] Reverter movimentações de estoque (sistema não usa stockMovements)
+
+### Correção Modal Importador iFood
+- [x] Corrigir layout do modal de divergência de valor (aumentado para max-w-5xl, colunas com largura %)
+- [ ] Testar modal com dados reais

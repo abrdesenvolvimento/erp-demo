@@ -710,7 +710,7 @@ export default function ImportadorIfood() {
 
         {/* Modal de Divergência de Valor */}
         <Dialog open={!!divergenceModal} onOpenChange={() => setDivergenceModal(null)}>
-          <DialogContent className="max-w-4xl w-[95vw] z-50">
+          <DialogContent className="max-w-5xl w-[95vw] z-50">
             <DialogHeader>
               <DialogTitle>Divergência de Valor - Pedido #{divergenceModal?.order.ifoodOrderCode}</DialogTitle>
               <DialogDescription>
@@ -724,11 +724,11 @@ export default function ImportadorIfood() {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead className="min-w-[200px]">Produto</TableHead>
-                        <TableHead className="text-right min-w-[100px]">Preço iFood</TableHead>
-                        <TableHead className="text-right min-w-[100px]">Preço ABRWF</TableHead>
-                        <TableHead className="text-center min-w-[80px]">Diferença</TableHead>
-                        <TableHead className="text-center min-w-[120px]">Ação</TableHead>
+                        <TableHead className="w-[35%]">Produto</TableHead>
+                        <TableHead className="text-right w-[15%]">Preço iFood</TableHead>
+                        <TableHead className="text-right w-[15%]">Preço ABRWF</TableHead>
+                        <TableHead className="text-center w-[15%]">Diferença</TableHead>
+                        <TableHead className="text-center w-[20%]">Ação</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -754,12 +754,13 @@ export default function ImportadorIfood() {
                             )}
                           </TableCell>
                           <TableCell className="text-center">
-                          {item.productId && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              disabled={updatingPrice}
-                              onClick={async () => {
+                            {item.productId && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                disabled={updatingPrice}
+                                className="whitespace-nowrap"
+                                onClick={async () => {
                                 setUpdatingPrice(true);
                                 try {
                                   await updateChannelPriceMutation.mutateAsync({
