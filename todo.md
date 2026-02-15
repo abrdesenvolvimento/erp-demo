@@ -751,3 +751,10 @@ Despesa de impostos aparece tanto em janeiro quanto em fevereiro após edição 
 | Outras Receitas | R$ 121.480,34 | ✅ Correto |
 | CMV | R$ 60.678,05 | ✅ Correto |
 | Balancete D=C | R$ 332.074,44 | ✅ Equilibrado |
+
+### Investigação Balancete Jan/2026 (14/02/2026)
+- [x] Investigar origem de Salários a Pagar R$ 62.785,08 (2.1.2.01) → eram 38 despesas com conta errada
+- [x] Investigar origem de Adiantamentos a Fornecedores R$ 2.048,68 (1.1.4.01) → eram 81 vendas com baixa estoque na conta errada
+- [x] Corrigir journals: Despesas 2.1.2.01→1.1.1.01 (Caixa) | Vendas 1.1.4.01→1.1.3.01 (Estoque)
+- [x] Corrigir código accountExpenseCreation: CONTAS_A_PAGAR → CAIXA_GERAL
+- [x] Revalidar Balancete: D=C=R$ 332.074,44 ✓ Equilibrado

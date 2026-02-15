@@ -7284,10 +7284,10 @@ export async function accountExpenseCreation(data: {
         description: `Despesa: ${data.description}`,
       },
       {
-        accountCode: ACCOUNTING_CODES.CONTAS_A_PAGAR,
+        accountCode: ACCOUNTING_CODES.CAIXA_GERAL,
         amount: data.amount,
         type: "C",
-        description: `Despesa a pagar: ${data.description}`,
+        description: `Pgto despesa: ${data.description}`,
       },
     ],
     createdBy: data.createdBy,

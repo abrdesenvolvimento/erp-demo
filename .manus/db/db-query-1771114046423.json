@@ -1,0 +1,20 @@
+{
+  "query": "SELECT id, code, name FROM chartOfAccounts WHERE code IN ('1.1.3.01', '1.1.4.01') ORDER BY id",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT id, code, name FROM chartOfAccounts WHERE code IN ('1.1.3.01', '1.1.4.01') ORDER BY id",
+  "rows": [
+    {
+      "id": "14",
+      "code": "1.1.3.01",
+      "name": "Mercadorias para Revenda"
+    },
+    {
+      "id": "17",
+      "code": "1.1.4.01",
+      "name": "Adiantamentos a Fornecedores"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tcode\tname\n14\t1.1.3.01\tMercadorias para Revenda\n17\t1.1.4.01\tAdiantamentos a Fornecedores\n",
+  "stderr": "",
+  "execution_time_ms": 58
+}

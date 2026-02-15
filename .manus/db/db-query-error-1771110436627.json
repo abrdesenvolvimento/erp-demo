@@ -1,0 +1,8 @@
+{
+  "query": "\nSELECT j.id as journalId, j.description, j.competenceMonth, j.entryDate, j.status,\n       ae.entryType, CAST(ae.amount AS DECIMAL(15,2)) as amount, ae.description as entryDesc,\n       ca.code, ca.name\nFROM accountingEntries ae\nJOIN journals j ON ae.journalId = j.id\nJOIN chartOfAccounts ca ON ae.accountId = ca.id\nWHERE j.competenceMonth = '2026-01'\n  AND j.status = 'POSTED'\n  AND ca.code = '2.1.2.01'\nORDER BY j.entryDate, j.id\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute \nSELECT j.id as journalId, j.description, j.competenceMonth, j.entryDate, j.status,\n       ae.entryType, CAST(ae.amount AS DECIMAL(15,2)) as amount, ae.description as entryDesc,\n       ca.code, ca.name\nFROM accountingEntries ae\nJOIN journals j ON ae.journalId = j.id\nJOIN chartOfAccounts ca ON ae.accountId = ca.id\nWHERE j.competenceMonth = '2026-01'\n  AND j.status = 'POSTED'\n  AND ca.code = '2.1.2.01'\nORDER BY j.entryDate, j.id\n",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 2: Unknown column 'j.entryDate' in 'order clause'"
+  ]
+}
