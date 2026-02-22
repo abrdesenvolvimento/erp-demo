@@ -1,0 +1,55 @@
+{
+  "query": "SELECT \n  p.id, p.name, p.avgCost, p.currentStock, c.name as category,\n  (SELECT MAX(DATE(CONVERT_TZ(po.postingDate, '+00:00', '-03:00'))) \n   FROM purchaseOrderItems poi2 \n   INNER JOIN purchaseOrders po ON poi2.purchaseOrderId = po.id \n   WHERE poi2.productId = p.id AND po.status = 'CONFIRMED') as lastPurchaseDate,\n  (SELECT poi2.unitCost \n   FROM purchaseOrderItems poi2 \n   INNER JOIN purchaseOrders po ON poi2.purchaseOrderId = po.id \n   WHERE poi2.productId = p.id AND po.status = 'CONFIRMED'\n   ORDER BY po.postingDate DESC LIMIT 1) as lastPurchaseCost\nFROM products p\nINNER JOIN categories c ON p.categoryId = c.id\nWHERE p.active = 1 AND (p.isComposite = 0 OR p.isComposite IS NULL) AND p.currentStock > 0\nORDER BY p.currentStock * p.avgCost DESC\nLIMIT 5",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  p.id, p.name, p.avgCost, p.currentStock, c.name as category,\n  (SELECT MAX(DATE(CONVERT_TZ(po.postingDate, '+00:00', '-03:00'))) \n   FROM purchaseOrderItems poi2 \n   INNER JOIN purchaseOrders po ON poi2.purchaseOrderId = po.id \n   WHERE poi2.productId = p.id AND po.status = 'CONFIRMED') as lastPurchaseDate,\n  (SELECT poi2.unitCost \n   FROM purchaseOrderItems poi2 \n   INNER JOIN purchaseOrders po ON poi2.purchaseOrderId = po.id \n   WHERE poi2.productId = p.id AND po.status = 'CONFIRMED'\n   ORDER BY po.postingDate DESC LIMIT 1) as lastPurchaseCost\nFROM products p\nINNER JOIN categories c ON p.categoryId = c.id\nWHERE p.active = 1 AND (p.isComposite = 0 OR p.isComposite IS NULL) AND p.currentStock > 0\nORDER BY p.currentStock * p.avgCost DESC\nLIMIT 5",
+  "rows": [
+    {
+      "id": "2280001",
+      "name": "Gold Label 750ml",
+      "avgCost": "197.31",
+      "currentStock": "13",
+      "category": "Bebidas",
+      "lastPurchaseDate": "2025-11-25",
+      "lastPurchaseCost": "199.9000"
+    },
+    {
+      "id": "540013",
+      "name": "Original 269ml",
+      "avgCost": "2.99",
+      "currentStock": "675",
+      "category": "Bebidas",
+      "lastPurchaseDate": "2026-02-21",
+      "lastPurchaseCost": "2.9900"
+    },
+    {
+      "id": "510001",
+      "name": "Heineken 269ml",
+      "avgCost": "3.78",
+      "currentStock": "527",
+      "category": "Bebidas",
+      "lastPurchaseDate": "2026-02-21",
+      "lastPurchaseCost": "3.7825"
+    },
+    {
+      "id": "3060007",
+      "name": "Blue Label 750ml",
+      "avgCost": "799.90",
+      "currentStock": "2",
+      "category": "Bebidas",
+      "lastPurchaseDate": "NULL",
+      "lastPurchaseCost": "NULL"
+    },
+    {
+      "id": "2250007",
+      "name": "43 700ml",
+      "avgCost": "113.00",
+      "currentStock": "12",
+      "category": "Bebidas",
+      "lastPurchaseDate": "NULL",
+      "lastPurchaseCost": "NULL"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tavgCost\tcurrentStock\tcategory\tlastPurchaseDate\tlastPurchaseCost\n2280001\tGold Label 750ml\t197.31\t13\tBebidas\t2025-11-25\t199.9000\n540013\tOriginal 269ml\t2.99\t675\tBebidas\t2026-02-21\t2.9900\n510001\tHeineken 269ml\t3.78\t527\tBebidas\t2026-02-21\t3.7825\n3060007\tBlue Label 750ml\t799.90\t2\tBebidas\tNULL\tNULL\n2250007\t43 700ml\t113.00\t12\tBebidas\tNULL\tNULL\n",
+  "stderr": "",
+  "execution_time_ms": 107
+}

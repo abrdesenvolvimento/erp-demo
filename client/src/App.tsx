@@ -25,6 +25,7 @@ import OutrasReceitas from "./pages/OutrasReceitas";
 import ContasGerenciais from "./pages/ContasGerenciais";
 import GovernancaContabil from "./pages/GovernancaContabil";
 import ImportadorIfood from "./pages/ImportadorIfood";
+import AnaliseEstoque from "./pages/AnaliseEstoque";
 import AccessDenied from "./pages/AccessDenied";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
@@ -48,8 +49,8 @@ function Router() {
       <Route path="/analise-canal" component={AnaliseCanal} />
       <Route path="/analise-despesas" component={AnaliseDespesas} />
       <Route path="/metas" component={Metas} />
-      <Route path="/fechamento" component={FechamentoMensal} />
-      <Route path="/fechamento-novo" component={FechamentoMensalNovo} />
+      <Route path="/fechamento" component={FechamentoMensalNovo} />
+      <Route path="/analise-estoque" component={AnaliseEstoque} />
       <Route path="/plano-contas" component={PlanoContas} />
       <Route path="/relatorios-contabeis" component={RelatoriosContabeis} />
       <Route path="/outras-receitas" component={OutrasReceitas} />

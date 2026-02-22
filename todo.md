@@ -810,3 +810,15 @@ Despesa de impostos aparece tanto em janeiro quanto em fevereiro após edição 
 ### Melhorias Estoque por Categoria - Feedback Gabriel (22/02/2026)
 - [x] Adicionar Giro Médio Ponderado no Total Geral do quadro de Estoque
 - [x] Adicionar coluna % do Total (percentual de cada categoria no estoque final)
+
+### Análise de Estoque - Novo Módulo (22/02/2026)
+- [x] Backend: queries de análise de estoque (giro por produto, dias de estoque, variação de custo)
+- [x] Backend: router tRPC para análise de estoque
+- [x] Frontend: página Análise de Estoque com Resumo por Categoria
+- [x] Frontend: tabela Detalhe por Produto (giro, dias estoque, variação custo, última entrada)
+- [x] Frontend: filtros (período mês/ano, categoria multi-select, ordenação)
+- [x] Registrar rota em App.tsx e menu lateral (Análises > Estoque)
+
+### Substituição Rota Fechamento (22/02/2026)
+- [x] Substituir rota /fechamento pelo FechamentoMensalNovo
+- [x] Rota /fechamento agora aponta para FechamentoMensalNovo

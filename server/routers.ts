@@ -8,11 +8,13 @@ import * as db from "./db";
 import { getNowInBrazil, formatDateForInput } from '../shared/dateUtils';
 import { accountingRouter } from './routers/accounting';
 import { ifoodImportRouter } from './routers/ifoodImport';
+import { stockAnalysisRouter } from './routers/stockAnalysis';
 
 export const appRouter = router({
   system: systemRouter,
   accounting: accountingRouter,
   ifoodImport: ifoodImportRouter,
+  stockAnalysis: stockAnalysisRouter,
 
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
