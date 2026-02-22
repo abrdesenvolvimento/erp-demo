@@ -829,3 +829,15 @@ Despesa de impostos aparece tanto em janeiro quanto em fevereiro após edição 
 - [x] Adicionar colunas de vendas por canal (Balcão/A Prazo vs Delivery) na tabela de produtos
 - [x] Criar aba "Produtos Parados" (filtro por dias sem venda: 30, 60, 90, 120+)
 - [x] Criar aba "Classificação ABC" (por faturamento: A=80%, B=15%, C=5%)
+
+### Ajustes Análise de Estoque v3 (22/02/2026)
+- [x] Classificação ABC: adicionar filtro por classificação (A, B, C) e por produto
+- [x] Aba Produtos Parados e Classificação ABC: adicionar ordenação clicável nas colunas (como Giro e Cobertura)
+- [x] Filtros de Categoria, Subcategoria e Produto: trocar para autocomplete multi-select (selecionar mais de um)
+- [x] Autocomplete: ocultar itens já selecionados da lista de sugestões
+
+### Verificação Multiempresa (22/02/2026)
+- [x] Verificar se queries de closingQueries.ts filtram por companyId (NÃO filtram)
+- [x] Verificar se queries de stockAnalysisQueries.ts filtram por companyId (NÃO filtram)
+- [x] Verificar se FechamentoMensalNovo e AnaliseEstoque estão preparados para multiempresa (NÃO estão)
+- [x] Documentar gaps e plano de ação para multiempresa (documento criado)

@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,14 +7,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Package, TrendingUp, TrendingDown, ArrowUpDown, Search, BarChart3, Clock, AlertTriangle, ArrowUp, ArrowDown, ShoppingCart, Truck, PauseCircle, LayoutGrid } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Package, TrendingUp, TrendingDown, ArrowUpDown, Search, BarChart3, Clock, AlertTriangle, ArrowUp, ArrowDown, ShoppingCart, Truck, PauseCircle, LayoutGrid, X } from "lucide-react";
 
 const MONTHS = [
   "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
   "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
 ];
 
-type SortField = 'stockValue' | 'turnover' | 'daysOfStock' | 'costVariation' | 'productName' | 'qtdSold' | 'qtdSoldBalcao' | 'qtdSoldDelivery' | 'daysSinceLastSale' | 'abcClass';
+type SortField = 'stockValue' | 'turnover' | 'daysOfStock' | 'costVariation' | 'productName' | 'qtdSold' | 'qtdSoldBalcao' | 'qtdSoldDelivery' | 'daysSinceLastSale' | 'abcClass' | 'currentStock' | 'avgCost' | 'cmv' | 'cmvAccPct' | 'entriesInPeriod';
 type SortDir = 'asc' | 'desc';
 
 function formatCurrency(value: number): string {
@@ -55,33 +56,147 @@ function getDaysSinceLastSaleBadge(days: number | undefined) {
   return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">{days}d</Badge>;
 }
 
+// ===== COMPONENTE MULTI-SELECT AUTOCOMPLETE =====
+interface MultiSelectOption {
+  value: string;
+  label: string;
+}
+
+function MultiSelectAutocomplete({
+  options,
+  selected,
+  onChange,
+  placeholder,
+  className = "",
+}: {
+  options: MultiSelectOption[];
+  selected: string[];
+  onChange: (values: string[]) => void;
+  placeholder: string;
+  className?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const containerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+        setSearch("");
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const filteredOptions = useMemo(() => {
+    return options.filter(o =>
+      !selected.includes(o.value) &&
+      o.label.toLowerCase().includes(search.toLowerCase())
+    );
+  }, [options, selected, search]);
+
+  const selectedLabels = useMemo(() => {
+    return selected.map(v => options.find(o => o.value === v)?.label || v);
+  }, [selected, options]);
+
+  const handleRemove = useCallback((value: string) => {
+    onChange(selected.filter(v => v !== value));
+  }, [selected, onChange]);
+
+  const handleSelect = useCallback((value: string) => {
+    onChange([...selected, value]);
+    setSearch("");
+    inputRef.current?.focus();
+  }, [selected, onChange]);
+
+  return (
+    <div ref={containerRef} className={`relative ${className}`}>
+      <div
+        className="flex flex-wrap items-center gap-1 min-h-[36px] px-2 py-1 border rounded-md bg-background cursor-text"
+        onClick={() => { setOpen(true); inputRef.current?.focus(); }}
+      >
+        {selected.length === 0 && !search && (
+          <span className="text-muted-foreground text-sm">{placeholder}</span>
+        )}
+        {selectedLabels.map((label, i) => (
+          <Badge key={selected[i]} variant="secondary" className="text-xs gap-1 py-0.5 px-1.5">
+            {label.length > 18 ? label.substring(0, 18) + '…' : label}
+            <X
+              className="h-3 w-3 cursor-pointer hover:text-destructive"
+              onClick={(e) => { e.stopPropagation(); handleRemove(selected[i]); }}
+            />
+          </Badge>
+        ))}
+        <Input
+          ref={inputRef}
+          value={search}
+          onChange={(e) => { setSearch(e.target.value); setOpen(true); }}
+          onFocus={() => setOpen(true)}
+          className="border-0 shadow-none p-0 h-6 min-w-[80px] flex-1 focus-visible:ring-0"
+          placeholder={selected.length > 0 ? "" : ""}
+        />
+      </div>
+      {open && filteredOptions.length > 0 && (
+        <div className="absolute z-50 mt-1 w-full max-h-[200px] overflow-y-auto bg-popover border rounded-md shadow-md">
+          {filteredOptions.slice(0, 50).map(opt => (
+            <div
+              key={opt.value}
+              className="px-3 py-1.5 text-sm cursor-pointer hover:bg-accent"
+              onMouseDown={(e) => { e.preventDefault(); handleSelect(opt.value); }}
+            >
+              {opt.label}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ===== COMPONENTE PRINCIPAL =====
 export default function AnaliseEstoque() {
   const now = new Date();
   const nowBrazil = new Date(now.getTime() - 3 * 60 * 60 * 1000);
   const [month, setMonth] = useState(nowBrazil.getMonth() + 1);
   const [year, setYear] = useState(nowBrazil.getFullYear());
-  const [selectedCategory, setSelectedCategory] = useState<string>("all");
-  const [selectedSubcategory, setSelectedSubcategory] = useState<string>("all");
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [selectedSubcategories, setSelectedSubcategories] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [sortField, setSortField] = useState<SortField>('stockValue');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
   const [activeTab, setActiveTab] = useState("giro");
   const [stoppedDaysFilter, setStoppedDaysFilter] = useState<string>("30");
+  const [abcFilter, setAbcFilter] = useState<string>("all");
+
+  // Sort state for Parados tab
+  const [stoppedSortField, setStoppedSortField] = useState<SortField>('daysSinceLastSale');
+  const [stoppedSortDir, setStoppedSortDir] = useState<SortDir>('desc');
+
+  // Sort state for ABC tab
+  const [abcSortField, setAbcSortField] = useState<SortField>('cmv');
+  const [abcSortDir, setAbcSortDir] = useState<SortDir>('desc');
 
   const { data: categoryData, isLoading: loadingCategories } = trpc.stockAnalysis.byCategory.useQuery(
     { year, month }
   );
 
+  // Use first selected category for backend filter, or undefined
+  const categoryIdForQuery = selectedCategories.length === 1 ? parseInt(selectedCategories[0]) : undefined;
+  const subcategoryForQuery = selectedSubcategories.length === 1 ? selectedSubcategories[0] : undefined;
+
   const { data: productData, isLoading: loadingProducts } = trpc.stockAnalysis.byProduct.useQuery(
     {
       year, month,
-      categoryId: selectedCategory !== "all" ? parseInt(selectedCategory) : undefined,
-      subcategory: selectedSubcategory !== "all" ? selectedSubcategory : undefined,
+      categoryId: categoryIdForQuery,
+      subcategory: subcategoryForQuery,
     }
   );
 
   const { data: subcategories } = trpc.stockAnalysis.subcategories.useQuery(
-    { categoryId: selectedCategory !== "all" ? parseInt(selectedCategory) : undefined }
+    { categoryId: categoryIdForQuery }
   );
 
   const years = useMemo(() => {
@@ -90,81 +205,131 @@ export default function AnaliseEstoque() {
     return arr;
   }, []);
 
-  // Filtrar e ordenar produtos
-  const filteredProducts = useMemo(() => {
-    if (!productData) return [];
-    let filtered = productData;
+  // Category options for multi-select
+  const categoryOptions = useMemo<MultiSelectOption[]>(() => {
+    if (!categoryData) return [];
+    return categoryData.map((cat: any) => ({ value: String(cat.categoryId), label: cat.categoryName }));
+  }, [categoryData]);
 
+  // Subcategory options for multi-select
+  const subcategoryOptions = useMemo<MultiSelectOption[]>(() => {
+    if (!subcategories) return [];
+    return subcategories.map((sub: string) => ({ value: sub, label: sub }));
+  }, [subcategories]);
+
+  // Product options for multi-select (from all loaded products)
+  const productOptions = useMemo<MultiSelectOption[]>(() => {
+    if (!productData) return [];
+    const seen = new Set<string>();
+    return productData
+      .filter((p: any) => {
+        if (seen.has(String(p.productId))) return false;
+        seen.add(String(p.productId));
+        return true;
+      })
+      .map((p: any) => ({ value: String(p.productId), label: p.productName }));
+  }, [productData]);
+
+  // State for product multi-select
+  const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
+
+  // Client-side multi-filter
+  const clientFilteredProducts = useMemo(() => {
+    if (!productData) return [];
+    let filtered = productData as any[];
+
+    // Multi-category filter (client-side when > 1 selected)
+    if (selectedCategories.length > 1) {
+      const catIds = new Set(selectedCategories.map(Number));
+      filtered = filtered.filter((p: any) => catIds.has(p.categoryId));
+    }
+
+    // Multi-subcategory filter
+    if (selectedSubcategories.length > 1) {
+      const subs = new Set(selectedSubcategories);
+      filtered = filtered.filter((p: any) => subs.has(p.subcategory));
+    }
+
+    // Product filter
+    if (selectedProducts.length > 0) {
+      const prodIds = new Set(selectedProducts.map(Number));
+      filtered = filtered.filter((p: any) => prodIds.has(p.productId));
+    }
+
+    // Search term
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
       filtered = filtered.filter((p: any) => p.productName.toLowerCase().includes(term));
     }
 
-    return [...filtered].sort((a: any, b: any) => {
-      let aVal = a[sortField];
-      let bVal = b[sortField];
-      if (sortField === 'productName') {
-        return sortDir === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+    return filtered;
+  }, [productData, selectedCategories, selectedSubcategories, selectedProducts, searchTerm]);
+
+  // Generic sort function
+  const sortProducts = useCallback((products: any[], field: SortField, dir: SortDir) => {
+    return [...products].sort((a: any, b: any) => {
+      let aVal = a[field];
+      let bVal = b[field];
+      if (field === 'productName') {
+        return dir === 'asc' ? (aVal || '').localeCompare(bVal || '') : (bVal || '').localeCompare(aVal || '');
       }
-      if (sortField === 'abcClass') {
+      if (field === 'abcClass') {
         const order: Record<string, number> = { A: 1, B: 2, C: 3 };
-        return sortDir === 'asc' ? (order[aVal] || 4) - (order[bVal] || 4) : (order[bVal] || 4) - (order[aVal] || 4);
+        return dir === 'asc' ? (order[aVal] || 4) - (order[bVal] || 4) : (order[bVal] || 4) - (order[aVal] || 4);
       }
-      if (sortField === 'daysOfStock') {
+      if (field === 'daysOfStock') {
         if (aVal >= 999 && bVal < 999) return 1;
         if (bVal >= 999 && aVal < 999) return -1;
       }
-      if (sortField === 'daysSinceLastSale') {
+      if (field === 'daysSinceLastSale') {
         if (aVal === undefined && bVal !== undefined) return 1;
         if (bVal === undefined && aVal !== undefined) return -1;
       }
-      return sortDir === 'asc' ? (aVal ?? 0) - (bVal ?? 0) : (bVal ?? 0) - (aVal ?? 0);
+      return dir === 'asc' ? (aVal ?? 0) - (bVal ?? 0) : (bVal ?? 0) - (aVal ?? 0);
     });
-  }, [productData, searchTerm, sortField, sortDir]);
+  }, []);
 
-  // Produtos parados (filtro por dias sem venda)
+  // Filtered + sorted products for Giro tab
+  const filteredProducts = useMemo(() => {
+    return sortProducts(clientFilteredProducts, sortField, sortDir);
+  }, [clientFilteredProducts, sortField, sortDir, sortProducts]);
+
+  // Produtos parados
   const stoppedProducts = useMemo(() => {
-    if (!productData) return [];
     const minDays = parseInt(stoppedDaysFilter);
-    return [...productData]
-      .filter((p: any) => {
-        if (p.daysSinceLastSale === undefined) return true; // nunca vendido
-        return p.daysSinceLastSale >= minDays;
-      })
-      .sort((a: any, b: any) => {
-        const aD = a.daysSinceLastSale ?? 9999;
-        const bD = b.daysSinceLastSale ?? 9999;
-        return bD - aD;
-      });
-  }, [productData, stoppedDaysFilter]);
-
-  // Classificação ABC
-  const abcProducts = useMemo(() => {
-    if (!productData) return [];
-    return [...productData].sort((a: any, b: any) => {
-      const order: Record<string, number> = { A: 1, B: 2, C: 3 };
-      const diff = (order[a.abcClass] || 4) - (order[b.abcClass] || 4);
-      if (diff !== 0) return diff;
-      return b.cmv - a.cmv;
+    const stopped = clientFilteredProducts.filter((p: any) => {
+      if (p.daysSinceLastSale === undefined) return true;
+      return p.daysSinceLastSale >= minDays;
     });
-  }, [productData]);
+    return sortProducts(stopped, stoppedSortField, stoppedSortDir);
+  }, [clientFilteredProducts, stoppedDaysFilter, stoppedSortField, stoppedSortDir, sortProducts]);
 
-  // Resumos ABC
+  // Classificação ABC (with filter)
+  const abcProducts = useMemo(() => {
+    let products = [...clientFilteredProducts];
+    if (abcFilter !== 'all') {
+      products = products.filter((p: any) => p.abcClass === abcFilter);
+    }
+    return sortProducts(products, abcSortField, abcSortDir);
+  }, [clientFilteredProducts, abcFilter, abcSortField, abcSortDir, sortProducts]);
+
+  // Resumos ABC (always from all client-filtered, not abc-filtered)
   const abcSummary = useMemo(() => {
-    if (!abcProducts.length) return { A: { count: 0, value: 0, cmv: 0 }, B: { count: 0, value: 0, cmv: 0 }, C: { count: 0, value: 0, cmv: 0 } };
     const summary: Record<string, { count: number; value: number; cmv: number }> = {
       A: { count: 0, value: 0, cmv: 0 },
       B: { count: 0, value: 0, cmv: 0 },
       C: { count: 0, value: 0, cmv: 0 },
     };
-    for (const p of abcProducts) {
+    for (const p of clientFilteredProducts) {
       const cls = (p as any).abcClass || 'C';
-      summary[cls].count++;
-      summary[cls].value += (p as any).stockValue;
-      summary[cls].cmv += (p as any).cmv;
+      if (summary[cls]) {
+        summary[cls].count++;
+        summary[cls].value += (p as any).stockValue;
+        summary[cls].cmv += (p as any).cmv;
+      }
     }
     return summary;
-  }, [abcProducts]);
+  }, [clientFilteredProducts]);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -175,9 +340,27 @@ export default function AnaliseEstoque() {
     }
   };
 
-  const SortIcon = ({ field }: { field: SortField }) => {
-    if (sortField !== field) return <ArrowUpDown className="h-3 w-3 ml-1 opacity-30" />;
-    return sortDir === 'asc' ? <ArrowUp className="h-3 w-3 ml-1" /> : <ArrowDown className="h-3 w-3 ml-1" />;
+  const handleStoppedSort = (field: SortField) => {
+    if (stoppedSortField === field) {
+      setStoppedSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    } else {
+      setStoppedSortField(field);
+      setStoppedSortDir('desc');
+    }
+  };
+
+  const handleAbcSort = (field: SortField) => {
+    if (abcSortField === field) {
+      setAbcSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    } else {
+      setAbcSortField(field);
+      setAbcSortDir('desc');
+    }
+  };
+
+  const SortIcon = ({ field, activeField, activeDir }: { field: SortField; activeField: SortField; activeDir: SortDir }) => {
+    if (activeField !== field) return <ArrowUpDown className="h-3 w-3 ml-1 opacity-30" />;
+    return activeDir === 'asc' ? <ArrowUp className="h-3 w-3 ml-1" /> : <ArrowDown className="h-3 w-3 ml-1" />;
   };
 
   // Totais do resumo
@@ -211,6 +394,57 @@ export default function AnaliseEstoque() {
     };
   }, [stoppedProducts]);
 
+  // Clear filters helper
+  const clearFilters = () => {
+    setSelectedCategories([]);
+    setSelectedSubcategories([]);
+    setSelectedProducts([]);
+    setSearchTerm("");
+  };
+
+  const hasActiveFilters = selectedCategories.length > 0 || selectedSubcategories.length > 0 || selectedProducts.length > 0 || searchTerm;
+
+  // ===== FILTROS COMPARTILHADOS =====
+  const FiltersBar = () => (
+    <div className="flex items-center gap-2 flex-wrap">
+      <div className="relative">
+        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Buscar produto..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="pl-8 w-[180px]"
+        />
+      </div>
+      <MultiSelectAutocomplete
+        options={categoryOptions}
+        selected={selectedCategories}
+        onChange={(v) => { setSelectedCategories(v); setSelectedSubcategories([]); }}
+        placeholder="Categorias"
+        className="w-[200px]"
+      />
+      <MultiSelectAutocomplete
+        options={subcategoryOptions}
+        selected={selectedSubcategories}
+        onChange={setSelectedSubcategories}
+        placeholder="Subcategorias"
+        className="w-[200px]"
+      />
+      <MultiSelectAutocomplete
+        options={productOptions}
+        selected={selectedProducts}
+        onChange={setSelectedProducts}
+        placeholder="Produtos"
+        className="w-[220px]"
+      />
+      {hasActiveFilters && (
+        <Button variant="ghost" size="sm" onClick={clearFilters} className="text-muted-foreground">
+          <X className="h-4 w-4 mr-1" /> Limpar
+        </Button>
+      )}
+    </div>
+  );
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -232,7 +466,7 @@ export default function AnaliseEstoque() {
               </SelectContent>
             </Select>
             <Select value={String(year)} onValueChange={(v) => setYear(parseInt(v))}>
-              <SelectTrigger className="w-[100px]">
+              <SelectTrigger className="w-[80px]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -249,8 +483,7 @@ export default function AnaliseEstoque() {
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
-                <Package className="h-4 w-4" />
-                Valor em Estoque
+                <Package className="h-4 w-4" /> Valor em Estoque
               </div>
               <div className="text-2xl font-bold text-primary">
                 {loadingCategories ? "..." : formatCurrency(categoryTotals.stockValue)}
@@ -263,36 +496,29 @@ export default function AnaliseEstoque() {
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
-                <BarChart3 className="h-4 w-4" />
-                CMV do Período
+                <BarChart3 className="h-4 w-4" /> CMV do Período
               </div>
               <div className="text-2xl font-bold">
                 {loadingCategories ? "..." : formatCurrency(categoryTotals.cmv)}
               </div>
-              <div className="text-xs text-muted-foreground mt-1">
-                Custo das mercadorias vendidas
-              </div>
+              <div className="text-xs text-muted-foreground mt-1">Custo das mercadorias vendidas</div>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
-                <TrendingUp className="h-4 w-4" />
-                Giro Médio
+                <TrendingUp className="h-4 w-4" /> Giro Médio
               </div>
               <div className={`text-2xl font-bold ${categoryTotals.stockValue > 0 ? getTurnoverColor(categoryTotals.cmv / categoryTotals.stockValue) : ''}`}>
                 {loadingCategories ? "..." : categoryTotals.stockValue > 0 ? `${(categoryTotals.cmv / categoryTotals.stockValue).toFixed(2)}x` : "0.00x"}
               </div>
-              <div className="text-xs text-muted-foreground mt-1">
-                CMV / Valor em Estoque
-              </div>
+              <div className="text-xs text-muted-foreground mt-1">CMV / Valor em Estoque</div>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
-                <Clock className="h-4 w-4" />
-                Cobertura Média
+                <Clock className="h-4 w-4" /> Cobertura Média
               </div>
               <div className="text-2xl font-bold">
                 {loadingCategories ? "..." : (() => {
@@ -301,9 +527,7 @@ export default function AnaliseEstoque() {
                   return days >= 999 ? "—" : `${days} dias`;
                 })()}
               </div>
-              <div className="text-xs text-muted-foreground mt-1">
-                Dias de estoque disponível
-              </div>
+              <div className="text-xs text-muted-foreground mt-1">Dias de estoque disponível</div>
             </CardContent>
           </Card>
         </div>
@@ -312,8 +536,7 @@ export default function AnaliseEstoque() {
         <Card>
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
-              <Package className="h-5 w-5 text-primary" />
-              Resumo por Categoria
+              <Package className="h-5 w-5 text-primary" /> Resumo por Categoria
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -339,8 +562,9 @@ export default function AnaliseEstoque() {
                       key={cat.categoryId}
                       className="cursor-pointer hover:bg-muted/50"
                       onClick={() => {
-                        setSelectedCategory(String(cat.categoryId));
-                        setSelectedSubcategory("all");
+                        setSelectedCategories([String(cat.categoryId)]);
+                        setSelectedSubcategories([]);
+                        setSelectedProducts([]);
                         setActiveTab("giro");
                         document.getElementById('product-tabs')?.scrollIntoView({ behavior: 'smooth' });
                       }}
@@ -353,13 +577,10 @@ export default function AnaliseEstoque() {
                       <TableCell className={`text-right font-mono ${getTurnoverColor(cat.turnover)}`}>
                         {cat.turnover.toFixed(2)}x
                       </TableCell>
-                      <TableCell className="text-right">
-                        {getDaysOfStockBadge(cat.daysOfStock)}
-                      </TableCell>
+                      <TableCell className="text-right">{getDaysOfStockBadge(cat.daysOfStock)}</TableCell>
                       <TableCell className={`text-right font-mono ${
                         cat.costVariation > 0 ? 'text-red-600' :
-                        cat.costVariation < 0 ? 'text-green-600' :
-                        'text-muted-foreground'
+                        cat.costVariation < 0 ? 'text-green-600' : 'text-muted-foreground'
                       }`}>
                         {cat.costVariation !== 0 ? (
                           <span className="flex items-center justify-end gap-1">
@@ -402,21 +623,18 @@ export default function AnaliseEstoque() {
           </CardContent>
         </Card>
 
-        {/* ABAS: Giro e Cobertura | Produtos Parados | Classificação ABC */}
+        {/* ABAS */}
         <div id="product-tabs">
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="mb-4">
               <TabsTrigger value="giro" className="flex items-center gap-1.5">
-                <BarChart3 className="h-4 w-4" />
-                Giro e Cobertura
+                <BarChart3 className="h-4 w-4" /> Giro e Cobertura
               </TabsTrigger>
               <TabsTrigger value="parados" className="flex items-center gap-1.5">
-                <PauseCircle className="h-4 w-4" />
-                Produtos Parados
+                <PauseCircle className="h-4 w-4" /> Produtos Parados
               </TabsTrigger>
               <TabsTrigger value="abc" className="flex items-center gap-1.5">
-                <LayoutGrid className="h-4 w-4" />
-                Classificação ABC
+                <LayoutGrid className="h-4 w-4" /> Classificação ABC
               </TabsTrigger>
             </TabsList>
 
@@ -424,46 +642,11 @@ export default function AnaliseEstoque() {
             <TabsContent value="giro">
               <Card>
                 <CardHeader>
-                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                  <div className="flex flex-col gap-4">
                     <CardTitle className="text-lg flex items-center gap-2">
-                      <BarChart3 className="h-5 w-5 text-primary" />
-                      Detalhe por Produto
+                      <BarChart3 className="h-5 w-5 text-primary" /> Detalhe por Produto
                     </CardTitle>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <div className="relative">
-                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          placeholder="Buscar produto..."
-                          value={searchTerm}
-                          onChange={(e) => setSearchTerm(e.target.value)}
-                          className="pl-8 w-[200px]"
-                        />
-                      </div>
-                      <Select value={selectedCategory} onValueChange={(v) => { setSelectedCategory(v); setSelectedSubcategory("all"); }}>
-                        <SelectTrigger className="w-[160px]">
-                          <SelectValue placeholder="Categoria" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">Todas categorias</SelectItem>
-                          {categoryData?.map((cat: any) => (
-                            <SelectItem key={cat.categoryId} value={String(cat.categoryId)}>
-                              {cat.categoryName}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <Select value={selectedSubcategory} onValueChange={setSelectedSubcategory}>
-                        <SelectTrigger className="w-[160px]">
-                          <SelectValue placeholder="Subcategoria" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">Todas subcategorias</SelectItem>
-                          {subcategories?.map((sub: string) => (
-                            <SelectItem key={sub} value={sub}>{sub}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                    <FiltersBar />
                   </div>
                 </CardHeader>
                 <CardContent>
@@ -473,91 +656,69 @@ export default function AnaliseEstoque() {
                     <>
                       <div className="text-sm text-muted-foreground mb-3">
                         {filteredProducts.length} produtos encontrados
-                        {selectedCategory !== "all" && categoryData ? ` em ${categoryData.find((c: any) => String(c.categoryId) === selectedCategory)?.categoryName || ''}` : ''}
-                        {selectedSubcategory !== "all" ? ` > ${selectedSubcategory}` : ''}
+                        {selectedCategories.length > 0 && categoryData ? ` em ${selectedCategories.map(c => categoryData.find((cat: any) => String(cat.categoryId) === c)?.categoryName).filter(Boolean).join(', ')}` : ''}
                       </div>
                       <div className="overflow-x-auto">
                         <Table>
                           <TableHeader>
                             <TableRow>
                               <TableHead className="cursor-pointer hover:text-foreground" onClick={() => handleSort('productName')}>
-                                <span className="flex items-center">Produto<SortIcon field="productName" /></span>
+                                <span className="flex items-center">Produto<SortIcon field="productName" activeField={sortField} activeDir={sortDir} /></span>
                               </TableHead>
-                              <TableHead className="text-right">Qtd</TableHead>
+                              <TableHead className="text-right cursor-pointer hover:text-foreground" onClick={() => handleSort('currentStock')}>
+                                <span className="flex items-center justify-end">Qtd<SortIcon field="currentStock" activeField={sortField} activeDir={sortDir} /></span>
+                              </TableHead>
                               <TableHead className="text-right">Custo Médio</TableHead>
                               <TableHead className="text-right cursor-pointer hover:text-foreground" onClick={() => handleSort('stockValue')}>
-                                <span className="flex items-center justify-end">Valor Estoque<SortIcon field="stockValue" /></span>
+                                <span className="flex items-center justify-end">Valor Estoque<SortIcon field="stockValue" activeField={sortField} activeDir={sortDir} /></span>
                               </TableHead>
                               <TableHead className="text-right cursor-pointer hover:text-foreground" onClick={() => handleSort('qtdSoldBalcao')}>
-                                <span className="flex items-center justify-end gap-1"><ShoppingCart className="h-3 w-3" />Balcão<SortIcon field="qtdSoldBalcao" /></span>
+                                <span className="flex items-center justify-end"><ShoppingCart className="h-3 w-3 mr-1" />Balcão<SortIcon field="qtdSoldBalcao" activeField={sortField} activeDir={sortDir} /></span>
                               </TableHead>
                               <TableHead className="text-right cursor-pointer hover:text-foreground" onClick={() => handleSort('qtdSoldDelivery')}>
-                                <span className="flex items-center justify-end gap-1"><Truck className="h-3 w-3" />Delivery<SortIcon field="qtdSoldDelivery" /></span>
+                                <span className="flex items-center justify-end"><Truck className="h-3 w-3 mr-1" />Delivery<SortIcon field="qtdSoldDelivery" activeField={sortField} activeDir={sortDir} /></span>
                               </TableHead>
                               <TableHead className="text-right cursor-pointer hover:text-foreground" onClick={() => handleSort('qtdSold')}>
-                                <span className="flex items-center justify-end">Total Vend.<SortIcon field="qtdSold" /></span>
+                                <span className="flex items-center justify-end">Total Vend.<SortIcon field="qtdSold" activeField={sortField} activeDir={sortDir} /></span>
                               </TableHead>
                               <TableHead className="text-right cursor-pointer hover:text-foreground" onClick={() => handleSort('turnover')}>
-                                <span className="flex items-center justify-end">Giro<SortIcon field="turnover" /></span>
+                                <span className="flex items-center justify-end">Giro<SortIcon field="turnover" activeField={sortField} activeDir={sortDir} /></span>
                               </TableHead>
                               <TableHead className="text-right cursor-pointer hover:text-foreground" onClick={() => handleSort('daysOfStock')}>
-                                <span className="flex items-center justify-end">Dias de Estoque<SortIcon field="daysOfStock" /></span>
+                                <span className="flex items-center justify-end">Dias de Estoque<SortIcon field="daysOfStock" activeField={sortField} activeDir={sortDir} /></span>
                               </TableHead>
                               <TableHead className="text-right">Última Compra</TableHead>
                               <TableHead className="text-right cursor-pointer hover:text-foreground" onClick={() => handleSort('costVariation')}>
-                                <span className="flex items-center justify-end">Var. Custo<SortIcon field="costVariation" /></span>
+                                <span className="flex items-center justify-end">Var. Custo<SortIcon field="costVariation" activeField={sortField} activeDir={sortDir} /></span>
                               </TableHead>
-                              <TableHead className="text-right">Entradas</TableHead>
+                              <TableHead className="text-right cursor-pointer hover:text-foreground" onClick={() => handleSort('entriesInPeriod')}>
+                                <span className="flex items-center justify-end">Entradas<SortIcon field="entriesInPeriod" activeField={sortField} activeDir={sortDir} /></span>
+                              </TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
                             {filteredProducts.length > 0 ? filteredProducts.map((prod: any) => (
                               <TableRow key={prod.productId}>
-                                <TableCell className="font-medium max-w-[220px] truncate" title={prod.productName}>
-                                  {prod.productName}
-                                </TableCell>
+                                <TableCell className="font-medium max-w-[220px] truncate" title={prod.productName}>{prod.productName}</TableCell>
                                 <TableCell className="text-right font-mono">{formatNumber(prod.currentStock)}</TableCell>
-                                <TableCell className="text-right font-mono text-muted-foreground">
-                                  {formatCurrency(prod.avgCost)}
-                                </TableCell>
-                                <TableCell className="text-right font-mono font-medium">
-                                  {formatCurrency(prod.stockValue)}
-                                </TableCell>
-                                <TableCell className="text-right font-mono">
-                                  {prod.qtdSoldBalcao > 0 ? formatNumber(prod.qtdSoldBalcao) : <span className="text-muted-foreground">0</span>}
-                                </TableCell>
-                                <TableCell className="text-right font-mono">
-                                  {prod.qtdSoldDelivery > 0 ? formatNumber(prod.qtdSoldDelivery) : <span className="text-muted-foreground">0</span>}
-                                </TableCell>
-                                <TableCell className="text-right font-mono">
-                                  {prod.qtdSold > 0 ? formatNumber(prod.qtdSold) : <span className="text-muted-foreground">0</span>}
-                                </TableCell>
-                                <TableCell className={`text-right font-mono ${getTurnoverColor(prod.turnover)}`}>
-                                  {prod.turnover.toFixed(2)}x
-                                </TableCell>
-                                <TableCell className="text-right">
-                                  {getDaysOfStockBadge(prod.daysOfStock)}
-                                </TableCell>
+                                <TableCell className="text-right font-mono text-muted-foreground">{formatCurrency(prod.avgCost)}</TableCell>
+                                <TableCell className="text-right font-mono font-medium">{formatCurrency(prod.stockValue)}</TableCell>
+                                <TableCell className="text-right font-mono">{prod.qtdSoldBalcao > 0 ? formatNumber(prod.qtdSoldBalcao) : <span className="text-muted-foreground">0</span>}</TableCell>
+                                <TableCell className="text-right font-mono">{prod.qtdSoldDelivery > 0 ? formatNumber(prod.qtdSoldDelivery) : <span className="text-muted-foreground">0</span>}</TableCell>
+                                <TableCell className="text-right font-mono">{prod.qtdSold > 0 ? formatNumber(prod.qtdSold) : <span className="text-muted-foreground">0</span>}</TableCell>
+                                <TableCell className={`text-right font-mono ${getTurnoverColor(prod.turnover)}`}>{prod.turnover.toFixed(2)}x</TableCell>
+                                <TableCell className="text-right">{getDaysOfStockBadge(prod.daysOfStock)}</TableCell>
                                 <TableCell className="text-right text-sm">
                                   {prod.lastPurchaseDate ? (
                                     <div>
-                                      <div className="text-muted-foreground">
-                                        {new Date(prod.lastPurchaseDate + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}
-                                      </div>
-                                      {prod.lastPurchaseCost && (
-                                        <div className="text-xs text-muted-foreground">
-                                          {formatCurrency(prod.lastPurchaseCost)}
-                                        </div>
-                                      )}
+                                      <div className="text-muted-foreground">{new Date(prod.lastPurchaseDate + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}</div>
+                                      {prod.lastPurchaseCost && <div className="text-xs text-muted-foreground">{formatCurrency(prod.lastPurchaseCost)}</div>}
                                     </div>
-                                  ) : (
-                                    <span className="text-muted-foreground">—</span>
-                                  )}
+                                  ) : <span className="text-muted-foreground">—</span>}
                                 </TableCell>
                                 <TableCell className={`text-right font-mono ${
                                   prod.costVariation !== null && prod.costVariation > 0 ? 'text-red-600' :
-                                  prod.costVariation !== null && prod.costVariation < 0 ? 'text-green-600' :
-                                  'text-muted-foreground'
+                                  prod.costVariation !== null && prod.costVariation < 0 ? 'text-green-600' : 'text-muted-foreground'
                                 }`}>
                                   {prod.costVariation !== null ? (
                                     <span className="flex items-center justify-end gap-1">
@@ -568,22 +729,13 @@ export default function AnaliseEstoque() {
                                 </TableCell>
                                 <TableCell className="text-right">
                                   {prod.entriesInPeriod > 0 ? (
-                                    <div>
-                                      <span className="font-mono">{prod.entriesInPeriod}</span>
-                                      <span className="text-xs text-muted-foreground ml-1">
-                                        ({formatNumber(prod.totalPurchased)} un)
-                                      </span>
-                                    </div>
-                                  ) : (
-                                    <span className="text-muted-foreground">—</span>
-                                  )}
+                                    <div><span className="font-mono">{prod.entriesInPeriod}</span><span className="text-xs text-muted-foreground ml-1">({formatNumber(prod.totalPurchased)} un)</span></div>
+                                  ) : <span className="text-muted-foreground">—</span>}
                                 </TableCell>
                               </TableRow>
                             )) : (
                               <TableRow>
-                                <TableCell colSpan={12} className="text-center text-muted-foreground">
-                                  Nenhum produto encontrado
-                                </TableCell>
+                                <TableCell colSpan={12} className="text-center text-muted-foreground">Nenhum produto encontrado</TableCell>
                               </TableRow>
                             )}
                           </TableBody>
@@ -591,8 +743,8 @@ export default function AnaliseEstoque() {
                             <TableFooter>
                               <TableRow className="font-bold bg-muted/50">
                                 <TableCell>Total ({filteredProducts.length})</TableCell>
-                                <TableCell className="text-right"></TableCell>
-                                <TableCell className="text-right"></TableCell>
+                                <TableCell></TableCell>
+                                <TableCell></TableCell>
                                 <TableCell className="text-right font-mono">{formatCurrency(productTotals.stockValue)}</TableCell>
                                 <TableCell className="text-right font-mono">{formatNumber(productTotals.qtdSoldBalcao)}</TableCell>
                                 <TableCell className="text-right font-mono">{formatNumber(productTotals.qtdSoldDelivery)}</TableCell>
@@ -609,18 +761,13 @@ export default function AnaliseEstoque() {
                           )}
                         </Table>
                       </div>
-
-                      {/* Legenda */}
                       <div className="mt-4 flex flex-wrap gap-4 text-xs text-muted-foreground border-t pt-3">
                         <div className="flex items-center gap-1">
                           <AlertTriangle className="h-3 w-3 text-red-500" />
                           <span>Dias de Estoque: </span>
-                          <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-[10px] px-1">7-45d</Badge>
-                          <span>Ideal</span>
-                          <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 text-[10px] px-1">45-90d</Badge>
-                          <span>Atenção</span>
-                          <Badge variant="destructive" className="bg-red-100 text-red-700 border-red-200 text-[10px] px-1">&gt;90d</Badge>
-                          <span>Excesso</span>
+                          <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-[10px] px-1">7-45d</Badge> Ideal
+                          <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 text-[10px] px-1">45-90d</Badge> Atenção
+                          <Badge variant="destructive" className="bg-red-100 text-red-700 border-red-200 text-[10px] px-1">&gt;90d</Badge> Excesso
                         </div>
                         <div className="flex items-center gap-1">
                           <ShoppingCart className="h-3 w-3" /> Balcão/A Prazo
@@ -637,38 +784,27 @@ export default function AnaliseEstoque() {
             <TabsContent value="parados">
               <Card>
                 <CardHeader>
-                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                    <CardTitle className="text-lg flex items-center gap-2">
-                      <PauseCircle className="h-5 w-5 text-destructive" />
-                      Produtos Parados
-                    </CardTitle>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-muted-foreground">Sem vendas há mais de:</span>
-                      <Select value={stoppedDaysFilter} onValueChange={setStoppedDaysFilter}>
-                        <SelectTrigger className="w-[120px]">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="30">30 dias</SelectItem>
-                          <SelectItem value="60">60 dias</SelectItem>
-                          <SelectItem value="90">90 dias</SelectItem>
-                          <SelectItem value="120">120 dias</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <Select value={selectedCategory} onValueChange={(v) => { setSelectedCategory(v); setSelectedSubcategory("all"); }}>
-                        <SelectTrigger className="w-[160px]">
-                          <SelectValue placeholder="Categoria" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">Todas categorias</SelectItem>
-                          {categoryData?.map((cat: any) => (
-                            <SelectItem key={cat.categoryId} value={String(cat.categoryId)}>
-                              {cat.categoryName}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                  <div className="flex flex-col gap-4">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        <PauseCircle className="h-5 w-5 text-destructive" /> Produtos Parados
+                      </CardTitle>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-muted-foreground">Sem vendas há mais de:</span>
+                        <Select value={stoppedDaysFilter} onValueChange={setStoppedDaysFilter}>
+                          <SelectTrigger className="w-[120px]">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="30">30 dias</SelectItem>
+                            <SelectItem value="60">60 dias</SelectItem>
+                            <SelectItem value="90">90 dias</SelectItem>
+                            <SelectItem value="120">120 dias</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
+                    <FiltersBar />
                   </div>
                 </CardHeader>
                 <CardContent>
@@ -676,7 +812,6 @@ export default function AnaliseEstoque() {
                     <div className="text-center py-8 text-muted-foreground">Carregando...</div>
                   ) : (
                     <>
-                      {/* Resumo de capital parado */}
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                         <Card className="border-red-200 bg-red-50/50">
                           <CardContent className="pt-4 pb-4">
@@ -704,55 +839,49 @@ export default function AnaliseEstoque() {
                         <Table>
                           <TableHeader>
                             <TableRow>
-                              <TableHead>Produto</TableHead>
-                              <TableHead className="text-right">Qtd</TableHead>
-                              <TableHead className="text-right">Custo Médio</TableHead>
-                              <TableHead className="text-right">Valor Parado</TableHead>
+                              <TableHead className="cursor-pointer hover:text-foreground" onClick={() => handleStoppedSort('productName')}>
+                                <span className="flex items-center">Produto<SortIcon field="productName" activeField={stoppedSortField} activeDir={stoppedSortDir} /></span>
+                              </TableHead>
+                              <TableHead className="text-right cursor-pointer hover:text-foreground" onClick={() => handleStoppedSort('currentStock')}>
+                                <span className="flex items-center justify-end">Qtd<SortIcon field="currentStock" activeField={stoppedSortField} activeDir={stoppedSortDir} /></span>
+                              </TableHead>
+                              <TableHead className="text-right cursor-pointer hover:text-foreground" onClick={() => handleStoppedSort('avgCost')}>
+                                <span className="flex items-center justify-end">Custo Médio<SortIcon field="avgCost" activeField={stoppedSortField} activeDir={stoppedSortDir} /></span>
+                              </TableHead>
+                              <TableHead className="text-right cursor-pointer hover:text-foreground" onClick={() => handleStoppedSort('stockValue')}>
+                                <span className="flex items-center justify-end">Valor Parado<SortIcon field="stockValue" activeField={stoppedSortField} activeDir={stoppedSortDir} /></span>
+                              </TableHead>
                               <TableHead className="text-right">Última Venda</TableHead>
-                              <TableHead className="text-right">Dias Sem Venda</TableHead>
+                              <TableHead className="text-right cursor-pointer hover:text-foreground" onClick={() => handleStoppedSort('daysSinceLastSale')}>
+                                <span className="flex items-center justify-end">Dias Sem Venda<SortIcon field="daysSinceLastSale" activeField={stoppedSortField} activeDir={stoppedSortDir} /></span>
+                              </TableHead>
                               <TableHead className="text-right">Última Compra</TableHead>
-                              <TableHead className="text-right">Entradas</TableHead>
+                              <TableHead className="text-right cursor-pointer hover:text-foreground" onClick={() => handleStoppedSort('entriesInPeriod')}>
+                                <span className="flex items-center justify-end">Entradas<SortIcon field="entriesInPeriod" activeField={stoppedSortField} activeDir={stoppedSortDir} /></span>
+                              </TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
                             {stoppedProducts.length > 0 ? stoppedProducts.map((prod: any) => (
                               <TableRow key={prod.productId}>
-                                <TableCell className="font-medium max-w-[250px] truncate" title={prod.productName}>
-                                  {prod.productName}
-                                </TableCell>
+                                <TableCell className="font-medium max-w-[250px] truncate" title={prod.productName}>{prod.productName}</TableCell>
                                 <TableCell className="text-right font-mono">{formatNumber(prod.currentStock)}</TableCell>
-                                <TableCell className="text-right font-mono text-muted-foreground">
-                                  {formatCurrency(prod.avgCost)}
-                                </TableCell>
-                                <TableCell className="text-right font-mono font-medium text-red-600">
-                                  {formatCurrency(prod.stockValue)}
-                                </TableCell>
+                                <TableCell className="text-right font-mono text-muted-foreground">{formatCurrency(prod.avgCost)}</TableCell>
+                                <TableCell className="text-right font-mono font-medium text-red-600">{formatCurrency(prod.stockValue)}</TableCell>
                                 <TableCell className="text-right text-sm">
-                                  {prod.lastSaleDate ? (
-                                    new Date(prod.lastSaleDate + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit' })
-                                  ) : (
-                                    <span className="text-muted-foreground">Nunca</span>
-                                  )}
+                                  {prod.lastSaleDate ? new Date(prod.lastSaleDate + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit' }) : <span className="text-muted-foreground">Nunca</span>}
+                                </TableCell>
+                                <TableCell className="text-right">{getDaysSinceLastSaleBadge(prod.daysSinceLastSale)}</TableCell>
+                                <TableCell className="text-right text-sm">
+                                  {prod.lastPurchaseDate ? new Date(prod.lastPurchaseDate + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit' }) : '—'}
                                 </TableCell>
                                 <TableCell className="text-right">
-                                  {getDaysSinceLastSaleBadge(prod.daysSinceLastSale)}
-                                </TableCell>
-                                <TableCell className="text-right text-sm">
-                                  {prod.lastPurchaseDate ? (
-                                    new Date(prod.lastPurchaseDate + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit' })
-                                  ) : '—'}
-                                </TableCell>
-                                <TableCell className="text-right">
-                                  {prod.entriesInPeriod > 0 ? (
-                                    <span className="font-mono">{prod.entriesInPeriod} ({formatNumber(prod.totalPurchased)} un)</span>
-                                  ) : '—'}
+                                  {prod.entriesInPeriod > 0 ? <span className="font-mono">{prod.entriesInPeriod} ({formatNumber(prod.totalPurchased)} un)</span> : '—'}
                                 </TableCell>
                               </TableRow>
                             )) : (
                               <TableRow>
-                                <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
-                                  Nenhum produto parado encontrado com o filtro atual
-                                </TableCell>
+                                <TableCell colSpan={8} className="text-center text-muted-foreground py-8">Nenhum produto parado encontrado com o filtro atual</TableCell>
                               </TableRow>
                             )}
                           </TableBody>
@@ -772,7 +901,6 @@ export default function AnaliseEstoque() {
                           )}
                         </Table>
                       </div>
-
                       <div className="mt-4 text-xs text-muted-foreground border-t pt-3">
                         <div className="flex items-center gap-1">
                           <AlertTriangle className="h-3 w-3 text-red-500" />
@@ -789,26 +917,27 @@ export default function AnaliseEstoque() {
             <TabsContent value="abc">
               <Card>
                 <CardHeader>
-                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                    <CardTitle className="text-lg flex items-center gap-2">
-                      <LayoutGrid className="h-5 w-5 text-primary" />
-                      Classificação ABC
-                    </CardTitle>
-                    <div className="flex items-center gap-2">
-                      <Select value={selectedCategory} onValueChange={(v) => { setSelectedCategory(v); setSelectedSubcategory("all"); }}>
-                        <SelectTrigger className="w-[160px]">
-                          <SelectValue placeholder="Categoria" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">Todas categorias</SelectItem>
-                          {categoryData?.map((cat: any) => (
-                            <SelectItem key={cat.categoryId} value={String(cat.categoryId)}>
-                              {cat.categoryName}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                  <div className="flex flex-col gap-4">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        <LayoutGrid className="h-5 w-5 text-primary" /> Classificação ABC
+                      </CardTitle>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-muted-foreground">Classificação:</span>
+                        <Select value={abcFilter} onValueChange={setAbcFilter}>
+                          <SelectTrigger className="w-[120px]">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">Todas</SelectItem>
+                            <SelectItem value="A">Classe A</SelectItem>
+                            <SelectItem value="B">Classe B</SelectItem>
+                            <SelectItem value="C">Classe C</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
+                    <FiltersBar />
                   </div>
                 </CardHeader>
                 <CardContent>
@@ -816,9 +945,9 @@ export default function AnaliseEstoque() {
                     <div className="text-center py-8 text-muted-foreground">Carregando...</div>
                   ) : (
                     <>
-                      {/* Cards resumo ABC */}
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                        <Card className="border-green-200 bg-green-50/50">
+                        <Card className={`border-green-200 bg-green-50/50 cursor-pointer transition-shadow ${abcFilter === 'A' ? 'ring-2 ring-green-400' : 'hover:shadow-md'}`}
+                          onClick={() => setAbcFilter(abcFilter === 'A' ? 'all' : 'A')}>
                           <CardContent className="pt-4 pb-4">
                             <div className="flex items-center gap-2 mb-2">
                               <Badge className="bg-green-100 text-green-800 border-green-200 text-lg px-3">A</Badge>
@@ -829,7 +958,8 @@ export default function AnaliseEstoque() {
                             <div className="text-sm text-green-600">Estoque: {formatCurrency(abcSummary.A.value)}</div>
                           </CardContent>
                         </Card>
-                        <Card className="border-amber-200 bg-amber-50/50">
+                        <Card className={`border-amber-200 bg-amber-50/50 cursor-pointer transition-shadow ${abcFilter === 'B' ? 'ring-2 ring-amber-400' : 'hover:shadow-md'}`}
+                          onClick={() => setAbcFilter(abcFilter === 'B' ? 'all' : 'B')}>
                           <CardContent className="pt-4 pb-4">
                             <div className="flex items-center gap-2 mb-2">
                               <Badge className="bg-amber-100 text-amber-800 border-amber-200 text-lg px-3">B</Badge>
@@ -840,7 +970,8 @@ export default function AnaliseEstoque() {
                             <div className="text-sm text-amber-600">Estoque: {formatCurrency(abcSummary.B.value)}</div>
                           </CardContent>
                         </Card>
-                        <Card className="border-red-200 bg-red-50/50">
+                        <Card className={`border-red-200 bg-red-50/50 cursor-pointer transition-shadow ${abcFilter === 'C' ? 'ring-2 ring-red-400' : 'hover:shadow-md'}`}
+                          onClick={() => setAbcFilter(abcFilter === 'C' ? 'all' : 'C')}>
                           <CardContent className="pt-4 pb-4">
                             <div className="flex items-center gap-2 mb-2">
                               <Badge className="bg-red-100 text-red-800 border-red-200 text-lg px-3">C</Badge>
@@ -857,51 +988,66 @@ export default function AnaliseEstoque() {
                         <Table>
                           <TableHeader>
                             <TableRow>
-                              <TableHead className="w-[50px]">ABC</TableHead>
-                              <TableHead>Produto</TableHead>
-                              <TableHead className="text-right">Qtd</TableHead>
-                              <TableHead className="text-right">Valor Estoque</TableHead>
-                              <TableHead className="text-right">CMV</TableHead>
+                              <TableHead className="w-[50px] cursor-pointer hover:text-foreground" onClick={() => handleAbcSort('abcClass')}>
+                                <span className="flex items-center">ABC<SortIcon field="abcClass" activeField={abcSortField} activeDir={abcSortDir} /></span>
+                              </TableHead>
+                              <TableHead className="cursor-pointer hover:text-foreground" onClick={() => handleAbcSort('productName')}>
+                                <span className="flex items-center">Produto<SortIcon field="productName" activeField={abcSortField} activeDir={abcSortDir} /></span>
+                              </TableHead>
+                              <TableHead className="text-right cursor-pointer hover:text-foreground" onClick={() => handleAbcSort('currentStock')}>
+                                <span className="flex items-center justify-end">Qtd<SortIcon field="currentStock" activeField={abcSortField} activeDir={abcSortDir} /></span>
+                              </TableHead>
+                              <TableHead className="text-right cursor-pointer hover:text-foreground" onClick={() => handleAbcSort('stockValue')}>
+                                <span className="flex items-center justify-end">Valor Estoque<SortIcon field="stockValue" activeField={abcSortField} activeDir={abcSortDir} /></span>
+                              </TableHead>
+                              <TableHead className="text-right cursor-pointer hover:text-foreground" onClick={() => handleAbcSort('cmv')}>
+                                <span className="flex items-center justify-end">CMV<SortIcon field="cmv" activeField={abcSortField} activeDir={abcSortDir} /></span>
+                              </TableHead>
                               <TableHead className="text-right">% CMV Acum.</TableHead>
-                              <TableHead className="text-right">Vendido</TableHead>
-                              <TableHead className="text-right">Giro</TableHead>
-                              <TableHead className="text-right">Dias de Estoque</TableHead>
+                              <TableHead className="text-right cursor-pointer hover:text-foreground" onClick={() => handleAbcSort('qtdSold')}>
+                                <span className="flex items-center justify-end">Vendido<SortIcon field="qtdSold" activeField={abcSortField} activeDir={abcSortDir} /></span>
+                              </TableHead>
+                              <TableHead className="text-right cursor-pointer hover:text-foreground" onClick={() => handleAbcSort('turnover')}>
+                                <span className="flex items-center justify-end">Giro<SortIcon field="turnover" activeField={abcSortField} activeDir={abcSortDir} /></span>
+                              </TableHead>
+                              <TableHead className="text-right cursor-pointer hover:text-foreground" onClick={() => handleAbcSort('daysOfStock')}>
+                                <span className="flex items-center justify-end">Dias de Estoque<SortIcon field="daysOfStock" activeField={abcSortField} activeDir={abcSortDir} /></span>
+                              </TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
                             {(() => {
-                              const totalCmv = abcProducts.reduce((s: number, p: any) => s + p.cmv, 0);
-                              let accCmv = 0;
+                              const totalCmv = clientFilteredProducts.reduce((s: number, p: any) => s + p.cmv, 0);
+                              // For % CMV Acum, we need to sort by CMV desc to accumulate correctly
+                              const sortedByCmv = [...clientFilteredProducts].sort((a: any, b: any) => b.cmv - a.cmv);
+                              const accMap = new Map<number, number>();
+                              let acc = 0;
+                              for (const p of sortedByCmv) {
+                                acc += (p as any).cmv;
+                                accMap.set((p as any).productId, totalCmv > 0 ? (acc / totalCmv) * 100 : 0);
+                              }
+
                               return abcProducts.length > 0 ? abcProducts.map((prod: any) => {
-                                accCmv += prod.cmv;
-                                const accPct = totalCmv > 0 ? (accCmv / totalCmv) * 100 : 0;
+                                const accPct = accMap.get(prod.productId) || 0;
                                 return (
                                   <TableRow key={prod.productId} className={
                                     prod.abcClass === 'A' ? 'bg-green-50/30' :
                                     prod.abcClass === 'B' ? 'bg-amber-50/30' : 'bg-red-50/20'
                                   }>
                                     <TableCell>{getAbcBadge(prod.abcClass)}</TableCell>
-                                    <TableCell className="font-medium max-w-[250px] truncate" title={prod.productName}>
-                                      {prod.productName}
-                                    </TableCell>
+                                    <TableCell className="font-medium max-w-[250px] truncate" title={prod.productName}>{prod.productName}</TableCell>
                                     <TableCell className="text-right font-mono">{formatNumber(prod.currentStock)}</TableCell>
                                     <TableCell className="text-right font-mono">{formatCurrency(prod.stockValue)}</TableCell>
                                     <TableCell className="text-right font-mono">{formatCurrency(prod.cmv)}</TableCell>
                                     <TableCell className="text-right font-mono text-muted-foreground">{accPct.toFixed(1)}%</TableCell>
                                     <TableCell className="text-right font-mono">{formatNumber(prod.qtdSold)}</TableCell>
-                                    <TableCell className={`text-right font-mono ${getTurnoverColor(prod.turnover)}`}>
-                                      {prod.turnover.toFixed(2)}x
-                                    </TableCell>
-                                    <TableCell className="text-right">
-                                      {getDaysOfStockBadge(prod.daysOfStock)}
-                                    </TableCell>
+                                    <TableCell className={`text-right font-mono ${getTurnoverColor(prod.turnover)}`}>{prod.turnover.toFixed(2)}x</TableCell>
+                                    <TableCell className="text-right">{getDaysOfStockBadge(prod.daysOfStock)}</TableCell>
                                   </TableRow>
                                 );
                               }) : (
                                 <TableRow>
-                                  <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
-                                    Nenhum produto encontrado
-                                  </TableCell>
+                                  <TableCell colSpan={9} className="text-center text-muted-foreground py-8">Nenhum produto encontrado</TableCell>
                                 </TableRow>
                               );
                             })()}
