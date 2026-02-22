@@ -644,6 +644,28 @@ export default function FechamentoMensalNovo() {
                       </TableRow>
                     )}
                   </TableBody>
+                  {data.stockByCategory && data.stockByCategory.length > 0 && (
+                    <TableFooter>
+                      <TableRow className="font-bold bg-muted/50">
+                        <TableCell>Total</TableCell>
+                        <TableCell className="text-right font-mono">
+                          {formatCurrency(data.stockByCategory.reduce((sum: number, s: any) => sum + s.initialStock, 0))}
+                        </TableCell>
+                        <TableCell className="text-right font-mono">
+                          {formatCurrency(data.stockByCategory.reduce((sum: number, s: any) => sum + s.finalStock, 0))}
+                        </TableCell>
+                        <TableCell className={`text-right font-mono ${
+                          (() => {
+                            const totalVar = data.stockByCategory.reduce((sum: number, s: any) => sum + s.variation, 0);
+                            return totalVar > 0 ? 'text-green-600' : totalVar < 0 ? 'text-red-600' : 'text-muted-foreground';
+                          })()
+                        }`}>
+                          {formatCurrency(data.stockByCategory.reduce((sum: number, s: any) => sum + s.variation, 0))}
+                        </TableCell>
+                        <TableCell className="text-right"></TableCell>
+                      </TableRow>
+                    </TableFooter>
+                  )}
                 </Table>
               </CardContent>
             </Card>

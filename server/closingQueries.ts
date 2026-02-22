@@ -279,6 +279,7 @@ export async function getStockByCategory(
   if (!db) throw new Error("Database not available");
 
   // Estoque FINAL (snapshot atual) por categoria
+  // Excluir produtos compostos (isComposite=1) para alinhar com o Dashboard
   const finalStockResult = await db.execute(sql.raw(`
     SELECT 
       c.id as categoryId,
@@ -287,13 +288,12 @@ export async function getStockByCategory(
     FROM products p
     INNER JOIN categories c ON p.categoryId = c.id
     WHERE p.active = 1
+      AND (p.isComposite = 0 OR p.isComposite IS NULL)
     GROUP BY c.id, c.name
   `));
 
   // Movimentações de estoque no período (entradas e saídas)
-  // Tabela productMovements: type = ENTRADA, SAIDA, PERDA, ACERTO, ESTORNO
-  // quantity pode ser negativo (ex: ACERTO com -4)
-  // Não tem unitCost, então usamos avgCost do produto
+  // Excluir produtos compostos para consistência
   const movementsResult = await db.execute(sql.raw(`
     SELECT 
       c.id as categoryId,
@@ -304,12 +304,14 @@ export async function getStockByCategory(
     FROM productMovements pm
     INNER JOIN products p ON pm.productId = p.id
     INNER JOIN categories c ON p.categoryId = c.id
-    WHERE DATE(CONVERT_TZ(pm.createdAt, '+00:00', '-03:00')) >= '${startDate}'
+    WHERE (p.isComposite = 0 OR p.isComposite IS NULL)
+      AND DATE(CONVERT_TZ(pm.createdAt, '+00:00', '-03:00')) >= '${startDate}'
       AND DATE(CONVERT_TZ(pm.createdAt, '+00:00', '-03:00')) <= '${endDate}'
     GROUP BY c.id
   `));
 
   // CMV por categoria (custo das vendas) para cálculo do giro
+  // Excluir produtos compostos para consistência
   const cmvResult = await db.execute(sql.raw(`
     SELECT 
       c.id as categoryId,
@@ -319,6 +321,7 @@ export async function getStockByCategory(
     INNER JOIN products p ON si.productId = p.id
     INNER JOIN categories c ON p.categoryId = c.id
     WHERE s.status = 'ACTIVE'
+      AND (p.isComposite = 0 OR p.isComposite IS NULL)
       AND DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) >= '${startDate}'
       AND DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) <= '${endDate}'
     GROUP BY c.id

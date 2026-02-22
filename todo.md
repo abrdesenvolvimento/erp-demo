@@ -802,3 +802,7 @@ Despesa de impostos aparece tanto em janeiro quanto em fevereiro após edição 
 - [x] Estoque e Giro: corrigir cálculo - estoque inicial e final estão iguais (variação R$ 0,00)
 - [x] Despesas por Conta Gerencial: ordenar do maior para o menor valor
 - [x] Compras por Fornecedor: corrigir "Sem Nome" - buscar nome do parceiro corretamente
+
+### Ajustes Estoque por Categoria - Feedback Gabriel (22/02/2026)
+- [x] Adicionar totalizador (linha Total) ao final do quadro de Estoque por Categoria + Giro
+- [x] Corrigir estoque final para bater com valor real do estoque (Dashboard mostra R$98.438,05)
