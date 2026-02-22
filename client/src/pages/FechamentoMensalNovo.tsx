@@ -609,36 +609,43 @@ export default function FechamentoMensalNovo() {
                       <TableHead>Categoria</TableHead>
                       <TableHead className="text-right">Estoque Inicial</TableHead>
                       <TableHead className="text-right">Estoque Final</TableHead>
+                      <TableHead className="text-right">%</TableHead>
                       <TableHead className="text-right">Variação</TableHead>
                       <TableHead className="text-right">Giro</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {data.stockByCategory && data.stockByCategory.length > 0 ? (
-                      data.stockByCategory.map((stock: any) => (
-                        <TableRow key={stock.categoryId}>
-                          <TableCell className="font-medium">{stock.categoryName}</TableCell>
-                          <TableCell className="text-right font-mono">
-                            {formatCurrency(stock.initialStock)}
-                          </TableCell>
-                          <TableCell className="text-right font-mono">
-                            {formatCurrency(stock.finalStock)}
-                          </TableCell>
-                          <TableCell className={`text-right font-mono ${
-                            stock.variation > 0 ? 'text-green-600' : 
-                            stock.variation < 0 ? 'text-red-600' : 
-                            'text-muted-foreground'
-                          }`}>
-                            {formatCurrency(stock.variation)}
-                          </TableCell>
-                          <TableCell className="text-right font-bold">
-                            {stock.turnover.toFixed(2)}x
-                          </TableCell>
-                        </TableRow>
-                      ))
+                      (() => {
+                        const totalFinalStock = data.stockByCategory.reduce((sum: number, s: any) => sum + s.finalStock, 0);
+                        return data.stockByCategory.map((stock: any) => (
+                          <TableRow key={stock.categoryId}>
+                            <TableCell className="font-medium">{stock.categoryName}</TableCell>
+                            <TableCell className="text-right font-mono">
+                              {formatCurrency(stock.initialStock)}
+                            </TableCell>
+                            <TableCell className="text-right font-mono">
+                              {formatCurrency(stock.finalStock)}
+                            </TableCell>
+                            <TableCell className="text-right font-mono text-muted-foreground">
+                              {totalFinalStock > 0 ? ((stock.finalStock / totalFinalStock) * 100).toFixed(1) : '0.0'}%
+                            </TableCell>
+                            <TableCell className={`text-right font-mono ${
+                              stock.variation > 0 ? 'text-green-600' : 
+                              stock.variation < 0 ? 'text-red-600' : 
+                              'text-muted-foreground'
+                            }`}>
+                              {formatCurrency(stock.variation)}
+                            </TableCell>
+                            <TableCell className="text-right font-bold">
+                              {stock.turnover.toFixed(2)}x
+                            </TableCell>
+                          </TableRow>
+                        ));
+                      })()
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={5} className="text-center text-muted-foreground">
+                        <TableCell colSpan={6} className="text-center text-muted-foreground">
                           Sem dados de estoque
                         </TableCell>
                       </TableRow>
@@ -654,6 +661,7 @@ export default function FechamentoMensalNovo() {
                         <TableCell className="text-right font-mono">
                           {formatCurrency(data.stockByCategory.reduce((sum: number, s: any) => sum + s.finalStock, 0))}
                         </TableCell>
+                        <TableCell className="text-right font-mono">100%</TableCell>
                         <TableCell className={`text-right font-mono ${
                           (() => {
                             const totalVar = data.stockByCategory.reduce((sum: number, s: any) => sum + s.variation, 0);
@@ -662,7 +670,19 @@ export default function FechamentoMensalNovo() {
                         }`}>
                           {formatCurrency(data.stockByCategory.reduce((sum: number, s: any) => sum + s.variation, 0))}
                         </TableCell>
-                        <TableCell className="text-right"></TableCell>
+                        <TableCell className="text-right font-bold">
+                          {(() => {
+                            const totalInitial = data.stockByCategory.reduce((sum: number, s: any) => sum + s.initialStock, 0);
+                            const totalFinal = data.stockByCategory.reduce((sum: number, s: any) => sum + s.finalStock, 0);
+                            const avgStock = (totalInitial + totalFinal) / 2;
+                            const totalCmv = data.stockByCategory.reduce((sum: number, s: any) => {
+                              const avg = (s.initialStock + s.finalStock) / 2;
+                              return sum + (avg > 0 ? s.turnover * avg : 0);
+                            }, 0);
+                            const giro = avgStock > 0 ? totalCmv / avgStock : 0;
+                            return giro.toFixed(2) + 'x';
+                          })()}
+                        </TableCell>
                       </TableRow>
                     </TableFooter>
                   )}

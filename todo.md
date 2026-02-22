@@ -806,3 +806,7 @@ Despesa de impostos aparece tanto em janeiro quanto em fevereiro após edição 
 ### Ajustes Estoque por Categoria - Feedback Gabriel (22/02/2026)
 - [x] Adicionar totalizador (linha Total) ao final do quadro de Estoque por Categoria + Giro
 - [x] Corrigir estoque final para bater com valor real do estoque (Dashboard mostra R$98.438,05)
+
+### Melhorias Estoque por Categoria - Feedback Gabriel (22/02/2026)
+- [x] Adicionar Giro Médio Ponderado no Total Geral do quadro de Estoque
+- [x] Adicionar coluna % do Total (percentual de cada categoria no estoque final)
