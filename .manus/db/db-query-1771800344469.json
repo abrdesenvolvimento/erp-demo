@@ -1,0 +1,9 @@
+{
+  "query": "\nUPDATE categories SET companyId = 1, branchId = 1 WHERE companyId IS NULL;\nUPDATE subcategories SET companyId = 1, branchId = 1 WHERE companyId IS NULL;\nUPDATE salesChannels SET companyId = 1, branchId = 1 WHERE companyId IS NULL;\nUPDATE products SET companyId = 1, branchId = 1 WHERE companyId IS NULL;\nUPDATE productCompositions SET companyId = 1, branchId = 1 WHERE companyId IS NULL;\nUPDATE productPrices SET companyId = 1, branchId = 1 WHERE companyId IS NULL;\nUPDATE partners SET companyId = 1, branchId = 1 WHERE companyId IS NULL;\nUPDATE productMovements SET companyId = 1, branchId = 1 WHERE companyId IS NULL;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute \nUPDATE categories SET companyId = 1, branchId = 1 WHERE companyId IS NULL;\nUPDATE subcategories SET companyId = 1, branchId = 1 WHERE companyId IS NULL;\nUPDATE salesChannels SET companyId = 1, branchId = 1 WHERE companyId IS NULL;\nUPDATE products SET companyId = 1, branchId = 1 WHERE companyId IS NULL;\nUPDATE productCompositions SET companyId = 1, branchId = 1 WHERE companyId IS NULL;\nUPDATE productPrices SET companyId = 1, branchId = 1 WHERE companyId IS NULL;\nUPDATE partners SET companyId = 1, branchId = 1 WHERE companyId IS NULL;\nUPDATE productMovements SET companyId = 1, branchId = 1 WHERE companyId IS NULL;\n",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 131
+}

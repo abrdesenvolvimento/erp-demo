@@ -22,11 +22,12 @@ import {
 import { APP_LOGO, APP_TITLE, getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
-import { LayoutDashboard, LogOut, PanelLeft, Users, Package, ShoppingCart, BarChart3, ShoppingBag, Receipt, DollarSign, CreditCard, UserCircle, Shield, TrendingUp, Bike, ChevronDown, ChevronRight, PieChart, GitCompare, Wallet, Target, FileText, BookOpen, Calculator, Upload } from "lucide-react";
+import { LayoutDashboard, LogOut, PanelLeft, Users, Package, ShoppingCart, BarChart3, ShoppingBag, Receipt, DollarSign, CreditCard, UserCircle, Shield, TrendingUp, Bike, ChevronDown, ChevronRight, PieChart, GitCompare, Wallet, Target, FileText, BookOpen, Calculator, Upload, Building2, MapPin, Check } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import { Button } from "./ui/button";
+import { useCompany } from "@/contexts/CompanyContext";
 
 // Menu items principais (sem submenu)
 const mainMenuItems = [
@@ -163,6 +164,8 @@ function DashboardLayoutContent({
   const { user, logout } = useAuth();
   const [location, setLocation] = useLocation();
   const { state, toggleSidebar } = useSidebar();
+  const { companies: userCompanies, activeCompanyId, activeBranchId, activeCompany, setActiveCompany } = useCompany();
+  const [companyMenuOpen, setCompanyMenuOpen] = useState(false);
   const isCollapsed = state === "collapsed";
   const [isResizing, setIsResizing] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
@@ -370,6 +373,62 @@ function DashboardLayoutContent({
               )}
             </div>
           </SidebarHeader>
+
+          {/* Seletor de Empresa/Filial */}
+          {!isCollapsed && userCompanies.length > 0 && (
+            <div className="px-3 pb-2">
+              <DropdownMenu open={companyMenuOpen} onOpenChange={setCompanyMenuOpen}>
+                <DropdownMenuTrigger asChild>
+                  <button className="flex items-center gap-2 w-full rounded-lg border border-border/60 bg-muted/30 px-3 py-2 text-left hover:bg-accent/50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                    <Building2 className="h-4 w-4 text-muted-foreground shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium truncate leading-none">
+                        {activeCompany?.companyName || activeCompany?.companyLegalName || 'Selecionar Empresa'}
+                      </p>
+                      {activeCompany?.branchName && (
+                        <p className="text-[10px] text-muted-foreground truncate mt-0.5 flex items-center gap-1">
+                          <MapPin className="h-2.5 w-2.5" />
+                          {activeCompany.branchName}
+                        </p>
+                      )}
+                    </div>
+                    <ChevronDown className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-64">
+                  {userCompanies.map((uc) => {
+                    const isActive = uc.companyId === activeCompanyId && uc.branchId === activeBranchId;
+                    return (
+                      <DropdownMenuItem
+                        key={`${uc.companyId}-${uc.branchId}`}
+                        onClick={() => {
+                          setActiveCompany(uc.companyId, uc.branchId || 0);
+                          setCompanyMenuOpen(false);
+                        }}
+                        className={`cursor-pointer flex items-center gap-2 ${isActive ? 'bg-accent' : ''}`}
+                      >
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">
+                            {uc.companyName || uc.companyLegalName}
+                          </p>
+                          {uc.branchName && (
+                            <p className="text-xs text-muted-foreground truncate flex items-center gap-1">
+                              <MapPin className="h-2.5 w-2.5" />
+                              {uc.branchName}
+                              {uc.segment && (
+                                <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded-full ml-1">{uc.segment}</span>
+                              )}
+                            </p>
+                          )}
+                        </div>
+                        {isActive && <Check className="h-4 w-4 text-primary shrink-0" />}
+                      </DropdownMenuItem>
+                    );
+                  })}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          )}
 
           <SidebarContent className="gap-0">
             <SidebarMenu className="px-2 py-1">

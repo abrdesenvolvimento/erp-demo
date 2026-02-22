@@ -1,0 +1,35 @@
+{
+  "query": "\nSELECT 'categories' as tbl, COUNT(*) as total, SUM(CASE WHEN companyId IS NULL THEN 1 ELSE 0 END) as null_count FROM categories\nUNION ALL\nSELECT 'subcategories', COUNT(*), SUM(CASE WHEN companyId IS NULL THEN 1 ELSE 0 END) FROM subcategories\nUNION ALL\nSELECT 'salesChannels', COUNT(*), SUM(CASE WHEN companyId IS NULL THEN 1 ELSE 0 END) FROM salesChannels\nUNION ALL\nSELECT 'products', COUNT(*), SUM(CASE WHEN companyId IS NULL THEN 1 ELSE 0 END) FROM products\nUNION ALL\nSELECT 'partners', COUNT(*), SUM(CASE WHEN companyId IS NULL THEN 1 ELSE 0 END) FROM partners;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute \nSELECT 'categories' as tbl, COUNT(*) as total, SUM(CASE WHEN companyId IS NULL THEN 1 ELSE 0 END) as null_count FROM categories\nUNION ALL\nSELECT 'subcategories', COUNT(*), SUM(CASE WHEN companyId IS NULL THEN 1 ELSE 0 END) FROM subcategories\nUNION ALL\nSELECT 'salesChannels', COUNT(*), SUM(CASE WHEN companyId IS NULL THEN 1 ELSE 0 END) FROM salesChannels\nUNION ALL\nSELECT 'products', COUNT(*), SUM(CASE WHEN companyId IS NULL THEN 1 ELSE 0 END) FROM products\nUNION ALL\nSELECT 'partners', COUNT(*), SUM(CASE WHEN companyId IS NULL THEN 1 ELSE 0 END) FROM partners;\n",
+  "rows": [
+    {
+      "tbl": "categories",
+      "total": "9",
+      "null_count": "0"
+    },
+    {
+      "tbl": "partners",
+      "total": "129",
+      "null_count": "0"
+    },
+    {
+      "tbl": "salesChannels",
+      "total": "4",
+      "null_count": "0"
+    },
+    {
+      "tbl": "subcategories",
+      "total": "48",
+      "null_count": "0"
+    },
+    {
+      "tbl": "products",
+      "total": "1067",
+      "null_count": "0"
+    }
+  ],
+  "messages": [],
+  "stdout": "tbl\ttotal\tnull_count\ncategories\t9\t0\npartners\t129\t0\nsalesChannels\t4\t0\nsubcategories\t48\t0\nproducts\t1067\t0\n",
+  "stderr": "",
+  "execution_time_ms": 55
+}

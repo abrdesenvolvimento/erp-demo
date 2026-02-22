@@ -1,0 +1,35 @@
+{
+  "query": "SELECT id, name, role FROM users;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT id, name, role FROM users;",
+  "rows": [
+    {
+      "id": "3sp2FmLhkenyjqMFmfLoex",
+      "name": "Gabriel Morais",
+      "role": "admin"
+    },
+    {
+      "id": "6DBTSksJmdeiQvgXMcJBYh",
+      "name": "Ricardo Pereira",
+      "role": "admin"
+    },
+    {
+      "id": "SxWub2pstjQMugEvgWaUgn",
+      "name": "Jaine Barros de Oliveira",
+      "role": "consultor"
+    },
+    {
+      "id": "j8R68T3wPMAkij5Kb9Zef8",
+      "name": "Gabriel Morais",
+      "role": "operacional"
+    },
+    {
+      "id": "nJQ5MEcvMtTycyPAzY3UzD",
+      "name": "Adega Beira Rio Osasco",
+      "role": "user"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\trole\n3sp2FmLhkenyjqMFmfLoex\tGabriel Morais\tadmin\n6DBTSksJmdeiQvgXMcJBYh\tRicardo Pereira\tadmin\nSxWub2pstjQMugEvgWaUgn\tJaine Barros de Oliveira\tconsultor\nj8R68T3wPMAkij5Kb9Zef8\tGabriel Morais\toperacional\nnJQ5MEcvMtTycyPAzY3UzD\tAdega Beira Rio Osasco\tuser\n",
+  "stderr": "",
+  "execution_time_ms": 50
+}

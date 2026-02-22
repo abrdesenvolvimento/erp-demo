@@ -1,0 +1,9 @@
+{
+  "query": "ALTER TABLE `subcategories` ADD COLUMN `companyId` int NOT NULL DEFAULT 1;\nALTER TABLE `subcategories` ADD COLUMN `branchId` int NOT NULL DEFAULT 1;\nALTER TABLE `subcategories` ADD INDEX `subcat_company_branch_idx` (`companyId`, `branchId`);\nALTER TABLE `salesChannels` ADD COLUMN `companyId` int NOT NULL DEFAULT 1;\nALTER TABLE `salesChannels` ADD COLUMN `branchId` int NOT NULL DEFAULT 1;\nALTER TABLE `salesChannels` ADD INDEX `sc_company_branch_idx` (`companyId`, `branchId`);\nALTER TABLE `products` ADD COLUMN `companyId` int NOT NULL DEFAULT 1;\nALTER TABLE `products` ADD COLUMN `branchId` int NOT NULL DEFAULT 1;\nALTER TABLE `products` ADD INDEX `prod_company_branch_idx` (`companyId`, `branchId`);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute ALTER TABLE `subcategories` ADD COLUMN `companyId` int NOT NULL DEFAULT 1;\nALTER TABLE `subcategories` ADD COLUMN `branchId` int NOT NULL DEFAULT 1;\nALTER TABLE `subcategories` ADD INDEX `subcat_company_branch_idx` (`companyId`, `branchId`);\nALTER TABLE `salesChannels` ADD COLUMN `companyId` int NOT NULL DEFAULT 1;\nALTER TABLE `salesChannels` ADD COLUMN `branchId` int NOT NULL DEFAULT 1;\nALTER TABLE `salesChannels` ADD INDEX `sc_company_branch_idx` (`companyId`, `branchId`);\nALTER TABLE `products` ADD COLUMN `companyId` int NOT NULL DEFAULT 1;\nALTER TABLE `products` ADD COLUMN `branchId` int NOT NULL DEFAULT 1;\nALTER TABLE `products` ADD INDEX `prod_company_branch_idx` (`companyId`, `branchId`);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 4243
+}

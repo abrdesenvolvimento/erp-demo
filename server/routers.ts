@@ -9,12 +9,14 @@ import { getNowInBrazil, formatDateForInput } from '../shared/dateUtils';
 import { accountingRouter } from './routers/accounting';
 import { ifoodImportRouter } from './routers/ifoodImport';
 import { stockAnalysisRouter } from './routers/stockAnalysis';
+import { companyRouter } from './routers/company';
 
 export const appRouter = router({
   system: systemRouter,
   accounting: accountingRouter,
   ifoodImport: ifoodImportRouter,
   stockAnalysis: stockAnalysisRouter,
+  company: companyRouter,
 
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
@@ -87,8 +89,8 @@ export const appRouter = router({
   categories: router({
     list: protectedProcedure
       .input(z.object({ activeOnly: z.boolean().optional().default(true) }).optional())
-      .query(async ({ input }) => {
-        return await db.getCategories(input?.activeOnly ?? true);
+      .query(async ({ input, ctx }) => {
+        return await db.getCategories(input?.activeOnly ?? true, ctx.activeCompanyId);
       }),
     
     create: protectedProcedure
@@ -96,8 +98,8 @@ export const appRouter = router({
         name: z.string().min(1),
         active: z.boolean().optional().default(true),
       }))
-      .mutation(async ({ input }) => {
-        const id = await db.createCategory(input);
+      .mutation(async ({ input, ctx }) => {
+        const id = await db.createCategory({ ...input, companyId: ctx.activeCompanyId, branchId: ctx.activeBranchId });
         return { id, success: true };
       }),
   }),
@@ -106,8 +108,8 @@ export const appRouter = router({
   subcategories: router({
     list: protectedProcedure
       .input(z.object({ categoryId: z.number().optional() }).optional())
-      .query(async ({ input }) => {
-        return await db.getSubcategories(input?.categoryId);
+      .query(async ({ input, ctx }) => {
+        return await db.getSubcategories(input?.categoryId, ctx.activeCompanyId);
       }),
     
     create: protectedProcedure
@@ -115,8 +117,8 @@ export const appRouter = router({
         name: z.string().min(1),
         categoryId: z.number(),
       }))
-      .mutation(async ({ input }) => {
-        const id = await db.createSubcategory(input);
+      .mutation(async ({ input, ctx }) => {
+        const id = await db.createSubcategory({ ...input, companyId: ctx.activeCompanyId, branchId: ctx.activeBranchId });
         return { id, success: true };
       }),
   }),
@@ -125,8 +127,8 @@ export const appRouter = router({
   salesChannels: router({
     list: protectedProcedure
       .input(z.object({ activeOnly: z.boolean().optional().default(true) }).optional())
-      .query(async ({ input }) => {
-        return await db.getSalesChannels(input?.activeOnly ?? true);
+      .query(async ({ input, ctx }) => {
+        return await db.getSalesChannels(input?.activeOnly ?? true, ctx.activeCompanyId);
       }),
     
     create: protectedProcedure
@@ -136,8 +138,8 @@ export const appRouter = router({
         type: z.enum(["BALCAO", "DELIVERY"]),
         active: z.boolean().optional().default(true),
       }))
-      .mutation(async ({ input }) => {
-        const id = await db.createSalesChannel(input);
+      .mutation(async ({ input, ctx }) => {
+        const id = await db.createSalesChannel({ ...input, companyId: ctx.activeCompanyId, branchId: ctx.activeBranchId });
         return { id, success: true };
       }),
   }),
@@ -154,7 +156,7 @@ export const appRouter = router({
       }).optional())
       .query(async ({ input, ctx }) => {
         console.log('[products.list] Input:', JSON.stringify(input), 'includePrices:', input?.includePrices);
-        const products = await db.getProducts(input);
+        const products = await db.getProducts({ ...input, companyId: ctx.activeCompanyId });
         console.log('[products.list] Total produtos:', products.length);
         if (products.length > 0) {
           console.log('[products.list] Primeiro produto preços:', JSON.stringify(products[0].prices));
@@ -217,11 +219,11 @@ export const appRouter = router({
           quantity: z.union([z.number(), z.string()]).transform(val => typeof val === 'number' ? val : parseFloat(val)),
         })).optional(),
       }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ input, ctx }) => {
         console.log('[products.create] Received input:', JSON.stringify(input, null, 2));
         const { prices, compositions, ...productData } = input;
         console.log('[products.create] Compositions extracted:', compositions);
-        const id = await db.createProduct(productData);
+        const id = await db.createProduct({ ...productData, companyId: ctx.activeCompanyId, branchId: ctx.activeBranchId });
         console.log('[products.create] Product created with ID:', id);
         
         if (!id || isNaN(id)) {
@@ -405,8 +407,8 @@ export const appRouter = router({
         partnerType: z.enum(["CUSTOMER", "SUPPLIER", "BOTH"]).optional(),
         activeOnly: z.boolean().optional().default(true),
       }).optional())
-      .query(async ({ input }) => {
-        return await db.getPartners(input);
+      .query(async ({ input, ctx }) => {
+        return await db.getPartners({ ...input, companyId: ctx.activeCompanyId });
       }),
     
     get: protectedProcedure
@@ -436,8 +438,8 @@ export const appRouter = router({
         creditPolicy: z.enum(["ACTIVE", "BLOCKED"]).optional().default("ACTIVE"),
         active: z.boolean().optional().default(true),
       }))
-      .mutation(async ({ input }) => {
-        const id = await db.createPartner(input);
+      .mutation(async ({ input, ctx }) => {
+        const id = await db.createPartner({ ...input, companyId: ctx.activeCompanyId, branchId: ctx.activeBranchId });
         return { id, success: true };
       }),
     

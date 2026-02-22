@@ -841,3 +841,27 @@ Despesa de impostos aparece tanto em janeiro quanto em fevereiro após edição 
 - [x] Verificar se queries de stockAnalysisQueries.ts filtram por companyId (NÃO filtram)
 - [x] Verificar se FechamentoMensalNovo e AnaliseEstoque estão preparados para multiempresa (NÃO estão)
 - [x] Documentar gaps e plano de ação para multiempresa (documento criado)
+
+
+### Multiempresa Fase 1 — Fundação (22/02/2026)
+- [x] Schema: criar tabela `companies` (id, name, tradeName, docNumber, segment, active)
+- [x] Schema: criar tabela `branches` (id, companyId, name, address, active)
+- [x] Schema: criar tabela `userCompanies` (userId, companyId, branchId, role, isDefault)
+- [x] Schema: adicionar companyId+branchId em categories
+- [x] Schema: adicionar companyId+branchId em subcategories
+- [x] Schema: adicionar companyId+branchId em salesChannels
+- [x] Schema: adicionar companyId+branchId em products
+- [x] Schema: adicionar companyId+branchId em productCompositions
+- [x] Schema: adicionar companyId+branchId em productPrices
+- [x] Schema: adicionar companyId+branchId em partners
+- [x] Executar migrações via SQL direto (db:push com problemas interativos)
+- [x] Backend: alterar context.ts para injetar activeCompanyId/activeBranchId
+- [x] Backend: alterar queries de cadastros base para filtrar por companyId/branchId
+- [x] Backend: alterar routers de cadastros base para usar ctx.activeCompanyId/activeBranchId
+- [x] Frontend: criar CompanyContext (empresa ativa, filial ativa, troca)
+- [x] Frontend: criar seletor Empresa → Filial no DashboardLayout
+- [x] Frontend: invalidar queries ao trocar empresa/filial
+- [x] Migração: cadastrar Adega Beira Rio (companyId=1, branchId=1, segment=Adega)
+- [x] Migração: cadastrar A Brasa Reúne (companyId=2, branchId=2, segment=Hamburgueria)
+- [x] Migração: atualizar dados existentes com companyId=1, branchId=1
+- [x] Migração: associar usuários existentes às empresas (userCompanies)

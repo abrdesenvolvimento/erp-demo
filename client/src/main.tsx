@@ -43,9 +43,16 @@ const trpcClient = trpc.createClient({
       url: "/api/trpc",
       transformer: superjson,
       fetch(input, init) {
+        // Injetar headers de empresa/filial ativa
+        const headers = new Headers((init as RequestInit)?.headers || {});
+        const companyId = document.cookie.match(/(?:^| )activeCompanyId=([^;]+)/)?.[1];
+        const branchId = document.cookie.match(/(?:^| )activeBranchId=([^;]+)/)?.[1];
+        if (companyId) headers.set('x-company-id', companyId);
+        if (branchId) headers.set('x-branch-id', branchId);
         return globalThis.fetch(input, {
           ...(init ?? {}),
           credentials: "include",
+          headers,
         });
       },
     }),

@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE IF NOT EXISTS `branches` (\n  `id` int AUTO_INCREMENT PRIMARY KEY,\n  `companyId` int NOT NULL,\n  `name` varchar(200) NOT NULL,\n  `street` varchar(255),\n  `streetNumber` varchar(20),\n  `complement` varchar(100),\n  `neighborhood` varchar(100),\n  `city` varchar(100),\n  `state` varchar(2),\n  `zipCode` varchar(10),\n  `active` boolean NOT NULL DEFAULT true,\n  `createdAt` timestamp DEFAULT CURRENT_TIMESTAMP,\n  `updatedAt` timestamp DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n  INDEX `branch_company_idx` (`companyId`)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute CREATE TABLE IF NOT EXISTS `branches` (\n  `id` int AUTO_INCREMENT PRIMARY KEY,\n  `companyId` int NOT NULL,\n  `name` varchar(200) NOT NULL,\n  `street` varchar(255),\n  `streetNumber` varchar(20),\n  `complement` varchar(100),\n  `neighborhood` varchar(100),\n  `city` varchar(100),\n  `state` varchar(2),\n  `zipCode` varchar(10),\n  `active` boolean NOT NULL DEFAULT true,\n  `createdAt` timestamp DEFAULT CURRENT_TIMESTAMP,\n  `updatedAt` timestamp DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n  INDEX `branch_company_idx` (`companyId`)\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 200
+}

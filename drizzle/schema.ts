@@ -11,6 +11,69 @@ import {
   uniqueIndex,
 } from "drizzle-orm/mysql-core";
 
+// ==================== MULTIEMPRESA ====================
+
+// Empresas
+export const companies = mysqlTable("companies", {
+  id: int("id").primaryKey().autoincrement(),
+  name: varchar("name", { length: 200 }).notNull(),
+  tradeName: varchar("tradeName", { length: 200 }),
+  docNumber: varchar("docNumber", { length: 20 }),
+  stateRegistration: varchar("stateRegistration", { length: 30 }),
+  segment: varchar("segment", { length: 100 }),
+  phone: varchar("phone", { length: 20 }),
+  whatsapp: varchar("whatsapp", { length: 20 }),
+  active: boolean("active").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow(),
+});
+
+export type Company = typeof companies.$inferSelect;
+export type InsertCompany = typeof companies.$inferInsert;
+
+// Filiais
+export const branches = mysqlTable("branches", {
+  id: int("id").primaryKey().autoincrement(),
+  companyId: int("companyId").notNull(),
+  name: varchar("name", { length: 200 }).notNull(),
+  street: varchar("street", { length: 255 }),
+  streetNumber: varchar("streetNumber", { length: 20 }),
+  complement: varchar("complement", { length: 100 }),
+  neighborhood: varchar("neighborhood", { length: 100 }),
+  city: varchar("city", { length: 100 }),
+  state: varchar("state", { length: 2 }),
+  zipCode: varchar("zipCode", { length: 10 }),
+  active: boolean("active").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow(),
+}, (table) => ({
+  companyIdx: index("branch_company_idx").on(table.companyId),
+}));
+
+export type Branch = typeof branches.$inferSelect;
+export type InsertBranch = typeof branches.$inferInsert;
+
+// Relação Usuário ↔ Empresa/Filial
+export const userCompanies = mysqlTable("userCompanies", {
+  id: int("id").primaryKey().autoincrement(),
+  userId: varchar("userId", { length: 64 }).notNull(),
+  companyId: int("companyId").notNull(),
+  branchId: int("branchId"),
+  role: mysqlEnum("role", ["admin", "operacional", "consultor"]).default("operacional").notNull(),
+  isDefault: boolean("isDefault").default(false).notNull(),
+  createdAt: timestamp("createdAt").defaultNow(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow(),
+}, (table) => ({
+  userIdx: index("uc_user_idx").on(table.userId),
+  companyIdx: index("uc_company_idx").on(table.companyId),
+  userCompanyIdx: uniqueIndex("uc_user_company_idx").on(table.userId, table.companyId, table.branchId),
+}));
+
+export type UserCompany = typeof userCompanies.$inferSelect;
+export type InsertUserCompany = typeof userCompanies.$inferInsert;
+
+// ==================== USUÁRIOS ====================
+
 // Usuários do sistema
 export const users = mysqlTable("users", {
   id: varchar("id", { length: 64 }).primaryKey(),
@@ -28,11 +91,15 @@ export type InsertUser = typeof users.$inferInsert;
 // Categorias de produtos
 export const categories = mysqlTable("categories", {
   id: int("id").primaryKey().autoincrement(),
+  companyId: int("companyId").notNull().default(1),
+  branchId: int("branchId").notNull().default(1),
   name: varchar("name", { length: 100 }).notNull(),
   active: boolean("active").default(true).notNull(),
   createdAt: timestamp("createdAt").defaultNow(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow(),
-});
+}, (table) => ({
+  companyBranchIdx: index("cat_company_branch_idx").on(table.companyId, table.branchId),
+}));
 
 export type Category = typeof categories.$inferSelect;
 export type InsertCategory = typeof categories.$inferInsert;
@@ -40,12 +107,16 @@ export type InsertCategory = typeof categories.$inferInsert;
 // Subcategorias
 export const subcategories = mysqlTable("subcategories", {
   id: int("id").primaryKey().autoincrement(),
+  companyId: int("companyId").notNull().default(1),
+  branchId: int("branchId").notNull().default(1),
   name: varchar("name", { length: 100 }).notNull(),
   categoryId: int("categoryId").notNull(),
   active: boolean("active").default(true).notNull(),
   createdAt: timestamp("createdAt").defaultNow(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow(),
-});
+}, (table) => ({
+  companyBranchIdx: index("subcat_company_branch_idx").on(table.companyId, table.branchId),
+}));
 
 export type Subcategory = typeof subcategories.$inferSelect;
 export type InsertSubcategory = typeof subcategories.$inferInsert;
@@ -53,13 +124,17 @@ export type InsertSubcategory = typeof subcategories.$inferInsert;
 // Canais de venda
 export const salesChannels = mysqlTable("salesChannels", {
   id: int("id").primaryKey().autoincrement(),
+  companyId: int("companyId").notNull().default(1),
+  branchId: int("branchId").notNull().default(1),
   code: varchar("code", { length: 50 }).notNull(),
   name: varchar("name", { length: 100 }).notNull(),
   type: mysqlEnum("type", ["BALCAO", "DELIVERY"]).notNull(),
   active: boolean("active").default(true).notNull(),
   createdAt: timestamp("createdAt").defaultNow(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow(),
-});
+}, (table) => ({
+  companyBranchIdx: index("sc_company_branch_idx").on(table.companyId, table.branchId),
+}));
 
 export type SalesChannel = typeof salesChannels.$inferSelect;
 export type InsertSalesChannel = typeof salesChannels.$inferInsert;
@@ -67,6 +142,8 @@ export type InsertSalesChannel = typeof salesChannels.$inferInsert;
 // Produtos
 export const products = mysqlTable("products", {
   id: int("id").primaryKey().autoincrement(),
+  companyId: int("companyId").notNull().default(1),
+  branchId: int("branchId").notNull().default(1),
   name: varchar("name", { length: 200 }).notNull(),
   categoryId: int("categoryId").notNull(),
   subcategoryId: int("subcategoryId"),
@@ -85,6 +162,7 @@ export const products = mysqlTable("products", {
 }, (table) => ({
   eanIdx: index("ean_idx").on(table.ean),
   nameIdx: index("name_idx").on(table.name),
+  companyBranchIdx: index("prod_company_branch_idx").on(table.companyId, table.branchId),
 }));
 
 export type Product = typeof products.$inferSelect;
@@ -93,6 +171,8 @@ export type InsertProduct = typeof products.$inferInsert;
 // Composição de produtos (para packs)
 export const productCompositions = mysqlTable("productCompositions", {
   id: int("id").primaryKey().autoincrement(),
+  companyId: int("companyId").notNull().default(1),
+  branchId: int("branchId").notNull().default(1),
   parentProductId: int("parentProductId").notNull(),
   childProductId: int("childProductId").notNull(),
   quantity: decimal("quantity", { precision: 10, scale: 3 }).notNull(),
@@ -105,6 +185,8 @@ export type InsertProductComposition = typeof productCompositions.$inferInsert;
 // Preços por canal
 export const productPrices = mysqlTable("productPrices", {
   id: int("id").primaryKey().autoincrement(),
+  companyId: int("companyId").notNull().default(1),
+  branchId: int("branchId").notNull().default(1),
   productId: int("productId").notNull(),
   channelId: int("channelId").notNull(),
   price: decimal("price", { precision: 10, scale: 2 }).notNull(),
@@ -121,6 +203,8 @@ export type InsertProductPrice = typeof productPrices.$inferInsert;
 // Histórico de movimentações de produtos
 export const productMovements = mysqlTable("productMovements", {
   id: int("id").primaryKey().autoincrement(),
+  companyId: int("companyId").notNull().default(1),
+  branchId: int("branchId").notNull().default(1),
   productId: int("productId").notNull(),
   date: timestamp("date").notNull(),
   type: mysqlEnum("type", ["ENTRADA", "SAIDA", "PERDA", "ACERTO", "ESTORNO"]).notNull(),
@@ -133,6 +217,7 @@ export const productMovements = mysqlTable("productMovements", {
   productIdx: index("product_idx").on(table.productId),
   dateIdx: index("date_idx").on(table.date),
   typeIdx: index("type_idx").on(table.type),
+  companyBranchIdx: index("pm_company_branch_idx").on(table.companyId, table.branchId),
 }));
 
 export type ProductMovement = typeof productMovements.$inferSelect;
@@ -141,6 +226,8 @@ export type InsertProductMovement = typeof productMovements.$inferInsert;
 // Parceiros (clientes e fornecedores)
 export const partners = mysqlTable("partners", {
   id: int("id").primaryKey().autoincrement(),
+  companyId: int("companyId").notNull().default(1),
+  branchId: int("branchId").notNull().default(1),
   name: varchar("name", { length: 200 }).notNull(),
   tradeName: varchar("tradeName", { length: 200 }), // Nome Fantasia
   docNumber: varchar("docNumber", { length: 20 }),
@@ -164,6 +251,7 @@ export const partners = mysqlTable("partners", {
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow(),
 }, (table) => ({
   docIdx: index("doc_idx").on(table.docNumber),
+  companyBranchIdx: index("partner_company_branch_idx").on(table.companyId, table.branchId),
 }));
 
 export type Partner = typeof partners.$inferSelect;

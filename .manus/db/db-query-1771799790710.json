@@ -1,0 +1,9 @@
+{
+  "query": "INSERT INTO `companies` (`name`, `tradeName`, `docNumber`, `stateRegistration`, `segment`, `phone`, `whatsapp`) VALUES\n('ADEGA BEIRA RIO ROCHDALE LTDA', 'Adega Beira Rio', NULL, NULL, 'Adega', NULL, NULL),\n('A BRASA REUNE BAR E HAMBURGUERIA LTDA', 'A Brasa Reúne Bar e Hamburgueria', '65.218.771/0001-03', '158.214.440.119', 'Hamburgueria', NULL, '11 9 9014-244');\n\nINSERT INTO `branches` (`companyId`, `name`, `street`, `streetNumber`, `neighborhood`, `city`, `state`, `zipCode`) VALUES\n(1, 'Rochdale', NULL, NULL, 'Rochdale', 'Osasco', 'SP', NULL),\n(2, 'Rochdale', 'Av. Brasil', '2009', 'Rochdale', 'Osasco', 'SP', '06220-050');",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute INSERT INTO `companies` (`name`, `tradeName`, `docNumber`, `stateRegistration`, `segment`, `phone`, `whatsapp`) VALUES\n('ADEGA BEIRA RIO ROCHDALE LTDA', 'Adega Beira Rio', NULL, NULL, 'Adega', NULL, NULL),\n('A BRASA REUNE BAR E HAMBURGUERIA LTDA', 'A Brasa Reúne Bar e Hamburgueria', '65.218.771/0001-03', '158.214.440.119', 'Hamburgueria', NULL, '11 9 9014-244');\n\nINSERT INTO `branches` (`companyId`, `name`, `street`, `streetNumber`, `neighborhood`, `city`, `state`, `zipCode`) VALUES\n(1, 'Rochdale', NULL, NULL, 'Rochdale', 'Osasco', 'SP', NULL),\n(2, 'Rochdale', 'Av. Brasil', '2009', 'Rochdale', 'Osasco', 'SP', '06220-050');",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 89
+}

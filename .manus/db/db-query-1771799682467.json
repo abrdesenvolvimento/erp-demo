@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE IF NOT EXISTS `userCompanies` (\n  `id` int AUTO_INCREMENT PRIMARY KEY,\n  `userId` varchar(64) NOT NULL,\n  `companyId` int NOT NULL,\n  `branchId` int,\n  `role` enum('admin','operacional','consultor') NOT NULL DEFAULT 'operacional',\n  `isDefault` boolean NOT NULL DEFAULT false,\n  `createdAt` timestamp DEFAULT CURRENT_TIMESTAMP,\n  `updatedAt` timestamp DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n  INDEX `uc_user_idx` (`userId`),\n  INDEX `uc_company_idx` (`companyId`),\n  UNIQUE INDEX `uc_user_company_idx` (`userId`, `companyId`, `branchId`)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute CREATE TABLE IF NOT EXISTS `userCompanies` (\n  `id` int AUTO_INCREMENT PRIMARY KEY,\n  `userId` varchar(64) NOT NULL,\n  `companyId` int NOT NULL,\n  `branchId` int,\n  `role` enum('admin','operacional','consultor') NOT NULL DEFAULT 'operacional',\n  `isDefault` boolean NOT NULL DEFAULT false,\n  `createdAt` timestamp DEFAULT CURRENT_TIMESTAMP,\n  `updatedAt` timestamp DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n  INDEX `uc_user_idx` (`userId`),\n  INDEX `uc_company_idx` (`companyId`),\n  UNIQUE INDEX `uc_user_company_idx` (`userId`, `companyId`, `branchId`)\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 194
+}

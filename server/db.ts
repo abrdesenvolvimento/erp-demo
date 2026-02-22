@@ -166,19 +166,27 @@ export async function deleteUser(userId: string) {
 }
 
 // ==================== CATEGORIAS ====================
-export async function getCategories(activeOnly = true) {
+export async function getCategories(activeOnly = true, companyId?: number) {
   const db = await getDb();
   if (!db) return [];
   
-  let query = db.select().from(categories);
+  const conditions: SQL[] = [];
   if (activeOnly) {
-    query = query.where(eq(categories.active, true)) as any;
+    conditions.push(eq(categories.active, true));
+  }
+  if (companyId) {
+    conditions.push(eq(categories.companyId, companyId));
+  }
+  
+  let query = db.select().from(categories);
+  if (conditions.length > 0) {
+    query = query.where(and(...conditions)) as any;
   }
   
   return await query.orderBy(categories.name);
 }
 
-export async function createCategory(data: InsertCategory) {
+export async function createCategory(data: InsertCategory & { companyId?: number; branchId?: number }) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
@@ -194,13 +202,21 @@ export async function updateCategory(id: number, data: Partial<InsertCategory>) 
 }
 
 // ==================== SUBCATEGORIAS ====================
-export async function getSubcategories(categoryId?: number) {
+export async function getSubcategories(categoryId?: number, companyId?: number) {
   const db = await getDb();
   if (!db) return [];
   
-  let query = db.select().from(subcategories);
+  const conditions: SQL[] = [];
   if (categoryId) {
-    query = query.where(eq(subcategories.categoryId, categoryId)) as any;
+    conditions.push(eq(subcategories.categoryId, categoryId));
+  }
+  if (companyId) {
+    conditions.push(eq(subcategories.companyId, companyId));
+  }
+  
+  let query = db.select().from(subcategories);
+  if (conditions.length > 0) {
+    query = query.where(and(...conditions)) as any;
   }
   
   return await query.orderBy(subcategories.name);
@@ -215,13 +231,21 @@ export async function createSubcategory(data: InsertSubcategory) {
 }
 
 // ==================== CANAIS DE VENDA ====================
-export async function getSalesChannels(activeOnly = true) {
+export async function getSalesChannels(activeOnly = true, companyId?: number) {
   const db = await getDb();
   if (!db) return [];
   
-  let query = db.select().from(salesChannels);
+  const conditions: SQL[] = [];
   if (activeOnly) {
-    query = query.where(eq(salesChannels.active, true)) as any;
+    conditions.push(eq(salesChannels.active, true));
+  }
+  if (companyId) {
+    conditions.push(eq(salesChannels.companyId, companyId));
+  }
+  
+  let query = db.select().from(salesChannels);
+  if (conditions.length > 0) {
+    query = query.where(and(...conditions)) as any;
   }
   
   return await query.orderBy(salesChannels.name);
@@ -236,13 +260,17 @@ export async function createSalesChannel(data: InsertSalesChannel) {
 }
 
 // ==================== PRODUTOS ====================
-export async function getProducts(filters?: { search?: string; categoryId?: number; subcategoryId?: number; activeOnly?: boolean; includePrices?: boolean }) {
+export async function getProducts(filters?: { search?: string; categoryId?: number; subcategoryId?: number; activeOnly?: boolean; includePrices?: boolean; companyId?: number }) {
   const db = await getDb();
   if (!db) return [];
   
   // Get products
   let query = db.select().from(products);
   const conditions = [];
+  
+  if (filters?.companyId) {
+    conditions.push(eq(products.companyId, filters.companyId));
+  }
   
   if (filters?.activeOnly !== false) {
     conditions.push(eq(products.active, true));
@@ -421,12 +449,16 @@ export async function setProductPrice(data: InsertProductPrice) {
 }
 
 // ==================== PARCEIROS ====================
-export async function getPartners(filters?: { search?: string; partnerType?: string; activeOnly?: boolean }) {
+export async function getPartners(filters?: { search?: string; partnerType?: string; activeOnly?: boolean; companyId?: number }) {
   const db = await getDb();
   if (!db) return [];
   
   let query = db.select().from(partners);
   const conditions = [];
+  
+  if (filters?.companyId) {
+    conditions.push(eq(partners.companyId, filters.companyId));
+  }
   
   if (filters?.activeOnly !== false) {
     conditions.push(eq(partners.active, true));

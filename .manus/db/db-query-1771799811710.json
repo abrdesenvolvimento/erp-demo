@@ -1,0 +1,9 @@
+{
+  "query": "INSERT INTO `userCompanies` (`userId`, `companyId`, `branchId`, `role`, `isDefault`) VALUES\n('3sp2FmLhkenyjqMFmfLoex', 1, 1, 'admin', true),\n('6DBTSksJmdeiQvgXMcJBYh', 1, 1, 'admin', true),\n('SxWub2pstjQMugEvgWaUgn', 1, 1, 'consultor', true),\n('j8R68T3wPMAkij5Kb9Zef8', 1, 1, 'operacional', true),\n('nJQ5MEcvMtTycyPAzY3UzD', 1, 1, 'operacional', true);\n\nINSERT INTO `userCompanies` (`userId`, `companyId`, `branchId`, `role`, `isDefault`) VALUES\n('3sp2FmLhkenyjqMFmfLoex', 2, 2, 'admin', false),\n('6DBTSksJmdeiQvgXMcJBYh', 2, 2, 'admin', false);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute INSERT INTO `userCompanies` (`userId`, `companyId`, `branchId`, `role`, `isDefault`) VALUES\n('3sp2FmLhkenyjqMFmfLoex', 1, 1, 'admin', true),\n('6DBTSksJmdeiQvgXMcJBYh', 1, 1, 'admin', true),\n('SxWub2pstjQMugEvgWaUgn', 1, 1, 'consultor', true),\n('j8R68T3wPMAkij5Kb9Zef8', 1, 1, 'operacional', true),\n('nJQ5MEcvMtTycyPAzY3UzD', 1, 1, 'operacional', true);\n\nINSERT INTO `userCompanies` (`userId`, `companyId`, `branchId`, `role`, `isDefault`) VALUES\n('3sp2FmLhkenyjqMFmfLoex', 2, 2, 'admin', false),\n('6DBTSksJmdeiQvgXMcJBYh', 2, 2, 'admin', false);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 73
+}
