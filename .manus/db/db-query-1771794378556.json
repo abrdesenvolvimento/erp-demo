@@ -1,0 +1,103 @@
+{
+  "query": "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'products' AND COLUMN_NAME LIKE '%sub%'; SELECT DISTINCT subcategory FROM products WHERE subcategory IS NOT NULL LIMIT 20; SELECT id, name FROM salesChannels;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'products' AND COLUMN_NAME LIKE '%sub%'; SELECT DISTINCT subcategory FROM products WHERE subcategory IS NOT NULL LIMIT 20; SELECT id, name FROM salesChannels;",
+  "rows": [
+    {
+      "COLUMN_NAME": "subcategoryId"
+    },
+    {
+      "COLUMN_NAME": "subcategory"
+    },
+    {
+      "COLUMN_NAME": "subcategoryId"
+    },
+    {
+      "COLUMN_NAME": "subcategory"
+    },
+    {
+      "COLUMN_NAME": "subcategory_id"
+    },
+    {
+      "COLUMN_NAME": "subcategory"
+    },
+    {
+      "COLUMN_NAME": "Mer"
+    },
+    {
+      "COLUMN_NAME": "Gelo de Sabor"
+    },
+    {
+      "COLUMN_NAME": "Água de Coco"
+    },
+    {
+      "COLUMN_NAME": "Dose Whisky"
+    },
+    {
+      "COLUMN_NAME": "Carvão"
+    },
+    {
+      "COLUMN_NAME": "Amendoim"
+    },
+    {
+      "COLUMN_NAME": "Vinho"
+    },
+    {
+      "COLUMN_NAME": "Licor"
+    },
+    {
+      "COLUMN_NAME": "Cachaça"
+    },
+    {
+      "COLUMN_NAME": "Vodka"
+    },
+    {
+      "COLUMN_NAME": "Seda"
+    },
+    {
+      "COLUMN_NAME": "Aluminio"
+    },
+    {
+      "COLUMN_NAME": "Piteira"
+    },
+    {
+      "COLUMN_NAME": "Refrigerante"
+    },
+    {
+      "COLUMN_NAME": "Chocolate"
+    },
+    {
+      "COLUMN_NAME": "Essência"
+    },
+    {
+      "COLUMN_NAME": "Suco"
+    },
+    {
+      "COLUMN_NAME": "Bitter"
+    },
+    {
+      "COLUMN_NAME": "Bebida Mista"
+    },
+    {
+      "COLUMN_NAME": "Rosh"
+    },
+    {
+      "COLUMN_NAME": "id\tname"
+    },
+    {
+      "COLUMN_NAME": "1\tBalcão / A Prazo"
+    },
+    {
+      "COLUMN_NAME": "2\tDelivery iFood"
+    },
+    {
+      "COLUMN_NAME": "3\tDelivery 99Food"
+    },
+    {
+      "COLUMN_NAME": "4\tDelivery Próprio"
+    }
+  ],
+  "messages": [],
+  "stdout": "COLUMN_NAME\nsubcategoryId\nsubcategory\nsubcategoryId\nsubcategory\nsubcategory_id\nsubcategory\nMer\nGelo de Sabor\nÁgua de Coco\nDose Whisky\nCarvão\nAmendoim\nVinho\nLicor\nCachaça\nVodka\nSeda\nAluminio\nPiteira\nRefrigerante\nChocolate\nEssência\nSuco\nBitter\nBebida Mista\nRosh\nid\tname\n1\tBalcão / A Prazo\n2\tDelivery iFood\n3\tDelivery 99Food\n4\tDelivery Próprio\n",
+  "stderr": "",
+  "execution_time_ms": 79
+}

@@ -822,3 +822,10 @@ Despesa de impostos aparece tanto em janeiro quanto em fevereiro após edição 
 ### Substituição Rota Fechamento (22/02/2026)
 - [x] Substituir rota /fechamento pelo FechamentoMensalNovo
 - [x] Rota /fechamento agora aponta para FechamentoMensalNovo
+
+### Melhorias Análise de Estoque v2 (22/02/2026)
+- [x] Renomear "Dias Estoque" para "Dias de Estoque" em todas as tabelas
+- [x] Adicionar filtro de Subcategoria na tabela de produtos
+- [x] Adicionar colunas de vendas por canal (Balcão/A Prazo vs Delivery) na tabela de produtos
+- [x] Criar aba "Produtos Parados" (filtro por dias sem venda: 30, 60, 90, 120+)
+- [x] Criar aba "Classificação ABC" (por faturamento: A=80%, B=15%, C=5%)

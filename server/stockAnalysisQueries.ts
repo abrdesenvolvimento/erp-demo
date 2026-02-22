@@ -26,11 +26,14 @@ export interface StockAnalysisProduct {
   productName: string;
   categoryId: number;
   categoryName: string;
+  subcategory: string | null; // Subcategoria do produto
   currentStock: number;       // Qtd em estoque
   avgCost: number;            // Custo médio atual
   stockValue: number;         // Valor em estoque (qtd * custo)
   cmv: number;                // CMV do período
   qtdSold: number;            // Quantidade vendida no período
+  qtdSoldBalcao: number;      // Vendido Balcão/A Prazo
+  qtdSoldDelivery: number;    // Vendido Delivery (iFood+99+Próprio)
   turnover: number;           // Giro do produto
   daysOfStock: number;        // Dias de estoque
   lastPurchaseDate: string | null;  // Data da última compra
@@ -39,6 +42,9 @@ export interface StockAnalysisProduct {
   costVariation: number | null;     // Variação % do custo
   entriesInPeriod: number;    // Qtd de entradas no período
   totalPurchased: number;     // Qtd total comprada no período
+  abcClass?: string;          // Classificação ABC (A, B, C)
+  lastSaleDate?: string | null; // Data da última venda
+  daysSinceLastSale?: number;   // Dias desde última venda
 }
 
 // ==================== QUERIES ====================
@@ -206,12 +212,15 @@ export async function getStockAnalysisByProduct(
   prevStartDate: string,
   prevEndDate: string,
   daysInPeriod: number,
-  categoryId?: number
+  categoryId?: number,
+  subcategory?: string
 ): Promise<StockAnalysisProduct[]> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
   const categoryFilter = categoryId ? `AND p.categoryId = ${categoryId}` : '';
+
+  const subcategoryFilter = subcategory ? `AND p.subcategory = '${subcategory.replace(/'/g, "''")}'` : '';
 
   // 1. Produtos com estoque atual
   const productsResult = await db.execute(sql.raw(`
@@ -220,6 +229,7 @@ export async function getStockAnalysisByProduct(
       p.name as productName,
       c.id as categoryId,
       c.name as categoryName,
+      p.subcategory,
       p.currentStock,
       CAST(p.avgCost AS DECIMAL(12,4)) as avgCost
     FROM products p
@@ -228,6 +238,7 @@ export async function getStockAnalysisByProduct(
       AND (p.isComposite = 0 OR p.isComposite IS NULL)
       AND p.currentStock > 0
       ${categoryFilter}
+      ${subcategoryFilter}
     ORDER BY (p.currentStock * p.avgCost) DESC
   `));
 
@@ -236,12 +247,14 @@ export async function getStockAnalysisByProduct(
 
   const productIds = productRows.map((r: any) => r.productId).join(',');
 
-  // 2. CMV e quantidade vendida por produto no período
+  // 2. CMV e quantidade vendida por produto no período (com separação por canal)
   const cmvResult = await db.execute(sql.raw(`
     SELECT 
       si.productId,
       SUM(si.quantity * p.avgCost) as cmv,
-      SUM(si.quantity) as qtdSold
+      SUM(si.quantity) as qtdSold,
+      SUM(CASE WHEN s.saleType IN ('BALCAO','A_PRAZO') THEN si.quantity ELSE 0 END) as qtdSoldBalcao,
+      SUM(CASE WHEN s.saleType = 'DELIVERY' THEN si.quantity ELSE 0 END) as qtdSoldDelivery
     FROM saleItems si
     INNER JOIN sales s ON si.saleId = s.id
     INNER JOIN products p ON si.productId = p.id
@@ -249,6 +262,18 @@ export async function getStockAnalysisByProduct(
       AND si.productId IN (${productIds})
       AND DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) >= '${startDate}'
       AND DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) <= '${endDate}'
+    GROUP BY si.productId
+  `));
+
+  // 2b. Última venda por produto (para Produtos Parados)
+  const lastSaleResult = await db.execute(sql.raw(`
+    SELECT 
+      si.productId,
+      MAX(DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00'))) as lastSaleDate
+    FROM saleItems si
+    INNER JOIN sales s ON si.saleId = s.id
+    WHERE s.status = 'ACTIVE'
+      AND si.productId IN (${productIds})
     GROUP BY si.productId
   `));
 
@@ -323,9 +348,20 @@ export async function getStockAnalysisByProduct(
   `));
 
   // Mapear tudo
-  const cmvMap: Record<number, { cmv: number; qtdSold: number }> = {};
+  const cmvMap: Record<number, { cmv: number; qtdSold: number; qtdSoldBalcao: number; qtdSoldDelivery: number }> = {};
   for (const r of (cmvResult[0] as unknown as any[])) {
-    cmvMap[r.productId] = { cmv: parseFloat(r.cmv || '0'), qtdSold: parseFloat(r.qtdSold || '0') };
+    cmvMap[r.productId] = {
+      cmv: parseFloat(r.cmv || '0'),
+      qtdSold: parseFloat(r.qtdSold || '0'),
+      qtdSoldBalcao: parseFloat(r.qtdSoldBalcao || '0'),
+      qtdSoldDelivery: parseFloat(r.qtdSoldDelivery || '0'),
+    };
+  }
+
+  const lastSaleMap: Record<number, string> = {};
+  for (const r of (lastSaleResult[0] as unknown as any[])) {
+    const d = r.lastSaleDate;
+    lastSaleMap[r.productId] = d instanceof Date ? d.toISOString().split('T')[0] : String(d || '').split('T')[0];
   }
 
   const lastPurchaseMap: Record<number, string> = {};
@@ -361,7 +397,7 @@ export async function getStockAnalysisByProduct(
     const currentStock = parseFloat(row.currentStock || '0');
     const avgCost = parseFloat(row.avgCost || '0');
     const stockValue = currentStock * avgCost;
-    const cmvData = cmvMap[pid] || { cmv: 0, qtdSold: 0 };
+    const cmvData = cmvMap[pid] || { cmv: 0, qtdSold: 0, qtdSoldBalcao: 0, qtdSoldDelivery: 0 };
     const dailyCmv = daysInPeriod > 0 ? cmvData.cmv / daysInPeriod : 0;
     const turnover = stockValue > 0 ? cmvData.cmv / stockValue : 0;
     const daysOfStock = dailyCmv > 0 ? stockValue / dailyCmv : 999;
@@ -375,16 +411,28 @@ export async function getStockAnalysisByProduct(
 
     const entries = entriesMap[pid] || { count: 0, total: 0 };
 
+    // Calcular dias desde última venda
+    const lastSaleDateStr = lastSaleMap[pid] || null;
+    let daysSinceLastSale: number | undefined;
+    if (lastSaleDateStr) {
+      const lastSale = new Date(lastSaleDateStr + 'T12:00:00');
+      const now = new Date();
+      daysSinceLastSale = Math.floor((now.getTime() - lastSale.getTime()) / (1000 * 60 * 60 * 24));
+    }
+
     results.push({
       productId: pid,
       productName: row.productName,
       categoryId: row.categoryId,
       categoryName: row.categoryName,
+      subcategory: row.subcategory || null,
       currentStock,
       avgCost: Math.round(avgCost * 100) / 100,
       stockValue: Math.round(stockValue * 100) / 100,
       cmv: Math.round(cmvData.cmv * 100) / 100,
       qtdSold: Math.round(cmvData.qtdSold * 100) / 100,
+      qtdSoldBalcao: Math.round(cmvData.qtdSoldBalcao * 100) / 100,
+      qtdSoldDelivery: Math.round(cmvData.qtdSoldDelivery * 100) / 100,
       turnover: Math.round(turnover * 100) / 100,
       daysOfStock: Math.min(Math.round(daysOfStock), 999),
       lastPurchaseDate: lastPurchaseMap[pid] || null,
@@ -393,8 +441,31 @@ export async function getStockAnalysisByProduct(
       costVariation,
       entriesInPeriod: entries.count,
       totalPurchased: Math.round(entries.total * 100) / 100,
+      lastSaleDate: lastSaleDateStr,
+      daysSinceLastSale,
     });
   }
+
+  // Calcular classificação ABC por faturamento (usando CMV como proxy)
+  // Ordenar por CMV desc, acumular %, classificar A=80%, B=15%, C=5%
+  const sortedByCmv = [...results].sort((a, b) => b.cmv - a.cmv);
+  const totalCmv = sortedByCmv.reduce((s, p) => s + p.cmv, 0);
+  let accumulated = 0;
+  for (const prod of sortedByCmv) {
+    accumulated += prod.cmv;
+    const pct = totalCmv > 0 ? (accumulated / totalCmv) * 100 : 100;
+    if (pct <= 80) {
+      prod.abcClass = 'A';
+    } else if (pct <= 95) {
+      prod.abcClass = 'B';
+    } else {
+      prod.abcClass = 'C';
+    }
+  }
+  // Atualizar no array original
+  const abcMap: Record<number, string> = {};
+  for (const p of sortedByCmv) abcMap[p.productId] = p.abcClass || 'C';
+  for (const r of results) r.abcClass = abcMap[r.productId] || 'C';
 
   return results;
 }

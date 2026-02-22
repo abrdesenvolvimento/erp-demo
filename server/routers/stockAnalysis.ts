@@ -5,6 +5,8 @@
 import { z } from "zod";
 import { protectedProcedure, router } from "../_core/trpc";
 import { getStockAnalysisByCategory, getStockAnalysisByProduct } from "../stockAnalysisQueries";
+import { sql } from "drizzle-orm";
+import { getDb } from "../db";
 
 function getDaysInMonth(year: number, month: number): number {
   return new Date(year, month, 0).getDate();
@@ -63,9 +65,32 @@ export const stockAnalysisRouter = router({
       year: z.number(),
       month: z.number().min(1).max(12),
       categoryId: z.number().optional(),
+      subcategory: z.string().optional(),
     }))
     .query(async ({ input }) => {
       const { startDate, endDate, prevStartDate, prevEndDate, daysInPeriod } = getPeriodDates(input.year, input.month);
-      return await getStockAnalysisByProduct(startDate, endDate, prevStartDate, prevEndDate, daysInPeriod, input.categoryId);
+      return await getStockAnalysisByProduct(startDate, endDate, prevStartDate, prevEndDate, daysInPeriod, input.categoryId, input.subcategory);
+    }),
+
+  /**
+   * Lista de subcategorias disponíveis
+   */
+  subcategories: protectedProcedure
+    .input(z.object({
+      categoryId: z.number().optional(),
+    }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) return [];
+      const catFilter = input.categoryId ? `AND categoryId = ${input.categoryId}` : '';
+      const result = await db.execute(sql.raw(`
+        SELECT DISTINCT subcategory 
+        FROM products 
+        WHERE subcategory IS NOT NULL AND subcategory != '' 
+          AND active = 1
+          ${catFilter}
+        ORDER BY subcategory
+      `));
+      return (result[0] as unknown as any[]).map((r: any) => r.subcategory as string);
     }),
 });
