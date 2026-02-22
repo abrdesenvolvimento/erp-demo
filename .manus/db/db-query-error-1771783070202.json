@@ -1,0 +1,8 @@
+{
+  "query": "SELECT \n  c.id as categoryId,\n  c.name as categoryName,\n  SUM(poi.quantity * poi.unitPrice) as amount\nFROM purchaseOrderItems poi\nINNER JOIN purchaseOrders po ON poi.purchaseOrderId = po.id\nINNER JOIN products p ON poi.productId = p.id\nINNER JOIN categories c ON p.categoryId = c.id\nWHERE po.status = 'CONFIRMED'\n  AND DATE(CONVERT_TZ(po.postingDate, '+00:00', '-03:00')) >= '2026-02-01'\n  AND DATE(CONVERT_TZ(po.postingDate, '+00:00', '-03:00')) <= '2026-02-28'\nGROUP BY c.id, c.name\nORDER BY amount DESC",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  c.id as categoryId,\n  c.name as categoryName,\n  SUM(poi.quantity * poi.unitPrice) as amount\nFROM purchaseOrderItems poi\nINNER JOIN purchaseOrders po ON poi.purchaseOrderId = po.id\nINNER JOIN products p ON poi.productId = p.id\nINNER JOIN categories c ON p.categoryId = c.id\nWHERE po.status = 'CONFIRMED'\n  AND DATE(CONVERT_TZ(po.postingDate, '+00:00', '-03:00')) >= '2026-02-01'\n  AND DATE(CONVERT_TZ(po.postingDate, '+00:00', '-03:00')) <= '2026-02-28'\nGROUP BY c.id, c.name\nORDER BY amount DESC",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 1: Unknown column 'poi.unitprice' in 'where clause'"
+  ]
+}

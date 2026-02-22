@@ -1,0 +1,150 @@
+{
+  "query": "SELECT pa.id, pa.name, pa.tradeName, po.supplierId, COUNT(po.id) as cnt FROM purchaseOrders po LEFT JOIN partners pa ON po.supplierId = pa.id WHERE po.status = 'CONFIRMED' GROUP BY po.supplierId, pa.id, pa.name, pa.tradeName ORDER BY cnt DESC LIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT pa.id, pa.name, pa.tradeName, po.supplierId, COUNT(po.id) as cnt FROM purchaseOrders po LEFT JOIN partners pa ON po.supplierId = pa.id WHERE po.status = 'CONFIRMED' GROUP BY po.supplierId, pa.id, pa.name, pa.tradeName ORDER BY cnt DESC LIMIT 20;",
+  "rows": [
+    {
+      "id": "390001",
+      "name": "Spal Industria Brasileira de Bebidas S/A",
+      "tradeName": "Coca Cola",
+      "supplierId": "390001",
+      "cnt": "45"
+    },
+    {
+      "id": "540002",
+      "name": "Ambev SA",
+      "tradeName": "NULL",
+      "supplierId": "540002",
+      "cnt": "21"
+    },
+    {
+      "id": "510001",
+      "name": "Assai Autonomistas",
+      "tradeName": "NULL",
+      "supplierId": "510001",
+      "cnt": "20"
+    },
+    {
+      "id": "480001",
+      "name": "HNK BR Bebidas Ltda",
+      "tradeName": "NULL",
+      "supplierId": "480001",
+      "cnt": "18"
+    },
+    {
+      "id": "420004",
+      "name": "Sam's Club Autonomistas",
+      "tradeName": "NULL",
+      "supplierId": "420004",
+      "cnt": "15"
+    },
+    {
+      "id": "420005",
+      "name": "Assai Corifeu",
+      "tradeName": "NULL",
+      "supplierId": "420005",
+      "cnt": "13"
+    },
+    {
+      "id": "420001",
+      "name": "Pão de Açúcar",
+      "tradeName": "Pão de Açúcar Site",
+      "supplierId": "420001",
+      "cnt": "12"
+    },
+    {
+      "id": "450002",
+      "name": "Central Distribuidora",
+      "tradeName": "NULL",
+      "supplierId": "450002",
+      "cnt": "10"
+    },
+    {
+      "id": "420003",
+      "name": "Atacadão Autonomistas",
+      "tradeName": "NULL",
+      "supplierId": "420003",
+      "cnt": "9"
+    },
+    {
+      "id": "780002",
+      "name": "Funchal Carvão",
+      "tradeName": "NULL",
+      "supplierId": "780002",
+      "cnt": "8"
+    },
+    {
+      "id": "1260001",
+      "name": "Comercial Mais Gelo Ltda",
+      "tradeName": "NULL",
+      "supplierId": "1260001",
+      "cnt": "8"
+    },
+    {
+      "id": "660001",
+      "name": "Infinity Gelo Saborizado",
+      "tradeName": "NULL",
+      "supplierId": "660001",
+      "cnt": "7"
+    },
+    {
+      "id": "240001",
+      "name": "Cervejaria Petropolis S/A (Barueri)",
+      "tradeName": "NULL",
+      "supplierId": "240001",
+      "cnt": "7"
+    },
+    {
+      "id": "600001",
+      "name": "Comercial Bolsão ",
+      "tradeName": "NULL",
+      "supplierId": "600001",
+      "cnt": "6"
+    },
+    {
+      "id": "420002",
+      "name": "Carrefour Autonomistas",
+      "tradeName": "Carrefour Autonomistas",
+      "supplierId": "420002",
+      "cnt": "6"
+    },
+    {
+      "id": "810001",
+      "name": "Prabar Comercio de Produtos Industrializados",
+      "tradeName": "NULL",
+      "supplierId": "810001",
+      "cnt": "6"
+    },
+    {
+      "id": "570001",
+      "name": "Carrefour Super Shopping",
+      "tradeName": "NULL",
+      "supplierId": "570001",
+      "cnt": "5"
+    },
+    {
+      "id": "840002",
+      "name": "Souza Cruz Ltda",
+      "tradeName": "NULL",
+      "supplierId": "840002",
+      "cnt": "5"
+    },
+    {
+      "id": "630002",
+      "name": "Vuelta Abajo",
+      "tradeName": "NULL",
+      "supplierId": "630002",
+      "cnt": "5"
+    },
+    {
+      "id": "510002",
+      "name": "Philip Morris Brasil",
+      "tradeName": "NULL",
+      "supplierId": "510002",
+      "cnt": "4"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\ttradeName\tsupplierId\tcnt\n390001\tSpal Industria Brasileira de Bebidas S/A\tCoca Cola\t390001\t45\n540002\tAmbev SA\tNULL\t540002\t21\n510001\tAssai Autonomistas\tNULL\t510001\t20\n480001\tHNK BR Bebidas Ltda\tNULL\t480001\t18\n420004\tSam's Club Autonomistas\tNULL\t420004\t15\n420005\tAssai Corifeu\tNULL\t420005\t13\n420001\tPão de Açúcar\tPão de Açúcar Site\t420001\t12\n450002\tCentral Distribuidora\tNULL\t450002\t10\n420003\tAtacadão Autonomistas\tNULL\t420003\t9\n780002\tFunchal Carvão\tNULL\t780002\t8\n1260001\tComercial Mais Gelo Ltda\tNULL\t1260001\t8\n660001\tInfinity Gelo Saborizado\tNULL\t660001\t7\n240001\tCervejaria Petropolis S/A (Barueri)\tNULL\t240001\t7\n600001\tComercial Bolsão \tNULL\t600001\t6\n420002\tCarrefour Autonomistas\tCarrefour Autonomistas\t420002\t6\n810001\tPrabar Comercio de Produtos Industrializados\tNULL\t810001\t6\n570001\tCarrefour Super Shopping\tNULL\t570001\t5\n840002\tSouza Cruz Ltda\tNULL\t840002\t5\n630002\tVuelta Abajo\tNULL\t630002\t5\n510002\tPhilip Morris Brasil\tNULL\t510002\t4\n",
+  "stderr": "",
+  "execution_time_ms": 66
+}

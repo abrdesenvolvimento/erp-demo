@@ -41,6 +41,14 @@ import {
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 import { 
+  getSalesByCategory, 
+  getPurchasesByCategory, 
+  getSalesByPaymentType, 
+  getStockByCategory, 
+  getPurchasesBySupplier,
+  getSalesByChannel 
+} from './closingQueries';
+import { 
   getTodayInBrazil, 
   getCurrentBrazilDateInfo, 
   formatDateForInput,
@@ -5760,7 +5768,7 @@ export async function getRevenueGoalProgress(year: number, month: number) {
 
 // ==================== FECHAMENTO MENSAL ====================
 
-export async function getMonthlyClosing(year: number, month: number) {
+export async function getMonthlyClosing(year: number, month: number, skipExtras = false) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
@@ -5982,7 +5990,7 @@ export async function getMonthlyClosing(year: number, month: number) {
       AND DATE(CONVERT_TZ(e.createdAt, '+00:00', '-03:00')) >= '${startDate}'
       AND DATE(CONVERT_TZ(e.createdAt, '+00:00', '-03:00')) <= '${endDate}'
     GROUP BY ma.id, ma.code, ma.name, ma.nature, ma.classification
-    ORDER BY ma.code
+    ORDER BY total DESC
   `));
 
   const expensesByAccountRows = expensesByAccountResult[0] as unknown as any[];
@@ -6033,6 +6041,45 @@ export async function getMonthlyClosing(year: number, month: number) {
   const grossMargin = totalSales.revenue > 0 ? (grossProfit / totalSales.revenue) * 100 : 0;
   const netResult = totalSales.revenue - totalSales.cost - totalExpenses.amount;
   const netMargin = totalSales.revenue > 0 ? (netResult / totalSales.revenue) * 100 : 0;
+
+  // NOVAS SEÇÕES PARA O LAYOUT ATUALIZADO (skip em chamadas recursivas)
+  let salesByCategory: any[] = [];
+  let purchasesByCategory: any[] = [];
+  let salesByPaymentType: any[] = [];
+  let stockByCategory: any[] = [];
+  let purchasesBySupplier: any[] = [];
+  let salesByChannel: any[] = [];
+  let goalsProgress: any = null;
+  let previousMonthData: any = null;
+
+  if (!skipExtras) {
+    [salesByCategory, purchasesByCategory, salesByPaymentType, stockByCategory, purchasesBySupplier, salesByChannel] = await Promise.all([
+      getSalesByCategory(startDate, endDate),
+      getPurchasesByCategory(startDate, endDate),
+      getSalesByPaymentType(startDate, endDate),
+      getStockByCategory(startDate, endDate, year, month),
+      getPurchasesBySupplier(startDate, endDate),
+      getSalesByChannel(startDate, endDate),
+    ]);
+
+    // Buscar metas do mês
+    goalsProgress = await getRevenueGoalProgress(year, month);
+
+    // Buscar dados do mês anterior para comparação
+    const prevMonth = month === 1 ? 12 : month - 1;
+    const prevYear = month === 1 ? year - 1 : year;
+    try {
+      previousMonthData = await getMonthlyClosing(prevYear, prevMonth, true);
+      // Buscar salesByCategory do mês anterior separadamente (skipExtras não inclui)
+      const prevStartDate = startOfMonthBrazil(prevYear, prevMonth);
+      const prevEndDate = endOfMonthBrazil(prevYear, prevMonth);
+      if (previousMonthData) {
+        previousMonthData.salesByCategory = await getSalesByCategory(prevStartDate, prevEndDate);
+      }
+    } catch (e) {
+      console.warn(`Não foi possível carregar dados do mês anterior (${prevYear}-${prevMonth})`);
+    }
+  }
 
   return {
     period: {
@@ -6101,6 +6148,21 @@ export async function getMonthlyClosing(year: number, month: number) {
       resultadoLiquido,
       margemLiquida: Math.round(margemLiquida * 10) / 10,
     },
+    // NOVAS SEÇÕES DO LAYOUT ATUALIZADO
+    salesByCategory,
+    purchasesByCategory,
+    salesByPaymentType,
+    stockByCategory,
+    purchasesBySupplier,
+    salesByChannel,
+    goals: goalsProgress,
+    previousMonth: previousMonthData ? {
+      revenue: previousMonthData.results.revenue,
+      grossProfit: previousMonthData.results.grossProfit,
+      operationalExpenses: previousMonthData.results.operationalExpenses,
+      netResult: previousMonthData.results.netResult,
+      salesByCategory: previousMonthData.salesByCategory || [],
+    } : null,
   };
 }
 

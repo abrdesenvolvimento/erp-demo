@@ -18,6 +18,7 @@ import AnaliseCanal from "./pages/AnaliseCanal";
 import AnaliseDespesas from "./pages/AnaliseDespesas";
 import Metas from "./pages/Metas";
 import FechamentoMensal from "./pages/FechamentoMensal";
+import FechamentoMensalNovo from "./pages/FechamentoMensalNovo";
 import PlanoContas from "./pages/PlanoContas";
 import RelatoriosContabeis from "./pages/RelatoriosContabeis";
 import OutrasReceitas from "./pages/OutrasReceitas";
@@ -48,6 +49,7 @@ function Router() {
       <Route path="/analise-despesas" component={AnaliseDespesas} />
       <Route path="/metas" component={Metas} />
       <Route path="/fechamento" component={FechamentoMensal} />
+      <Route path="/fechamento-novo" component={FechamentoMensalNovo} />
       <Route path="/plano-contas" component={PlanoContas} />
       <Route path="/relatorios-contabeis" component={RelatoriosContabeis} />
       <Route path="/outras-receitas" component={OutrasReceitas} />

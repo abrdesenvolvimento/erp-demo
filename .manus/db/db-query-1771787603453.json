@@ -1,0 +1,110 @@
+{
+  "query": "SELECT id, name, tradeName FROM partners LIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT id, name, tradeName FROM partners LIMIT 20;",
+  "rows": [
+    {
+      "id": "240001",
+      "name": "Cervejaria Petropolis S/A (Barueri)",
+      "tradeName": "NULL"
+    },
+    {
+      "id": "240002",
+      "name": "Gabriel Morais Santos",
+      "tradeName": "Gabriel"
+    },
+    {
+      "id": "240003",
+      "name": "Jocineide Pereira Costa Silva",
+      "tradeName": "NULL"
+    },
+    {
+      "id": "270001",
+      "name": "Alexandre Lima",
+      "tradeName": "Alexandre Lima"
+    },
+    {
+      "id": "270002",
+      "name": "Beylton Souza",
+      "tradeName": "NULL"
+    },
+    {
+      "id": "270003",
+      "name": "Daniel Moura",
+      "tradeName": "NULL"
+    },
+    {
+      "id": "270004",
+      "name": "Nailton Nivardo",
+      "tradeName": "NULL"
+    },
+    {
+      "id": "270005",
+      "name": "Eliane Teixeira",
+      "tradeName": "NULL"
+    },
+    {
+      "id": "270006",
+      "name": "Ericles Araujo",
+      "tradeName": "NULL"
+    },
+    {
+      "id": "270007",
+      "name": "Wilson Carlos",
+      "tradeName": "NULL"
+    },
+    {
+      "id": "270008",
+      "name": "Gustavo Carvalho",
+      "tradeName": "NULL"
+    },
+    {
+      "id": "270009",
+      "name": "Igor Matheus",
+      "tradeName": "NULL"
+    },
+    {
+      "id": "270010",
+      "name": "Luis",
+      "tradeName": "NULL"
+    },
+    {
+      "id": "270011",
+      "name": "Josivan Oliveira",
+      "tradeName": "NULL"
+    },
+    {
+      "id": "270012",
+      "name": "George Silva",
+      "tradeName": "NULL"
+    },
+    {
+      "id": "300001",
+      "name": "Jhonatan Gaspar",
+      "tradeName": "NULL"
+    },
+    {
+      "id": "300002",
+      "name": "Ernesto Junior",
+      "tradeName": "Juninho"
+    },
+    {
+      "id": "300003",
+      "name": "Elimar",
+      "tradeName": "Kalango"
+    },
+    {
+      "id": "330001",
+      "name": "Lucas Mantovi",
+      "tradeName": "Mantovi"
+    },
+    {
+      "id": "360001",
+      "name": "Marcelo",
+      "tradeName": "NULL"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\ttradeName\n240001\tCervejaria Petropolis S/A (Barueri)\tNULL\n240002\tGabriel Morais Santos\tGabriel\n240003\tJocineide Pereira Costa Silva\tNULL\n270001\tAlexandre Lima\tAlexandre Lima\n270002\tBeylton Souza\tNULL\n270003\tDaniel Moura\tNULL\n270004\tNailton Nivardo\tNULL\n270005\tEliane Teixeira\tNULL\n270006\tEricles Araujo\tNULL\n270007\tWilson Carlos\tNULL\n270008\tGustavo Carvalho\tNULL\n270009\tIgor Matheus\tNULL\n270010\tLuis\tNULL\n270011\tJosivan Oliveira\tNULL\n270012\tGeorge Silva\tNULL\n300001\tJhonatan Gaspar\tNULL\n300002\tErnesto Junior\tJuninho\n300003\tElimar\tKalango\n330001\tLucas Mantovi\tMantovi\n360001\tMarcelo\tNULL\n",
+  "stderr": "",
+  "execution_time_ms": 49
+}

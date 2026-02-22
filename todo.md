@@ -1,6 +1,6 @@
 # ABRWF - Pendências e Melhorias
 
-**Última atualização:** 05/02/2026
+**Última atualização:** 15/02/2026
 
 ---
 
@@ -187,7 +187,7 @@ Automatizar importação de pedidos concluídos do iFood via arquivos JSON
 - [x] Modal de confirmação de exclusão com detalhes (quantidade de vendas a reverter)
 - [x] Reversão automática de vendas, itens e movimentações de estoque
 - [x] Atualização de preço do canal funcionando corretamente
-- [ ] Modal de divergência de valor ainda com layout quebrado (coluna Ação sobreposta)
+- [x] Modal de divergência de valor otimizado (15/02/2026)
 
 ---
 
@@ -215,22 +215,37 @@ Despesas criadas ANTES desta implementação (07/02/2026) não possuem registros
 
 ---
 
-## 📈 TELA DE FECHAMENTO (AJUSTES)
+## 📈 TELA DE FECHAMENTO - NOVO LAYOUT (22/02/2026)
 
-### Remover
-- [ ] Despesas por Categoria (não utilizamos mais)
-- [ ] DRE (mover para módulo Contabilidade)
-- [ ] Coluna "Código" do quadro Despesas por Conta Gerencial
+### Estrutura Aba Mensal
+- [ ] 1. Cards de Resumo (Faturamento, Lucro Bruto, Despesas, Resultado Líquido) + Comparativo Mês Anterior
+- [ ] 2. Vendas por Canal (Qtd, Faturamento, %, Ticket Médio) + Metas (Meta, Realizado, % Atingido)
+- [ ] 3. Vendas por Categoria (Faturamento, %, Margem) + Compras por Categoria (Valor, %) lado a lado
+- [ ] 4. Faturamento por Tipo de Pagamento (Tipo, Qtd Transações, Faturamento, %)
+- [ ] 5. Estoque por Categoria (Inicial, Final, Variação) + Giro de Estoque (CMV/Estoque Médio)
+- [ ] 6. Despesas por Conta Gerencial (Conta, Classificação, Valor, %)
+- [ ] 7. Compras por Fornecedor (Fornecedor, Valor, %, Qtd Notas)
 
-### Adicionar
-- [ ] Quadro: Compras por Categoria de Produtos (similar ao Compras por Tipo)
+### Backend
+- [ ] Criar queries para cada seção com filtro de competência
+- [ ] Implementar cálculo de giro de estoque
+- [ ] Implementar comparativo mês anterior
+- [ ] Endpoint tRPC consolidado para fechamento mensal
 
-### Manter
-- [ ] Resumo Mensal Comparativo (como está)
+### Frontend
+- [ ] Refatorar componente Fechamento.tsx
+- [ ] Criar componentes para cada seção
+- [ ] Implementar layout responsivo
+- [ ] Adicionar seletor de competência (mês/ano)
 
-### Impressão
+### Impressão (Fase 2)
 - [ ] Adicionar logo da empresa no cabeçalho
 - [ ] Ajustar layout para impressão A4
+
+### Removido do Escopo
+- Contas a Receber/Pagar (já tem módulo próprio)
+- Fluxo de Caixa Resumido (implementar depois)
+- DRE (já está no módulo Contabilidade)
 
 ---
 
@@ -771,12 +786,19 @@ Despesa de impostos aparece tanto em janeiro quanto em fevereiro após edição 
 - [x] Reverter journals contábeis das 3 vendas (2 journals deletados)
 - [x] Reverter movimentações de estoque (sistema não usa stockMovements)
 
-### Correção Modal Importador iFood
-- [x] Corrigir layout do modal de divergência de valor (aumentado para max-w-5xl, colunas com largura %)
-- [ ] Testar modal com dados reais
+### Correção Modal Importador iFood ✅ (15/02/2026)
+- [x] Corrigir layout do modal de divergência de valor (aumentado para max-w-6xl)
+- [x] Ajustar largura das colunas (40%/15%/15%/15%/15%) sem scroll horizontal
+- [x] Otimizar espaçamento, reduzir tamanho de fontes e botão
+- [x] Nome do produto truncado com tooltip
+- [x] Testado com dados reais
 
-
-### Correção Modal Importador iFood - Botão Ação Cortado (15/02/2026)
-- [x] Ajustar largura das colunas e container para botão "Corrigir Preço" ficar visível
-- [x] Remover scroll horizontal, otimizar espaçamento, reduzir tamanho de fontes e botão
-- [x] Testar com dados reais
+### Ajustes Fechamento Mensal - Feedback Gabriel (22/02/2026)
+- [x] Card Despesas: inverter lógica de cor (aumento = vermelho, redução = verde)
+- [x] Vendas por Canal: mostrar nomes corretos (iFood, 99, Balcão, A Prazo) em vez de DELIVERY, A_PRAZO, BALCAO
+- [x] Metas vs Realizado: investigar e corrigir carregamento de metas de fevereiro
+- [x] Vendas por Categoria: adicionar variação comparada ao mês anterior
+- [x] Faturamento por Tipo de Pagamento: adicionar linha de total geral ao final
+- [x] Estoque e Giro: corrigir cálculo - estoque inicial e final estão iguais (variação R$ 0,00)
+- [x] Despesas por Conta Gerencial: ordenar do maior para o menor valor
+- [x] Compras por Fornecedor: corrigir "Sem Nome" - buscar nome do parceiro corretamente

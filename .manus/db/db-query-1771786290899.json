@@ -1,0 +1,35 @@
+{
+  "query": "SELECT c.id as categoryId, c.name as categoryName, SUM(p.currentStock * p.avgCost) as finalStock FROM products p INNER JOIN categories c ON p.categoryId = c.id WHERE p.active = 1 GROUP BY c.id, c.name ORDER BY finalStock DESC LIMIT 5",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT c.id as categoryId, c.name as categoryName, SUM(p.currentStock * p.avgCost) as finalStock FROM products p INNER JOIN categories c ON p.categoryId = c.id WHERE p.active = 1 GROUP BY c.id, c.name ORDER BY finalStock DESC LIMIT 5",
+  "rows": [
+    {
+      "categoryId": "8",
+      "categoryName": "Bebidas",
+      "finalStock": "103462.32"
+    },
+    {
+      "categoryId": "9",
+      "categoryName": "Doces / Salgadinhos e Bolachas",
+      "finalStock": "6055.57"
+    },
+    {
+      "categoryId": "10",
+      "categoryName": "Tabacaria",
+      "finalStock": "4332.04"
+    },
+    {
+      "categoryId": "11",
+      "categoryName": "Cigarro",
+      "finalStock": "1560.68"
+    },
+    {
+      "categoryId": "12",
+      "categoryName": "Gelo de Sabor",
+      "finalStock": "1072.00"
+    }
+  ],
+  "messages": [],
+  "stdout": "categoryId\tcategoryName\tfinalStock\n8\tBebidas\t103462.32\n9\tDoces / Salgadinhos e Bolachas\t6055.57\n10\tTabacaria\t4332.04\n11\tCigarro\t1560.68\n12\tGelo de Sabor\t1072.00\n",
+  "stderr": "",
+  "execution_time_ms": 59
+}

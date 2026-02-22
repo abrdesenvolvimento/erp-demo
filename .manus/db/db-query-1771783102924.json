@@ -1,0 +1,50 @@
+{
+  "query": "SELECT \n  c.id as categoryId,\n  c.name as categoryName,\n  SUM(poi.quantity * poi.unitCost) as amount\nFROM purchaseOrderItems poi\nINNER JOIN purchaseOrders po ON poi.purchaseOrderId = po.id\nINNER JOIN products p ON poi.productId = p.id\nINNER JOIN categories c ON p.categoryId = c.id\nWHERE po.status = 'CONFIRMED'\n  AND DATE(CONVERT_TZ(po.postingDate, '+00:00', '-03:00')) >= '2026-02-01'\n  AND DATE(CONVERT_TZ(po.postingDate, '+00:00', '-03:00')) <= '2026-02-28'\nGROUP BY c.id, c.name\nORDER BY amount DESC",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT \n  c.id as categoryId,\n  c.name as categoryName,\n  SUM(poi.quantity * poi.unitCost) as amount\nFROM purchaseOrderItems poi\nINNER JOIN purchaseOrders po ON poi.purchaseOrderId = po.id\nINNER JOIN products p ON poi.productId = p.id\nINNER JOIN categories c ON p.categoryId = c.id\nWHERE po.status = 'CONFIRMED'\n  AND DATE(CONVERT_TZ(po.postingDate, '+00:00', '-03:00')) >= '2026-02-01'\n  AND DATE(CONVERT_TZ(po.postingDate, '+00:00', '-03:00')) <= '2026-02-28'\nGROUP BY c.id, c.name\nORDER BY amount DESC",
+  "rows": [
+    {
+      "categoryId": "8",
+      "categoryName": "Bebidas",
+      "amount": "38267.5877000"
+    },
+    {
+      "categoryId": "9",
+      "categoryName": "Doces / Salgadinhos e Bolachas",
+      "amount": "4238.2187000"
+    },
+    {
+      "categoryId": "10",
+      "categoryName": "Tabacaria",
+      "amount": "1422.9900000"
+    },
+    {
+      "categoryId": "14",
+      "categoryName": "Gelo",
+      "amount": "600.0000000"
+    },
+    {
+      "categoryId": "30001",
+      "categoryName": "Mercearia",
+      "amount": "552.6600000"
+    },
+    {
+      "categoryId": "13",
+      "categoryName": "Carvão",
+      "amount": "460.0000000"
+    },
+    {
+      "categoryId": "12",
+      "categoryName": "Gelo de Sabor",
+      "amount": "450.0000000"
+    },
+    {
+      "categoryId": "11",
+      "categoryName": "Cigarro",
+      "amount": "361.2000000"
+    }
+  ],
+  "messages": [],
+  "stdout": "categoryId\tcategoryName\tamount\n8\tBebidas\t38267.5877000\n9\tDoces / Salgadinhos e Bolachas\t4238.2187000\n10\tTabacaria\t1422.9900000\n14\tGelo\t600.0000000\n30001\tMercearia\t552.6600000\n13\tCarvão\t460.0000000\n12\tGelo de Sabor\t450.0000000\n11\tCigarro\t361.2000000\n",
+  "stderr": "",
+  "execution_time_ms": 77
+}
