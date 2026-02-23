@@ -53,7 +53,7 @@ export default function SelectCompany() {
               <img 
                 src={APP_LOGO} 
                 alt={APP_TITLE} 
-                className="h-24 w-24 mx-auto mb-5 rounded-2xl object-cover shadow-lg ring-1 ring-slate-200" 
+                className="h-36 w-36 mx-auto mb-6 rounded-2xl object-cover shadow-lg ring-1 ring-slate-200" 
               />
             )}
             <h1 className="text-2xl font-bold text-slate-800 mb-2 tracking-tight">

@@ -933,3 +933,6 @@ Despesa de impostos aparece tanto em janeiro quanto em fevereiro após edição 
 - [ ] Multi-tenant com banco de dados separado por cliente externo
 - [ ] Pacotes de módulos para liberar acesso a terceiros
 - [ ] Empresas internas (Adega + A Brasa) com acesso total
+
+### Ajuste Logo Tela de Seleção (23/02/2026 - Rodada 3)
+- [x] Aumentar tamanho do logo ABRWF na tela de seleção de empresa (h-24 → h-36)
