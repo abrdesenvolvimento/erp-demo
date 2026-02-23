@@ -881,3 +881,7 @@ Despesa de impostos aparece tanto em janeiro quanto em fevereiro após edição 
 - [x] Backend: corrigir getStockByCategory em closingQueries.ts
 - [x] Servidor rodando com sucesso (HTTP 200)
 - [x] Erros TS restantes são todos pré-existentes (não relacionados à multiempresa)
+
+### Correções Multiempresa Fase 2 — Bugs Reportados (22/02/2026)
+- [x] Dashboard: informações da Adega ainda aparecem ao selecionar outra empresa (queries não filtram por companyId)
+- [x] Seletor de empresa: implementar tela de seleção obrigatória antes do acesso ao sistema (quando usuário tem múltiplas empresas)

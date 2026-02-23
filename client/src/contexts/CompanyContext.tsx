@@ -23,6 +23,7 @@ type CompanyContextType = {
   activeCompany: CompanyAccess | null;
   loading: boolean;
   switching: boolean;
+  needsSelection: boolean;
   setActiveCompany: (companyId: number, branchId: number) => void;
 };
 
@@ -33,6 +34,7 @@ const CompanyContext = createContext<CompanyContextType>({
   activeCompany: null,
   loading: true,
   switching: false,
+  needsSelection: false,
   setActiveCompany: () => {},
 });
 
@@ -70,20 +72,22 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
     },
   });
 
-  // Auto-selecionar empresa padrão se nenhuma está ativa
+  // Auto-selecionar empresa padrão APENAS se o usuário tem acesso a UMA única empresa
+  // Se tem múltiplas empresas, exibir tela de seleção
   useEffect(() => {
-    if (companies.length > 0 && !activeCompanyId) {
-      const defaultCompany = companies.find(c => c.isDefault) || companies[0];
-      if (defaultCompany) {
-        setActiveCompanyId(defaultCompany.companyId);
-        setActiveBranchId(defaultCompany.branchId);
-        setActiveMutation.mutate({
-          companyId: defaultCompany.companyId,
-          branchId: defaultCompany.branchId || 0,
-        });
-      }
+    if (companies.length === 1 && !activeCompanyId) {
+      const company = companies[0];
+      setActiveCompanyId(company.companyId);
+      setActiveBranchId(company.branchId);
+      setActiveMutation.mutate({
+        companyId: company.companyId,
+        branchId: company.branchId || 0,
+      });
     }
   }, [companies, activeCompanyId]);
+
+  // Determinar se precisa mostrar tela de seleção
+  const needsSelection = !isLoading && companies.length > 1 && !activeCompanyId;
 
   const setActiveCompany = useCallback((companyId: number, branchId: number) => {
     if (companyId === activeCompanyId && branchId === activeBranchId) return;
@@ -112,6 +116,7 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
         activeCompany,
         loading: isLoading,
         switching,
+        needsSelection,
         setActiveCompany,
       }}
     >

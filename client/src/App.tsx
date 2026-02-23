@@ -30,7 +30,9 @@ import AccessDenied from "./pages/AccessDenied";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
-import { CompanyProvider } from "./contexts/CompanyContext";
+import { CompanyProvider, useCompany } from "./contexts/CompanyContext";
+import SelectCompany from "./pages/SelectCompany";
+import { useAuth } from "./_core/hooks/useAuth";
 
 function Router() {
   return (
@@ -66,6 +68,23 @@ function Router() {
   );
 }
 
+function CompanyGate() {
+  const { needsSelection, loading: companyLoading } = useCompany();
+  const { isAuthenticated, loading: authLoading } = useAuth();
+
+  // Se ainda está carregando auth ou empresas, mostrar o router normalmente (cada página tem seu loading)
+  if (authLoading || companyLoading) {
+    return <Router />;
+  }
+
+  // Se autenticado e precisa selecionar empresa, mostrar tela de seleção
+  if (isAuthenticated && needsSelection) {
+    return <SelectCompany />;
+  }
+
+  return <Router />;
+}
+
 function App() {
   return (
     <ErrorBoundary>
@@ -73,7 +92,7 @@ function App() {
         <CompanyProvider>
           <TooltipProvider>
             <Toaster />
-            <Router />
+            <CompanyGate />
           </TooltipProvider>
         </CompanyProvider>
       </ThemeProvider>

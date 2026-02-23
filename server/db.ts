@@ -2691,7 +2691,8 @@ export async function getTotalPendingReceivables(companyId?: number) {
   .from(sales)
   .where(and(
     eq(sales.saleType, "A_PRAZO"),
-    ne(sales.status, "CANCELLED")
+    ne(sales.status, "CANCELLED"),
+    companyId ? eq(sales.companyId, companyId) : undefined
   ));
 
   // Soma total de débitos manuais de todos os clientes
@@ -3859,7 +3860,8 @@ export async function getPurchaseTotalCurrentMonth(companyId?: number) {
     and(
       eq(purchaseOrders.status, "CONFIRMED"),
       gte(purchaseOrders.postingDate, firstDayOfMonth),
-      lte(purchaseOrders.postingDate, lastDayOfMonth)
+      lte(purchaseOrders.postingDate, lastDayOfMonth),
+      companyId ? eq(purchaseOrders.companyId, companyId) : undefined
     )
   );
   
@@ -3867,7 +3869,7 @@ export async function getPurchaseTotalCurrentMonth(companyId?: number) {
 }
 
 /**
- * Retorna o valor total de compras por tipo de documento (mês atual)
+ * Total de compras por tipo de documento (mês atual)
  */
 export async function getPurchaseTotalByDocType(companyId?: number) {
   const db = await getDb();
@@ -3887,7 +3889,8 @@ export async function getPurchaseTotalByDocType(companyId?: number) {
     and(
       eq(purchaseOrders.status, "CONFIRMED"),
       gte(purchaseOrders.postingDate, firstDayOfMonth),
-      lte(purchaseOrders.postingDate, lastDayOfMonth)
+      lte(purchaseOrders.postingDate, lastDayOfMonth),
+      companyId ? eq(purchaseOrders.companyId, companyId) : undefined
     )
   )
   .groupBy(purchaseOrders.docType);
@@ -3922,7 +3925,8 @@ export async function getGrossMarginByCategory(companyId?: number) {
     and(
       ne(sales.status, "CANCELLED"),
       gte(sales.saleDate, new Date(currentYear, currentMonth - 2, 1)), // Mês anterior para margem de segurança
-      lte(sales.saleDate, new Date(currentYear, currentMonth, 31, 23, 59, 59)) // Próximo mês para margem
+      lte(sales.saleDate, new Date(currentYear, currentMonth, 31, 23, 59, 59)), // Próximo mês para margem
+      companyId ? eq(sales.companyId, companyId) : undefined
     )
   );
   
@@ -4825,6 +4829,7 @@ export async function getDashboardMonthlyRevenue(companyId?: number) {
     WHERE status != 'CANCELLED'
       AND YEAR(CONVERT_TZ(saleDate, '+00:00', '-03:00')) = YEAR(CONVERT_TZ(NOW(), '+00:00', '-03:00'))
       AND MONTH(CONVERT_TZ(saleDate, '+00:00', '-03:00')) = MONTH(CONVERT_TZ(NOW(), '+00:00', '-03:00'))
+      ${companyId ? `AND companyId = ${companyId}` : ''}
   `));
 
   const rows = result[0] as unknown as any[];
@@ -4859,6 +4864,7 @@ export async function getDashboardDailyRevenue(companyId?: number) {
     FROM sales
     WHERE status != 'CANCELLED'
       AND DATE(CONVERT_TZ(saleDate, '+00:00', '-03:00')) = DATE(CONVERT_TZ(NOW(), '+00:00', '-03:00'))
+      ${companyId ? `AND companyId = ${companyId}` : ''}
   `));
 
   const rows = result[0] as unknown as any[];
@@ -4895,6 +4901,7 @@ export async function getDashboardMonthlyPurchases(companyId?: number) {
     WHERE status = 'CONFIRMED'
       AND YEAR(CONVERT_TZ(createdAt, '+00:00', '-03:00')) = YEAR(CONVERT_TZ(NOW(), '+00:00', '-03:00'))
       AND MONTH(CONVERT_TZ(createdAt, '+00:00', '-03:00')) = MONTH(CONVERT_TZ(NOW(), '+00:00', '-03:00'))
+      ${companyId ? `AND companyId = ${companyId}` : ''}
   `));
 
   const rows = result[0] as unknown as any[];
@@ -5161,6 +5168,7 @@ export async function getDeliveryNetMarginOptimized(companyId?: number) {
       AND status != 'CANCELLED'
       AND YEAR(CONVERT_TZ(saleDate, '+00:00', '-03:00')) = YEAR(CONVERT_TZ(NOW(), '+00:00', '-03:00'))
       AND MONTH(CONVERT_TZ(saleDate, '+00:00', '-03:00')) = MONTH(CONVERT_TZ(NOW(), '+00:00', '-03:00'))
+      ${companyId ? `AND companyId = ${companyId}` : ''}
   `));
 
   // Query 2: Buscar custo total dos itens vendidos
@@ -5174,6 +5182,7 @@ export async function getDeliveryNetMarginOptimized(companyId?: number) {
       AND s.status != 'CANCELLED'
       AND YEAR(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) = YEAR(CONVERT_TZ(NOW(), '+00:00', '-03:00'))
       AND MONTH(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) = MONTH(CONVERT_TZ(NOW(), '+00:00', '-03:00'))
+      ${companyId ? `AND s.companyId = ${companyId}` : ''}
   `));
 
   const revenueRows = revenueResult[0] as unknown as any[];
