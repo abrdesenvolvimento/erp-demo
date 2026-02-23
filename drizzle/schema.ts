@@ -566,6 +566,7 @@ export const customerPayments = mysqlTable("customerPayments", {
   paymentMethod: varchar("paymentMethod", { length: 50 }).notNull(), // Forma de pagamento (Dinheiro, PIX, Cartão, etc)
   notes: text("notes"), // Observações
   createdBy: varchar("createdBy", { length: 64 }).notNull(), // Usuário que registrou
+  companyId: int("companyId"), // Empresa (multiempresa)
   createdAt: timestamp("createdAt").defaultNow(),
 }, (table) => ({
   customerIdx: index("customer_idx").on(table.customerId),
@@ -585,6 +586,7 @@ export const customerDebits = mysqlTable("customerDebits", {
   managementAccountId: int("managementAccountId").references(() => managementAccounts.id), // Conta gerencial para classificação contábil
   notes: text("notes"),
   createdBy: varchar("createdBy", { length: 64 }),
+  companyId: int("companyId"), // Empresa (multiempresa)
   createdAt: timestamp("createdAt").defaultNow(),
 });
 

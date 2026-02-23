@@ -115,7 +115,7 @@ export default function Home() {
                   <span className="font-medium text-blue-600">
                     R$ {formatCurrency(stats?.monthRevenueBalcao)}
                     <span className="text-muted-foreground ml-1">
-                      ({stats ? Math.round((parseFloat(stats.monthRevenueBalcao) / parseFloat(stats.monthRevenue)) * 100) : 0}%)
+                      ({stats && parseFloat(stats.monthRevenue) > 0 ? Math.round((parseFloat(stats.monthRevenueBalcao) / parseFloat(stats.monthRevenue)) * 100) : 0}%)
                     </span>
                   </span>
                 </div>
@@ -124,7 +124,7 @@ export default function Home() {
                   <span className="font-medium text-blue-600">
                     R$ {formatCurrency(stats?.monthRevenueDelivery)}
                     <span className="text-muted-foreground ml-1">
-                      ({stats ? Math.round((parseFloat(stats.monthRevenueDelivery) / parseFloat(stats.monthRevenue)) * 100) : 0}%)
+                      ({stats && parseFloat(stats.monthRevenue) > 0 ? Math.round((parseFloat(stats.monthRevenueDelivery) / parseFloat(stats.monthRevenue)) * 100) : 0}%)
                     </span>
                   </span>
                 </div>
@@ -515,7 +515,7 @@ export default function Home() {
                           <div>
                             <p className="font-medium">{category.categoryName}</p>
                             <p className="text-xs text-muted-foreground">
-                              {((parseFloat(category.value) / parseFloat(stats.totalStockValue)) * 100).toFixed(1)}% do total • {category.products?.length || 0} produtos
+                              {(parseFloat(stats.totalStockValue) > 0 ? ((parseFloat(category.value) / parseFloat(stats.totalStockValue)) * 100).toFixed(1) : '0.0')}% do total • {category.products?.length || 0} produtos
                             </p>
                           </div>
                         </div>

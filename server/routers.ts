@@ -1743,7 +1743,8 @@ export const appRouter = router({
       .mutation(async ({ input, ctx }) => {
         return await db.registerPaymentToBalance({
           ...input,
-          createdBy: ctx.user.id
+          createdBy: ctx.user.id,
+          companyId: ctx.activeCompanyId ?? undefined
         });
       }),
     
@@ -1760,7 +1761,8 @@ export const appRouter = router({
       .mutation(async ({ input, ctx }) => {
         return await db.registerManualDebit({
           ...input,
-          createdBy: ctx.user.id
+          createdBy: ctx.user.id,
+          companyId: ctx.activeCompanyId ?? undefined
         });
       }),
   }),

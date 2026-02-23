@@ -36,6 +36,9 @@ export function useAuth(options?: UseAuthOptions) {
       }
       throw error;
     } finally {
+      // Limpar cookies de empresa ativa para forçar tela de seleção no próximo login
+      document.cookie = "activeCompanyId=;path=/;max-age=0";
+      document.cookie = "activeBranchId=;path=/;max-age=0";
       utils.auth.me.setData(undefined, null);
       await utils.auth.me.invalidate();
     }

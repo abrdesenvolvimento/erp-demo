@@ -2671,7 +2671,10 @@ export async function getCustomersWithPendingReceivables(companyId?: number) {
   })
   .from(receivables)
   .leftJoin(partners, eq(receivables.customerId, partners.id))
-  .where(sql`${receivables.status} IN ('PENDENTE', 'PARCIAL', 'VENCIDO')`)
+  .where(and(
+    sql`${receivables.status} IN ('PENDENTE', 'PARCIAL', 'VENCIDO')`,
+    companyId ? eq(receivables.companyId, companyId) : undefined
+  ))
   .groupBy(receivables.customerId, partners.name)
   .having(sql`SUM(CAST(${receivables.totalAmount} AS DECIMAL(10,2)) - CAST(${receivables.receivedAmount} AS DECIMAL(10,2))) > 0`)
   .orderBy(desc(sql`SUM(CAST(${receivables.totalAmount} AS DECIMAL(10,2)) - CAST(${receivables.receivedAmount} AS DECIMAL(10,2)))`));
@@ -2699,13 +2702,15 @@ export async function getTotalPendingReceivables(companyId?: number) {
   const [debitsResult] = await db.select({
     total: sql<string>`COALESCE(SUM(CAST(${customerDebits.debitAmount} AS DECIMAL(10,2))), 0)`
   })
-  .from(customerDebits);
+  .from(customerDebits)
+  .where(companyId ? eq(customerDebits.companyId, companyId) : undefined);
 
   // Soma total de pagamentos de todos os clientes
   const [paymentsResult] = await db.select({
     total: sql<string>`COALESCE(SUM(CAST(${customerPayments.paidAmount} AS DECIMAL(10,2))), 0)`
   })
-  .from(customerPayments);
+  .from(customerPayments)
+  .where(companyId ? eq(customerPayments.companyId, companyId) : undefined);
 
   const totalSales = parseFloat(salesResult.total || "0");
   const totalDebits = parseFloat(debitsResult.total || "0");
@@ -3001,7 +3006,10 @@ export async function getAllSuppliersWithHistory(companyId?: number) {
   })
   .from(purchaseInstallments)
   .leftJoin(purchaseOrders, eq(purchaseInstallments.purchaseOrderId, purchaseOrders.id))
-  .where(eq(purchaseInstallments.status, 'PENDING'))
+  .where(and(
+    eq(purchaseInstallments.status, 'PENDING'),
+    companyId ? eq(purchaseOrders.companyId, companyId) : undefined
+  ))
   .groupBy(purchaseOrders.supplierId);
   
   // Buscar pendências de DESPESAS (expenseInstallments)
@@ -3011,7 +3019,10 @@ export async function getAllSuppliersWithHistory(companyId?: number) {
   })
   .from(expenseInstallments)
   .leftJoin(expenses, eq(expenseInstallments.expenseId, expenses.id))
-  .where(eq(expenseInstallments.status, 'PENDENTE'))
+  .where(and(
+    eq(expenseInstallments.status, 'PENDENTE'),
+    companyId ? eq(expenses.companyId, companyId) : undefined
+  ))
   .groupBy(expenses.supplierId);
   
   // Buscar contagem total de transações por fornecedor (compras + despesas)
@@ -3106,7 +3117,10 @@ export async function getSuppliersWithPendingPayables(companyId?: number) {
   })
   .from(purchaseInstallments)
   .leftJoin(purchaseOrders, eq(purchaseInstallments.purchaseOrderId, purchaseOrders.id))
-  .where(eq(purchaseInstallments.status, 'PENDING'))
+  .where(and(
+    eq(purchaseInstallments.status, 'PENDING'),
+    companyId ? eq(purchaseOrders.companyId, companyId) : undefined
+  ))
   .groupBy(purchaseOrders.supplierId);
   
   // Buscar pendências de DESPESAS (expenseInstallments)
@@ -3116,7 +3130,10 @@ export async function getSuppliersWithPendingPayables(companyId?: number) {
   })
   .from(expenseInstallments)
   .leftJoin(expenses, eq(expenseInstallments.expenseId, expenses.id))
-  .where(eq(expenseInstallments.status, 'PENDENTE'))
+  .where(and(
+    eq(expenseInstallments.status, 'PENDENTE'),
+    companyId ? eq(expenses.companyId, companyId) : undefined
+  ))
   .groupBy(expenses.supplierId);
   
   // Consolidar por fornecedor
@@ -3164,18 +3181,41 @@ export async function getTotalPendingPayables(companyId?: number) {
   if (!db) throw new Error("Database not available");
   
   // Total de compras pendentes
-  const purchaseResult = await db.select({
-    total: sql<string>`COALESCE(SUM(CAST(${purchaseInstallments.amount} AS DECIMAL(10,2))), 0)`
-  })
-  .from(purchaseInstallments)
-  .where(eq(purchaseInstallments.status, 'PENDING'));
+  const purchaseConditions = [eq(purchaseInstallments.status, 'PENDING')];
+  const expenseConditions = [eq(expenseInstallments.status, 'PENDENTE')];
+
+  let purchaseResult;
+  if (companyId) {
+    purchaseResult = await db.select({
+      total: sql<string>`COALESCE(SUM(CAST(${purchaseInstallments.amount} AS DECIMAL(10,2))), 0)`
+    })
+    .from(purchaseInstallments)
+    .innerJoin(purchaseOrders, eq(purchaseInstallments.purchaseOrderId, purchaseOrders.id))
+    .where(and(eq(purchaseInstallments.status, 'PENDING'), eq(purchaseOrders.companyId, companyId)));
+  } else {
+    purchaseResult = await db.select({
+      total: sql<string>`COALESCE(SUM(CAST(${purchaseInstallments.amount} AS DECIMAL(10,2))), 0)`
+    })
+    .from(purchaseInstallments)
+    .where(eq(purchaseInstallments.status, 'PENDING'));
+  }
   
   // Total de despesas pendentes
-  const expenseResult = await db.select({
-    total: sql<string>`COALESCE(SUM(CAST(${expenseInstallments.amount} AS DECIMAL(10,2))), 0)`
-  })
-  .from(expenseInstallments)
-  .where(eq(expenseInstallments.status, 'PENDENTE'));
+  let expenseResult;
+  if (companyId) {
+    expenseResult = await db.select({
+      total: sql<string>`COALESCE(SUM(CAST(${expenseInstallments.amount} AS DECIMAL(10,2))), 0)`
+    })
+    .from(expenseInstallments)
+    .innerJoin(expenses, eq(expenseInstallments.expenseId, expenses.id))
+    .where(and(eq(expenseInstallments.status, 'PENDENTE'), eq(expenses.companyId, companyId)));
+  } else {
+    expenseResult = await db.select({
+      total: sql<string>`COALESCE(SUM(CAST(${expenseInstallments.amount} AS DECIMAL(10,2))), 0)`
+    })
+    .from(expenseInstallments)
+    .where(eq(expenseInstallments.status, 'PENDENTE'));
+  }
   
   const purchaseTotal = parseFloat(purchaseResult[0]?.total || "0");
   const expenseTotal = parseFloat(expenseResult[0]?.total || "0");
@@ -3559,6 +3599,7 @@ export async function getSalesCalendar(year: number, month: number, companyId?: 
     WHERE status != 'CANCELLED'
       AND saleDate >= '${firstDayOfMonth} 03:00:00'
       AND saleDate < DATE_ADD('${lastDayOfMonth}', INTERVAL 1 DAY) + INTERVAL 3 HOUR
+      ${companyId ? `AND companyId = ${companyId}` : ''}
     GROUP BY DAY(CONVERT_TZ(saleDate, '+00:00', '-03:00')), saleType
     ORDER BY day
   `));
@@ -3599,7 +3640,7 @@ export async function getSalesCalendar(year: number, month: number, companyId?: 
  * Calcula o saldo devedor de um cliente
  * Saldo = Σ(vendas A_PRAZO) + Σ(débitos manuais) - Σ(pagamentos)
  */
-export async function getCustomerBalance(customerId: number): Promise<number> {
+export async function getCustomerBalance(customerId: number, companyId?: number): Promise<number> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
@@ -3611,7 +3652,8 @@ export async function getCustomerBalance(customerId: number): Promise<number> {
   .where(and(
     eq(sales.customerId, customerId),
     eq(sales.saleType, "A_PRAZO"),
-    eq(sales.status, "ACTIVE")
+    eq(sales.status, "ACTIVE"),
+    companyId ? eq(sales.companyId, companyId) : undefined
   ));
 
   // Soma total de débitos manuais
@@ -3619,14 +3661,20 @@ export async function getCustomerBalance(customerId: number): Promise<number> {
     total: sql<string>`COALESCE(SUM(CAST(${customerDebits.debitAmount} AS DECIMAL(10,2))), 0)`
   })
   .from(customerDebits)
-  .where(eq(customerDebits.customerId, customerId));
+  .where(and(
+    eq(customerDebits.customerId, customerId),
+    companyId ? eq(customerDebits.companyId, companyId) : undefined
+  ));
 
   // Soma total de pagamentos
   const [paymentsResult] = await db.select({
     total: sql<string>`COALESCE(SUM(CAST(${customerPayments.paidAmount} AS DECIMAL(10,2))), 0)`
   })
   .from(customerPayments)
-  .where(eq(customerPayments.customerId, customerId));
+  .where(and(
+    eq(customerPayments.customerId, customerId),
+    companyId ? eq(customerPayments.companyId, companyId) : undefined
+  ));
 
   const totalSales = parseFloat(salesResult.total || "0");
   const totalDebits = parseFloat(debitsResult.total || "0");
@@ -3653,7 +3701,8 @@ export async function getCustomersWithBalance(companyId?: number) {
   .leftJoin(partners, eq(sales.customerId, partners.id))
   .where(and(
     eq(sales.saleType, "A_PRAZO"),
-    eq(sales.status, "ACTIVE")
+    eq(sales.status, "ACTIVE"),
+    companyId ? eq(sales.companyId, companyId) : undefined
   ))
   .groupBy(sales.customerId, partners.name);
 
@@ -3661,7 +3710,7 @@ export async function getCustomersWithBalance(companyId?: number) {
   const customersWithBalances = await Promise.all(
     customersWithSales.map(async (customer) => {
       if (!customer.customerId) return null;
-      const balance = await getCustomerBalance(customer.customerId);
+      const balance = await getCustomerBalance(customer.customerId, companyId);
       return {
         customerId: customer.customerId,
         customerName: customer.customerName,
@@ -3737,7 +3786,10 @@ export async function getCustomerAccountHistory(customerId: number, companyId?: 
     notes: customerDebits.notes
   })
   .from(customerDebits)
-  .where(eq(customerDebits.customerId, customerId));
+  .where(and(
+    eq(customerDebits.customerId, customerId),
+    companyId ? eq(customerDebits.companyId, companyId) : undefined
+  ));
 
   // Buscar todos os pagamentos
   const payments = await db.select({
@@ -3750,7 +3802,10 @@ export async function getCustomerAccountHistory(customerId: number, companyId?: 
     notes: customerPayments.notes
   })
   .from(customerPayments)
-  .where(eq(customerPayments.customerId, customerId));
+  .where(and(
+    eq(customerPayments.customerId, customerId),
+    companyId ? eq(customerPayments.companyId, companyId) : undefined
+  ));
 
   // Combinar e ordenar por data
   const history = [...salesWithItems, ...debits, ...payments]
@@ -3791,6 +3846,7 @@ export async function registerPaymentToBalance(data: {
   paymentMethod: string;
   notes?: string;
   createdBy: string;
+  companyId?: number;
 }) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
@@ -3801,7 +3857,8 @@ export async function registerPaymentToBalance(data: {
     paidAmount: data.paidAmount,
     paymentMethod: data.paymentMethod,
     notes: data.notes ?? null,
-    createdBy: data.createdBy
+    createdBy: data.createdBy,
+    companyId: data.companyId ?? null
   });
 
   return { success: true };
@@ -3819,6 +3876,7 @@ export async function registerManualDebit(data: {
   managementAccountId?: number;
   notes?: string;
   createdBy: string;
+  companyId?: number;
 }) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
@@ -3830,7 +3888,8 @@ export async function registerManualDebit(data: {
     description: data.description,
     managementAccountId: data.managementAccountId ?? null,
     notes: data.notes ?? null,
-    createdBy: data.createdBy
+    createdBy: data.createdBy,
+    companyId: data.companyId ?? null
   });
 
   return { success: true };
@@ -4637,6 +4696,7 @@ export async function getPayablesCalendar(year: number, month: number, companyId
     WHERE pi.dueDate >= '${toDateString(startDate)}'
       AND pi.dueDate <= '${toDateString(endDate)}'
       AND pi.status IN ('PENDING', 'OVERDUE')
+      ${companyId ? `AND po.companyId = ${companyId}` : ''}
     ORDER BY pi.dueDate ASC, p.name ASC
   `));
 

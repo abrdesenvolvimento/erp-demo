@@ -885,3 +885,15 @@ Despesa de impostos aparece tanto em janeiro quanto em fevereiro após edição 
 ### Correções Multiempresa Fase 2 — Bugs Reportados (22/02/2026)
 - [x] Dashboard: informações da Adega ainda aparecem ao selecionar outra empresa (queries não filtram por companyId)
 - [x] Seletor de empresa: implementar tela de seleção obrigatória antes do acesso ao sistema (quando usuário tem múltiplas empresas)
+
+### Correções Multiempresa — Bugs Reportados (22/02/2026 - Rodada 2)
+- [x] Tela de seleção de empresa não aparece após logoff (cookies de empresa limpos no logout)
+- [x] Dashboard: Faturamento Diário calendário filtrado por companyId (getSalesCalendar corrigido)
+- [x] Dashboard: getDashboardDailyRevenue, getDashboardMonthlyRevenue, getDashboardMonthlyPurchases filtrados
+- [x] Contas a Pagar: getPayablesCalendar e getTotalPendingPayables filtrados via JOIN com tabelas pai
+- [x] Pendente Recebimento: customerPayments/customerDebits com companyId (coluna adicionada + filtros)
+- [x] Dashboard: NaN% corrigido (verificação de zero antes de dividir)
+- [x] getCustomerBalance, getCustomersWithBalance, getCustomerAccountHistory filtrados por companyId
+- [x] getSuppliersWithPendingPayables filtrado via JOIN com purchaseOrders/expenses
+- [x] getGrossMarginByCategory, getPurchaseTotalCurrentMonth, getPurchaseTotalByDocType filtrados
+- [x] registerPaymentToBalance e registerManualDebit agora salvam companyId
