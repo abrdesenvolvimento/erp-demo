@@ -921,3 +921,15 @@ Despesa de impostos aparece tanto em janeiro quanto em fevereiro após edição 
 - [x] Customizar tela de seleção: usar logo real de cada empresa (Adega + A Brasa Reúne)
 - [x] Customizar tela de seleção: melhorar visual/fundo (dark theme, grid pattern, glow effects)
 - [x] Armazenar logo de cada empresa no banco (campo logoUrl na tabela companies)
+
+### Ajustes Tela de Seleção de Empresa (23/02/2026 - Rodada 2)
+- [x] Tela de seleção: trocar tema escuro por tema claro
+- [x] Tela de seleção: colocar logo ABRWF grande acima do título "Selecionar Empresa"
+- [x] Corrigir logo da Adega Beira Rio (atualizado no banco com logo correto da Adega)
+- [ ] Sidebar: usar logo da empresa ativa (não o logo do sistema) quando dentro de uma empresa
+
+### Requisitos Futuros - Comercialização (Anotado)
+- [ ] Sistema de permissões por módulo/pacote contratado (para comercialização)
+- [ ] Multi-tenant com banco de dados separado por cliente externo
+- [ ] Pacotes de módulos para liberar acesso a terceiros
+- [ ] Empresas internas (Adega + A Brasa) com acesso total
