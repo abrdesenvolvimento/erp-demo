@@ -230,6 +230,13 @@ export async function createSubcategory(data: InsertSubcategory) {
   return Number((result as any).insertId);
 }
 
+export async function updateSubcategory(id: number, data: Partial<InsertSubcategory>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(subcategories).set(data).where(eq(subcategories.id, id));
+}
+
 // ==================== CANAIS DE VENDA ====================
 export async function getSalesChannels(activeOnly = true, companyId?: number) {
   const db = await getDb();

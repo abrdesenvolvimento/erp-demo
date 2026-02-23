@@ -102,6 +102,19 @@ export const appRouter = router({
         const id = await db.createCategory({ ...input, companyId: ctx.activeCompanyId, branchId: ctx.activeBranchId });
         return { id, success: true };
       }),
+
+    update: adminProcedure
+      .input(z.object({
+        id: z.number(),
+        data: z.object({
+          name: z.string().optional(),
+          active: z.boolean().optional(),
+        }),
+      }))
+      .mutation(async ({ input }) => {
+        await db.updateCategory(input.id, input.data);
+        return { success: true };
+      }),
   }),
 
   // ==================== SUBCATEGORIAS ====================
@@ -120,6 +133,20 @@ export const appRouter = router({
       .mutation(async ({ input, ctx }) => {
         const id = await db.createSubcategory({ ...input, companyId: ctx.activeCompanyId, branchId: ctx.activeBranchId });
         return { id, success: true };
+      }),
+
+    update: adminProcedure
+      .input(z.object({
+        id: z.number(),
+        data: z.object({
+          name: z.string().optional(),
+          categoryId: z.number().optional(),
+          active: z.boolean().optional(),
+        }),
+      }))
+      .mutation(async ({ input }) => {
+        await db.updateSubcategory(input.id, input.data);
+        return { success: true };
       }),
   }),
 

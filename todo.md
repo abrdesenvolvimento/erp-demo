@@ -942,3 +942,11 @@ Despesa de impostos aparece tanto em janeiro quanto em fevereiro após edição 
 - [x] Criação de registros: companyId adicionado em createReceivable, addPurchaseOrderItem, createSaleItem, createExpenseCategory, upsertRevenueGoal, createRevenueGoal, createManagementAccount
 - [x] Liberação de acesso por usuário: página Gerenciar Acessos com grant/revoke/updateRole por empresa
 - [x] Bug: Despesas não aparecem no calendário de Contas a Pagar (query expandida para incluir expenseInstallments + badge visual Compra/Despesa)
+
+### Página de Gestão de Categorias e Subcategorias (23/02/2026)
+- [x] Investigar estrutura atual de categorias/subcategorias no schema
+- [x] Criar endpoints tRPC para CRUD completo de categorias e subcategorias
+- [x] Criar página frontend com visualização em árvore hierárquica
+- [x] Adicionar rota e menu na sidebar
+- [x] Separar por tipo (Produtos vs Despesas) — abas Produtos e Despesas
+- [x] Permitir criar, editar e ativar/desativar categorias/subcategorias
