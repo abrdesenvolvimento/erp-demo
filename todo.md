@@ -936,3 +936,9 @@ Despesa de impostos aparece tanto em janeiro quanto em fevereiro após edição 
 
 ### Ajuste Logo Tela de Seleção (23/02/2026 - Rodada 3)
 - [x] Aumentar tamanho do logo ABRWF na tela de seleção de empresa (h-24 → h-36)
+
+### Pendências Multiempresa - Rodada 4 (23/02/2026)
+- [x] Impressão/PDF: usar logo e dados da empresa ativa (nome, CNPJ, endereço dinâmicos)
+- [x] Criação de registros: companyId adicionado em createReceivable, addPurchaseOrderItem, createSaleItem, createExpenseCategory, upsertRevenueGoal, createRevenueGoal, createManagementAccount
+- [x] Liberação de acesso por usuário: página Gerenciar Acessos com grant/revoke/updateRole por empresa
+- [x] Bug: Despesas não aparecem no calendário de Contas a Pagar (query expandida para incluir expenseInstallments + badge visual Compra/Despesa)

@@ -11,10 +11,15 @@ type CompanyAccess = {
   companyName: string | null;
   companyLegalName: string;
   companyLogoUrl: string | null;
+  companyDocNumber: string | null;
   segment: string | null;
   branchName: string | null;
+  branchStreet: string | null;
+  branchStreetNumber: string | null;
+  branchNeighborhood: string | null;
   branchCity: string | null;
   branchState: string | null;
+  branchZipCode: string | null;
 };
 
 type CompanyContextType = {

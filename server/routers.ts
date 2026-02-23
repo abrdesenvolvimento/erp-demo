@@ -579,6 +579,7 @@ export const appRouter = router({
             receivedAmount: "0.00",
             status: "PENDENTE",
             createdBy: ctx.user.id,
+            companyId: ctx.activeCompanyId ?? 1,
           });
           
           // Criar parcelas
@@ -707,6 +708,8 @@ export const appRouter = router({
             quantity: item.quantity,
             unitPrice: item.unitPrice,
             totalPrice: item.totalPrice,
+            companyId: ctx.activeCompanyId ?? 1,
+            branchId: ctx.activeBranchId ?? 1,
           });
         }
         
@@ -921,6 +924,7 @@ export const appRouter = router({
             unitCost: item.unitCost.toFixed(4),
             totalCost: totalCost.toFixed(2),
             expiryDate: item.expiryDate ? new Date(item.expiryDate) : null,
+            companyId: ctx.activeCompanyId ?? 1,
           });
         }
         
@@ -1024,8 +1028,8 @@ export const appRouter = router({
           description: z.string().optional(),
           active: z.boolean().optional().default(true),
         }))
-        .mutation(async ({ input }) => {
-          const id = await db.createExpenseCategory(input);
+        .mutation(async ({ input, ctx }) => {
+          const id = await db.createExpenseCategory({ ...input, companyId: ctx.activeCompanyId ?? 1 });
           return { id, success: true };
         }),
       
@@ -2328,6 +2332,7 @@ export const appRouter = router({
           notes: input.notes,
           createdBy: ctx.user.id,
           createdByName: ctx.user.name || undefined,
+          companyId: ctx.activeCompanyId ?? 1,
         });
       }),
 
@@ -2395,8 +2400,8 @@ export const appRouter = router({
         accountingCode: z.string().min(1),
         accountingName: z.string().optional(),
       }))
-      .mutation(async ({ input }) => {
-        const id = await db.createManagementAccount(input);
+      .mutation(async ({ input, ctx }) => {
+        const id = await db.createManagementAccount({ ...input, companyId: ctx.activeCompanyId ?? 1 });
         return { id, success: true };
       }),
 

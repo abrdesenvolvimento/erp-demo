@@ -756,13 +756,24 @@ export default function ContasPagar() {
               <div className="space-y-2">
                 {calendarData.find(d => d.day === selectedCalendarDay)!.items.map((item: any) => (
                   <div
-                    key={item.installmentId}
+                    key={`${item.tipo || 'C'}-${item.installmentId}`}
                     className="flex items-center justify-between p-3 bg-muted rounded-md"
                   >
                     <div className="flex-1">
-                      <p className="font-medium">{item.supplierName}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium">{item.supplierName}</p>
+                        <span className={`text-xs font-medium px-2 py-0.5 rounded ${
+                          item.tipo === 'DESPESA'
+                            ? 'bg-purple-100 text-purple-700'
+                            : 'bg-blue-100 text-blue-700'
+                        }`}>
+                          {item.tipo === 'DESPESA' ? 'Despesa' : 'Compra'}
+                        </span>
+                      </div>
                       <p className="text-sm text-muted-foreground">
-                        {item.docNumber ? `Doc: ${item.docNumber}` : `Compra #${item.purchaseOrderId}`}
+                        {item.tipo === 'DESPESA'
+                          ? (item.docNumber ? item.docNumber.substring(0, 60) + (item.docNumber.length > 60 ? '...' : '') : `Despesa #${item.purchaseOrderId}`)
+                          : (item.docNumber ? `Doc: ${item.docNumber}` : `Compra #${item.purchaseOrderId}`)}
                       </p>
                       {item.paymentMethod && (
                         <span className={`inline-block text-xs font-medium mt-1 px-2 py-0.5 rounded ${

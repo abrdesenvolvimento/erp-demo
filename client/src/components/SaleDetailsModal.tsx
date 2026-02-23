@@ -6,6 +6,7 @@ import { Printer, X, Edit, Ban, Plus, Users } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { useAuth } from "@/_core/hooks/useAuth";
+import { useCompany } from "@/contexts/CompanyContext";
 import { useState } from "react";
 import {
   AlertDialog,
@@ -27,6 +28,7 @@ interface SaleDetailsModalProps {
 
 export function SaleDetailsModal({ saleId, open, onClose }: SaleDetailsModalProps) {
   const { user } = useAuth();
+  const { activeCompany } = useCompany();
   const utils = trpc.useUtils();
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [cancellationReason, setCancellationReason] = useState("");
@@ -402,13 +404,13 @@ export function SaleDetailsModal({ saleId, open, onClose }: SaleDetailsModalProp
       </head>
       <body>
         <div class="header">
-          <img src="/logo-adega.png" alt="Adega Beira Rio">
-          <h1>Adega Beira Rio</h1>
-          <p>Comércio de Bebidas Ltda</p>
-          <p>Rua Israel, 286</p>
-          <p>Rochdale, Osasco/SP</p>
-          <p>CEP 06220-053</p>
-          <p>CNPJ: 50.887.052/0001-08</p>
+          ${activeCompany?.companyLogoUrl ? `<img src="${activeCompany.companyLogoUrl}" alt="${activeCompany.companyName || activeCompany.companyLegalName}">` : ''}
+          <h1>${activeCompany?.companyName || activeCompany?.companyLegalName || 'Empresa'}</h1>
+          <p>${activeCompany?.companyLegalName || ''}</p>
+          ${activeCompany?.branchStreet ? `<p>${activeCompany.branchStreet}${activeCompany.branchStreetNumber ? ', ' + activeCompany.branchStreetNumber : ''}</p>` : ''}
+          ${activeCompany?.branchNeighborhood || activeCompany?.branchCity ? `<p>${activeCompany.branchNeighborhood || ''}${activeCompany.branchCity ? (activeCompany.branchNeighborhood ? ', ' : '') + activeCompany.branchCity : ''}${activeCompany.branchState ? '/' + activeCompany.branchState : ''}</p>` : ''}
+          ${activeCompany?.branchZipCode ? `<p>CEP ${activeCompany.branchZipCode}</p>` : ''}
+          ${activeCompany?.companyDocNumber ? `<p>CNPJ: ${activeCompany.companyDocNumber}</p>` : ''}
         </div>
         
         <div class="info">

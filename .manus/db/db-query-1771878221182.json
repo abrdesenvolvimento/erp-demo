@@ -1,0 +1,73 @@
+{
+  "query": "SELECT uc.id, uc.userId, u.name as userName, uc.companyId, c.tradeName as companyName, uc.role, uc.isDefault FROM userCompanies uc LEFT JOIN users u ON uc.userId = u.id LEFT JOIN companies c ON uc.companyId = c.id;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT uc.id, uc.userId, u.name as userName, uc.companyId, c.tradeName as companyName, uc.role, uc.isDefault FROM userCompanies uc LEFT JOIN users u ON uc.userId = u.id LEFT JOIN companies c ON uc.companyId = c.id;",
+  "rows": [
+    {
+      "id": "6",
+      "userId": "3sp2FmLhkenyjqMFmfLoex",
+      "userName": "Gabriel Morais",
+      "companyId": "2",
+      "companyName": "A Brasa Reúne Bar e Hamburgueria",
+      "role": "admin",
+      "isDefault": "0"
+    },
+    {
+      "id": "1",
+      "userId": "3sp2FmLhkenyjqMFmfLoex",
+      "userName": "Gabriel Morais",
+      "companyId": "1",
+      "companyName": "Adega Beira Rio",
+      "role": "admin",
+      "isDefault": "1"
+    },
+    {
+      "id": "7",
+      "userId": "6DBTSksJmdeiQvgXMcJBYh",
+      "userName": "Ricardo Pereira",
+      "companyId": "2",
+      "companyName": "A Brasa Reúne Bar e Hamburgueria",
+      "role": "admin",
+      "isDefault": "0"
+    },
+    {
+      "id": "2",
+      "userId": "6DBTSksJmdeiQvgXMcJBYh",
+      "userName": "Ricardo Pereira",
+      "companyId": "1",
+      "companyName": "Adega Beira Rio",
+      "role": "admin",
+      "isDefault": "1"
+    },
+    {
+      "id": "3",
+      "userId": "SxWub2pstjQMugEvgWaUgn",
+      "userName": "Jaine Barros de Oliveira",
+      "companyId": "1",
+      "companyName": "Adega Beira Rio",
+      "role": "consultor",
+      "isDefault": "1"
+    },
+    {
+      "id": "4",
+      "userId": "j8R68T3wPMAkij5Kb9Zef8",
+      "userName": "Gabriel Morais",
+      "companyId": "1",
+      "companyName": "Adega Beira Rio",
+      "role": "operacional",
+      "isDefault": "1"
+    },
+    {
+      "id": "5",
+      "userId": "nJQ5MEcvMtTycyPAzY3UzD",
+      "userName": "Adega Beira Rio Osasco",
+      "companyId": "1",
+      "companyName": "Adega Beira Rio",
+      "role": "operacional",
+      "isDefault": "1"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tuserId\tuserName\tcompanyId\tcompanyName\trole\tisDefault\n6\t3sp2FmLhkenyjqMFmfLoex\tGabriel Morais\t2\tA Brasa Reúne Bar e Hamburgueria\tadmin\t0\n1\t3sp2FmLhkenyjqMFmfLoex\tGabriel Morais\t1\tAdega Beira Rio\tadmin\t1\n7\t6DBTSksJmdeiQvgXMcJBYh\tRicardo Pereira\t2\tA Brasa Reúne Bar e Hamburgueria\tadmin\t0\n2\t6DBTSksJmdeiQvgXMcJBYh\tRicardo Pereira\t1\tAdega Beira Rio\tadmin\t1\n3\tSxWub2pstjQMugEvgWaUgn\tJaine Barros de Oliveira\t1\tAdega Beira Rio\tconsultor\t1\n4\tj8R68T3wPMAkij5Kb9Zef8\tGabriel Morais\t1\tAdega Beira Rio\toperacional\t1\n5\tnJQ5MEcvMtTycyPAzY3UzD\tAdega Beira Rio Osasco\t1\tAdega Beira Rio\toperacional\t1\n",
+  "stderr": "",
+  "execution_time_ms": 57
+}

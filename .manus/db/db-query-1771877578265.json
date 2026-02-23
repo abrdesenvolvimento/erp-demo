@@ -1,0 +1,40 @@
+{
+  "query": "SELECT c.id, c.name, c.tradeName, c.docNumber, c.logoUrl, b.id as branchId, b.name as branchName, b.street, b.streetNumber, b.neighborhood, b.city, b.state, b.zipCode FROM companies c LEFT JOIN branches b ON c.id = b.companyId;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT c.id, c.name, c.tradeName, c.docNumber, c.logoUrl, b.id as branchId, b.name as branchName, b.street, b.streetNumber, b.neighborhood, b.city, b.state, b.zipCode FROM companies c LEFT JOIN branches b ON c.id = b.companyId;",
+  "rows": [
+    {
+      "id": "1",
+      "name": "ADEGA BEIRA RIO ROCHDALE LTDA",
+      "tradeName": "Adega Beira Rio",
+      "docNumber": "NULL",
+      "logoUrl": "https://files.manuscdn.com/user_upload_by_module/session_file/310519663140687549/VvrulRlnhRupaJWD.png",
+      "branchId": "1",
+      "branchName": "Rochdale",
+      "street": "NULL",
+      "streetNumber": "NULL",
+      "neighborhood": "Rochdale",
+      "city": "Osasco",
+      "state": "SP",
+      "zipCode": "NULL"
+    },
+    {
+      "id": "2",
+      "name": "A BRASA REUNE BAR E HAMBURGUERIA LTDA",
+      "tradeName": "A Brasa Reúne Bar e Hamburgueria",
+      "docNumber": "65.218.771/0001-03",
+      "logoUrl": "https://files.manuscdn.com/user_upload_by_module/session_file/310519663140687549/XdNUWUdzzLxyYANG.png",
+      "branchId": "2",
+      "branchName": "Rochdale",
+      "street": "Av. Brasil",
+      "streetNumber": "2009",
+      "neighborhood": "Rochdale",
+      "city": "Osasco",
+      "state": "SP",
+      "zipCode": "06220-050"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\ttradeName\tdocNumber\tlogoUrl\tbranchId\tbranchName\tstreet\tstreetNumber\tneighborhood\tcity\tstate\tzipCode\n1\tADEGA BEIRA RIO ROCHDALE LTDA\tAdega Beira Rio\tNULL\thttps://files.manuscdn.com/user_upload_by_module/session_file/310519663140687549/VvrulRlnhRupaJWD.png\t1\tRochdale\tNULL\tNULL\tRochdale\tOsasco\tSP\tNULL\n2\tA BRASA REUNE BAR E HAMBURGUERIA LTDA\tA Brasa Reúne Bar e Hamburgueria\t65.218.771/0001-03\thttps://files.manuscdn.com/user_upload_by_module/session_file/310519663140687549/XdNUWUdzzLxyYANG.png\t2\tRochdale\tAv. Brasil\t2009\tRochdale\tOsasco\tSP\t06220-050\n",
+  "stderr": "",
+  "execution_time_ms": 57
+}

@@ -27,6 +27,7 @@ import GovernancaContabil from "./pages/GovernancaContabil";
 import ImportadorIfood from "./pages/ImportadorIfood";
 import AnaliseEstoque from "./pages/AnaliseEstoque";
 import AccessDenied from "./pages/AccessDenied";
+import GerenciarAcessos from "./pages/GerenciarAcessos";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
@@ -61,6 +62,7 @@ function Router() {
       <Route path="/governanca-contabil" component={GovernancaContabil} />
       <Route path="/importar-ifood" component={ImportadorIfood} />
       <Route path="/minha-conta" component={MinhaConta} />
+      <Route path="/gerenciar-acessos" component={GerenciarAcessos} />
       <Route path="/acesso-negado" component={AccessDenied} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />

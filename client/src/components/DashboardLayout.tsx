@@ -37,6 +37,7 @@ const mainMenuItems = [
   { icon: Upload, label: "Importar iFood", path: "/importar-ifood", roles: ["admin"] },
   { icon: Users, label: "Parceiros", path: "/parceiros", roles: ["admin", "operacional", "consultor"] },
   { icon: Shield, label: "Gerenciar Usuários", path: "/usuarios", roles: ["admin"] },
+  { icon: Building2, label: "Gerenciar Acessos", path: "/gerenciar-acessos", roles: ["admin"] },
 ];
 
 // Submenu Financeiro

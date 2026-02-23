@@ -3576,6 +3576,8 @@ export async function createSaleItem(data: {
   quantity: number;
   unitPrice: string;
   totalPrice: string;
+  companyId?: number;
+  branchId?: number;
 }) {
   const database = await getDb();
   if (!database) throw new Error("Database not available");
@@ -4752,7 +4754,8 @@ export async function getPayablesCalendar(year: number, month: number, companyId
   const startDate = new Date(year, month - 1, 1);
   const endDate = new Date(year, month, 0); // Último dia do mês
 
-  const result = await db.execute(sql.raw(`
+  // 1. Parcelas de COMPRAS (purchaseInstallments)
+  const purchaseResult = await db.execute(sql.raw(`
     SELECT 
       DAY(pi.dueDate) as day,
       pi.id as installmentId,
@@ -4763,7 +4766,8 @@ export async function getPayablesCalendar(year: number, month: number, companyId
       po.docNumber,
       po.paymentMethod,
       p.id as supplierId,
-      p.name as supplierName
+      p.name as supplierName,
+      'COMPRA' as tipo
     FROM purchaseInstallments pi
     INNER JOIN purchaseOrders po ON pi.purchaseOrderId = po.id
     INNER JOIN partners p ON po.supplierId = p.id
@@ -4774,7 +4778,33 @@ export async function getPayablesCalendar(year: number, month: number, companyId
     ORDER BY pi.dueDate ASC, p.name ASC
   `));
 
-  const rows = ((result as any)[0] || []) as any[];
+  // 2. Parcelas de DESPESAS (via expenseInstallments + accountsPayable)
+  const expenseResult = await db.execute(sql.raw(`
+    SELECT 
+      DAY(ei.dueDate) as day,
+      ei.id as installmentId,
+      ei.amount,
+      ei.dueDate,
+      CASE ei.status WHEN 'PENDENTE' THEN 'PENDING' WHEN 'VENCIDO' THEN 'OVERDUE' ELSE ei.status END as status,
+      e.id as purchaseOrderId,
+      e.description as docNumber,
+      COALESCE(e.paymentMethod, 'PIX') as paymentMethod,
+      COALESCE(e.supplierId, 0) as supplierId,
+      COALESCE(p.name, 'Despesa') as supplierName,
+      'DESPESA' as tipo
+    FROM expenseInstallments ei
+    INNER JOIN expenses e ON ei.expenseId = e.id
+    LEFT JOIN partners p ON e.supplierId = p.id
+    WHERE ei.dueDate >= '${toDateString(startDate)}'
+      AND ei.dueDate <= '${toDateString(endDate)}'
+      AND ei.status IN ('PENDENTE', 'VENCIDO')
+      ${companyId ? `AND e.companyId = ${companyId}` : ''}
+    ORDER BY ei.dueDate ASC
+  `));
+
+  const purchaseRows = ((purchaseResult as any)[0] || []) as any[];
+  const expenseRows = ((expenseResult as any)[0] || []) as any[];
+  const allRows = [...purchaseRows, ...expenseRows];
 
   // Agrupar por dia
   const calendar: Record<number, {
@@ -4791,10 +4821,11 @@ export async function getPayablesCalendar(year: number, month: number, companyId
       paymentMethod: string;
       supplierId: number;
       supplierName: string;
+      tipo: string;
     }>;
   }> = {};
 
-  for (const row of rows) {
+  for (const row of allRows) {
     const day = row.day;
     if (!calendar[day]) {
       calendar[day] = { day, total: 0, count: 0, items: [] };
@@ -4811,6 +4842,7 @@ export async function getPayablesCalendar(year: number, month: number, companyId
       paymentMethod: row.paymentMethod,
       supplierId: row.supplierId,
       supplierName: row.supplierName,
+      tipo: row.tipo,
     });
   }
 
@@ -5797,6 +5829,7 @@ export async function createRevenueGoal(data: {
   targetAmount: number;
   notes?: string;
   createdBy: string;
+  companyId?: number;
 }) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
@@ -5804,9 +5837,10 @@ export async function createRevenueGoal(data: {
   const channelValue = data.channelId === null || data.channelId === undefined ? 'NULL' : data.channelId;
   const notesValue = data.notes ? `'${data.notes.replace(/'/g, "''")}'` : 'NULL';
 
+  const companyIdValue = data.companyId ?? 1;
   await db.execute(sql.raw(`
-    INSERT INTO revenueGoals (year, month, channelId, targetAmount, notes, createdBy)
-    VALUES (${data.year}, ${data.month}, ${channelValue}, ${data.targetAmount}, ${notesValue}, '${data.createdBy}')
+    INSERT INTO revenueGoals (year, month, channelId, targetAmount, notes, createdBy, companyId)
+    VALUES (${data.year}, ${data.month}, ${channelValue}, ${data.targetAmount}, ${notesValue}, '${data.createdBy}', ${companyIdValue})
   `));
 
   return { success: true };
@@ -5870,12 +5904,13 @@ export async function upsertRevenueGoal(data: {
   notes?: string;
   createdBy: string;
   createdByName?: string;
+  companyId?: number;
 }) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
   // Verificar se já existe
-  const existing = await getRevenueGoal(data.year, data.month, data.channelId);
+  const existing = await getRevenueGoal(data.year, data.month, data.channelId, data.companyId);
   
   if (existing) {
     return updateRevenueGoal(existing.id, {
@@ -5885,7 +5920,7 @@ export async function upsertRevenueGoal(data: {
       changedByName: data.createdByName,
     });
   } else {
-    return createRevenueGoal(data);
+    return createRevenueGoal({ ...data, companyId: data.companyId });
   }
 }
 
@@ -6642,6 +6677,7 @@ export async function createManagementAccount(data: {
   impactPayroll?: boolean;
   accountingCode: string;
   accountingName?: string;
+  companyId?: number;
 }) {
   const db = await getDb();
   if (!db) throw new Error('Database not available');
@@ -6657,6 +6693,7 @@ export async function createManagementAccount(data: {
     impactMargin: data.impactMargin || false,
     impactPayroll: data.impactPayroll || false,
     isActive: true,
+    companyId: data.companyId ?? 1,
   });
   
   const managementAccountId = (insertResult[0] as any).insertId;

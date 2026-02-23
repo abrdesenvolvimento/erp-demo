@@ -22,6 +22,7 @@ interface CalendarPayButtonProps {
     docNumber: string;
     purchaseOrderId: number;
     paymentMethod: string;
+    tipo?: string;
   };
   onPaymentSuccess?: () => void;
 }
@@ -64,7 +65,7 @@ export function CalendarPayButton({ item, onPaymentSuccess }: CalendarPayButtonP
 
     payInstallmentMutation.mutate({
       installmentId: item.installmentId,
-      type: 'purchase' as const,
+      type: (item.tipo === 'DESPESA' ? 'expense' : 'purchase') as 'purchase' | 'expense',
       paidDate: new Date(paymentForm.paidDate),
       paidAmount: paidAmount.toString(),
       paymentMethod: paymentForm.paymentMethod,
