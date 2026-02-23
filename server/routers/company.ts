@@ -18,6 +18,7 @@ export const companyRouter = router({
         isDefault: userCompanies.isDefault,
         companyName: companies.tradeName,
         companyLegalName: companies.name,
+        companyLogoUrl: companies.logoUrl,
         segment: companies.segment,
         branchName: branches.name,
         branchCity: branches.city,

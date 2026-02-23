@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import { appRouter } from './routers';
-import type { Context } from './_core/context';
+import type { TrpcContext } from './_core/context';
 
 // Mock de contexto admin
-const mockAdminContext: Context = {
+const mockAdminContext: TrpcContext = {
   user: {
     id: 'admin-test',
     name: 'Admin Test',
@@ -15,6 +15,8 @@ const mockAdminContext: Context = {
   },
   req: {} as any,
   res: {} as any,
+  activeCompanyId: 1,
+  activeBranchId: 1,
 };
 
 const caller = appRouter.createCaller(mockAdminContext);

@@ -23,6 +23,7 @@ export const companies = mysqlTable("companies", {
   segment: varchar("segment", { length: 100 }),
   phone: varchar("phone", { length: 20 }),
   whatsapp: varchar("whatsapp", { length: 20 }),
+  logoUrl: text("logoUrl"),
   active: boolean("active").default(true).notNull(),
   createdAt: timestamp("createdAt").defaultNow(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow(),

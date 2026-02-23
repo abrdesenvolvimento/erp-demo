@@ -380,7 +380,11 @@ function DashboardLayoutContent({
               <DropdownMenu open={companyMenuOpen} onOpenChange={setCompanyMenuOpen}>
                 <DropdownMenuTrigger asChild>
                   <button className="flex items-center gap-2 w-full rounded-lg border border-border/60 bg-muted/30 px-3 py-2 text-left hover:bg-accent/50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-                    <Building2 className="h-4 w-4 text-muted-foreground shrink-0" />
+                    {activeCompany?.companyLogoUrl ? (
+                      <img src={activeCompany.companyLogoUrl} alt="" className="h-6 w-6 rounded-md object-cover shrink-0" />
+                    ) : (
+                      <Building2 className="h-4 w-4 text-muted-foreground shrink-0" />
+                    )}
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-medium truncate leading-none">
                         {activeCompany?.companyName || activeCompany?.companyLegalName || 'Selecionar Empresa'}
@@ -407,6 +411,11 @@ function DashboardLayoutContent({
                         }}
                         className={`cursor-pointer flex items-center gap-2 ${isActive ? 'bg-accent' : ''}`}
                       >
+                        {uc.companyLogoUrl ? (
+                          <img src={uc.companyLogoUrl} alt="" className="h-6 w-6 rounded-md object-cover shrink-0" />
+                        ) : (
+                          <Building2 className="h-4 w-4 text-muted-foreground shrink-0" />
+                        )}
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium truncate">
                             {uc.companyName || uc.companyLegalName}

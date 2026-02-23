@@ -10,6 +10,7 @@ type CompanyAccess = {
   isDefault: boolean;
   companyName: string | null;
   companyLegalName: string;
+  companyLogoUrl: string | null;
   segment: string | null;
   branchName: string | null;
   branchCity: string | null;

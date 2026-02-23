@@ -100,13 +100,16 @@ describe('Stock Analysis Queries', () => {
 
   describe('getStockAnalysisByProduct', () => {
     it('should return product details with correct calculations', async () => {
-      // Mock: products, cmv, lastPurchase, lastCost, costCurr, costPrev, entries
+      // Mock: products, cmv, lastSale, lastPurchase, lastCost, costCurr, costPrev, entries
       mockExecute
         .mockResolvedValueOnce([[
           { productId: 1, productName: 'Heineken 269ml', categoryId: 1, categoryName: 'Bebidas', currentStock: 527, avgCost: '3.78' },
         ]])
         .mockResolvedValueOnce([[
           { productId: 1, cmv: '1636', qtdSold: '433' },
+        ]])
+        .mockResolvedValueOnce([[
+          { productId: 1, lastSaleDate: '2026-02-22' },
         ]])
         .mockResolvedValueOnce([[
           { productId: 1, lastPurchaseDate: '2026-02-21' },
@@ -154,6 +157,7 @@ describe('Stock Analysis Queries', () => {
           { productId: 1, productName: 'Blue Label 750ml', categoryId: 1, categoryName: 'Bebidas', currentStock: 2, avgCost: '799.90' },
         ]])
         .mockResolvedValueOnce([[]])  // no CMV
+        .mockResolvedValueOnce([[]])  // no last sale
         .mockResolvedValueOnce([[]])  // no purchase
         .mockResolvedValueOnce([[]])  // no last cost
         .mockResolvedValueOnce([[]])  // no cost curr

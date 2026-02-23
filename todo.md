@@ -915,3 +915,9 @@ Despesa de impostos aparece tanto em janeiro quanto em fevereiro após edição 
 - [x] stockAnalysisQueries.ts: 2 funções corrigidas (getStockAnalysisByCategory, getStockAnalysisByProduct)
 - [x] accounting router: listOtherRevenues, createOtherRevenue, listChartOfAccounts, listManagementAccounts corrigidos
 - [x] routers.ts: getCustomerBalance e getCustomerAccountHistory agora recebem companyId em todas as chamadas
+
+### Melhorias Tela de Seleção e Troca de Empresa (23/02/2026)
+- [x] Eliminar flash de dados antigos ao trocar de empresa (loading overlay)
+- [x] Customizar tela de seleção: usar logo real de cada empresa (Adega + A Brasa Reúne)
+- [x] Customizar tela de seleção: melhorar visual/fundo (dark theme, grid pattern, glow effects)
+- [x] Armazenar logo de cada empresa no banco (campo logoUrl na tabela companies)

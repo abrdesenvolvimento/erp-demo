@@ -358,7 +358,7 @@ export async function getStockAnalysisByProduct(
 
   // Mapear tudo
   const cmvMap: Record<number, { cmv: number; qtdSold: number; qtdSoldBalcao: number; qtdSoldDelivery: number }> = {};
-  for (const r of (cmvResult[0] as unknown as any[])) {
+  for (const r of ((cmvResult[0] || []) as unknown as any[])) {
     cmvMap[r.productId] = {
       cmv: parseFloat(r.cmv || '0'),
       qtdSold: parseFloat(r.qtdSold || '0'),
@@ -368,34 +368,34 @@ export async function getStockAnalysisByProduct(
   }
 
   const lastSaleMap: Record<number, string> = {};
-  for (const r of (lastSaleResult[0] as unknown as any[])) {
+  for (const r of ((lastSaleResult[0] || []) as unknown as any[])) {
     const d = r.lastSaleDate;
     lastSaleMap[r.productId] = d instanceof Date ? d.toISOString().split('T')[0] : String(d || '').split('T')[0];
   }
 
   const lastPurchaseMap: Record<number, string> = {};
-  for (const r of (lastPurchaseResult[0] as unknown as any[])) {
+  for (const r of ((lastPurchaseResult[0] || []) as unknown as any[])) {
     const d = r.lastPurchaseDate;
     lastPurchaseMap[r.productId] = d instanceof Date ? d.toISOString().split('T')[0] : String(d || '').split('T')[0];
   }
 
   const lastCostMap: Record<number, number> = {};
-  for (const r of (lastCostResult[0] as unknown as any[])) {
+  for (const r of ((lastCostResult[0] || []) as unknown as any[])) {
     lastCostMap[r.productId] = parseFloat(r.lastPurchaseCost || '0');
   }
 
   const costCurrMap: Record<number, number> = {};
-  for (const r of (costCurrResult[0] as unknown as any[])) {
+  for (const r of ((costCurrResult[0] || []) as unknown as any[])) {
     costCurrMap[r.productId] = parseFloat(r.avgPurchaseCost || '0');
   }
 
   const costPrevMap: Record<number, number> = {};
-  for (const r of (costPrevResult[0] as unknown as any[])) {
+  for (const r of ((costPrevResult[0] || []) as unknown as any[])) {
     costPrevMap[r.productId] = parseFloat(r.avgPurchaseCost || '0');
   }
 
   const entriesMap: Record<number, { count: number; total: number }> = {};
-  for (const r of (entriesResult[0] as unknown as any[])) {
+  for (const r of ((entriesResult[0] || []) as unknown as any[])) {
     entriesMap[r.productId] = { count: parseInt(r.entriesCount || '0'), total: parseFloat(r.totalPurchased || '0') };
   }
 

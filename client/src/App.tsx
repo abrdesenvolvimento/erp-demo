@@ -69,7 +69,7 @@ function Router() {
 }
 
 function CompanyGate() {
-  const { needsSelection, loading: companyLoading, companies, activeCompanyId } = useCompany();
+  const { needsSelection, loading: companyLoading, switching, activeCompany } = useCompany();
   const { isAuthenticated, loading: authLoading } = useAuth();
 
   // Se não está autenticado ou ainda carregando auth, mostrar router normalmente
@@ -94,7 +94,29 @@ function CompanyGate() {
     return <SelectCompany />;
   }
 
-  return <Router />;
+  return (
+    <>
+      {/* Overlay de troca de empresa — bloqueia interação e esconde dados antigos */}
+      {switching && (
+        <div className="fixed inset-0 z-[9999] bg-white/90 backdrop-blur-sm flex items-center justify-center">
+          <div className="flex flex-col items-center gap-4">
+            {activeCompany?.companyLogoUrl && (
+              <img 
+                src={activeCompany.companyLogoUrl} 
+                alt="" 
+                className="h-16 w-16 rounded-xl object-contain" 
+              />
+            )}
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-600"></div>
+            <p className="text-slate-600 text-sm font-medium">
+              Carregando {activeCompany?.companyName || 'empresa'}...
+            </p>
+          </div>
+        </div>
+      )}
+      <Router />
+    </>
+  );
 }
 
 function App() {
