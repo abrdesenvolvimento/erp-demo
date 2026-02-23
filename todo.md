@@ -906,9 +906,9 @@ Despesa de impostos aparece tanto em janeiro quanto em fevereiro após edição 
 - [x] Metas: getRevenueGoal/upsertRevenueGoal corrigidos com filtro companyId
 - [x] Fechamento Mensal: closingQueries.ts (6 funções) corrigidas com filtro companyId
 - [x] Dashboard: Meta do Mês corrigida (getRevenueGoal já filtra por companyId)
-- [ ] Tela de Seleção: trocar ícone genérico pelo logo ABRWF maior
-- [ ] Tela de Seleção: trocar letra "A" pelo logo de cada empresa
-- [ ] Tela de Seleção: melhorar fundo (menos genérico)
+- [x] Tela de Seleção: trocar ícone genérico pelo logo ABRWF maior
+- [x] Tela de Seleção: trocar letra "A" pelo logo de cada empresa
+- [x] Tela de Seleção: melhorar fundo (menos genérico)
 - [x] Tela de Seleção: corrigir flash da tela inicial antes do redirect (CompanyGate mostra loading)
 - [x] db.ts: 22 funções corrigidas (getPurchaseOrders, getExpenses, listReceivables, listPendingReceivableInstallments, listOverdueReceivableInstallments, getReceivablesSummary, getCustomerReceivableDetail, getSupplierPayableDetail, getPaymentHistory, cancelSale, searchProducts, createCategory, getProductMovements, getExpenseCategories, listManagementAccounts, listManagementAccountsForSelect, listManagementAccountsGrouped, getSalesMonthlyStats, getRevenueGoal, getRevenueGoalProgress, getAllRevenueGoalHistory, getCustomerAccountHistory-sales-query)
 - [x] closingQueries.ts: 6 funções corrigidas (getSalesByChannel, getSalesByCategory, getPurchasesByCategory, getExpensesByCategory, getStockByCategory, getPaymentsByType)

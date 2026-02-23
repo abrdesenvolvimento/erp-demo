@@ -508,7 +508,8 @@ export async function createPartner(data: InsertPartner) {
   if (!db) throw new Error("Database not available");
   
   const result = await db.insert(partners).values(data);
-  return Number((result as any).insertId);
+  const insertId = (result as any).insertId || (result as any)[0]?.insertId;
+  return Number(insertId);
 }
 
 export async function updatePartner(id: number, data: Partial<InsertPartner>) {

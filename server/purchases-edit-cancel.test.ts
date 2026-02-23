@@ -31,12 +31,12 @@ describe('Purchases - Edit and Cancel', () => {
     const supplier = await caller.partners.create({
       partnerType: 'SUPPLIER',
       name: 'Fornecedor Teste Cancelamento',
-      cpfCnpj: '12345678901234',
+      docNumber: '12345678901234',
       email: 'fornecedor-cancel@test.com',
       phone: '11999999999',
       zipCode: '01310-100',
       street: 'Av Paulista',
-      number: '1000',
+      streetNumber: '1000',
       neighborhood: 'Bela Vista',
       city: 'São Paulo',
       state: 'SP',
@@ -95,7 +95,7 @@ describe('Purchases - Edit and Cancel', () => {
 
   it('deve cancelar uma compra confirmada', async () => {
     // Buscar estoque antes do cancelamento
-    const productBefore = await caller.products.getById({ id: testProductId });
+    const productBefore = await caller.products.get({ id: testProductId });
     const stockBefore = parseFloat(productBefore?.currentStock?.toString() || '0');
 
     // Cancelar compra
@@ -103,7 +103,7 @@ describe('Purchases - Edit and Cancel', () => {
     expect(result.success).toBe(true);
 
     // Verificar se estoque foi revertido
-    const productAfter = await caller.products.getById({ id: testProductId });
+    const productAfter = await caller.products.get({ id: testProductId });
     const stockAfter = parseFloat(productAfter?.currentStock?.toString() || '0');
     
     expect(stockAfter).toBe(stockBefore - 50); // Estoque deve ter diminuído 50 unidades
@@ -149,7 +149,7 @@ describe('Purchases - Edit and Cancel', () => {
     await caller.purchases.confirm({ id: editPurchaseId });
 
     // Buscar estoque antes da edição
-    const productBefore = await caller.products.getById({ id: testProductId });
+    const productBefore = await caller.products.get({ id: testProductId });
     const stockBefore = parseFloat(productBefore?.currentStock?.toString() || '0');
 
     // Editar compra (alterar quantidade de 20 para 30)
@@ -169,7 +169,7 @@ describe('Purchases - Edit and Cancel', () => {
     expect(result.success).toBe(true);
 
     // Verificar se estoque foi atualizado corretamente
-    const productAfter = await caller.products.getById({ id: testProductId });
+    const productAfter = await caller.products.get({ id: testProductId });
     const stockAfter = parseFloat(productAfter?.currentStock?.toString() || '0');
     
     // Estoque deve ter aumentado 10 unidades (30 - 20)
