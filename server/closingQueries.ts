@@ -61,7 +61,7 @@ export interface SalesByChannel {
  * Vendas por Canal (usando salesChannels + channelId da venda)
  * Agrupa por canal real: iFood, 99Food, Balcão, A Prazo
  */
-export async function getSalesByChannel(startDate: string, endDate: string): Promise<SalesByChannel[]> {
+export async function getSalesByChannel(startDate: string, endDate: string, companyId?: number): Promise<SalesByChannel[]> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
@@ -146,7 +146,7 @@ export async function getSalesByChannel(startDate: string, endDate: string): Pro
 /**
  * Vendas por Categoria de Produtos
  */
-export async function getSalesByCategory(startDate: string, endDate: string): Promise<SalesByCategory[]> {
+export async function getSalesByCategory(startDate: string, endDate: string, companyId?: number): Promise<SalesByCategory[]> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
@@ -192,7 +192,7 @@ export async function getSalesByCategory(startDate: string, endDate: string): Pr
 /**
  * Compras por Categoria de Produtos
  */
-export async function getPurchasesByCategory(startDate: string, endDate: string): Promise<PurchasesByCategory[]> {
+export async function getPurchasesByCategory(startDate: string, endDate: string, companyId?: number): Promise<PurchasesByCategory[]> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
@@ -231,7 +231,7 @@ export async function getPurchasesByCategory(startDate: string, endDate: string)
 /**
  * Vendas por Tipo de Pagamento
  */
-export async function getSalesByPaymentType(startDate: string, endDate: string): Promise<SalesByPaymentType[]> {
+export async function getSalesByPaymentType(startDate: string, endDate: string, companyId?: number): Promise<SalesByPaymentType[]> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
@@ -273,7 +273,8 @@ export async function getStockByCategory(
   startDate: string,
   endDate: string,
   year: number,
-  month: number
+  month: number,
+  companyId?: number
 ): Promise<StockByCategory[]> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
@@ -380,7 +381,7 @@ export async function getStockByCategory(
 /**
  * Compras por Fornecedor - usa COALESCE(tradeName, name) para evitar "Sem Nome"
  */
-export async function getPurchasesBySupplier(startDate: string, endDate: string): Promise<PurchasesBySupplier[]> {
+export async function getPurchasesBySupplier(startDate: string, endDate: string, companyId?: number): Promise<PurchasesBySupplier[]> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 

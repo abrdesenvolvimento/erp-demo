@@ -1,0 +1,198 @@
+{
+  "query": "SELECT t.TABLE_NAME, IF(c.COLUMN_NAME IS NOT NULL, 'HAS', 'NO') as has_companyId FROM INFORMATION_SCHEMA.TABLES t LEFT JOIN INFORMATION_SCHEMA.COLUMNS c ON t.TABLE_NAME = c.TABLE_NAME AND c.COLUMN_NAME = 'companyId' AND c.TABLE_SCHEMA = t.TABLE_SCHEMA WHERE t.TABLE_SCHEMA = DATABASE() AND t.TABLE_TYPE = 'BASE TABLE' ORDER BY has_companyId DESC, t.TABLE_NAME",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT t.TABLE_NAME, IF(c.COLUMN_NAME IS NOT NULL, 'HAS', 'NO') as has_companyId FROM INFORMATION_SCHEMA.TABLES t LEFT JOIN INFORMATION_SCHEMA.COLUMNS c ON t.TABLE_NAME = c.TABLE_NAME AND c.COLUMN_NAME = 'companyId' AND c.TABLE_SCHEMA = t.TABLE_SCHEMA WHERE t.TABLE_SCHEMA = DATABASE() AND t.TABLE_TYPE = 'BASE TABLE' ORDER BY has_companyId DESC, t.TABLE_NAME",
+  "rows": [
+    {
+      "TABLE_NAME": "__drizzle_migrations",
+      "has_companyId": "NO"
+    },
+    {
+      "TABLE_NAME": "accountingMappings",
+      "has_companyId": "NO"
+    },
+    {
+      "TABLE_NAME": "backupLogs",
+      "has_companyId": "NO"
+    },
+    {
+      "TABLE_NAME": "companies",
+      "has_companyId": "NO"
+    },
+    {
+      "TABLE_NAME": "customerDebits",
+      "has_companyId": "NO"
+    },
+    {
+      "TABLE_NAME": "customerPayments",
+      "has_companyId": "NO"
+    },
+    {
+      "TABLE_NAME": "expenseCategories",
+      "has_companyId": "NO"
+    },
+    {
+      "TABLE_NAME": "expenseInstallments",
+      "has_companyId": "NO"
+    },
+    {
+      "TABLE_NAME": "purchaseInstallments",
+      "has_companyId": "NO"
+    },
+    {
+      "TABLE_NAME": "receivableInstallments",
+      "has_companyId": "NO"
+    },
+    {
+      "TABLE_NAME": "revenueAccounts",
+      "has_companyId": "NO"
+    },
+    {
+      "TABLE_NAME": "revenueEntries",
+      "has_companyId": "NO"
+    },
+    {
+      "TABLE_NAME": "revenueGoalHistory",
+      "has_companyId": "NO"
+    },
+    {
+      "TABLE_NAME": "users",
+      "has_companyId": "NO"
+    },
+    {
+      "TABLE_NAME": "accountingBatchLog",
+      "has_companyId": "HAS"
+    },
+    {
+      "TABLE_NAME": "accountingEntries",
+      "has_companyId": "HAS"
+    },
+    {
+      "TABLE_NAME": "accountingPeriods",
+      "has_companyId": "HAS"
+    },
+    {
+      "TABLE_NAME": "accountsPayable",
+      "has_companyId": "HAS"
+    },
+    {
+      "TABLE_NAME": "branches",
+      "has_companyId": "HAS"
+    },
+    {
+      "TABLE_NAME": "categories",
+      "has_companyId": "HAS"
+    },
+    {
+      "TABLE_NAME": "chartOfAccounts",
+      "has_companyId": "HAS"
+    },
+    {
+      "TABLE_NAME": "expenses",
+      "has_companyId": "HAS"
+    },
+    {
+      "TABLE_NAME": "governanceAuditLog",
+      "has_companyId": "HAS"
+    },
+    {
+      "TABLE_NAME": "governanceSettings",
+      "has_companyId": "HAS"
+    },
+    {
+      "TABLE_NAME": "ifoodImportLogs",
+      "has_companyId": "HAS"
+    },
+    {
+      "TABLE_NAME": "ifoodImportedOrders",
+      "has_companyId": "HAS"
+    },
+    {
+      "TABLE_NAME": "ifoodPriceDivergences",
+      "has_companyId": "HAS"
+    },
+    {
+      "TABLE_NAME": "ifoodProductMappings",
+      "has_companyId": "HAS"
+    },
+    {
+      "TABLE_NAME": "journalSources",
+      "has_companyId": "HAS"
+    },
+    {
+      "TABLE_NAME": "journals",
+      "has_companyId": "HAS"
+    },
+    {
+      "TABLE_NAME": "managementAccounts",
+      "has_companyId": "HAS"
+    },
+    {
+      "TABLE_NAME": "otherRevenues",
+      "has_companyId": "HAS"
+    },
+    {
+      "TABLE_NAME": "partners",
+      "has_companyId": "HAS"
+    },
+    {
+      "TABLE_NAME": "productCompositions",
+      "has_companyId": "HAS"
+    },
+    {
+      "TABLE_NAME": "productMovements",
+      "has_companyId": "HAS"
+    },
+    {
+      "TABLE_NAME": "productPrices",
+      "has_companyId": "HAS"
+    },
+    {
+      "TABLE_NAME": "products",
+      "has_companyId": "HAS"
+    },
+    {
+      "TABLE_NAME": "purchaseOrderItems",
+      "has_companyId": "HAS"
+    },
+    {
+      "TABLE_NAME": "purchaseOrders",
+      "has_companyId": "HAS"
+    },
+    {
+      "TABLE_NAME": "receivablePayments",
+      "has_companyId": "HAS"
+    },
+    {
+      "TABLE_NAME": "receivables",
+      "has_companyId": "HAS"
+    },
+    {
+      "TABLE_NAME": "revenueGoals",
+      "has_companyId": "HAS"
+    },
+    {
+      "TABLE_NAME": "saleItems",
+      "has_companyId": "HAS"
+    },
+    {
+      "TABLE_NAME": "sales",
+      "has_companyId": "HAS"
+    },
+    {
+      "TABLE_NAME": "salesChannels",
+      "has_companyId": "HAS"
+    },
+    {
+      "TABLE_NAME": "subcategories",
+      "has_companyId": "HAS"
+    },
+    {
+      "TABLE_NAME": "userCompanies",
+      "has_companyId": "HAS"
+    }
+  ],
+  "messages": [],
+  "stdout": "TABLE_NAME\thas_companyId\n__drizzle_migrations\tNO\naccountingMappings\tNO\nbackupLogs\tNO\ncompanies\tNO\ncustomerDebits\tNO\ncustomerPayments\tNO\nexpenseCategories\tNO\nexpenseInstallments\tNO\npurchaseInstallments\tNO\nreceivableInstallments\tNO\nrevenueAccounts\tNO\nrevenueEntries\tNO\nrevenueGoalHistory\tNO\nusers\tNO\naccountingBatchLog\tHAS\naccountingEntries\tHAS\naccountingPeriods\tHAS\naccountsPayable\tHAS\nbranches\tHAS\ncategories\tHAS\nchartOfAccounts\tHAS\nexpenses\tHAS\ngovernanceAuditLog\tHAS\ngovernanceSettings\tHAS\nifoodImportLogs\tHAS\nifoodImportedOrders\tHAS\nifoodPriceDivergences\tHAS\nifoodProductMappings\tHAS\njournalSources\tHAS\njournals\tHAS\nmanagementAccounts\tHAS\notherRevenues\tHAS\npartners\tHAS\nproductCompositions\tHAS\nproductMovements\tHAS\nproductPrices\tHAS\nproducts\tHAS\npurchaseOrderItems\tHAS\npurchaseOrders\tHAS\nreceivablePayments\tHAS\nreceivables\tHAS\nrevenueGoals\tHAS\nsaleItems\tHAS\nsales\tHAS\nsalesChannels\tHAS\nsubcategories\tHAS\nuserCompanies\tHAS\n",
+  "stderr": "",
+  "execution_time_ms": 190
+}

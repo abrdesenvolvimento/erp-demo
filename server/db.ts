@@ -519,13 +519,14 @@ export async function updatePartner(id: number, data: Partial<InsertPartner>) {
 }
 
 // ==================== VENDAS ====================
-export async function getSales(filters?: { saleType?: string; customerId?: number; limit?: number; dateFrom?: string; dateTo?: string }) {
+export async function getSales(filters?: { saleType?: string; customerId?: number; limit?: number; dateFrom?: string; dateTo?: string; companyId?: number }) {
   const db = await getDb();
   if (!db) return [];
   
   // Se tem filtro de data, usar query SQL otimizada
   if (filters?.dateFrom || filters?.dateTo) {
     let whereConditions = `1=1`;
+    if (filters?.companyId) whereConditions += ` AND companyId = ${filters.companyId}`;
     
     if (filters?.saleType) {
       whereConditions += ` AND saleType = '${filters.saleType}'`;
@@ -569,6 +570,7 @@ export async function getSales(filters?: { saleType?: string; customerId?: numbe
   
   // Query padrão sem filtro de data - usar SQL para converter timezone
   let whereConditions = `1=1`;
+  if (filters?.companyId) whereConditions += ` AND companyId = ${filters.companyId}`;
   
   if (filters?.saleType) {
     whereConditions += ` AND saleType = '${filters.saleType}'`;
@@ -794,7 +796,8 @@ export async function getSalesStats(
   period?: 'today' | 'week' | 'month' | 'all',
   dateFrom?: string,
   dateTo?: string,
-  channel?: 'BALCAO' | 'DELIVERY' | 'A_PRAZO'
+  channel?: 'BALCAO' | 'DELIVERY' | 'A_PRAZO',
+  companyId?: number
 ) {
   const db = await getDb();
   if (!db) return {
@@ -809,6 +812,7 @@ export async function getSalesStats(
   
   // Construir condições WHERE
   let whereConditions = `status != 'CANCELLED'`;
+  if (companyId) whereConditions += ` AND companyId = ${companyId}`;
   
   // Filtro de data customizada (tem prioridade sobre period)
   if (dateFrom || dateTo) {
@@ -1061,7 +1065,7 @@ export async function createPurchaseOrder(data: InsertPurchaseOrder) {
   }
 }
 
-export async function getPurchaseOrders(filters?: { status?: string; supplierId?: number; startDate?: Date; endDate?: Date; docNumber?: string; minValue?: number; maxValue?: number }) {
+export async function getPurchaseOrders(filters?: { status?: string; supplierId?: number; startDate?: Date; endDate?: Date; docNumber?: string; minValue?: number; maxValue?: number; companyId?: number }) {
   const db = await getDb();
   if (!db) return [];
   
@@ -1552,7 +1556,7 @@ export async function updatePurchaseOrderItems(
   }
 }
 
-export async function searchProducts(searchTerm: string) {
+export async function searchProducts(searchTerm: string, companyId?: number) {
   const db = await getDb();
   if (!db) return [];
   
@@ -1573,7 +1577,7 @@ export async function searchProducts(searchTerm: string) {
 }
 
 // Cancelar venda (admin only, 24h limit)
-export async function cancelSale(saleId: number, userId: string, reason?: string) {
+export async function cancelSale(saleId: number, userId: string, reason?: string, companyId?: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
@@ -1719,7 +1723,7 @@ export async function updateSaleItems(saleId: number, updates: {
 // ==================== DESPESAS OPERACIONAIS ====================
 
 // Categorias de Despesas
-export async function getExpenseCategories(activeOnly = true) {
+export async function getExpenseCategories(activeOnly = true, companyId?: number) {
   const db = await getDb();
   if (!db) return [];
   
@@ -1747,7 +1751,7 @@ export async function updateExpenseCategory(id: number, data: Partial<InsertExpe
 }
 
 // Despesas
-export async function getExpenses(filters?: { 
+export async function getExpenses(filters?: { companyId?: number; 
   categoryId?: number; 
   status?: string; 
   supplierId?: number;
@@ -1997,7 +2001,7 @@ export async function getExpenseInstallments(expenseId: number) {
     .orderBy(expenseInstallments.installmentNumber);
 }
 
-export async function getPendingExpenseInstallments(filters?: {
+export async function getPendingExpenseInstallments(filters?: { companyId?: number;
   categoryId?: number;
   startDate?: Date;
   endDate?: Date;
@@ -2048,7 +2052,7 @@ export async function createExpenseInstallment(data: InsertExpenseInstallment) {
   return Number((result as any).insertId);
 }
 
-export async function getPaymentHistory(filters: {
+export async function getPaymentHistory(filters: { companyId?: number;
   supplierId?: number;
   startDate?: string;
   endDate?: string;
@@ -2397,7 +2401,7 @@ export async function createReceivableInstallment(data: InsertReceivableInstallm
 }
 
 // Listar recebíveis
-export async function listReceivables(filters?: {
+export async function listReceivables(filters?: { companyId?: number;
   customerId?: number;
   status?: string;
 }) {
@@ -2441,7 +2445,7 @@ export async function getReceivableById(id: number) {
 }
 
 // Listar parcelas pendentes
-export async function listPendingReceivableInstallments(customerId?: number) {
+export async function listPendingReceivableInstallments(customerId?: number, companyId?: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
@@ -2470,7 +2474,7 @@ export async function listPendingReceivableInstallments(customerId?: number) {
 }
 
 // Listar parcelas vencidas
-export async function listOverdueReceivableInstallments() {
+export async function listOverdueReceivableInstallments(companyId?: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
@@ -2610,7 +2614,7 @@ export async function updateOverdueReceivableInstallments() {
 }
 
 // Resumo de recebíveis
-export async function getReceivablesSummary() {
+export async function getReceivablesSummary(companyId?: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
@@ -2654,7 +2658,7 @@ export async function getReceivablesSummary() {
 
 
 // Listar clientes com saldo devedor
-export async function getCustomersWithPendingReceivables() {
+export async function getCustomersWithPendingReceivables(companyId?: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
@@ -2676,7 +2680,7 @@ export async function getCustomersWithPendingReceivables() {
 }
 
 // Obter total pendente de todos os clientes (usando sistema de conta corrente)
-export async function getTotalPendingReceivables() {
+export async function getTotalPendingReceivables(companyId?: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
@@ -2710,7 +2714,7 @@ export async function getTotalPendingReceivables() {
 }
 
 // Obter detalhamento completo de um cliente
-export async function getCustomerReceivableDetail(customerId: number) {
+export async function getCustomerReceivableDetail(customerId: number, companyId?: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
@@ -2976,7 +2980,7 @@ export async function registerCustomerPayment(data: {
 // ==================== CONTAS A PAGAR ====================
 
 // Listar TODOS os fornecedores com histórico (com ou sem saldo pendente)
-export async function getAllSuppliersWithHistory() {
+export async function getAllSuppliersWithHistory(companyId?: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
@@ -3090,7 +3094,7 @@ export async function getAllSuppliersWithHistory() {
 }
 
 // Listar fornecedores com saldo devedor (contas a pagar pendentes) - LEGADO
-export async function getSuppliersWithPendingPayables() {
+export async function getSuppliersWithPendingPayables(companyId?: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
@@ -3154,7 +3158,7 @@ export async function getSuppliersWithPendingPayables() {
 }
 
 // Obter total pendente de pagamento a todos os fornecedores
-export async function getTotalPendingPayables() {
+export async function getTotalPendingPayables(companyId?: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
@@ -3179,7 +3183,7 @@ export async function getTotalPendingPayables() {
 }
 
 // Obter detalhamento completo de um fornecedor
-export async function getSupplierPayableDetail(supplierId: number) {
+export async function getSupplierPayableDetail(supplierId: number, companyId?: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
@@ -3530,7 +3534,7 @@ export async function getPendingReceivablesByCustomer(customerId: number) {
 }
 
 
-export async function getSalesCalendar(year: number, month: number) {
+export async function getSalesCalendar(year: number, month: number, companyId?: number) {
   const db = await getDb();
   if (!db) return [];
 
@@ -3633,7 +3637,7 @@ export async function getCustomerBalance(customerId: number): Promise<number> {
 /**
  * Lista todos os clientes com saldo devedor > 0
  */
-export async function getCustomersWithBalance() {
+export async function getCustomersWithBalance(companyId?: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
@@ -3676,7 +3680,7 @@ export async function getCustomersWithBalance() {
  * Busca histórico completo de um cliente (vendas + pagamentos + débitos manuais)
  * Retorna lista ordenada cronologicamente com saldo acumulado
  */
-export async function getCustomerAccountHistory(customerId: number) {
+export async function getCustomerAccountHistory(customerId: number, companyId?: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
@@ -3838,7 +3842,7 @@ export async function registerManualDebit(data: {
 /**
  * Retorna o valor total de compras do mês atual
  */
-export async function getPurchaseTotalCurrentMonth() {
+export async function getPurchaseTotalCurrentMonth(companyId?: number) {
   const db = await getDb();
   if (!db) return "0.00";
   
@@ -3865,7 +3869,7 @@ export async function getPurchaseTotalCurrentMonth() {
 /**
  * Retorna o valor total de compras por tipo de documento (mês atual)
  */
-export async function getPurchaseTotalByDocType() {
+export async function getPurchaseTotalByDocType(companyId?: number) {
   const db = await getDb();
   if (!db) return [];
   
@@ -3895,7 +3899,7 @@ export async function getPurchaseTotalByDocType() {
  * Retorna margem bruta por categoria (mês atual)
  * Margem% = (1 - Custo/Venda) × 100
  */
-export async function getGrossMarginByCategory() {
+export async function getGrossMarginByCategory(companyId?: number) {
   const db = await getDb();
   if (!db) return [];
   
@@ -4028,6 +4032,7 @@ export async function getGrossMarginByCategory() {
 export async function getSalesAnalysisByValue(
   startDate: Date, 
   endDate: Date,
+  companyId?: number,
   filters?: { 
     productIds?: number[]; 
     subcategoryId?: number;
@@ -4045,6 +4050,7 @@ export async function getSalesAnalysisByValue(
   // Construir condições WHERE dinâmicas
   // Usar CONVERT_TZ para converter UTC para horário local do Brasil (GMT-3)
   let whereConditions = `s.status != 'CANCELLED' AND DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) >= '${startStr}' AND DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) <= '${endStr}'`;
+  if (companyId) whereConditions += ` AND s.companyId = ${companyId}`;
   
   if (filters?.productIds && filters.productIds.length > 0) {
     whereConditions += ` AND p.id IN (${filters.productIds.join(',')})`;
@@ -4098,6 +4104,7 @@ export async function getSalesAnalysisByValue(
 export async function getSalesAnalysisByQuantity(
   startDate: Date, 
   endDate: Date,
+  companyId?: number,
   filters?: { 
     productIds?: number[]; 
     subcategoryId?: number;
@@ -4115,7 +4122,9 @@ export async function getSalesAnalysisByQuantity(
   // Construir condições WHERE dinâmicas
   // Usar CONVERT_TZ para converter UTC para horário local do Brasil (GMT-3)
   let whereConditions = `s.status != 'CANCELLED' AND DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) >= '${startStr}' AND DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) <= '${endStr}'`;
+  if (companyId) whereConditions += ` AND s.companyId = ${companyId}`;
   let subqueryWhere = `s2.status != 'CANCELLED' AND DATE(CONVERT_TZ(s2.saleDate, '+00:00', '-03:00')) >= '${startStr}' AND DATE(CONVERT_TZ(s2.saleDate, '+00:00', '-03:00')) <= '${endStr}'`;
+  if (companyId) subqueryWhere += ` AND s2.companyId = ${companyId}`;
   
   if (filters?.productIds && filters.productIds.length > 0) {
     whereConditions += ` AND p.id IN (${filters.productIds.join(',')})`;
@@ -4176,6 +4185,7 @@ export async function getSalesAnalysisByQuantity(
 export async function getSalesAnalysisByCategoryValue(
   startDate: Date, 
   endDate: Date,
+  companyId?: number,
   filters?: { 
     productIds?: number[]; 
     subcategoryId?: number;
@@ -4193,6 +4203,7 @@ export async function getSalesAnalysisByCategoryValue(
   // Construir condições WHERE dinâmicas
   // Usar CONVERT_TZ para converter UTC para horário local do Brasil (GMT-3)
   let whereConditions = `s.status != 'CANCELLED' AND DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) >= '${startStr}' AND DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) <= '${endStr}'`;
+  if (companyId) whereConditions += ` AND s.companyId = ${companyId}`;
   
   if (filters?.productIds && filters.productIds.length > 0) {
     whereConditions += ` AND p.id IN (${filters.productIds.join(',')})`;
@@ -4244,6 +4255,7 @@ export async function getSalesAnalysisByCategoryValue(
 export async function getSalesAnalysisByDay(
   startDate: Date, 
   endDate: Date,
+  companyId?: number,
   filters?: { 
     productIds?: number[]; 
     subcategoryId?: number;
@@ -4261,6 +4273,7 @@ export async function getSalesAnalysisByDay(
   // Construir condições WHERE dinâmicas
   // Usar CONVERT_TZ para converter UTC para horário local do Brasil (GMT-3)
   let whereConditions = `s.status != 'CANCELLED' AND DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) >= '${startStr}' AND DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) <= '${endStr}'`;
+  if (companyId) whereConditions += ` AND s.companyId = ${companyId}`;
   
   if (filters?.productIds && filters.productIds.length > 0) {
     whereConditions += ` AND p.id IN (${filters.productIds.join(',')})`;
@@ -4311,6 +4324,7 @@ export async function getSalesAnalysisByDay(
 export async function getSalesAnalysisByWeek(
   startDate: Date, 
   endDate: Date,
+  companyId?: number,
   filters?: { 
     productIds?: number[]; 
     subcategoryId?: number;
@@ -4328,6 +4342,7 @@ export async function getSalesAnalysisByWeek(
   // Construir condições WHERE dinâmicas
   // Usar CONVERT_TZ para converter UTC para horário local do Brasil (GMT-3)
   let whereConditions = `s.status != 'CANCELLED' AND DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) >= '${startStr}' AND DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) <= '${endStr}'`;
+  if (companyId) whereConditions += ` AND s.companyId = ${companyId}`;
   
   if (filters?.productIds && filters.productIds.length > 0) {
     whereConditions += ` AND p.id IN (${filters.productIds.join(',')})`;
@@ -4380,6 +4395,7 @@ export async function getSalesAnalysisByWeek(
 export async function getSalesAnalysisByMonth(
   startDate: Date, 
   endDate: Date,
+  companyId?: number,
   filters?: { 
     productIds?: number[]; 
     subcategoryId?: number;
@@ -4397,6 +4413,7 @@ export async function getSalesAnalysisByMonth(
   // Construir condições WHERE dinâmicas
   // Usar CONVERT_TZ para converter UTC para horário local do Brasil (GMT-3)
   let whereConditions = `s.status != 'CANCELLED' AND DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) >= '${startStr}' AND DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) <= '${endStr}'`;
+  if (companyId) whereConditions += ` AND s.companyId = ${companyId}`;
   
   if (filters?.productIds && filters.productIds.length > 0) {
     whereConditions += ` AND p.id IN (${filters.productIds.join(',')})`;
@@ -4449,6 +4466,7 @@ export async function getSalesAnalysisByMonth(
 export async function getSalesByProductAndDate(
   startDate: Date, 
   endDate: Date,
+  companyId?: number,
   filters?: { 
     productIds?: number[]; 
     subcategoryId?: number;
@@ -4466,6 +4484,7 @@ export async function getSalesByProductAndDate(
   // Construir condições WHERE dinâmicas
   // Usar CONVERT_TZ para converter UTC para horário local do Brasil (GMT-3)
   let whereConditions = `s.status != 'CANCELLED' AND DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) >= '${startStr}' AND DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) <= '${endStr}'`;
+  if (companyId) whereConditions += ` AND s.companyId = ${companyId}`;
   
   if (filters?.productIds && filters.productIds.length > 0) {
     whereConditions += ` AND p.id IN (${filters.productIds.join(',')})`;
@@ -4514,7 +4533,7 @@ export async function getSalesByProductAndDate(
 
 
 // ==================== EXPORTAÇÃO DE VENDAS ====================
-export async function getSalesForExport(filters?: { 
+export async function getSalesForExport(filters?: { companyId?: number; 
   startDate?: Date; 
   endDate?: Date; 
   saleType?: string; 
@@ -4525,6 +4544,7 @@ export async function getSalesForExport(filters?: {
   if (!db) return [];
 
   let whereConditions = `s.status != 'CANCELLED'`;
+  if (filters?.companyId) whereConditions += ` AND s.companyId = ${filters.companyId}`;
 
   // Filtro de data (saleDate com timezone) - usar dateUtils
   if (filters?.startDate) {
@@ -4587,7 +4607,7 @@ export async function getSalesForExport(filters?: {
 
 
 // ==================== CALENDÁRIO DE CONTAS A PAGAR ====================
-export async function getPayablesCalendar(year: number, month: number) {
+export async function getPayablesCalendar(year: number, month: number, companyId?: number) {
   const db = await getDb();
   if (!db) return [];
 
@@ -4677,7 +4697,7 @@ export async function createProductMovement(data: InsertProductMovement) {
 /**
  * Busca movimentações de um produto específico
  */
-export async function getProductMovements(productId: number, filters?: {
+export async function getProductMovements(productId: number, companyId?: number, filters?: {
   startDate?: Date;
   endDate?: Date;
   type?: string;
@@ -4783,7 +4803,7 @@ export async function adjustProductStock(data: {
  * Busca faturamento do mês atual diretamente no SQL
  * Muito mais eficiente que buscar todas as vendas e filtrar em JavaScript
  */
-export async function getDashboardMonthlyRevenue() {
+export async function getDashboardMonthlyRevenue(companyId?: number) {
   const db = await getDb();
   if (!db) return { 
     total: 0, 
@@ -4821,7 +4841,7 @@ export async function getDashboardMonthlyRevenue() {
 /**
  * Busca faturamento de hoje diretamente no SQL
  */
-export async function getDashboardDailyRevenue() {
+export async function getDashboardDailyRevenue(companyId?: number) {
   const db = await getDb();
   if (!db) return { 
     total: 0, 
@@ -4854,7 +4874,7 @@ export async function getDashboardDailyRevenue() {
 /**
  * Busca total de compras do mês atual
  */
-export async function getDashboardMonthlyPurchases() {
+export async function getDashboardMonthlyPurchases(companyId?: number) {
   const db = await getDb();
   if (!db) return { 
     total: 0, 
@@ -4896,13 +4916,15 @@ export async function getDashboardMonthlyPurchases() {
 export async function getDeliveryProductAnalysis(
   startDate: string,
   endDate: string,
-  categoryId?: number
+  categoryId?: number,
+  companyId?: number
 ) {
   const db = await getDb();
   if (!db) return [];
 
   // Construir condições WHERE
   let whereConditions = `s.status != 'CANCELLED' AND s.saleType = 'DELIVERY' AND DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) >= '${startDate}' AND DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) <= '${endDate}'`;
+  if (companyId) whereConditions += ` AND s.companyId = ${companyId}`;
   
   if (categoryId) {
     whereConditions += ` AND p.categoryId = ${categoryId}`;
@@ -4964,6 +4986,7 @@ export async function getDeliveryProductAnalysis(
 export async function getSalesAnalysisSummary(
   startDate: Date, 
   endDate: Date,
+  companyId?: number,
   filters?: { 
     channels?: string[];
     paymentMethod?: string;
@@ -4984,6 +5007,7 @@ export async function getSalesAnalysisSummary(
   if (hasProductFilter) {
     // Query baseada em saleItems para filtrar por produtos específicos
     let whereConditions = `s.status != 'CANCELLED' AND DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) >= '${startStr}' AND DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) <= '${endStr}'`;
+    if (companyId) whereConditions += ` AND s.companyId = ${companyId}`;
     
     if (filters?.channels && filters.channels.length > 0) {
       const channelList = filters.channels.map(ch => `'${ch}'`).join(',');
@@ -5022,6 +5046,7 @@ export async function getSalesAnalysisSummary(
 
   // Query original usando sales.finalAmount (sem filtro de produto)
   let whereConditions = `status != 'CANCELLED' AND DATE(CONVERT_TZ(saleDate, '+00:00', '-03:00')) >= '${startStr}' AND DATE(CONVERT_TZ(saleDate, '+00:00', '-03:00')) <= '${endStr}'`;
+  if (companyId) whereConditions += ` AND companyId = ${companyId}`;
   
   if (filters?.channels && filters.channels.length > 0) {
     const channelList = filters.channels.map(ch => `'${ch}'`).join(',');
@@ -5056,7 +5081,7 @@ export async function getSalesAnalysisSummary(
  * Retorna estatísticas mensais de vendas para um ano específico
  * Agrupa por mês e canal de venda
  */
-export async function getSalesMonthlyStats(year: number) {
+export async function getSalesMonthlyStats(year: number, companyId?: number) {
   const db = await getDb();
   if (!db) return [];
 
@@ -5115,7 +5140,7 @@ export async function getSalesMonthlyStats(year: number) {
  * Busca margem líquida de delivery do mês atual usando SQL otimizado
  * Calcula faturamento, custo e margem líquida (após dedução de 7% de taxa)
  */
-export async function getDeliveryNetMarginOptimized() {
+export async function getDeliveryNetMarginOptimized(companyId?: number) {
   const db = await getDb();
   if (!db) return {
     deliveryRevenue: '0.00',
@@ -5184,7 +5209,7 @@ export async function getDeliveryNetMarginOptimized() {
  * Busca análise de despesas por categoria
  * Agrupa despesas por categoria com totais
  */
-export async function getExpenseAnalysisByCategory(
+export async function getExpenseAnalysisByCategory(companyId: number | undefined,
   startDate?: string,
   endDate?: string,
   categoryId?: number,
@@ -5194,6 +5219,7 @@ export async function getExpenseAnalysisByCategory(
   if (!db) return [];
 
   let whereClause = `WHERE e.status != 'CANCELADA'`;
+  if (companyId) whereClause += ` AND e.companyId = ${companyId}`;
   
   if (startDate) {
     whereClause += ` AND DATE(CONVERT_TZ(e.createdAt, '+00:00', '-03:00')) >= '${startDate}'`;
@@ -5234,7 +5260,7 @@ export async function getExpenseAnalysisByCategory(
  * Busca análise de despesas por mês
  * Agrupa despesas por mês/ano com totais
  */
-export async function getExpenseAnalysisByMonth(
+export async function getExpenseAnalysisByMonth(companyId: number | undefined,
   startDate?: string,
   endDate?: string,
   categoryId?: number,
@@ -5244,6 +5270,7 @@ export async function getExpenseAnalysisByMonth(
   if (!db) return [];
 
   let whereClause = `WHERE e.status != 'CANCELADA'`;
+  if (companyId) whereClause += ` AND e.companyId = ${companyId}`;
   
   if (startDate) {
     whereClause += ` AND DATE(CONVERT_TZ(e.createdAt, '+00:00', '-03:00')) >= '${startDate}'`;
@@ -5283,7 +5310,7 @@ export async function getExpenseAnalysisByMonth(
  * Busca análise de despesas por categoria e mês (matriz)
  * Para comparativo mensal por categoria
  */
-export async function getExpenseAnalysisByCategoryAndMonth(
+export async function getExpenseAnalysisByCategoryAndMonth(companyId: number | undefined,
   startDate?: string,
   endDate?: string,
   categoryId?: number,
@@ -5293,6 +5320,7 @@ export async function getExpenseAnalysisByCategoryAndMonth(
   if (!db) return [];
 
   let whereClause = `WHERE e.status != 'CANCELADA'`;
+  if (companyId) whereClause += ` AND e.companyId = ${companyId}`;
   
   if (startDate) {
     whereClause += ` AND DATE(CONVERT_TZ(e.createdAt, '+00:00', '-03:00')) >= '${startDate}'`;
@@ -5337,7 +5365,7 @@ export async function getExpenseAnalysisByCategoryAndMonth(
  * Busca detalhamento de despesas (lançamentos individuais)
  * Com informações de fornecedor e observação
  */
-export async function getExpenseAnalysisDetail(
+export async function getExpenseAnalysisDetail(companyId: number | undefined,
   startDate?: string,
   endDate?: string,
   categoryId?: number,
@@ -5348,6 +5376,7 @@ export async function getExpenseAnalysisDetail(
   if (!db) return [];
 
   let whereClause = `WHERE e.status != 'CANCELADA'`;
+  if (companyId) whereClause += ` AND e.companyId = ${companyId}`;
   
   if (startDate) {
     whereClause += ` AND DATE(CONVERT_TZ(e.createdAt, '+00:00', '-03:00')) >= '${startDate}'`;
@@ -5406,7 +5435,7 @@ export async function getExpenseAnalysisDetail(
 /**
  * Busca resumo geral de despesas
  */
-export async function getExpenseAnalysisSummary(
+export async function getExpenseAnalysisSummary(companyId: number | undefined,
   startDate?: string,
   endDate?: string,
   categoryId?: number,
@@ -5416,6 +5445,7 @@ export async function getExpenseAnalysisSummary(
   if (!db) return { totalAmount: 0, totalLancamentos: 0, avgPerLancamento: 0 };
 
   let whereClause = `WHERE e.status != 'CANCELADA'`;
+  if (companyId) whereClause += ` AND e.companyId = ${companyId}`;
   
   if (startDate) {
     whereClause += ` AND DATE(CONVERT_TZ(e.createdAt, '+00:00', '-03:00')) >= '${startDate}'`;
@@ -5457,7 +5487,7 @@ export async function getExpenseAnalysisSummary(
  * Busca dados hierárquicos de despesas para matriz expansível
  * Retorna: Categoria > Fornecedor > Lançamento com valores por mês
  */
-export async function getExpenseHierarchicalData(
+export async function getExpenseHierarchicalData(companyId: number | undefined,
   startDate?: string,
   endDate?: string
 ) {
@@ -5465,6 +5495,7 @@ export async function getExpenseHierarchicalData(
   if (!db) return [];
 
   let whereClause = `WHERE e.status != 'CANCELADA'`;
+  if (companyId) whereClause += ` AND e.companyId = ${companyId}`;
   
   if (startDate) {
     whereClause += ` AND DATE(CONVERT_TZ(e.createdAt, '+00:00', '-03:00')) >= '${startDate}'`;
@@ -5524,11 +5555,12 @@ export async function getExpenseHierarchicalData(
 
 // ==================== METAS DE FATURAMENTO ====================
 
-export async function getRevenueGoals(year?: number) {
+export async function getRevenueGoals(year?: number, companyId?: number) {
   const db = await getDb();
   if (!db) return [];
 
   let whereClause = '';
+  if (companyId) whereClause += ` AND companyId = ${companyId}`;
   if (year) {
     whereClause = `WHERE year = ${year}`;
   }
@@ -5566,7 +5598,7 @@ export async function getRevenueGoals(year?: number) {
   }));
 }
 
-export async function getRevenueGoal(year: number, month: number, channelId?: number | null) {
+export async function getRevenueGoal(year: number, month: number, channelId?: number | null, companyId?: number) {
   const db = await getDb();
   if (!db) return null;
 
@@ -5709,7 +5741,7 @@ export async function upsertRevenueGoal(data: {
   }
 }
 
-export async function getRevenueGoalProgress(year: number, month: number) {
+export async function getRevenueGoalProgress(year: number, month: number, companyId?: number) {
   const db = await getDb();
   if (!db) return null;
 
@@ -5800,7 +5832,7 @@ export async function getRevenueGoalProgress(year: number, month: number) {
 
 // ==================== FECHAMENTO MENSAL ====================
 
-export async function getMonthlyClosing(year: number, month: number, skipExtras = false) {
+export async function getMonthlyClosing(year: number, month: number, companyId?: number, skipExtras = false) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
@@ -6086,27 +6118,27 @@ export async function getMonthlyClosing(year: number, month: number, skipExtras 
 
   if (!skipExtras) {
     [salesByCategory, purchasesByCategory, salesByPaymentType, stockByCategory, purchasesBySupplier, salesByChannel] = await Promise.all([
-      getSalesByCategory(startDate, endDate),
-      getPurchasesByCategory(startDate, endDate),
-      getSalesByPaymentType(startDate, endDate),
-      getStockByCategory(startDate, endDate, year, month),
-      getPurchasesBySupplier(startDate, endDate),
-      getSalesByChannel(startDate, endDate),
+      getSalesByCategory(startDate, endDate, companyId),
+      getPurchasesByCategory(startDate, endDate, companyId),
+      getSalesByPaymentType(startDate, endDate, companyId),
+      getStockByCategory(startDate, endDate, year, month, companyId),
+      getPurchasesBySupplier(startDate, endDate, companyId),
+      getSalesByChannel(startDate, endDate, companyId),
     ]);
 
     // Buscar metas do mês
-    goalsProgress = await getRevenueGoalProgress(year, month);
+    goalsProgress = await getRevenueGoalProgress(year, month, companyId);
 
     // Buscar dados do mês anterior para comparação
     const prevMonth = month === 1 ? 12 : month - 1;
     const prevYear = month === 1 ? year - 1 : year;
     try {
-      previousMonthData = await getMonthlyClosing(prevYear, prevMonth, true);
+      previousMonthData = await getMonthlyClosing(prevYear, prevMonth, companyId, true);
       // Buscar salesByCategory do mês anterior separadamente (skipExtras não inclui)
       const prevStartDate = startOfMonthBrazil(prevYear, prevMonth);
       const prevEndDate = endOfMonthBrazil(prevYear, prevMonth);
       if (previousMonthData) {
-        previousMonthData.salesByCategory = await getSalesByCategory(prevStartDate, prevEndDate);
+        previousMonthData.salesByCategory = await getSalesByCategory(prevStartDate, prevEndDate, companyId);
       }
     } catch (e) {
       console.warn(`Não foi possível carregar dados do mês anterior (${prevYear}-${prevMonth})`);
@@ -6198,7 +6230,7 @@ export async function getMonthlyClosing(year: number, month: number, skipExtras 
   };
 }
 
-export async function getYearlyClosing(year: number) {
+export async function getYearlyClosing(year: number, companyId?: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
@@ -6206,7 +6238,7 @@ export async function getYearlyClosing(year: number) {
   
   // Buscar dados de cada mês
   for (let month = 1; month <= 12; month++) {
-    const data = await getMonthlyClosing(year, month);
+    const data = await getMonthlyClosing(year, month, companyId);
     monthlyData.push({
       month,
       monthName: data.period.monthName,
@@ -6287,7 +6319,7 @@ export async function getRevenueGoalHistory(goalId: number) {
 }
 
 // Buscar todo o histórico de metas de um período
-export async function getAllRevenueGoalHistory(year: number) {
+export async function getAllRevenueGoalHistory(year: number, companyId?: number) {
   const db = await getDb();
   if (!db) return [];
 
@@ -6334,7 +6366,7 @@ export async function getAllRevenueGoalHistory(year: number) {
 // ==================== CONTAS GERENCIAIS ====================
 
 // Listar todas as contas gerenciais ativas
-export async function listManagementAccounts(filters?: {
+export async function listManagementAccounts(filters?: { companyId?: number;
   nature?: string;
   classification?: string;
   search?: string;
@@ -6535,7 +6567,7 @@ export async function getAccountingCodeByManagementAccount(managementAccountId: 
 }
 
 // Listar contas gerenciais para dropdown (simplificado)
-export async function listManagementAccountsForSelect() {
+export async function listManagementAccountsForSelect(companyId?: number) {
   const db = await getDb();
   if (!db) return [];
   
@@ -6569,7 +6601,7 @@ export async function listManagementAccountsForSelect() {
 }
 
 // Buscar contas gerenciais agrupadas por classificação
-export async function listManagementAccountsGrouped() {
+export async function listManagementAccountsGrouped(companyId?: number) {
   const accounts = await listManagementAccountsForSelect();
   
   const grouped: Record<string, typeof accounts> = {};

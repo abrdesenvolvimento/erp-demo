@@ -1,0 +1,109 @@
+{
+  "query": "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE COLUMN_NAME = 'companyId' AND TABLE_SCHEMA = DATABASE() ORDER BY TABLE_NAME",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT TABLE_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE COLUMN_NAME = 'companyId' AND TABLE_SCHEMA = DATABASE() ORDER BY TABLE_NAME",
+  "rows": [
+    {
+      "TABLE_NAME": "accountingBatchLog"
+    },
+    {
+      "TABLE_NAME": "accountingEntries"
+    },
+    {
+      "TABLE_NAME": "accountingPeriods"
+    },
+    {
+      "TABLE_NAME": "accountsPayable"
+    },
+    {
+      "TABLE_NAME": "branches"
+    },
+    {
+      "TABLE_NAME": "categories"
+    },
+    {
+      "TABLE_NAME": "chartOfAccounts"
+    },
+    {
+      "TABLE_NAME": "expenses"
+    },
+    {
+      "TABLE_NAME": "governanceAuditLog"
+    },
+    {
+      "TABLE_NAME": "governanceSettings"
+    },
+    {
+      "TABLE_NAME": "ifoodImportLogs"
+    },
+    {
+      "TABLE_NAME": "ifoodImportedOrders"
+    },
+    {
+      "TABLE_NAME": "ifoodPriceDivergences"
+    },
+    {
+      "TABLE_NAME": "ifoodProductMappings"
+    },
+    {
+      "TABLE_NAME": "journalSources"
+    },
+    {
+      "TABLE_NAME": "journals"
+    },
+    {
+      "TABLE_NAME": "managementAccounts"
+    },
+    {
+      "TABLE_NAME": "otherRevenues"
+    },
+    {
+      "TABLE_NAME": "partners"
+    },
+    {
+      "TABLE_NAME": "productCompositions"
+    },
+    {
+      "TABLE_NAME": "productMovements"
+    },
+    {
+      "TABLE_NAME": "productPrices"
+    },
+    {
+      "TABLE_NAME": "products"
+    },
+    {
+      "TABLE_NAME": "purchaseOrderItems"
+    },
+    {
+      "TABLE_NAME": "purchaseOrders"
+    },
+    {
+      "TABLE_NAME": "receivablePayments"
+    },
+    {
+      "TABLE_NAME": "receivables"
+    },
+    {
+      "TABLE_NAME": "revenueGoals"
+    },
+    {
+      "TABLE_NAME": "saleItems"
+    },
+    {
+      "TABLE_NAME": "sales"
+    },
+    {
+      "TABLE_NAME": "salesChannels"
+    },
+    {
+      "TABLE_NAME": "subcategories"
+    },
+    {
+      "TABLE_NAME": "userCompanies"
+    }
+  ],
+  "messages": [],
+  "stdout": "TABLE_NAME\naccountingBatchLog\naccountingEntries\naccountingPeriods\naccountsPayable\nbranches\ncategories\nchartOfAccounts\nexpenses\ngovernanceAuditLog\ngovernanceSettings\nifoodImportLogs\nifoodImportedOrders\nifoodPriceDivergences\nifoodProductMappings\njournalSources\njournals\nmanagementAccounts\notherRevenues\npartners\nproductCompositions\nproductMovements\nproductPrices\nproducts\npurchaseOrderItems\npurchaseOrders\nreceivablePayments\nreceivables\nrevenueGoals\nsaleItems\nsales\nsalesChannels\nsubcategories\nuserCompanies\n",
+  "stderr": "",
+  "execution_time_ms": 400
+}

@@ -6,8 +6,8 @@ export type TrpcContext = {
   req: CreateExpressContextOptions["req"];
   res: CreateExpressContextOptions["res"];
   user: User | null;
-  activeCompanyId: number | null;
-  activeBranchId: number | null;
+  activeCompanyId: number | undefined;
+  activeBranchId: number | undefined;
 };
 
 export async function createContext(
@@ -23,25 +23,25 @@ export async function createContext(
   }
 
   // Ler empresa/filial ativa do header ou cookie
-  let activeCompanyId: number | null = null;
-  let activeBranchId: number | null = null;
+  let activeCompanyId: number | undefined = undefined;
+  let activeBranchId: number | undefined = undefined;
 
   const companyHeader = opts.req.headers["x-company-id"];
   const branchHeader = opts.req.headers["x-branch-id"];
 
   if (companyHeader) {
-    activeCompanyId = parseInt(String(companyHeader), 10) || null;
+    activeCompanyId = parseInt(String(companyHeader), 10) || undefined;
   }
   if (branchHeader) {
-    activeBranchId = parseInt(String(branchHeader), 10) || null;
+    activeBranchId = parseInt(String(branchHeader), 10) || undefined;
   }
 
   // Fallback: se não veio no header, tentar do cookie
   if (!activeCompanyId && opts.req.cookies?.activeCompanyId) {
-    activeCompanyId = parseInt(opts.req.cookies.activeCompanyId, 10) || null;
+    activeCompanyId = parseInt(opts.req.cookies.activeCompanyId, 10) || undefined;
   }
   if (!activeBranchId && opts.req.cookies?.activeBranchId) {
-    activeBranchId = parseInt(opts.req.cookies.activeBranchId, 10) || null;
+    activeBranchId = parseInt(opts.req.cookies.activeBranchId, 10) || undefined;
   }
 
   return {

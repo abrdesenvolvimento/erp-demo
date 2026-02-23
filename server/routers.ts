@@ -188,9 +188,9 @@ export const appRouter = router({
     
     // Endpoint específico para exportação com preços (sempre inclui preços)
     exportWithPrices: protectedProcedure
-      .query(async () => {
+      .query(async ({ ctx }) => {
         console.log('[exportWithPrices] Iniciando busca de produtos com preços...');
-        const products = await db.getProducts({ activeOnly: false, includePrices: true });
+        const products = await db.getProducts({ activeOnly: false, includePrices: true, companyId: ctx.activeCompanyId });
         console.log('[exportWithPrices] Total produtos:', products.length);
         if (products.length > 0) {
           console.log('[exportWithPrices] Primeiro produto:', products[0].name);
@@ -371,8 +371,8 @@ export const appRouter = router({
         limit: z.number().optional(),
         offset: z.number().optional(),
       }))
-      .query(async ({ input }) => {
-        return await db.getProductMovements(input.productId, {
+      .query(async ({ input, ctx }) => {
+        return await db.getProductMovements(input.productId, ctx.activeCompanyId, {
           startDate: input.startDate,
           endDate: input.endDate,
           type: input.type,
@@ -504,8 +504,8 @@ export const appRouter = router({
         dateFrom: z.string().optional(), // Formato: YYYY-MM-DD
         dateTo: z.string().optional(),   // Formato: YYYY-MM-DD
       }).optional())
-      .query(async ({ input }) => {
-        return await db.getSales(input);
+      .query(async ({ input, ctx }) => {
+        return await db.getSales({ ...input, companyId: ctx.activeCompanyId });
       }),
     
     get: protectedProcedure
@@ -566,7 +566,7 @@ export const appRouter = router({
         const { dueDates, ...saleDataWithoutDueDates } = saleData;
         
         const id = await db.createSale(
-          { ...saleDataWithoutDueDates, createdBy: ctx.user.id },
+          { ...saleDataWithoutDueDates, createdBy: ctx.user.id, companyId: ctx.activeCompanyId ?? 1, branchId: ctx.activeBranchId ?? 1 },
           items
         );
         
@@ -618,12 +618,13 @@ export const appRouter = router({
         dateTo: z.string().optional(),   // Formato: YYYY-MM-DD
         channel: z.enum(['BALCAO', 'DELIVERY', 'A_PRAZO', 'all']).optional().default('all'),
       }).optional())
-      .query(async ({ input }) => {
+      .query(async ({ input, ctx }) => {
         return await db.getSalesStats(
           input?.period || 'month',
           input?.dateFrom,
           input?.dateTo,
-          input?.channel === 'all' ? undefined : input?.channel
+          input?.channel === 'all' ? undefined : input?.channel,
+          ctx.activeCompanyId
         );
       }),
     
@@ -742,8 +743,8 @@ export const appRouter = router({
         year: z.number(),
         month: z.number().min(1).max(12),
       }))
-      .query(async ({ input }) => {
-        return await db.getSalesCalendar(input.year, input.month);
+      .query(async ({ input, ctx }) => {
+        return await db.getSalesCalendar(input.year, input.month, ctx.activeCompanyId);
       }),
 
     // Estatísticas mensais para visão anual
@@ -751,8 +752,8 @@ export const appRouter = router({
       .input(z.object({
         year: z.number(),
       }))
-      .query(async ({ input }) => {
-        return await db.getSalesMonthlyStats(input.year);
+      .query(async ({ input, ctx }) => {
+        return await db.getSalesMonthlyStats(input.year, ctx.activeCompanyId);
       }),
 
     cancel: adminProcedure
@@ -761,7 +762,7 @@ export const appRouter = router({
         reason: z.string().optional(),
       }))
       .mutation(async ({ input, ctx }) => {
-        await db.cancelSale(input.id, ctx.user.id, input.reason);
+        await db.cancelSale(input.id, ctx.user.id, input.reason, ctx.activeCompanyId);
         return { success: true };
       }),
 
@@ -773,8 +774,8 @@ export const appRouter = router({
         customerId: z.number().optional(),
         paymentMethod: z.string().optional(),
       }).optional())
-      .query(async ({ input }) => {
-        return await db.getSalesForExport(input);
+      .query(async ({ input, ctx }) => {
+        return await db.getSalesForExport({ ...input, companyId: ctx.activeCompanyId });
       }),
 
     // Trocar cliente em venda a prazo
@@ -825,8 +826,8 @@ export const appRouter = router({
         minValue: z.number().optional(),
         maxValue: z.number().optional(),
       }).optional())
-      .query(async ({ input }) => {
-        return await db.getPurchaseOrders(input);
+      .query(async ({ input, ctx }) => {
+        return await db.getPurchaseOrders({ ...input, companyId: ctx.activeCompanyId });
       }),
     
     getById: consultorProcedure
@@ -843,8 +844,8 @@ export const appRouter = router({
     
     searchProducts: adminProcedure
       .input(z.object({ search: z.string() }))
-      .query(async ({ input }) => {
-        return await db.searchProducts(input.search);
+      .query(async ({ input, ctx }) => {
+        return await db.searchProducts(input.search, ctx.activeCompanyId);
       }),
     
     create: adminProcedure
@@ -908,7 +909,7 @@ export const appRouter = router({
           purchaseOrderData.accessKey = purchaseData.accessKey;
         }
         
-        const purchaseOrderId = await db.createPurchaseOrder(purchaseOrderData);
+        const purchaseOrderId = await db.createPurchaseOrder({ ...purchaseOrderData, companyId: ctx.activeCompanyId ?? 1, branchId: ctx.activeBranchId ?? 1 });
         
         // Adicionar itens
         for (const item of items) {
@@ -1013,8 +1014,8 @@ export const appRouter = router({
     categories: router({
       list: consultorProcedure
         .input(z.object({ activeOnly: z.boolean().optional().default(true) }).optional())
-        .query(async ({ input }) => {
-          return await db.getExpenseCategories(input?.activeOnly ?? true);
+        .query(async ({ input, ctx }) => {
+          return await db.getExpenseCategories(input?.activeOnly ?? true, ctx.activeCompanyId);
         }),
       
       create: adminProcedure
@@ -1055,8 +1056,8 @@ export const appRouter = router({
         minValue: z.number().optional(),
         maxValue: z.number().optional(),
       }).optional())
-      .query(async ({ input }) => {
-        return await db.getExpenses(input);
+      .query(async ({ input, ctx }) => {
+        return await db.getExpenses({ ...input, companyId: ctx.activeCompanyId });
       }),
     
     get: consultorProcedure
@@ -1095,7 +1096,7 @@ export const appRouter = router({
           accountingCode = await db.getAccountingCodeByManagementAccount(input.managementAccountId) || undefined;
         }
 
-        const expenseId = await db.createExpense({
+        const expenseId = await db.createExpense({ companyId: ctx.activeCompanyId ?? 1, branchId: ctx.activeBranchId ?? 1,
           supplierId: input.supplierId,
           issueDate: input.issueDate,
           entryDate: input.entryDate,
@@ -1293,8 +1294,8 @@ export const appRouter = router({
           startDate: z.date().optional(),
           endDate: z.date().optional(),
         }).optional())
-        .query(async ({ input }) => {
-          return await db.getPendingExpenseInstallments(input);
+        .query(async ({ input, ctx }) => {
+          return await db.getPendingExpenseInstallments({ ...input, companyId: ctx.activeCompanyId });
         }),
       
       pay: protectedProcedure
@@ -1326,8 +1327,8 @@ export const appRouter = router({
         customerId: z.number().optional(),
         status: z.enum(["PENDENTE", "PARCIAL", "QUITADO", "VENCIDO"]).optional(),
       }).optional())
-      .query(async ({ input }) => {
-        return await db.listReceivables(input);
+      .query(async ({ input, ctx }) => {
+        return await db.listReceivables({ ...input, companyId: ctx.activeCompanyId });
       }),
     
     get: protectedProcedure
@@ -1337,26 +1338,26 @@ export const appRouter = router({
       }),
     
     summary: protectedProcedure
-      .query(async () => {
-        return await db.getReceivablesSummary();
+      .query(async ({ ctx }) => {
+        return await db.getReceivablesSummary(ctx.activeCompanyId);
       }),
     
     // Gestão por cliente
     byCustomer: protectedProcedure
-      .query(async () => {
-        return await db.getCustomersWithPendingReceivables();
+      .query(async ({ ctx }) => {
+        return await db.getCustomersWithPendingReceivables(ctx.activeCompanyId);
       }),
     
     totalPending: protectedProcedure
-      .query(async () => {
-        const total = await db.getTotalPendingReceivables();
+      .query(async ({ ctx }) => {
+        const total = await db.getTotalPendingReceivables(ctx.activeCompanyId);
         return { total: total.toFixed(2) };
       }),
     
     customerDetail: protectedProcedure
       .input(z.object({ customerId: z.number() }))
-      .query(async ({ input }) => {
-        return await db.getCustomerReceivableDetail(input.customerId);
+      .query(async ({ input, ctx }) => {
+        return await db.getCustomerReceivableDetail(input.customerId, ctx.activeCompanyId);
       }),
     
     registerPayment: protectedProcedure
@@ -1368,7 +1369,7 @@ export const appRouter = router({
         paymentMethod: z.string(),
         notes: z.string().optional(),
       }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ input, ctx }) => {
         return await db.registerCustomerPayment(input);
       }),
     
@@ -1605,13 +1606,13 @@ export const appRouter = router({
         .input(z.object({
           customerId: z.number().optional(),
         }).optional())
-        .query(async ({ input }) => {
-          return await db.listPendingReceivableInstallments(input?.customerId);
+        .query(async ({ input, ctx }) => {
+          return await db.listPendingReceivableInstallments(input?.customerId, ctx.activeCompanyId);
         }),
       
       overdue: protectedProcedure
-        .query(async () => {
-          return await db.listOverdueReceivableInstallments();
+        .query(async ({ ctx }) => {
+          return await db.listOverdueReceivableInstallments(ctx.activeCompanyId);
         }),
       
       pay: protectedProcedure
@@ -1633,28 +1634,28 @@ export const appRouter = router({
   payables: router({
     // Listar fornecedores com saldo devedor (legado)
     bySupplier: adminProcedure
-      .query(async () => {
-        return await db.getSuppliersWithPendingPayables();
+      .query(async ({ ctx }) => {
+        return await db.getSuppliersWithPendingPayables(ctx.activeCompanyId);
       }),
     
     // Listar TODOS os fornecedores com histórico (com ou sem saldo pendente)
     allSuppliers: adminProcedure
-      .query(async () => {
-        return await db.getAllSuppliersWithHistory();
+      .query(async ({ ctx }) => {
+        return await db.getAllSuppliersWithHistory(ctx.activeCompanyId);
       }),
     
     // Total pendente de pagamento
     totalPending: adminProcedure
-      .query(async () => {
-        const total = await db.getTotalPendingPayables();
+      .query(async ({ ctx }) => {
+        const total = await db.getTotalPendingPayables(ctx.activeCompanyId);
         return { total: total.toFixed(2) };
       }),
     
     // Detalhamento de um fornecedor
     supplierDetail: adminProcedure
       .input(z.object({ supplierId: z.number() }))
-      .query(async ({ input }) => {
-        return await db.getSupplierPayableDetail(input.supplierId);
+      .query(async ({ input, ctx }) => {
+        return await db.getSupplierPayableDetail(input.supplierId, ctx.activeCompanyId);
       }),
     
     // Registrar pagamento
@@ -1667,7 +1668,7 @@ export const appRouter = router({
         paymentMethod: z.string(),
         notes: z.string().optional(),
       }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ input, ctx }) => {
         return await db.registerSupplierPayment(input);
       }),
     
@@ -1700,8 +1701,8 @@ export const appRouter = router({
         docNumber: z.string().optional(),
         paymentMethod: z.string().optional(),
       }).optional())
-      .query(async ({ input }) => {
-        return await db.getPaymentHistory(input || {});
+      .query(async ({ input, ctx }) => {
+        return await db.getPaymentHistory({ ...(input || {}), companyId: ctx.activeCompanyId });
       }),
     
     // Calendário de contas a pagar
@@ -1710,8 +1711,8 @@ export const appRouter = router({
         year: z.number(),
         month: z.number().min(1).max(12),
       }))
-      .query(async ({ input }) => {
-        return await db.getPayablesCalendar(input.year, input.month);
+      .query(async ({ input, ctx }) => {
+        return await db.getPayablesCalendar(input.year, input.month, ctx.activeCompanyId);
       }),
   }),
 
@@ -1719,15 +1720,15 @@ export const appRouter = router({
   accountReceivable: router({
     // Listar clientes com saldo devedor
     customers: protectedProcedure
-      .query(async () => {
-        return await db.getCustomersWithBalance();
+      .query(async ({ ctx }) => {
+        return await db.getCustomersWithBalance(ctx.activeCompanyId);
       }),
     
     // Buscar histórico de um cliente (vendas + pagamentos)
     history: protectedProcedure
       .input(z.object({ customerId: z.number() }))
-      .query(async ({ input }) => {
-        return await db.getCustomerAccountHistory(input.customerId);
+      .query(async ({ input, ctx }) => {
+        return await db.getCustomerAccountHistory(input.customerId, ctx.activeCompanyId);
       }),
     
     // Registrar pagamento
@@ -1767,8 +1768,8 @@ export const appRouter = router({
   // ==================== DASHBOARD ====================
   dashboard: router({
     stats: protectedProcedure.query(async ({ ctx }) => {
-      const products = await db.getProducts({ activeOnly: false });
-      const recentSales = await db.getSales({ limit: 10 });
+      const products = await db.getProducts({ activeOnly: false, companyId: ctx.activeCompanyId });
+      const recentSales = await db.getSales({ limit: 10, companyId: ctx.activeCompanyId });
       
       // Usar horário de Brasília (GMT-3) para cálculos de data
       const todayDateStr = new Date().toLocaleDateString('en-US', { timeZone: 'America/Sao_Paulo' });
@@ -1782,9 +1783,9 @@ export const appRouter = router({
       
       // OTIMIZAÇÃO: Usar queries SQL diretas ao invés de buscar todas as vendas e filtrar em JavaScript
       // Isso resolve o problema de limite de 10.000 vendas e melhora performance significativamente
-      const dailyRevenue = await db.getDashboardDailyRevenue();
-      const monthlyRevenue = await db.getDashboardMonthlyRevenue();
-      const monthlyPurchases = await db.getDashboardMonthlyPurchases();
+      const dailyRevenue = await db.getDashboardDailyRevenue(ctx.activeCompanyId);
+      const monthlyRevenue = await db.getDashboardMonthlyRevenue(ctx.activeCompanyId);
+      const monthlyPurchases = await db.getDashboardMonthlyPurchases(ctx.activeCompanyId);
       
       const todayRevenue = dailyRevenue.total;
       const todayRevenueBalcao = dailyRevenue.balcao;
@@ -1795,7 +1796,7 @@ export const appRouter = router({
       const monthRevenueDelivery = monthlyRevenue.delivery;
       
       // Total pendente a receber
-      const totalPendingReceivables = await db.getTotalPendingReceivables();
+      const totalPendingReceivables = await db.getTotalPendingReceivables(ctx.activeCompanyId);
       
       // Valor total em estoque (excluindo produtos compostos)
       const totalStockValue = products
@@ -1803,7 +1804,7 @@ export const appRouter = router({
         .reduce((sum, p) => sum + (parseFloat(p.currentStock!.toString()) * parseFloat(p.avgCost!.toString())), 0);
       
       // Valor em estoque por categoria (excluindo produtos compostos)
-      const categories = await db.getCategories();
+      const categories = await db.getCategories(true, ctx.activeCompanyId);
       const stockValueByCategory = categories.map(cat => {
         const categoryProducts = products.filter(p => p.active && !p.isComposite && p.categoryId === cat.id);
         const value = categoryProducts.reduce((sum, p) => {
@@ -1857,7 +1858,7 @@ export const appRouter = router({
       }).sort((a, b) => a.daysUntilExpiration - b.daysUntilExpiration);
       
       // Buscar vendas recentes com detalhes (cliente e canal)
-      const channels = await db.getSalesChannels();
+      const channels = await db.getSalesChannels(true, ctx.activeCompanyId);
       const recentSalesWithDetails = [];
       for (const sale of recentSales.slice(0, 5)) {
         const customer = sale.customerId ? await db.getPartner(sale.customerId) : null;
@@ -1893,9 +1894,9 @@ export const appRouter = router({
     }),
     
     // Estatísticas de compras
-    purchaseStats: protectedProcedure.query(async () => {
-      const totalCurrentMonth = await db.getPurchaseTotalCurrentMonth();
-      const totalByDocType = await db.getPurchaseTotalByDocType();
+    purchaseStats: protectedProcedure.query(async ({ ctx }) => {
+      const totalCurrentMonth = await db.getPurchaseTotalCurrentMonth(ctx.activeCompanyId);
+      const totalByDocType = await db.getPurchaseTotalByDocType(ctx.activeCompanyId);
       
       // Mapear tipos de documento para labels amigáveis
       const docTypeLabels: Record<string, string> = {
@@ -1917,8 +1918,8 @@ export const appRouter = router({
     }),
     
     // Margem bruta por categoria
-    grossMarginByCategory: protectedProcedure.query(async () => {
-      const margins = await db.getGrossMarginByCategory();
+    grossMarginByCategory: protectedProcedure.query(async ({ ctx }) => {
+      const margins = await db.getGrossMarginByCategory(ctx.activeCompanyId);
       return margins;
     }),
     
@@ -1929,7 +1930,7 @@ export const appRouter = router({
         endDate: z.string().optional(),
         categoryId: z.number().optional(),
       }).optional())
-      .query(async ({ input }) => {
+      .query(async ({ input, ctx }) => {
       // Determinar strings de data para filtro
       let startDateStr: string;
       let endDateStr: string;
@@ -1947,13 +1948,13 @@ export const appRouter = router({
       }
       
       // Usar query SQL otimizada com CONVERT_TZ
-      return await db.getDeliveryProductAnalysis(startDateStr, endDateStr, input?.categoryId);
+      return await db.getDeliveryProductAnalysis(startDateStr, endDateStr, input?.categoryId, ctx.activeCompanyId);
     }),
     
     // Margem líquida delivery (deduzindo 7% de taxa iFood)
     // Usa query SQL otimizada para garantir consistência com outros cálculos do dashboard
-    deliveryNetMargin: protectedProcedure.query(async () => {
-      return await db.getDeliveryNetMarginOptimized();
+    deliveryNetMargin: protectedProcedure.query(async ({ ctx }) => {
+      return await db.getDeliveryNetMarginOptimized(ctx.activeCompanyId);
     }),
   }),
 
@@ -1970,8 +1971,8 @@ export const appRouter = router({
         productIds: z.array(z.number()).optional(),
         subcategoryId: z.number().optional(),
       }))
-      .query(async ({ input }) => {
-        return await db.getSalesAnalysisSummary(input.startDate, input.endDate, {
+      .query(async ({ input, ctx }) => {
+        return await db.getSalesAnalysisSummary(input.startDate, input.endDate, ctx.activeCompanyId, {
           channels: input.channels,
           paymentMethod: input.paymentMethod,
           productIds: input.productIds,
@@ -1989,8 +1990,8 @@ export const appRouter = router({
         channels: z.array(z.string()).optional(),
         paymentMethod: z.string().optional(),
       }))
-      .query(async ({ input }) => {
-        return await db.getSalesAnalysisByValue(input.startDate, input.endDate, {
+      .query(async ({ input, ctx }) => {
+        return await db.getSalesAnalysisByValue(input.startDate, input.endDate, ctx.activeCompanyId, {
           productIds: input.productIds,
           subcategoryId: input.subcategoryId,
           channels: input.channels,
@@ -2008,8 +2009,8 @@ export const appRouter = router({
         channels: z.array(z.string()).optional(),
         paymentMethod: z.string().optional(),
       }))
-      .query(async ({ input }) => {
-        return await db.getSalesAnalysisByQuantity(input.startDate, input.endDate, {
+      .query(async ({ input, ctx }) => {
+        return await db.getSalesAnalysisByQuantity(input.startDate, input.endDate, ctx.activeCompanyId, {
           productIds: input.productIds,
           subcategoryId: input.subcategoryId,
           channels: input.channels,
@@ -2027,8 +2028,8 @@ export const appRouter = router({
         channels: z.array(z.string()).optional(),
         paymentMethod: z.string().optional(),
       }))
-      .query(async ({ input }) => {
-        return await db.getSalesAnalysisByCategoryValue(input.startDate, input.endDate, {
+      .query(async ({ input, ctx }) => {
+        return await db.getSalesAnalysisByCategoryValue(input.startDate, input.endDate, ctx.activeCompanyId, {
           productIds: input.productIds,
           subcategoryId: input.subcategoryId,
           channels: input.channels,
@@ -2046,8 +2047,8 @@ export const appRouter = router({
         channels: z.array(z.string()).optional(),
         paymentMethod: z.string().optional(),
       }))
-      .query(async ({ input }) => {
-        return await db.getSalesAnalysisByDay(input.startDate, input.endDate, {
+      .query(async ({ input, ctx }) => {
+        return await db.getSalesAnalysisByDay(input.startDate, input.endDate, ctx.activeCompanyId, {
           productIds: input.productIds,
           subcategoryId: input.subcategoryId,
           channels: input.channels,
@@ -2065,8 +2066,8 @@ export const appRouter = router({
         channels: z.array(z.string()).optional(),
         paymentMethod: z.string().optional(),
       }))
-      .query(async ({ input }) => {
-        return await db.getSalesAnalysisByWeek(input.startDate, input.endDate, {
+      .query(async ({ input, ctx }) => {
+        return await db.getSalesAnalysisByWeek(input.startDate, input.endDate, ctx.activeCompanyId, {
           productIds: input.productIds,
           subcategoryId: input.subcategoryId,
           channels: input.channels,
@@ -2084,8 +2085,8 @@ export const appRouter = router({
         channels: z.array(z.string()).optional(),
         paymentMethod: z.string().optional(),
       }))
-      .query(async ({ input }) => {
-        return await db.getSalesAnalysisByMonth(input.startDate, input.endDate, {
+      .query(async ({ input, ctx }) => {
+        return await db.getSalesAnalysisByMonth(input.startDate, input.endDate, ctx.activeCompanyId, {
           productIds: input.productIds,
           subcategoryId: input.subcategoryId,
           channels: input.channels,
@@ -2103,8 +2104,8 @@ export const appRouter = router({
         channels: z.array(z.string()).optional(),
         paymentMethod: z.string().optional(),
       }))
-      .query(async ({ input }) => {
-        return await db.getSalesByProductAndDate(input.startDate, input.endDate, {
+      .query(async ({ input, ctx }) => {
+        return await db.getSalesByProductAndDate(input.startDate, input.endDate, ctx.activeCompanyId, {
           productIds: input.productIds,
           subcategoryId: input.subcategoryId,
           channels: input.channels,
@@ -2129,7 +2130,7 @@ export const appRouter = router({
         channels: z.array(z.string()).optional(),
         paymentMethod: z.string().optional(),
       }))
-      .query(async ({ input }) => {
+      .query(async ({ input, ctx }) => {
         const filters = {
           productIds: input.productIds,
           subcategoryId: input.subcategoryId,
@@ -2144,10 +2145,10 @@ export const appRouter = router({
 
         // Buscar dados dos dois períodos em paralelo + totais usando finalAmount
         const [period1Data, period2Data, period1Summary, period2Summary] = await Promise.all([
-          fetchFunction(input.period1.startDate, input.period1.endDate, filters),
-          fetchFunction(input.period2.startDate, input.period2.endDate, filters),
-          db.getSalesAnalysisSummary(input.period1.startDate, input.period1.endDate, filters),
-          db.getSalesAnalysisSummary(input.period2.startDate, input.period2.endDate, filters),
+          fetchFunction(input.period1.startDate, input.period1.endDate, ctx.activeCompanyId, filters),
+          fetchFunction(input.period2.startDate, input.period2.endDate, ctx.activeCompanyId, filters),
+          db.getSalesAnalysisSummary(input.period1.startDate, input.period1.endDate, ctx.activeCompanyId, filters),
+          db.getSalesAnalysisSummary(input.period2.startDate, input.period2.endDate, ctx.activeCompanyId, filters),
         ]);
 
         return {
@@ -2175,8 +2176,8 @@ export const appRouter = router({
         categoryId: z.number().optional(),
         supplierId: z.number().optional(),
       }).optional())
-      .query(async ({ input }) => {
-        return await db.getExpenseAnalysisSummary(
+      .query(async ({ input, ctx }) => {
+        return await db.getExpenseAnalysisSummary(ctx.activeCompanyId,
           input?.startDate,
           input?.endDate,
           input?.categoryId,
@@ -2192,8 +2193,8 @@ export const appRouter = router({
         categoryId: z.number().optional(),
         supplierId: z.number().optional(),
       }).optional())
-      .query(async ({ input }) => {
-        return await db.getExpenseAnalysisByCategory(
+      .query(async ({ input, ctx }) => {
+        return await db.getExpenseAnalysisByCategory(ctx.activeCompanyId,
           input?.startDate,
           input?.endDate,
           input?.categoryId,
@@ -2209,8 +2210,8 @@ export const appRouter = router({
         categoryId: z.number().optional(),
         supplierId: z.number().optional(),
       }).optional())
-      .query(async ({ input }) => {
-        return await db.getExpenseAnalysisByMonth(
+      .query(async ({ input, ctx }) => {
+        return await db.getExpenseAnalysisByMonth(ctx.activeCompanyId,
           input?.startDate,
           input?.endDate,
           input?.categoryId,
@@ -2226,8 +2227,8 @@ export const appRouter = router({
         categoryId: z.number().optional(),
         supplierId: z.number().optional(),
       }).optional())
-      .query(async ({ input }) => {
-        return await db.getExpenseAnalysisByCategoryAndMonth(
+      .query(async ({ input, ctx }) => {
+        return await db.getExpenseAnalysisByCategoryAndMonth(ctx.activeCompanyId,
           input?.startDate,
           input?.endDate,
           input?.categoryId,
@@ -2241,8 +2242,8 @@ export const appRouter = router({
         startDate: z.string().optional(),
         endDate: z.string().optional(),
       }).optional())
-      .query(async ({ input }) => {
-        return await db.getExpenseHierarchicalData(
+      .query(async ({ input, ctx }) => {
+        return await db.getExpenseHierarchicalData(ctx.activeCompanyId,
           input?.startDate,
           input?.endDate
         );
@@ -2257,8 +2258,8 @@ export const appRouter = router({
         supplierId: z.number().optional(),
         limit: z.number().optional().default(500),
       }).optional())
-      .query(async ({ input }) => {
-        return await db.getExpenseAnalysisDetail(
+      .query(async ({ input, ctx }) => {
+        return await db.getExpenseAnalysisDetail(ctx.activeCompanyId,
           input?.startDate,
           input?.endDate,
           input?.categoryId,
@@ -2275,16 +2276,16 @@ export const appRouter = router({
         year: z.number(),
         month: z.number(),
       }))
-      .query(async ({ input }) => {
-        return await db.getMonthlyClosing(input.year, input.month);
+      .query(async ({ input, ctx }) => {
+        return await db.getMonthlyClosing(input.year, input.month, ctx.activeCompanyId);
       }),
 
     yearly: consultorProcedure
       .input(z.object({
         year: z.number(),
       }))
-      .query(async ({ input }) => {
-        return await db.getYearlyClosing(input.year);
+      .query(async ({ input, ctx }) => {
+        return await db.getYearlyClosing(input.year, ctx.activeCompanyId);
       }),
   }),
 
@@ -2294,8 +2295,8 @@ export const appRouter = router({
       .input(z.object({
         year: z.number().optional(),
       }).optional())
-      .query(async ({ input }) => {
-        return await db.getRevenueGoals(input?.year);
+      .query(async ({ input, ctx }) => {
+        return await db.getRevenueGoals(input?.year, ctx.activeCompanyId);
       }),
 
     get: adminProcedure
@@ -2304,8 +2305,8 @@ export const appRouter = router({
         month: z.number(),
         channelId: z.number().nullable().optional(),
       }))
-      .query(async ({ input }) => {
-        return await db.getRevenueGoal(input.year, input.month, input.channelId);
+      .query(async ({ input, ctx }) => {
+        return await db.getRevenueGoal(input.year, input.month, input.channelId, ctx.activeCompanyId);
       }),
 
     upsert: adminProcedure
@@ -2333,16 +2334,16 @@ export const appRouter = router({
         year: z.number(),
         month: z.number(),
       }))
-      .query(async ({ input }) => {
-        return await db.getRevenueGoalProgress(input.year, input.month);
+      .query(async ({ input, ctx }) => {
+        return await db.getRevenueGoalProgress(input.year, input.month, ctx.activeCompanyId);
       }),
 
     history: adminProcedure
       .input(z.object({
         year: z.number(),
       }))
-      .query(async ({ input }) => {
-        return await db.getAllRevenueGoalHistory(input.year);
+      .query(async ({ input, ctx }) => {
+        return await db.getAllRevenueGoalHistory(input.year, ctx.activeCompanyId);
       }),
   }),
 
@@ -2355,20 +2356,20 @@ export const appRouter = router({
         classification: z.enum(['OPERACIONAL', 'ADMINISTRATIVA', 'COMERCIAL', 'FINANCEIRA', 'NAO_OPERACIONAL', 'PATRIMONIAL']).optional(),
         search: z.string().optional(),
       }).optional())
-      .query(async ({ input }) => {
-        return await db.listManagementAccounts(input);
+      .query(async ({ input, ctx }) => {
+        return await db.listManagementAccounts({ ...input, companyId: ctx.activeCompanyId });
       }),
 
     // Listar para dropdown (simplificado)
     forSelect: protectedProcedure
-      .query(async () => {
-        return await db.listManagementAccountsForSelect();
+      .query(async ({ ctx }) => {
+        return await db.listManagementAccountsForSelect(ctx.activeCompanyId);
       }),
 
     // Listar agrupadas por classificação
     grouped: protectedProcedure
-      .query(async () => {
-        return await db.listManagementAccountsGrouped();
+      .query(async ({ ctx }) => {
+        return await db.listManagementAccountsGrouped(ctx.activeCompanyId);
       }),
 
     // Buscar por ID
@@ -2420,8 +2421,8 @@ export const appRouter = router({
     // Buscar configurações de governança
     getSettings: adminProcedure
       .input(z.object({ companyId: z.number().optional() }).optional())
-      .query(async ({ input }) => {
-        return await db.getGovernanceSettings(input?.companyId || 1);
+      .query(async ({ input, ctx }) => {
+        return await db.getGovernanceSettings(ctx.activeCompanyId || input?.companyId || 1);
       }),
 
     // Atualizar configurações de governança
@@ -2454,8 +2455,8 @@ export const appRouter = router({
     // Listar períodos contábeis
     listPeriods: protectedProcedure
       .input(z.object({ companyId: z.number().optional() }).optional())
-      .query(async ({ input }) => {
-        return await db.listAccountingPeriods(input?.companyId || 1);
+      .query(async ({ input, ctx }) => {
+        return await db.listAccountingPeriods(ctx.activeCompanyId || input?.companyId || 1);
       }),
 
     // Buscar período específico
@@ -2464,8 +2465,8 @@ export const appRouter = router({
         companyId: z.number().optional(),
         competenceMonth: z.string(),
       }))
-      .query(async ({ input }) => {
-        return await db.getAccountingPeriod(input.companyId || 1, input.competenceMonth);
+      .query(async ({ input, ctx }) => {
+        return await db.getAccountingPeriod(ctx.activeCompanyId || input.companyId || 1, input.competenceMonth);
       }),
 
     // Fechar período contábil

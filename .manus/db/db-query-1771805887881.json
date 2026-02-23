@@ -1,0 +1,142 @@
+{
+  "query": "SELECT TABLE_NAME, COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE COLUMN_NAME = 'companyId' AND TABLE_SCHEMA = DATABASE() ORDER BY TABLE_NAME",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT TABLE_NAME, COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE COLUMN_NAME = 'companyId' AND TABLE_SCHEMA = DATABASE() ORDER BY TABLE_NAME",
+  "rows": [
+    {
+      "TABLE_NAME": "accountingBatchLog",
+      "COLUMN_NAME": "companyId"
+    },
+    {
+      "TABLE_NAME": "accountingEntries",
+      "COLUMN_NAME": "companyId"
+    },
+    {
+      "TABLE_NAME": "accountingPeriods",
+      "COLUMN_NAME": "companyId"
+    },
+    {
+      "TABLE_NAME": "accountsPayable",
+      "COLUMN_NAME": "companyId"
+    },
+    {
+      "TABLE_NAME": "branches",
+      "COLUMN_NAME": "companyId"
+    },
+    {
+      "TABLE_NAME": "categories",
+      "COLUMN_NAME": "companyId"
+    },
+    {
+      "TABLE_NAME": "chartOfAccounts",
+      "COLUMN_NAME": "companyId"
+    },
+    {
+      "TABLE_NAME": "expenses",
+      "COLUMN_NAME": "companyId"
+    },
+    {
+      "TABLE_NAME": "governanceAuditLog",
+      "COLUMN_NAME": "companyId"
+    },
+    {
+      "TABLE_NAME": "governanceSettings",
+      "COLUMN_NAME": "companyId"
+    },
+    {
+      "TABLE_NAME": "ifoodImportLogs",
+      "COLUMN_NAME": "companyId"
+    },
+    {
+      "TABLE_NAME": "ifoodImportedOrders",
+      "COLUMN_NAME": "companyId"
+    },
+    {
+      "TABLE_NAME": "ifoodPriceDivergences",
+      "COLUMN_NAME": "companyId"
+    },
+    {
+      "TABLE_NAME": "ifoodProductMappings",
+      "COLUMN_NAME": "companyId"
+    },
+    {
+      "TABLE_NAME": "journalSources",
+      "COLUMN_NAME": "companyId"
+    },
+    {
+      "TABLE_NAME": "journals",
+      "COLUMN_NAME": "companyId"
+    },
+    {
+      "TABLE_NAME": "managementAccounts",
+      "COLUMN_NAME": "companyId"
+    },
+    {
+      "TABLE_NAME": "otherRevenues",
+      "COLUMN_NAME": "companyId"
+    },
+    {
+      "TABLE_NAME": "partners",
+      "COLUMN_NAME": "companyId"
+    },
+    {
+      "TABLE_NAME": "productCompositions",
+      "COLUMN_NAME": "companyId"
+    },
+    {
+      "TABLE_NAME": "productMovements",
+      "COLUMN_NAME": "companyId"
+    },
+    {
+      "TABLE_NAME": "productPrices",
+      "COLUMN_NAME": "companyId"
+    },
+    {
+      "TABLE_NAME": "products",
+      "COLUMN_NAME": "companyId"
+    },
+    {
+      "TABLE_NAME": "purchaseOrderItems",
+      "COLUMN_NAME": "companyId"
+    },
+    {
+      "TABLE_NAME": "purchaseOrders",
+      "COLUMN_NAME": "companyId"
+    },
+    {
+      "TABLE_NAME": "receivablePayments",
+      "COLUMN_NAME": "companyId"
+    },
+    {
+      "TABLE_NAME": "receivables",
+      "COLUMN_NAME": "companyId"
+    },
+    {
+      "TABLE_NAME": "revenueGoals",
+      "COLUMN_NAME": "companyId"
+    },
+    {
+      "TABLE_NAME": "saleItems",
+      "COLUMN_NAME": "companyId"
+    },
+    {
+      "TABLE_NAME": "sales",
+      "COLUMN_NAME": "companyId"
+    },
+    {
+      "TABLE_NAME": "salesChannels",
+      "COLUMN_NAME": "companyId"
+    },
+    {
+      "TABLE_NAME": "subcategories",
+      "COLUMN_NAME": "companyId"
+    },
+    {
+      "TABLE_NAME": "userCompanies",
+      "COLUMN_NAME": "companyId"
+    }
+  ],
+  "messages": [],
+  "stdout": "TABLE_NAME\tCOLUMN_NAME\naccountingBatchLog\tcompanyId\naccountingEntries\tcompanyId\naccountingPeriods\tcompanyId\naccountsPayable\tcompanyId\nbranches\tcompanyId\ncategories\tcompanyId\nchartOfAccounts\tcompanyId\nexpenses\tcompanyId\ngovernanceAuditLog\tcompanyId\ngovernanceSettings\tcompanyId\nifoodImportLogs\tcompanyId\nifoodImportedOrders\tcompanyId\nifoodPriceDivergences\tcompanyId\nifoodProductMappings\tcompanyId\njournalSources\tcompanyId\njournals\tcompanyId\nmanagementAccounts\tcompanyId\notherRevenues\tcompanyId\npartners\tcompanyId\nproductCompositions\tcompanyId\nproductMovements\tcompanyId\nproductPrices\tcompanyId\nproducts\tcompanyId\npurchaseOrderItems\tcompanyId\npurchaseOrders\tcompanyId\nreceivablePayments\tcompanyId\nreceivables\tcompanyId\nrevenueGoals\tcompanyId\nsaleItems\tcompanyId\nsales\tcompanyId\nsalesChannels\tcompanyId\nsubcategories\tcompanyId\nuserCompanies\tcompanyId\n",
+  "stderr": "",
+  "execution_time_ms": 136
+}

@@ -260,6 +260,8 @@ export type InsertPartner = typeof partners.$inferInsert;
 // Vendas
 export const sales = mysqlTable("sales", {
   id: int("id").primaryKey().autoincrement(),
+  companyId: int("companyId").notNull().default(1),
+  branchId: int("branchId").notNull().default(1),
   saleType: mysqlEnum("saleType", ["BALCAO", "DELIVERY", "A_PRAZO"]).notNull(),
   saleDate: timestamp("saleDate").defaultNow(),
   customerId: int("customerId"),
@@ -292,6 +294,8 @@ export type InsertSale = typeof sales.$inferInsert;
 // Itens de venda
 export const saleItems = mysqlTable("saleItems", {
   id: int("id").primaryKey().autoincrement(),
+  companyId: int("companyId").notNull().default(1),
+  branchId: int("branchId").notNull().default(1),
   saleId: int("saleId").notNull(),
   productId: int("productId").notNull(),
   quantity: int("quantity").notNull(),
@@ -307,6 +311,8 @@ export type InsertSaleItem = typeof saleItems.$inferInsert;
 // Ordens de Compra
 export const purchaseOrders = mysqlTable("purchaseOrders", {
   id: int("id").primaryKey().autoincrement(),
+  companyId: int("companyId").notNull().default(1),
+  branchId: int("branchId").notNull().default(1),
   supplierId: int("supplierId").notNull(),
   docType: mysqlEnum("docType", ["NOTA_FISCAL", "CUPOM", "SEM_DOCUMENTO"]).notNull(),
   docNumber: varchar("docNumber", { length: 100 }),
@@ -336,6 +342,8 @@ export type InsertPurchaseOrder = typeof purchaseOrders.$inferInsert;
 // Itens de Ordem de Compra
 export const purchaseOrderItems = mysqlTable("purchaseOrderItems", {
   id: int("id").primaryKey().autoincrement(),
+  companyId: int("companyId").notNull().default(1),
+  branchId: int("branchId").notNull().default(1),
   purchaseOrderId: int("purchaseOrderId").notNull(),
   productId: int("productId").notNull(),
   quantity: decimal("quantity", { precision: 10, scale: 3 }).notNull(),
@@ -407,6 +415,8 @@ export type InsertPurchaseInstallment = typeof purchaseInstallments.$inferInsert
 // Categorias de Despesas
 export const expenseCategories = mysqlTable("expenseCategories", {
   id: int("id").primaryKey().autoincrement(),
+  companyId: int("companyId").notNull().default(1),
+  branchId: int("branchId").notNull().default(1),
   name: varchar("name", { length: 100 }).notNull(),
   description: text("description"),
   active: boolean("active").default(true).notNull(),
@@ -420,6 +430,8 @@ export type InsertExpenseCategory = typeof expenseCategories.$inferInsert;
 // Despesas Operacionais
 export const expenses = mysqlTable("expenses", {
   id: int("id").primaryKey().autoincrement(),
+  companyId: int("companyId").notNull().default(1),
+  branchId: int("branchId").notNull().default(1),
   supplierId: int("supplierId"), // FK para fornecedor (opcional) - PRIMEIRO CAMPO
   issueDate: timestamp("issueDate"), // Data de emissão do documento
   entryDate: timestamp("entryDate"), // Data de entrada no sistema (afeta competência)
@@ -482,6 +494,8 @@ export type InsertExpenseInstallment = typeof expenseInstallments.$inferInsert;
 // Recebíveis (vinculados às vendas A_PRAZO)
 export const receivables = mysqlTable("receivables", {
   id: int("id").primaryKey().autoincrement(),
+  companyId: int("companyId").notNull().default(1),
+  branchId: int("branchId").notNull().default(1),
   saleId: int("saleId").notNull(), // FK para venda
   customerId: int("customerId").notNull(), // FK para cliente
   totalAmount: decimal("totalAmount", { precision: 10, scale: 2 }).notNull(),
@@ -583,6 +597,8 @@ export type InsertCustomerDebit = typeof customerDebits.$inferInsert;
 // Metas mensais de faturamento
 export const revenueGoals = mysqlTable("revenueGoals", {
   id: int("id").primaryKey().autoincrement(),
+  companyId: int("companyId").notNull().default(1),
+  branchId: int("branchId").notNull().default(1),
   year: int("year").notNull(), // Ano da meta
   month: int("month").notNull(), // Mês da meta (1-12)
   channelId: int("channelId"), // Canal específico (null = meta geral)
@@ -623,6 +639,8 @@ export type InsertRevenueGoalHistory = typeof revenueGoalHistory.$inferInsert;
 // Contas Gerenciais (o que o usuário vê e seleciona)
 export const managementAccounts = mysqlTable("managementAccounts", {
   id: int("id").primaryKey().autoincrement(),
+  companyId: int("companyId").notNull().default(1),
+  branchId: int("branchId").notNull().default(1),
   code: varchar("code", { length: 20 }).notNull(),  // Código interno (ex: "ALU001")
   name: varchar("name", { length: 100 }).notNull(),  // Nome da conta (ex: "Aluguel")
   description: text("description"),  // Descrição detalhada

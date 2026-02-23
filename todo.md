@@ -265,12 +265,13 @@ Despesas criadas ANTES desta implementação (07/02/2026) não possuem registros
 
 ---
 
-## 🏢 ACESSO POR EMPRESA (FUTURO)
+## 🏢 ACESSO POR EMPRESA
 
-- [ ] Suporte a múltiplas empresas no ABRWF
-- [ ] Isolamento de dados (produtos, vendas, financeiro, contabilidade)
-- [ ] Isolamento em nível de banco e regras de acesso
-- [ ] Evolução futura para ambientes com regras específicas por empresa
+- [x] Fase 1: Fundação (tabelas companies, branches, userCompanies, contexto, seletor)
+- [x] Fase 2: Isolamento de dados operacionais (vendas, compras, despesas, recebíveis, estoque, fechamento)
+- [ ] Fase 3: Isolamento de parcelas (purchaseInstallments, expenseInstallments, receivableInstallments)
+- [ ] Fase 4: Isolamento de contabilidade (journals, accountingEntries)
+- [ ] Fase 5: Testes de integração e validação end-to-end
 
 ---
 
@@ -865,3 +866,18 @@ Despesa de impostos aparece tanto em janeiro quanto em fevereiro após edição 
 - [x] Migração: cadastrar A Brasa Reúne (companyId=2, branchId=2, segment=Hamburgueria)
 - [x] Migração: atualizar dados existentes com companyId=1, branchId=1
 - [x] Migração: associar usuários existentes às empresas (userCompanies)
+
+### Multiempresa Fase 2 — Isolamento de Dados Operacionais (22/02/2026)
+- [x] Schema: adicionar companyId+branchId em sales, saleItems, purchaseOrders, purchaseOrderItems
+- [x] Schema: adicionar companyId+branchId em expenses, receivables, receivableInstallments
+- [x] Schema: adicionar companyId+branchId em revenueGoals, managementAccounts
+- [x] Backend: atualizar context.ts (activeCompanyId/activeBranchId como number|undefined)
+- [x] Backend: adicionar companyId como parâmetro em ~70 funções de db.ts
+- [x] Backend: adicionar filtros companyId em ~21 whereConditions/whereClause SQL raw
+- [x] Backend: adicionar companyId em 6 funções de closingQueries.ts
+- [x] Backend: atualizar ~80 chamadas em routers.ts para passar ctx.activeCompanyId
+- [x] Backend: corrigir destructuring de ctx em ~60 handlers de routers.ts
+- [x] Backend: corrigir assinaturas de funções de análise de vendas (8 funções)
+- [x] Backend: corrigir getStockByCategory em closingQueries.ts
+- [x] Servidor rodando com sucesso (HTTP 200)
+- [x] Erros TS restantes são todos pré-existentes (não relacionados à multiempresa)
