@@ -69,16 +69,28 @@ function Router() {
 }
 
 function CompanyGate() {
-  const { needsSelection, loading: companyLoading } = useCompany();
+  const { needsSelection, loading: companyLoading, companies, activeCompanyId } = useCompany();
   const { isAuthenticated, loading: authLoading } = useAuth();
 
-  // Se ainda está carregando auth ou empresas, mostrar o router normalmente (cada página tem seu loading)
-  if (authLoading || companyLoading) {
+  // Se não está autenticado ou ainda carregando auth, mostrar router normalmente
+  if (!isAuthenticated || authLoading) {
     return <Router />;
   }
 
-  // Se autenticado e precisa selecionar empresa, mostrar tela de seleção
-  if (isAuthenticated && needsSelection) {
+  // Se está autenticado mas ainda carregando empresas, mostrar loading em vez de flash da Home
+  if (companyLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
+        <div className="flex flex-col items-center gap-4">
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-amber-600"></div>
+          <p className="text-slate-500 text-sm">Carregando...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Se autenticado, tem múltiplas empresas e nenhuma selecionada, mostrar tela de seleção
+  if (needsSelection) {
     return <SelectCompany />;
   }
 

@@ -897,3 +897,21 @@ Despesa de impostos aparece tanto em janeiro quanto em fevereiro após edição 
 - [x] getSuppliersWithPendingPayables filtrado via JOIN com purchaseOrders/expenses
 - [x] getGrossMarginByCategory, getPurchaseTotalCurrentMonth, getPurchaseTotalByDocType filtrados
 - [x] registerPaymentToBalance e registerManualDebit agora salvam companyId
+
+### Correções Multiempresa — Bugs Reportados (23/02/2026 - Rodada 3)
+- [x] Compras: listagem mostra compras da Adega ao selecionar A Brasa Reúne (getPurchaseOrders corrigido com filtro companyId)
+- [x] Outras Receitas: mostra receitas da Adega (accounting router corrigido para usar ctx.activeCompanyId)
+- [x] Análise de Faturamento: getSalesMonthlyStats, getRevenueGoal, getRevenueGoalProgress, getAllRevenueGoalHistory corrigidos
+- [x] Análise de Estoque: stockAnalysisQueries.ts e stockAnalysis router corrigidos com companyId
+- [x] Metas: getRevenueGoal/upsertRevenueGoal corrigidos com filtro companyId
+- [x] Fechamento Mensal: closingQueries.ts (6 funções) corrigidas com filtro companyId
+- [x] Dashboard: Meta do Mês corrigida (getRevenueGoal já filtra por companyId)
+- [ ] Tela de Seleção: trocar ícone genérico pelo logo ABRWF maior
+- [ ] Tela de Seleção: trocar letra "A" pelo logo de cada empresa
+- [ ] Tela de Seleção: melhorar fundo (menos genérico)
+- [x] Tela de Seleção: corrigir flash da tela inicial antes do redirect (CompanyGate mostra loading)
+- [x] db.ts: 22 funções corrigidas (getPurchaseOrders, getExpenses, listReceivables, listPendingReceivableInstallments, listOverdueReceivableInstallments, getReceivablesSummary, getCustomerReceivableDetail, getSupplierPayableDetail, getPaymentHistory, cancelSale, searchProducts, createCategory, getProductMovements, getExpenseCategories, listManagementAccounts, listManagementAccountsForSelect, listManagementAccountsGrouped, getSalesMonthlyStats, getRevenueGoal, getRevenueGoalProgress, getAllRevenueGoalHistory, getCustomerAccountHistory-sales-query)
+- [x] closingQueries.ts: 6 funções corrigidas (getSalesByChannel, getSalesByCategory, getPurchasesByCategory, getExpensesByCategory, getStockByCategory, getPaymentsByType)
+- [x] stockAnalysisQueries.ts: 2 funções corrigidas (getStockAnalysisByCategory, getStockAnalysisByProduct)
+- [x] accounting router: listOtherRevenues, createOtherRevenue, listChartOfAccounts, listManagementAccounts corrigidos
+- [x] routers.ts: getCustomerBalance e getCustomerAccountHistory agora recebem companyId em todas as chamadas

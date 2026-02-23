@@ -283,13 +283,12 @@ export const accountingRouter = router({
   }),
 
   // Outras Receitas
-  listOtherRevenues: publicProcedure
+  listOtherRevenues: protectedProcedure
     .input(z.object({
       competenceMonth: z.string().optional(),
-      companyId: z.number().optional().default(1)
     }).optional())
-    .query(async ({ input }) => {
-      return accounting.listOtherRevenues(input?.competenceMonth, input?.companyId || 1);
+    .query(async ({ input, ctx }) => {
+      return accounting.listOtherRevenues(input?.competenceMonth, ctx.activeCompanyId);
     }),
 
   createOtherRevenue: protectedProcedure
@@ -307,11 +306,11 @@ export const accountingRouter = router({
       notes: z.string().optional(),
       amount: z.number(),
       status: z.enum(["ACTIVE", "CANCELLED"]).optional().default("ACTIVE"),
-      companyId: z.number().optional().default(1)
     }))
     .mutation(async ({ input, ctx }) => {
       return accounting.createOtherRevenue({
         ...input,
+        companyId: ctx.activeCompanyId || 1,
         issueDate: new Date(input.issueDate),
         entryDate: new Date(input.entryDate),
         creditDate: input.creditDate ? new Date(input.creditDate) : undefined,
@@ -353,21 +352,17 @@ export const accountingRouter = router({
     }),
 
   // Listar Plano de Contas (atalho para frontend)
-  listChartOfAccounts: publicProcedure
-    .input(z.object({
-      companyId: z.number().optional().default(1)
-    }).optional())
-    .query(async ({ input }) => {
-      return accounting.getChartOfAccounts(input?.companyId || 1);
+  listChartOfAccounts: protectedProcedure
+    .input(z.object({}).optional())
+    .query(async ({ ctx }) => {
+      return accounting.getChartOfAccounts(ctx.activeCompanyId || 1);
     }),
 
   // Contas Gerenciais
-  listManagementAccounts: publicProcedure
-    .input(z.object({
-      companyId: z.number().optional().default(1)
-    }).optional())
-    .query(async ({ input }) => {
-      return accounting.listManagementAccounts(input?.companyId || 1);
+  listManagementAccounts: protectedProcedure
+    .input(z.object({}).optional())
+    .query(async ({ ctx }) => {
+      return accounting.listManagementAccounts(ctx.activeCompanyId || 1);
     }),
 
   createManagementAccount: protectedProcedure

@@ -1071,6 +1071,11 @@ export async function getPurchaseOrders(filters?: { status?: string; supplierId?
   
   const conditions: SQL[] = [];
   
+  // Filtro de empresa (multiempresa)
+  if (filters?.companyId) {
+    conditions.push(eq(purchaseOrders.companyId, filters.companyId));
+  }
+  
   // Filtro de fornecedor
   if (filters?.supplierId) {
     conditions.push(eq(purchaseOrders.supplierId, filters.supplierId));
@@ -1563,14 +1568,20 @@ export async function searchProducts(searchTerm: string, companyId?: number) {
   const searchLower = searchTerm.toLowerCase();
   const term = `%${searchLower}%`;
   
+  const conditions: SQL[] = [
+    or(
+      sql`LOWER(${products.name}) LIKE ${term}`,
+      sql`LOWER(${products.ean}) LIKE ${term}`
+    )!
+  ];
+  
+  if (companyId) {
+    conditions.push(eq(products.companyId, companyId));
+  }
+  
   const results = await db.select()
     .from(products)
-    .where(
-      or(
-        sql`LOWER(${products.name}) LIKE ${term}`,
-        sql`LOWER(${products.ean}) LIKE ${term}`
-      )
-    )
+    .where(and(...conditions))
     .limit(10);
   
   return results;
@@ -1584,6 +1595,7 @@ export async function cancelSale(saleId: number, userId: string, reason?: string
   // Buscar venda
   const sale = await getSale(saleId);
   if (!sale) throw new Error("Venda não encontrada");
+  if (companyId && sale.companyId !== companyId) throw new Error("Venda não pertence a esta empresa");
   if (sale.status === "CANCELLED") throw new Error("Venda já está cancelada");
 
   // Validar limite de 24h
@@ -1727,9 +1739,17 @@ export async function getExpenseCategories(activeOnly = true, companyId?: number
   const db = await getDb();
   if (!db) return [];
   
-  let query = db.select().from(expenseCategories);
+  const conditions: SQL[] = [];
   if (activeOnly) {
-    query = query.where(eq(expenseCategories.active, true)) as any;
+    conditions.push(eq(expenseCategories.active, true));
+  }
+  if (companyId) {
+    conditions.push(eq(expenseCategories.companyId, companyId));
+  }
+  
+  let query = db.select().from(expenseCategories);
+  if (conditions.length > 0) {
+    query = query.where(and(...conditions)) as any;
   }
   
   return await query.orderBy(expenseCategories.name);
@@ -1778,6 +1798,11 @@ export async function getExpenses(filters?: { companyId?: number;
   .leftJoin(accountingMappings, eq(managementAccounts.id, accountingMappings.managementAccountId));
   
   const conditions = [];
+  
+  // Filtro de empresa (multiempresa)
+  if (filters?.companyId) {
+    conditions.push(eq(expenses.companyId, filters.companyId));
+  }
   
   if (filters?.categoryId) {
     conditions.push(eq(expenses.categoryId, filters.categoryId));
@@ -2027,6 +2052,11 @@ export async function getPendingExpenseInstallments(filters?: { companyId?: numb
     )
   ];
   
+  // Filtro de empresa (multiempresa)
+  if (filters?.companyId) {
+    conditions.push(eq(expenses.companyId, filters.companyId));
+  }
+  
   if (filters?.categoryId) {
     conditions.push(eq(expenses.categoryId, filters.categoryId));
   }
@@ -2065,6 +2095,11 @@ export async function getPaymentHistory(filters: { companyId?: number;
   // Buscar parcelas PAGAS de COMPRAS
   const purchaseConditions: any[] = [eq(purchaseInstallments.status, "PAID")];
   
+  // Filtro de empresa (multiempresa)
+  if (filters.companyId) {
+    purchaseConditions.push(eq(purchaseOrders.companyId, filters.companyId));
+  }
+  
   if (filters.supplierId) {
     purchaseConditions.push(eq(purchaseOrders.supplierId, filters.supplierId));
   }
@@ -2098,6 +2133,11 @@ export async function getPaymentHistory(filters: { companyId?: number;
   
   // Buscar parcelas PAGAS de DESPESAS
   const expenseConditions: any[] = [eq(expenseInstallments.status, "PAGO")];
+  
+  // Filtro de empresa (multiempresa)
+  if (filters.companyId) {
+    expenseConditions.push(eq(expenses.companyId, filters.companyId));
+  }
   
   if (filters.supplierId) {
     expenseConditions.push(eq(expenses.supplierId, filters.supplierId));
@@ -2411,6 +2451,10 @@ export async function listReceivables(filters?: { companyId?: number;
   let query = db.select().from(receivables);
   
   const conditions = [];
+  // Filtro de empresa (multiempresa)
+  if (filters?.companyId) {
+    conditions.push(eq(receivables.companyId, filters.companyId));
+  }
   if (filters?.customerId) {
     conditions.push(eq(receivables.customerId, filters.customerId));
   }
@@ -2449,18 +2493,15 @@ export async function listPendingReceivableInstallments(customerId?: number, com
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
+  const conditions: SQL[] = [eq(receivableInstallments.status, "PENDENTE")];
+  
   if (customerId) {
-    return await db.select({
-      installment: receivableInstallments,
-      receivable: receivables
-    })
-    .from(receivableInstallments)
-    .leftJoin(receivables, eq(receivableInstallments.receivableId, receivables.id))
-    .where(and(
-      eq(receivableInstallments.status, "PENDENTE"),
-      eq(receivables.customerId, customerId)
-    ))
-    .orderBy(receivableInstallments.dueDate);
+    conditions.push(eq(receivables.customerId, customerId));
+  }
+  
+  // Filtro de empresa (multiempresa)
+  if (companyId) {
+    conditions.push(eq(receivables.companyId, companyId));
   }
   
   return await db.select({
@@ -2469,7 +2510,7 @@ export async function listPendingReceivableInstallments(customerId?: number, com
   })
   .from(receivableInstallments)
   .leftJoin(receivables, eq(receivableInstallments.receivableId, receivables.id))
-  .where(eq(receivableInstallments.status, "PENDENTE"))
+  .where(and(...conditions))
   .orderBy(receivableInstallments.dueDate);
 }
 
@@ -2481,16 +2522,23 @@ export async function listOverdueReceivableInstallments(companyId?: number) {
   // Usar dateUtils para consistência de timezone
   const today = getTodayInBrazil();
   
+  const conditions: SQL[] = [
+    eq(receivableInstallments.status, "PENDENTE"),
+    sql`${receivableInstallments.dueDate} < ${today}`
+  ];
+  
+  // Filtro de empresa (multiempresa)
+  if (companyId) {
+    conditions.push(eq(receivables.companyId, companyId));
+  }
+  
   return await db.select({
     installment: receivableInstallments,
     receivable: receivables
   })
   .from(receivableInstallments)
   .leftJoin(receivables, eq(receivableInstallments.receivableId, receivables.id))
-  .where(and(
-    eq(receivableInstallments.status, "PENDENTE"),
-    sql`${receivableInstallments.dueDate} < ${today}`
-  ))
+  .where(and(...conditions))
   .orderBy(receivableInstallments.dueDate);
 }
 
@@ -2622,31 +2670,43 @@ export async function getReceivablesSummary(companyId?: number) {
   const today = getTodayInBrazil();
   
   // Total a receber (parcelas pendentes)
+  const pendingConditions: SQL[] = [eq(receivableInstallments.status, "PENDENTE")];
+  if (companyId) pendingConditions.push(eq(receivables.companyId, companyId));
+  
   const pending = await db.select({
     total: sql<string>`COALESCE(SUM(${receivableInstallments.amount}), 0)`
   })
   .from(receivableInstallments)
-  .where(eq(receivableInstallments.status, "PENDENTE"));
+  .leftJoin(receivables, eq(receivableInstallments.receivableId, receivables.id))
+  .where(and(...pendingConditions));
   
   // Total vencido
+  const overdueConditions: SQL[] = [
+    eq(receivableInstallments.status, "PENDENTE"),
+    sql`${receivableInstallments.dueDate} < ${today}`
+  ];
+  if (companyId) overdueConditions.push(eq(receivables.companyId, companyId));
+  
   const overdue = await db.select({
     total: sql<string>`COALESCE(SUM(${receivableInstallments.amount}), 0)`
   })
   .from(receivableInstallments)
-  .where(and(
-    eq(receivableInstallments.status, "PENDENTE"),
-    sql`${receivableInstallments.dueDate} < ${today}`
-  ));
+  .leftJoin(receivables, eq(receivableInstallments.receivableId, receivables.id))
+  .where(and(...overdueConditions));
   
   // Total recebido hoje
+  const receivedConditions: SQL[] = [
+    eq(receivableInstallments.status, "PAGO"),
+    sql`DATE(CONVERT_TZ(${receivableInstallments.paidDate}, '+00:00', '-03:00')) = DATE(CONVERT_TZ(${today}, '+00:00', '-03:00'))`
+  ];
+  if (companyId) receivedConditions.push(eq(receivables.companyId, companyId));
+  
   const receivedToday = await db.select({
     total: sql<string>`COALESCE(SUM(${receivableInstallments.paidAmount}), 0)`
   })
   .from(receivableInstallments)
-  .where(and(
-    eq(receivableInstallments.status, "PAGO"),
-    sql`DATE(CONVERT_TZ(${receivableInstallments.paidDate}, '+00:00', '-03:00')) = DATE(CONVERT_TZ(${today}, '+00:00', '-03:00'))`
-  ));
+  .leftJoin(receivables, eq(receivableInstallments.receivableId, receivables.id))
+  .where(and(...receivedConditions));
   
   return {
     totalPending: parseFloat(pending[0]?.total || "0"),
@@ -2729,17 +2789,22 @@ export async function getCustomerReceivableDetail(customerId: number, companyId?
   if (!customer[0]) throw new Error("Cliente não encontrado");
   
   // Buscar todas as vendas A_PRAZO do cliente com recebíveis
+  const saleConditions: SQL[] = [
+    eq(sales.customerId, customerId),
+    eq(sales.saleType, "A_PRAZO"),
+    eq(sales.status, "ACTIVE")
+  ];
+  if (companyId) {
+    saleConditions.push(eq(sales.companyId, companyId));
+  }
+  
   const salesWithReceivables = await db.select({
     sale: sales,
     receivable: receivables
   })
   .from(sales)
   .leftJoin(receivables, eq(sales.id, receivables.saleId))
-  .where(and(
-    eq(sales.customerId, customerId),
-    eq(sales.saleType, "A_PRAZO"),
-    eq(sales.status, "ACTIVE")
-  ))
+  .where(and(...saleConditions))
   .orderBy(desc(sales.saleDate));
   
   // Para cada venda, buscar itens e parcelas
@@ -3235,9 +3300,13 @@ export async function getSupplierPayableDetail(supplierId: number, companyId?: n
   const allInstallments: any[] = [];
   
   // 1. Buscar parcelas de COMPRAS
+  const purchaseConditions: SQL[] = [eq(purchaseOrders.supplierId, supplierId)];
+  if (companyId) {
+    purchaseConditions.push(eq(purchaseOrders.companyId, companyId));
+  }
   const purchases = await db.select()
     .from(purchaseOrders)
-    .where(eq(purchaseOrders.supplierId, supplierId))
+    .where(and(...purchaseConditions))
     .orderBy(desc(purchaseOrders.createdAt));
   
   for (const purchase of purchases) {
@@ -3277,9 +3346,13 @@ export async function getSupplierPayableDetail(supplierId: number, companyId?: n
   }
   
   // 2. Buscar parcelas de DESPESAS
+  const expenseConditions: SQL[] = [eq(expenses.supplierId, supplierId)];
+  if (companyId) {
+    expenseConditions.push(eq(expenses.companyId, companyId));
+  }
   const expensesList = await db.select()
     .from(expenses)
-    .where(eq(expenses.supplierId, supplierId))
+    .where(and(...expenseConditions))
     .orderBy(desc(expenses.createdAt));
   
   for (const expense of expensesList) {
@@ -3747,13 +3820,13 @@ export async function getCustomerAccountHistory(customerId: number, companyId?: 
     description: sql<string>`CONCAT('Venda #', ${sales.id})`,
     paymentMethod: sales.paymentMethod
   })
-  .from(sales)
+   .from(sales)
   .where(and(
     eq(sales.customerId, customerId),
     eq(sales.saleType, "A_PRAZO"),
-    eq(sales.status, "ACTIVE")
+    eq(sales.status, "ACTIVE"),
+    companyId ? eq(sales.companyId, companyId) : undefined
   ));
-
   // Buscar produtos de cada venda
   const salesWithItems = await Promise.all(
     customerSales.map(async (sale) => {
@@ -4788,6 +4861,9 @@ export async function getProductMovements(productId: number, companyId?: number,
     .leftJoin(users, eq(productMovements.userId, users.id))
     .where(eq(productMovements.productId, productId))
     .$dynamic();
+  if (companyId) {
+    query = query.where(eq(productMovements.companyId, companyId));
+  }
 
   if (filters?.startDate) {
     query = query.where(gte(productMovements.date, filters.startDate));
@@ -5168,6 +5244,7 @@ export async function getSalesMonthlyStats(year: number, companyId?: number) {
     WHERE status != 'CANCELLED'
       AND saleDate >= '${firstDayOfYear} 03:00:00'
       AND saleDate < DATE_ADD('${lastDayOfYear}', INTERVAL 1 DAY) + INTERVAL 3 HOUR
+      ${companyId ? `AND companyId = ${companyId}` : ''}
     GROUP BY MONTH(CONVERT_TZ(saleDate, '+00:00', '-03:00')), saleType
     ORDER BY month
   `));
@@ -5690,6 +5767,7 @@ export async function getRevenueGoal(year: number, month: number, channelId?: nu
     FROM revenueGoals rg
     LEFT JOIN salesChannels sc ON rg.channelId = sc.id
     WHERE rg.year = ${year} AND rg.month = ${month} ${channelCondition}
+      ${companyId ? `AND rg.companyId = ${companyId}` : ''}
     LIMIT 1
   `));
 
@@ -5825,6 +5903,7 @@ export async function getRevenueGoalProgress(year: number, month: number, compan
     FROM revenueGoals rg
     LEFT JOIN salesChannels sc ON rg.channelId = sc.id
     WHERE rg.year = ${year} AND rg.month = ${month}
+      ${companyId ? `AND rg.companyId = ${companyId}` : ''}
   `));
 
   const goalsRows = goals[0] as unknown as any[];
@@ -5842,6 +5921,7 @@ export async function getRevenueGoalProgress(year: number, month: number, compan
     WHERE s.status = 'ACTIVE'
       AND DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) >= '${startDate}'
       AND DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) <= '${endDate}'
+      ${companyId ? `AND s.companyId = ${companyId}` : ''}
     GROUP BY s.channelId
   `));
 
@@ -6410,6 +6490,7 @@ export async function getAllRevenueGoalHistory(year: number, companyId?: number)
     JOIN revenueGoals g ON h.goalId = g.id
     LEFT JOIN salesChannels sc ON g.channelId = sc.id
     WHERE g.year = ${year}
+      ${companyId ? `AND g.companyId = ${companyId}` : ''}
     ORDER BY h.createdAt DESC
     LIMIT 50
   `));
@@ -6465,6 +6546,9 @@ export async function listManagementAccounts(filters?: { companyId?: number;
     WHERE ma.isActive = 1
   `;
   
+  if (filters?.companyId) {
+    query += ` AND ma.companyId = ${filters.companyId}`;
+  }
   if (filters?.nature) {
     query += ` AND ma.nature = '${filters.nature}'`;
   }
@@ -6653,6 +6737,7 @@ export async function listManagementAccountsForSelect(companyId?: number) {
       AND am.effectiveDate <= NOW() 
       AND (am.endDate IS NULL OR am.endDate > NOW())
     WHERE ma.isActive = 1
+      ${companyId ? `AND ma.companyId = ${companyId}` : ''}
     ORDER BY ma.classification, ma.displayOrder, ma.name
   `));
   
@@ -6671,7 +6756,7 @@ export async function listManagementAccountsForSelect(companyId?: number) {
 
 // Buscar contas gerenciais agrupadas por classificação
 export async function listManagementAccountsGrouped(companyId?: number) {
-  const accounts = await listManagementAccountsForSelect();
+  const accounts = await listManagementAccountsForSelect(companyId);
   
   const grouped: Record<string, typeof accounts> = {};
   

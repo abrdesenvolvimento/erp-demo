@@ -57,7 +57,8 @@ export async function getStockAnalysisByCategory(
   endDate: string,
   prevStartDate: string,
   prevEndDate: string,
-  daysInPeriod: number
+  daysInPeriod: number,
+  companyId?: number
 ): Promise<StockAnalysisCategorySummary[]> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
@@ -73,6 +74,7 @@ export async function getStockAnalysisByCategory(
     INNER JOIN categories c ON p.categoryId = c.id
     WHERE p.active = 1
       AND (p.isComposite = 0 OR p.isComposite IS NULL)
+      ${companyId ? `AND p.companyId = ${companyId}` : ''}
     GROUP BY c.id, c.name
     HAVING stockValue > 0
   `));
@@ -90,6 +92,7 @@ export async function getStockAnalysisByCategory(
       AND (p.isComposite = 0 OR p.isComposite IS NULL)
       AND DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) >= '${startDate}'
       AND DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) <= '${endDate}'
+      ${companyId ? `AND s.companyId = ${companyId}` : ''}
     GROUP BY c.id
   `));
 
@@ -107,6 +110,7 @@ export async function getStockAnalysisByCategory(
     WHERE (p.isComposite = 0 OR p.isComposite IS NULL)
       AND DATE(CONVERT_TZ(pm.createdAt, '+00:00', '-03:00')) >= '${startDate}'
       AND DATE(CONVERT_TZ(pm.createdAt, '+00:00', '-03:00')) <= '${endDate}'
+      ${companyId ? `AND p.companyId = ${companyId}` : ''}
     GROUP BY c.id
   `));
 
@@ -123,6 +127,7 @@ export async function getStockAnalysisByCategory(
       AND (p.isComposite = 0 OR p.isComposite IS NULL)
       AND DATE(CONVERT_TZ(po.postingDate, '+00:00', '-03:00')) >= '${startDate}'
       AND DATE(CONVERT_TZ(po.postingDate, '+00:00', '-03:00')) <= '${endDate}'
+      ${companyId ? `AND po.companyId = ${companyId}` : ''}
     GROUP BY c.id
   `));
 
@@ -138,6 +143,7 @@ export async function getStockAnalysisByCategory(
       AND (p.isComposite = 0 OR p.isComposite IS NULL)
       AND DATE(CONVERT_TZ(po.postingDate, '+00:00', '-03:00')) >= '${prevStartDate}'
       AND DATE(CONVERT_TZ(po.postingDate, '+00:00', '-03:00')) <= '${prevEndDate}'
+      ${companyId ? `AND po.companyId = ${companyId}` : ''}
     GROUP BY c.id
   `));
 
@@ -213,7 +219,8 @@ export async function getStockAnalysisByProduct(
   prevEndDate: string,
   daysInPeriod: number,
   categoryId?: number,
-  subcategory?: string
+  subcategory?: string,
+  companyId?: number
 ): Promise<StockAnalysisProduct[]> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
@@ -239,6 +246,7 @@ export async function getStockAnalysisByProduct(
       AND p.currentStock > 0
       ${categoryFilter}
       ${subcategoryFilter}
+      ${companyId ? `AND p.companyId = ${companyId}` : ''}
     ORDER BY (p.currentStock * p.avgCost) DESC
   `));
 
@@ -262,6 +270,7 @@ export async function getStockAnalysisByProduct(
       AND si.productId IN (${productIds})
       AND DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) >= '${startDate}'
       AND DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) <= '${endDate}'
+      ${companyId ? `AND s.companyId = ${companyId}` : ''}
     GROUP BY si.productId
   `));
 

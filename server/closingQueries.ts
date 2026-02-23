@@ -78,6 +78,7 @@ export async function getSalesByChannel(startDate: string, endDate: string, comp
     WHERE s.status = 'ACTIVE'
       AND DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) >= '${startDate}'
       AND DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) <= '${endDate}'
+      ${companyId ? `AND s.companyId = ${companyId}` : ''}
     GROUP BY s.channelId, sc.name, sc.code, s.saleType
     ORDER BY revenue DESC
   `));
@@ -163,6 +164,7 @@ export async function getSalesByCategory(startDate: string, endDate: string, com
     WHERE s.status = 'ACTIVE'
       AND DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) >= '${startDate}'
       AND DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) <= '${endDate}'
+      ${companyId ? `AND s.companyId = ${companyId}` : ''}
     GROUP BY c.id, c.name
     ORDER BY revenue DESC
   `));
@@ -208,6 +210,7 @@ export async function getPurchasesByCategory(startDate: string, endDate: string,
     WHERE po.status = 'CONFIRMED'
       AND DATE(CONVERT_TZ(po.postingDate, '+00:00', '-03:00')) >= '${startDate}'
       AND DATE(CONVERT_TZ(po.postingDate, '+00:00', '-03:00')) <= '${endDate}'
+      ${companyId ? `AND po.companyId = ${companyId}` : ''}
     GROUP BY c.id, c.name
     ORDER BY amount DESC
   `));
@@ -245,6 +248,7 @@ export async function getSalesByPaymentType(startDate: string, endDate: string, 
       AND s.paymentMethod IS NOT NULL
       AND DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) >= '${startDate}'
       AND DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) <= '${endDate}'
+      ${companyId ? `AND s.companyId = ${companyId}` : ''}
     GROUP BY s.paymentMethod
     ORDER BY revenue DESC
   `));
@@ -290,6 +294,7 @@ export async function getStockByCategory(
     INNER JOIN categories c ON p.categoryId = c.id
     WHERE p.active = 1
       AND (p.isComposite = 0 OR p.isComposite IS NULL)
+      ${companyId ? `AND p.companyId = ${companyId}` : ''}
     GROUP BY c.id, c.name
   `));
 
@@ -308,6 +313,7 @@ export async function getStockByCategory(
     WHERE (p.isComposite = 0 OR p.isComposite IS NULL)
       AND DATE(CONVERT_TZ(pm.createdAt, '+00:00', '-03:00')) >= '${startDate}'
       AND DATE(CONVERT_TZ(pm.createdAt, '+00:00', '-03:00')) <= '${endDate}'
+      ${companyId ? `AND pm.companyId = ${companyId}` : ''}
     GROUP BY c.id
   `));
 
@@ -325,6 +331,7 @@ export async function getStockByCategory(
       AND (p.isComposite = 0 OR p.isComposite IS NULL)
       AND DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) >= '${startDate}'
       AND DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) <= '${endDate}'
+      ${companyId ? `AND s.companyId = ${companyId}` : ''}
     GROUP BY c.id
   `));
 
@@ -396,6 +403,7 @@ export async function getPurchasesBySupplier(startDate: string, endDate: string,
     WHERE po.status = 'CONFIRMED'
       AND DATE(CONVERT_TZ(po.postingDate, '+00:00', '-03:00')) >= '${startDate}'
       AND DATE(CONVERT_TZ(po.postingDate, '+00:00', '-03:00')) <= '${endDate}'
+      ${companyId ? `AND po.companyId = ${companyId}` : ''}
     GROUP BY pa.id, pa.name, pa.tradeName
     ORDER BY amount DESC
   `));

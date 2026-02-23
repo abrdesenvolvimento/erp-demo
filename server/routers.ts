@@ -481,7 +481,7 @@ export const appRouter = router({
         
         // Calcular saldo devedor usando a mesma lógica de getCustomerBalance
         // Saldo = Σ(vendas A_PRAZO) + Σ(débitos manuais) - Σ(pagamentos)
-        const currentBalance = await db.getCustomerBalance(input.customerId);
+        const currentBalance = await db.getCustomerBalance(input.customerId, ctx.activeCompanyId);
         
         const creditLimit = parseFloat(customer.creditLimit || '0');
         const available = creditLimit - currentBalance;
@@ -550,7 +550,7 @@ export const appRouter = router({
           const customer = await db.getPartner(saleData.customerId);
           if (customer) {
             // Calcular saldo devedor usando a mesma lógica de getCustomerBalance
-            const currentBalance = await db.getCustomerBalance(saleData.customerId);
+            const currentBalance = await db.getCustomerBalance(saleData.customerId, ctx.activeCompanyId);
             
             const creditLimit = parseFloat(customer.creditLimit || '0');
             const saleAmount = parseFloat(saleData.finalAmount);
@@ -1379,7 +1379,7 @@ export const appRouter = router({
       .mutation(async ({ input, ctx }) => {
         const { generateReceivablesPDF } = await import('./receivablesPdf');
         // Usar getCustomerAccountHistory que tem o saldo correto (currentBalance)
-        const customerDetail = await db.getCustomerAccountHistory(input.customerId);
+        const customerDetail = await db.getCustomerAccountHistory(input.customerId, ctx.activeCompanyId);
         
         if (!customerDetail) {
           throw new TRPCError({
@@ -1493,7 +1493,7 @@ export const appRouter = router({
         }
         
         // Buscar dados do cliente
-        const customerDetail = await db.getCustomerAccountHistory(input.customerId);
+        const customerDetail = await db.getCustomerAccountHistory(input.customerId, ctx.activeCompanyId);
         
         if (!customerDetail) {
           throw new TRPCError({

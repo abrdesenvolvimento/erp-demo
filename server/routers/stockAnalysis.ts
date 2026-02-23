@@ -52,9 +52,10 @@ export const stockAnalysisRouter = router({
       year: z.number(),
       month: z.number().min(1).max(12),
     }))
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
+      const companyId = ctx.activeCompanyId;
       const { startDate, endDate, prevStartDate, prevEndDate, daysInPeriod } = getPeriodDates(input.year, input.month);
-      return await getStockAnalysisByCategory(startDate, endDate, prevStartDate, prevEndDate, daysInPeriod);
+      return await getStockAnalysisByCategory(startDate, endDate, prevStartDate, prevEndDate, daysInPeriod, companyId);
     }),
 
   /**
@@ -67,9 +68,10 @@ export const stockAnalysisRouter = router({
       categoryId: z.number().optional(),
       subcategory: z.string().optional(),
     }))
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
+      const companyId = ctx.activeCompanyId;
       const { startDate, endDate, prevStartDate, prevEndDate, daysInPeriod } = getPeriodDates(input.year, input.month);
-      return await getStockAnalysisByProduct(startDate, endDate, prevStartDate, prevEndDate, daysInPeriod, input.categoryId, input.subcategory);
+      return await getStockAnalysisByProduct(startDate, endDate, prevStartDate, prevEndDate, daysInPeriod, input.categoryId, input.subcategory, companyId);
     }),
 
   /**
@@ -79,17 +81,20 @@ export const stockAnalysisRouter = router({
     .input(z.object({
       categoryId: z.number().optional(),
     }))
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
       const db = await getDb();
       if (!db) return [];
+      const companyId = ctx.activeCompanyId;
       const catFilter = input.categoryId ? `AND categoryId = ${input.categoryId}` : '';
+      const companyFilter = companyId ? `AND companyId = ${companyId}` : '';
       const result = await db.execute(sql.raw(`
         SELECT DISTINCT subcategory 
         FROM products 
         WHERE subcategory IS NOT NULL AND subcategory != '' 
           AND active = 1
           ${catFilter}
-        ORDER BY subcategory
+          ${companyFilter}
+        Order by subcategory
       `));
       return (result[0] as unknown as any[]).map((r: any) => r.subcategory as string);
     }),
