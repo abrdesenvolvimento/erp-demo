@@ -114,7 +114,8 @@ export default function AnaliseCanal() {
         quantity: acc.quantity + parseFloat(item.totalQuantity),
         revenue: acc.revenue + parseFloat(item.totalRevenue),
         cost: acc.cost + parseFloat(item.totalCost),
-      }), { quantity: 0, revenue: 0, cost: 0 });
+        salesCount: acc.salesCount + parseInt(item.salesCount || '0'),
+      }), { quantity: 0, revenue: 0, cost: 0, salesCount: 0 });
 
       // Para Delivery, descontar 7% de taxa do faturamento para calcular margem líquida
       let effectiveRevenue = totals.revenue;
@@ -126,14 +127,14 @@ export default function AnaliseCanal() {
 
       const profit = effectiveRevenue - totals.cost;
       const margin = effectiveRevenue > 0 ? (profit / effectiveRevenue) * 100 : 0;
-      // Contar vendas distintas (aproximação: número de produtos únicos vendidos)
-      const salesCount = data.length;
+      // Contar vendas distintas (usando COUNT DISTINCT do backend)
+      const salesCount = totals.salesCount;
       const avgTicket = salesCount > 0 ? totals.revenue / salesCount : 0;
 
       return {
         channel: channelName,
         channelKey,
-        quantity: totals.quantity,
+        quantity: salesCount,
         revenue: totals.revenue,
         cost: totals.cost + deliveryFee, // Incluir taxa como "custo" para visualização
         profit,
@@ -413,18 +414,20 @@ export default function AnaliseCanal() {
                   {/* Métricas secundárias */}
                   <div className="grid grid-cols-2 gap-4 pt-2 border-t">
                     <div>
-                      <p className="text-xs text-muted-foreground">Qtd Vendida</p>
-                      <p className="text-lg font-semibold">{channel.quantity.toFixed(0)}</p>
+                      <p className="text-xs text-muted-foreground">Qtd Vendas</p>
+                      <p className="text-lg font-semibold">{channel.quantity}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Ticket Médio</p>
+                      <p className="text-lg font-semibold text-blue-600">
+                        {formatCurrency(channel.avgTicket)}
+                      </p>
                     </div>
                     <div>
                       <p className="text-xs text-muted-foreground">Lucro</p>
                       <p className={`text-lg font-semibold ${channel.profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                         {formatCurrency(channel.profit)}
                       </p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">Custo</p>
-                      <p className="text-lg font-semibold text-red-600">{formatCurrency(channel.cost)}</p>
                     </div>
                     <div>
                       <p className="text-xs text-muted-foreground">Margem</p>
@@ -451,8 +454,14 @@ export default function AnaliseCanal() {
               </div>
               <div className="flex gap-8">
                 <div className="text-center">
-                  <p className="text-sm text-muted-foreground">Qtd Vendida</p>
-                  <p className="text-2xl font-bold">{totals.quantity.toFixed(0)}</p>
+                  <p className="text-sm text-muted-foreground">Qtd Vendas</p>
+                  <p className="text-2xl font-bold">{totals.quantity}</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-sm text-muted-foreground">Ticket Médio</p>
+                  <p className="text-2xl font-bold text-blue-600">
+                    {formatCurrency(totals.quantity > 0 ? totals.revenue / totals.quantity : 0)}
+                  </p>
                 </div>
                 <div className="text-center">
                   <p className="text-sm text-muted-foreground">Lucro Total</p>
@@ -482,8 +491,9 @@ export default function AnaliseCanal() {
                 <thead>
                   <tr className="border-b">
                     <th className="text-left py-3 px-4 font-medium">Canal</th>
-                    <th className="text-right py-3 px-4 font-medium">Qtd Vendida</th>
+                    <th className="text-right py-3 px-4 font-medium">Qtd Vendas</th>
                     <th className="text-right py-3 px-4 font-medium">Faturamento</th>
+                    <th className="text-right py-3 px-4 font-medium">Ticket Médio</th>
                     <th className="text-right py-3 px-4 font-medium">Custo</th>
                     <th className="text-right py-3 px-4 font-medium">Lucro</th>
                     <th className="text-right py-3 px-4 font-medium">Margem</th>
@@ -505,9 +515,12 @@ export default function AnaliseCanal() {
                             <span className="font-medium">{channel.channel}</span>
                           </div>
                         </td>
-                        <td className="text-right py-3 px-4">{channel.quantity.toFixed(0)}</td>
+                        <td className="text-right py-3 px-4">{channel.quantity}</td>
                         <td className="text-right py-3 px-4 font-medium text-emerald-600">
                           {formatCurrency(channel.revenue)}
+                        </td>
+                        <td className="text-right py-3 px-4 text-blue-600">
+                          {formatCurrency(channel.avgTicket)}
                         </td>
                         <td className="text-right py-3 px-4 text-red-600">
                           {formatCurrency(channel.cost)}
@@ -530,8 +543,9 @@ export default function AnaliseCanal() {
                 <tfoot>
                   <tr className="bg-muted/50 font-medium">
                     <td className="py-3 px-4">Total</td>
-                    <td className="text-right py-3 px-4">{totals.quantity.toFixed(0)}</td>
+                    <td className="text-right py-3 px-4">{totals.quantity}</td>
                     <td className="text-right py-3 px-4 text-emerald-600">{formatCurrency(totals.revenue)}</td>
+                    <td className="text-right py-3 px-4 text-blue-600">{formatCurrency(totals.quantity > 0 ? totals.revenue / totals.quantity : 0)}</td>
                     <td className="text-right py-3 px-4 text-red-600">{formatCurrency(totals.cost)}</td>
                     <td className={`text-right py-3 px-4 ${totals.profit >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
                       {formatCurrency(totals.profit)}

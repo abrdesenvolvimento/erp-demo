@@ -1868,22 +1868,22 @@ export async function getExpenses(filters?: { companyId?: number;
     conditions.push(like(expenses.docNumber, `%${filters.docNumber}%`));
   }
   
-  // Filtro de data (createdAt)
+  // Filtro de data (issueDate - data de emissão/lançamento)
   if (filters?.startDate) {
-    conditions.push(gte(expenses.createdAt, filters.startDate));
+    conditions.push(gte(expenses.issueDate, filters.startDate));
   }
   if (filters?.endDate) {
     // Adiciona 1 dia para incluir o dia final completo
     const endOfDay = new Date(filters.endDate);
     endOfDay.setDate(endOfDay.getDate() + 1);
-    conditions.push(lt(expenses.createdAt, endOfDay));
+    conditions.push(lt(expenses.issueDate, endOfDay));
   }
   
   if (conditions.length > 0) {
     query = query.where(and(...conditions)) as any;
   }
   
-  const results = await query.orderBy(desc(expenses.createdAt));
+  const results = await query.orderBy(desc(expenses.issueDate));
   
   // Filtro de valor (aplicado após query pois precisa calcular total)
   if (filters?.minValue !== undefined || filters?.maxValue !== undefined) {
@@ -4265,7 +4265,8 @@ export async function getSalesAnalysisByValue(
       SUM(si.totalPrice) as totalRevenue,
       SUM(si.quantity * p.avgCost) as totalCost,
       SUM(si.totalPrice) - SUM(si.quantity * p.avgCost) as totalProfit,
-      ROUND((1 - (SUM(si.quantity * p.avgCost) / NULLIF(SUM(si.totalPrice), 0))) * 100, 1) as marginPercent
+      ROUND((1 - (SUM(si.quantity * p.avgCost) / NULLIF(SUM(si.totalPrice), 0))) * 100, 1) as marginPercent,
+      COUNT(DISTINCT s.id) as salesCount
     FROM saleItems si
     INNER JOIN sales s ON si.saleId = s.id
     INNER JOIN products p ON si.productId = p.id
@@ -4284,6 +4285,7 @@ export async function getSalesAnalysisByValue(
     totalCost: string;
     totalProfit: string;
     marginPercent: string;
+    salesCount: string;
   }>;
 }
 

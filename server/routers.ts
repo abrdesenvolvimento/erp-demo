@@ -1178,8 +1178,8 @@ export const appRouter = router({
         });
         
         // Criar parcelas com valores individuais
-        // Se for À Vista, criar já com status PAGO e data de pagamento
-        const isAVista = input.paymentMethod === 'À Vista';
+        // Se for pagamento imediato (À Vista, Perdas, Débito Automático), criar já com status PAGO
+        const isAVista = input.paymentMethod === 'À Vista' || input.paymentMethod === 'Perdas' || input.paymentMethod === 'Débito Automático';
         
         for (let i = 0; i < input.dueDates.length; i++) {
           await db.createExpenseInstallment({

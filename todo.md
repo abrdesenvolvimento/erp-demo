@@ -1015,3 +1015,15 @@ Despesa de impostos aparece tanto em janeiro quanto em fevereiro após edição 
 - [ ] Pendente: accounting.ts createManagementAccount (managementAccounts) - companyId via data
 - [ ] Pendente: accountingBatchLog - companyId via data
 - [ ] Pendente: productCompositions no setProductCompositions - sem companyId
+
+### Bugs e melhorias reportados (24/02/2026 - Lote 2)
+- [x] Bug: Despesas - Histórico não aparece mesmo filtrando datas maiores - corrigido: filtro usava createdAt em vez de issueDate
+- [x] Bug/Melhoria: Contas a Pagar - Despesas À Vista/Perdas/Débito Automático agora têm baixa automática ao criar
+- [x] Bug/Melhoria: Contas a Pagar - Baixa dada em 11 contas pendentes até 23/02 (R$10.042,48) + 5 despesas teste removidas
+- [x] Limpeza: Outras Receitas - 9 receitas de teste removidas (IDs 60004-60012)
+- [x] Bug: Análise de Delivery - Corrigido: badges Excelente (verde) e Atenção (amarelo) agora com cores explícitas
+- [x] Melhoria: Análise por Canal - Trocado qtd itens por qtd vendas (COUNT DISTINCT s.id)
+- [x] Melhoria: Análise por Canal - Ticket médio adicionado nos cards, tabela comparativa e total geral
+- [x] Info: Análise por Canal - Margem 26.9% é correta (inclui dedução de taxa delivery 7%). Dashboard 29.4% é margem bruta sem taxa. Nomenclaturas diferentes, ambas corretas.
+- [x] Investigado: Fechamento - Não há canal Balcão duplicado no banco. Apenas 3 agrupamentos (Balcão 1154, Delivery 679, A Prazo 193). Pode ter sido cache/dados temporários.
+- [x] Limpeza: Compras por Fornecedor - 37 fornecedores teste removidos + 10 compras teste + 10 contas a pagar teste + 20 itens de compra teste + 10 movimentos de estoque teste

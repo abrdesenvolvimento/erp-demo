@@ -81,11 +81,11 @@ export default function AnaliseDelivery() {
     return "Crítico";
   };
 
-  const getMarginBadgeVariant = (marginPercent: string): "default" | "secondary" | "destructive" => {
+  const getMarginBadgeClass = (marginPercent: string): string => {
     const margin = parseFloat(marginPercent);
-    if (margin >= 20) return "default";
-    if (margin >= 10) return "secondary";
-    return "destructive";
+    if (margin >= 20) return "bg-green-600 text-white hover:bg-green-700";
+    if (margin >= 10) return "bg-yellow-500 text-white hover:bg-yellow-600";
+    return "bg-red-600 text-white hover:bg-red-700";
   };
 
   // Filtrar e ordenar produtos
@@ -330,15 +330,15 @@ export default function AnaliseDelivery() {
               <p className="text-xs font-semibold text-muted-foreground mb-2">Legenda de Status da Margem:</p>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
                 <div className="flex items-center gap-2">
-                  <Badge variant="default" className="text-xs">Excelente</Badge>
+                  <Badge className="text-xs bg-green-600 text-white">Excelente</Badge>
                   <span className="text-xs text-muted-foreground">Margem &ge; 20%</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Badge variant="secondary" className="text-xs">Atenção</Badge>
+                  <Badge className="text-xs bg-yellow-500 text-white">Atenção</Badge>
                   <span className="text-xs text-muted-foreground">Margem 10-20%</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Badge variant="destructive" className="text-xs">Crítico</Badge>
+                  <Badge className="text-xs bg-red-600 text-white">Crítico</Badge>
                   <span className="text-xs text-muted-foreground">Margem &lt; 10%</span>
                 </div>
               </div>
@@ -443,7 +443,7 @@ export default function AnaliseDelivery() {
                           </span>
                         </td>
                         <td className="text-center py-3 px-2">
-                          <Badge variant={getMarginBadgeVariant(product.netMarginPercent)} className="text-xs">
+                          <Badge className={`text-xs ${getMarginBadgeClass(product.netMarginPercent)}`}>
                             {getMarginBadge(product.netMarginPercent)}
                           </Badge>
                         </td>
