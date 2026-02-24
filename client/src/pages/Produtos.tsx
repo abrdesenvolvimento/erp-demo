@@ -53,6 +53,7 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { validateEAN } from "@/lib/validators";
 import ProductMovementsModal from "@/components/ProductMovementsModal";
 import AdjustStockModal from "@/components/AdjustStockModal";
+import { getTodayBR } from "@/lib/dateUtils";
 
 // Componente para gerenciar composições de produtos
 function CompositionsSection({ productId, refreshKey, onSaved }: { productId: number; refreshKey?: number; onSaved?: () => void }) {
@@ -625,7 +626,7 @@ export default function Produtos() {
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, 'Produtos');
       
-      const fileName = `produtos_${new Date().toISOString().split('T')[0]}.xlsx`;
+      const fileName = `produtos_${getTodayBR()}.xlsx`;
       XLSX.writeFile(wb, fileName);
       
       toast.success(`Exportados ${productsWithPrices.length} produtos para Excel`);

@@ -13,6 +13,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Plus, Pencil, Trash2, Loader2, FileText, Check, ChevronLeft, X } from "lucide-react";
 import DashboardLayout from "@/components/DashboardLayout";
+import { getTodayBR, toDateStringBR, getCurrentCompetenceMonthBR } from "@/lib/dateUtils";
 import { toast } from "sonner";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -40,8 +41,7 @@ const getCompetenceMonth = (date: string) => {
 
 // Obter mês de competência atual
 const getCurrentCompetenceMonth = () => {
-  const date = new Date();
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+  return getCurrentCompetenceMonthBR();
 };
 
 // Formatar competência para exibição
@@ -103,8 +103,8 @@ interface OtherRevenueForm {
 
 const getEmptyForm = (): OtherRevenueForm => ({
   partnerId: "",
-  issueDate: new Date().toISOString().split('T')[0],
-  entryDate: new Date().toISOString().split('T')[0],
+  issueDate: getTodayBR(),
+  entryDate: getTodayBR(),
   competenceMonth: getCurrentCompetenceMonth(),
   documentType: "",
   documentNumber: "",
@@ -244,14 +244,14 @@ export default function OutrasReceitas() {
     setSelectedRevenue({
       id: revenue.id,
       partnerId: revenue.partnerId?.toString() || "",
-      issueDate: revenue.issueDate ? new Date(revenue.issueDate).toISOString().split('T')[0] : new Date(revenue.revenueDate).toISOString().split('T')[0],
-      entryDate: revenue.entryDate ? new Date(revenue.entryDate).toISOString().split('T')[0] : new Date(revenue.revenueDate).toISOString().split('T')[0],
+      issueDate: revenue.issueDate ? toDateStringBR(new Date(revenue.issueDate)) : toDateStringBR(new Date(revenue.revenueDate)),
+      entryDate: revenue.entryDate ? toDateStringBR(new Date(revenue.entryDate)) : toDateStringBR(new Date(revenue.revenueDate)),
       competenceMonth: revenue.competenceMonth,
       documentType: revenue.documentType || "",
       documentNumber: revenue.documentNumber || "",
       managementAccountId: revenue.managementAccountId?.toString() || "",
       description: revenue.description,
-      creditDate: revenue.creditDate ? new Date(revenue.creditDate).toISOString().split('T')[0] : "",
+      creditDate: revenue.creditDate ? toDateStringBR(new Date(revenue.creditDate)) : "",
       paymentMethod: revenue.paymentMethod || "",
       notes: revenue.notes || "",
       amount: revenue.amount.toString(),

@@ -975,3 +975,19 @@ Despesa de impostos aparece tanto em janeiro quanto em fevereiro após edição 
 
 ### Bug - Cards de resumo zerados na tela de Vendas (24/02/2026)
 - [x] CRÍTICO: Cards de resumo (Vendas Balcão, Delivery, A Prazo, Total Geral) mostrando zero - corrigido: strings vazias de filterFromDate/filterToDate eram truthy em JS, causando filtro SQL inválido. Normalizado para undefined no frontend e backend.
+
+### Bug - Timezone nas importações (24/02/2026)
+- [x] Importações de dados (iFood/vendas/compras) estavam com timezone diferente do arquivo original
+
+### Correção Completa de Timezone (24/02/2026)
+- [x] Corrigir dados históricos do iFood no banco: +3h em 3.024 vendas e 948 movimentações
+- [x] Corrigir parseIfoodDate no ifoodImport.ts com offset -03:00 (Brasília)
+- [x] Varredura completa: 165 instâncias de new Date() em 19 arquivos
+- [x] Criar função parseDateAsBrasilia no shared/dateUtils.ts
+- [x] Criar dateUtils do frontend (client/src/lib/dateUtils.ts) com getTodayBR, toDateStringBR, etc.
+- [x] Corrigir db.ts: vendas (saleDate), movimentações de estoque (date), contabilização (entryDate), validação 24h
+- [x] Corrigir routers.ts: compras (issueDate, postingDate, expiryDate, dueDate, paidDate), despesas (entryDate), dashboard stats
+- [x] Corrigir ifoodImport.ts: updatedAt, log de importação
+- [x] Corrigir stockAnalysis.ts: cálculo de dias do mês atual
+- [x] Corrigir frontend: Despesas, ContasPagar, ContasReceber, CalendarPayButton, OutrasReceitas, RelatoriosContabeis, Produtos, ContasReceberNovo
+- [x] AnáliseVendas.tsx: verificado - seguro (browser em Brasília)

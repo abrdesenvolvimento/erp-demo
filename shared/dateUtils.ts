@@ -71,6 +71,39 @@ export function parseDateInBrazil(dateStr: string): Date {
 }
 
 /**
+ * Converte uma string de data de formulário (YYYY-MM-DD ou YYYY-MM-DD HH:MM:SS)
+ * para Date UTC correto, assumindo que a data está em horário de Brasília.
+ * 
+ * IMPORTANTE: Usar esta função para TODAS as datas que vêm de formulários
+ * (compras, despesas, parcelas, etc.) para garantir que o banco armazene
+ * o UTC correto.
+ * 
+ * Exemplos:
+ * - "2026-02-22" → 2026-02-22T03:00:00Z (meia-noite Brasília = 03:00 UTC)
+ * - "2026-02-22 14:30:00" → 2026-02-22T17:30:00Z (14:30 Brasília = 17:30 UTC)
+ */
+export function parseDateAsBrasilia(dateStr: string): Date {
+  if (!dateStr) return new Date();
+  const trimmed = dateStr.trim();
+  
+  // Se já tem offset de timezone, usar como está
+  if (trimmed.includes('Z') || /[+-]\d{2}:?\d{2}$/.test(trimmed)) {
+    return new Date(trimmed);
+  }
+  
+  // Normalizar para formato ISO
+  let normalized = trimmed.replace(' ', 'T');
+  
+  // Se só tem data (YYYY-MM-DD), adicionar meia-noite
+  if (/^\d{4}-\d{2}-\d{2}$/.test(normalized)) {
+    normalized += 'T00:00:00';
+  }
+  
+  // Adicionar offset de Brasília (GMT-3)
+  return new Date(normalized + '-03:00');
+}
+
+/**
  * Converte Date para string no formato YYYY-MM-DD usando timezone de Brasília
  */
 export function formatDateForInput(date: Date | string): string {

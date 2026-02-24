@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
+import { getTodayBR } from "@/lib/dateUtils";
 import {
   Dialog,
   DialogContent,
@@ -32,7 +33,7 @@ export function CalendarPayButton({ item, onPaymentSuccess }: CalendarPayButtonP
   const amount = typeof item.amount === 'string' ? parseFloat(item.amount) : item.amount;
   
   const [paymentForm, setPaymentForm] = useState({
-    paidDate: new Date().toISOString().split('T')[0],
+    paidDate: getTodayBR(),
     paidAmount: amount.toString(),
     interestAmount: "",
     discountAmount: "",

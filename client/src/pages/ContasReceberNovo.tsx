@@ -13,6 +13,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { cn } from "@/lib/utils";
 
 import { getTodayInBrazil, getNowInBrazil, formatDateBR, formatDateTimeBR } from "@shared/dateUtils";
+import { getTodayBR } from "@/lib/dateUtils";
 import { toast } from "sonner";
 import { usePermissions } from "@/hooks/usePermissions";
 
@@ -121,7 +122,7 @@ export default function ContasReceberNovo() {
   });
 // Form state - Pagamento
   const [paymentForm, setPaymentForm] = useState({
-    paidDate: getTodayInBrazil().toISOString().split('T')[0],
+    paidDate: getTodayBR(),
     paidAmount: "",
     paymentMethod: "DINHEIRO",
     notes: ""
@@ -129,7 +130,7 @@ export default function ContasReceberNovo() {
 
   const resetPaymentForm = () => {
     setPaymentForm({
-      paidDate: getTodayInBrazil().toISOString().split('T')[0],
+      paidDate: getTodayBR(),
       paidAmount: "",
       paymentMethod: "DINHEIRO",
       notes: ""
@@ -138,7 +139,7 @@ export default function ContasReceberNovo() {
 
   // Form state - Débito Manual
   const [debitForm, setDebitForm] = useState({
-    debitDate: getTodayInBrazil().toISOString().split('T')[0],
+    debitDate: getTodayBR(),
     debitAmount: "",
     description: "",
     notes: ""
@@ -146,7 +147,7 @@ export default function ContasReceberNovo() {
 
   const resetDebitForm = () => {
     setDebitForm({
-      debitDate: getTodayInBrazil().toISOString().split('T')[0],
+      debitDate: getTodayBR(),
       debitAmount: "",
       description: "",
       notes: ""

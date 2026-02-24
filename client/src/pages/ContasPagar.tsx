@@ -13,6 +13,7 @@ import { Badge } from "../components/ui/badge";
 import { toast } from "sonner";
 import { DollarSign, User, ChevronRight, ArrowLeft, ChevronLeft, Calendar } from "lucide-react";
 import DashboardLayout from "../components/DashboardLayout";
+import { getTodayBR, getNowBR } from "../lib/dateUtils";
 
 // Função para determinar cor baseado no vencimento
 function getDueDateColor(dueDate: Date | string, status: string): string {
@@ -61,7 +62,7 @@ export default function ContasPagar() {
         paymentMethod: calendarPayItem.paymentMethod,
       });
       setPaymentForm({
-        paidDate: new Date().toISOString().split('T')[0],
+        paidDate: getTodayBR(),
         paidAmount: calendarPayItem.amount.toString(),
         interestAmount: "",
         discountAmount: "",
@@ -96,7 +97,7 @@ export default function ContasPagar() {
               paymentMethod: item.paymentMethod,
             });
             setPaymentForm({
-              paidDate: new Date().toISOString().split('T')[0],
+              paidDate: getTodayBR(),
               paidAmount: item.amount.toString(),
               interestAmount: "",
               discountAmount: "",
@@ -128,7 +129,7 @@ export default function ContasPagar() {
       paymentMethod: item.paymentMethod,
     });
     setPaymentForm({
-      paidDate: new Date().toISOString().split('T')[0],
+      paidDate: getTodayBR(),
       paidAmount: item.amount.toString(),
       interestAmount: "",
       discountAmount: "",
@@ -142,7 +143,7 @@ export default function ContasPagar() {
   const [showSupplierResults, setShowSupplierResults] = useState(false);
 
   const [paymentForm, setPaymentForm] = useState({
-    paidDate: new Date().toISOString().split('T')[0],
+    paidDate: getTodayBR(),
     paidAmount: "",
     interestAmount: "",
     discountAmount: "",
@@ -193,7 +194,7 @@ export default function ContasPagar() {
 
   const resetPaymentForm = () => {
     setPaymentForm({
-      paidDate: new Date().toISOString().split('T')[0],
+      paidDate: getTodayBR(),
       paidAmount: "",
       interestAmount: "",
       discountAmount: "",
@@ -214,7 +215,7 @@ export default function ContasPagar() {
   const handleOpenPaymentModal = (installment: any) => {
     setSelectedInstallment(installment);
     setPaymentForm({
-      paidDate: new Date().toISOString().split('T')[0],
+      paidDate: getTodayBR(),
       paidAmount: installment.pendingAmount,
       interestAmount: "",
       discountAmount: "",

@@ -50,6 +50,7 @@ import {
 } from './closingQueries';
 import { 
   getTodayInBrazil, 
+  getNowInBrazil,
   getCurrentBrazilDateInfo, 
   formatDateForInput,
   startOfMonthBrazil,
@@ -739,7 +740,7 @@ export async function createSale(saleData: InsertSale, items: Omit<InsertSaleIte
     // Registrar movimentação de SAIDA
     await createProductMovement({
       productId: item.productId,
-      date: saleData.saleDate || new Date(),
+      date: saleData.saleDate || getNowInBrazil(),
       type: "SAIDA",
       quantity: (-item.quantity).toString(),
       documentNumber: `Venda #${saleId}`,
@@ -762,7 +763,7 @@ export async function createSale(saleData: InsertSale, items: Omit<InsertSaleIte
       saleData.saleType,
       saleData.finalAmount,
       saleData.discountAmount || '0',
-      saleData.saleDate || new Date()
+      saleData.saleDate || getNowInBrazil()
     );
   } catch (error) {
     console.error('[createSale] Erro ao criar lançamentos de receita:', error);
@@ -812,7 +813,7 @@ export async function createSale(saleData: InsertSale, items: Omit<InsertSaleIte
       cmvAmount: cmvTotal.toFixed(2),
       channelType,
       customerName,
-      entryDate: saleData.saleDate || new Date(),
+      entryDate: saleData.saleDate || getNowInBrazil(),
       createdBy: saleData.createdBy || "system",
     });
     
@@ -868,17 +869,16 @@ export async function getSalesStats(
       whereConditions += ` AND saleDate < DATE_ADD('${effectiveDateTo}', INTERVAL 1 DAY) + INTERVAL 3 HOUR`;
     }
   } else if (period && period !== 'all') {
-    // Obter data atual em Brasília
-    const now = new Date();
-    const nowBrasiliaStr = now.toLocaleString('en-CA', { timeZone: 'America/Sao_Paulo' }).split(',')[0]; // YYYY-MM-DD
+    // Obter data atual em Brasília usando dateUtils
+    const nowBrasiliaStr = formatDateForInput(getNowInBrazil()); // YYYY-MM-DD
     
     if (period === 'today') {
       whereConditions += ` AND saleDate >= '${nowBrasiliaStr} 03:00:00'`;
       whereConditions += ` AND saleDate < DATE_ADD('${nowBrasiliaStr}', INTERVAL 1 DAY) + INTERVAL 3 HOUR`;
     } else if (period === 'week') {
-      const weekAgo = new Date(now);
-      weekAgo.setDate(now.getDate() - 7);
-      const weekAgoStr = weekAgo.toLocaleString('en-CA', { timeZone: 'America/Sao_Paulo' }).split(',')[0];
+      const weekAgo = getNowInBrazil();
+      weekAgo.setDate(weekAgo.getDate() - 7);
+      const weekAgoStr = formatDateForInput(weekAgo);
       whereConditions += ` AND saleDate >= '${weekAgoStr} 03:00:00'`;
     } else if (period === 'month') {
       // Primeiro dia do mês atual
@@ -1316,7 +1316,7 @@ export async function confirmPurchaseOrder(purchaseOrderId: number) {
     // Registrar movimentação de ENTRADA
     await createProductMovement({
       productId: prod.id,
-      date: new Date(),
+      date: getNowInBrazil(),
       type: "ENTRADA",
       quantity: quantityPurchased.toString(),
       documentNumber: purchaseOrderData.purchaseOrder.docNumber || `Compra #${purchaseOrderId}`,
@@ -1348,7 +1348,7 @@ export async function confirmPurchaseOrder(purchaseOrderId: number) {
       supplierId: purchaseOrderData.purchaseOrder.supplierId,
       supplierName: purchaseOrderData.supplier?.tradeName || purchaseOrderData.supplier?.name || "Fornecedor",
       docNumber: purchaseOrderData.purchaseOrder.docNumber || undefined,
-      entryDate: purchaseOrderData.purchaseOrder.purchaseDate || new Date(),
+      entryDate: purchaseOrderData.purchaseOrder.purchaseDate || getNowInBrazil(),
       createdBy: purchaseOrderData.purchaseOrder.createdBy || "system",
     });
     
@@ -1639,9 +1639,9 @@ export async function cancelSale(saleId: number, userId: string, reason?: string
   if (companyId && sale.companyId !== companyId) throw new Error("Venda não pertence a esta empresa");
   if (sale.status === "CANCELLED") throw new Error("Venda já está cancelada");
 
-  // Validar limite de 24h
+  // Validar limite de 24h (usando horário de Brasília)
   const saleDate = new Date(sale.saleDate!);
-  const now = new Date();
+  const now = getNowInBrazil();
   const hoursDiff = (now.getTime() - saleDate.getTime()) / (1000 * 60 * 60);
   if (hoursDiff > 24) {
     throw new Error("Não é possível cancelar vendas com mais de 24 horas");
@@ -1703,9 +1703,9 @@ export async function updateSaleItems(saleId: number, updates: {
   if (!sale) throw new Error("Venda não encontrada");
   if (sale.status === "CANCELLED") throw new Error("Não é possível editar venda cancelada");
 
-  // Validar limite de 24h
+  // Validar limite de 24h (usando horário de Brasília)
   const saleDate = new Date(sale.saleDate!);
-  const now = new Date();
+  const now = getNowInBrazil();
   const hoursDiff = (now.getTime() - saleDate.getTime()) / (1000 * 60 * 60);
   if (hoursDiff > 24) {
     throw new Error("Não é possível editar vendas com mais de 24 horas");
@@ -1995,7 +1995,7 @@ export async function createExpense(data: InsertExpense) {
   if ((data as any)._shouldRegisterMovement) {
     await createProductMovement({
       productId: (data as any)._productId,
-      date: new Date(),
+      date: getNowInBrazil(),
       type: "PERDA",
       quantity: (-(data as any)._lossQuantity).toString(),
       documentNumber: `Despesa #${expenseId}`,
@@ -4996,7 +4996,7 @@ export async function adjustProductStock(data: {
   // Registrar movimentação
   await createProductMovement({
     productId: data.productId,
-    date: new Date(),
+    date: getNowInBrazil(),
     type: "ACERTO",
     quantity: data.quantity.toString(),
     documentNumber: null,
@@ -6797,7 +6797,7 @@ export async function createManagementAccount(data: {
     managementAccountId,
     accountingCode: data.accountingCode,
     accountingName: data.accountingName || data.name,
-    effectiveDate: new Date(),
+    effectiveDate: getNowInBrazil(),
   });
   
   return managementAccountId;
@@ -8274,7 +8274,7 @@ export async function canEditEntity(
   
   // Verificar janela de edição
   if (createdAt) {
-    const now = new Date();
+    const now = getNowInBrazil();
     const diffMs = now.getTime() - createdAt.getTime();
     
     if (entityType === "sale") {
@@ -8326,7 +8326,7 @@ export async function closeExpiredReopenedPeriods(): Promise<number> {
   const db = await getDb();
   if (!db) return 0;
   
-  const now = new Date();
+  const now = getNowInBrazil();
   
   // Buscar períodos reabertos com janela expirada
   const expiredPeriods = await db.select()
@@ -8777,7 +8777,7 @@ export async function reprocessExpenseAccounting(expenseId: number): Promise<{ s
       managementAccountId: exp.managementAccountId!,
       amount: exp.amount,
       description: exp.description,
-      entryDate: exp.entryDate || exp.issueDate || new Date(),
+      entryDate: exp.entryDate || exp.issueDate || getNowInBrazil(),
       createdBy: exp.createdBy
     });
   } catch (error) {

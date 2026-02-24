@@ -11,6 +11,7 @@ import { DollarSign, User, ChevronRight, ArrowLeft, FileDown, Loader2, MessageCi
 import { useState, useEffect } from "react";
 import DashboardLayout from "../components/DashboardLayout";
 import { trpc } from "../lib/trpc";
+import { getTodayBR } from "../lib/dateUtils";
 
 interface PaymentForm {
   paidDate: string;
@@ -35,7 +36,7 @@ export default function ContasReceber() {
   const [searchCustomer, setSearchCustomer] = useState("");
   const [sortBy, setSortBy] = useState<"name" | "amount">("amount");
   const [paymentForm, setPaymentForm] = useState({
-    paidDate: new Date().toISOString().split('T')[0],
+    paidDate: getTodayBR(),
     paidAmount: "",
     paymentMethod: "",
     notes: ""
@@ -119,7 +120,7 @@ export default function ContasReceber() {
 
   const resetPaymentForm = () => {
     setPaymentForm({
-      paidDate: new Date().toISOString().split('T')[0],
+      paidDate: getTodayBR(),
       paidAmount: "",
       paymentMethod: "",
       notes: ""

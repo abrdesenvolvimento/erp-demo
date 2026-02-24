@@ -13,6 +13,7 @@ import {
   productMovements
 } from "../../drizzle/schema";
 import { eq, like, and, sql, desc, inArray } from "drizzle-orm";
+import { getNowInBrazil } from '../../shared/dateUtils';
 
 // Constantes
 const IFOOD_CHANNEL_ID = 2; // Canal iFood/Delivery
@@ -32,6 +33,31 @@ function normalizeSku(sku: unknown): string {
   // Se for apenas dígitos, manter como está (preserva zeros à esquerda)
   // Se tiver letras, manter como está (SKU alfanumérico)
   return normalized;
+}
+
+/**
+ * Converte data do iFood (formato "YYYY-MM-DD HH:MM:SS" em horário de Brasília)
+ * para um Date UTC correto.
+ * 
+ * O iFood exporta datas no horário local de Brasília (GMT-3),
+ * mas sem indicador de timezone. Se usarmos new Date() diretamente,
+ * o Node.js interpreta como timezone do servidor (que pode ser UTC, 
+ * America/New_York, etc.), causando deslocamento.
+ * 
+ * Esta função adiciona explicitamente o offset -03:00 (Brasília)
+ * para garantir conversão correta para UTC.
+ */
+function parseIfoodDate(dateStr: string): Date {
+  if (!dateStr) return new Date(); // Fallback: se não tem data, usar UTC atual (raro)
+  // Formato esperado: "YYYY-MM-DD HH:MM:SS" ou "YYYY-MM-DDTHH:MM:SS"
+  // Normalizar para formato ISO com offset de Brasília
+  const normalized = dateStr.trim().replace(' ', 'T');
+  // Se já tem offset, usar como está
+  if (normalized.includes('+') || normalized.includes('Z') || /T.*-\d{2}:?\d{2}$/.test(normalized)) {
+    return new Date(normalized);
+  }
+  // Adicionar offset de Brasília (GMT-3)
+  return new Date(normalized + '-03:00');
 }
 
 export const ifoodImportRouter = router({
@@ -227,7 +253,7 @@ export const ifoodImportRouter = router({
         await db.update(productPrices)
           .set({ 
             price: input.newPrice.toFixed(2),
-            updatedAt: new Date()
+            updatedAt: getNowInBrazil()
           })
           .where(and(
             eq(productPrices.productId, input.productId),
@@ -535,7 +561,7 @@ export const ifoodImportRouter = router({
       if (!db) throw new Error("Database not available");
 
       // Criar log de importação
-      const now = new Date();
+      const now = getNowInBrazil();
       let logId: number;
       
       try {
@@ -597,7 +623,7 @@ export const ifoodImportRouter = router({
           // Criar venda
           const [saleResult] = await db.insert(sales).values({
             saleType: "DELIVERY",
-            saleDate: new Date(order.orderDate),
+            saleDate: parseIfoodDate(order.orderDate),
             customerId: IFOOD_CUSTOMER_ID,
             channelId: IFOOD_CHANNEL_ID,
             platformOrderId: order.ifoodOrderCode,
@@ -630,7 +656,7 @@ export const ifoodImportRouter = router({
             // Baixar estoque
             await db.insert(productMovements).values({
               productId: item.productId,
-              date: new Date(order.orderDate),
+              date: parseIfoodDate(order.orderDate),
               type: "SAIDA",
               quantity: (-item.quantity).toString(),
               documentNumber: `IFOOD-${order.ifoodOrderCode}`,

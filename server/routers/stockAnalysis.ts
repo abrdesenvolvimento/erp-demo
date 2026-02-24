@@ -7,6 +7,7 @@ import { protectedProcedure, router } from "../_core/trpc";
 import { getStockAnalysisByCategory, getStockAnalysisByProduct } from "../stockAnalysisQueries";
 import { sql } from "drizzle-orm";
 import { getDb } from "../db";
+import { getNowInBrazil } from '../../shared/dateUtils';
 
 function getDaysInMonth(year: number, month: number): number {
   return new Date(year, month, 0).getDate();
@@ -28,9 +29,8 @@ function getPeriodDates(year: number, month: number) {
   const prevDays = getDaysInMonth(prevYear, prevMonth);
   const prevEndDate = `${prevYear}-${String(prevMonth).padStart(2, '0')}-${String(prevDays).padStart(2, '0')}`;
 
-  // Para o mês atual, usar apenas os dias passados
-  const now = new Date();
-  const nowBrazil = new Date(now.getTime() - 3 * 60 * 60 * 1000);
+  // Para o mês atual, usar apenas os dias passados (horário de Brasília)
+  const nowBrazil = getNowInBrazil();
   const currentYear = nowBrazil.getFullYear();
   const currentMonth = nowBrazil.getMonth() + 1;
   const currentDay = nowBrazil.getDate();

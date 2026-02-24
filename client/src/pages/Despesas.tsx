@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { getTodayBR, toDateStringBR, getCurrentCompetenceMonthBR, addDaysBR } from "@/lib/dateUtils";
 
 interface DueDate {
   date: string;
@@ -50,12 +51,9 @@ export default function Despesas() {
   const [filterManagementAccountSearch, setFilterManagementAccountSearch] = useState("");
   
   // Form state - Datas
-  const [issueDate, setIssueDate] = useState(new Date().toISOString().split('T')[0]);
-  const [entryDate, setEntryDate] = useState(new Date().toISOString().split('T')[0]);
-  const [competenceMonth, setCompetenceMonth] = useState(() => {
-    const now = new Date();
-    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-  });
+  const [issueDate, setIssueDate] = useState(getTodayBR());
+  const [entryDate, setEntryDate] = useState(getTodayBR());
+  const [competenceMonth, setCompetenceMonth] = useState(getCurrentCompetenceMonthBR());
   
   // Form state
   const [supplierOpen, setSupplierOpen] = useState(false);
@@ -70,7 +68,7 @@ export default function Despesas() {
   const [amount, setAmount] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("");
   const [dueDates, setDueDates] = useState<DueDate[]>([
-    { date: new Date().toISOString().split('T')[0], amount: "" }
+    { date: getTodayBR(), amount: "" }
   ]);
   const [notes, setNotes] = useState("");
   
@@ -86,8 +84,8 @@ export default function Despesas() {
 
   // Queries
   const { data: expenses = [], refetch } = trpc.expenses.list.useQuery({
-    startDate: filterStartDate ? new Date(filterStartDate + 'T00:00:00') : undefined,
-    endDate: filterEndDate ? new Date(filterEndDate + 'T23:59:59') : undefined,
+    startDate: filterStartDate ? new Date(filterStartDate + 'T12:00:00-03:00') : undefined,
+    endDate: filterEndDate ? new Date(filterEndDate + 'T23:59:59-03:00') : undefined,
     supplierId: filterSupplierId,
     docNumber: filterDocNumber || undefined,
     minValue: filterMinValue ? parseFloat(filterMinValue) : undefined,
@@ -140,10 +138,9 @@ export default function Despesas() {
   });
   
   const resetForm = () => {
-    setIssueDate(new Date().toISOString().split('T')[0]);
-    setEntryDate(new Date().toISOString().split('T')[0]);
-    const now = new Date();
-    setCompetenceMonth(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`);
+    setIssueDate(getTodayBR());
+    setEntryDate(getTodayBR());
+    setCompetenceMonth(getCurrentCompetenceMonthBR());
     setSupplierId(undefined);
     setSupplierSearch("");
     setDocType("FATURA");
@@ -155,7 +152,7 @@ export default function Despesas() {
     setDescription("");
     setAmount("");
     setPaymentMethod("");
-    setDueDates([{ date: new Date().toISOString().split('T')[0], amount: "" }]);
+    setDueDates([{ date: getTodayBR(), amount: "" }]);
     setNotes("");
     setProductId(undefined);
     setProductSearch("");
@@ -163,20 +160,19 @@ export default function Despesas() {
   };
   
   const addDueDate = () => {
-    const lastDate = dueDates[dueDates.length - 1]?.date || new Date().toISOString().split('T')[0];
+    const lastDate = dueDates[dueDates.length - 1]?.date || getTodayBR();
     const isCredit = paymentMethod === "Crédito G" || paymentMethod === "Crédito R" || paymentMethod === "Crédito ABR";
     
-    let nextDate: Date;
+    let nextDateStr: string;
     if (isCredit) {
       // Crédito: +30 dias a partir da última parcela
-      nextDate = new Date(lastDate + "T12:00:00");
-      nextDate.setDate(nextDate.getDate() + 30);
+      nextDateStr = addDaysBR(lastDate, 30);
     } else {
       // Boleto/outros: data do lançamento (manual)
-      nextDate = new Date();
+      nextDateStr = getTodayBR();
     }
     
-    setDueDates([...dueDates, { date: nextDate.toISOString().split('T')[0], amount: "" }]);
+    setDueDates([...dueDates, { date: nextDateStr, amount: "" }]);
   };
   
   const removeDueDate = (index: number) => {
@@ -201,20 +197,19 @@ export default function Despesas() {
         
         // Carregar datas
         if (expense.expense.issueDate) {
-          setIssueDate(new Date(expense.expense.issueDate).toISOString().split('T')[0]);
+          setIssueDate(toDateStringBR(new Date(expense.expense.issueDate)));
         }
         if (expense.expense.entryDate) {
-          setEntryDate(new Date(expense.expense.entryDate).toISOString().split('T')[0]);
-          // Calcular mês de competência baseado na data de entrada
-          const entryDateObj = new Date(expense.expense.entryDate);
-          const year = entryDateObj.getFullYear();
-          const month = String(entryDateObj.getMonth() + 1).padStart(2, '0');
+          setEntryDate(toDateStringBR(new Date(expense.expense.entryDate)));
+          // Calcular mês de competência baseado na data de entrada (usando timezone BR)
+          const dateStr = toDateStringBR(new Date(expense.expense.entryDate));
+          const [year, month] = dateStr.split('-');
           setCompetenceMonth(`${year}-${month}`);
         }
         
         // Carregar parcelas
         setDueDates(expenseDetails.map((inst: any) => ({
-          date: new Date(inst.dueDate).toISOString().split('T')[0],
+          date: toDateStringBR(new Date(inst.dueDate)),
           amount: inst.amount
         })));
       }
@@ -224,10 +219,10 @@ export default function Despesas() {
   // Recalcular mês de competência automaticamente quando a data de entrada mudar
   useEffect(() => {
     if (entryDate) {
-      const entryDateObj = new Date(entryDate + 'T00:00:00');
-      const year = entryDateObj.getFullYear();
-      const month = String(entryDateObj.getMonth() + 1).padStart(2, '0');
-      setCompetenceMonth(`${year}-${month}`);
+      const [year, month] = entryDate.split('-');
+      if (year && month) {
+        setCompetenceMonth(`${year}-${month}`);
+      }
     }
   }, [entryDate]);
   
@@ -295,7 +290,7 @@ export default function Despesas() {
       const calculatedValue = avgCost * parseFloat(lossQuantity);
       totalAmount = calculatedValue.toFixed(2);
       finalDueDates = [{
-        date: new Date().toISOString().split('T')[0],
+        date: getTodayBR(),
         amount: totalAmount
       }];
       finalPaymentMethod = 'Perdas';
@@ -306,8 +301,8 @@ export default function Despesas() {
     
     const payload = {
       supplierId,
-      issueDate: new Date(issueDate + 'T12:00:00'),
-      entryDate: new Date(entryDate + 'T12:00:00'),
+      issueDate: new Date(issueDate + 'T12:00:00-03:00'),
+      entryDate: new Date(entryDate + 'T12:00:00-03:00'),
       competenceMonth,
       docType,
       docNumber,
@@ -321,7 +316,7 @@ export default function Despesas() {
         // Criar data explícitamente em horário de Brasília (meio-dia) para evitar problemas de timezone
         const [year, month, day] = d.date.split('-');
         return {
-          date: new Date(parseInt(year), parseInt(month) - 1, parseInt(day), 12, 0, 0),
+          date: new Date(`${year}-${month}-${day}T12:00:00-03:00`),
           amount: d.amount
         };
       }),

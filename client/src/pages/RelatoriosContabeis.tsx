@@ -12,6 +12,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { FileText, Loader2, DollarSign, Calculator, X, Search } from "lucide-react";
 import DashboardLayout from "@/components/DashboardLayout";
+import { getTodayBR, getCurrentCompetenceMonthBR } from "@/lib/dateUtils";
 
 // Tipos
 type RazaoEntry = {
@@ -188,19 +189,17 @@ export default function RelatoriosContabeis() {
   // Filtros do Razão - agora suporta múltiplas contas
   const [razaoAccountIds, setRazaoAccountIds] = useState<number[]>([]);
   const [razaoStartDate, setRazaoStartDate] = useState(() => {
-    const date = new Date();
-    date.setMonth(0); // Janeiro
-    date.setDate(1);
-    return date.toISOString().split('T')[0];
+    const today = getTodayBR();
+    const year = today.split('-')[0];
+    return `${year}-01-01`;
   });
   const [razaoEndDate, setRazaoEndDate] = useState(() => {
-    return new Date().toISOString().split('T')[0];
+    return getTodayBR();
   });
   
   // Filtros do Balancete/DRE
   const [selectedPeriod, setSelectedPeriod] = useState(() => {
-    const date = new Date();
-    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+    return getCurrentCompetenceMonthBR();
   });
 
   // Períodos disponíveis

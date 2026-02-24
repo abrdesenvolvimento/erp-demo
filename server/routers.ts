@@ -5,7 +5,7 @@ import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, adminProcedure, consultorProcedure, router } from "./_core/trpc";
 import * as db from "./db";
-import { getNowInBrazil, formatDateForInput } from '../shared/dateUtils';
+import { getNowInBrazil, formatDateForInput, parseDateAsBrasilia, getTodayInBrazil } from '../shared/dateUtils';
 import { accountingRouter } from './routers/accounting';
 import { ifoodImportRouter } from './routers/ifoodImport';
 import { stockAnalysisRouter } from './routers/stockAnalysis';
@@ -651,7 +651,7 @@ export const appRouter = router({
             }
           } else {
             // Se não foi fornecido, criar uma única parcela com vencimento padrão (30 dias)
-            const dueDate = new Date();
+            const dueDate = getNowInBrazil();
             dueDate.setDate(dueDate.getDate() + 30);
             
             await db.createReceivableInstallment({
@@ -946,8 +946,8 @@ export const appRouter = router({
         const purchaseOrderData: any = {
           supplierId: purchaseData.supplierId,
           docType: purchaseData.docType,
-          issueDate: new Date(purchaseData.issueDate),
-          postingDate: new Date(purchaseData.postingDate),
+          issueDate: parseDateAsBrasilia(purchaseData.issueDate),
+          postingDate: parseDateAsBrasilia(purchaseData.postingDate),
           totalAmount: totalAmount.toFixed(2),
           discount: discount.toFixed(2),
           freightCost: freightCost.toFixed(2),
@@ -978,7 +978,7 @@ export const appRouter = router({
             quantity: item.quantity.toString(),
             unitCost: item.unitCost.toFixed(4),
             totalCost: totalCost.toFixed(2),
-            expiryDate: item.expiryDate ? new Date(item.expiryDate) : null,
+            expiryDate: item.expiryDate ? parseDateAsBrasilia(item.expiryDate) : null,
             companyId: ctx.activeCompanyId ?? 1,
           });
         }
@@ -991,10 +991,10 @@ export const appRouter = router({
           await db.addPurchaseInstallment({
             purchaseOrderId,
             installmentNumber: i + 1,
-            dueDate: new Date(installments[i].dueDate),
+            dueDate: parseDateAsBrasilia(installments[i].dueDate),
             amount: installments[i].amount.toFixed(2),
             status: isAVista ? "PAID" : "PENDING",
-            paidDate: isAVista ? new Date(installments[i].dueDate) : undefined,
+            paidDate: isAVista ? parseDateAsBrasilia(installments[i].dueDate) : undefined,
             paidAmount: isAVista ? installments[i].amount.toFixed(2) : undefined,
             paymentMethod: isAVista ? purchaseData.paymentMethod : undefined,
           });
@@ -1055,7 +1055,7 @@ export const appRouter = router({
         // Atualizar itens com novos custos (passa valores para recalcular total)
         const itemsWithDates = items.map(item => ({
           ...item,
-          expiryDate: item.expiryDate ? new Date(item.expiryDate) : null
+          expiryDate: item.expiryDate ? parseDateAsBrasilia(item.expiryDate) : null
         }));
         
         await db.updatePurchaseOrderItems(id, itemsWithDates, {
@@ -1218,7 +1218,7 @@ export const appRouter = router({
               managementAccountId: input.managementAccountId,
               supplierName: undefined, // Será buscado se necessário
               description: input.description,
-              entryDate: input.entryDate || input.issueDate || new Date(),
+              entryDate: input.entryDate || input.issueDate || getNowInBrazil(),
               createdBy: ctx.user.id,
             });
             
@@ -1310,7 +1310,7 @@ export const appRouter = router({
               amount: input.amount,
               managementAccountId: input.managementAccountId,
               description: input.description,
-              entryDate: input.entryDate || input.issueDate || new Date(),
+              entryDate: input.entryDate || input.issueDate || getNowInBrazil(),
               createdBy: 'system',
             });
             
@@ -1833,9 +1833,7 @@ export const appRouter = router({
       const recentSales = await db.getSales({ limit: 10, companyId: ctx.activeCompanyId });
       
       // Usar horário de Brasília (GMT-3) para cálculos de data
-      const todayDateStr = new Date().toLocaleDateString('en-US', { timeZone: 'America/Sao_Paulo' });
-      const [month, day, year] = todayDateStr.split('/');
-      const today = new Date(`${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T00:00:00`);
+      const today = getTodayInBrazil();
       
       // Produtos com estoque baixo
       const lowStockProducts = products.filter(p => 
