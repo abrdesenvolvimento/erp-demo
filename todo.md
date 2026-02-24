@@ -972,3 +972,6 @@ Despesa de impostos aparece tanto em janeiro quanto em fevereiro após edição 
 
 ### Bug Crítico - Preço não configurado para canal (24/02/2026)
 - [x] CRÍTICO: Erro "Produto não tem preço configurado para este canal" ao vender A PRAZO na Adega - corrigido: adicionado fallback robusto de busca de preço (selectedProductWithPrices -> selectedProduct -> canal Balcão) + logs detalhados. Testado na sandbox com sucesso. Requer republicação para produzir efeito no site publicado.
+
+### Bug - Cards de resumo zerados na tela de Vendas (24/02/2026)
+- [x] CRÍTICO: Cards de resumo (Vendas Balcão, Delivery, A Prazo, Total Geral) mostrando zero - corrigido: strings vazias de filterFromDate/filterToDate eram truthy em JS, causando filtro SQL inválido. Normalizado para undefined no frontend e backend.

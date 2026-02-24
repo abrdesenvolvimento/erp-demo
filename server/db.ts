@@ -851,17 +851,21 @@ export async function getSalesStats(
   let whereConditions = `status != 'CANCELLED'`;
   if (companyId) whereConditions += ` AND companyId = ${companyId}`;
   
+  // Normalizar strings vazias para undefined
+  const effectiveDateFrom = dateFrom && dateFrom.trim() !== '' ? dateFrom : undefined;
+  const effectiveDateTo = dateTo && dateTo.trim() !== '' ? dateTo : undefined;
+  
   // Filtro de data customizada (tem prioridade sobre period)
-  if (dateFrom || dateTo) {
+  if (effectiveDateFrom || effectiveDateTo) {
     // Usar range de timestamps ao invés de CONVERT_TZ para usar índice
     // Brasília = UTC-3, então adicionamos 3 horas para converter para UTC
-    if (dateFrom) {
+    if (effectiveDateFrom) {
       // Início do dia em Brasília (00:00) = 03:00 UTC
-      whereConditions += ` AND saleDate >= '${dateFrom} 03:00:00'`;
+      whereConditions += ` AND saleDate >= '${effectiveDateFrom} 03:00:00'`;
     }
-    if (dateTo) {
+    if (effectiveDateTo) {
       // Fim do dia em Brasília (23:59:59) = próximo dia 02:59:59 UTC
-      whereConditions += ` AND saleDate < DATE_ADD('${dateTo}', INTERVAL 1 DAY) + INTERVAL 3 HOUR`;
+      whereConditions += ` AND saleDate < DATE_ADD('${effectiveDateTo}', INTERVAL 1 DAY) + INTERVAL 3 HOUR`;
     }
   } else if (period && period !== 'all') {
     // Obter data atual em Brasília

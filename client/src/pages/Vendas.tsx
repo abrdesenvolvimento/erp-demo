@@ -102,8 +102,8 @@ export default function Vendas() {
   });
   
   const { data: stats } = trpc.sales.stats.useQuery({ 
-    dateFrom: filterFromDate,
-    dateTo: filterToDate,
+    dateFrom: filterFromDate || undefined,
+    dateTo: filterToDate || undefined,
     channel: filterSaleType === "" ? 'all' : (filterSaleType as 'BALCAO' | 'DELIVERY' | 'A_PRAZO')
   }, {
     refetchOnMount: true,
