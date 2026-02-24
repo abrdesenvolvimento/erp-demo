@@ -158,16 +158,44 @@ export const appRouter = router({
         return await db.getSalesChannels(input?.activeOnly ?? true, ctx.activeCompanyId);
       }),
     
-    create: protectedProcedure
+    get: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .query(async ({ input }) => {
+        return await db.getSalesChannel(input.id);
+      }),
+    
+    create: adminProcedure
       .input(z.object({
         code: z.string().min(1),
         name: z.string().min(1),
         type: z.enum(["BALCAO", "DELIVERY"]),
         active: z.boolean().optional().default(true),
+        commissionPercent: z.string().optional().default("0.00"),
+        fixedFeePerOrder: z.string().optional().default("0.00"),
+        paymentDays: z.number().optional().default(0),
+        description: z.string().optional(),
       }))
       .mutation(async ({ input, ctx }) => {
         const id = await db.createSalesChannel({ ...input, companyId: ctx.activeCompanyId, branchId: ctx.activeBranchId });
         return { id, success: true };
+      }),
+    
+    update: adminProcedure
+      .input(z.object({
+        id: z.number(),
+        code: z.string().min(1).optional(),
+        name: z.string().min(1).optional(),
+        type: z.enum(["BALCAO", "DELIVERY"]).optional(),
+        active: z.boolean().optional(),
+        commissionPercent: z.string().optional(),
+        fixedFeePerOrder: z.string().optional(),
+        paymentDays: z.number().optional(),
+        description: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const { id, ...data } = input;
+        await db.updateSalesChannel(id, data);
+        return { success: true };
       }),
   }),
 
@@ -1962,6 +1990,7 @@ export const appRouter = router({
         startDate: z.string().optional(),
         endDate: z.string().optional(),
         categoryId: z.number().optional(),
+        channelId: z.number().optional(),
       }).optional())
       .query(async ({ input, ctx }) => {
       // Determinar strings de data para filtro
@@ -1980,8 +2009,8 @@ export const appRouter = router({
         endDateStr = `${year}-${month.padStart(2, '0')}-${lastDay.toString().padStart(2, '0')}`;
       }
       
-      // Usar query SQL otimizada com CONVERT_TZ
-      return await db.getDeliveryProductAnalysis(startDateStr, endDateStr, input?.categoryId, ctx.activeCompanyId);
+      // Usar query SQL otimizada com CONVERT_TZ e comissão do canal
+      return await db.getDeliveryProductAnalysis(startDateStr, endDateStr, input?.categoryId, ctx.activeCompanyId, input?.channelId);
     }),
     
     // Margem líquida delivery (deduzindo 7% de taxa iFood)

@@ -131,6 +131,10 @@ export const salesChannels = mysqlTable("salesChannels", {
   name: varchar("name", { length: 100 }).notNull(),
   type: mysqlEnum("type", ["BALCAO", "DELIVERY"]).notNull(),
   active: boolean("active").default(true).notNull(),
+  commissionPercent: decimal("commissionPercent", { precision: 5, scale: 2 }).default("0.00"),
+  fixedFeePerOrder: decimal("fixedFeePerOrder", { precision: 10, scale: 2 }).default("0.00"),
+  paymentDays: int("paymentDays").default(0),
+  description: text("description"),
   createdAt: timestamp("createdAt").defaultNow(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow(),
 }, (table) => ({

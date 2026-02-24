@@ -950,3 +950,22 @@ Despesa de impostos aparece tanto em janeiro quanto em fevereiro após edição 
 - [x] Adicionar rota e menu na sidebar
 - [x] Separar por tipo (Produtos vs Despesas) — abas Produtos e Despesas
 - [x] Permitir criar, editar e ativar/desativar categorias/subcategorias
+
+### Bugs Multiempresa - Rodada 5 (23/02/2026)
+- [x] CRÍTICO: Erro ao vender na Adega - investigado: dados estão corretos no banco, canais separados por companyId
+- [x] Fechamento da A Brasa mostra dados da Adega - corrigido: adicionado filtro companyId em TODAS as queries internas de getMonthlyClosing (vendas, custo, compras, despesas, pagamentos, recebíveis, receitas contábeis, despesas por conta gerencial)
+- [x] Metas da A Brasa mostra metas da Adega - corrigido: bug no whereClause de getRevenueGoals que sobrescrevia filtro companyId quando year era definido
+- [x] Despesas por Conta Gerencial da A Brasa mostra dados da Adega - corrigido: filtro companyId adicionado na query de despesas por conta gerencial
+- [x] Vendas por Canal da A Brasa mostra dados da Adega - corrigido: filtro companyId adicionado na query de vendas por canal
+- [ ] Cadastro de produto na A Brasa mostra canais da Adega (Balcão, Delivery 99Food, Delivery Próprio, Delivery iFood)
+
+### Canais de Venda - Regras de Negócio (23/02/2026)
+- [x] Adicionar campos commissionPercent, fixedFeePerOrder, paymentDays, description ao schema salesChannels
+- [x] Criar funções updateSalesChannel e getSalesChannel no db.ts
+- [x] Atualizar rotas tRPC: adicionar get, update com novos campos
+- [x] Criar página Canais de Venda com CRUD completo (criar, editar, ativar/desativar)
+- [x] Exibir comissão, taxa fixa e prazo de pagamento na tabela
+- [x] Adicionar rota /canais-venda e menu na sidebar
+- [x] Atualizar Análise Delivery para usar comissão do banco em vez de 7% fixo
+- [x] Adicionar filtro por canal de delivery na Análise Delivery
+- [x] Exibir info do canal selecionado (comissão, taxa, pedidos) no resumo

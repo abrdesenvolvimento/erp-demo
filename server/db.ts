@@ -266,6 +266,35 @@ export async function createSalesChannel(data: InsertSalesChannel) {
   return Number((result as any).insertId);
 }
 
+export async function updateSalesChannel(id: number, data: Partial<InsertSalesChannel>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const updateData: Record<string, unknown> = {};
+  if (data.name !== undefined) updateData.name = data.name;
+  if (data.code !== undefined) updateData.code = data.code;
+  if (data.type !== undefined) updateData.type = data.type;
+  if (data.active !== undefined) updateData.active = data.active;
+  if (data.commissionPercent !== undefined) updateData.commissionPercent = data.commissionPercent;
+  if (data.fixedFeePerOrder !== undefined) updateData.fixedFeePerOrder = data.fixedFeePerOrder;
+  if (data.paymentDays !== undefined) updateData.paymentDays = data.paymentDays;
+  if (data.description !== undefined) updateData.description = data.description;
+  
+  if (Object.keys(updateData).length === 0) return;
+  
+  await db.update(salesChannels)
+    .set(updateData)
+    .where(eq(salesChannels.id, id));
+}
+
+export async function getSalesChannel(id: number) {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const result = await db.select().from(salesChannels).where(eq(salesChannels.id, id)).limit(1);
+  return result.length > 0 ? result[0] : null;
+}
+
 // ==================== PRODUTOS ====================
 export async function getProducts(filters?: { search?: string; categoryId?: number; subcategoryId?: number; activeOnly?: boolean; includePrices?: boolean; companyId?: number }) {
   const db = await getDb();
@@ -5100,18 +5129,43 @@ export async function getDeliveryProductAnalysis(
   startDate: string,
   endDate: string,
   categoryId?: number,
-  companyId?: number
+  companyId?: number,
+  channelId?: number
 ) {
   const db = await getDb();
-  if (!db) return [];
+  if (!db) return { products: [], channelInfo: null };
+
+  // Buscar info do canal para usar comissão do banco
+  let commissionPercent = 7; // fallback padrão
+  let fixedFeePerOrder = 0;
+  let channelName = 'Delivery';
+  
+  if (channelId) {
+    const channelResult = await db.execute(sql.raw(
+      `SELECT name, commissionPercent, fixedFeePerOrder FROM salesChannels WHERE id = ${channelId}`
+    ));
+    const channelRows = (channelResult[0] as unknown as any[]) || [];
+    if (channelRows.length > 0) {
+      commissionPercent = parseFloat(channelRows[0].commissionPercent || '7');
+      fixedFeePerOrder = parseFloat(channelRows[0].fixedFeePerOrder || '0');
+      channelName = channelRows[0].name;
+    }
+  }
 
   // Construir condições WHERE
   let whereConditions = `s.status != 'CANCELLED' AND s.saleType = 'DELIVERY' AND DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) >= '${startDate}' AND DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) <= '${endDate}'`;
   if (companyId) whereConditions += ` AND s.companyId = ${companyId}`;
+  if (channelId) whereConditions += ` AND s.channelId = ${channelId}`;
   
   if (categoryId) {
     whereConditions += ` AND p.categoryId = ${categoryId}`;
   }
+
+  // Contar total de pedidos para calcular taxa fixa
+  const orderCountResult = await db.execute(sql.raw(
+    `SELECT COUNT(DISTINCT s.id) as totalOrders FROM sales s WHERE ${whereConditions.replace(/AND p\.categoryId.*$/, '')}`
+  ));
+  const totalOrders = parseInt((orderCountResult[0] as unknown as any[])?.[0]?.totalOrders || '0');
 
   const result = await db.execute(sql.raw(`
     SELECT 
@@ -5129,8 +5183,10 @@ export async function getDeliveryProductAnalysis(
   `));
 
   const rows = (result[0] as unknown as any[]) || [];
+  const totalRevenue = rows.reduce((sum, r) => sum + parseFloat(r.totalRevenue || '0'), 0);
+  const totalFixedFees = fixedFeePerOrder * totalOrders;
   
-  return rows.map(row => {
+  const products = rows.map(row => {
     const revenue = parseFloat(row.totalRevenue || '0');
     const cost = parseFloat(row.totalCost || '0');
     const quantity = parseFloat(row.totalQuantity || '0');
@@ -5138,8 +5194,12 @@ export async function getDeliveryProductAnalysis(
     const grossProfit = revenue - cost;
     const grossMarginPercent = revenue > 0 ? (grossProfit / revenue) * 100 : 0;
     
-    const ifoodFee = revenue * 0.07;
-    const netProfit = grossProfit - ifoodFee;
+    // Usar comissão do canal (proporcional ao faturamento do produto)
+    const commissionFee = revenue * (commissionPercent / 100);
+    // Distribuir taxa fixa proporcionalmente ao faturamento
+    const proportionalFixedFee = totalRevenue > 0 ? (revenue / totalRevenue) * totalFixedFees : 0;
+    const totalFee = commissionFee + proportionalFixedFee;
+    const netProfit = grossProfit - totalFee;
     const netMarginPercent = revenue > 0 ? (netProfit / revenue) * 100 : 0;
     
     return {
@@ -5150,11 +5210,23 @@ export async function getDeliveryProductAnalysis(
       cost: cost.toFixed(2),
       grossProfit: grossProfit.toFixed(2),
       grossMarginPercent: grossMarginPercent.toFixed(1),
-      ifoodFee: ifoodFee.toFixed(2),
+      ifoodFee: totalFee.toFixed(2),
       netProfit: netProfit.toFixed(2),
       netMarginPercent: netMarginPercent.toFixed(1),
     };
   });
+
+  return {
+    products,
+    channelInfo: {
+      channelId,
+      channelName,
+      commissionPercent: commissionPercent.toFixed(2),
+      fixedFeePerOrder: fixedFeePerOrder.toFixed(2),
+      totalOrders,
+      totalFixedFees: totalFixedFees.toFixed(2),
+    },
+  };
 }
 
 
@@ -5745,11 +5817,10 @@ export async function getRevenueGoals(year?: number, companyId?: number) {
   const db = await getDb();
   if (!db) return [];
 
-  let whereClause = '';
-  if (companyId) whereClause += ` AND companyId = ${companyId}`;
-  if (year) {
-    whereClause = `WHERE year = ${year}`;
-  }
+  const conditions: string[] = [];
+  if (year) conditions.push(`rg.year = ${year}`);
+  if (companyId) conditions.push(`rg.companyId = ${companyId}`);
+  const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
   const result = await db.execute(sql.raw(`
     SELECT 
@@ -6043,6 +6114,7 @@ export async function getMonthlyClosing(year: number, month: number, companyId?:
     WHERE s.status = 'ACTIVE'
       AND DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) >= '${startDate}'
       AND DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) <= '${endDate}'
+      ${companyId ? `AND s.companyId = ${companyId}` : ''}
     GROUP BY s.saleType
   `));
 
@@ -6056,6 +6128,7 @@ export async function getMonthlyClosing(year: number, month: number, companyId?:
     WHERE s.status = 'ACTIVE'
       AND DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) >= '${startDate}'
       AND DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) <= '${endDate}'
+      ${companyId ? `AND s.companyId = ${companyId}` : ''}
   `));
   const totalCostValue = parseFloat((costResult[0] as unknown as any[])[0]?.totalCost || '0');
 
@@ -6096,6 +6169,7 @@ export async function getMonthlyClosing(year: number, month: number, companyId?:
     WHERE po.status = 'CONFIRMED'
       AND DATE(CONVERT_TZ(po.postingDate, '+00:00', '-03:00')) >= '${startDate}'
       AND DATE(CONVERT_TZ(po.postingDate, '+00:00', '-03:00')) <= '${endDate}'
+      ${companyId ? `AND po.companyId = ${companyId}` : ''}
     GROUP BY po.docType
   `));
 
@@ -6129,6 +6203,7 @@ export async function getMonthlyClosing(year: number, month: number, companyId?:
     WHERE e.status != 'CANCELADA'
       AND DATE(CONVERT_TZ(e.createdAt, '+00:00', '-03:00')) >= '${startDate}'
       AND DATE(CONVERT_TZ(e.createdAt, '+00:00', '-03:00')) <= '${endDate}'
+      ${companyId ? `AND e.companyId = ${companyId}` : ''}
     GROUP BY ec.id, ec.name
   `));
 
@@ -6151,18 +6226,22 @@ export async function getMonthlyClosing(year: number, month: number, companyId?:
   // 4. CONTAS A PAGAR - Pagamentos realizados no mês (queries separadas para compatibilidade)
   const purchasePaymentsResult = await db.execute(sql.raw(`
     SELECT COALESCE(SUM(amount), 0) as total
-    FROM purchaseInstallments 
-    WHERE paidDate IS NOT NULL
-      AND DATE(CONVERT_TZ(paidDate, '+00:00', '-03:00')) >= '${startDate}'
-      AND DATE(CONVERT_TZ(paidDate, '+00:00', '-03:00')) <= '${endDate}'
+    FROM purchaseInstallments pi
+    ${companyId ? `INNER JOIN purchaseOrders po ON pi.purchaseOrderId = po.id` : ''}
+    WHERE pi.paidDate IS NOT NULL
+      AND DATE(CONVERT_TZ(pi.paidDate, '+00:00', '-03:00')) >= '${startDate}'
+      AND DATE(CONVERT_TZ(pi.paidDate, '+00:00', '-03:00')) <= '${endDate}'
+      ${companyId ? `AND po.companyId = ${companyId}` : ''}
   `));
 
   const expensePaymentsResult = await db.execute(sql.raw(`
     SELECT COALESCE(SUM(paymentAmount), 0) as total
-    FROM expenseInstallments 
-    WHERE paymentDate IS NOT NULL
-      AND DATE(CONVERT_TZ(paymentDate, '+00:00', '-03:00')) >= '${startDate}'
-      AND DATE(CONVERT_TZ(paymentDate, '+00:00', '-03:00')) <= '${endDate}'
+    FROM expenseInstallments ei
+    ${companyId ? `INNER JOIN expenses e2 ON ei.expenseId = e2.id` : ''}
+    WHERE ei.paymentDate IS NOT NULL
+      AND DATE(CONVERT_TZ(ei.paymentDate, '+00:00', '-03:00')) >= '${startDate}'
+      AND DATE(CONVERT_TZ(ei.paymentDate, '+00:00', '-03:00')) <= '${endDate}'
+      ${companyId ? `AND e2.companyId = ${companyId}` : ''}
   `));
 
   const purchasePaymentsRows = purchasePaymentsResult[0] as unknown as any[];
@@ -6173,9 +6252,10 @@ export async function getMonthlyClosing(year: number, month: number, companyId?:
   // 5. CONTAS A RECEBER - Recebimentos no mês
   const receivablesResult = await db.execute(sql.raw(`
     SELECT COALESCE(SUM(paidAmount), 0) as totalReceived
-    FROM receivablePayments
-    WHERE DATE(CONVERT_TZ(paidDate, '+00:00', '-03:00')) >= '${startDate}'
-      AND DATE(CONVERT_TZ(paidDate, '+00:00', '-03:00')) <= '${endDate}'
+    FROM receivablePayments rp
+    WHERE DATE(CONVERT_TZ(rp.paidDate, '+00:00', '-03:00')) >= '${startDate}'
+      AND DATE(CONVERT_TZ(rp.paidDate, '+00:00', '-03:00')) <= '${endDate}'
+      ${companyId ? `AND rp.companyId = ${companyId}` : ''}
   `));
 
   const receivablesRows = receivablesResult[0] as unknown as any[];
@@ -6193,8 +6273,10 @@ export async function getMonthlyClosing(year: number, month: number, companyId?:
       SUM(CAST(re.amount AS DECIMAL(12,2))) as total
     FROM revenueEntries re
     INNER JOIN revenueAccounts ra ON re.revenueAccountId = ra.id
+    ${companyId ? `LEFT JOIN sales s_re ON re.saleId = s_re.id` : ''}
     WHERE DATE(CONVERT_TZ(re.entryDate, '+00:00', '-03:00')) >= '${startDate}'
       AND DATE(CONVERT_TZ(re.entryDate, '+00:00', '-03:00')) <= '${endDate}'
+      ${companyId ? `AND (s_re.companyId = ${companyId} OR re.saleId IS NULL)` : ''}
     GROUP BY ra.id, ra.code, ra.name, ra.accountType, ra.saleType, re.entryType
     ORDER BY ra.code
   `));
@@ -6245,6 +6327,7 @@ export async function getMonthlyClosing(year: number, month: number, companyId?:
     WHERE e.status != 'CANCELADA'
       AND DATE(CONVERT_TZ(e.createdAt, '+00:00', '-03:00')) >= '${startDate}'
       AND DATE(CONVERT_TZ(e.createdAt, '+00:00', '-03:00')) <= '${endDate}'
+      ${companyId ? `AND e.companyId = ${companyId}` : ''}
     GROUP BY ma.id, ma.code, ma.name, ma.nature, ma.classification
     ORDER BY total DESC
   `));

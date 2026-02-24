@@ -3,11 +3,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { trpc } from "@/lib/trpc";
-import { TrendingUp, TrendingDown, AlertCircle, ArrowLeft, Search, Calendar, Filter } from "lucide-react";
+import { TrendingUp, TrendingDown, AlertCircle, ArrowLeft, Search, Calendar, Filter, Info } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Link } from "wouter";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 
 export default function AnaliseDelivery() {
   const [sortBy, setSortBy] = useState<'netProfit' | 'netMargin' | 'revenue'>('netProfit');
@@ -15,31 +17,45 @@ export default function AnaliseDelivery() {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [categoryId, setCategoryId] = useState<number | undefined>(undefined);
+  const [channelId, setChannelId] = useState<number | undefined>(undefined);
   const [marginStatus, setMarginStatus] = useState<'all' | 'excellent' | 'attention' | 'critical'>('all');
   
-  // Queries com filtros - usar mesmos parâmetros para resumo e lista de produtos
-  const queryParams = startDate && endDate ? { startDate, endDate, categoryId } : { categoryId };
-  const { data: products, isLoading: isProductsLoading } = trpc.dashboard.deliveryProductAnalysis.useQuery(queryParams);
+  // Buscar canais de delivery
+  const { data: allChannels = [] } = trpc.salesChannels.list.useQuery({ activeOnly: true });
+  const deliveryChannels = useMemo(() => allChannels.filter((c: any) => c.type === 'DELIVERY'), [allChannels]);
+  
+  // Queries com filtros
+  const queryParams = useMemo(() => ({
+    ...(startDate && endDate ? { startDate, endDate } : {}),
+    ...(categoryId ? { categoryId } : {}),
+    ...(channelId ? { channelId } : {}),
+  }), [startDate, endDate, categoryId, channelId]);
+  
+  const { data: analysisData, isLoading: isProductsLoading } = trpc.dashboard.deliveryProductAnalysis.useQuery(queryParams);
+  
+  // Extrair produtos e info do canal
+  const products = analysisData?.products || (Array.isArray(analysisData) ? analysisData : []);
+  const channelInfo = analysisData?.channelInfo || null;
   
   // Calcular resumo a partir dos produtos filtrados
   const deliveryMargin = products && products.length > 0 ? {
-    deliveryRevenue: products.reduce((sum, p) => sum + parseFloat(p.revenue), 0).toFixed(2),
-    totalCost: products.reduce((sum, p) => sum + parseFloat(p.cost), 0).toFixed(2),
-    grossProfit: products.reduce((sum, p) => sum + parseFloat(p.grossProfit), 0).toFixed(2),
+    deliveryRevenue: products.reduce((sum: number, p: any) => sum + parseFloat(p.revenue), 0).toFixed(2),
+    totalCost: products.reduce((sum: number, p: any) => sum + parseFloat(p.cost), 0).toFixed(2),
+    grossProfit: products.reduce((sum: number, p: any) => sum + parseFloat(p.grossProfit), 0).toFixed(2),
     grossMarginPercent: (() => {
-      const revenue = products.reduce((sum, p) => sum + parseFloat(p.revenue), 0);
-      const cost = products.reduce((sum, p) => sum + parseFloat(p.cost), 0);
+      const revenue = products.reduce((sum: number, p: any) => sum + parseFloat(p.revenue), 0);
+      const cost = products.reduce((sum: number, p: any) => sum + parseFloat(p.cost), 0);
       return revenue > 0 ? ((revenue - cost) / revenue * 100).toFixed(1) : '0.0';
     })(),
-    ifoodFee: (products.reduce((sum, p) => sum + parseFloat(p.revenue), 0) * 0.07).toFixed(2),
-    netProfit: products.reduce((sum, p) => sum + parseFloat(p.netProfit), 0).toFixed(2),
+    totalFee: products.reduce((sum: number, p: any) => sum + parseFloat(p.ifoodFee), 0).toFixed(2),
+    netProfit: products.reduce((sum: number, p: any) => sum + parseFloat(p.netProfit), 0).toFixed(2),
     netMarginPercent: (() => {
-      const revenue = products.reduce((sum, p) => sum + parseFloat(p.revenue), 0);
-      const netProfit = products.reduce((sum, p) => sum + parseFloat(p.netProfit), 0);
+      const revenue = products.reduce((sum: number, p: any) => sum + parseFloat(p.revenue), 0);
+      const netProfit = products.reduce((sum: number, p: any) => sum + parseFloat(p.netProfit), 0);
       return revenue > 0 ? (netProfit / revenue * 100).toFixed(1) : '0.0';
     })(),
   } : null;
-  const isMarginLoading = isProductsLoading;
+  
   const { data: categories } = trpc.categories.list.useQuery();
 
   const formatCurrency = (value: string | number | null | undefined): string => {
@@ -60,36 +76,44 @@ export default function AnaliseDelivery() {
 
   const getMarginBadge = (marginPercent: string): string => {
     const margin = parseFloat(marginPercent);
-    if (margin >= 20) return "🟢 Excelente";
-    if (margin >= 10) return "🟡 Atenção";
-    return "🔴 Crítico";
+    if (margin >= 20) return "Excelente";
+    if (margin >= 10) return "Atenção";
+    return "Crítico";
+  };
+
+  const getMarginBadgeVariant = (marginPercent: string): "default" | "secondary" | "destructive" => {
+    const margin = parseFloat(marginPercent);
+    if (margin >= 20) return "default";
+    if (margin >= 10) return "secondary";
+    return "destructive";
   };
 
   // Filtrar e ordenar produtos
   const filteredAndSortedProducts = products ? [...products]
-    .filter(p => {
-      // Filtro de busca por nome
+    .filter((p: any) => {
       if (searchTerm && !p.productName.toLowerCase().includes(searchTerm.toLowerCase())) {
         return false;
       }
-      
-      // Filtro de status de margem
       if (marginStatus !== 'all') {
         const margin = parseFloat(p.netMarginPercent);
         if (marginStatus === 'excellent' && margin < 20) return false;
         if (marginStatus === 'attention' && (margin < 10 || margin >= 20)) return false;
         if (marginStatus === 'critical' && margin >= 10) return false;
       }
-      
       return true;
     })
-    .sort((a, b) => {
+    .sort((a: any, b: any) => {
       if (sortBy === 'netProfit') return parseFloat(b.netProfit) - parseFloat(a.netProfit);
       if (sortBy === 'netMargin') return parseFloat(b.netMarginPercent) - parseFloat(a.netMarginPercent);
       return parseFloat(b.revenue) - parseFloat(a.revenue);
     }) : [];
 
-  if (isMarginLoading || isProductsLoading) {
+  // Determinar label da comissão
+  const commissionLabel = channelInfo 
+    ? `Taxa ${channelInfo.channelName} (${channelInfo.commissionPercent}%${parseFloat(channelInfo.fixedFeePerOrder) > 0 ? ` + R$ ${formatCurrency(channelInfo.fixedFeePerOrder)}/pedido` : ''})`
+    : 'Taxa Canal (7%)';
+
+  if (isProductsLoading) {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center min-h-[60vh]">
@@ -112,7 +136,15 @@ export default function AnaliseDelivery() {
               </Button>
             </Link>
             <h1 className="text-3xl font-bold tracking-tight">Análise Delivery por Produto</h1>
-            <p className="text-muted-foreground">Margem líquida após dedução de 7% (taxa iFood)</p>
+            <p className="text-muted-foreground">
+              Margem líquida após dedução de taxas do canal
+              {channelInfo && (
+                <span className="ml-2 text-purple-600 font-medium">
+                  — {channelInfo.channelName}: {channelInfo.commissionPercent}%
+                  {parseFloat(channelInfo.fixedFeePerOrder) > 0 && ` + R$ ${formatCurrency(channelInfo.fixedFeePerOrder)}/pedido`}
+                </span>
+              )}
+            </p>
           </div>
         </div>
 
@@ -120,7 +152,14 @@ export default function AnaliseDelivery() {
         {deliveryMargin && parseFloat(deliveryMargin.deliveryRevenue) > 0 && (
           <Card className="border-t-4 border-t-purple-500">
             <CardHeader>
-              <CardTitle className="text-lg">Resumo Geral do Mês</CardTitle>
+              <CardTitle className="text-lg flex items-center gap-2">
+                Resumo Geral
+                {channelInfo && (
+                  <Badge variant="secondary" className="font-normal">
+                    {channelInfo.channelName} — {channelInfo.totalOrders} pedidos
+                  </Badge>
+                )}
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -133,8 +172,8 @@ export default function AnaliseDelivery() {
                   <p className="text-2xl font-bold">R$ {formatCurrency(deliveryMargin.totalCost)}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Taxa iFood (7%)</p>
-                  <p className="text-2xl font-bold text-red-600">R$ {formatCurrency(deliveryMargin.ifoodFee)}</p>
+                  <p className="text-sm text-muted-foreground">{commissionLabel}</p>
+                  <p className="text-2xl font-bold text-red-600">R$ {formatCurrency(deliveryMargin.totalFee)}</p>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Lucro Líquido</p>
@@ -182,8 +221,8 @@ export default function AnaliseDelivery() {
             </div>
           </CardHeader>
           <CardContent>
-            {/* Filtros de Período, Categoria e Status */}
-            <div className="mb-4 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            {/* Filtros de Período, Canal, Categoria e Status */}
+            <div className="mb-4 grid gap-4 md:grid-cols-2 lg:grid-cols-5">
               {/* Filtro de Data Início */}
               <div>
                 <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
@@ -212,6 +251,33 @@ export default function AnaliseDelivery() {
                 />
               </div>
               
+              {/* Filtro de Canal */}
+              <div>
+                <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
+                  <Filter className="inline h-3 w-3 mr-1" />
+                  Canal de Delivery
+                </label>
+                <Select
+                  value={channelId?.toString() || 'all'}
+                  onValueChange={(value) => setChannelId(value === 'all' ? undefined : parseInt(value))}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Todos os canais" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos os canais</SelectItem>
+                    {deliveryChannels.map((ch: any) => (
+                      <SelectItem key={ch.id} value={ch.id.toString()}>
+                        {ch.name}
+                        {ch.commissionPercent && parseFloat(ch.commissionPercent) > 0 && (
+                          <span className="text-muted-foreground ml-1">({ch.commissionPercent}%)</span>
+                        )}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
               {/* Filtro de Categoria */}
               <div>
                 <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
@@ -227,7 +293,7 @@ export default function AnaliseDelivery() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Todas as categorias</SelectItem>
-                    {categories?.map((cat) => (
+                    {categories?.map((cat: any) => (
                       <SelectItem key={cat.id} value={cat.id.toString()}>
                         {cat.name}
                       </SelectItem>
@@ -264,25 +330,16 @@ export default function AnaliseDelivery() {
               <p className="text-xs font-semibold text-muted-foreground mb-2">Legenda de Status da Margem:</p>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
                 <div className="flex items-center gap-2">
-                  <span className="text-lg">🟢</span>
-                  <div>
-                    <p className="font-semibold text-green-600 text-xs">Excelente</p>
-                    <p className="text-xs text-muted-foreground">Margem ≥ 20%</p>
-                  </div>
+                  <Badge variant="default" className="text-xs">Excelente</Badge>
+                  <span className="text-xs text-muted-foreground">Margem &ge; 20%</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-lg">🟡</span>
-                  <div>
-                    <p className="font-semibold text-yellow-600 text-xs">Atenção</p>
-                    <p className="text-xs text-muted-foreground">Margem 10-20%</p>
-                  </div>
+                  <Badge variant="secondary" className="text-xs">Atenção</Badge>
+                  <span className="text-xs text-muted-foreground">Margem 10-20%</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-lg">🔴</span>
-                  <div>
-                    <p className="font-semibold text-red-600 text-xs">Crítico</p>
-                    <p className="text-xs text-muted-foreground">Margem &lt; 10%</p>
-                  </div>
+                  <Badge variant="destructive" className="text-xs">Crítico</Badge>
+                  <span className="text-xs text-muted-foreground">Margem &lt; 10%</span>
                 </div>
               </div>
             </div>
@@ -309,7 +366,7 @@ export default function AnaliseDelivery() {
             {filteredAndSortedProducts.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 <AlertCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>Nenhuma venda delivery no mês atual</p>
+                <p>Nenhuma venda delivery encontrada para o período selecionado</p>
               </div>
             ) : (
               <div className="overflow-x-auto">
@@ -321,14 +378,26 @@ export default function AnaliseDelivery() {
                       <th className="text-right py-3 px-2 font-semibold text-sm">Faturamento</th>
                       <th className="text-right py-3 px-2 font-semibold text-sm">Custo</th>
                       <th className="text-right py-3 px-2 font-semibold text-sm">Mg Bruta</th>
-                      <th className="text-right py-3 px-2 font-semibold text-sm">Taxa 7%</th>
+                      <th className="text-right py-3 px-2 font-semibold text-sm">
+                        <Tooltip>
+                          <TooltipTrigger className="flex items-center gap-1 justify-end">
+                            Taxa Canal
+                            <Info className="h-3 w-3 text-muted-foreground" />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            {channelInfo 
+                              ? `${channelInfo.commissionPercent}% comissão${parseFloat(channelInfo.fixedFeePerOrder) > 0 ? ` + R$ ${formatCurrency(channelInfo.fixedFeePerOrder)}/pedido` : ''}`
+                              : 'Comissão + taxa fixa do canal (se houver)'}
+                          </TooltipContent>
+                        </Tooltip>
+                      </th>
                       <th className="text-right py-3 px-2 font-semibold text-sm">Mg Líquida</th>
                       <th className="text-right py-3 px-2 font-semibold text-sm">Lucro Líq.</th>
                       <th className="text-center py-3 px-2 font-semibold text-sm">Status</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredAndSortedProducts.map((product, index) => (
+                    {filteredAndSortedProducts.map((product: any, index: number) => (
                       <tr 
                         key={product.productId} 
                         className={`border-b hover:bg-muted/50 transition-colors ${
@@ -373,8 +442,10 @@ export default function AnaliseDelivery() {
                             R$ {formatCurrency(product.netProfit)}
                           </span>
                         </td>
-                        <td className="text-center py-3 px-2 text-xs">
-                          {getMarginBadge(product.netMarginPercent)}
+                        <td className="text-center py-3 px-2">
+                          <Badge variant={getMarginBadgeVariant(product.netMarginPercent)} className="text-xs">
+                            {getMarginBadge(product.netMarginPercent)}
+                          </Badge>
                         </td>
                       </tr>
                     ))}
@@ -384,8 +455,6 @@ export default function AnaliseDelivery() {
             )}
           </CardContent>
         </Card>
-
-
       </div>
     </DashboardLayout>
   );

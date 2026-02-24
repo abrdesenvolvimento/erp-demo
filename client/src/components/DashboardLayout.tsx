@@ -22,7 +22,7 @@ import {
 import { APP_LOGO, APP_TITLE, getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
-import { LayoutDashboard, LogOut, PanelLeft, Users, Package, ShoppingCart, BarChart3, ShoppingBag, Receipt, DollarSign, CreditCard, UserCircle, Shield, TrendingUp, Bike, ChevronDown, ChevronRight, PieChart, GitCompare, Wallet, Target, FileText, BookOpen, Calculator, Upload, Building2, MapPin, Check, Tags } from "lucide-react";
+import { LayoutDashboard, LogOut, PanelLeft, Users, Package, ShoppingCart, BarChart3, ShoppingBag, Receipt, DollarSign, CreditCard, UserCircle, Shield, TrendingUp, Bike, ChevronDown, ChevronRight, PieChart, GitCompare, Wallet, Target, FileText, BookOpen, Calculator, Upload, Building2, MapPin, Check, Tags, Store } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
@@ -39,6 +39,7 @@ const mainMenuItems = [
   { icon: Users, label: "Parceiros", path: "/parceiros", roles: ["admin", "operacional", "consultor"] },
   { icon: Shield, label: "Gerenciar Usuários", path: "/usuarios", roles: ["admin"] },
   { icon: Building2, label: "Gerenciar Acessos", path: "/gerenciar-acessos", roles: ["admin"] },
+  { icon: Store, label: "Canais de Venda", path: "/canais-venda", roles: ["admin"] },
 ];
 
 // Submenu Financeiro
