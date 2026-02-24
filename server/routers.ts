@@ -450,6 +450,8 @@ export const appRouter = router({
           userId: ctx.user.id,
           reason: input.reason,
           notes: input.notes,
+          companyId: ctx.activeCompanyId,
+          branchId: ctx.activeBranchId,
         });
       }),
   }),
@@ -1429,7 +1431,7 @@ export const appRouter = router({
         notes: z.string().optional(),
       }))
       .mutation(async ({ input, ctx }) => {
-        return await db.registerCustomerPayment(input);
+        return await db.registerCustomerPayment({ ...input, companyId: ctx.activeCompanyId });
       }),
     
     // Exportar PDF

@@ -193,18 +193,17 @@ export const ifoodImportRouter = router({
           .where(eq(ifoodProductMappings.ifoodSku, input.ifoodSku));
       } else if (input.ifoodProductName) {
         // Criar novo
-        await db.insert(ifoodProductMappings).values({
+           await db.insert(ifoodProductMappings).values({
           ifoodSku: input.ifoodSku,
           ifoodProductName: input.ifoodProductName,
           productId: input.productId,
           situation: input.situation || "Manual",
           createdBy: ctx.user.id,
+          companyId: ctx.activeCompanyId ?? 1,
         });
       }
-
       return { success: true };
     }),
-
   // Criar novo mapeamento
   createMapping: adminProcedure
     .input(z.object({
@@ -216,15 +215,14 @@ export const ifoodImportRouter = router({
     .mutation(async ({ input, ctx }) => {
       const db = await getDb();
       if (!db) throw new Error("Database not available");
-
       await db.insert(ifoodProductMappings).values({
         ifoodSku: input.ifoodSku,
         ifoodProductName: input.ifoodProductName,
         productId: input.productId,
         situation: input.situation || "Manual",
         createdBy: ctx.user.id,
+        companyId: ctx.activeCompanyId ?? 1,
       });
-
       return { success: true };
     }),
 
@@ -265,6 +263,7 @@ export const ifoodImportRouter = router({
           productId: input.productId,
           channelId: input.channelId,
           price: input.newPrice.toFixed(2),
+          companyId: ctx.activeCompanyId ?? 1,
         });
       }
 
@@ -577,6 +576,7 @@ export const ifoodImportRouter = router({
           status: "PROCESSING",
           errorMessage: null,
           createdBy: ctx.user.id,
+          companyId: ctx.activeCompanyId ?? 1,
         });
         
         // Drizzle com MySQL retorna um array com o resultado do insert
@@ -621,6 +621,8 @@ export const ifoodImportRouter = router({
           const subtotal = order.items.reduce((sum, item) => sum + (item.ifoodPrice * item.quantity), 0);
 
           // Criar venda
+          const companyId = ctx.activeCompanyId ?? 1;
+          const branchId = ctx.activeBranchId ?? 1;
           const [saleResult] = await db.insert(sales).values({
             saleType: "DELIVERY",
             saleDate: parseIfoodDate(order.orderDate),
@@ -635,6 +637,8 @@ export const ifoodImportRouter = router({
             notes: `Importado iFood - Pedido #${order.ifoodOrderCode}`,
             status: "ACTIVE",
             createdBy: ctx.user.id,
+            companyId,
+            branchId,
           });
           const saleId = saleResult.insertId;
 
@@ -651,6 +655,7 @@ export const ifoodImportRouter = router({
               quantity: item.quantity,
               unitPrice: item.ifoodPrice.toFixed(2),
               totalPrice: (item.ifoodPrice * item.quantity).toFixed(2),
+              companyId,
             });
 
             // Baixar estoque
@@ -662,6 +667,7 @@ export const ifoodImportRouter = router({
               documentNumber: `IFOOD-${order.ifoodOrderCode}`,
               userId: ctx.user.id,
               notes: `Venda iFood #${order.ifoodOrderCode}`,
+              companyId,
             });
 
             // Atualizar estoque do produto
@@ -679,6 +685,7 @@ export const ifoodImportRouter = router({
                 ifoodPrice: item.ifoodPrice.toFixed(2),
                 abrwfPrice: item.abrwfPrice.toFixed(2),
                 divergencePercent: item.divergencePercent?.toFixed(2) || "0",
+                companyId,
               });
             }
           }
@@ -689,6 +696,7 @@ export const ifoodImportRouter = router({
             ifoodOrderCode: order.ifoodOrderCode,
             saleId,
             importLogId: logId,
+            companyId,
           });
 
           importedCount++;

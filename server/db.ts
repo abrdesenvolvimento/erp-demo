@@ -729,8 +729,8 @@ export async function createSale(saleData: InsertSale, items: Omit<InsertSaleIte
   const saleId = Number((saleResult as any)[0]?.insertId || (saleResult as any).insertId);
   console.log('[createSale] saleId:', saleId);
   
-  // Inserir itens
-  const itemsWithSaleId = items.map(item => ({ ...item, saleId }));
+  // Inserir itens (com companyId/branchId)
+  const itemsWithSaleId = items.map(item => ({ ...item, saleId, companyId: saleData.companyId, branchId: saleData.branchId }));
   await db.insert(saleItems).values(itemsWithSaleId);
   
   // Baixar estoque (considerando produtos compostos) e registrar movimentação
@@ -746,6 +746,8 @@ export async function createSale(saleData: InsertSale, items: Omit<InsertSaleIte
       documentNumber: `Venda #${saleId}`,
       userId: saleData.createdBy,
       notes: `Venda ${saleData.saleType} - ${saleData.paymentMethod || 'N/A'}`,
+      companyId: saleData.companyId,
+      branchId: saleData.branchId,
     });
   }
   
@@ -1322,6 +1324,8 @@ export async function confirmPurchaseOrder(purchaseOrderId: number) {
       documentNumber: purchaseOrderData.purchaseOrder.docNumber || `Compra #${purchaseOrderId}`,
       userId: purchaseOrderData.purchaseOrder.createdBy,
       notes: `Compra confirmada - Fornecedor: ${purchaseOrderData.supplier?.name || 'N/A'}`,
+      companyId: purchaseOrderData.purchaseOrder.companyId,
+      branchId: purchaseOrderData.purchaseOrder.branchId,
     });
     
     // Atualizar custo de produtos compostos que usam este componente
@@ -1722,11 +1726,13 @@ export async function updateSaleItems(saleId: number, updates: {
   // Deletar itens atuais
   await db.delete(saleItems).where(eq(saleItems.saleId, saleId));
 
-  // Inserir novos itens
+  // Inserir novos itens (com companyId/branchId da venda original)
   const itemsWithSaleId = updates.items.map(item => ({
     ...item,
     saleId,
     totalPrice: (parseFloat(item.unitPrice) * item.quantity).toFixed(2),
+    companyId: sale.companyId,
+    branchId: sale.branchId,
   }));
   await db.insert(saleItems).values(itemsWithSaleId);
 
@@ -2001,6 +2007,8 @@ export async function createExpense(data: InsertExpense) {
       documentNumber: `Despesa #${expenseId}`,
       userId: data.createdBy,
       notes: `Perda registrada - Produto: ${(data as any)._productName}`,
+      companyId: data.companyId,
+      branchId: data.branchId,
     });
   }
   
@@ -2920,6 +2928,7 @@ export async function registerCustomerPayment(data: {
   paidAmount: string;
   paymentMethod: string;
   notes?: string;
+  companyId?: number;
 }) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
@@ -2967,7 +2976,8 @@ export async function registerCustomerPayment(data: {
         paidDate: data.paidDate,
         paidAmount: paymentForThisInstallment.toFixed(2),
         paymentMethod: data.paymentMethod,
-        notes: data.notes
+        notes: data.notes,
+        companyId: data.companyId,
       });
       
       // Atualizar parcela com totais acumulados
@@ -3027,7 +3037,8 @@ export async function registerCustomerPayment(data: {
           paidDate: data.paidDate,
           paidAmount: paymentForThisInstallment.toFixed(2),
           paymentMethod: data.paymentMethod,
-          notes: data.notes
+          notes: data.notes,
+          companyId: data.companyId,
         });
         
         // Atualizar parcela com totais acumulados
@@ -4973,6 +4984,8 @@ export async function adjustProductStock(data: {
   userId: string;
   reason: string; // Justificativa obrigatória
   notes?: string;
+  companyId?: number;
+  branchId?: number;
 }) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
@@ -5002,6 +5015,8 @@ export async function adjustProductStock(data: {
     documentNumber: null,
     userId: data.userId,
     notes: `${data.reason}${data.notes ? ` - ${data.notes}` : ''}`,
+    companyId: data.companyId,
+    branchId: data.branchId,
   });
 
   return { success: true, newStock };

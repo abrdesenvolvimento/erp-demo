@@ -2,72 +2,51 @@
  * Utilitários centralizados para manipulação de datas com timezone de Brasília
  * 
  * IMPORTANTE: Todo o sistema deve usar estas funções para garantir consistência
- * de timezone (America/Sao_Paulo) em todas as operações com datas.
+ * de timezone (America/Sao_Paulo = UTC-3) em todas as operações com datas.
+ * 
+ * REGRA FUNDAMENTAL: O banco armazena timestamps em UTC. 
+ * Todas as funções que retornam Date devem retornar Date objects com o UTC correto.
+ * getNowInBrazil() NÃO retorna "hora de Brasília como se fosse local" — 
+ * retorna new Date() (que já é UTC correto). O nome é mantido por compatibilidade.
+ * 
+ * Para obter a data/hora de Brasília como STRING (para exibição ou comparação),
+ * usar formatDateForInput(), formatDateBR(), formatDateTimeBR(), etc.
  */
 
 const BRAZIL_TIMEZONE = 'America/Sao_Paulo';
+const BRAZIL_OFFSET_HOURS = -3; // UTC-3 (simplificado, sem horário de verão)
 
 /**
- * Obtém a data/hora atual em Brasília
+ * Obtém a data/hora atual como Date (UTC correto).
+ * O banco armazena em UTC, e CONVERT_TZ converte para Brasília nas queries.
+ * Portanto, basta usar new Date() que já é UTC.
  */
 export function getNowInBrazil(): Date {
-  const now = new Date();
-  const brasiliaStr = now.toLocaleString('en-US', { 
-    timeZone: BRAZIL_TIMEZONE,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: false
-  });
-  
-  // Parse: "12/03/2025, 22:30:45" -> Date object
-  const [datePart, timePart] = brasiliaStr.split(', ');
-  const [month, day, year] = datePart.split('/');
-  const [hour, minute, second] = timePart.split(':');
-  
-  return new Date(
-    parseInt(year),
-    parseInt(month) - 1,
-    parseInt(day),
-    parseInt(hour),
-    parseInt(minute),
-    parseInt(second)
-  );
+  return new Date();
 }
 
 /**
- * Obtém apenas a data (sem hora) atual em Brasília
- * Retorna Date com hora zerada (00:00:00)
+ * Obtém apenas a data (sem hora) atual em Brasília.
+ * Retorna Date com meia-noite UTC do dia atual em Brasília.
+ * Ex: Se agora é 23:30 Brasília (02:30 UTC do dia seguinte),
+ *     retorna 03:00 UTC do dia atual em Brasília.
  */
 export function getTodayInBrazil(): Date {
-  const now = new Date();
-  const brasiliaStr = now.toLocaleString('en-US', { 
-    timeZone: BRAZIL_TIMEZONE,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit'
-  });
-  
-  const [month, day, year] = brasiliaStr.split('/');
-  
-  return new Date(
-    parseInt(year),
-    parseInt(month) - 1,
-    parseInt(day),
-    0, 0, 0, 0
-  );
+  const dateStr = formatDateForInput(new Date());
+  // dateStr = "YYYY-MM-DD" do dia atual em Brasília
+  // Converter para meia-noite Brasília = 03:00 UTC
+  return new Date(dateStr + 'T00:00:00-03:00');
 }
 
 /**
- * Converte uma string de data (YYYY-MM-DD) para Date em Brasília (meio-dia)
- * Usa meio-dia (12:00) para evitar problemas de timezone ao salvar no banco
+ * Converte uma string de data (YYYY-MM-DD) para Date com UTC correto,
+ * assumindo que a data está em horário de Brasília (meio-dia).
+ * Usa meio-dia (12:00) para evitar problemas de arredondamento.
  */
 export function parseDateInBrazil(dateStr: string): Date {
-  const [year, month, day] = dateStr.split('-').map(Number);
-  return new Date(year, month - 1, day, 12, 0, 0, 0);
+  if (!dateStr) return new Date();
+  // "2026-02-22" → 2026-02-22T12:00:00-03:00 → 2026-02-22T15:00:00Z
+  return new Date(dateStr + 'T12:00:00-03:00');
 }
 
 /**
@@ -104,7 +83,8 @@ export function parseDateAsBrasilia(dateStr: string): Date {
 }
 
 /**
- * Converte Date para string no formato YYYY-MM-DD usando timezone de Brasília
+ * Converte Date para string no formato YYYY-MM-DD usando timezone de Brasília.
+ * Usa Intl para garantir que funciona independente do timezone do servidor.
  */
 export function formatDateForInput(date: Date | string): string {
   const d = typeof date === 'string' ? new Date(date) : date;
@@ -157,7 +137,7 @@ export function formatDateTimeBR(date: Date | string | null | undefined): string
  */
 export function isToday(date: Date | string): boolean {
   const d = typeof date === 'string' ? new Date(date) : date;
-  const today = getTodayInBrazil();
+  const today = new Date();
   
   const dateStr = formatDateForInput(d);
   const todayStr = formatDateForInput(today);
@@ -176,35 +156,36 @@ export function isPast(date: Date | string): boolean {
 }
 
 /**
- * Adiciona dias a uma data (em Brasília)
+ * Adiciona dias a uma data
  */
 export function addDays(date: Date | string, days: number): Date {
-  const d = typeof date === 'string' ? new Date(date) : new Date(date);
+  const d = typeof date === 'string' ? new Date(date) : new Date(date.getTime());
   d.setDate(d.getDate() + days);
   return d;
 }
 
 /**
- * Adiciona meses a uma data (em Brasília)
+ * Adiciona meses a uma data
  */
 export function addMonths(date: Date | string, months: number): Date {
-  const d = typeof date === 'string' ? new Date(date) : new Date(date);
+  const d = typeof date === 'string' ? new Date(date) : new Date(date.getTime());
   d.setMonth(d.getMonth() + months);
   return d;
 }
 
 /**
- * Obtém o primeiro dia do mês (em Brasília)
+ * Obtém o primeiro dia do mês (em UTC, meia-noite Brasília)
  */
 export function getFirstDayOfMonth(year: number, month: number): Date {
-  return new Date(year, month - 1, 1, 0, 0, 0, 0);
+  return new Date(`${year}-${String(month).padStart(2, '0')}-01T00:00:00-03:00`);
 }
 
 /**
- * Obtém o último dia do mês (em Brasília)
+ * Obtém o último dia do mês (em UTC, 23:59:59 Brasília)
  */
 export function getLastDayOfMonth(year: number, month: number): Date {
-  return new Date(year, month, 0, 23, 59, 59, 999);
+  const lastDay = new Date(year, month, 0).getDate();
+  return new Date(`${year}-${String(month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}T23:59:59-03:00`);
 }
 
 /**
@@ -314,7 +295,7 @@ export function getCurrentBrazilDateInfo() {
     year: parseInt(year),
     month: parseInt(month),
     day: parseInt(day),
-    date: new Date(parseInt(year), parseInt(month) - 1, parseInt(day), 0, 0, 0, 0)
+    date: new Date(`${year}-${month}-${day}T00:00:00-03:00`)
   };
 }
 

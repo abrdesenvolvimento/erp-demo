@@ -991,3 +991,27 @@ Despesa de impostos aparece tanto em janeiro quanto em fevereiro após edição 
 - [x] Corrigir stockAnalysis.ts: cálculo de dias do mês atual
 - [x] Corrigir frontend: Despesas, ContasPagar, ContasReceber, CalendarPayButton, OutrasReceitas, RelatoriosContabeis, Produtos, ContasReceberNovo
 - [x] AnáliseVendas.tsx: verificado - seguro (browser em Brasília)
+
+### Bug - Vendas sumiram após correção de timezone (24/02/2026)
+- [x] Vendas delivery dos dias 21 e 22/02 não apareciam - causa: 126 vendas (101 delivery + 25 balcão/a prazo) com companyId=NULL (importação iFood não incluía companyId). Corrigidos 126 vendas, 218 saleItems, 101 ifoodImportedOrders, 1 log
+- [x] Vendas de ontem (23/02) não apareciam ao filtrar - causa: 15 vendas tinham companyId=NULL. Corrigido. Agora mostra 16 vendas (10 balcão + 6 a prazo)
+- [x] Corrigido código de importação iFood (ifoodImport.ts) para incluir companyId e branchId em vendas, saleItems, productMovements, ifoodImportedOrders e logs
+- [x] Verificado: dados de vendas 20-23/02 estão corretos e consistentes (sex=98, sáb=170, dom=118, seg=16)
+
+### Auditoria companyId em db.insert() (24/02/2026)
+- [x] Varredura completa: 59 operações db.insert() em 5 arquivos do servidor
+- [x] Identificados 24 inserts em tabelas com companyId que não passavam o campo explicitamente
+- [x] Corrigido createSale: saleItems agora recebem companyId/branchId da venda
+- [x] Corrigido createSale: productMovements (SAIDA) agora recebem companyId/branchId da venda
+- [x] Corrigido confirmPurchaseOrder: productMovements (ENTRADA) agora recebem companyId/branchId da compra
+- [x] Corrigido createExpense: productMovements (PERDA) agora recebem companyId/branchId da despesa
+- [x] Corrigido adjustProductStock: productMovements (ACERTO) agora recebem companyId/branchId do contexto
+- [x] Corrigido registerCustomerPayment: receivablePayments agora recebem companyId do contexto
+- [x] Corrigido updateSaleItems: saleItems novos recebem companyId/branchId da venda original
+- [x] Corrigido ifoodImport: ifoodProductMappings recebem companyId do contexto (2 inserts)
+- [x] Corrigido ifoodImport: productPrices recebem companyId do contexto
+- [x] Corrigido ifoodImport: ifoodPriceDivergences recebem companyId da importação
+- [ ] Pendente: accounting.ts createAccount (chartOfAccounts) - companyId via data
+- [ ] Pendente: accounting.ts createManagementAccount (managementAccounts) - companyId via data
+- [ ] Pendente: accountingBatchLog - companyId via data
+- [ ] Pendente: productCompositions no setProductCompositions - sem companyId
