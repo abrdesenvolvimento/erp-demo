@@ -1883,7 +1883,13 @@ export async function getExpenses(filters?: { companyId?: number;
     query = query.where(and(...conditions)) as any;
   }
   
-  const results = await query.orderBy(desc(expenses.issueDate));
+  let results;
+  try {
+    results = await query.orderBy(desc(expenses.issueDate));
+  } catch (error) {
+    console.error('[getExpenses] Query error:', error);
+    return [];
+  }
   
   // Filtro de valor (aplicado após query pois precisa calcular total)
   if (filters?.minValue !== undefined || filters?.maxValue !== undefined) {
@@ -5350,6 +5356,71 @@ export async function getSalesAnalysisSummary(
   };
 }
 
+
+/**
+ * Retorna contagem de vendas por canal (saleType) para uso na Análise por Canal
+ * Conta vendas distintas, não itens
+ */
+export async function getSalesCountByChannel(
+  startDate: Date,
+  endDate: Date,
+  companyId?: number,
+  filters?: {
+    productIds?: number[];
+    subcategoryId?: number;
+  }
+) {
+  const db = await getDb();
+  if (!db) return [];
+
+  const startStr = toDateString(startDate);
+  const endStr = toDateString(endDate);
+
+  let whereConditions = `s.status != 'CANCELLED' AND DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) >= '${startStr}' AND DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) <= '${endStr}'`;
+  if (companyId) whereConditions += ` AND s.companyId = ${companyId}`;
+
+  // Se tem filtro de produto, contar apenas vendas que contenham esses produtos
+  if (filters?.productIds && filters.productIds.length > 0) {
+    const result = await db.execute(sql.raw(`
+      SELECT 
+        s.saleType,
+        COUNT(DISTINCT s.id) as salesCount
+      FROM sales s
+      INNER JOIN saleItems si ON si.saleId = s.id
+      INNER JOIN products p ON si.productId = p.id
+      WHERE ${whereConditions}
+      AND p.id IN (${filters.productIds.join(',')})
+      GROUP BY s.saleType
+    `));
+    return (result[0] || []) as any as Array<{ saleType: string; salesCount: string }>;
+  }
+
+  if (filters?.subcategoryId) {
+    const result = await db.execute(sql.raw(`
+      SELECT 
+        s.saleType,
+        COUNT(DISTINCT s.id) as salesCount
+      FROM sales s
+      INNER JOIN saleItems si ON si.saleId = s.id
+      INNER JOIN products p ON si.productId = p.id
+      WHERE ${whereConditions}
+      AND p.subcategoryId = ${filters.subcategoryId}
+      GROUP BY s.saleType
+    `));
+    return (result[0] || []) as any as Array<{ saleType: string; salesCount: string }>;
+  }
+
+  // Sem filtro de produto: contar diretamente da tabela sales
+  const result = await db.execute(sql.raw(`
+    SELECT 
+      saleType,
+      COUNT(*) as salesCount
+    FROM sales s
+    WHERE ${whereConditions}
+    GROUP BY saleType
+  `));
+  return (result[0] || []) as any as Array<{ saleType: string; salesCount: string }>;
+}
 
 // ==================== ANÁLISE DE FATURAMENTO - VISÃO MENSAL ====================
 

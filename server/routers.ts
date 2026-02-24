@@ -1118,7 +1118,13 @@ export const appRouter = router({
         maxValue: z.number().optional(),
       }).optional())
       .query(async ({ input, ctx }) => {
-        return await db.getExpenses({ ...input, companyId: ctx.activeCompanyId });
+        try {
+          const result = await db.getExpenses({ ...input, companyId: ctx.activeCompanyId });
+          return result;
+        } catch (error) {
+          console.error('[expenses.list] ERROR:', error);
+          throw error;
+        }
       }),
     
     get: consultorProcedure
@@ -2037,6 +2043,21 @@ export const appRouter = router({
         return await db.getSalesAnalysisSummary(input.startDate, input.endDate, ctx.activeCompanyId, {
           channels: input.channels,
           paymentMethod: input.paymentMethod,
+          productIds: input.productIds,
+          subcategoryId: input.subcategoryId,
+        });
+      }),
+
+    // Contagem de vendas por canal (para Análise por Canal)
+    countByChannel: adminProcedure
+      .input(z.object({
+        startDate: z.date(),
+        endDate: z.date(),
+        productIds: z.array(z.number()).optional(),
+        subcategoryId: z.number().optional(),
+      }))
+      .query(async ({ input, ctx }) => {
+        return await db.getSalesCountByChannel(input.startDate, input.endDate, ctx.activeCompanyId, {
           productIds: input.productIds,
           subcategoryId: input.subcategoryId,
         });

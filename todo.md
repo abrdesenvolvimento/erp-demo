@@ -1027,3 +1027,7 @@ Despesa de impostos aparece tanto em janeiro quanto em fevereiro após edição 
 - [x] Info: Análise por Canal - Margem 26.9% é correta (inclui dedução de taxa delivery 7%). Dashboard 29.4% é margem bruta sem taxa. Nomenclaturas diferentes, ambas corretas.
 - [x] Investigado: Fechamento - Não há canal Balcão duplicado no banco. Apenas 3 agrupamentos (Balcão 1154, Delivery 679, A Prazo 193). Pode ter sido cache/dados temporários.
 - [x] Limpeza: Compras por Fornecedor - 37 fornecedores teste removidos + 10 compras teste + 10 contas a pagar teste + 20 itens de compra teste + 10 movimentos de estoque teste
+
+### Bugs reportados (24/02/2026 - Lote 3)
+- [x] Bug: Despesas não apareciam - causa real: tabela expenseCategories no banco não tinha colunas companyId/branchId que o Drizzle schema esperava. Adicionadas via ALTER TABLE + schema sincronizado.
+- [x] Bug: Análise por Canal - Delivery mostrava 1081 em vez de 695 vendas - causa: frontend somava salesCount por produto (mesma venda contada múltiplas vezes). Corrigido: nova rota countByChannel conta vendas distintas por canal sem agrupar por produto.

@@ -89,6 +89,16 @@ export default function AnaliseCanal() {
     { enabled: !!dateRange?.from && !!dateRange?.to }
   );
 
+  // Buscar contagem de vendas por canal (contagem correta, sem duplicação por produto)
+  const { data: salesCountByChannel } = trpc.salesAnalysis.countByChannel.useQuery(
+    {
+      startDate: dateRange?.from ?? new Date(),
+      endDate: dateRange?.to ?? new Date(),
+      productIds: selectedProductIds.length > 0 ? selectedProductIds : undefined,
+    },
+    { enabled: !!dateRange?.from && !!dateRange?.to }
+  );
+
   const isLoading = isLoadingBalcao || isLoadingDelivery || isLoadingAPrazo;
 
   // Taxa de delivery (7%)
@@ -127,8 +137,9 @@ export default function AnaliseCanal() {
 
       const profit = effectiveRevenue - totals.cost;
       const margin = effectiveRevenue > 0 ? (profit / effectiveRevenue) * 100 : 0;
-      // Contar vendas distintas (usando COUNT DISTINCT do backend)
-      const salesCount = totals.salesCount;
+      // Usar contagem correta de vendas do endpoint countByChannel
+      const channelCount = salesCountByChannel?.find(c => c.saleType === channelKey);
+      const salesCount = channelCount ? parseInt(channelCount.salesCount) : 0;
       const avgTicket = salesCount > 0 ? totals.revenue / salesCount : 0;
 
       return {
@@ -148,7 +159,7 @@ export default function AnaliseCanal() {
       calculateChannelMetrics(deliveryData, 'Delivery', 'DELIVERY'),
       calculateChannelMetrics(aPrazoData, 'A Prazo', 'A_PRAZO'),
     ];
-  }, [balcaoData, deliveryData, aPrazoData]);
+  }, [balcaoData, deliveryData, aPrazoData, salesCountByChannel]);
 
   // Calcular totais
   const totals = useMemo(() => {
