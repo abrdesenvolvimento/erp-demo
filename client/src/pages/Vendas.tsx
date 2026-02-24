@@ -317,11 +317,37 @@ export default function Vendas() {
       return;
     }
 
-    // OTIMIZAÇÃO: Usar preços do produto carregado separadamente
-    const productWithPrices = selectedProductWithPrices || selectedProduct;
-    const price = productWithPrices.prices?.find((p: any) => p.channelId === parseInt(channelId));
+    // Buscar preço: tentar selectedProductWithPrices primeiro, depois selectedProduct
+    const channelIdNum = parseInt(channelId);
+    let price = selectedProductWithPrices?.prices?.find((p: any) => p.channelId === channelIdNum);
+    
+    // Fallback: usar preços do produto carregado na lista (includePrices=true)
     if (!price) {
-      toast.error("Produto não tem preço configurado para este canal");
+      price = selectedProduct.prices?.find((p: any) => p.channelId === channelIdNum);
+    }
+    
+    // Se ainda não encontrou, tentar buscar pelo canal Balcão (para A_PRAZO)
+    if (!price && saleType === 'A_PRAZO') {
+      const balcaoChannel = channels.find((ch: any) => 
+        ch.name.toLowerCase().includes('balcão') || ch.code === 'BALCAO'
+      );
+      if (balcaoChannel) {
+        price = selectedProductWithPrices?.prices?.find((p: any) => p.channelId === balcaoChannel.id)
+          || selectedProduct.prices?.find((p: any) => p.channelId === balcaoChannel.id);
+      }
+    }
+    
+    if (!price) {
+      const channelName = channels.find((ch: any) => ch.id === channelIdNum)?.name || channelId;
+      console.error('[Vendas] Preço não encontrado:', {
+        productId: selectedProduct.id,
+        productName: selectedProduct.name,
+        channelId: channelIdNum,
+        channelName,
+        pricesFromList: selectedProduct.prices?.map((p: any) => ({ channelId: p.channelId, price: p.price })),
+        pricesFromGetWithPrices: selectedProductWithPrices?.prices?.map((p: any) => ({ channelId: p.channelId, price: p.price })),
+      });
+      toast.error(`Produto "${selectedProduct.name}" não tem preço configurado para o canal ${channelName}. Cadastre o preço na tela de Produtos.`);
       return;
     }
 

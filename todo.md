@@ -969,3 +969,6 @@ Despesa de impostos aparece tanto em janeiro quanto em fevereiro após edição 
 - [x] Atualizar Análise Delivery para usar comissão do banco em vez de 7% fixo
 - [x] Adicionar filtro por canal de delivery na Análise Delivery
 - [x] Exibir info do canal selecionado (comissão, taxa, pedidos) no resumo
+
+### Bug Crítico - Preço não configurado para canal (24/02/2026)
+- [x] CRÍTICO: Erro "Produto não tem preço configurado para este canal" ao vender A PRAZO na Adega - corrigido: adicionado fallback robusto de busca de preço (selectedProductWithPrices -> selectedProduct -> canal Balcão) + logs detalhados. Testado na sandbox com sucesso. Requer republicação para produzir efeito no site publicado.

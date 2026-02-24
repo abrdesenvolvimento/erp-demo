@@ -203,9 +203,23 @@ export function SaleDetailsModal({ saleId, open, onClose }: SaleDetailsModalProp
       return;
     }
 
-    const price = selectedProduct.prices?.find((p: any) => p.channelId === saleData.channelId);
+    // Buscar preço com fallback robusto
+    const chId = saleData.channelId;
+    let price = selectedProduct.prices?.find((p: any) => p.channelId === chId);
+    
+    // Se não encontrou, pode ser que o channelId esteja como string
     if (!price) {
-      toast.error(`Produto "${selectedProduct.name}" não tem preço configurado para este canal`);
+      price = selectedProduct.prices?.find((p: any) => String(p.channelId) === String(chId));
+    }
+    
+    if (!price) {
+      console.error('[SaleDetailsModal] Preço não encontrado:', {
+        productId: selectedProduct.id,
+        productName: selectedProduct.name,
+        channelId: chId,
+        prices: selectedProduct.prices?.map((p: any) => ({ channelId: p.channelId, price: p.price })),
+      });
+      toast.error(`Produto "${selectedProduct.name}" não tem preço configurado para este canal. Cadastre o preço na tela de Produtos.`);
       return;
     }
 
