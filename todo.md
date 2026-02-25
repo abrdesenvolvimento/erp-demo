@@ -1106,3 +1106,10 @@ Despesa de impostos aparece tanto em janeiro quanto em fevereiro após edição 
 - [x] Aumentar transição de troca de empresa para 5s (sidebar gradient 5s + overlay 5s delay)
 - [x] Aumentar logo da empresa ativa no seletor (h-14 w-14 rounded-lg)
 - [x] Aumentar logo no overlay de transição (h-24 w-24 rounded-2xl com shadow e zoom-in)
+
+## Ajustes Sidebar — Rodada 4 (25/02/2026)
+- [x] Aumentar logo na tela de transição para h-32 w-32 (128px) com borda accent e shadow-2xl
+- [x] Diminuir transição de 5s para 4s
+- [x] Overlay de transição premium com gradiente da marca (verde Adega / grafite A Brasa) + glow decorativo
+- [x] Barra de progresso temática com cor accent (dourado Adega / laranja A Brasa) + ease-out cubic
+- [x] Animações CSS: fadeIn, logoEntrance (bounce), slideUp escalonado, pulse no glow
