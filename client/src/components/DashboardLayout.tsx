@@ -29,6 +29,57 @@ import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import { Button } from "./ui/button";
 import { useCompany } from "@/contexts/CompanyContext";
 
+// Paleta de cores por empresa — sidebar muda conforme empresa ativa
+const COMPANY_THEMES: Record<number, {
+  sidebarBg: string;
+  sidebarBgGradient: string;
+  textPrimary: string;
+  textMuted: string;
+  accent: string;
+  accentHover: string;
+  activeItemBg: string;
+  borderColor: string;
+  separatorColor: string;
+}> = {
+  // Adega Beira Rio — Verde Lúpulo + Dourado Trigo
+  1: {
+    sidebarBg: '#4a6b2a',
+    sidebarBgGradient: 'linear-gradient(180deg, #5a7d35 0%, #3d5a22 100%)',
+    textPrimary: '#F2F2F2',
+    textMuted: 'rgba(242,242,242,0.65)',
+    accent: '#F0B840',
+    accentHover: 'rgba(240,184,64,0.15)',
+    activeItemBg: 'rgba(240,184,64,0.20)',
+    borderColor: 'rgba(240,184,64,0.25)',
+    separatorColor: 'rgba(242,242,242,0.15)',
+  },
+  // A Brasa Reúne — Grafite + Laranja Brasa
+  2: {
+    sidebarBg: '#2F2F2F',
+    sidebarBgGradient: 'linear-gradient(180deg, #3a3a3a 0%, #1f1f1f 100%)',
+    textPrimary: '#E5D3B3',
+    textMuted: 'rgba(229,211,179,0.60)',
+    accent: '#F07A00',
+    accentHover: 'rgba(240,122,0,0.15)',
+    activeItemBg: 'rgba(240,122,0,0.20)',
+    borderColor: 'rgba(240,122,0,0.25)',
+    separatorColor: 'rgba(229,211,179,0.15)',
+  },
+};
+
+// Tema padrão (teal original) quando nenhuma empresa está selecionada
+const DEFAULT_THEME = {
+  sidebarBg: '',
+  sidebarBgGradient: '',
+  textPrimary: '',
+  textMuted: '',
+  accent: '',
+  accentHover: '',
+  activeItemBg: '',
+  borderColor: '',
+  separatorColor: '',
+};
+
 // Menu items principais (sem submenu)
 const mainMenuItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/", roles: ["admin", "operacional", "consultor"] },
@@ -170,6 +221,10 @@ function DashboardLayoutContent({
   const { companies: userCompanies, activeCompanyId, activeBranchId, activeCompany, setActiveCompany } = useCompany();
   const [companyMenuOpen, setCompanyMenuOpen] = useState(false);
   const isCollapsed = state === "collapsed";
+  
+  // Tema dinâmico por empresa
+  const companyTheme = activeCompanyId ? (COMPANY_THEMES[activeCompanyId] || DEFAULT_THEME) : DEFAULT_THEME;
+  const hasCustomTheme = !!companyTheme.sidebarBg;
   const [isResizing, setIsResizing] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
   
@@ -337,6 +392,17 @@ function DashboardLayoutContent({
           collapsible="icon"
           className="border-r-0"
           disableTransition={isResizing}
+          style={hasCustomTheme ? {
+            background: companyTheme.sidebarBgGradient,
+            color: companyTheme.textPrimary,
+            '--sidebar-accent': companyTheme.activeItemBg,
+            '--sidebar-accent-foreground': companyTheme.textPrimary,
+            '--sidebar-primary': companyTheme.accent,
+            '--sidebar-primary-foreground': companyTheme.textPrimary,
+            '--sidebar-foreground': companyTheme.textPrimary,
+            '--sidebar-muted-foreground': companyTheme.textMuted,
+            '--sidebar-border': companyTheme.separatorColor,
+          } as CSSProperties : undefined}
         >
           <SidebarHeader className="justify-center">
             {/* Logo do Sistema ABRWF — identidade fixa */}
@@ -345,14 +411,16 @@ function DashboardLayoutContent({
                 <div className="relative h-10 w-10 shrink-0 group">
                   <img
                     src={APP_LOGO}
-                    className="h-10 w-10 rounded-md object-contain ring-1 ring-border"
+                    className="h-10 w-10 rounded-md object-contain"
                     alt={APP_TITLE}
+                    style={hasCustomTheme ? { backgroundColor: 'rgba(255,255,255,0.9)', padding: '2px' } : undefined}
                   />
                   <button
                     onClick={toggleSidebar}
-                    className="absolute inset-0 flex items-center justify-center bg-accent rounded-md ring-1 ring-border opacity-0 group-hover:opacity-100 transition-opacity focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className="absolute inset-0 flex items-center justify-center rounded-md opacity-0 group-hover:opacity-100 transition-opacity focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    style={hasCustomTheme ? { backgroundColor: companyTheme.activeItemBg } : { backgroundColor: 'var(--accent)' }}
                   >
-                    <PanelLeft className="h-4 w-4 text-foreground" />
+                    <PanelLeft className="h-4 w-4" />
                   </button>
                 </div>
               ) : (
@@ -362,6 +430,7 @@ function DashboardLayoutContent({
                       src={APP_LOGO}
                       className="h-10 w-auto max-w-[40px] rounded-md object-contain shrink-0"
                       alt={APP_TITLE}
+                      style={hasCustomTheme ? { backgroundColor: 'rgba(255,255,255,0.9)', padding: '2px' } : undefined}
                     />
                     <span className="font-bold tracking-tight text-base">
                       {APP_TITLE}
@@ -369,9 +438,10 @@ function DashboardLayoutContent({
                   </div>
                   <button
                     onClick={toggleSidebar}
-                    className="ml-auto h-8 w-8 flex items-center justify-center hover:bg-accent rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring shrink-0"
+                    className="ml-auto h-8 w-8 flex items-center justify-center rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring shrink-0"
+                    style={hasCustomTheme ? { color: companyTheme.textMuted } : undefined}
                   >
-                    <PanelLeft className="h-4 w-4 text-muted-foreground" />
+                    <PanelLeft className="h-4 w-4" />
                   </button>
                 </>
               )}
@@ -381,12 +451,12 @@ function DashboardLayoutContent({
           {/* Empresa Ativa — seletor com logo e dados */}
           {!isCollapsed && userCompanies.length > 0 && (
             <div className="px-3 pb-3">
-              <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium mb-1.5 px-1">Empresa Ativa</p>
+              <p className="text-[10px] uppercase tracking-wider font-medium mb-1.5 px-1" style={hasCustomTheme ? { color: companyTheme.textMuted } : { color: 'var(--muted-foreground)' }}>Empresa Ativa</p>
               <DropdownMenu open={companyMenuOpen} onOpenChange={setCompanyMenuOpen}>
                 <DropdownMenuTrigger asChild>
-                  <button className="flex items-center gap-3 w-full rounded-lg border border-primary/20 bg-primary/5 px-3 py-2.5 text-left hover:bg-primary/10 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                  <button className="flex items-center gap-3 w-full rounded-lg border px-3 py-2.5 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring" style={hasCustomTheme ? { borderColor: companyTheme.borderColor, backgroundColor: companyTheme.accentHover } : { borderColor: 'var(--primary-20)', backgroundColor: 'var(--primary-5)' }}>
                     {activeCompany?.companyLogoUrl ? (
-                      <img src={activeCompany.companyLogoUrl} alt="" className="h-8 w-8 rounded-md object-contain ring-1 ring-border shrink-0" />
+                      <img src={activeCompany.companyLogoUrl} alt="" className="h-9 w-9 rounded-md object-contain shrink-0" />
                     ) : (
                       <div className="h-8 w-8 rounded-md bg-muted flex items-center justify-center shrink-0">
                         <Building2 className="h-4 w-4 text-muted-foreground" />
@@ -397,13 +467,13 @@ function DashboardLayoutContent({
                         {activeCompany?.companyName || activeCompany?.companyLegalName || 'Selecionar Empresa'}
                       </p>
                       {activeCompany?.branchName && (
-                        <p className="text-[10px] text-muted-foreground truncate mt-0.5 flex items-center gap-1">
+                        <p className="text-[10px] truncate mt-0.5 flex items-center gap-1" style={hasCustomTheme ? { color: companyTheme.textMuted } : { color: 'var(--muted-foreground)' }}>
                           <MapPin className="h-2.5 w-2.5" />
                           {activeCompany.branchName}
                         </p>
                       )}
                     </div>
-                    <ChevronDown className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                    <ChevronDown className="h-3.5 w-3.5 shrink-0" style={hasCustomTheme ? { color: companyTheme.textMuted } : undefined} />
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start" className="w-64">
@@ -472,7 +542,7 @@ function DashboardLayoutContent({
               {visibleFinanceItems.length > 0 && (
                 <>
                   {/* Separador visual */}
-                  <div className="my-2 mx-2 border-t border-border/50" />
+                  <div className="my-2 mx-2 border-t" style={hasCustomTheme ? { borderColor: companyTheme.separatorColor } : { borderColor: 'var(--border)' }} />
                   
                   {/* Cabeçalho do submenu */}
                   <SidebarMenuItem>
@@ -495,7 +565,7 @@ function DashboardLayoutContent({
 
                   {/* Itens do submenu */}
                   {financeExpanded && !isCollapsed && (
-                    <div className="ml-4 border-l border-border/50 pl-2">
+                    <div className="ml-4 border-l pl-2" style={hasCustomTheme ? { borderColor: companyTheme.separatorColor } : { borderColor: 'var(--border)' }}>
                       {visibleFinanceItems.map(item => {
                         const isActive = location === item.path;
                         return (
@@ -543,7 +613,7 @@ function DashboardLayoutContent({
               {visibleAccountingItems.length > 0 && (
                 <>
                   {/* Separador visual */}
-                  <div className="my-2 mx-2 border-t border-border/50" />
+                  <div className="my-2 mx-2 border-t" style={hasCustomTheme ? { borderColor: companyTheme.separatorColor } : { borderColor: 'var(--border)' }} />
                   
                   {/* Cabeçalho do submenu */}
                   <SidebarMenuItem>
@@ -566,7 +636,7 @@ function DashboardLayoutContent({
 
                   {/* Itens do submenu */}
                   {accountingExpanded && !isCollapsed && (
-                    <div className="ml-4 border-l border-border/50 pl-2">
+                    <div className="ml-4 border-l pl-2" style={hasCustomTheme ? { borderColor: companyTheme.separatorColor } : { borderColor: 'var(--border)' }}>
                       {visibleAccountingItems.map(item => {
                         const isActive = location === item.path;
                         return (
@@ -614,7 +684,7 @@ function DashboardLayoutContent({
               {visibleAnalysisItems.length > 0 && (
                 <>
                   {/* Separador visual */}
-                  <div className="my-2 mx-2 border-t border-border/50" />
+                  <div className="my-2 mx-2 border-t" style={hasCustomTheme ? { borderColor: companyTheme.separatorColor } : { borderColor: 'var(--border)' }} />
                   
                   {/* Cabeçalho do submenu */}
                   <SidebarMenuItem>
@@ -637,7 +707,7 @@ function DashboardLayoutContent({
 
                   {/* Itens do submenu */}
                   {analysisExpanded && !isCollapsed && (
-                    <div className="ml-4 border-l border-border/50 pl-2">
+                    <div className="ml-4 border-l pl-2" style={hasCustomTheme ? { borderColor: companyTheme.separatorColor } : { borderColor: 'var(--border)' }}>
                       {visibleAnalysisItems.map(item => {
                         const isActive = location === item.path;
                         return (
@@ -686,9 +756,15 @@ function DashboardLayoutContent({
           <SidebarFooter className="p-3">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-3 rounded-lg px-1 py-1 hover:bg-accent/50 transition-colors w-full text-left group-data-[collapsible=icon]:justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-                  <Avatar className="h-9 w-9 border shrink-0">
-                    <AvatarFallback className="text-xs font-medium">
+                <button
+                  className="flex items-center gap-3 rounded-lg px-1 py-1 transition-colors w-full text-left group-data-[collapsible=icon]:justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  style={hasCustomTheme ? { color: companyTheme.textPrimary } : undefined}
+                >
+                  <Avatar className="h-9 w-9 shrink-0" style={hasCustomTheme ? { border: `1px solid ${companyTheme.separatorColor}` } : { border: '1px solid var(--border)' }}>
+                    <AvatarFallback
+                      className="text-xs font-medium"
+                      style={hasCustomTheme ? { backgroundColor: companyTheme.accentHover, color: companyTheme.accent } : undefined}
+                    >
                       {user?.name?.charAt(0).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
@@ -698,7 +774,7 @@ function DashboardLayoutContent({
                         {user?.name || "-"}
                       </p>
                       {user?.role === 'admin' && (
-                        <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-amber-100 text-amber-700">Admin</span>
+                        <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium" style={hasCustomTheme ? { backgroundColor: `${companyTheme.accent}30`, color: companyTheme.accent } : undefined}>Admin</span>
                       )}
                       {user?.role === 'operacional' && (
                         <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-700">Operacional</span>
@@ -707,7 +783,7 @@ function DashboardLayoutContent({
                         <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-purple-100 text-purple-700">Consultor</span>
                       )}
                     </div>
-                    <p className="text-xs text-muted-foreground truncate mt-1.5">
+                    <p className="text-xs truncate mt-1.5" style={hasCustomTheme ? { color: companyTheme.textMuted } : { color: 'var(--muted-foreground)' }}>
                       {user?.email || "-"}
                     </p>
                   </div>

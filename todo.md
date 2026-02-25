@@ -1088,3 +1088,10 @@ Despesa de impostos aparece tanto em janeiro quanto em fevereiro após edição 
 ## Melhoria Sidebar — Identidade do Sistema (25/02/2026)
 - [x] Reorganizar sidebar: logo ABRWF (sistema) no topo, empresa ativa (logo+nome) abaixo separadamente
 - [x] Manter identidade visual do sistema independente da empresa acessada
+
+## Melhoria Sidebar — Cores por Empresa e Logo (25/02/2026)
+- [x] Remover "rebarba" (fundo branco arredondado) da logo da empresa no sidebar — preencher espaço total
+- [x] Implementar cores dinâmicas do sidebar por empresa (Adega: verde lúpulo/dourado; A Brasa: grafite/laranja)
+- [x] Armazenar paleta de cores no frontend por companyId (COMPANY_THEMES em DashboardLayout.tsx)
+- [x] Testes de contraste WCAG AA para acessibilidade (23 testes passando)
+- [x] Ajuste do dourado Adega de #E3A72F → #F0B840 para melhor contraste com verde (ratio >= 3:1)
