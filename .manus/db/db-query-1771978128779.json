@@ -1,0 +1,25 @@
+{
+  "query": "\nSELECT \n  'Todos (active=1, não composto)' as tipo,\n  COUNT(*) as qtd,\n  ROUND(SUM(currentStock * avgCost), 2) as valor_estoque\nFROM products \nWHERE active = 1 \n  AND (isComposite = 0 OR isComposite IS NULL)\n  AND currentStock > 0\n  AND avgCost > 0\n  AND companyId = 1\n\nUNION ALL\n\nSELECT \n  'Todos (incluindo inativos, não composto)' as tipo,\n  COUNT(*) as qtd,\n  ROUND(SUM(currentStock * avgCost), 2) as valor_estoque\nFROM products \nWHERE (isComposite = 0 OR isComposite IS NULL)\n  AND currentStock > 0\n  AND avgCost > 0\n  AND companyId = 1\n\nUNION ALL\n\nSELECT \n  'Inativos com estoque' as tipo,\n  COUNT(*) as qtd,\n  ROUND(SUM(currentStock * avgCost), 2) as valor_estoque\nFROM products \nWHERE active = 0\n  AND (isComposite = 0 OR isComposite IS NULL)\n  AND currentStock > 0\n  AND avgCost > 0\n  AND companyId = 1\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute \nSELECT \n  'Todos (active=1, não composto)' as tipo,\n  COUNT(*) as qtd,\n  ROUND(SUM(currentStock * avgCost), 2) as valor_estoque\nFROM products \nWHERE active = 1 \n  AND (isComposite = 0 OR isComposite IS NULL)\n  AND currentStock > 0\n  AND avgCost > 0\n  AND companyId = 1\n\nUNION ALL\n\nSELECT \n  'Todos (incluindo inativos, não composto)' as tipo,\n  COUNT(*) as qtd,\n  ROUND(SUM(currentStock * avgCost), 2) as valor_estoque\nFROM products \nWHERE (isComposite = 0 OR isComposite IS NULL)\n  AND currentStock > 0\n  AND avgCost > 0\n  AND companyId = 1\n\nUNION ALL\n\nSELECT \n  'Inativos com estoque' as tipo,\n  COUNT(*) as qtd,\n  ROUND(SUM(currentStock * avgCost), 2) as valor_estoque\nFROM products \nWHERE active = 0\n  AND (isComposite = 0 OR isComposite IS NULL)\n  AND currentStock > 0\n  AND avgCost > 0\n  AND companyId = 1\n",
+  "rows": [
+    {
+      "tipo": "Todos (active=1, não composto)",
+      "qtd": "805",
+      "valor_estoque": "106724.43"
+    },
+    {
+      "tipo": "Inativos com estoque",
+      "qtd": "19",
+      "valor_estoque": "9001.88"
+    },
+    {
+      "tipo": "Todos (incluindo inativos, não composto)",
+      "qtd": "824",
+      "valor_estoque": "115726.31"
+    }
+  ],
+  "messages": [],
+  "stdout": "tipo\tqtd\tvalor_estoque\nTodos (active=1, não composto)\t805\t106724.43\nInativos com estoque\t19\t9001.88\nTodos (incluindo inativos, não composto)\t824\t115726.31\n",
+  "stderr": "",
+  "execution_time_ms": 119
+}

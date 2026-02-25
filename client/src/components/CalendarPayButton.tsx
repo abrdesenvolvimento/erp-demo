@@ -11,6 +11,8 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 
@@ -96,7 +98,6 @@ export function CalendarPayButton({ item, onPaymentSuccess }: CalendarPayButtonP
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
-          console.log('CalendarPayButton clicado!', item);
           setShowModal(true);
         }}
       >
@@ -104,71 +105,72 @@ export function CalendarPayButton({ item, onPaymentSuccess }: CalendarPayButtonP
       </Button>
 
       <Dialog open={showModal} onOpenChange={setShowModal}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>Registrar Pagamento</DialogTitle>
             <DialogDescription>
-              {item.supplierName} - Doc: {item.docNumber} - Valor: R$ {amount.toFixed(2)}
+              {item.supplierName} - Doc: {item.docNumber} - Valor: {formatCurrency(amount)}
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="paidDate" className="text-right">
-                Data Pagamento
-              </Label>
-              <Input
-                id="paidDate"
-                type="date"
-                value={paymentForm.paidDate}
-                onChange={(e) => setPaymentForm({ ...paymentForm, paidDate: e.target.value })}
-                className="col-span-3"
-              />
+
+          <div className="space-y-4 py-2">
+            {/* Data e Valor Base */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="cal-paidDate">Data do Pagamento *</Label>
+                <Input
+                  id="cal-paidDate"
+                  type="date"
+                  value={paymentForm.paidDate}
+                  onChange={(e) => setPaymentForm({ ...paymentForm, paidDate: e.target.value })}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="cal-paidAmount">Valor Base *</Label>
+                <Input
+                  id="cal-paidAmount"
+                  type="number"
+                  step="0.01"
+                  value={paymentForm.paidAmount}
+                  onChange={(e) => setPaymentForm({ ...paymentForm, paidAmount: e.target.value })}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Pendente: {formatCurrency(amount)}
+                </p>
+              </div>
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="paidAmount" className="text-right">
-                Valor Base
-              </Label>
-              <Input
-                id="paidAmount"
-                type="number"
-                step="0.01"
-                value={paymentForm.paidAmount}
-                onChange={(e) => setPaymentForm({ ...paymentForm, paidAmount: e.target.value })}
-                className="col-span-3"
-              />
+
+            {/* Juros e Desconto */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="cal-interestAmount">Juros/Multa (+)</Label>
+                <Input
+                  id="cal-interestAmount"
+                  type="number"
+                  step="0.01"
+                  placeholder="0.00"
+                  value={paymentForm.interestAmount}
+                  onChange={(e) => setPaymentForm({ ...paymentForm, interestAmount: e.target.value })}
+                />
+                <p className="text-xs text-muted-foreground">Valor adicional por atraso</p>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="cal-discountAmount">Desconto (-)</Label>
+                <Input
+                  id="cal-discountAmount"
+                  type="number"
+                  step="0.01"
+                  placeholder="0.00"
+                  value={paymentForm.discountAmount}
+                  onChange={(e) => setPaymentForm({ ...paymentForm, discountAmount: e.target.value })}
+                />
+                <p className="text-xs text-muted-foreground">Desconto obtido</p>
+              </div>
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="interestAmount" className="text-right">
-                Juros/Multa (+)
-              </Label>
-              <Input
-                id="interestAmount"
-                type="number"
-                step="0.01"
-                placeholder="0.00"
-                value={paymentForm.interestAmount}
-                onChange={(e) => setPaymentForm({ ...paymentForm, interestAmount: e.target.value })}
-                className="col-span-3"
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="discountAmount" className="text-right">
-                Desconto (-)
-              </Label>
-              <Input
-                id="discountAmount"
-                type="number"
-                step="0.01"
-                placeholder="0.00"
-                value={paymentForm.discountAmount}
-                onChange={(e) => setPaymentForm({ ...paymentForm, discountAmount: e.target.value })}
-                className="col-span-3"
-              />
-            </div>
-            
+
             {/* Resumo do pagamento */}
             {(baseAmount > 0 || interestAmount > 0 || discountAmount > 0) && (
-              <div className="col-span-4 bg-muted p-3 rounded-md">
+              <div className="bg-muted p-3 rounded-md">
                 <div className="flex justify-between text-sm">
                   <span>Valor Base:</span>
                   <span>{formatCurrency(baseAmount)}</span>
@@ -188,31 +190,40 @@ export function CalendarPayButton({ item, onPaymentSuccess }: CalendarPayButtonP
                 <hr className="my-2" />
                 <div className="flex justify-between font-medium">
                   <span>Total Efetivo:</span>
-                  <span className="text-lg">{formatCurrency(totalEffective)}</span>
+                  <span className="text-lg font-bold">{formatCurrency(totalEffective)}</span>
                 </div>
               </div>
             )}
-            
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="paymentMethod" className="text-right">
-                Forma Pagamento
-              </Label>
-              <Input
-                id="paymentMethod"
+
+            {/* Forma de Pagamento */}
+            <div className="space-y-1.5">
+              <Label htmlFor="cal-paymentMethod">Forma de Pagamento *</Label>
+              <Select
                 value={paymentForm.paymentMethod}
-                onChange={(e) => setPaymentForm({ ...paymentForm, paymentMethod: e.target.value })}
-                className="col-span-3"
-              />
+                onValueChange={(value) => setPaymentForm({ ...paymentForm, paymentMethod: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="DINHEIRO">Dinheiro</SelectItem>
+                  <SelectItem value="PIX">PIX</SelectItem>
+                  <SelectItem value="CARTAO_DEBITO">Débito</SelectItem>
+                  <SelectItem value="CARTAO_CREDITO">Crédito</SelectItem>
+                  <SelectItem value="TRANSFERENCIA">Transferência Bancária</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="notes" className="text-right">
-                Observações
-              </Label>
-              <Input
-                id="notes"
+
+            {/* Observações */}
+            <div className="space-y-1.5">
+              <Label htmlFor="cal-notes">Observações</Label>
+              <Textarea
+                id="cal-notes"
+                placeholder="Informações adicionais sobre o pagamento..."
                 value={paymentForm.notes}
                 onChange={(e) => setPaymentForm({ ...paymentForm, notes: e.target.value })}
-                className="col-span-3"
+                rows={2}
               />
             </div>
           </div>

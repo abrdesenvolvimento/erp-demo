@@ -1865,25 +1865,28 @@ export const appRouter = router({
       // Total pendente a receber
       const totalPendingReceivables = await db.getTotalPendingReceivables(ctx.activeCompanyId);
       
-      // Valor total em estoque (excluindo produtos compostos)
-      const totalStockValue = products
-        .filter(p => p.active && !p.isComposite && p.currentStock && p.avgCost)
-        .reduce((sum, p) => sum + (parseFloat(p.currentStock!.toString()) * parseFloat(p.avgCost!.toString())), 0);
-      
       // Valor em estoque por categoria (excluindo produtos compostos)
+      // Usa mesma lógica da Análise de Estoque: SUM(currentStock * avgCost) por categoria
+      // Inclui produtos com estoque negativo para refletir divergências de inventário
       const categories = await db.getCategories(true, ctx.activeCompanyId);
       const stockValueByCategory = categories.map(cat => {
         const categoryProducts = products.filter(p => p.active && !p.isComposite && p.categoryId === cat.id);
         const value = categoryProducts.reduce((sum, p) => {
-          if (p.currentStock && p.avgCost) {
-            return sum + (parseFloat(p.currentStock.toString()) * parseFloat(p.avgCost.toString()));
+          const stock = parseFloat(p.currentStock?.toString() || '0');
+          const cost = parseFloat(p.avgCost?.toString() || '0');
+          if (stock !== 0 && cost !== 0) {
+            return sum + (stock * cost);
           }
           return sum;
         }, 0);
         
-        // Mapear produtos com seus valores individuais
+        // Mapear produtos com seus valores individuais (apenas os com estoque positivo para exibição)
         const productsWithValue = categoryProducts
-          .filter(p => p.currentStock && p.avgCost)
+          .filter(p => {
+            const stock = parseFloat(p.currentStock?.toString() || '0');
+            const cost = parseFloat(p.avgCost?.toString() || '0');
+            return stock > 0 && cost > 0;
+          })
           .map(p => {
             const productValue = parseFloat(p.currentStock!.toString()) * parseFloat(p.avgCost!.toString());
             return {
@@ -1894,7 +1897,7 @@ export const appRouter = router({
               value: productValue.toFixed(2),
             };
           })
-          .sort((a, b) => parseFloat(b.value) - parseFloat(a.value)); // Ordenar por valor (maior para menor)
+          .sort((a, b) => parseFloat(b.value) - parseFloat(a.value));
         
         return {
           categoryId: cat.id,
@@ -1903,6 +1906,9 @@ export const appRouter = router({
           products: productsWithValue,
         };
       }).filter(c => parseFloat(c.value) > 0).sort((a, b) => parseFloat(b.value) - parseFloat(a.value));
+      
+      // Valor total em estoque = soma dos valores por categoria (alinhado com Análise de Estoque)
+      const totalStockValue = stockValueByCategory.reduce((sum, c) => sum + parseFloat(c.value), 0);
       
       // Produtos próximos ao vencimento (30 dias) - apenas com estoque > 0
       const expiringProducts = products.filter(p => {

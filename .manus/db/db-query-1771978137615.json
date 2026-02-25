@@ -1,0 +1,20 @@
+{
+  "query": "\nSELECT \n  CASE WHEN active = 1 THEN 'Ativo' ELSE 'Inativo' END as status,\n  COUNT(*) as qtd_produtos,\n  ROUND(SUM(currentStock * avgCost), 2) as valor_estoque\nFROM products \nWHERE (isComposite = 0 OR isComposite IS NULL)\n  AND currentStock IS NOT NULL\n  AND avgCost IS NOT NULL\n  AND currentStock > 0\n  AND avgCost > 0\n  AND companyId = 1\nGROUP BY active\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute \nSELECT \n  CASE WHEN active = 1 THEN 'Ativo' ELSE 'Inativo' END as status,\n  COUNT(*) as qtd_produtos,\n  ROUND(SUM(currentStock * avgCost), 2) as valor_estoque\nFROM products \nWHERE (isComposite = 0 OR isComposite IS NULL)\n  AND currentStock IS NOT NULL\n  AND avgCost IS NOT NULL\n  AND currentStock > 0\n  AND avgCost > 0\n  AND companyId = 1\nGROUP BY active\n",
+  "rows": [
+    {
+      "status": "Inativo",
+      "qtd_produtos": "19",
+      "valor_estoque": "9001.88"
+    },
+    {
+      "status": "Ativo",
+      "qtd_produtos": "805",
+      "valor_estoque": "106724.43"
+    }
+  ],
+  "messages": [],
+  "stdout": "status\tqtd_produtos\tvalor_estoque\nInativo\t19\t9001.88\nAtivo\t805\t106724.43\n",
+  "stderr": "",
+  "execution_time_ms": 54
+}

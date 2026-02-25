@@ -1031,3 +1031,11 @@ Despesa de impostos aparece tanto em janeiro quanto em fevereiro após edição 
 ### Bugs reportados (24/02/2026 - Lote 3)
 - [x] Bug: Despesas não apareciam - causa real: tabela expenseCategories no banco não tinha colunas companyId/branchId que o Drizzle schema esperava. Adicionadas via ALTER TABLE + schema sincronizado.
 - [x] Bug: Análise por Canal - Delivery mostrava 1081 em vez de 695 vendas - causa: frontend somava salesCount por produto (mesma venda contada múltiplas vezes). Corrigido: nova rota countByChannel conta vendas distintas por canal sem agrupar por produto.
+
+### Bugs e melhorias reportados (24/02/2026 - Lote 4)
+- [x] Bug: Modal de baixa de pagamento (Contas a Pagar) com layout quebrado - campos sobrepostos
+- [x] Bug: Divergência valor estoque - Análise Estoque R$96.424 vs Dashboard R$106.602
+- [x] Melhoria: Fechamento - Adicionar linha de Total nas tabelas Vendas por Categoria e Compras por Categoria
+- [x] Melhoria: Impressão do Fechamento - Layout cortado, tabelas não cabem na página
+- [x] Melhoria: Atualizar logo da Adega Beira Rio na tela de seleção de empresa (imagem mais nítida)
+- [x] Bug: Erro "Venda não pertence a esta empresa" ao tentar excluir venda teste na A Brasa

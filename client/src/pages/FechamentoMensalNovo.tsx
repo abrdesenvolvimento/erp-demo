@@ -440,48 +440,72 @@ export default function FechamentoMensalNovo() {
                     </TableHeader>
                     <TableBody>
                       {data.salesByCategory && data.salesByCategory.length > 0 ? (
-                        data.salesByCategory.map((cat: any) => {
-                          // Buscar margem do mês anterior para esta categoria
-                          const prevCat = data.previousMonth?.salesByCategory?.find(
-                            (pc: any) => pc.categoryId === cat.categoryId
-                          );
-                          const marginDiff = prevCat ? cat.margin - prevCat.margin : null;
-                          
-                          return (
-                            <TableRow key={cat.categoryId}>
-                              <TableCell className="font-medium">{cat.categoryName}</TableCell>
-                              <TableCell className="text-right font-mono">
-                                {formatCurrency(cat.revenue)}
-                              </TableCell>
-                              <TableCell className="text-right text-muted-foreground">
-                                {formatPercent(cat.percentage)}
-                              </TableCell>
-                              <TableCell className={`text-right font-bold ${
-                                cat.margin >= 30 ? 'text-green-600' : 
-                                cat.margin >= 15 ? 'text-amber-600' : 
-                                'text-red-600'
-                              }`}>
-                                {formatPercent(cat.margin)}
-                              </TableCell>
-                              <TableCell className="text-right">
-                                {marginDiff !== null ? (
-                                  <span className={`text-xs font-medium flex items-center justify-end gap-0.5 ${
-                                    marginDiff > 0.5 ? 'text-green-600' : 
-                                    marginDiff < -0.5 ? 'text-red-600' : 
-                                    'text-muted-foreground'
-                                  }`}>
-                                    {marginDiff > 0.5 ? <ArrowUp className="h-3 w-3" /> : 
-                                     marginDiff < -0.5 ? <ArrowDown className="h-3 w-3" /> : 
-                                     <Minus className="h-3 w-3" />}
-                                    {marginDiff > 0 ? '+' : ''}{marginDiff.toFixed(1)}pp
-                                  </span>
-                                ) : (
-                                  <span className="text-xs text-muted-foreground">-</span>
-                                )}
-                              </TableCell>
-                            </TableRow>
-                          );
-                        })
+                        <>
+                          {data.salesByCategory.map((cat: any) => {
+                            // Buscar margem do mês anterior para esta categoria
+                            const prevCat = data.previousMonth?.salesByCategory?.find(
+                              (pc: any) => pc.categoryId === cat.categoryId
+                            );
+                            const marginDiff = prevCat ? cat.margin - prevCat.margin : null;
+                            
+                            return (
+                              <TableRow key={cat.categoryId}>
+                                <TableCell className="font-medium">{cat.categoryName}</TableCell>
+                                <TableCell className="text-right font-mono">
+                                  {formatCurrency(cat.revenue)}
+                                </TableCell>
+                                <TableCell className="text-right text-muted-foreground">
+                                  {formatPercent(cat.percentage)}
+                                </TableCell>
+                                <TableCell className={`text-right font-bold ${
+                                  cat.margin >= 30 ? 'text-green-600' : 
+                                  cat.margin >= 15 ? 'text-amber-600' : 
+                                  'text-red-600'
+                                }`}>
+                                  {formatPercent(cat.margin)}
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  {marginDiff !== null ? (
+                                    <span className={`text-xs font-medium flex items-center justify-end gap-0.5 ${
+                                      marginDiff > 0.5 ? 'text-green-600' : 
+                                      marginDiff < -0.5 ? 'text-red-600' : 
+                                      'text-muted-foreground'
+                                    }`}>
+                                      {marginDiff > 0.5 ? <ArrowUp className="h-3 w-3" /> : 
+                                       marginDiff < -0.5 ? <ArrowDown className="h-3 w-3" /> : 
+                                       <Minus className="h-3 w-3" />}
+                                      {marginDiff > 0 ? '+' : ''}{marginDiff.toFixed(1)}pp
+                                    </span>
+                                  ) : (
+                                    <span className="text-xs text-muted-foreground">-</span>
+                                  )}
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
+                          {/* Linha de Total */}
+                          <TableRow className="border-t-2 bg-muted/50 font-bold">
+                            <TableCell className="font-bold">Total</TableCell>
+                            <TableCell className="text-right font-mono font-bold">
+                              {formatCurrency(data.salesByCategory.reduce((sum: number, cat: any) => sum + (cat.revenue || 0), 0))}
+                            </TableCell>
+                            <TableCell className="text-right font-bold">100%</TableCell>
+                            <TableCell className={`text-right font-bold ${
+                              (() => {
+                                const totalRev = data.salesByCategory.reduce((s: number, c: any) => s + (c.revenue || 0), 0);
+                                const weightedMargin = totalRev > 0 ? data.salesByCategory.reduce((s: number, c: any) => s + (c.margin || 0) * (c.revenue || 0), 0) / totalRev : 0;
+                                return weightedMargin >= 30 ? 'text-green-600' : weightedMargin >= 15 ? 'text-amber-600' : 'text-red-600';
+                              })()
+                            }`}>
+                              {(() => {
+                                const totalRev = data.salesByCategory.reduce((s: number, c: any) => s + (c.revenue || 0), 0);
+                                const weightedMargin = totalRev > 0 ? data.salesByCategory.reduce((s: number, c: any) => s + (c.margin || 0) * (c.revenue || 0), 0) / totalRev : 0;
+                                return formatPercent(weightedMargin);
+                              })()}
+                            </TableCell>
+                            <TableCell></TableCell>
+                          </TableRow>
+                        </>
                       ) : (
                         <TableRow>
                           <TableCell colSpan={5} className="text-center text-muted-foreground">
@@ -512,17 +536,27 @@ export default function FechamentoMensalNovo() {
                     </TableHeader>
                     <TableBody>
                       {data.purchasesByCategory && data.purchasesByCategory.length > 0 ? (
-                        data.purchasesByCategory.map((cat: any) => (
-                          <TableRow key={cat.categoryId}>
-                            <TableCell className="font-medium">{cat.categoryName}</TableCell>
-                            <TableCell className="text-right font-mono">
-                              {formatCurrency(cat.amount)}
+                        <>
+                          {data.purchasesByCategory.map((cat: any) => (
+                            <TableRow key={cat.categoryId}>
+                              <TableCell className="font-medium">{cat.categoryName}</TableCell>
+                              <TableCell className="text-right font-mono">
+                                {formatCurrency(cat.amount)}
+                              </TableCell>
+                              <TableCell className="text-right text-muted-foreground">
+                                {formatPercent(cat.percentage)}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                          {/* Linha de Total */}
+                          <TableRow className="border-t-2 bg-muted/50 font-bold">
+                            <TableCell className="font-bold">Total</TableCell>
+                            <TableCell className="text-right font-mono font-bold">
+                              {formatCurrency(data.purchasesByCategory.reduce((sum: number, cat: any) => sum + (cat.amount || 0), 0))}
                             </TableCell>
-                            <TableCell className="text-right text-muted-foreground">
-                              {formatPercent(cat.percentage)}
-                            </TableCell>
+                            <TableCell className="text-right font-bold">100%</TableCell>
                           </TableRow>
-                        ))
+                        </>
                       ) : (
                         <TableRow>
                           <TableCell colSpan={3} className="text-center text-muted-foreground">
@@ -817,6 +851,111 @@ export default function FechamentoMensalNovo() {
           </div>
         ) : null}
       </div>
+
+      {/* Estilos de impressão */}
+      <style>{`
+        @media print {
+          @page {
+            size: A4 landscape;
+            margin: 8mm;
+          }
+          body {
+            print-color-adjust: exact;
+            -webkit-print-color-adjust: exact;
+            font-size: 9px !important;
+          }
+          /* Esconder sidebar, header, controles e scrollbars */
+          [data-sidebar],
+          nav,
+          header,
+          .print\:hidden,
+          ::-webkit-scrollbar {
+            display: none !important;
+          }
+          .print\:block {
+            display: block !important;
+          }
+          /* Mostrar conteúdo em largura total */
+          main,
+          [data-sidebar-inset],
+          .flex-1 {
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 100% !important;
+            max-width: 100% !important;
+          }
+          /* Cards compactos sem sombra */
+          .border,
+          [class*="Card"] {
+            box-shadow: none !important;
+            border: 1px solid #d1d5db !important;
+            break-inside: avoid;
+          }
+          /* Padding compacto nos cards */
+          [class*="CardHeader"] {
+            padding: 8px 12px 4px !important;
+          }
+          [class*="CardContent"] {
+            padding: 4px 12px 8px !important;
+          }
+          /* Tabelas compactas e sem overflow */
+          table {
+            font-size: 8px !important;
+            width: 100% !important;
+            table-layout: fixed;
+          }
+          th, td {
+            padding: 2px 4px !important;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+          }
+          /* Overflow hidden para containers de tabela */
+          .overflow-x-auto,
+          .overflow-auto {
+            overflow: visible !important;
+          }
+          /* Grid de cards de resumo */
+          .print\:grid-cols-4 {
+            grid-template-columns: repeat(4, 1fr) !important;
+            gap: 8px !important;
+          }
+          .print\:grid-cols-2 {
+            grid-template-columns: repeat(2, 1fr) !important;
+            gap: 8px !important;
+          }
+          .print\:space-y-4 > * + * {
+            margin-top: 8px !important;
+          }
+          /* Texto dos cards de resumo menor */
+          .text-2xl {
+            font-size: 16px !important;
+          }
+          .text-lg {
+            font-size: 12px !important;
+          }
+          .text-sm {
+            font-size: 8px !important;
+          }
+          .text-xs {
+            font-size: 7px !important;
+          }
+          /* Espaçamento entre seções */
+          .space-y-6 > * + * {
+            margin-top: 8px !important;
+          }
+          .gap-6 {
+            gap: 8px !important;
+          }
+          .gap-4 {
+            gap: 6px !important;
+          }
+          /* Evitar quebra de página dentro de cards */
+          .space-y-6 > div {
+            break-inside: avoid;
+          }
+        }
+      `}</style>
     </DashboardLayout>
   );
 }

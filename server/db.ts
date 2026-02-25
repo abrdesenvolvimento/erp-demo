@@ -653,7 +653,7 @@ export async function getSale(id: number) {
       s.subtotal, s.discountAmount, s.surchargeAmount, s.finalAmount,
       s.paymentMethod, s.requiresAdminApproval, s.adminApprovedBy, s.notes,
       s.status, s.cancelledAt, s.cancelledBy, s.cancellationReason,
-      s.createdBy, s.createdAt,
+      s.createdBy, s.createdAt, s.companyId, s.branchId,
       u.name as sellerName,
       COALESCE(p.tradeName, p.name) as customerName
     FROM sales s
@@ -1640,7 +1640,7 @@ export async function cancelSale(saleId: number, userId: string, reason?: string
   // Buscar venda
   const sale = await getSale(saleId);
   if (!sale) throw new Error("Venda não encontrada");
-  if (companyId && sale.companyId !== companyId) throw new Error("Venda não pertence a esta empresa");
+  if (companyId && Number(sale.companyId) !== Number(companyId)) throw new Error("Venda não pertence a esta empresa");
   if (sale.status === "CANCELLED") throw new Error("Venda já está cancelada");
 
   // Validar limite de 24h (usando horário de Brasília)
