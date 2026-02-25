@@ -1134,3 +1134,7 @@ Despesa de impostos aparece tanto em janeiro quanto em fevereiro após edição 
 - [x] Submenu "Administração" visível apenas para role=admin
 - [x] Seção de atividade do perfil: lista de 8 tipos de ações que serão registradas + nota de auditoria
 - [x] Testes: 10 testes passando (perfil-admin-menu.test.ts)
+
+## Ajustes Finais — Publicação 25/02/2026
+- [x] Exibir avatar do usuário no sidebar footer quando houver foto cadastrada (AvatarImage)
+- [x] Trocar subtítulo do Dashboard para "Visão Geral"

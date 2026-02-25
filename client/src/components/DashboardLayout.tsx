@@ -1,5 +1,5 @@
 import { useAuth } from "@/_core/hooks/useAuth";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -896,6 +896,9 @@ function DashboardLayoutContent({
                   style={hasCustomTheme ? { color: companyTheme.textPrimary } : undefined}
                 >
                   <Avatar className="h-9 w-9 shrink-0" style={hasCustomTheme ? { border: `1px solid ${companyTheme.separatorColor}` } : { border: '1px solid var(--border)' }}>
+                    {(user as any)?.avatarUrl && (
+                      <AvatarImage src={(user as any).avatarUrl} alt={user?.name || 'Avatar'} className="object-cover" />
+                    )}
                     <AvatarFallback
                       className="text-xs font-medium"
                       style={hasCustomTheme ? { backgroundColor: companyTheme.accentHover, color: companyTheme.accent } : undefined}
