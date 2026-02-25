@@ -1124,3 +1124,6 @@ Despesa de impostos aparece tanto em janeiro quanto em fevereiro após edição 
 
 ## Fix Logo Adega — Rodada 7 (25/02/2026)
 - [x] Aplicar múltiplos drop-shadows fortes para criar outline escuro no logo da Adega (sidebar + transição + seleção)
+
+## Logo Adega v3 — Rodada 8 (25/02/2026)
+- [x] Upload do logo Adega v3 (com faixas contornadas) para S3 e atualizar no banco
