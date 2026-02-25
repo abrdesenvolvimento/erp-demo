@@ -227,6 +227,38 @@ function DashboardLayoutContent({
   const hasCustomTheme = !!companyTheme.sidebarBg;
   const [isResizing, setIsResizing] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
+
+  // Aplica CSS variables do tema no :root para que mobile sheet e todos bg-sidebar herdem
+  useEffect(() => {
+    const root = document.documentElement;
+    if (hasCustomTheme) {
+      root.style.setProperty('--sidebar', companyTheme.sidebarBg);
+      root.style.setProperty('--sidebar-foreground', companyTheme.textPrimary);
+      root.style.setProperty('--sidebar-accent', companyTheme.activeItemBg);
+      root.style.setProperty('--sidebar-accent-foreground', companyTheme.textPrimary);
+      root.style.setProperty('--sidebar-primary', companyTheme.accent);
+      root.style.setProperty('--sidebar-primary-foreground', companyTheme.textPrimary);
+      root.style.setProperty('--sidebar-border', companyTheme.separatorColor);
+    } else {
+      // Limpa para usar fallback do CSS
+      root.style.removeProperty('--sidebar');
+      root.style.removeProperty('--sidebar-foreground');
+      root.style.removeProperty('--sidebar-accent');
+      root.style.removeProperty('--sidebar-accent-foreground');
+      root.style.removeProperty('--sidebar-primary');
+      root.style.removeProperty('--sidebar-primary-foreground');
+      root.style.removeProperty('--sidebar-border');
+    }
+    return () => {
+      root.style.removeProperty('--sidebar');
+      root.style.removeProperty('--sidebar-foreground');
+      root.style.removeProperty('--sidebar-accent');
+      root.style.removeProperty('--sidebar-accent-foreground');
+      root.style.removeProperty('--sidebar-primary');
+      root.style.removeProperty('--sidebar-primary-foreground');
+      root.style.removeProperty('--sidebar-border');
+    };
+  }, [hasCustomTheme, companyTheme]);
   
   // Estado do submenu de análises
   const [analysisExpanded, setAnalysisExpanded] = useState(() => {
@@ -403,7 +435,7 @@ function DashboardLayoutContent({
             '--sidebar-foreground': companyTheme.textPrimary,
             '--sidebar-muted-foreground': companyTheme.textMuted,
             '--sidebar-border': companyTheme.separatorColor,
-            transition: 'background 3s ease, color 1.5s ease',
+            transition: 'background 5s ease, color 2.5s ease',
           } as CSSProperties : undefined}
         >
           <SidebarHeader className="justify-center">
@@ -458,10 +490,10 @@ function DashboardLayoutContent({
                 <DropdownMenuTrigger asChild>
                   <button className="flex items-center gap-3 w-full rounded-lg border px-3 py-3 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring" style={hasCustomTheme ? { borderColor: companyTheme.borderColor, backgroundColor: companyTheme.accentHover } : { borderColor: 'var(--primary-20)', backgroundColor: 'var(--primary-5)' }}>
                     {activeCompany?.companyLogoUrl ? (
-                      <img src={activeCompany.companyLogoUrl} alt="" className="h-12 w-12 rounded-lg object-contain shrink-0" />
+                      <img src={activeCompany.companyLogoUrl} alt="" className="h-14 w-14 rounded-lg object-contain shrink-0" />
                     ) : (
-                      <div className="h-12 w-12 rounded-lg bg-muted flex items-center justify-center shrink-0">
-                        <Building2 className="h-5 w-5 text-muted-foreground" />
+                      <div className="h-14 w-14 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                        <Building2 className="h-6 w-6 text-muted-foreground" />
                       </div>
                     )}
                     <div className="flex-1 min-w-0">

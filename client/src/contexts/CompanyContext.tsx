@@ -71,7 +71,8 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
     onSuccess: () => {
       // Invalidar TODAS as queries do tRPC para recarregar dados da nova empresa
       queryClient.invalidateQueries();
-      setSwitching(false);
+      // Delay mínimo de 5s para transição suave entre empresas
+      setTimeout(() => setSwitching(false), 5000);
     },
     onError: () => {
       setSwitching(false);

@@ -104,13 +104,13 @@ function CompanyGate() {
     <>
       {/* Overlay de troca de empresa — bloqueia interação e esconde dados antigos */}
       {switching && (
-        <div className="fixed inset-0 z-[9999] bg-white/90 backdrop-blur-sm flex items-center justify-center">
-          <div className="flex flex-col items-center gap-4">
+        <div className="fixed inset-0 z-[9999] bg-white/95 backdrop-blur-md flex items-center justify-center animate-in fade-in duration-500">
+          <div className="flex flex-col items-center gap-6">
             {activeCompany?.companyLogoUrl && (
               <img 
                 src={activeCompany.companyLogoUrl} 
                 alt="" 
-                className="h-16 w-16 rounded-xl object-contain" 
+                className="h-24 w-24 rounded-2xl object-contain shadow-lg animate-in zoom-in-75 duration-700" 
               />
             )}
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-600"></div>

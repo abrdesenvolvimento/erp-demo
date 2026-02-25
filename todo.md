@@ -1100,3 +1100,9 @@ Despesa de impostos aparece tanto em janeiro quanto em fevereiro após edição 
 - [x] Remover fundo azul petróleo residual do sidebar (--sidebar: transparent sobrescreve bg-sidebar)
 - [x] Transição suave de ~3 segundos ao trocar de empresa (transition: background 3s ease)
 - [x] Aumentar logo da empresa ativa no seletor (h-12 w-12 com rounded-lg)
+
+## Ajustes Sidebar — Rodada 3 (25/02/2026)
+- [x] Eliminar azul petróleo completamente (CSS root --sidebar neutro + useEffect no :root para propagar tema)
+- [x] Aumentar transição de troca de empresa para 5s (sidebar gradient 5s + overlay 5s delay)
+- [x] Aumentar logo da empresa ativa no seletor (h-14 w-14 rounded-lg)
+- [x] Aumentar logo no overlay de transição (h-24 w-24 rounded-2xl com shadow e zoom-in)
