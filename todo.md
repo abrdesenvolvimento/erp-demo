@@ -1039,3 +1039,44 @@ Despesa de impostos aparece tanto em janeiro quanto em fevereiro após edição 
 - [x] Melhoria: Impressão do Fechamento - Layout cortado, tabelas não cabem na página
 - [x] Melhoria: Atualizar logo da Adega Beira Rio na tela de seleção de empresa (imagem mais nítida)
 - [x] Bug: Erro "Venda não pertence a esta empresa" ao tentar excluir venda teste na A Brasa
+
+## Sprint 25/02/2026 — Prioridades Definidas pelo Gabriel
+
+### Multiempresa Fase 3 — Isolamento de Parcelas
+- [x] Adicionar companyId+branchId em purchaseInstallments (schema + migração)
+- [x] Adicionar companyId+branchId em expenseInstallments (schema + migração)
+- [x] Adicionar companyId+branchId em receivableInstallments (schema + migração)
+- [x] Atualizar queries de parcelas para filtrar por companyId
+- [x] Atualizar routers para passar ctx.activeCompanyId nas queries de parcelas
+
+### Multiempresa Fase 4 — Isolamento de Contabilidade
+- [x] Verificar se journals já tem companyId (schema atual) — já tinha
+- [x] Verificar se accountingEntries já tem companyId (schema atual) — já tinha
+- [x] Adicionar filtros companyId nas queries contábeis se necessário
+- [x] Corrigir 4 inserts pendentes: createAccount, createManagementAccount, accountingBatchLog, productCompositions
+
+### Multiempresa Fase 5 — Testes e Validação
+- [x] Criar testes de integração para isolamento de dados entre empresas (36 testes)
+- [x] Validar que nenhuma query retorna dados cruzados entre empresas
+
+### Multiempresa — Bugs Pendentes
+- [x] Bug: Cadastro de produto na A Brasa mostra canais da Adega — verificado, filtro por companyId já funciona
+- [x] Melhoria: Sidebar usar logo da empresa ativa (não logo do sistema)
+
+### Timezone Fase 2 — PDF/Backup
+- [x] Migrar exibição de datas em PDFs/impressão para timezone correto (Brasília)
+- [x] Verificar backup: datas nos arquivos de backup estão em UTC ou Brasília — já usa Brasília
+
+### Timezone Fase 3 — Padronização UTC
+- [x] Padronizar timestamps técnicos (createdAt, updatedAt) em UTC — servidor já usa UTC
+- [x] Garantir que conversão para Brasília acontece apenas na camada de apresentação
+
+### Card de Crédito no Dashboard
+- [x] Backend: query para calcular limite total, utilizado, saldo disponível, % utilização
+- [x] Frontend: card de Controle de Crédito no Dashboard (com modal detalhado)
+
+### Análise de Faturamento — Feriados
+- [x] Backend: módulo shared/holidays.ts com cálculo de feriados (Meeus/Gauss)
+- [x] Frontend: destaque automático de feriados no calendário de faturamento
+- [x] Backend: tabela calendarHighlights + CRUD (getHighlights, addHighlight, removeHighlight)
+- [x] Frontend: popover no calendário para admin adicionar/remover destaques manuais

@@ -32,6 +32,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useState, useRef } from "react";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { formatDateBR } from "@shared/dateUtils";
 
 const MONTHS = [
   { value: 1, label: "Janeiro" },
@@ -178,7 +179,7 @@ export default function FechamentoMensal() {
               <h1 className="text-2xl font-bold">Fechamento Mensal</h1>
               <p className="text-lg capitalize">{data.period.monthName} de {data.period.year}</p>
               <p className="text-sm text-muted-foreground">
-                Período: {new Date(data.period.startDate).toLocaleDateString('pt-BR')} a {new Date(data.period.endDate).toLocaleDateString('pt-BR')}
+                Período: {formatDateBR(data.period.startDate)} a {formatDateBR(data.period.endDate)}
               </p>
             </div>
 

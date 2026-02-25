@@ -4,12 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { trpc } from "@/lib/trpc";
-import { TrendingUp, TrendingDown, AlertTriangle, ShoppingCart, DollarSign, Calendar, Package, Clock, ChevronDown, ChevronRight, Target } from "lucide-react";
+import { TrendingUp, TrendingDown, AlertTriangle, ShoppingCart, DollarSign, Calendar, Package, Clock, ChevronDown, ChevronRight, Target, CreditCard } from "lucide-react";
 import { Link } from "wouter";
 import { useState } from "react";
 import { SaleDetailsModal } from "@/components/SaleDetailsModal";
 import { CompactSalesCalendar } from "@/components/CompactSalesCalendar";
 import { useAuth } from "@/_core/hooks/useAuth";
+import { formatDateBR } from "@shared/dateUtils";
 
 export default function Home() {
   const { user } = useAuth();
@@ -20,6 +21,7 @@ export default function Home() {
   const { data: stats, isLoading } = trpc.dashboard.stats.useQuery();
   const { data: purchaseStats, isLoading: isPurchaseLoading } = trpc.dashboard.purchaseStats.useQuery();
   const { data: marginData, isLoading: isMarginLoading } = trpc.dashboard.grossMarginByCategory.useQuery();
+  const { data: creditSummary, isLoading: isCreditLoading } = trpc.dashboard.creditSummary.useQuery();
   const { data: deliveryMargin, isLoading: isDeliveryMarginLoading } = trpc.dashboard.deliveryNetMargin.useQuery();
   const currentYear = new Date().getFullYear();
   const currentMonth = new Date().getMonth() + 1;
@@ -32,6 +34,7 @@ export default function Home() {
   const [showStockValueModal, setShowStockValueModal] = useState(false);
   const [showDeliveryMarginModal, setShowDeliveryMarginModal] = useState(false);
   const [showGrossMarginModal, setShowGrossMarginModal] = useState(false);
+  const [showCreditModal, setShowCreditModal] = useState(false);
   const [expandedCategories, setExpandedCategories] = useState<Set<number>>(new Set());
   const [selectedSaleId, setSelectedSaleId] = useState<number | null>(null);
   const [showSaleDetailsModal, setShowSaleDetailsModal] = useState(false);
@@ -373,6 +376,53 @@ export default function Home() {
             </Card>
           )}
 
+          {/* Card de Crédito Concedido - Admin */}
+          {isAdmin && (
+            <Card 
+              className="border-t-4 border-t-cyan-500 cursor-pointer hover:shadow-md transition-shadow"
+              onClick={() => setShowCreditModal(true)}
+            >
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Crédito Concedido
+                </CardTitle>
+                <CreditCard className="h-4 w-4 text-cyan-500" />
+              </CardHeader>
+              <CardContent>
+                {isCreditLoading ? (
+                  <div className="text-sm text-muted-foreground">Carregando...</div>
+                ) : creditSummary ? (
+                  <>
+                    <div className="text-2xl font-bold text-cyan-600">
+                      R$ {formatCurrency(creditSummary.totalUsed)}
+                    </div>
+                    <div className="mt-3 space-y-1.5">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-muted-foreground">Limite Total</span>
+                        <span className="font-medium">R$ {formatCurrency(creditSummary.totalLimit)}</span>
+                      </div>
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-muted-foreground">Disponível</span>
+                        <span className="font-medium text-green-600">R$ {formatCurrency(creditSummary.totalAvailable)}</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-1.5 mt-1">
+                        <div 
+                          className={`h-1.5 rounded-full ${creditSummary.usagePercent > 80 ? 'bg-red-500' : creditSummary.usagePercent > 50 ? 'bg-amber-500' : 'bg-cyan-500'}`}
+                          style={{ width: `${Math.min(creditSummary.usagePercent, 100)}%` }}
+                        />
+                      </div>
+                      <p className="text-xs text-muted-foreground text-center">
+                        {creditSummary.usagePercent.toFixed(1)}% utilizado • {creditSummary.customersWithBalance} cliente(s)
+                      </p>
+                    </div>
+                  </>
+                ) : (
+                  <p className="text-sm text-muted-foreground">Sem dados</p>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
           {/* Card de Meta do Mês - Admin e Consultor */}
           {canViewFinancials && (
             <Link href="/metas">
@@ -615,7 +665,7 @@ export default function Home() {
                         }
                       </p>
                       <p className="text-xs text-muted-foreground mt-1">
-                        {new Date(product.expirationDate).toLocaleDateString('pt-BR')}
+                        {formatDateBR(product.expirationDate)}
                       </p>
                     </div>
                   </div>
@@ -769,6 +819,86 @@ export default function Home() {
             </div>
           ) : (
             <p className="text-center py-8 text-muted-foreground">Nenhuma venda no mês atual</p>
+          )}
+        </DialogContent>
+      </Dialog>
+      {/* Modal de Crédito Concedido */}
+      <Dialog open={showCreditModal} onOpenChange={setShowCreditModal}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CreditCard className="h-5 w-5 text-cyan-500" />
+              Crédito Concedido a Clientes
+            </DialogTitle>
+          </DialogHeader>
+          {creditSummary ? (
+            <div className="space-y-4">
+              {/* Resumo Principal */}
+              <div className="p-4 rounded-lg bg-cyan-50 border border-cyan-200">
+                <div className="grid grid-cols-3 gap-4 text-center">
+                  <div>
+                    <p className="text-xs text-cyan-700">Limite Total</p>
+                    <p className="text-lg font-bold text-cyan-900">R$ {formatCurrency(creditSummary.totalLimit)}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-cyan-700">Em Aberto</p>
+                    <p className="text-lg font-bold text-red-600">R$ {formatCurrency(creditSummary.totalUsed)}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-cyan-700">Disponível</p>
+                    <p className="text-lg font-bold text-green-600">R$ {formatCurrency(creditSummary.totalAvailable)}</p>
+                  </div>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2.5 mt-3">
+                  <div 
+                    className={`h-2.5 rounded-full transition-all ${creditSummary.usagePercent > 80 ? 'bg-red-500' : creditSummary.usagePercent > 50 ? 'bg-amber-500' : 'bg-cyan-500'}`}
+                    style={{ width: `${Math.min(creditSummary.usagePercent, 100)}%` }}
+                  />
+                </div>
+                <p className="text-xs text-cyan-700 text-center mt-1">
+                  {creditSummary.usagePercent.toFixed(1)}% do limite utilizado • {creditSummary.activeCustomers} cliente(s) com limite ativo
+                </p>
+              </div>
+
+              {/* Top Clientes com Saldo */}
+              {creditSummary.topCustomers.length > 0 && (
+                <div className="space-y-2">
+                  <h3 className="text-sm font-semibold text-muted-foreground">Maiores Saldos em Aberto</h3>
+                  {creditSummary.topCustomers.map((customer) => {
+                    const limit = parseFloat(customer.creditLimit || '0');
+                    const balance = parseFloat(customer.currentBalance || '0');
+                    const usage = limit > 0 ? (balance / limit) * 100 : 0;
+                    return (
+                      <div key={customer.id} className="p-3 rounded-lg bg-muted/50">
+                        <div className="flex items-center justify-between mb-1">
+                          <p className="font-medium text-sm">{customer.name}</p>
+                          <p className="font-bold text-sm text-red-600">R$ {formatCurrency(balance)}</p>
+                        </div>
+                        <div className="flex items-center justify-between text-xs text-muted-foreground">
+                          <span>Limite: R$ {formatCurrency(limit)}</span>
+                          <span>{usage.toFixed(0)}% utilizado</span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-1 mt-1">
+                          <div 
+                            className={`h-1 rounded-full ${usage > 80 ? 'bg-red-400' : usage > 50 ? 'bg-amber-400' : 'bg-cyan-400'}`}
+                            style={{ width: `${Math.min(usage, 100)}%` }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Link para Contas a Receber */}
+              <Link href="/contas-receber">
+                <Button variant="default" className="w-full" onClick={() => setShowCreditModal(false)}>
+                  Ver Contas a Receber Detalhado →
+                </Button>
+              </Link>
+            </div>
+          ) : (
+            <p className="text-center py-8 text-muted-foreground">Nenhum cliente com crédito configurado</p>
           )}
         </DialogContent>
       </Dialog>

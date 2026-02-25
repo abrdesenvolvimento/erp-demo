@@ -1,4 +1,4 @@
-import { eq, desc, or, like, and, sql, gte, lte, lt, ne, SQL } from "drizzle-orm";
+import { eq, desc, or, like, and, sql, gte, lte, lt, ne, inArray, SQL } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import { 
   InsertUser, users,
@@ -37,7 +37,8 @@ import {
   accountingPeriods, AccountingPeriod, InsertAccountingPeriod,
   governanceSettings, GovernanceSettings, InsertGovernanceSettings,
   governanceAuditLog, GovernanceAuditLog, InsertGovernanceAuditLog,
-  accountingBatchLog, AccountingBatchLog, InsertAccountingBatchLog
+  accountingBatchLog, AccountingBatchLog, InsertAccountingBatchLog,
+  calendarHighlights, CalendarHighlight, InsertCalendarHighlight
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 import { 
@@ -948,7 +949,7 @@ export async function getProductCompositions(parentProductId: number) {
     .where(eq(productCompositions.parentProductId, parentProductId));
 }
 
-export async function setProductCompositions(parentProductId: number, compositions: { childProductId: number, quantity: number }[]) {
+export async function setProductCompositions(parentProductId: number, compositions: { childProductId: number, quantity: number }[], companyId?: number, branchId?: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
@@ -963,6 +964,8 @@ export async function setProductCompositions(parentProductId: number, compositio
   // Adicionar novas composições
   if (compositions.length > 0) {
     const values = compositions.map(comp => ({
+      companyId: companyId ?? 1,
+      branchId: branchId ?? 1,
       parentProductId,
       childProductId: comp.childProductId,
       quantity: typeof comp.quantity === 'number' ? comp.quantity.toString() : comp.quantity
@@ -2107,9 +2110,9 @@ export async function getPendingExpenseInstallments(filters?: { companyId?: numb
     )
   ];
   
-  // Filtro de empresa (multiempresa)
+  // Filtro de empresa (multiempresa) - usar diretamente na tabela de parcelas
   if (filters?.companyId) {
-    conditions.push(eq(expenses.companyId, filters.companyId));
+    conditions.push(eq(expenseInstallments.companyId, filters.companyId));
   }
   
   if (filters?.categoryId) {
@@ -2150,9 +2153,9 @@ export async function getPaymentHistory(filters: { companyId?: number;
   // Buscar parcelas PAGAS de COMPRAS
   const purchaseConditions: any[] = [eq(purchaseInstallments.status, "PAID")];
   
-  // Filtro de empresa (multiempresa)
+  // Filtro de empresa (multiempresa) - usar diretamente na tabela de parcelas
   if (filters.companyId) {
-    purchaseConditions.push(eq(purchaseOrders.companyId, filters.companyId));
+    purchaseConditions.push(eq(purchaseInstallments.companyId, filters.companyId));
   }
   
   if (filters.supplierId) {
@@ -2189,9 +2192,9 @@ export async function getPaymentHistory(filters: { companyId?: number;
   // Buscar parcelas PAGAS de DESPESAS
   const expenseConditions: any[] = [eq(expenseInstallments.status, "PAGO")];
   
-  // Filtro de empresa (multiempresa)
+  // Filtro de empresa (multiempresa) - usar diretamente na tabela de parcelas
   if (filters.companyId) {
-    expenseConditions.push(eq(expenses.companyId, filters.companyId));
+    expenseConditions.push(eq(expenseInstallments.companyId, filters.companyId));
   }
   
   if (filters.supplierId) {
@@ -2554,9 +2557,9 @@ export async function listPendingReceivableInstallments(customerId?: number, com
     conditions.push(eq(receivables.customerId, customerId));
   }
   
-  // Filtro de empresa (multiempresa)
+  // Filtro de empresa (multiempresa) - usar diretamente na tabela de parcelas
   if (companyId) {
-    conditions.push(eq(receivables.companyId, companyId));
+    conditions.push(eq(receivableInstallments.companyId, companyId));
   }
   
   return await db.select({
@@ -2582,9 +2585,9 @@ export async function listOverdueReceivableInstallments(companyId?: number) {
     sql`${receivableInstallments.dueDate} < ${today}`
   ];
   
-  // Filtro de empresa (multiempresa)
+  // Filtro de empresa (multiempresa) - usar diretamente na tabela de parcelas
   if (companyId) {
-    conditions.push(eq(receivables.companyId, companyId));
+    conditions.push(eq(receivableInstallments.companyId, companyId));
   }
   
   return await db.select({
@@ -2726,7 +2729,7 @@ export async function getReceivablesSummary(companyId?: number) {
   
   // Total a receber (parcelas pendentes)
   const pendingConditions: SQL[] = [eq(receivableInstallments.status, "PENDENTE")];
-  if (companyId) pendingConditions.push(eq(receivables.companyId, companyId));
+  if (companyId) pendingConditions.push(eq(receivableInstallments.companyId, companyId));
   
   const pending = await db.select({
     total: sql<string>`COALESCE(SUM(${receivableInstallments.amount}), 0)`
@@ -2740,7 +2743,7 @@ export async function getReceivablesSummary(companyId?: number) {
     eq(receivableInstallments.status, "PENDENTE"),
     sql`${receivableInstallments.dueDate} < ${today}`
   ];
-  if (companyId) overdueConditions.push(eq(receivables.companyId, companyId));
+  if (companyId) overdueConditions.push(eq(receivableInstallments.companyId, companyId));
   
   const overdue = await db.select({
     total: sql<string>`COALESCE(SUM(${receivableInstallments.amount}), 0)`
@@ -2754,7 +2757,7 @@ export async function getReceivablesSummary(companyId?: number) {
     eq(receivableInstallments.status, "PAGO"),
     sql`DATE(CONVERT_TZ(${receivableInstallments.paidDate}, '+00:00', '-03:00')) = DATE(CONVERT_TZ(${today}, '+00:00', '-03:00'))`
   ];
-  if (companyId) receivedConditions.push(eq(receivables.companyId, companyId));
+  if (companyId) receivedConditions.push(eq(receivableInstallments.companyId, companyId));
   
   const receivedToday = await db.select({
     total: sql<string>`COALESCE(SUM(${receivableInstallments.paidAmount}), 0)`
@@ -2832,6 +2835,72 @@ export async function getTotalPendingReceivables(companyId?: number) {
   const totalPayments = parseFloat(paymentsResult.total || "0");
   
   return totalSales + totalDebits - totalPayments;
+}
+
+// Obter resumo de crédito concedido a clientes (limite total, em aberto, disponível)
+export async function getCreditSummary(companyId?: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  // Soma total de limites de crédito de clientes ativos
+  const [limitResult] = await db.select({
+    totalLimit: sql<string>`COALESCE(SUM(CAST(${partners.creditLimit} AS DECIMAL(12,2))), 0)`,
+    activeCustomers: sql<number>`COUNT(*)`,
+  })
+  .from(partners)
+  .where(and(
+    inArray(partners.partnerType, ["CUSTOMER", "BOTH"]),
+    eq(partners.creditPolicy, "ACTIVE"),
+    sql`CAST(${partners.creditLimit} AS DECIMAL(12,2)) > 0`,
+    companyId ? eq(partners.companyId, companyId) : undefined
+  ));
+  
+  // Total em aberto (currentBalance de todos os clientes com saldo > 0)
+  const [balanceResult] = await db.select({
+    totalUsed: sql<string>`COALESCE(SUM(CAST(${partners.currentBalance} AS DECIMAL(12,2))), 0)`,
+    customersWithBalance: sql<number>`COUNT(*)`,
+  })
+  .from(partners)
+  .where(and(
+    inArray(partners.partnerType, ["CUSTOMER", "BOTH"]),
+    sql`CAST(${partners.currentBalance} AS DECIMAL(12,2)) > 0`,
+    companyId ? eq(partners.companyId, companyId) : undefined
+  ));
+  
+  // Top 5 clientes com maior saldo em aberto
+  const topCustomers = await db.select({
+    id: partners.id,
+    name: partners.tradeName,
+    fullName: partners.name,
+    creditLimit: partners.creditLimit,
+    currentBalance: partners.currentBalance,
+  })
+  .from(partners)
+  .where(and(
+    inArray(partners.partnerType, ["CUSTOMER", "BOTH"]),
+    sql`CAST(${partners.currentBalance} AS DECIMAL(12,2)) > 0`,
+    companyId ? eq(partners.companyId, companyId) : undefined
+  ))
+  .orderBy(sql`CAST(${partners.currentBalance} AS DECIMAL(12,2)) DESC`)
+  .limit(5);
+  
+  const totalLimit = parseFloat(limitResult.totalLimit || "0");
+  const totalUsed = parseFloat(balanceResult.totalUsed || "0");
+  
+  return {
+    totalLimit,
+    totalUsed,
+    totalAvailable: totalLimit - totalUsed,
+    usagePercent: totalLimit > 0 ? ((totalUsed / totalLimit) * 100) : 0,
+    activeCustomers: limitResult.activeCustomers || 0,
+    customersWithBalance: balanceResult.customersWithBalance || 0,
+    topCustomers: topCustomers.map(c => ({
+      id: c.id,
+      name: c.name || c.fullName,
+      creditLimit: c.creditLimit,
+      currentBalance: c.currentBalance,
+    })),
+  };
 }
 
 // Obter detalhamento completo de um cliente
@@ -7440,12 +7509,13 @@ export async function createJournal(data: {
   competenceMonth: string;
   description: string;
   createdBy: string;
+  companyId?: number;
 }): Promise<number> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
   const result = await db.insert(journals).values({
-    companyId: 1,
+    companyId: data.companyId ?? 1,
     competenceMonth: data.competenceMonth,
     description: data.description,
     status: "DRAFT",
@@ -7470,12 +7540,13 @@ export async function addAccountingEntry(data: {
   description: string;
   sourceType?: string;
   sourceId?: number;
+  companyId?: number;
 }): Promise<number> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
   const result = await db.insert(accountingEntries).values({
-    companyId: 1,
+    companyId: data.companyId ?? 1,
     journalId: data.journalId,
     accountId: data.accountId,
     entryDate: data.entryDate,
@@ -7497,12 +7568,13 @@ export async function addJournalSource(data: {
   journalId: number;
   sourceType: string;
   sourceId: number;
+  companyId?: number;
 }): Promise<void> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
   await db.insert(journalSources).values({
-    companyId: 1,
+    companyId: data.companyId ?? 1,
     journalId: data.journalId,
     sourceType: data.sourceType,
     sourceId: data.sourceId,
@@ -8967,4 +9039,60 @@ export async function deletePurchaseCompletely(purchaseOrderId: number): Promise
     console.error(`[deletePurchaseCompletely] Erro ao deletar compra #${purchaseOrderId}:`, error);
     return { success: false, error: error instanceof Error ? error.message : String(error) };
   }
+}
+
+
+// ==================== DESTAQUES DO CALENDÁRIO ====================
+
+export async function getCalendarHighlights(year: number, month: number, companyId?: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  const monthStr = String(month).padStart(2, "0");
+  const prefix = `${year}-${monthStr}`;
+
+  const conditions: SQL[] = [
+    sql`${calendarHighlights.date} LIKE ${prefix + '%'}`,
+  ];
+  if (companyId) {
+    conditions.push(eq(calendarHighlights.companyId, companyId));
+  }
+
+  return await db.select()
+    .from(calendarHighlights)
+    .where(and(...conditions));
+}
+
+export async function addCalendarHighlight(data: {
+  date: string;
+  label: string;
+  color: string;
+  companyId: number;
+  createdBy: string;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const [result] = await db.insert(calendarHighlights).values({
+    date: data.date,
+    label: data.label,
+    color: data.color,
+    companyId: data.companyId,
+    createdBy: data.createdBy,
+  }).$returningId();
+
+  return { id: result.id, ...data };
+}
+
+export async function removeCalendarHighlight(id: number, companyId?: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const conditions: SQL[] = [eq(calendarHighlights.id, id)];
+  if (companyId) {
+    conditions.push(eq(calendarHighlights.companyId, companyId));
+  }
+
+  await db.delete(calendarHighlights).where(and(...conditions));
+  return { success: true };
 }

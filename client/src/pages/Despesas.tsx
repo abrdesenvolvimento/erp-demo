@@ -14,6 +14,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { getTodayBR, toDateStringBR, getCurrentCompetenceMonthBR, addDaysBR } from "@/lib/dateUtils";
+import { formatDateBR } from "@shared/dateUtils";
 
 interface DueDate {
   date: string;
@@ -823,7 +824,7 @@ export default function Despesas() {
                               R$ {calculatedValue.toFixed(2)}
                             </span>
                             <span className="text-sm text-muted-foreground">
-                              Data: {new Date().toLocaleDateString('pt-BR')}
+                              Data: {formatDateBR(new Date())}
                               <br />
                               <span className="text-xs">(lançamento automático)</span>
                             </span>

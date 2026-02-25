@@ -956,6 +956,7 @@ export async function createManagementAccount(data: {
   impactMargin?: boolean;
   impactPayroll?: boolean;
   isActive?: boolean;
+  companyId?: number;
 }) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
@@ -976,6 +977,8 @@ export async function createManagementAccount(data: {
   const nextOrder = (maxOrder[0]?.max || 0) + 1;
   
   const result = await db.insert(managementAccounts).values({
+    companyId: data.companyId ?? 1,
+    branchId: 1,
     code: data.code,
     name: data.name,
     description: data.description || null,

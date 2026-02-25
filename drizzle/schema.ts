@@ -390,6 +390,8 @@ export type InsertAccountPayable = typeof accountsPayable.$inferInsert;
 // Parcelas de Compra
 export const purchaseInstallments = mysqlTable("purchaseInstallments", {
   id: int("id").primaryKey().autoincrement(),
+  companyId: int("companyId").notNull().default(1),
+  branchId: int("branchId").notNull().default(1),
   purchaseOrderId: int("purchaseOrderId").notNull(),
   installmentNumber: int("installmentNumber").notNull(),
   dueDate: timestamp("dueDate").notNull(),
@@ -406,6 +408,7 @@ export const purchaseInstallments = mysqlTable("purchaseInstallments", {
 }, (table) => ({
   poIdx: index("po_idx").on(table.purchaseOrderId),
   dueDateIdx: index("due_date_idx").on(table.dueDate),
+  companyBranchIdx: index("pi_company_branch_idx").on(table.companyId, table.branchId),
 }));
 
 export type PurchaseInstallment = typeof purchaseInstallments.$inferSelect;
@@ -471,6 +474,8 @@ export type InsertExpense = typeof expenses.$inferInsert;
 // Parcelas de Despesas
 export const expenseInstallments = mysqlTable("expenseInstallments", {
   id: int("id").primaryKey().autoincrement(),
+  companyId: int("companyId").notNull().default(1),
+  branchId: int("branchId").notNull().default(1),
   expenseId: int("expenseId").notNull(),
   installmentNumber: int("installmentNumber").notNull(),
   amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
@@ -488,6 +493,7 @@ export const expenseInstallments = mysqlTable("expenseInstallments", {
   expenseIdx: index("expense_idx").on(table.expenseId),
   dueDateIdx: index("due_date_idx").on(table.dueDate),
   statusIdx: index("status_idx").on(table.status),
+  companyBranchIdx: index("ei_company_branch_idx").on(table.companyId, table.branchId),
 }));
 
 export type ExpenseInstallment = typeof expenseInstallments.$inferSelect;
@@ -521,6 +527,8 @@ export type InsertReceivable = typeof receivables.$inferInsert;
 // Parcelas de Recebíveis
 export const receivableInstallments = mysqlTable("receivableInstallments", {
   id: int("id").primaryKey().autoincrement(),
+  companyId: int("companyId").notNull().default(1),
+  branchId: int("branchId").notNull().default(1),
   receivableId: int("receivableId").notNull(),
   installmentNumber: int("installmentNumber").notNull(),
   amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
@@ -536,6 +544,7 @@ export const receivableInstallments = mysqlTable("receivableInstallments", {
   receivableIdx: index("receivable_idx").on(table.receivableId),
   dueDateIdx: index("due_date_idx").on(table.dueDate),
   statusIdx: index("status_idx").on(table.status),
+  companyBranchIdx: index("ri_company_branch_idx").on(table.companyId, table.branchId),
 }));
 
 export type ReceivableInstallment = typeof receivableInstallments.$inferSelect;
@@ -1118,3 +1127,18 @@ export const ifoodPriceDivergences = mysqlTable("ifoodPriceDivergences", {
 });
 export type IfoodPriceDivergence = typeof ifoodPriceDivergences.$inferSelect;
 export type InsertIfoodPriceDivergence = typeof ifoodPriceDivergences.$inferInsert;
+
+
+// ==================== DESTAQUES MANUAIS DO CALENDÁRIO ====================
+
+export const calendarHighlights = mysqlTable("calendarHighlights", {
+  id: int("id").primaryKey().autoincrement(),
+  companyId: int("companyId").notNull().default(1),
+  date: varchar("date", { length: 10 }).notNull(), // formato YYYY-MM-DD
+  label: varchar("label", { length: 100 }).notNull(), // ex: "Loja Fechada", "Evento Especial"
+  color: varchar("color", { length: 20 }).notNull().default("amber"), // amber, red, blue, green, etc.
+  createdBy: varchar("createdBy", { length: 64 }),
+  createdAt: timestamp("createdAt").defaultNow(),
+});
+export type CalendarHighlight = typeof calendarHighlights.$inferSelect;
+export type InsertCalendarHighlight = typeof calendarHighlights.$inferInsert;

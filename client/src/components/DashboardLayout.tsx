@@ -343,7 +343,7 @@ function DashboardLayoutContent({
               {isCollapsed ? (
                 <div className="relative h-10 w-10 shrink-0 group">
                   <img
-                    src={APP_LOGO}
+                    src={activeCompany?.companyLogoUrl || APP_LOGO}
                     className="h-10 w-10 rounded-md object-contain ring-1 ring-border"
                     alt="Logo"
                   />
@@ -358,12 +358,12 @@ function DashboardLayoutContent({
                 <>
                   <div className="flex items-center gap-3 min-w-0">
                     <img
-                      src={APP_LOGO}
+                      src={activeCompany?.companyLogoUrl || APP_LOGO}
                       className="h-12 w-auto max-w-[48px] rounded-md object-contain ring-1 ring-border shrink-0"
                       alt="Logo"
                     />
                     <span className="font-semibold tracking-tight truncate">
-                      {APP_TITLE}
+                      {activeCompany?.companyName || APP_TITLE}
                     </span>
                   </div>
                   <button

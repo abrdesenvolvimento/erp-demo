@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useCompany } from "@/contexts/CompanyContext";
 import { useState } from "react";
+import { formatDateTimeBR } from "@shared/dateUtils";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -255,18 +256,7 @@ export function SaleDetailsModal({ saleId, open, onClose }: SaleDetailsModalProp
     p.name.toLowerCase().includes(productSearch.toLowerCase())
   ).slice(0, 5) || [];
 
-  const formatDate = (date: string | Date | null) => {
-    if (!date) return '-';
-    const d = new Date(date);
-    return d.toLocaleString('pt-BR', { 
-      day: '2-digit', 
-      month: '2-digit', 
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      timeZone: 'America/Sao_Paulo'
-    });
-  };
+  const formatDate = (date: string | Date | null) => formatDateTimeBR(date);
 
   const formatCurrency = (value: string | number | null) => {
     if (!value) return 'R$ 0,00';

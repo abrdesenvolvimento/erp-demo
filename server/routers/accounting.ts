@@ -54,8 +54,8 @@ export const accountingRouter = router({
         allowsEntries: z.boolean().optional().default(true),
         displayOrder: z.number().optional().default(0)
       }))
-      .mutation(async ({ input }) => {
-        return accounting.createAccount(input);
+      .mutation(async ({ input, ctx }) => {
+        return accounting.createAccount({ ...input, companyId: ctx.activeCompanyId ?? input.companyId ?? 1 });
       }),
     
     update: protectedProcedure
@@ -377,8 +377,8 @@ export const accountingRouter = router({
       impactPayroll: z.boolean().optional().default(false),
       isActive: z.boolean().optional().default(true)
     }))
-    .mutation(async ({ input }) => {
-      return accounting.createManagementAccount(input);
+    .mutation(async ({ input, ctx }) => {
+      return accounting.createManagementAccount({ ...input, companyId: ctx.activeCompanyId ?? 1 });
     }),
 
   updateManagementAccount: protectedProcedure

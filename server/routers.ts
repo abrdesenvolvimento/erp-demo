@@ -302,7 +302,7 @@ export const appRouter = router({
         console.log('[products.create] Checking compositions:', { hasCompositions: !!compositions, length: compositions?.length });
         if (compositions && compositions.length > 0) {
           console.log('[products.create] Saving compositions for product', id, ':', compositions);
-          await db.setProductCompositions(id, compositions);
+          await db.setProductCompositions(id, compositions, ctx.activeCompanyId ?? 1, ctx.activeBranchId ?? 1);
           console.log('[products.create] Compositions saved successfully');
         } else {
           console.log('[products.create] No compositions to save');
@@ -361,7 +361,7 @@ export const appRouter = router({
         console.log('[products.update] Compositions received:', { hasCompositions: compositions !== undefined, length: compositions?.length, compositions });
         if (compositions !== undefined) {
           console.log('[products.update] Updating compositions for product', input.id);
-          await db.setProductCompositions(input.id, compositions);
+          await db.setProductCompositions(input.id, compositions, ctx.activeCompanyId ?? 1, ctx.activeBranchId ?? 1);
         } else {
           console.log('[products.update] Compositions not provided, skipping update');
         }
@@ -411,8 +411,8 @@ export const appRouter = router({
           quantity: z.union([z.number(), z.string()]).transform(val => typeof val === 'number' ? val : parseFloat(val)),
         })),
       }))
-      .mutation(async ({ input }) => {
-        await db.setProductCompositions(input.productId, input.compositions);
+      .mutation(async ({ input, ctx }) => {
+        await db.setProductCompositions(input.productId, input.compositions, ctx.activeCompanyId ?? 1, ctx.activeBranchId ?? 1);
         return { success: true };
       }),
     
@@ -644,6 +644,8 @@ export const appRouter = router({
             // Se dueDates foi fornecido, criar parcelas conforme especificado
             for (let i = 0; i < dueDates.length; i++) {
               await db.createReceivableInstallment({
+                companyId: ctx.activeCompanyId ?? 1,
+                branchId: ctx.activeBranchId ?? 1,
                 receivableId: receivableId.id,
                 installmentNumber: i + 1,
                 amount: dueDates[i].amount,
@@ -657,6 +659,8 @@ export const appRouter = router({
             dueDate.setDate(dueDate.getDate() + 30);
             
             await db.createReceivableInstallment({
+              companyId: ctx.activeCompanyId ?? 1,
+              branchId: ctx.activeBranchId ?? 1,
               receivableId: receivableId.id,
               installmentNumber: 1,
               amount: saleData.finalAmount,
@@ -991,6 +995,8 @@ export const appRouter = router({
         
         for (let i = 0; i < installments.length; i++) {
           await db.addPurchaseInstallment({
+            companyId: ctx.activeCompanyId ?? 1,
+            branchId: ctx.activeBranchId ?? 1,
             purchaseOrderId,
             installmentNumber: i + 1,
             dueDate: parseDateAsBrasilia(installments[i].dueDate),
@@ -1189,6 +1195,8 @@ export const appRouter = router({
         
         for (let i = 0; i < input.dueDates.length; i++) {
           await db.createExpenseInstallment({
+            companyId: ctx.activeCompanyId ?? 1,
+            branchId: ctx.activeBranchId ?? 1,
             expenseId,
             installmentNumber: i + 1,
             amount: input.dueDates[i].amount,
@@ -1336,6 +1344,8 @@ export const appRouter = router({
         await db.deleteExpenseInstallments(input.id);
         for (let i = 0; i < input.dueDates.length; i++) {
           await db.createExpenseInstallment({
+            companyId: ctx.activeCompanyId ?? 1,
+            branchId: ctx.activeBranchId ?? 1,
             expenseId: input.id,
             installmentNumber: i + 1,
             amount: input.dueDates[i].amount,
@@ -1834,6 +1844,33 @@ export const appRouter = router({
       }),
   }),
 
+  // ==================== DESTAQUES DO CALENDÁRIO ====================
+  calendar: router({
+    getHighlights: protectedProcedure
+      .input(z.object({ year: z.number(), month: z.number() }))
+      .query(async ({ input, ctx }) => {
+        return await db.getCalendarHighlights(input.year, input.month, ctx.activeCompanyId);
+      }),
+    addHighlight: adminProcedure
+      .input(z.object({
+        date: z.string(), // YYYY-MM-DD
+        label: z.string().min(1).max(100),
+        color: z.string().default("amber"),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        return await db.addCalendarHighlight({
+          ...input,
+          companyId: ctx.activeCompanyId ?? 1,
+          createdBy: ctx.user.id,
+        });
+      }),
+    removeHighlight: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input, ctx }) => {
+        return await db.removeCalendarHighlight(input.id, ctx.activeCompanyId);
+      }),
+  }),
+
   // ==================== DASHBOARD ====================
   dashboard: router({
     stats: protectedProcedure.query(async ({ ctx }) => {
@@ -1966,6 +2003,11 @@ export const appRouter = router({
       };
     }),
     
+    // Resumo de crédito concedido a clientes
+    creditSummary: protectedProcedure.query(async ({ ctx }) => {
+      return await db.getCreditSummary(ctx.activeCompanyId);
+    }),
+
     // Estatísticas de compras
     purchaseStats: protectedProcedure.query(async ({ ctx }) => {
       const totalCurrentMonth = await db.getPurchaseTotalCurrentMonth(ctx.activeCompanyId);
