@@ -73,6 +73,27 @@ export const appRouter = router({
         return { success: true };
       }),
     
+    uploadAvatar: protectedProcedure
+      .input(z.object({
+        avatarBase64: z.string(),
+        contentType: z.string(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const { storagePut } = await import('./storage');
+        const buffer = Buffer.from(input.avatarBase64, 'base64');
+        const ext = input.contentType.includes('png') ? 'png' : input.contentType.includes('gif') ? 'gif' : 'jpg';
+        const key = `avatars/${ctx.user.id}-${Date.now()}.${ext}`;
+        const { url } = await storagePut(key, buffer, input.contentType);
+        await db.updateUserAvatar(ctx.user.id, url);
+        return { url };
+      }),
+
+    removeAvatar: protectedProcedure
+      .mutation(async ({ ctx }) => {
+        await db.updateUserAvatar(ctx.user.id, null);
+        return { success: true };
+      }),
+
     delete: adminProcedure
       .input(z.object({ userId: z.string() }))
       .mutation(async ({ ctx, input }) => {

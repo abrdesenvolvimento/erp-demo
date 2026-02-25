@@ -159,6 +159,12 @@ export async function updateUser(userId: string, data: { name?: string; email?: 
   await db.update(users).set(updateData).where(eq(users.id, userId));
 }
 
+export async function updateUserAvatar(userId: string, avatarUrl: string | null) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(users).set({ avatarUrl }).where(eq(users.id, userId));
+}
+
 export async function deleteUser(userId: string) {
   const db = await getDb();
   if (!db) {
