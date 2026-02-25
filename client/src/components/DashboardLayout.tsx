@@ -395,6 +395,7 @@ function DashboardLayoutContent({
           style={hasCustomTheme ? {
             background: companyTheme.sidebarBgGradient,
             color: companyTheme.textPrimary,
+            '--sidebar': 'transparent',
             '--sidebar-accent': companyTheme.activeItemBg,
             '--sidebar-accent-foreground': companyTheme.textPrimary,
             '--sidebar-primary': companyTheme.accent,
@@ -402,6 +403,7 @@ function DashboardLayoutContent({
             '--sidebar-foreground': companyTheme.textPrimary,
             '--sidebar-muted-foreground': companyTheme.textMuted,
             '--sidebar-border': companyTheme.separatorColor,
+            transition: 'background 3s ease, color 1.5s ease',
           } as CSSProperties : undefined}
         >
           <SidebarHeader className="justify-center">
@@ -454,12 +456,12 @@ function DashboardLayoutContent({
               <p className="text-[10px] uppercase tracking-wider font-medium mb-1.5 px-1" style={hasCustomTheme ? { color: companyTheme.textMuted } : { color: 'var(--muted-foreground)' }}>Empresa Ativa</p>
               <DropdownMenu open={companyMenuOpen} onOpenChange={setCompanyMenuOpen}>
                 <DropdownMenuTrigger asChild>
-                  <button className="flex items-center gap-3 w-full rounded-lg border px-3 py-2.5 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring" style={hasCustomTheme ? { borderColor: companyTheme.borderColor, backgroundColor: companyTheme.accentHover } : { borderColor: 'var(--primary-20)', backgroundColor: 'var(--primary-5)' }}>
+                  <button className="flex items-center gap-3 w-full rounded-lg border px-3 py-3 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring" style={hasCustomTheme ? { borderColor: companyTheme.borderColor, backgroundColor: companyTheme.accentHover } : { borderColor: 'var(--primary-20)', backgroundColor: 'var(--primary-5)' }}>
                     {activeCompany?.companyLogoUrl ? (
-                      <img src={activeCompany.companyLogoUrl} alt="" className="h-9 w-9 rounded-md object-contain shrink-0" />
+                      <img src={activeCompany.companyLogoUrl} alt="" className="h-12 w-12 rounded-lg object-contain shrink-0" />
                     ) : (
-                      <div className="h-8 w-8 rounded-md bg-muted flex items-center justify-center shrink-0">
-                        <Building2 className="h-4 w-4 text-muted-foreground" />
+                      <div className="h-12 w-12 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                        <Building2 className="h-5 w-5 text-muted-foreground" />
                       </div>
                     )}
                     <div className="flex-1 min-w-0">

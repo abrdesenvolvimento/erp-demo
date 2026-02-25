@@ -1095,3 +1095,8 @@ Despesa de impostos aparece tanto em janeiro quanto em fevereiro após edição 
 - [x] Armazenar paleta de cores no frontend por companyId (COMPANY_THEMES em DashboardLayout.tsx)
 - [x] Testes de contraste WCAG AA para acessibilidade (23 testes passando)
 - [x] Ajuste do dourado Adega de #E3A72F → #F0B840 para melhor contraste com verde (ratio >= 3:1)
+
+## Ajustes Sidebar — Rodada 2 (25/02/2026)
+- [x] Remover fundo azul petróleo residual do sidebar (--sidebar: transparent sobrescreve bg-sidebar)
+- [x] Transição suave de ~3 segundos ao trocar de empresa (transition: background 3s ease)
+- [x] Aumentar logo da empresa ativa no seletor (h-12 w-12 com rounded-lg)
