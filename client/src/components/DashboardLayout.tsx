@@ -490,7 +490,7 @@ function DashboardLayoutContent({
                 <DropdownMenuTrigger asChild>
                   <button className="flex items-center gap-3 w-full rounded-lg border px-3 py-3 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring" style={hasCustomTheme ? { borderColor: companyTheme.borderColor, backgroundColor: companyTheme.accentHover } : { borderColor: 'var(--primary-20)', backgroundColor: 'var(--primary-5)' }}>
                     {activeCompany?.companyLogoUrl ? (
-                      <img src={activeCompany.companyLogoUrl} alt="" className="h-14 w-14 rounded-lg object-contain shrink-0" />
+                      <img src={activeCompany.companyLogoUrl} alt="" className="h-14 w-14 rounded-lg object-contain shrink-0" style={{ filter: 'drop-shadow(0 1px 3px rgba(0,0,0,0.5))' }} />
                     ) : (
                       <div className="h-14 w-14 rounded-lg bg-muted flex items-center justify-center shrink-0">
                         <Building2 className="h-6 w-6 text-muted-foreground" />
@@ -523,7 +523,7 @@ function DashboardLayoutContent({
                         className={`cursor-pointer flex items-center gap-2 ${isActive ? 'bg-accent' : ''}`}
                       >
                         {uc.companyLogoUrl ? (
-                          <img src={uc.companyLogoUrl} alt="" className="h-6 w-6 rounded-md object-cover shrink-0" />
+                          <img src={uc.companyLogoUrl} alt="" className="h-6 w-6 rounded-md object-cover shrink-0" style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.4))' }} />
                         ) : (
                           <Building2 className="h-4 w-4 text-muted-foreground shrink-0" />
                         )}

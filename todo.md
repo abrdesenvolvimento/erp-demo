@@ -1118,3 +1118,6 @@ Despesa de impostos aparece tanto em janeiro quanto em fevereiro após edição 
 - [x] Upload dos logos PNG transparentes para S3 (Adega e A Brasa)
 - [x] Atualizar URLs dos logos no banco de dados (tabela companies)
 - [x] Verificar visual no sidebar, seletor de empresa e tela de transição
+
+## Fix Logo Adega — Rodada 6 (25/02/2026)
+- [x] Adicionar drop-shadow no logo da Adega no sidebar para destacar partes brancas (filter: drop-shadow)
