@@ -1084,3 +1084,7 @@ Despesa de impostos aparece tanto em janeiro quanto em fevereiro após edição 
 ## Correções 25/02/2026 — Bugs reportados após sprint
 - [x] Bug: Card de Crédito mostra R$27.365 em aberto vs Contas a Receber R$9.204 — corrigido: reescrita query com saldo real (vendas a prazo + débitos - pagamentos) usando customerId correto
 - [x] Bug: Calendário de Faturamento não destaca feriados e não permite alteração manual de dias — corrigido: Relatorios.tsx atualizado com feriados + popover de destaques manuais
+
+## Melhoria Sidebar — Identidade do Sistema (25/02/2026)
+- [x] Reorganizar sidebar: logo ABRWF (sistema) no topo, empresa ativa (logo+nome) abaixo separadamente
+- [x] Manter identidade visual do sistema independente da empresa acessada

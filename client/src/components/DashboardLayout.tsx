@@ -338,14 +338,15 @@ function DashboardLayoutContent({
           className="border-r-0"
           disableTransition={isResizing}
         >
-          <SidebarHeader className="h-16 justify-center">
-            <div className="flex items-center gap-3 pl-2 group-data-[collapsible=icon]:px-0 transition-all w-full">
+          <SidebarHeader className="justify-center">
+            {/* Logo do Sistema ABRWF — identidade fixa */}
+            <div className="flex items-center gap-3 pl-2 group-data-[collapsible=icon]:px-0 transition-all w-full h-14">
               {isCollapsed ? (
                 <div className="relative h-10 w-10 shrink-0 group">
                   <img
-                    src={activeCompany?.companyLogoUrl || APP_LOGO}
+                    src={APP_LOGO}
                     className="h-10 w-10 rounded-md object-contain ring-1 ring-border"
-                    alt="Logo"
+                    alt={APP_TITLE}
                   />
                   <button
                     onClick={toggleSidebar}
@@ -358,12 +359,12 @@ function DashboardLayoutContent({
                 <>
                   <div className="flex items-center gap-3 min-w-0">
                     <img
-                      src={activeCompany?.companyLogoUrl || APP_LOGO}
-                      className="h-12 w-auto max-w-[48px] rounded-md object-contain ring-1 ring-border shrink-0"
-                      alt="Logo"
+                      src={APP_LOGO}
+                      className="h-10 w-auto max-w-[40px] rounded-md object-contain shrink-0"
+                      alt={APP_TITLE}
                     />
-                    <span className="font-semibold tracking-tight truncate">
-                      {activeCompany?.companyName || APP_TITLE}
+                    <span className="font-bold tracking-tight text-base">
+                      {APP_TITLE}
                     </span>
                   </div>
                   <button
@@ -377,19 +378,22 @@ function DashboardLayoutContent({
             </div>
           </SidebarHeader>
 
-          {/* Seletor de Empresa/Filial */}
+          {/* Empresa Ativa — seletor com logo e dados */}
           {!isCollapsed && userCompanies.length > 0 && (
-            <div className="px-3 pb-2">
+            <div className="px-3 pb-3">
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium mb-1.5 px-1">Empresa Ativa</p>
               <DropdownMenu open={companyMenuOpen} onOpenChange={setCompanyMenuOpen}>
                 <DropdownMenuTrigger asChild>
-                  <button className="flex items-center gap-2 w-full rounded-lg border border-border/60 bg-muted/30 px-3 py-2 text-left hover:bg-accent/50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                  <button className="flex items-center gap-3 w-full rounded-lg border border-primary/20 bg-primary/5 px-3 py-2.5 text-left hover:bg-primary/10 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring">
                     {activeCompany?.companyLogoUrl ? (
-                      <img src={activeCompany.companyLogoUrl} alt="" className="h-6 w-6 rounded-md object-cover shrink-0" />
+                      <img src={activeCompany.companyLogoUrl} alt="" className="h-8 w-8 rounded-md object-contain ring-1 ring-border shrink-0" />
                     ) : (
-                      <Building2 className="h-4 w-4 text-muted-foreground shrink-0" />
+                      <div className="h-8 w-8 rounded-md bg-muted flex items-center justify-center shrink-0">
+                        <Building2 className="h-4 w-4 text-muted-foreground" />
+                      </div>
                     )}
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium truncate leading-none">
+                      <p className="text-sm font-semibold truncate leading-tight">
                         {activeCompany?.companyName || activeCompany?.companyLegalName || 'Selecionar Empresa'}
                       </p>
                       {activeCompany?.branchName && (
