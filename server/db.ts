@@ -2838,6 +2838,7 @@ export async function getTotalPendingReceivables(companyId?: number) {
 }
 
 // Obter resumo de crédito concedido a clientes (limite total, em aberto, disponível)
+// Usa saldo real calculado (vendas a prazo + débitos - pagamentos) em vez de currentBalance
 export async function getCreditSummary(companyId?: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
@@ -2855,37 +2856,61 @@ export async function getCreditSummary(companyId?: number) {
     companyId ? eq(partners.companyId, companyId) : undefined
   ));
   
-  // Total em aberto (currentBalance de todos os clientes com saldo > 0)
-  const [balanceResult] = await db.select({
-    totalUsed: sql<string>`COALESCE(SUM(CAST(${partners.currentBalance} AS DECIMAL(12,2))), 0)`,
-    customersWithBalance: sql<number>`COUNT(*)`,
-  })
-  .from(partners)
-  .where(and(
-    inArray(partners.partnerType, ["CUSTOMER", "BOTH"]),
-    sql`CAST(${partners.currentBalance} AS DECIMAL(12,2)) > 0`,
-    companyId ? eq(partners.companyId, companyId) : undefined
-  ));
+  // Calcular saldo real por cliente: vendas a prazo + débitos - pagamentos
+  // Usa subquery wrapper porque MySQL não permite WHERE em alias calculado
+  // Nota: sales usa customerId, customerDebits usa customerId, customerPayments usa customerId
+  const customerBalances: Array<{ partnerId: number; realBalance: number }> = await db.execute(sql`
+    SELECT sub.partnerId, sub.realBalance FROM (
+      SELECT 
+        p.id as partnerId,
+        (
+          COALESCE((SELECT SUM(CAST(s.finalAmount AS DECIMAL(12,2))) FROM sales s WHERE s.customerId = p.id AND s.saleType = 'A_PRAZO' AND s.status != 'CANCELLED' ${companyId ? sql`AND s.companyId = ${companyId}` : sql``}), 0)
+          + COALESCE((SELECT SUM(CAST(cd.debitAmount AS DECIMAL(12,2))) FROM customerDebits cd WHERE cd.customerId = p.id ${companyId ? sql`AND cd.companyId = ${companyId}` : sql``}), 0)
+          - COALESCE((SELECT SUM(CAST(cp.paidAmount AS DECIMAL(12,2))) FROM customerPayments cp WHERE cp.customerId = p.id ${companyId ? sql`AND cp.companyId = ${companyId}` : sql``}), 0)
+        ) as realBalance
+      FROM partners p
+      WHERE p.partnerType IN ('CUSTOMER', 'BOTH')
+      ${companyId ? sql`AND p.companyId = ${companyId}` : sql``}
+    ) AS sub
+    WHERE sub.realBalance > 0
+    ORDER BY sub.realBalance DESC
+  `) as any;
   
-  // Top 5 clientes com maior saldo em aberto
-  const topCustomers = await db.select({
-    id: partners.id,
-    name: partners.tradeName,
-    fullName: partners.name,
-    creditLimit: partners.creditLimit,
-    currentBalance: partners.currentBalance,
-  })
-  .from(partners)
-  .where(and(
-    inArray(partners.partnerType, ["CUSTOMER", "BOTH"]),
-    sql`CAST(${partners.currentBalance} AS DECIMAL(12,2)) > 0`,
-    companyId ? eq(partners.companyId, companyId) : undefined
-  ))
-  .orderBy(sql`CAST(${partners.currentBalance} AS DECIMAL(12,2)) DESC`)
-  .limit(5);
+  const rows = Array.isArray(customerBalances) ? (customerBalances[0] || customerBalances) : customerBalances;
+  const balanceRows = Array.isArray(rows) ? rows : [];
+  
+  const totalUsed = balanceRows.reduce((sum: number, r: any) => sum + parseFloat(r.realBalance || "0"), 0);
+  const customersWithBalance = balanceRows.length;
+  
+  // Top 5 clientes com maior saldo real em aberto
+  const topPartnerIds = balanceRows.slice(0, 5).map((r: any) => r.partnerId);
+  let topCustomers: Array<{ id: number; name: string | null; fullName: string | null; creditLimit: string | null; realBalance: number }> = [];
+  
+  if (topPartnerIds.length > 0) {
+    const topPartnersData = await db.select({
+      id: partners.id,
+      name: partners.tradeName,
+      fullName: partners.name,
+      creditLimit: partners.creditLimit,
+    })
+    .from(partners)
+    .where(inArray(partners.id, topPartnerIds));
+    
+    // Merge com saldos reais
+    topCustomers = topPartnerIds.map((pid: number) => {
+      const partner = topPartnersData.find(p => p.id === pid);
+      const balRow = balanceRows.find((r: any) => r.partnerId === pid);
+      return {
+        id: pid,
+        name: partner?.name || partner?.fullName || null,
+        fullName: partner?.fullName || null,
+        creditLimit: partner?.creditLimit || null,
+        realBalance: parseFloat(balRow?.realBalance || "0"),
+      };
+    });
+  }
   
   const totalLimit = parseFloat(limitResult.totalLimit || "0");
-  const totalUsed = parseFloat(balanceResult.totalUsed || "0");
   
   return {
     totalLimit,
@@ -2893,12 +2918,12 @@ export async function getCreditSummary(companyId?: number) {
     totalAvailable: totalLimit - totalUsed,
     usagePercent: totalLimit > 0 ? ((totalUsed / totalLimit) * 100) : 0,
     activeCustomers: limitResult.activeCustomers || 0,
-    customersWithBalance: balanceResult.customersWithBalance || 0,
+    customersWithBalance,
     topCustomers: topCustomers.map(c => ({
       id: c.id,
       name: c.name || c.fullName,
       creditLimit: c.creditLimit,
-      currentBalance: c.currentBalance,
+      currentBalance: String(c.realBalance.toFixed(2)),
     })),
   };
 }

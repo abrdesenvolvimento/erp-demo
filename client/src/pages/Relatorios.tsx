@@ -4,9 +4,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, BarChart3, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, BarChart3, TrendingUp, TrendingDown, Minus, X, Plus } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { trpc } from "@/lib/trpc";
 import { getCurrentBrazilDateInfo } from "@shared/dateUtils";
+import { getHolidaysForMonth, type Holiday } from "@shared/holidays";
+import { useAuth } from "@/_core/hooks/useAuth";
 
 const MONTHS = [
   "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
@@ -20,6 +25,12 @@ export default function AnaliseFaturamento() {
   const [selectedYear, setSelectedYear] = useState(todayInfo.year);
   const [selectedMonth, setSelectedMonth] = useState(todayInfo.month);
   const [viewMode, setViewMode] = useState<"monthly" | "daily">("monthly");
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
+
+  // State para popover de destaque manual
+  const [highlightDay, setHighlightDay] = useState<number | null>(null);
+  const [highlightLabel, setHighlightLabel] = useState("");
 
   // Query para calendário (visão diária)
   const { data: calendarData, isLoading: isLoadingCalendar } = trpc.sales.calendar.useQuery({
@@ -31,6 +42,65 @@ export default function AnaliseFaturamento() {
   const { data: monthlyData, isLoading: isLoadingMonthly } = trpc.sales.monthlyStats.useQuery({
     year: selectedYear,
   });
+
+  // Buscar destaques manuais do banco
+  const { data: manualHighlights } = trpc.calendar.getHighlights.useQuery(
+    { year: selectedYear, month: selectedMonth },
+    { retry: false }
+  );
+
+  const utils = trpc.useUtils();
+
+  const addHighlightMutation = trpc.calendar.addHighlight.useMutation({
+    onSuccess: () => {
+      utils.calendar.getHighlights.invalidate({ year: selectedYear, month: selectedMonth });
+      setHighlightDay(null);
+      setHighlightLabel("");
+    },
+  });
+
+  const removeHighlightMutation = trpc.calendar.removeHighlight.useMutation({
+    onSuccess: () => {
+      utils.calendar.getHighlights.invalidate({ year: selectedYear, month: selectedMonth });
+    },
+  });
+
+  // Feriados do mês
+  const holidays = useMemo(() => {
+    const list = getHolidaysForMonth(selectedYear, selectedMonth);
+    const map = new Map<number, Holiday>();
+    for (const h of list) {
+      const day = parseInt(h.date.split("-")[2], 10);
+      map.set(day, h);
+    }
+    return map;
+  }, [selectedYear, selectedMonth]);
+
+  // Destaques manuais por dia
+  const manualByDay = useMemo(() => {
+    const map = new Map<number, { id: number; label: string; color: string }>();
+    if (manualHighlights) {
+      for (const h of manualHighlights) {
+        const day = parseInt(h.date.split("-")[2], 10);
+        map.set(day, { id: h.id, label: h.label, color: h.color });
+      }
+    }
+    return map;
+  }, [manualHighlights]);
+
+  const handleAddHighlight = (day: number) => {
+    if (!highlightLabel.trim()) return;
+    const dateStr = `${selectedYear}-${String(selectedMonth).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+    addHighlightMutation.mutate({
+      date: dateStr,
+      label: highlightLabel.trim(),
+      color: "amber",
+    });
+  };
+
+  const handleRemoveHighlight = (id: number) => {
+    removeHighlightMutation.mutate({ id });
+  };
 
   // Calcular primeiro dia do mês e total de dias
   const firstDayOfMonth = new Date(selectedYear, selectedMonth - 1, 1).getDay();
@@ -355,7 +425,7 @@ export default function AnaliseFaturamento() {
                 ) : (
                   <>
                     {/* Legenda */}
-                    <div className="flex gap-4 mb-4 text-sm">
+                    <div className="flex flex-wrap gap-4 mb-4 text-sm">
                       <div className="flex items-center gap-2">
                         <div className="w-4 h-4 bg-blue-500 rounded"></div>
                         <span>Balcão</span>
@@ -368,6 +438,21 @@ export default function AnaliseFaturamento() {
                         <div className="w-4 h-4 bg-orange-500 rounded"></div>
                         <span>A Prazo</span>
                       </div>
+                      {holidays.size > 0 && (
+                        <div className="flex items-center gap-2">
+                          <div className="w-4 h-4 bg-red-400 rounded"></div>
+                          <span>Feriado ({holidays.size})</span>
+                        </div>
+                      )}
+                      {manualByDay.size > 0 && (
+                        <div className="flex items-center gap-2">
+                          <div className="w-4 h-4 bg-amber-400 rounded"></div>
+                          <span>Destaque ({manualByDay.size})</span>
+                        </div>
+                      )}
+                      {isAdmin && (
+                        <span className="text-muted-foreground/60 italic text-xs self-center">Clique em um dia para adicionar destaque</span>
+                      )}
                     </div>
 
                     {/* Grid do calendário */}
@@ -388,18 +473,51 @@ export default function AnaliseFaturamento() {
 
                           const dayData = dataByDay.get(day);
                           const hasData = dayData && dayData.total > 0;
+                          const holiday = holidays.get(day);
+                          const manual = manualByDay.get(day);
 
-                          return (
+                          let borderClass = "border-gray-200";
+                          let bgClass = hasData ? "bg-gray-50" : "bg-white";
+
+                          if (isTodayDay(day)) {
+                            borderClass = "border-blue-500 border-2";
+                            bgClass = "bg-blue-50";
+                          } else if (manual) {
+                            bgClass = "bg-amber-50/70";
+                            borderClass = "border-amber-300";
+                          } else if (holiday) {
+                            bgClass = "bg-red-50/60";
+                            borderClass = "border-red-200";
+                          }
+
+                          const dayCell = (
                             <div
-                              key={day}
                               className={`
-                                min-h-[150px] md:h-[100px] border rounded-lg p-1.5 md:p-2 flex flex-col text-xs md:text-sm overflow-hidden
-                                ${isTodayDay(day) ? 'border-blue-500 border-2' : 'border-gray-200'}
-                                ${hasData ? 'bg-gray-50' : 'bg-white'}
+                                min-h-[150px] md:h-[100px] border rounded-lg p-1.5 md:p-2 flex flex-col text-xs md:text-sm overflow-hidden relative
+                                ${borderClass} ${bgClass}
+                                ${isAdmin ? 'cursor-pointer hover:ring-1 hover:ring-amber-300' : ''}
                                 hover:shadow-md transition-shadow
                               `}
                             >
-                              <div className="text-sm md:text-lg font-semibold mb-1">{day}</div>
+                              {/* Indicadores no canto */}
+                              {(holiday || manual) && (
+                                <div className="absolute top-1 right-1 flex gap-0.5">
+                                  {holiday && <div className="w-2.5 h-2.5 rounded-full bg-red-400" />}
+                                  {manual && <div className="w-2.5 h-2.5 rounded-full bg-amber-400" />}
+                                </div>
+                              )}
+
+                              <div className={`text-sm md:text-lg font-semibold mb-0.5 ${holiday ? 'text-red-500' : ''}`}>
+                                {day}
+                              </div>
+
+                              {/* Nome do feriado/destaque */}
+                              {(holiday || manual) && (
+                                <div className={`text-[7px] md:text-[9px] leading-tight truncate max-w-full font-medium mb-0.5 ${manual ? 'text-amber-600' : 'text-red-500'}`}>
+                                  {manual?.label || holiday?.name}
+                                </div>
+                              )}
+
                               {hasData && dayData && (
                                 <div className="flex-1 flex flex-col justify-between">
                                   <div className="space-y-0.5">
@@ -429,6 +547,101 @@ export default function AnaliseFaturamento() {
                               )}
                             </div>
                           );
+
+                          // Admin: popover para gerenciar destaques
+                          if (isAdmin) {
+                            return (
+                              <Popover key={day} open={highlightDay === day} onOpenChange={(open) => {
+                                if (open) {
+                                  setHighlightDay(day);
+                                  setHighlightLabel("");
+                                } else {
+                                  setHighlightDay(null);
+                                }
+                              }}>
+                                <PopoverTrigger asChild>
+                                  {dayCell}
+                                </PopoverTrigger>
+                                <PopoverContent className="w-64 p-3" side="top">
+                                  <div className="space-y-2">
+                                    <p className="text-xs font-semibold text-muted-foreground">
+                                      Dia {String(day).padStart(2, '0')}/{String(selectedMonth).padStart(2, '0')}/{selectedYear}
+                                    </p>
+
+                                    {/* Mostrar feriado se houver */}
+                                    {holiday && (
+                                      <div className="flex items-center gap-1.5 text-xs">
+                                        <div className="w-2 h-2 rounded-full bg-red-400" />
+                                        <span className="text-red-600">{holiday.name}</span>
+                                      </div>
+                                    )}
+
+                                    {/* Destaque manual existente */}
+                                    {manual && (
+                                      <div className="flex items-center justify-between bg-amber-50 rounded p-1.5">
+                                        <div className="flex items-center gap-1.5 text-xs">
+                                          <div className="w-2 h-2 rounded-full bg-amber-400" />
+                                          <span className="text-amber-700 font-medium">{manual.label}</span>
+                                        </div>
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          className="h-5 w-5 text-red-500 hover:text-red-700"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleRemoveHighlight(manual.id);
+                                          }}
+                                          disabled={removeHighlightMutation.isPending}
+                                        >
+                                          <X className="h-3 w-3" />
+                                        </Button>
+                                      </div>
+                                    )}
+
+                                    {/* Adicionar novo destaque */}
+                                    {!manual && (
+                                      <div className="flex gap-1.5">
+                                        <Input
+                                          placeholder="Ex: Loja Fechada"
+                                          value={highlightLabel}
+                                          onChange={(e) => setHighlightLabel(e.target.value)}
+                                          className="h-7 text-xs"
+                                          onKeyDown={(e) => {
+                                            if (e.key === "Enter") handleAddHighlight(day);
+                                          }}
+                                        />
+                                        <Button
+                                          size="icon"
+                                          className="h-7 w-7 shrink-0"
+                                          onClick={() => handleAddHighlight(day)}
+                                          disabled={!highlightLabel.trim() || addHighlightMutation.isPending}
+                                        >
+                                          <Plus className="h-3 w-3" />
+                                        </Button>
+                                      </div>
+                                    )}
+                                  </div>
+                                </PopoverContent>
+                              </Popover>
+                            );
+                          }
+
+                          // Non-admin: tooltip
+                          const tooltipText = [holiday?.name, manual?.label].filter(Boolean).join(" | ");
+                          if (tooltipText) {
+                            return (
+                              <Tooltip key={day}>
+                                <TooltipTrigger asChild>
+                                  {dayCell}
+                                </TooltipTrigger>
+                                <TooltipContent side="top" className="text-xs">
+                                  {tooltipText}
+                                </TooltipContent>
+                              </Tooltip>
+                            );
+                          }
+
+                          return <div key={day}>{dayCell}</div>;
                         })}
                       </div>
                     </div>

@@ -926,7 +926,7 @@ Despesa de impostos aparece tanto em janeiro quanto em fevereiro após edição 
 - [x] Tela de seleção: trocar tema escuro por tema claro
 - [x] Tela de seleção: colocar logo ABRWF grande acima do título "Selecionar Empresa"
 - [x] Corrigir logo da Adega Beira Rio (atualizado no banco com logo correto da Adega)
-- [ ] Sidebar: usar logo da empresa ativa (não o logo do sistema) quando dentro de uma empresa
+- [x] Sidebar: usar logo da empresa ativa (não o logo do sistema) quando dentro de uma empresa
 
 ### Requisitos Futuros - Comercialização (Anotado)
 - [ ] Sistema de permissões por módulo/pacote contratado (para comercialização)
@@ -1080,3 +1080,7 @@ Despesa de impostos aparece tanto em janeiro quanto em fevereiro após edição 
 - [x] Frontend: destaque automático de feriados no calendário de faturamento
 - [x] Backend: tabela calendarHighlights + CRUD (getHighlights, addHighlight, removeHighlight)
 - [x] Frontend: popover no calendário para admin adicionar/remover destaques manuais
+
+## Correções 25/02/2026 — Bugs reportados após sprint
+- [x] Bug: Card de Crédito mostra R$27.365 em aberto vs Contas a Receber R$9.204 — corrigido: reescrita query com saldo real (vendas a prazo + débitos - pagamentos) usando customerId correto
+- [x] Bug: Calendário de Faturamento não destaca feriados e não permite alteração manual de dias — corrigido: Relatorios.tsx atualizado com feriados + popover de destaques manuais
