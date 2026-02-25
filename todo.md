@@ -1113,3 +1113,8 @@ Despesa de impostos aparece tanto em janeiro quanto em fevereiro após edição 
 - [x] Overlay de transição premium com gradiente da marca (verde Adega / grafite A Brasa) + glow decorativo
 - [x] Barra de progresso temática com cor accent (dourado Adega / laranja A Brasa) + ease-out cubic
 - [x] Animações CSS: fadeIn, logoEntrance (bounce), slideUp escalonado, pulse no glow
+
+## Logos Transparentes — Rodada 5 (25/02/2026)
+- [x] Upload dos logos PNG transparentes para S3 (Adega e A Brasa)
+- [x] Atualizar URLs dos logos no banco de dados (tabela companies)
+- [x] Verificar visual no sidebar, seletor de empresa e tela de transição
