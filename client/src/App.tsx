@@ -196,7 +196,7 @@ function CompanyGate() {
                   src={activeCompany.companyLogoUrl}
                   alt=""
                   className="h-32 w-32 object-contain"
-                  style={{ background: 'rgba(255,255,255,0.05)' }}
+                  style={{ background: 'rgba(255,255,255,0.05)', filter: 'drop-shadow(0 0 1px rgba(0,0,0,0.8)) drop-shadow(0 0 2px rgba(0,0,0,0.6)) drop-shadow(0 1px 4px rgba(0,0,0,0.5))' }}
                 />
               </div>
             )}

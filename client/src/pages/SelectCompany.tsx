@@ -81,6 +81,7 @@ export default function SelectCompany() {
                         src={company.companyLogoUrl} 
                         alt={company.companyName || company.companyLegalName || ''} 
                         className="w-full h-full object-cover"
+                        style={{ filter: 'drop-shadow(0 0 1px rgba(0,0,0,0.6)) drop-shadow(0 1px 3px rgba(0,0,0,0.3))' }}
                       />
                     ) : (
                       <div className="w-full h-full bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center text-white font-bold text-xl">
