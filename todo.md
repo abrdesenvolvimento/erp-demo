@@ -1150,3 +1150,7 @@ Despesa de impostos aparece tanto em janeiro quanto em fevereiro após edição 
 - [x] Identificar e listar clientes com divergência antes da correção
 - [x] 37 clientes corrigidos, R$21.913,95 em divergências absolutas eliminadas
 - [x] Zero divergências restantes após UPDATE
+
+### Ajustes Filtros Análise de Estoque (26/02/2026)
+- [x] Remover primeiro filtro de busca por texto ("Buscar produto...") que tem bug de perda de foco
+- [x] Melhorar layout do autocomplete multi-select para não expandir o quadro verticalmente (max 2 badges + contador)

@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Package, TrendingUp, TrendingDown, ArrowUpDown, Search, BarChart3, Clock, AlertTriangle, ArrowUp, ArrowDown, ShoppingCart, Truck, PauseCircle, LayoutGrid, X } from "lucide-react";
+import { Package, TrendingUp, TrendingDown, ArrowUpDown, BarChart3, Clock, AlertTriangle, ArrowUp, ArrowDown, ShoppingCart, Truck, PauseCircle, LayoutGrid, X } from "lucide-react";
 
 const MONTHS = [
   "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
@@ -112,33 +112,44 @@ function MultiSelectAutocomplete({
     inputRef.current?.focus();
   }, [selected, onChange]);
 
+  // Exibir no máximo 2 badges inline, o restante como contador
+  const MAX_VISIBLE_BADGES = 2;
+  const visibleSelected = selected.slice(0, MAX_VISIBLE_BADGES);
+  const hiddenCount = selected.length - MAX_VISIBLE_BADGES;
+
   return (
     <div ref={containerRef} className={`relative ${className}`}>
       <div
-        className="flex flex-wrap items-center gap-1 min-h-[36px] px-2 py-1 border rounded-md bg-background cursor-text"
+        className="flex items-center gap-1 min-h-[36px] px-2 py-1 border rounded-md bg-background cursor-text overflow-hidden"
         onClick={() => { setOpen(true); inputRef.current?.focus(); }}
       >
         {selected.length === 0 && !search && (
-          <span className="text-muted-foreground text-sm">{placeholder}</span>
+          <span className="text-muted-foreground text-sm whitespace-nowrap">{placeholder}</span>
         )}
-        {selectedLabels.map((label, i) => (
-          <Badge key={selected[i]} variant="secondary" className="text-xs gap-1 py-0.5 px-1.5">
-            {label.length > 18 ? label.substring(0, 18) + '…' : label}
+        {visibleSelected.map((val, i) => (
+          <Badge key={val} variant="secondary" className="text-xs gap-1 py-0.5 px-1.5 shrink-0 max-w-[120px] truncate">
+            <span className="truncate">{selectedLabels[i].length > 14 ? selectedLabels[i].substring(0, 14) + '…' : selectedLabels[i]}</span>
             <X
-              className="h-3 w-3 cursor-pointer hover:text-destructive"
-              onClick={(e) => { e.stopPropagation(); handleRemove(selected[i]); }}
+              className="h-3 w-3 cursor-pointer hover:text-destructive shrink-0"
+              onClick={(e) => { e.stopPropagation(); handleRemove(val); }}
             />
           </Badge>
         ))}
+        {hiddenCount > 0 && (
+          <Badge variant="outline" className="text-xs py-0.5 px-1.5 shrink-0">
+            +{hiddenCount}
+          </Badge>
+        )}
         <Input
           ref={inputRef}
           value={search}
           onChange={(e) => { setSearch(e.target.value); setOpen(true); }}
           onFocus={() => setOpen(true)}
-          className="border-0 shadow-none p-0 h-6 min-w-[80px] flex-1 focus-visible:ring-0"
+          className="border-0 shadow-none p-0 h-6 min-w-[60px] flex-1 focus-visible:ring-0"
           placeholder={selected.length > 0 ? "" : ""}
         />
       </div>
+
       {open && filteredOptions.length > 0 && (
         <div className="absolute z-50 mt-1 w-full max-h-[200px] overflow-y-auto bg-popover border rounded-md shadow-md">
           {filteredOptions.slice(0, 50).map(opt => (
@@ -164,7 +175,6 @@ export default function AnaliseEstoque() {
   const [year, setYear] = useState(nowBrazil.getFullYear());
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedSubcategories, setSelectedSubcategories] = useState<string[]>([]);
-  const [searchTerm, setSearchTerm] = useState("");
   const [sortField, setSortField] = useState<SortField>('stockValue');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
   const [activeTab, setActiveTab] = useState("giro");
@@ -256,14 +266,8 @@ export default function AnaliseEstoque() {
       filtered = filtered.filter((p: any) => prodIds.has(p.productId));
     }
 
-    // Search term
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      filtered = filtered.filter((p: any) => p.productName.toLowerCase().includes(term));
-    }
-
     return filtered;
-  }, [productData, selectedCategories, selectedSubcategories, selectedProducts, searchTerm]);
+  }, [productData, selectedCategories, selectedSubcategories, selectedProducts]);
 
   // Generic sort function
   const sortProducts = useCallback((products: any[], field: SortField, dir: SortDir) => {
@@ -399,23 +403,13 @@ export default function AnaliseEstoque() {
     setSelectedCategories([]);
     setSelectedSubcategories([]);
     setSelectedProducts([]);
-    setSearchTerm("");
   };
 
-  const hasActiveFilters = selectedCategories.length > 0 || selectedSubcategories.length > 0 || selectedProducts.length > 0 || searchTerm;
+  const hasActiveFilters = selectedCategories.length > 0 || selectedSubcategories.length > 0 || selectedProducts.length > 0;
 
   // ===== FILTROS COMPARTILHADOS =====
   const FiltersBar = () => (
     <div className="flex items-center gap-2 flex-wrap">
-      <div className="relative">
-        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Buscar produto..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="pl-8 w-[180px]"
-        />
-      </div>
       <MultiSelectAutocomplete
         options={categoryOptions}
         selected={selectedCategories}
