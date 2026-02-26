@@ -1144,3 +1144,9 @@ Despesa de impostos aparece tanto em janeiro quanto em fevereiro após edição 
 - [x] Causa: getPartners usava campo currentBalance armazenado (desatualizado) em vez de calcular saldo real
 - [x] Correção: getPartners agora chama getCustomerBalance() para clientes (CUSTOMER/BOTH)
 - [x] Bonus: busca de parceiros agora inclui tradeName além de name e docNumber
+
+### Sincronização de Saldo de Clientes (26/02/2026)
+- [x] Recalcular e atualizar currentBalance de TODOS os clientes no banco (vendas a prazo + débitos - pagamentos)
+- [x] Identificar e listar clientes com divergência antes da correção
+- [x] 37 clientes corrigidos, R$21.913,95 em divergências absolutas eliminadas
+- [x] Zero divergências restantes após UPDATE
