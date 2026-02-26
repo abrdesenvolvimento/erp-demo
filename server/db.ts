@@ -528,7 +528,7 @@ export async function getPartners(filters?: { search?: string; partnerType?: str
   if (filters?.search) {
     const searchLower = filters.search.toLowerCase();
     conditions.push(
-      sql`(LOWER(${partners.name}) LIKE ${`%${searchLower}%`} OR LOWER(${partners.docNumber}) LIKE ${`%${searchLower}%`})`
+      sql`(LOWER(${partners.name}) LIKE ${`%${searchLower}%`} OR LOWER(${partners.docNumber}) LIKE ${`%${searchLower}%`} OR LOWER(${partners.tradeName}) LIKE ${`%${searchLower}%`})`
     );
   }
   
@@ -536,7 +536,26 @@ export async function getPartners(filters?: { search?: string; partnerType?: str
     query = query.where(and(...conditions)) as any;
   }
   
-  return await query.orderBy(partners.name);
+  const partnersList = await query.orderBy(partners.name);
+  
+  // Para clientes (CUSTOMER ou BOTH), calcular saldo real em vez de usar currentBalance armazenado
+  // O campo currentBalance fica desatualizado quando pagamentos são feitos via Contas a Receber
+  const companyId = filters?.companyId;
+  const partnersWithRealBalance = await Promise.all(
+    partnersList.map(async (p: any) => {
+      if (p.partnerType === 'CUSTOMER' || p.partnerType === 'BOTH') {
+        try {
+          const realBalance = await getCustomerBalance(p.id, companyId);
+          return { ...p, currentBalance: realBalance.toFixed(2) };
+        } catch {
+          return p;
+        }
+      }
+      return p;
+    })
+  );
+  
+  return partnersWithRealBalance;
 }
 
 export async function getPartner(id: number) {

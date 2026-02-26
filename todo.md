@@ -1138,3 +1138,9 @@ Despesa de impostos aparece tanto em janeiro quanto em fevereiro após edição 
 ## Ajustes Finais — Publicação 25/02/2026
 - [x] Exibir avatar do usuário no sidebar footer quando houver foto cadastrada (AvatarImage)
 - [x] Trocar subtítulo do Dashboard para "Visão Geral"
+
+### Bug - Saldo do cliente divergente entre Parceiros e Contas a Receber (26/02/2026)
+- [x] Parceiros mostra saldo R$163 para Savio, mas Conta Corrente mostra R$107 (saldo real)
+- [x] Causa: getPartners usava campo currentBalance armazenado (desatualizado) em vez de calcular saldo real
+- [x] Correção: getPartners agora chama getCustomerBalance() para clientes (CUSTOMER/BOTH)
+- [x] Bonus: busca de parceiros agora inclui tradeName além de name e docNumber

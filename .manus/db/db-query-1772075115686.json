@@ -1,0 +1,22 @@
+{
+  "query": "\nSELECT p.id, p.name, p.tradeName, p.currentBalance, p.creditLimit, p.companyId,\n  (SELECT COALESCE(SUM(CAST(s.finalAmount AS DECIMAL(10,2))), 0) FROM sales s WHERE s.customerId = p.id AND s.saleType = 'A_PRAZO' AND s.status = 'ACTIVE') as totalVendas,\n  (SELECT COALESCE(SUM(CAST(cd.debitAmount AS DECIMAL(10,2))), 0) FROM customerDebits cd WHERE cd.customerId = p.id) as totalDebitos,\n  (SELECT COALESCE(SUM(CAST(cp.paidAmount AS DECIMAL(10,2))), 0) FROM customerPayments cp WHERE cp.customerId = p.id) as totalPagamentos,\n  (SELECT COALESCE(SUM(CAST(s.finalAmount AS DECIMAL(10,2))), 0) FROM sales s WHERE s.customerId = p.id AND s.saleType = 'A_PRAZO' AND s.status = 'ACTIVE')\n  + (SELECT COALESCE(SUM(CAST(cd.debitAmount AS DECIMAL(10,2))), 0) FROM customerDebits cd WHERE cd.customerId = p.id)\n  - (SELECT COALESCE(SUM(CAST(cp.paidAmount AS DECIMAL(10,2))), 0) FROM customerPayments cp WHERE cp.customerId = p.id) as saldoCalculado\nFROM partners p \nWHERE p.name LIKE '%Savio%' OR p.tradeName LIKE '%Savio%';\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute \nSELECT p.id, p.name, p.tradeName, p.currentBalance, p.creditLimit, p.companyId,\n  (SELECT COALESCE(SUM(CAST(s.finalAmount AS DECIMAL(10,2))), 0) FROM sales s WHERE s.customerId = p.id AND s.saleType = 'A_PRAZO' AND s.status = 'ACTIVE') as totalVendas,\n  (SELECT COALESCE(SUM(CAST(cd.debitAmount AS DECIMAL(10,2))), 0) FROM customerDebits cd WHERE cd.customerId = p.id) as totalDebitos,\n  (SELECT COALESCE(SUM(CAST(cp.paidAmount AS DECIMAL(10,2))), 0) FROM customerPayments cp WHERE cp.customerId = p.id) as totalPagamentos,\n  (SELECT COALESCE(SUM(CAST(s.finalAmount AS DECIMAL(10,2))), 0) FROM sales s WHERE s.customerId = p.id AND s.saleType = 'A_PRAZO' AND s.status = 'ACTIVE')\n  + (SELECT COALESCE(SUM(CAST(cd.debitAmount AS DECIMAL(10,2))), 0) FROM customerDebits cd WHERE cd.customerId = p.id)\n  - (SELECT COALESCE(SUM(CAST(cp.paidAmount AS DECIMAL(10,2))), 0) FROM customerPayments cp WHERE cp.customerId = p.id) as saldoCalculado\nFROM partners p \nWHERE p.name LIKE '%Savio%' OR p.tradeName LIKE '%Savio%';\n",
+  "rows": [
+    {
+      "id": "1800002",
+      "name": "Savio",
+      "tradeName": "NULL",
+      "currentBalance": "234.00",
+      "creditLimit": "150.00",
+      "companyId": "1",
+      "totalVendas": "234.00",
+      "totalDebitos": "24.50",
+      "totalPagamentos": "151.50",
+      "saldoCalculado": "107.00"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\ttradeName\tcurrentBalance\tcreditLimit\tcompanyId\ttotalVendas\ttotalDebitos\ttotalPagamentos\tsaldoCalculado\n1800002\tSavio\tNULL\t234.00\t150.00\t1\t234.00\t24.50\t151.50\t107.00\n",
+  "stderr": "",
+  "execution_time_ms": 519
+}
