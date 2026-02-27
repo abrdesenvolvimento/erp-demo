@@ -1155,3 +1155,6 @@ Despesa de impostos aparece tanto em janeiro quanto em fevereiro após edição 
 - [x] Remover primeiro filtro de busca por texto ("Buscar produto...") que tem bug de perda de foco
 - [x] Melhorar layout do autocomplete multi-select para não expandir o quadro verticalmente (max 2 badges + contador)
 - [x] Melhorar layout do multi-select: campo compacto com "N selecionados" + badges completos abaixo dos filtros com nome inteiro e X para remover
+- [x] Bug: clicar no X dos badges de produtos selecionados não remove o item da seleção
+- [x] Causa: FiltersBar era componente inline (arrow function) recriado a cada render, perdendo referências
+- [x] Correção: convertido para JSX direto (filtersBarContent) e handler como função normal

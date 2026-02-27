@@ -405,7 +405,7 @@ export default function AnaliseEstoque() {
     return items;
   }, [selectedCategories, selectedSubcategories, selectedProducts, categoryOptions, subcategoryOptions, productOptions]);
 
-  const handleRemoveSelectedItem = useCallback((value: string, type: 'category' | 'subcategory' | 'product') => {
+  const handleRemoveSelectedItem = (value: string, type: 'category' | 'subcategory' | 'product') => {
     if (type === 'category') {
       setSelectedCategories(prev => prev.filter(v => v !== value));
     } else if (type === 'subcategory') {
@@ -413,10 +413,10 @@ export default function AnaliseEstoque() {
     } else {
       setSelectedProducts(prev => prev.filter(v => v !== value));
     }
-  }, []);
+  };
 
   // ===== FILTROS COMPARTILHADOS =====
-  const FiltersBar = () => (
+  const filtersBarContent = (
     <div className="space-y-2">
       <div className="flex items-center gap-2 flex-wrap">
         <MultiSelectAutocomplete
@@ -668,7 +668,7 @@ export default function AnaliseEstoque() {
                     <CardTitle className="text-lg flex items-center gap-2">
                       <BarChart3 className="h-5 w-5 text-primary" /> Detalhe por Produto
                     </CardTitle>
-                    <FiltersBar />
+                    {filtersBarContent}
                   </div>
                 </CardHeader>
                 <CardContent>
@@ -826,7 +826,7 @@ export default function AnaliseEstoque() {
                         </Select>
                       </div>
                     </div>
-                    <FiltersBar />
+                    {filtersBarContent}
                   </div>
                 </CardHeader>
                 <CardContent>
@@ -959,7 +959,7 @@ export default function AnaliseEstoque() {
                         </Select>
                       </div>
                     </div>
-                    <FiltersBar />
+                    {filtersBarContent}
                   </div>
                 </CardHeader>
                 <CardContent>
