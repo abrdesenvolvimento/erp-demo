@@ -1158,3 +1158,4 @@ Despesa de impostos aparece tanto em janeiro quanto em fevereiro após edição 
 - [x] Bug: clicar no X dos badges de produtos selecionados não remove o item da seleção
 - [x] Causa: FiltersBar era componente inline (arrow function) recriado a cada render, perdendo referências
 - [x] Correção: convertido para JSX direto (filtersBarContent) e handler como função normal
+- [x] Bug: clicar no X do badge seleciona texto em vez de remover o item - corrigido com button, preventDefault/stopPropagation em onMouseDown e onClick, e select-none

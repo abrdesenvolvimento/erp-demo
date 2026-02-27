@@ -450,17 +450,21 @@ export default function AnaliseEstoque() {
       {allSelectedItems.length > 0 && (
         <div className="flex items-center gap-1.5 flex-wrap">
           {allSelectedItems.map(item => (
-            <Badge
+            <span
               key={`${item.type}-${item.value}`}
-              variant="secondary"
-              className="text-xs gap-1 py-0.5 px-2 cursor-default"
+              className="inline-flex items-center gap-1 text-xs py-1 px-2.5 rounded-md bg-secondary text-secondary-foreground select-none"
             >
               {item.label}
-              <X
-                className="h-3 w-3 cursor-pointer hover:text-destructive ml-0.5"
-                onClick={() => handleRemoveSelectedItem(item.value, item.type)}
-              />
-            </Badge>
+              <button
+                type="button"
+                className="inline-flex items-center justify-center h-4 w-4 rounded-full hover:bg-destructive/20 hover:text-destructive transition-colors ml-0.5 shrink-0"
+                onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleRemoveSelectedItem(item.value, item.type); }}
+                aria-label={`Remover ${item.label}`}
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </span>
           ))}
         </div>
       )}
