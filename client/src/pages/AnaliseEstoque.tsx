@@ -98,47 +98,26 @@ function MultiSelectAutocomplete({
     );
   }, [options, selected, search]);
 
-  const selectedLabels = useMemo(() => {
-    return selected.map(v => options.find(o => o.value === v)?.label || v);
-  }, [selected, options]);
-
-  const handleRemove = useCallback((value: string) => {
-    onChange(selected.filter(v => v !== value));
-  }, [selected, onChange]);
-
   const handleSelect = useCallback((value: string) => {
     onChange([...selected, value]);
     setSearch("");
     inputRef.current?.focus();
   }, [selected, onChange]);
 
-  // Exibir no máximo 2 badges inline, o restante como contador
-  const MAX_VISIBLE_BADGES = 2;
-  const visibleSelected = selected.slice(0, MAX_VISIBLE_BADGES);
-  const hiddenCount = selected.length - MAX_VISIBLE_BADGES;
-
   return (
     <div ref={containerRef} className={`relative ${className}`}>
+      {/* Campo de input compacto */}
       <div
-        className="flex items-center gap-1 min-h-[36px] px-2 py-1 border rounded-md bg-background cursor-text overflow-hidden"
+        className="flex items-center gap-1.5 min-h-[36px] px-2.5 py-1 border rounded-md bg-background cursor-text"
         onClick={() => { setOpen(true); inputRef.current?.focus(); }}
       >
         {selected.length === 0 && !search && (
           <span className="text-muted-foreground text-sm whitespace-nowrap">{placeholder}</span>
         )}
-        {visibleSelected.map((val, i) => (
-          <Badge key={val} variant="secondary" className="text-xs gap-1 py-0.5 px-1.5 shrink-0 max-w-[120px] truncate">
-            <span className="truncate">{selectedLabels[i].length > 14 ? selectedLabels[i].substring(0, 14) + '…' : selectedLabels[i]}</span>
-            <X
-              className="h-3 w-3 cursor-pointer hover:text-destructive shrink-0"
-              onClick={(e) => { e.stopPropagation(); handleRemove(val); }}
-            />
-          </Badge>
-        ))}
-        {hiddenCount > 0 && (
-          <Badge variant="outline" className="text-xs py-0.5 px-1.5 shrink-0">
-            +{hiddenCount}
-          </Badge>
+        {selected.length > 0 && !search && (
+          <span className="text-sm text-foreground whitespace-nowrap">
+            {selected.length} {selected.length === 1 ? 'selecionado' : 'selecionados'}
+          </span>
         )}
         <Input
           ref={inputRef}
@@ -146,10 +125,11 @@ function MultiSelectAutocomplete({
           onChange={(e) => { setSearch(e.target.value); setOpen(true); }}
           onFocus={() => setOpen(true)}
           className="border-0 shadow-none p-0 h-6 min-w-[60px] flex-1 focus-visible:ring-0"
-          placeholder={selected.length > 0 ? "" : ""}
+          placeholder={selected.length > 0 ? "Buscar..." : ""}
         />
       </div>
 
+      {/* Dropdown de opções */}
       {open && filteredOptions.length > 0 && (
         <div className="absolute z-50 mt-1 w-full max-h-[200px] overflow-y-auto bg-popover border rounded-md shadow-md">
           {filteredOptions.slice(0, 50).map(opt => (
@@ -407,34 +387,82 @@ export default function AnaliseEstoque() {
 
   const hasActiveFilters = selectedCategories.length > 0 || selectedSubcategories.length > 0 || selectedProducts.length > 0;
 
+  // Coletar todos os itens selecionados para exibir abaixo dos filtros
+  const allSelectedItems = useMemo(() => {
+    const items: { label: string; value: string; type: 'category' | 'subcategory' | 'product' }[] = [];
+    selectedCategories.forEach(v => {
+      const opt = categoryOptions.find((o: MultiSelectOption) => o.value === v);
+      if (opt) items.push({ label: opt.label, value: v, type: 'category' });
+    });
+    selectedSubcategories.forEach(v => {
+      const opt = subcategoryOptions.find((o: MultiSelectOption) => o.value === v);
+      if (opt) items.push({ label: opt.label, value: v, type: 'subcategory' });
+    });
+    selectedProducts.forEach(v => {
+      const opt = productOptions.find((o: MultiSelectOption) => o.value === v);
+      if (opt) items.push({ label: opt.label, value: v, type: 'product' });
+    });
+    return items;
+  }, [selectedCategories, selectedSubcategories, selectedProducts, categoryOptions, subcategoryOptions, productOptions]);
+
+  const handleRemoveSelectedItem = useCallback((value: string, type: 'category' | 'subcategory' | 'product') => {
+    if (type === 'category') {
+      setSelectedCategories(prev => prev.filter(v => v !== value));
+    } else if (type === 'subcategory') {
+      setSelectedSubcategories(prev => prev.filter(v => v !== value));
+    } else {
+      setSelectedProducts(prev => prev.filter(v => v !== value));
+    }
+  }, []);
+
   // ===== FILTROS COMPARTILHADOS =====
   const FiltersBar = () => (
-    <div className="flex items-center gap-2 flex-wrap">
-      <MultiSelectAutocomplete
-        options={categoryOptions}
-        selected={selectedCategories}
-        onChange={(v) => { setSelectedCategories(v); setSelectedSubcategories([]); }}
-        placeholder="Categorias"
-        className="w-[200px]"
-      />
-      <MultiSelectAutocomplete
-        options={subcategoryOptions}
-        selected={selectedSubcategories}
-        onChange={setSelectedSubcategories}
-        placeholder="Subcategorias"
-        className="w-[200px]"
-      />
-      <MultiSelectAutocomplete
-        options={productOptions}
-        selected={selectedProducts}
-        onChange={setSelectedProducts}
-        placeholder="Produtos"
-        className="w-[220px]"
-      />
-      {hasActiveFilters && (
-        <Button variant="ghost" size="sm" onClick={clearFilters} className="text-muted-foreground">
-          <X className="h-4 w-4 mr-1" /> Limpar
-        </Button>
+    <div className="space-y-2">
+      <div className="flex items-center gap-2 flex-wrap">
+        <MultiSelectAutocomplete
+          options={categoryOptions}
+          selected={selectedCategories}
+          onChange={(v) => { setSelectedCategories(v); setSelectedSubcategories([]); }}
+          placeholder="Categorias"
+          className="w-[200px]"
+        />
+        <MultiSelectAutocomplete
+          options={subcategoryOptions}
+          selected={selectedSubcategories}
+          onChange={setSelectedSubcategories}
+          placeholder="Subcategorias"
+          className="w-[200px]"
+        />
+        <MultiSelectAutocomplete
+          options={productOptions}
+          selected={selectedProducts}
+          onChange={setSelectedProducts}
+          placeholder="Produtos"
+          className="w-[220px]"
+        />
+        {hasActiveFilters && (
+          <Button variant="ghost" size="sm" onClick={clearFilters} className="text-muted-foreground">
+            <X className="h-4 w-4 mr-1" /> Limpar
+          </Button>
+        )}
+      </div>
+      {/* Badges dos itens selecionados abaixo dos filtros */}
+      {allSelectedItems.length > 0 && (
+        <div className="flex items-center gap-1.5 flex-wrap">
+          {allSelectedItems.map(item => (
+            <Badge
+              key={`${item.type}-${item.value}`}
+              variant="secondary"
+              className="text-xs gap-1 py-0.5 px-2 cursor-default"
+            >
+              {item.label}
+              <X
+                className="h-3 w-3 cursor-pointer hover:text-destructive ml-0.5"
+                onClick={() => handleRemoveSelectedItem(item.value, item.type)}
+              />
+            </Badge>
+          ))}
+        </div>
       )}
     </div>
   );

@@ -1154,3 +1154,4 @@ Despesa de impostos aparece tanto em janeiro quanto em fevereiro após edição 
 ### Ajustes Filtros Análise de Estoque (26/02/2026)
 - [x] Remover primeiro filtro de busca por texto ("Buscar produto...") que tem bug de perda de foco
 - [x] Melhorar layout do autocomplete multi-select para não expandir o quadro verticalmente (max 2 badges + contador)
+- [x] Melhorar layout do multi-select: campo compacto com "N selecionados" + badges completos abaixo dos filtros com nome inteiro e X para remover
