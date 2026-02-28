@@ -478,3 +478,365 @@ export async function getStockAnalysisByProduct(
 
   return results;
 }
+
+
+// ==================== EVOLUÇÃO MENSAL DO ESTOQUE ====================
+
+export interface StockMonthlyEvolution {
+  month: string;       // YYYY-MM
+  monthLabel: string;  // "Jan/26"
+  totalValue: number;  // Valor total do estoque no final do mês
+  totalQuantity: number; // Quantidade total de itens em estoque
+  productCount: number;  // Número de produtos com estoque > 0
+  cmv: number;           // CMV do mês
+  turnover: number;      // Giro do mês
+}
+
+/**
+ * Evolução mensal do estoque (últimos N meses)
+ * Calcula o valor do estoque no final de cada mês usando movimentações
+ */
+export async function getStockMonthlyEvolution(
+  months: number = 12,
+  companyId?: number,
+  categoryId?: number
+): Promise<StockMonthlyEvolution[]> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const companyFilter = companyId ? `AND p.companyId = ${companyId}` : '';
+  const categoryFilter = categoryId ? `AND p.categoryId = ${categoryId}` : '';
+  const salesCompanyFilter = companyId ? `AND s.companyId = ${companyId}` : '';
+
+  // Estoque atual
+  const currentStockResult = await db.execute(sql.raw(`
+    SELECT 
+      SUM(p.currentStock * p.avgCost) as totalValue,
+      SUM(p.currentStock) as totalQuantity,
+      COUNT(CASE WHEN p.currentStock > 0 THEN 1 END) as productCount
+    FROM products p
+    WHERE p.active = 1
+      AND (p.isComposite = 0 OR p.isComposite IS NULL)
+      ${companyFilter}
+      ${categoryFilter}
+  `));
+
+  const currentRow = (currentStockResult[0] as unknown as any[])[0];
+  const currentValue = parseFloat(currentRow?.totalValue || '0');
+  const currentQty = parseFloat(currentRow?.totalQuantity || '0');
+  const currentCount = parseInt(currentRow?.productCount || '0');
+
+  // Movimentações mensais (entradas e saídas) para reconstruir estoque retroativo
+  const movResult = await db.execute(sql.raw(`
+    SELECT 
+      DATE_FORMAT(CONVERT_TZ(pm.createdAt, '+00:00', '-03:00'), '%Y-%m') as yearMonth,
+      SUM(CASE 
+        WHEN pm.type = 'ENTRADA' OR (pm.type = 'ACERTO' AND pm.quantity > 0) 
+        THEN ABS(pm.quantity) * p.avgCost 
+        ELSE 0 
+      END) as totalIn,
+      SUM(CASE 
+        WHEN pm.type IN ('SAIDA', 'PERDA') OR (pm.type = 'ACERTO' AND pm.quantity < 0) 
+        THEN ABS(pm.quantity) * p.avgCost 
+        ELSE 0 
+      END) as totalOut,
+      SUM(CASE 
+        WHEN pm.type = 'ENTRADA' OR (pm.type = 'ACERTO' AND pm.quantity > 0) 
+        THEN ABS(pm.quantity) 
+        ELSE 0 
+      END) as qtyIn,
+      SUM(CASE 
+        WHEN pm.type IN ('SAIDA', 'PERDA') OR (pm.type = 'ACERTO' AND pm.quantity < 0) 
+        THEN ABS(pm.quantity) 
+        ELSE 0 
+      END) as qtyOut
+    FROM productMovements pm
+    INNER JOIN products p ON pm.productId = p.id
+    WHERE (p.isComposite = 0 OR p.isComposite IS NULL)
+      AND p.active = 1
+      ${companyFilter}
+      ${categoryFilter}
+    GROUP BY yearMonth
+    ORDER BY yearMonth DESC
+    LIMIT ${months + 1}
+  `));
+
+  // CMV mensal
+  const cmvResult = await db.execute(sql.raw(`
+    SELECT 
+      DATE_FORMAT(CONVERT_TZ(s.saleDate, '+00:00', '-03:00'), '%Y-%m') as yearMonth,
+      SUM(si.quantity * p.avgCost) as cmv
+    FROM saleItems si
+    INNER JOIN sales s ON si.saleId = s.id
+    INNER JOIN products p ON si.productId = p.id
+    WHERE s.status = 'ACTIVE'
+      AND (p.isComposite = 0 OR p.isComposite IS NULL)
+      ${salesCompanyFilter}
+      ${categoryFilter ? categoryFilter.replace('p.categoryId', 'p.categoryId') : ''}
+    GROUP BY yearMonth
+    ORDER BY yearMonth DESC
+    LIMIT ${months + 1}
+  `));
+
+  const movRows = (movResult[0] || []) as unknown as any[];
+  const cmvRows = (cmvResult[0] || []) as unknown as any[];
+
+  const movMap: Record<string, { totalIn: number; totalOut: number; qtyIn: number; qtyOut: number }> = {};
+  for (const r of movRows) {
+    movMap[r.yearMonth] = {
+      totalIn: parseFloat(r.totalIn || '0'),
+      totalOut: parseFloat(r.totalOut || '0'),
+      qtyIn: parseFloat(r.qtyIn || '0'),
+      qtyOut: parseFloat(r.qtyOut || '0'),
+    };
+  }
+
+  const cmvMap: Record<string, number> = {};
+  for (const r of cmvRows) {
+    cmvMap[r.yearMonth] = parseFloat(r.cmv || '0');
+  }
+
+  // Reconstruir estoque retroativo mês a mês
+  const now = new Date();
+  const nowBrazil = new Date(now.getTime() - 3 * 60 * 60 * 1000);
+  const results: StockMonthlyEvolution[] = [];
+  
+  const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+  
+  let runningValue = currentValue;
+  let runningQty = currentQty;
+
+  for (let i = 0; i < months; i++) {
+    const d = new Date(nowBrazil.getFullYear(), nowBrazil.getMonth() - i, 1);
+    const ym = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    const label = `${monthNames[d.getMonth()]}/${String(d.getFullYear()).slice(2)}`;
+    
+    const cmv = cmvMap[ym] || 0;
+    const turnover = runningValue > 0 ? cmv / runningValue : 0;
+
+    results.push({
+      month: ym,
+      monthLabel: label,
+      totalValue: Math.round(runningValue * 100) / 100,
+      totalQuantity: Math.round(runningQty),
+      productCount: currentCount, // Aproximação
+      cmv: Math.round(cmv * 100) / 100,
+      turnover: Math.round(turnover * 100) / 100,
+    });
+
+    // Para o mês anterior, subtrair entradas e somar saídas do mês atual
+    const mov = movMap[ym] || { totalIn: 0, totalOut: 0, qtyIn: 0, qtyOut: 0 };
+    runningValue = runningValue - mov.totalIn + mov.totalOut;
+    runningQty = runningQty - mov.qtyIn + mov.qtyOut;
+  }
+
+  return results.reverse();
+}
+
+// ==================== DIAS SEM ESTOQUE (RUPTURA) ====================
+
+export interface StockOutProduct {
+  productId: number;
+  productName: string;
+  categoryId: number;
+  categoryName: string;
+  subcategory: string | null;
+  currentStock: number;
+  avgCost: number;
+  daysOutOfStock: number;       // Dias com estoque zerado
+  lastStockDate: string | null; // Última data com estoque > 0
+  avgDailySales: number;        // Média diária de vendas (últimos 90 dias)
+  totalSales90d: number;        // Total vendido nos últimos 90 dias
+  estimatedLostSales: number;   // Vendas perdidas estimadas (dias sem estoque * média diária)
+  estimatedLostRevenue: number; // Receita perdida estimada
+  abcClass: string;             // Classificação ABC
+  lastPurchaseDate: string | null;
+}
+
+/**
+ * Produtos com estoque zerado e análise de impacto
+ */
+export async function getStockOutProducts(
+  companyId?: number,
+  categoryId?: number
+): Promise<StockOutProduct[]> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const companyFilter = companyId ? `AND p.companyId = ${companyId}` : '';
+  const categoryFilter = categoryId ? `AND p.categoryId = ${categoryId}` : '';
+  const salesCompanyFilter = companyId ? `AND s.companyId = ${companyId}` : '';
+
+  // 1. Produtos com estoque zerado (ativos, não compostos)
+  const productsResult = await db.execute(sql.raw(`
+    SELECT 
+      p.id as productId,
+      p.name as productName,
+      c.id as categoryId,
+      c.name as categoryName,
+      p.subcategory,
+      p.currentStock,
+      CAST(p.avgCost AS DECIMAL(12,4)) as avgCost
+    FROM products p
+    INNER JOIN categories c ON p.categoryId = c.id
+    WHERE p.active = 1
+      AND (p.isComposite = 0 OR p.isComposite IS NULL)
+      AND p.currentStock <= 0
+      ${companyFilter}
+      ${categoryFilter}
+    ORDER BY p.name
+  `));
+
+  const productRows = (productsResult[0] || []) as unknown as any[];
+  if (productRows.length === 0) return [];
+
+  const productIds = productRows.map((r: any) => r.productId).join(',');
+
+  // 2. Última movimentação de entrada ou saída (quando ainda tinha estoque)
+  const lastMovResult = await db.execute(sql.raw(`
+    SELECT 
+      pm.productId,
+      MAX(DATE(CONVERT_TZ(pm.createdAt, '+00:00', '-03:00'))) as lastMovDate
+    FROM productMovements pm
+    WHERE pm.productId IN (${productIds})
+    GROUP BY pm.productId
+  `));
+
+  // 3. Vendas nos últimos 90 dias (para calcular média diária)
+  const salesResult = await db.execute(sql.raw(`
+    SELECT 
+      si.productId,
+      SUM(si.quantity) as totalSold,
+      COUNT(DISTINCT DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00'))) as daysWithSales
+    FROM saleItems si
+    INNER JOIN sales s ON si.saleId = s.id
+    WHERE s.status = 'ACTIVE'
+      AND si.productId IN (${productIds})
+      AND DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) >= DATE_SUB(CURDATE(), INTERVAL 90 DAY)
+      ${salesCompanyFilter}
+    GROUP BY si.productId
+  `));
+
+  // 4. Última compra
+  const lastPurchaseResult = await db.execute(sql.raw(`
+    SELECT 
+      poi.productId,
+      MAX(DATE(CONVERT_TZ(po.postingDate, '+00:00', '-03:00'))) as lastPurchaseDate
+    FROM purchaseOrderItems poi
+    INNER JOIN purchaseOrders po ON poi.purchaseOrderId = po.id
+    WHERE po.status = 'CONFIRMED'
+      AND poi.productId IN (${productIds})
+    GROUP BY poi.productId
+  `));
+
+  // 5. CMV total para classificação ABC (últimos 90 dias)
+  const cmvResult = await db.execute(sql.raw(`
+    SELECT 
+      si.productId,
+      SUM(si.quantity * p.avgCost) as cmv
+    FROM saleItems si
+    INNER JOIN sales s ON si.saleId = s.id
+    INNER JOIN products p ON si.productId = p.id
+    WHERE s.status = 'ACTIVE'
+      AND si.productId IN (${productIds})
+      AND DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) >= DATE_SUB(CURDATE(), INTERVAL 90 DAY)
+      ${salesCompanyFilter}
+    GROUP BY si.productId
+  `));
+
+  // 6. Preço médio de venda (para estimar receita perdida)
+  const priceResult = await db.execute(sql.raw(`
+    SELECT 
+      si.productId,
+      AVG(si.unitPrice) as avgPrice
+    FROM saleItems si
+    INNER JOIN sales s ON si.saleId = s.id
+    WHERE s.status = 'ACTIVE'
+      AND si.productId IN (${productIds})
+      AND DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) >= DATE_SUB(CURDATE(), INTERVAL 90 DAY)
+      ${salesCompanyFilter}
+    GROUP BY si.productId
+  `));
+
+  // Mapear
+  const lastMovMap: Record<number, string> = {};
+  for (const r of ((lastMovResult[0] || []) as unknown as any[])) {
+    const d = r.lastMovDate;
+    lastMovMap[r.productId] = d instanceof Date ? d.toISOString().split('T')[0] : String(d || '').split('T')[0];
+  }
+
+  const salesMap: Record<number, { totalSold: number; daysWithSales: number }> = {};
+  for (const r of ((salesResult[0] || []) as unknown as any[])) {
+    salesMap[r.productId] = {
+      totalSold: parseFloat(r.totalSold || '0'),
+      daysWithSales: parseInt(r.daysWithSales || '0'),
+    };
+  }
+
+  const lastPurchaseMap: Record<number, string> = {};
+  for (const r of ((lastPurchaseResult[0] || []) as unknown as any[])) {
+    const d = r.lastPurchaseDate;
+    lastPurchaseMap[r.productId] = d instanceof Date ? d.toISOString().split('T')[0] : String(d || '').split('T')[0];
+  }
+
+  const cmvMap: Record<number, number> = {};
+  for (const r of ((cmvResult[0] || []) as unknown as any[])) {
+    cmvMap[r.productId] = parseFloat(r.cmv || '0');
+  }
+
+  const priceMap: Record<number, number> = {};
+  for (const r of ((priceResult[0] || []) as unknown as any[])) {
+    priceMap[r.productId] = parseFloat(r.avgPrice || '0');
+  }
+
+  // Classificação ABC
+  const totalCmv = Object.values(cmvMap).reduce((s, v) => s + v, 0);
+  const sortedCmv = Object.entries(cmvMap).sort((a, b) => b[1] - a[1]);
+  const abcMap: Record<number, string> = {};
+  let accumulated = 0;
+  for (const [pid, cmv] of sortedCmv) {
+    accumulated += cmv;
+    const pct = totalCmv > 0 ? (accumulated / totalCmv) * 100 : 100;
+    abcMap[parseInt(pid)] = pct <= 80 ? 'A' : pct <= 95 ? 'B' : 'C';
+  }
+
+  const now = new Date();
+  const results: StockOutProduct[] = [];
+
+  for (const row of productRows) {
+    const pid = row.productId;
+    const lastMovDate = lastMovMap[pid];
+    let daysOutOfStock = 0;
+    if (lastMovDate) {
+      const lastDate = new Date(lastMovDate + 'T12:00:00');
+      daysOutOfStock = Math.floor((now.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24));
+    }
+
+    const sales = salesMap[pid] || { totalSold: 0, daysWithSales: 0 };
+    const avgDailySales = sales.totalSold / 90; // Média sobre 90 dias
+    const avgPrice = priceMap[pid] || 0;
+    const estimatedLostSales = Math.round(avgDailySales * daysOutOfStock * 100) / 100;
+    const estimatedLostRevenue = Math.round(estimatedLostSales * avgPrice * 100) / 100;
+
+    results.push({
+      productId: pid,
+      productName: row.productName,
+      categoryId: row.categoryId,
+      categoryName: row.categoryName,
+      subcategory: row.subcategory || null,
+      currentStock: parseFloat(row.currentStock || '0'),
+      avgCost: parseFloat(row.avgCost || '0'),
+      daysOutOfStock,
+      lastStockDate: lastMovDate || null,
+      avgDailySales: Math.round(avgDailySales * 100) / 100,
+      totalSales90d: Math.round(sales.totalSold * 100) / 100,
+      estimatedLostSales,
+      estimatedLostRevenue,
+      abcClass: abcMap[pid] || 'C',
+      lastPurchaseDate: lastPurchaseMap[pid] || null,
+    });
+  }
+
+  // Ordenar por impacto: produtos com mais vendas perdidas primeiro
+  return results.sort((a, b) => b.estimatedLostRevenue - a.estimatedLostRevenue);
+}

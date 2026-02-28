@@ -1162,3 +1162,9 @@ Despesa de impostos aparece tanto em janeiro quanto em fevereiro após edição 
 - [x] Bug: Saldo disponível na tela de Nova Venda a Prazo mostra R$0,00 em vez do valor real
 - [x] Causa: getAvailableCredit não desestruturava ctx no callback, então ctx.activeCompanyId era undefined e a query falhava silenciosamente
 - [x] Correção: adicionado { ctx } na desestruturação do callback do getAvailableCredit
+
+### Melhorias Análise de Estoque (28/02/2026)
+- [x] Nova aba: Evolução Mensal - gráfico de barras + tabela com valor, variação, CMV, giro e qtd itens (últimos 12 meses)
+- [x] Nova aba: Ruptura de Estoque - produtos com estoque zerado, dias sem estoque, média diária de vendas, vendas 90d, receita perdida estimada, classificação ABC
+- [x] Renomear "Dias de Estoque" para "Cobertura" em todo o sistema (cards, tabelas, legendas)
+- [ ] Pendência futura: Faixa de Idade de Estoque (controle por faixas de idade)

@@ -8,14 +8,14 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Package, TrendingUp, TrendingDown, ArrowUpDown, BarChart3, Clock, AlertTriangle, ArrowUp, ArrowDown, ShoppingCart, Truck, PauseCircle, LayoutGrid, X } from "lucide-react";
+import { Package, TrendingUp, TrendingDown, ArrowUpDown, BarChart3, Clock, AlertTriangle, ArrowUp, ArrowDown, ShoppingCart, Truck, PauseCircle, LayoutGrid, X, LineChart, PackageX, DollarSign, AlertCircle } from "lucide-react";
 
 const MONTHS = [
   "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
   "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
 ];
 
-type SortField = 'stockValue' | 'turnover' | 'daysOfStock' | 'costVariation' | 'productName' | 'qtdSold' | 'qtdSoldBalcao' | 'qtdSoldDelivery' | 'daysSinceLastSale' | 'abcClass' | 'currentStock' | 'avgCost' | 'cmv' | 'cmvAccPct' | 'entriesInPeriod';
+type SortField = 'stockValue' | 'turnover' | 'daysOfStock' | 'costVariation' | 'productName' | 'qtdSold' | 'qtdSoldBalcao' | 'qtdSoldDelivery' | 'daysSinceLastSale' | 'abcClass' | 'currentStock' | 'avgCost' | 'cmv' | 'cmvAccPct' | 'entriesInPeriod' | 'daysOutOfStock' | 'avgDailySales' | 'estimatedLostRevenue' | 'totalSales90d';
 type SortDir = 'asc' | 'desc';
 
 function formatCurrency(value: number): string {
@@ -169,6 +169,10 @@ export default function AnaliseEstoque() {
   const [abcSortField, setAbcSortField] = useState<SortField>('cmv');
   const [abcSortDir, setAbcSortDir] = useState<SortDir>('desc');
 
+  // Sort state for Ruptura tab
+  const [rupturaSortField, setRupturaSortField] = useState<SortField>('estimatedLostRevenue');
+  const [rupturaSortDir, setRupturaSortDir] = useState<SortDir>('desc');
+
   const { data: categoryData, isLoading: loadingCategories } = trpc.stockAnalysis.byCategory.useQuery(
     { year, month }
   );
@@ -186,6 +190,16 @@ export default function AnaliseEstoque() {
   );
 
   const { data: subcategories } = trpc.stockAnalysis.subcategories.useQuery(
+    { categoryId: categoryIdForQuery }
+  );
+
+  // Evolução mensal do estoque
+  const { data: monthlyEvolution, isLoading: loadingEvolution } = trpc.stockAnalysis.monthlyEvolution.useQuery(
+    { months: 12, categoryId: categoryIdForQuery }
+  );
+
+  // Produtos em ruptura (estoque zerado)
+  const { data: stockOutData, isLoading: loadingStockOut } = trpc.stockAnalysis.stockOut.useQuery(
     { categoryId: categoryIdForQuery }
   );
 
@@ -341,6 +355,33 @@ export default function AnaliseEstoque() {
       setAbcSortDir('desc');
     }
   };
+
+  const handleRupturaSort = (field: SortField) => {
+    if (rupturaSortField === field) {
+      setRupturaSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    } else {
+      setRupturaSortField(field);
+      setRupturaSortDir('desc');
+    }
+  };
+
+  // Sorted ruptura products
+  const sortedStockOut = useMemo(() => {
+    if (!stockOutData) return [];
+    return sortProducts(stockOutData as any[], rupturaSortField, rupturaSortDir);
+  }, [stockOutData, rupturaSortField, rupturaSortDir, sortProducts]);
+
+  // Ruptura totals
+  const rupturaTotals = useMemo(() => {
+    if (!stockOutData || stockOutData.length === 0) return { count: 0, lostRevenue: 0, avgA: 0, avgB: 0, avgC: 0 };
+    return {
+      count: stockOutData.length,
+      lostRevenue: stockOutData.reduce((s: number, p: any) => s + p.estimatedLostRevenue, 0),
+      avgA: stockOutData.filter((p: any) => p.abcClass === 'A').length,
+      avgB: stockOutData.filter((p: any) => p.abcClass === 'B').length,
+      avgC: stockOutData.filter((p: any) => p.abcClass === 'C').length,
+    };
+  }, [stockOutData]);
 
   const SortIcon = ({ field, activeField, activeDir }: { field: SortField; activeField: SortField; activeDir: SortDir }) => {
     if (activeField !== field) return <ArrowUpDown className="h-3 w-3 ml-1 opacity-30" />;
@@ -578,7 +619,7 @@ export default function AnaliseEstoque() {
                     <TableHead className="text-right">Produtos</TableHead>
                     <TableHead className="text-right">CMV</TableHead>
                     <TableHead className="text-right">Giro</TableHead>
-                    <TableHead className="text-right">Dias de Estoque</TableHead>
+                    <TableHead className="text-right">Cobertura</TableHead>
                     <TableHead className="text-right">Var. Custo</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -662,6 +703,12 @@ export default function AnaliseEstoque() {
               <TabsTrigger value="abc" className="flex items-center gap-1.5">
                 <LayoutGrid className="h-4 w-4" /> Classificação ABC
               </TabsTrigger>
+              <TabsTrigger value="evolucao" className="flex items-center gap-1.5">
+                <LineChart className="h-4 w-4" /> Evolução Mensal
+              </TabsTrigger>
+              <TabsTrigger value="ruptura" className="flex items-center gap-1.5">
+                <PackageX className="h-4 w-4" /> Ruptura de Estoque
+              </TabsTrigger>
             </TabsList>
 
             {/* ===== ABA 1: GIRO E COBERTURA ===== */}
@@ -711,7 +758,7 @@ export default function AnaliseEstoque() {
                                 <span className="flex items-center justify-end">Giro<SortIcon field="turnover" activeField={sortField} activeDir={sortDir} /></span>
                               </TableHead>
                               <TableHead className="text-right cursor-pointer hover:text-foreground" onClick={() => handleSort('daysOfStock')}>
-                                <span className="flex items-center justify-end">Dias de Estoque<SortIcon field="daysOfStock" activeField={sortField} activeDir={sortDir} /></span>
+                                <span className="flex items-center justify-end">Cobertura<SortIcon field="daysOfStock" activeField={sortField} activeDir={sortDir} /></span>
                               </TableHead>
                               <TableHead className="text-right">Última Compra</TableHead>
                               <TableHead className="text-right cursor-pointer hover:text-foreground" onClick={() => handleSort('costVariation')}>
@@ -790,7 +837,7 @@ export default function AnaliseEstoque() {
                       <div className="mt-4 flex flex-wrap gap-4 text-xs text-muted-foreground border-t pt-3">
                         <div className="flex items-center gap-1">
                           <AlertTriangle className="h-3 w-3 text-red-500" />
-                          <span>Dias de Estoque: </span>
+                          <span>Cobertura: </span>
                           <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-[10px] px-1">7-45d</Badge> Ideal
                           <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 text-[10px] px-1">45-90d</Badge> Atenção
                           <Badge variant="destructive" className="bg-red-100 text-red-700 border-red-200 text-[10px] px-1">&gt;90d</Badge> Excesso
@@ -1037,7 +1084,7 @@ export default function AnaliseEstoque() {
                                 <span className="flex items-center justify-end">Giro<SortIcon field="turnover" activeField={abcSortField} activeDir={abcSortDir} /></span>
                               </TableHead>
                               <TableHead className="text-right cursor-pointer hover:text-foreground" onClick={() => handleAbcSort('daysOfStock')}>
-                                <span className="flex items-center justify-end">Dias de Estoque<SortIcon field="daysOfStock" activeField={abcSortField} activeDir={abcSortDir} /></span>
+                                <span className="flex items-center justify-end">Cobertura<SortIcon field="daysOfStock" activeField={abcSortField} activeDir={abcSortDir} /></span>
                               </TableHead>
                             </TableRow>
                           </TableHeader>
@@ -1091,6 +1138,226 @@ export default function AnaliseEstoque() {
                 </CardContent>
               </Card>
             </TabsContent>
+            {/* ===== ABA 4: EVOLUÇÃO MENSAL ===== */}
+            <TabsContent value="evolucao">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <LineChart className="h-5 w-5 text-primary" /> Evolução Mensal do Estoque
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {loadingEvolution ? (
+                    <div className="text-center py-8 text-muted-foreground">Carregando...</div>
+                  ) : monthlyEvolution && monthlyEvolution.length > 0 ? (
+                    <>
+                      {/* Gráfico de barras simples com CSS */}
+                      <div className="mb-6">
+                        <div className="text-sm font-medium text-muted-foreground mb-3">Valor do Estoque (R$)</div>
+                        <div className="flex items-end gap-1 h-[200px]">
+                          {(() => {
+                            const maxVal = Math.max(...monthlyEvolution.map((m: any) => m.totalValue));
+                            return monthlyEvolution.map((m: any, i: number) => (
+                              <div key={m.month} className="flex-1 flex flex-col items-center gap-1">
+                                <div className="text-[10px] text-muted-foreground font-mono">
+                                  {formatCurrency(m.totalValue).replace('R$\u00a0', 'R$')}
+                                </div>
+                                <div
+                                  className={`w-full rounded-t transition-all ${
+                                    i === monthlyEvolution.length - 1 ? 'bg-primary' : 'bg-primary/40'
+                                  }`}
+                                  style={{ height: `${maxVal > 0 ? (m.totalValue / maxVal) * 150 : 0}px`, minHeight: m.totalValue > 0 ? '4px' : '0px' }}
+                                  title={`${m.monthLabel}: ${formatCurrency(m.totalValue)}`}
+                                />
+                                <div className="text-[10px] text-muted-foreground">{m.monthLabel}</div>
+                              </div>
+                            ));
+                          })()}
+                        </div>
+                      </div>
+
+                      {/* Tabela detalhada */}
+                      <div className="overflow-x-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Mês</TableHead>
+                              <TableHead className="text-right">Valor Estoque</TableHead>
+                              <TableHead className="text-right">Variação</TableHead>
+                              <TableHead className="text-right">CMV</TableHead>
+                              <TableHead className="text-right">Giro</TableHead>
+                              <TableHead className="text-right">Qtd Itens</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {monthlyEvolution.map((m: any, i: number) => {
+                              const prev = i > 0 ? monthlyEvolution[i - 1] : null;
+                              const variation = prev && prev.totalValue > 0
+                                ? ((m.totalValue - prev.totalValue) / prev.totalValue) * 100
+                                : null;
+                              return (
+                                <TableRow key={m.month} className={i === monthlyEvolution.length - 1 ? 'bg-primary/5 font-medium' : ''}>
+                                  <TableCell className="font-medium">{m.monthLabel}</TableCell>
+                                  <TableCell className="text-right font-mono">{formatCurrency(m.totalValue)}</TableCell>
+                                  <TableCell className={`text-right font-mono ${
+                                    variation !== null && variation > 0 ? 'text-red-600' :
+                                    variation !== null && variation < 0 ? 'text-green-600' : 'text-muted-foreground'
+                                  }`}>
+                                    {variation !== null ? (
+                                      <span className="flex items-center justify-end gap-1">
+                                        {variation > 0 ? <TrendingUp className="h-3 w-3" /> : variation < 0 ? <TrendingDown className="h-3 w-3" /> : null}
+                                        {variation > 0 ? '+' : ''}{variation.toFixed(1)}%
+                                      </span>
+                                    ) : '—'}
+                                  </TableCell>
+                                  <TableCell className="text-right font-mono">{formatCurrency(m.cmv)}</TableCell>
+                                  <TableCell className={`text-right font-mono ${getTurnoverColor(m.turnover)}`}>{m.turnover.toFixed(2)}x</TableCell>
+                                  <TableCell className="text-right font-mono">{formatNumber(m.totalQuantity)}</TableCell>
+                                </TableRow>
+                              );
+                            })}
+                          </TableBody>
+                        </Table>
+                      </div>
+
+                      <div className="mt-4 text-xs text-muted-foreground border-t pt-3">
+                        <p>A evolução é calculada retroativamente a partir do estoque atual, descontando movimentações de cada mês. O mês atual (destacado) reflete o estoque em tempo real.</p>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground">Sem dados de evolução disponíveis</div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* ===== ABA 5: RUPTURA DE ESTOQUE ===== */}
+            <TabsContent value="ruptura">
+              <Card>
+                <CardHeader>
+                  <div className="flex flex-col gap-4">
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <PackageX className="h-5 w-5 text-destructive" /> Ruptura de Estoque
+                    </CardTitle>
+                    <p className="text-sm text-muted-foreground">Produtos com estoque zerado e estimativa de impacto nas vendas</p>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {loadingStockOut ? (
+                    <div className="text-center py-8 text-muted-foreground">Carregando...</div>
+                  ) : (
+                    <>
+                      {/* Cards resumo */}
+                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                        <Card className="border-red-200 bg-red-50/50">
+                          <CardContent className="pt-4 pb-4">
+                            <div className="text-sm text-red-700">Produtos sem Estoque</div>
+                            <div className="text-2xl font-bold text-red-800">{rupturaTotals.count}</div>
+                          </CardContent>
+                        </Card>
+                        <Card className="border-amber-200 bg-amber-50/50">
+                          <CardContent className="pt-4 pb-4">
+                            <div className="text-sm text-amber-700">Receita Perdida Estimada</div>
+                            <div className="text-2xl font-bold text-amber-800">{formatCurrency(rupturaTotals.lostRevenue)}</div>
+                          </CardContent>
+                        </Card>
+                        <Card className="border-green-200 bg-green-50/50">
+                          <CardContent className="pt-4 pb-4">
+                            <div className="text-sm text-green-700">Classe A sem Estoque</div>
+                            <div className="text-2xl font-bold text-green-800">{rupturaTotals.avgA} <span className="text-sm font-normal">produtos</span></div>
+                          </CardContent>
+                        </Card>
+                        <Card>
+                          <CardContent className="pt-4 pb-4">
+                            <div className="text-sm text-muted-foreground">Classe B / C sem Estoque</div>
+                            <div className="text-2xl font-bold">{rupturaTotals.avgB} / {rupturaTotals.avgC}</div>
+                          </CardContent>
+                        </Card>
+                      </div>
+
+                      {/* Tabela */}
+                      <div className="overflow-x-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead className="w-[50px]">ABC</TableHead>
+                              <TableHead className="cursor-pointer hover:text-foreground" onClick={() => handleRupturaSort('productName')}>
+                                <span className="flex items-center">Produto<SortIcon field="productName" activeField={rupturaSortField} activeDir={rupturaSortDir} /></span>
+                              </TableHead>
+                              <TableHead className="text-right cursor-pointer hover:text-foreground" onClick={() => handleRupturaSort('daysOutOfStock')}>
+                                <span className="flex items-center justify-end">Dias sem Estoque<SortIcon field="daysOutOfStock" activeField={rupturaSortField} activeDir={rupturaSortDir} /></span>
+                              </TableHead>
+                              <TableHead className="text-right cursor-pointer hover:text-foreground" onClick={() => handleRupturaSort('avgDailySales')}>
+                                <span className="flex items-center justify-end">Média Diária<SortIcon field="avgDailySales" activeField={rupturaSortField} activeDir={rupturaSortDir} /></span>
+                              </TableHead>
+                              <TableHead className="text-right cursor-pointer hover:text-foreground" onClick={() => handleRupturaSort('totalSales90d')}>
+                                <span className="flex items-center justify-end">Vendas 90d<SortIcon field="totalSales90d" activeField={rupturaSortField} activeDir={rupturaSortDir} /></span>
+                              </TableHead>
+                              <TableHead className="text-right cursor-pointer hover:text-foreground" onClick={() => handleRupturaSort('estimatedLostRevenue')}>
+                                <span className="flex items-center justify-end">Receita Perdida Est.<SortIcon field="estimatedLostRevenue" activeField={rupturaSortField} activeDir={rupturaSortDir} /></span>
+                              </TableHead>
+                              <TableHead className="text-right">Última Compra</TableHead>
+                              <TableHead className="text-right">Categoria</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {sortedStockOut.length > 0 ? sortedStockOut.map((prod: any) => (
+                              <TableRow key={prod.productId} className={
+                                prod.abcClass === 'A' ? 'bg-red-50/30' :
+                                prod.abcClass === 'B' ? 'bg-amber-50/20' : ''
+                              }>
+                                <TableCell>{getAbcBadge(prod.abcClass)}</TableCell>
+                                <TableCell className="font-medium max-w-[250px] truncate" title={prod.productName}>{prod.productName}</TableCell>
+                                <TableCell className="text-right">
+                                  {prod.daysOutOfStock > 0 ? (
+                                    <Badge variant={prod.daysOutOfStock > 30 ? 'destructive' : 'outline'}
+                                      className={prod.daysOutOfStock > 30 ? 'bg-red-100 text-red-700 border-red-200' : prod.daysOutOfStock > 14 ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-yellow-50 text-yellow-700 border-yellow-200'}>
+                                      {prod.daysOutOfStock}d
+                                    </Badge>
+                                  ) : <span className="text-muted-foreground">—</span>}
+                                </TableCell>
+                                <TableCell className="text-right font-mono">
+                                  {prod.avgDailySales > 0 ? formatNumber(prod.avgDailySales, 1) + '/dia' : <span className="text-muted-foreground">0</span>}
+                                </TableCell>
+                                <TableCell className="text-right font-mono">
+                                  {prod.totalSales90d > 0 ? formatNumber(prod.totalSales90d) + ' un' : <span className="text-muted-foreground">0</span>}
+                                </TableCell>
+                                <TableCell className={`text-right font-mono ${prod.estimatedLostRevenue > 0 ? 'text-red-600 font-medium' : 'text-muted-foreground'}`}>
+                                  {prod.estimatedLostRevenue > 0 ? formatCurrency(prod.estimatedLostRevenue) : '—'}
+                                </TableCell>
+                                <TableCell className="text-right text-sm">
+                                  {prod.lastPurchaseDate ? (
+                                    new Date(prod.lastPurchaseDate + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
+                                  ) : <span className="text-muted-foreground">—</span>}
+                                </TableCell>
+                                <TableCell className="text-right text-sm text-muted-foreground">{prod.categoryName}</TableCell>
+                              </TableRow>
+                            )) : (
+                              <TableRow>
+                                <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
+                                  <div className="flex flex-col items-center gap-2">
+                                    <Package className="h-8 w-8 text-green-500" />
+                                    <span>Nenhum produto em ruptura de estoque</span>
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            )}
+                          </TableBody>
+                        </Table>
+                      </div>
+
+                      <div className="mt-4 text-xs text-muted-foreground border-t pt-3 space-y-1">
+                        <p><strong>Dias sem Estoque</strong>: Dias desde a última movimentação do produto (quando o estoque zerou).</p>
+                        <p><strong>Média Diária</strong>: Média de vendas por dia nos últimos 90 dias. Quanto maior, mais crítica a ruptura.</p>
+                        <p><strong>Receita Perdida Est.</strong>: Estimativa de receita perdida = dias sem estoque × média diária × preço médio de venda.</p>
+                        <p>Produtos <strong>Classe A</strong> em ruptura devem ser priorizados para reposição imediata.</p>
+                      </div>
+                    </>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
           </Tabs>
         </div>
       </div>

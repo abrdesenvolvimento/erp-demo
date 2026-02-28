@@ -4,7 +4,7 @@
 
 import { z } from "zod";
 import { protectedProcedure, router } from "../_core/trpc";
-import { getStockAnalysisByCategory, getStockAnalysisByProduct } from "../stockAnalysisQueries";
+import { getStockAnalysisByCategory, getStockAnalysisByProduct, getStockMonthlyEvolution, getStockOutProducts } from "../stockAnalysisQueries";
 import { sql } from "drizzle-orm";
 import { getDb } from "../db";
 import { getNowInBrazil } from '../../shared/dateUtils';
@@ -77,6 +77,31 @@ export const stockAnalysisRouter = router({
   /**
    * Lista de subcategorias disponíveis
    */
+  /**
+   * Evolução mensal do estoque (últimos N meses)
+   */
+  monthlyEvolution: protectedProcedure
+    .input(z.object({
+      months: z.number().min(3).max(24).optional(),
+      categoryId: z.number().optional(),
+    }))
+    .query(async ({ input, ctx }) => {
+      const companyId = ctx.activeCompanyId;
+      return await getStockMonthlyEvolution(input.months || 12, companyId, input.categoryId);
+    }),
+
+  /**
+   * Produtos com estoque zerado (ruptura)
+   */
+  stockOut: protectedProcedure
+    .input(z.object({
+      categoryId: z.number().optional(),
+    }).optional())
+    .query(async ({ input, ctx }) => {
+      const companyId = ctx.activeCompanyId;
+      return await getStockOutProducts(companyId, input?.categoryId);
+    }),
+
   subcategories: protectedProcedure
     .input(z.object({
       categoryId: z.number().optional(),
