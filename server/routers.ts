@@ -551,7 +551,7 @@ export const appRouter = router({
     // Retorna crédito disponível em tempo real (calcula saldo devedor atual)
     getAvailableCredit: protectedProcedure
       .input(z.object({ customerId: z.number() }))
-      .query(async ({ input }) => {
+      .query(async ({ input, ctx }) => {
         const customer = await db.getPartner(input.customerId);
         if (!customer) {
           throw new TRPCError({ code: 'NOT_FOUND', message: 'Cliente não encontrado' });

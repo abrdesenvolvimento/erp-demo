@@ -1,0 +1,34 @@
+{
+  "query": "SHOW TABLES LIKE '%payment%'; SHOW TABLES LIKE '%receivable%'; SHOW TABLES LIKE '%debit%';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SHOW TABLES LIKE '%payment%'; SHOW TABLES LIKE '%receivable%'; SHOW TABLES LIKE '%debit%';",
+  "rows": [
+    {
+      "Tables_in_7RkrCeS5KipYf8hkuNqrCk (%payment%)": "customerPayments"
+    },
+    {
+      "Tables_in_7RkrCeS5KipYf8hkuNqrCk (%payment%)": "receivablePayments"
+    },
+    {
+      "Tables_in_7RkrCeS5KipYf8hkuNqrCk (%payment%)": "Tables_in_7RkrCeS5KipYf8hkuNqrCk (%receivable%)"
+    },
+    {
+      "Tables_in_7RkrCeS5KipYf8hkuNqrCk (%payment%)": "receivableInstallments"
+    },
+    {
+      "Tables_in_7RkrCeS5KipYf8hkuNqrCk (%payment%)": "receivablePayments"
+    },
+    {
+      "Tables_in_7RkrCeS5KipYf8hkuNqrCk (%payment%)": "receivables"
+    },
+    {
+      "Tables_in_7RkrCeS5KipYf8hkuNqrCk (%payment%)": "Tables_in_7RkrCeS5KipYf8hkuNqrCk (%debit%)"
+    },
+    {
+      "Tables_in_7RkrCeS5KipYf8hkuNqrCk (%payment%)": "customerDebits"
+    }
+  ],
+  "messages": [],
+  "stdout": "Tables_in_7RkrCeS5KipYf8hkuNqrCk (%payment%)\ncustomerPayments\nreceivablePayments\nTables_in_7RkrCeS5KipYf8hkuNqrCk (%receivable%)\nreceivableInstallments\nreceivablePayments\nreceivables\nTables_in_7RkrCeS5KipYf8hkuNqrCk (%debit%)\ncustomerDebits\n",
+  "stderr": "",
+  "execution_time_ms": 449
+}

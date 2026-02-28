@@ -1159,3 +1159,6 @@ Despesa de impostos aparece tanto em janeiro quanto em fevereiro após edição 
 - [x] Causa: FiltersBar era componente inline (arrow function) recriado a cada render, perdendo referências
 - [x] Correção: convertido para JSX direto (filtersBarContent) e handler como função normal
 - [x] Bug: clicar no X do badge seleciona texto em vez de remover o item - corrigido com button, preventDefault/stopPropagation em onMouseDown e onClick, e select-none
+- [x] Bug: Saldo disponível na tela de Nova Venda a Prazo mostra R$0,00 em vez do valor real
+- [x] Causa: getAvailableCredit não desestruturava ctx no callback, então ctx.activeCompanyId era undefined e a query falhava silenciosamente
+- [x] Correção: adicionado { ctx } na desestruturação do callback do getAvailableCredit

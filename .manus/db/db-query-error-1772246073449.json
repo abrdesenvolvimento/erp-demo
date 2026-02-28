@@ -1,0 +1,8 @@
+{
+  "query": "\nSELECT p.id, p.name, p.creditLimit, p.currentBalance, p.companyId,\n  (SELECT COALESCE(SUM(s.totalAmount), 0) FROM sales s WHERE s.customerId = p.id AND s.saleType = 'A_PRAZO' AND s.status != 'CANCELLED') as totalSales,\n  (SELECT COALESCE(SUM(cp.amount), 0) FROM customer_payments cp WHERE cp.customerId = p.id) as totalPayments,\n  (SELECT COALESCE(SUM(cd.amount), 0) FROM customer_debits cd WHERE cd.customerId = p.id) as totalDebits\nFROM partners p \nWHERE p.name LIKE '%Ricardo Pereira%'\nLIMIT 5;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute \nSELECT p.id, p.name, p.creditLimit, p.currentBalance, p.companyId,\n  (SELECT COALESCE(SUM(s.totalAmount), 0) FROM sales s WHERE s.customerId = p.id AND s.saleType = 'A_PRAZO' AND s.status != 'CANCELLED') as totalSales,\n  (SELECT COALESCE(SUM(cp.amount), 0) FROM customer_payments cp WHERE cp.customerId = p.id) as totalPayments,\n  (SELECT COALESCE(SUM(cd.amount), 0) FROM customer_debits cd WHERE cd.customerId = p.id) as totalDebits\nFROM partners p \nWHERE p.name LIKE '%Ricardo Pereira%'\nLIMIT 5;\n",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1146 (42S02) at line 2: Table '7rkrces5kipyf8hkunqrck.customer_payments' doesn't exist"
+  ]
+}

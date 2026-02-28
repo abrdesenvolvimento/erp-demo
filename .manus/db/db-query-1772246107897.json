@@ -1,0 +1,19 @@
+{
+  "query": "\nSELECT p.id, p.name, p.creditLimit, p.currentBalance,\n  (SELECT COALESCE(SUM(CAST(s.finalAmount AS DECIMAL(10,2))), 0) FROM sales s WHERE s.customerId = p.id AND s.saleType = 'A_PRAZO' AND s.status = 'ACTIVE') as totalSales,\n  (SELECT COALESCE(SUM(CAST(cp.paidAmount AS DECIMAL(10,2))), 0) FROM customerPayments cp WHERE cp.customerId = p.id) as totalPayments,\n  (SELECT COALESCE(SUM(CAST(cd.debitAmount AS DECIMAL(10,2))), 0) FROM customerDebits cd WHERE cd.customerId = p.id) as totalDebits\nFROM partners p \nWHERE p.name LIKE '%Ricardo Pereira%'\nLIMIT 5;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute \nSELECT p.id, p.name, p.creditLimit, p.currentBalance,\n  (SELECT COALESCE(SUM(CAST(s.finalAmount AS DECIMAL(10,2))), 0) FROM sales s WHERE s.customerId = p.id AND s.saleType = 'A_PRAZO' AND s.status = 'ACTIVE') as totalSales,\n  (SELECT COALESCE(SUM(CAST(cp.paidAmount AS DECIMAL(10,2))), 0) FROM customerPayments cp WHERE cp.customerId = p.id) as totalPayments,\n  (SELECT COALESCE(SUM(CAST(cd.debitAmount AS DECIMAL(10,2))), 0) FROM customerDebits cd WHERE cd.customerId = p.id) as totalDebits\nFROM partners p \nWHERE p.name LIKE '%Ricardo Pereira%'\nLIMIT 5;\n",
+  "rows": [
+    {
+      "id": "360003",
+      "name": "Ricardo Pereira",
+      "creditLimit": "980.00",
+      "currentBalance": "886.00",
+      "totalSales": "535.00",
+      "totalPayments": "40.00",
+      "totalDebits": "391.00"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tcreditLimit\tcurrentBalance\ttotalSales\ttotalPayments\ttotalDebits\n360003\tRicardo Pereira\t980.00\t886.00\t535.00\t40.00\t391.00\n",
+  "stderr": "",
+  "execution_time_ms": 644
+}
