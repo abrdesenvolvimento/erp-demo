@@ -1174,3 +1174,9 @@ Despesa de impostos aparece tanto em janeiro quanto em fevereiro após edição 
 - [x] Filtro trocado para seleção por Ano (2025, 2026)
 - [x] Filtros de Categoria e Subcategoria adicionados
 - [x] Query reescrita: usa compras (custo real via purchaseOrderItems), vendas (CMV) e movimentações extras separadamente
+
+### Gráfico Evolução Mensal - Estoque × Faturamento (28/02/2026)
+- [x] Substituir gráfico manual por Recharts ComposedChart: barras azuis (Estoque) + linha amarela (Faturamento) com dois eixos Y
+- [x] Adicionar faturamento mensal na query backend (soma totalAmount das vendas por mês)
+- [x] Usar Recharts (já instalado) para renderização confiável
+- [x] Coluna Faturamento adicionada na tabela detalhada

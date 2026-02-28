@@ -8,7 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Package, TrendingUp, TrendingDown, ArrowUpDown, BarChart3, Clock, AlertTriangle, ArrowUp, ArrowDown, ShoppingCart, Truck, PauseCircle, LayoutGrid, X, LineChart, PackageX, DollarSign, AlertCircle } from "lucide-react";
+import { Package, TrendingUp, TrendingDown, ArrowUpDown, BarChart3, Clock, AlertTriangle, ArrowUp, ArrowDown, ShoppingCart, Truck, PauseCircle, LayoutGrid, X, LineChart as LineChartIcon, PackageX, DollarSign, AlertCircle } from "lucide-react";
+import { ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 const MONTHS = [
   "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
@@ -714,7 +715,7 @@ export default function AnaliseEstoque() {
                 <LayoutGrid className="h-4 w-4" /> Classificação ABC
               </TabsTrigger>
               <TabsTrigger value="evolucao" className="flex items-center gap-1.5">
-                <LineChart className="h-4 w-4" /> Evolução Mensal
+                <LineChartIcon className="h-4 w-4" /> Evolução Mensal
               </TabsTrigger>
               <TabsTrigger value="ruptura" className="flex items-center gap-1.5">
                 <PackageX className="h-4 w-4" /> Ruptura de Estoque
@@ -1154,7 +1155,7 @@ export default function AnaliseEstoque() {
                 <CardHeader>
                   <div className="flex flex-col gap-4">
                     <CardTitle className="text-lg flex items-center gap-2">
-                      <LineChart className="h-5 w-5 text-primary" /> Evolução Mensal do Estoque
+                      <LineChartIcon className="h-5 w-5 text-primary" /> Evolução Mensal do Estoque
                     </CardTitle>
                     {/* Filtros: Ano, Categoria, Subcategoria */}
                     <div className="flex flex-wrap items-center gap-3">
@@ -1209,40 +1210,47 @@ export default function AnaliseEstoque() {
                     <div className="text-center py-8 text-muted-foreground">Carregando...</div>
                   ) : monthlyEvolution && monthlyEvolution.length > 0 ? (
                     <>
-                      {/* Gráfico de barras com escala proporcional */}
+                      {/* Gráfico combinado: Barras (Estoque) + Linha (Faturamento) */}
                       <div className="mb-6">
-                        <div className="text-sm font-medium text-muted-foreground mb-3">Valor do Estoque (R$)</div>
-                        <div className="flex items-end gap-1" style={{ height: '220px' }}>
-                          {(() => {
-                            const values = monthlyEvolution.map((m: any) => m.totalValue);
-                            const maxVal = Math.max(...values);
-                            const minVal = Math.min(...values);
-                            // Usar escala relativa para que diferenças fiquem visíveis
-                            const range = maxVal - minVal;
-                            const chartBase = range > 0 ? minVal * 0.95 : maxVal * 0.5;
-                            const chartRange = maxVal - chartBase;
-                            return monthlyEvolution.map((m: any, i: number) => {
-                              const barHeight = chartRange > 0 
-                                ? Math.max(((m.totalValue - chartBase) / chartRange) * 170, 4)
-                                : 85;
-                              return (
-                                <div key={m.month} className="flex-1 flex flex-col items-center gap-1 min-w-0">
-                                  <div className="text-[10px] text-muted-foreground font-mono truncate w-full text-center">
-                                    {formatCurrency(m.totalValue).replace('R$\u00a0', 'R$')}
-                                  </div>
-                                  <div
-                                    className={`w-full rounded-t transition-all ${
-                                      i === monthlyEvolution.length - 1 ? 'bg-primary' : 'bg-primary/40'
-                                    }`}
-                                    style={{ height: `${barHeight}px` }}
-                                    title={`${m.monthLabel}: ${formatCurrency(m.totalValue)}`}
-                                  />
-                                  <div className="text-[10px] text-muted-foreground">{m.monthLabel}</div>
-                                </div>
-                              );
-                            });
-                          })()}
-                        </div>
+                        <ResponsiveContainer width="100%" height={320}>
+                          <ComposedChart
+                            data={monthlyEvolution.map((m: any) => ({
+                              name: m.monthLabel,
+                              estoque: m.totalValue,
+                              faturamento: m.revenue || 0,
+                            }))}
+                            margin={{ top: 10, right: 10, left: 10, bottom: 0 }}
+                          >
+                            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                            <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                            <YAxis
+                              yAxisId="left"
+                              tick={{ fontSize: 11 }}
+                              tickFormatter={(v: number) => `R$${(v / 1000).toFixed(0)}k`}
+                              label={{ value: 'Estoque (R$)', angle: -90, position: 'insideLeft', style: { fontSize: 11, fill: '#6b7280' } }}
+                            />
+                            <YAxis
+                              yAxisId="right"
+                              orientation="right"
+                              tick={{ fontSize: 11 }}
+                              tickFormatter={(v: number) => `R$${(v / 1000).toFixed(0)}k`}
+                              label={{ value: 'Faturamento (R$)', angle: 90, position: 'insideRight', style: { fontSize: 11, fill: '#6b7280' } }}
+                            />
+                            <Tooltip
+                              formatter={(value: number, name: string) => [
+                                formatCurrency(value),
+                                name === 'estoque' ? 'Valor Estoque' : 'Faturamento'
+                              ]}
+                              labelStyle={{ fontWeight: 'bold' }}
+                              contentStyle={{ borderRadius: '8px', border: '1px solid #e5e7eb' }}
+                            />
+                            <Legend
+                              formatter={(value: string) => value === 'estoque' ? 'Valor Estoque' : 'Faturamento'}
+                            />
+                            <Bar yAxisId="left" dataKey="estoque" fill="#3b82f6" radius={[4, 4, 0, 0]} barSize={40} opacity={0.8} />
+                            <Line yAxisId="right" dataKey="faturamento" stroke="#f59e0b" strokeWidth={3} dot={{ r: 5, fill: '#f59e0b' }} activeDot={{ r: 7 }} />
+                          </ComposedChart>
+                        </ResponsiveContainer>
                       </div>
 
                       {/* Tabela detalhada */}
@@ -1253,6 +1261,7 @@ export default function AnaliseEstoque() {
                               <TableHead>Mês</TableHead>
                               <TableHead className="text-right">Valor Estoque</TableHead>
                               <TableHead className="text-right">Variação</TableHead>
+                              <TableHead className="text-right">Faturamento</TableHead>
                               <TableHead className="text-right">CMV</TableHead>
                               <TableHead className="text-right">Giro</TableHead>
                               <TableHead className="text-right">Qtd Itens</TableHead>
@@ -1279,6 +1288,7 @@ export default function AnaliseEstoque() {
                                       </span>
                                     ) : '—'}
                                   </TableCell>
+                                  <TableCell className="text-right font-mono text-amber-600">{formatCurrency(m.revenue || 0)}</TableCell>
                                   <TableCell className="text-right font-mono">{formatCurrency(m.cmv)}</TableCell>
                                   <TableCell className={`text-right font-mono ${getTurnoverColor(m.turnover)}`}>{m.turnover.toFixed(2)}x</TableCell>
                                   <TableCell className="text-right font-mono">{formatNumber(m.totalQuantity)}</TableCell>
@@ -1290,7 +1300,7 @@ export default function AnaliseEstoque() {
                       </div>
 
                       <div className="mt-4 text-xs text-muted-foreground border-t pt-3">
-                        <p>A evolução é calculada retroativamente a partir do estoque atual, descontando compras, vendas e movimentações de cada mês. O mês atual (destacado) reflete o estoque em tempo real.</p>
+                        <p>A evolução é calculada retroativamente a partir do estoque atual, descontando compras, vendas e movimentações de cada mês. O mês atual (destacado) reflete o estoque em tempo real. O faturamento é o total de vendas do mês.</p>
                       </div>
                     </>
                   ) : (

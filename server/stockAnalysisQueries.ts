@@ -490,6 +490,7 @@ export interface StockMonthlyEvolution {
   productCount: number;  // Número de produtos com estoque > 0
   cmv: number;           // CMV do mês
   turnover: number;      // Giro do mês
+  revenue: number;       // Faturamento do mês
 }
 
 /**
@@ -565,6 +566,18 @@ export async function getStockMonthlyEvolution(
     ORDER BY yearMonth DESC
   `));
 
+  // Faturamento mensal (receita de vendas)
+  const revenueResult = await db.execute(sql.raw(`
+    SELECT 
+      DATE_FORMAT(CONVERT_TZ(s.saleDate, '+00:00', '-03:00'), '%Y-%m') as yearMonth,
+      SUM(s.totalAmount) as totalRevenue
+    FROM sales s
+    WHERE s.status = 'ACTIVE'
+      ${companyId ? `AND s.companyId = ${companyId}` : ''}
+    GROUP BY yearMonth
+    ORDER BY yearMonth DESC
+  `));
+
   // Movimentações extras (PERDA, ACERTO, ESTORNO) - não cobertas por compras/vendas
   const extraMovResult = await db.execute(sql.raw(`
     SELECT 
@@ -603,6 +616,12 @@ export async function getStockMonthlyEvolution(
   const purchaseRows = (purchaseResult[0] || []) as unknown as any[];
   const salesRows = (salesResult[0] || []) as unknown as any[];
   const extraRows = (extraMovResult[0] || []) as unknown as any[];
+
+  const revenueRows = (revenueResult[0] || []) as unknown as any[];
+  const revenueMap: Record<string, number> = {};
+  for (const r of revenueRows) {
+    revenueMap[r.yearMonth] = parseFloat(r.totalRevenue || '0');
+  }
 
   const purchaseMap: Record<string, { costIn: number; qtyIn: number }> = {};
   for (const r of purchaseRows) {
@@ -689,6 +708,8 @@ export async function getStockMonthlyEvolution(
     const cmv = salesMap[ym]?.costOut || 0;
     const turnover = stock.value > 0 ? cmv / stock.value : 0;
 
+    const revenue = revenueMap[ym] || 0;
+
     results.push({
       month: ym,
       monthLabel: label,
@@ -697,6 +718,7 @@ export async function getStockMonthlyEvolution(
       productCount: currentCount, // Aproximação
       cmv: Math.round(cmv * 100) / 100,
       turnover: Math.round(turnover * 100) / 100,
+      revenue: Math.round(revenue * 100) / 100,
     });
   }
 
