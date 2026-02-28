@@ -493,22 +493,27 @@ export interface StockMonthlyEvolution {
 }
 
 /**
- * Evolução mensal do estoque (últimos N meses)
- * Calcula o valor do estoque no final de cada mês usando movimentações
+ * Evolução mensal do estoque por ano
+ * Reconstrói o estoque retroativamente usando:
+ * - Compras (purchaseOrderItems) com custo real unitário para entradas
+ * - Vendas (saleItems) com custo médio do produto para saídas (CMV)
+ * - Movimentações (perdas, acertos) com custo médio do produto
  */
 export async function getStockMonthlyEvolution(
-  months: number = 12,
+  year: number = new Date().getFullYear(),
   companyId?: number,
-  categoryId?: number
+  categoryId?: number,
+  subcategoryId?: number
 ): Promise<StockMonthlyEvolution[]> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
   const companyFilter = companyId ? `AND p.companyId = ${companyId}` : '';
   const categoryFilter = categoryId ? `AND p.categoryId = ${categoryId}` : '';
-  const salesCompanyFilter = companyId ? `AND s.companyId = ${companyId}` : '';
+  const subcategoryFilter = subcategoryId ? `AND p.subcategoryId = ${subcategoryId}` : '';
+  const allProductFilters = `${companyFilter} ${categoryFilter} ${subcategoryFilter}`;
 
-  // Estoque atual
+  // Estoque atual (ponto de partida para reconstrução retroativa)
   const currentStockResult = await db.execute(sql.raw(`
     SELECT 
       SUM(p.currentStock * p.avgCost) as totalValue,
@@ -517,8 +522,7 @@ export async function getStockMonthlyEvolution(
     FROM products p
     WHERE p.active = 1
       AND (p.isComposite = 0 OR p.isComposite IS NULL)
-      ${companyFilter}
-      ${categoryFilter}
+      ${allProductFilters}
   `));
 
   const currentRow = (currentStockResult[0] as unknown as any[])[0];
@@ -526,111 +530,177 @@ export async function getStockMonthlyEvolution(
   const currentQty = parseFloat(currentRow?.totalQuantity || '0');
   const currentCount = parseInt(currentRow?.productCount || '0');
 
-  // Movimentações mensais (entradas e saídas) para reconstruir estoque retroativo
-  const movResult = await db.execute(sql.raw(`
+  // Entradas via compras com custo REAL (purchaseOrderItems)
+  const purchaseResult = await db.execute(sql.raw(`
     SELECT 
-      DATE_FORMAT(CONVERT_TZ(pm.createdAt, '+00:00', '-03:00'), '%Y-%m') as yearMonth,
-      SUM(CASE 
-        WHEN pm.type = 'ENTRADA' OR (pm.type = 'ACERTO' AND pm.quantity > 0) 
-        THEN ABS(pm.quantity) * p.avgCost 
-        ELSE 0 
-      END) as totalIn,
-      SUM(CASE 
-        WHEN pm.type IN ('SAIDA', 'PERDA') OR (pm.type = 'ACERTO' AND pm.quantity < 0) 
-        THEN ABS(pm.quantity) * p.avgCost 
-        ELSE 0 
-      END) as totalOut,
-      SUM(CASE 
-        WHEN pm.type = 'ENTRADA' OR (pm.type = 'ACERTO' AND pm.quantity > 0) 
-        THEN ABS(pm.quantity) 
-        ELSE 0 
-      END) as qtyIn,
-      SUM(CASE 
-        WHEN pm.type IN ('SAIDA', 'PERDA') OR (pm.type = 'ACERTO' AND pm.quantity < 0) 
-        THEN ABS(pm.quantity) 
-        ELSE 0 
-      END) as qtyOut
-    FROM productMovements pm
-    INNER JOIN products p ON pm.productId = p.id
-    WHERE (p.isComposite = 0 OR p.isComposite IS NULL)
+      DATE_FORMAT(CONVERT_TZ(po.postingDate, '+00:00', '-03:00'), '%Y-%m') as yearMonth,
+      SUM(poi.totalCost) as totalCostIn,
+      SUM(poi.quantity) as qtyIn
+    FROM purchaseOrderItems poi
+    INNER JOIN purchaseOrders po ON poi.purchaseOrderId = po.id
+    INNER JOIN products p ON poi.productId = p.id
+    WHERE po.status != 'CANCELLED'
+      AND (p.isComposite = 0 OR p.isComposite IS NULL)
       AND p.active = 1
-      ${companyFilter}
-      ${categoryFilter}
+      ${allProductFilters}
     GROUP BY yearMonth
     ORDER BY yearMonth DESC
-    LIMIT ${months + 1}
   `));
 
-  // CMV mensal
-  const cmvResult = await db.execute(sql.raw(`
+  // Saídas via vendas (CMV = qty * avgCost do produto)
+  const salesResult = await db.execute(sql.raw(`
     SELECT 
       DATE_FORMAT(CONVERT_TZ(s.saleDate, '+00:00', '-03:00'), '%Y-%m') as yearMonth,
-      SUM(si.quantity * p.avgCost) as cmv
+      SUM(si.quantity * p.avgCost) as totalCostOut,
+      SUM(si.quantity) as qtyOut
     FROM saleItems si
     INNER JOIN sales s ON si.saleId = s.id
     INNER JOIN products p ON si.productId = p.id
     WHERE s.status = 'ACTIVE'
       AND (p.isComposite = 0 OR p.isComposite IS NULL)
-      ${salesCompanyFilter}
-      ${categoryFilter ? categoryFilter.replace('p.categoryId', 'p.categoryId') : ''}
+      ${companyId ? `AND s.companyId = ${companyId}` : ''}
+      ${categoryFilter}
+      ${subcategoryFilter}
     GROUP BY yearMonth
     ORDER BY yearMonth DESC
-    LIMIT ${months + 1}
   `));
 
-  const movRows = (movResult[0] || []) as unknown as any[];
-  const cmvRows = (cmvResult[0] || []) as unknown as any[];
+  // Movimentações extras (PERDA, ACERTO, ESTORNO) - não cobertas por compras/vendas
+  const extraMovResult = await db.execute(sql.raw(`
+    SELECT 
+      DATE_FORMAT(CONVERT_TZ(pm.createdAt, '+00:00', '-03:00'), '%Y-%m') as yearMonth,
+      SUM(CASE 
+        WHEN pm.type = 'ACERTO' AND pm.quantity > 0 THEN ABS(pm.quantity) * p.avgCost 
+        WHEN pm.type = 'ESTORNO' AND pm.quantity > 0 THEN ABS(pm.quantity) * p.avgCost
+        ELSE 0 
+      END) as extraIn,
+      SUM(CASE 
+        WHEN pm.type = 'ACERTO' AND pm.quantity > 0 THEN ABS(pm.quantity) 
+        WHEN pm.type = 'ESTORNO' AND pm.quantity > 0 THEN ABS(pm.quantity)
+        ELSE 0 
+      END) as extraQtyIn,
+      SUM(CASE 
+        WHEN pm.type = 'PERDA' THEN ABS(pm.quantity) * p.avgCost
+        WHEN pm.type = 'ACERTO' AND pm.quantity < 0 THEN ABS(pm.quantity) * p.avgCost
+        ELSE 0 
+      END) as extraOut,
+      SUM(CASE 
+        WHEN pm.type = 'PERDA' THEN ABS(pm.quantity)
+        WHEN pm.type = 'ACERTO' AND pm.quantity < 0 THEN ABS(pm.quantity)
+        ELSE 0 
+      END) as extraQtyOut
+    FROM productMovements pm
+    INNER JOIN products p ON pm.productId = p.id
+    WHERE pm.type IN ('PERDA', 'ACERTO', 'ESTORNO')
+      AND (p.isComposite = 0 OR p.isComposite IS NULL)
+      AND p.active = 1
+      ${allProductFilters}
+    GROUP BY yearMonth
+    ORDER BY yearMonth DESC
+  `));
 
-  const movMap: Record<string, { totalIn: number; totalOut: number; qtyIn: number; qtyOut: number }> = {};
-  for (const r of movRows) {
-    movMap[r.yearMonth] = {
-      totalIn: parseFloat(r.totalIn || '0'),
-      totalOut: parseFloat(r.totalOut || '0'),
+  // Mapear dados por mês
+  const purchaseRows = (purchaseResult[0] || []) as unknown as any[];
+  const salesRows = (salesResult[0] || []) as unknown as any[];
+  const extraRows = (extraMovResult[0] || []) as unknown as any[];
+
+  const purchaseMap: Record<string, { costIn: number; qtyIn: number }> = {};
+  for (const r of purchaseRows) {
+    purchaseMap[r.yearMonth] = {
+      costIn: parseFloat(r.totalCostIn || '0'),
       qtyIn: parseFloat(r.qtyIn || '0'),
+    };
+  }
+
+  const salesMap: Record<string, { costOut: number; qtyOut: number }> = {};
+  for (const r of salesRows) {
+    salesMap[r.yearMonth] = {
+      costOut: parseFloat(r.totalCostOut || '0'),
       qtyOut: parseFloat(r.qtyOut || '0'),
     };
   }
 
-  const cmvMap: Record<string, number> = {};
-  for (const r of cmvRows) {
-    cmvMap[r.yearMonth] = parseFloat(r.cmv || '0');
+  const extraMap: Record<string, { extraIn: number; extraQtyIn: number; extraOut: number; extraQtyOut: number }> = {};
+  for (const r of extraRows) {
+    extraMap[r.yearMonth] = {
+      extraIn: parseFloat(r.extraIn || '0'),
+      extraQtyIn: parseFloat(r.extraQtyIn || '0'),
+      extraOut: parseFloat(r.extraOut || '0'),
+      extraQtyOut: parseFloat(r.extraQtyOut || '0'),
+    };
   }
 
-  // Reconstruir estoque retroativo mês a mês
+  // Determinar meses do ano solicitado
   const now = new Date();
   const nowBrazil = new Date(now.getTime() - 3 * 60 * 60 * 1000);
-  const results: StockMonthlyEvolution[] = [];
+  const currentYM = `${nowBrazil.getFullYear()}-${String(nowBrazil.getMonth() + 1).padStart(2, '0')}`;
   
   const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
   
+  // Gerar lista de meses do ano
+  const yearMonths: { ym: string; label: string }[] = [];
+  for (let m = 0; m < 12; m++) {
+    const ym = `${year}-${String(m + 1).padStart(2, '0')}`;
+    if (ym > currentYM) break; // Não incluir meses futuros
+    yearMonths.push({ ym, label: `${monthNames[m]}/${String(year).slice(2)}` });
+  }
+
+  // Reconstruir estoque retroativamente do mês atual até o início do ano
+  // Começar do estoque atual e ir subtraindo/somando movimentações
   let runningValue = currentValue;
   let runningQty = currentQty;
 
-  for (let i = 0; i < months; i++) {
-    const d = new Date(nowBrazil.getFullYear(), nowBrazil.getMonth() - i, 1);
+  // Primeiro, calcular o estoque de cada mês do atual até o primeiro do ano
+  // Precisamos ir do mês atual para trás
+  const allMonthsFromCurrentToYear: string[] = [];
+  let d = new Date(nowBrazil.getFullYear(), nowBrazil.getMonth(), 1);
+  while (d.getFullYear() > year || (d.getFullYear() === year && d.getMonth() >= 0)) {
     const ym = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-    const label = `${monthNames[d.getMonth()]}/${String(d.getFullYear()).slice(2)}`;
+    allMonthsFromCurrentToYear.push(ym);
+    if (d.getFullYear() === year && d.getMonth() === 0) break;
+    d = new Date(d.getFullYear(), d.getMonth() - 1, 1);
+  }
+
+  // Calcular estoque final de cada mês retroativamente
+  const stockByMonth: Record<string, { value: number; qty: number }> = {};
+  
+  for (let i = 0; i < allMonthsFromCurrentToYear.length; i++) {
+    const ym = allMonthsFromCurrentToYear[i];
+    stockByMonth[ym] = { value: runningValue, qty: runningQty };
+
+    // Para calcular o mês anterior: desfazer as movimentações deste mês
+    const purchase = purchaseMap[ym] || { costIn: 0, qtyIn: 0 };
+    const sale = salesMap[ym] || { costOut: 0, qtyOut: 0 };
+    const extra = extraMap[ym] || { extraIn: 0, extraQtyIn: 0, extraOut: 0, extraQtyOut: 0 };
+
+    // Desfazer: subtrair entradas (compras + acertos positivos) e somar saídas (vendas + perdas + acertos negativos)
+    runningValue = runningValue - purchase.costIn - extra.extraIn + sale.costOut + extra.extraOut;
+    runningQty = runningQty - purchase.qtyIn - extra.extraQtyIn + sale.qtyOut + extra.extraQtyOut;
     
-    const cmv = cmvMap[ym] || 0;
-    const turnover = runningValue > 0 ? cmv / runningValue : 0;
+    // Evitar valores negativos
+    if (runningValue < 0) runningValue = 0;
+    if (runningQty < 0) runningQty = 0;
+  }
+
+  // Montar resultado apenas para os meses do ano solicitado
+  const results: StockMonthlyEvolution[] = [];
+  for (const { ym, label } of yearMonths) {
+    const stock = stockByMonth[ym] || { value: 0, qty: 0 };
+    const cmv = salesMap[ym]?.costOut || 0;
+    const turnover = stock.value > 0 ? cmv / stock.value : 0;
 
     results.push({
       month: ym,
       monthLabel: label,
-      totalValue: Math.round(runningValue * 100) / 100,
-      totalQuantity: Math.round(runningQty),
+      totalValue: Math.round(stock.value * 100) / 100,
+      totalQuantity: Math.round(stock.qty),
       productCount: currentCount, // Aproximação
       cmv: Math.round(cmv * 100) / 100,
       turnover: Math.round(turnover * 100) / 100,
     });
-
-    // Para o mês anterior, subtrair entradas e somar saídas do mês atual
-    const mov = movMap[ym] || { totalIn: 0, totalOut: 0, qtyIn: 0, qtyOut: 0 };
-    runningValue = runningValue - mov.totalIn + mov.totalOut;
-    runningQty = runningQty - mov.qtyIn + mov.qtyOut;
   }
 
-  return results.reverse();
+  return results;
 }
 
 // ==================== DIAS SEM ESTOQUE (RUPTURA) ====================

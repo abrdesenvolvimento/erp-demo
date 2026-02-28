@@ -78,16 +78,17 @@ export const stockAnalysisRouter = router({
    * Lista de subcategorias disponíveis
    */
   /**
-   * Evolução mensal do estoque (últimos N meses)
+   * Evolução mensal do estoque por ano
    */
   monthlyEvolution: protectedProcedure
     .input(z.object({
-      months: z.number().min(3).max(24).optional(),
+      year: z.number().optional(),
       categoryId: z.number().optional(),
     }))
     .query(async ({ input, ctx }) => {
       const companyId = ctx.activeCompanyId;
-      return await getStockMonthlyEvolution(input.months || 12, companyId, input.categoryId);
+      const year = input.year || new Date().getFullYear();
+      return await getStockMonthlyEvolution(year, companyId, input.categoryId);
     }),
 
   /**

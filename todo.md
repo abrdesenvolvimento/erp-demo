@@ -1168,3 +1168,9 @@ Despesa de impostos aparece tanto em janeiro quanto em fevereiro após edição 
 - [x] Nova aba: Ruptura de Estoque - produtos com estoque zerado, dias sem estoque, média diária de vendas, vendas 90d, receita perdida estimada, classificação ABC
 - [x] Renomear "Dias de Estoque" para "Cobertura" em todo o sistema (cards, tabelas, legendas)
 - [ ] Pendência futura: Faixa de Idade de Estoque (controle por faixas de idade)
+
+### Correções Evolução Mensal (28/02/2026)
+- [x] Gráfico de barras corrigido com escala relativa (minVal*0.95 como base) para diferenças ficarem visíveis
+- [x] Filtro trocado para seleção por Ano (2025, 2026)
+- [x] Filtros de Categoria e Subcategoria adicionados
+- [x] Query reescrita: usa compras (custo real via purchaseOrderItems), vendas (CMV) e movimentações extras separadamente

@@ -193,9 +193,19 @@ export default function AnaliseEstoque() {
     { categoryId: categoryIdForQuery }
   );
 
+  // State para filtro de ano da evolução
+  const [evolutionYear, setEvolutionYear] = useState(nowBrazil.getFullYear());
+  const [evolutionCategoryId, setEvolutionCategoryId] = useState<number | undefined>(undefined);
+  const [evolutionSubcategory, setEvolutionSubcategory] = useState<string | undefined>(undefined);
+
   // Evolução mensal do estoque
   const { data: monthlyEvolution, isLoading: loadingEvolution } = trpc.stockAnalysis.monthlyEvolution.useQuery(
-    { months: 12, categoryId: categoryIdForQuery }
+    { year: evolutionYear, categoryId: evolutionCategoryId }
+  );
+
+  // Subcategorias para filtro da evolução
+  const { data: evolutionSubcategories } = trpc.stockAnalysis.subcategories.useQuery(
+    { categoryId: evolutionCategoryId }
   );
 
   // Produtos em ruptura (estoque zerado)
@@ -1142,36 +1152,95 @@ export default function AnaliseEstoque() {
             <TabsContent value="evolucao">
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <LineChart className="h-5 w-5 text-primary" /> Evolução Mensal do Estoque
-                  </CardTitle>
+                  <div className="flex flex-col gap-4">
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <LineChart className="h-5 w-5 text-primary" /> Evolução Mensal do Estoque
+                    </CardTitle>
+                    {/* Filtros: Ano, Categoria, Subcategoria */}
+                    <div className="flex flex-wrap items-center gap-3">
+                      <Select value={String(evolutionYear)} onValueChange={(v) => setEvolutionYear(Number(v))}>
+                        <SelectTrigger className="w-[120px]">
+                          <SelectValue placeholder="Ano" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {years.map(y => (
+                            <SelectItem key={y} value={String(y)}>{y}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Select
+                        value={evolutionCategoryId ? String(evolutionCategoryId) : "all"}
+                        onValueChange={(v) => {
+                          setEvolutionCategoryId(v === "all" ? undefined : Number(v));
+                          setEvolutionSubcategory(undefined);
+                        }}
+                      >
+                        <SelectTrigger className="w-[180px]">
+                          <SelectValue placeholder="Categoria" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">Todas Categorias</SelectItem>
+                          {categoryOptions.map((cat) => (
+                            <SelectItem key={cat.value} value={cat.value}>{cat.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {evolutionCategoryId && evolutionSubcategories && evolutionSubcategories.length > 0 && (
+                        <Select
+                          value={evolutionSubcategory || "all"}
+                          onValueChange={(v) => setEvolutionSubcategory(v === "all" ? undefined : v)}
+                        >
+                          <SelectTrigger className="w-[180px]">
+                            <SelectValue placeholder="Subcategoria" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">Todas Subcategorias</SelectItem>
+                            {evolutionSubcategories.map((sub: string) => (
+                              <SelectItem key={sub} value={sub}>{sub}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    </div>
+                  </div>
                 </CardHeader>
                 <CardContent>
                   {loadingEvolution ? (
                     <div className="text-center py-8 text-muted-foreground">Carregando...</div>
                   ) : monthlyEvolution && monthlyEvolution.length > 0 ? (
                     <>
-                      {/* Gráfico de barras simples com CSS */}
+                      {/* Gráfico de barras com escala proporcional */}
                       <div className="mb-6">
                         <div className="text-sm font-medium text-muted-foreground mb-3">Valor do Estoque (R$)</div>
-                        <div className="flex items-end gap-1 h-[200px]">
+                        <div className="flex items-end gap-1" style={{ height: '220px' }}>
                           {(() => {
-                            const maxVal = Math.max(...monthlyEvolution.map((m: any) => m.totalValue));
-                            return monthlyEvolution.map((m: any, i: number) => (
-                              <div key={m.month} className="flex-1 flex flex-col items-center gap-1">
-                                <div className="text-[10px] text-muted-foreground font-mono">
-                                  {formatCurrency(m.totalValue).replace('R$\u00a0', 'R$')}
+                            const values = monthlyEvolution.map((m: any) => m.totalValue);
+                            const maxVal = Math.max(...values);
+                            const minVal = Math.min(...values);
+                            // Usar escala relativa para que diferenças fiquem visíveis
+                            const range = maxVal - minVal;
+                            const chartBase = range > 0 ? minVal * 0.95 : maxVal * 0.5;
+                            const chartRange = maxVal - chartBase;
+                            return monthlyEvolution.map((m: any, i: number) => {
+                              const barHeight = chartRange > 0 
+                                ? Math.max(((m.totalValue - chartBase) / chartRange) * 170, 4)
+                                : 85;
+                              return (
+                                <div key={m.month} className="flex-1 flex flex-col items-center gap-1 min-w-0">
+                                  <div className="text-[10px] text-muted-foreground font-mono truncate w-full text-center">
+                                    {formatCurrency(m.totalValue).replace('R$\u00a0', 'R$')}
+                                  </div>
+                                  <div
+                                    className={`w-full rounded-t transition-all ${
+                                      i === monthlyEvolution.length - 1 ? 'bg-primary' : 'bg-primary/40'
+                                    }`}
+                                    style={{ height: `${barHeight}px` }}
+                                    title={`${m.monthLabel}: ${formatCurrency(m.totalValue)}`}
+                                  />
+                                  <div className="text-[10px] text-muted-foreground">{m.monthLabel}</div>
                                 </div>
-                                <div
-                                  className={`w-full rounded-t transition-all ${
-                                    i === monthlyEvolution.length - 1 ? 'bg-primary' : 'bg-primary/40'
-                                  }`}
-                                  style={{ height: `${maxVal > 0 ? (m.totalValue / maxVal) * 150 : 0}px`, minHeight: m.totalValue > 0 ? '4px' : '0px' }}
-                                  title={`${m.monthLabel}: ${formatCurrency(m.totalValue)}`}
-                                />
-                                <div className="text-[10px] text-muted-foreground">{m.monthLabel}</div>
-                              </div>
-                            ));
+                              );
+                            });
                           })()}
                         </div>
                       </div>
@@ -1221,11 +1290,11 @@ export default function AnaliseEstoque() {
                       </div>
 
                       <div className="mt-4 text-xs text-muted-foreground border-t pt-3">
-                        <p>A evolução é calculada retroativamente a partir do estoque atual, descontando movimentações de cada mês. O mês atual (destacado) reflete o estoque em tempo real.</p>
+                        <p>A evolução é calculada retroativamente a partir do estoque atual, descontando compras, vendas e movimentações de cada mês. O mês atual (destacado) reflete o estoque em tempo real.</p>
                       </div>
                     </>
                   ) : (
-                    <div className="text-center py-8 text-muted-foreground">Sem dados de evolução disponíveis</div>
+                    <div className="text-center py-8 text-muted-foreground">Sem dados de evolução disponíveis para {evolutionYear}</div>
                   )}
                 </CardContent>
               </Card>
