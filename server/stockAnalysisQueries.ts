@@ -570,7 +570,7 @@ export async function getStockMonthlyEvolution(
   const revenueResult = await db.execute(sql.raw(`
     SELECT 
       DATE_FORMAT(CONVERT_TZ(s.saleDate, '+00:00', '-03:00'), '%Y-%m') as yearMonth,
-      SUM(s.totalAmount) as totalRevenue
+      SUM(s.finalAmount) as totalRevenue
     FROM sales s
     WHERE s.status = 'ACTIVE'
       ${companyId ? `AND s.companyId = ${companyId}` : ''}

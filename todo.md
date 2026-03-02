@@ -1,6 +1,6 @@
 # ABRWF - Pendências e Melhorias
 
-**Última atualização:** 15/02/2026
+**Última atualização:** 02/03/2026
 
 ---
 
@@ -1180,3 +1180,12 @@ Despesa de impostos aparece tanto em janeiro quanto em fevereiro após edição 
 - [x] Adicionar faturamento mensal na query backend (soma totalAmount das vendas por mês)
 - [x] Usar Recharts (já instalado) para renderização confiável
 - [x] Coluna Faturamento adicionada na tabela detalhada
+
+### Bug Fix: Evolução Mensal retornava vazio (02/03/2026)
+- [x] Bug: Gráfico de Evolução Mensal mostrava "Sem dados de evolução disponíveis para 2026"
+- [x] Causa raiz: query de faturamento usava `s.totalAmount` (coluna inexistente na tabela sales)
+- [x] Coluna correta é `s.finalAmount` (tabela sales usa finalAmount, não totalAmount)
+- [x] O erro lançava exception que fazia a função inteira falhar silenciosamente
+- [x] Correção: substituído `SUM(s.totalAmount)` por `SUM(s.finalAmount)` em stockAnalysisQueries.ts
+- [x] Teste criado: monthly-evolution-fix.test.ts (3 testes passando)
+- [x] Dados confirmados: Jan/26 R$86.864,57 | Fev/26 R$82.409,98 | Mar/26 R$3.121,19
