@@ -1503,3 +1503,19 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Incluir Outras Receitas no cálculo do DRE na conta gerencial lançada (seção 7 - OUTRAS RECEITAS)
 - [x] Filtro para não duplicar receitas já contabilizadas (isAccounted = 0)
 - [x] Não mexer na contabilização por enquanto (pendente análise do responsável)
+
+
+### Sprint 03/03/2026 - Ajustes de Interface e Lógica
+- [x] Simplificar card Outras Receitas no Fechamento (apenas total + descrição resumida)
+- [x] Remover badge "Estoque Congelado" do header do Fechamento (manter lógica funcional)
+- [x] Corrigir Contabilidade 12/2025 aparecendo em Janeiro na Análise de Despesas (competência Dez, dueDate Jan)
+- [x] Corrigir DAS R$0,00 na Análise de Despesas de Janeiro (competência Jan, dueDate Fev)
+
+### Regra Híbrida de Despesas na Análise e Fechamento (03/03/2026)
+- [x] Parcelado (>1 parcela): valor da parcela no mês do dueDate (vencimento)
+- [x] Pagamento único (1 parcela): valor no mês do competenceMonth (competência)
+- [x] Contabilização: tudo pelo competenceMonth (regime de competência contábil padrão)
+- [x] Atualizar getExpenseHierarchicalData com regra híbrida
+- [x] Atualizar getExpenseAnalysisByCategory, byMonth, byCategoryAndMonth, summary, detail
+- [x] Atualizar queries de despesas no getMonthlyClosing (Fechamento) - seções 3 e 7
+- [x] 10 testes vitest passando (expense-hybrid-rule.test.ts)

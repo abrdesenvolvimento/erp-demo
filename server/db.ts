@@ -5677,6 +5677,7 @@ export async function getDeliveryNetMarginOptimized(companyId?: number) {
 /**
  * Busca análise de despesas por categoria
  * Agrupa despesas por categoria com totais
+ * Regra híbrida: parceladas (>1 parcela) usam dueDate, pagamento único usa competenceMonth
  */
 export async function getExpenseAnalysisByCategory(companyId: number | undefined,
   startDate?: string,
@@ -5687,14 +5688,32 @@ export async function getExpenseAnalysisByCategory(companyId: number | undefined
   const db = await getDb();
   if (!db) return [];
 
-  // Nova regra: despesas parceladas são distribuídas por mês de vencimento de cada parcela
-  // Filtro de data é aplicado sobre ei.dueDate (data de vencimento da parcela)
-  let whereClause = `WHERE e.status != 'CANCELADA'`;
-  if (companyId) whereClause += ` AND e.companyId = ${companyId}`;
-  if (startDate) whereClause += ` AND DATE(CONVERT_TZ(ei.dueDate, '+00:00', '-03:00')) >= '${startDate}'`;
-  if (endDate) whereClause += ` AND DATE(CONVERT_TZ(ei.dueDate, '+00:00', '-03:00')) <= '${endDate}'`;
-  if (categoryId) whereClause += ` AND e.categoryId = ${categoryId}`;
-  if (supplierId) whereClause += ` AND e.supplierId = ${supplierId}`;
+  // Regra híbrida: parceladas filtram por dueDate, pagamento único por competenceMonth
+  let baseWhere = `WHERE e.status != 'CANCELADA'`;
+  if (companyId) baseWhere += ` AND e.companyId = ${companyId}`;
+  if (categoryId) baseWhere += ` AND e.categoryId = ${categoryId}`;
+  if (supplierId) baseWhere += ` AND e.supplierId = ${supplierId}`;
+
+  // Converter startDate/endDate para competenceMonth range (YYYY-MM)
+  const startCompetence = startDate ? startDate.substring(0, 7) : null;
+  const endCompetence = endDate ? endDate.substring(0, 7) : null;
+
+  let dateFilter = '';
+  if (startDate || endDate) {
+    const parceladaFilter = [];
+    if (startDate) parceladaFilter.push(`DATE(CONVERT_TZ(ei.dueDate, '+00:00', '-03:00')) >= '${startDate}'`);
+    if (endDate) parceladaFilter.push(`DATE(CONVERT_TZ(ei.dueDate, '+00:00', '-03:00')) <= '${endDate}'`);
+    
+    const unicaFilter = [];
+    if (startCompetence) unicaFilter.push(`e.competenceMonth >= '${startCompetence}'`);
+    if (endCompetence) unicaFilter.push(`e.competenceMonth <= '${endCompetence}'`);
+
+    dateFilter = ` AND (
+      (pc.numParcelas > 1 AND ${parceladaFilter.join(' AND ')})
+      OR
+      (pc.numParcelas = 1 AND ${unicaFilter.join(' AND ')})
+    )`;
+  }
 
   const result = await db.execute(sql.raw(`
     SELECT 
@@ -5705,7 +5724,12 @@ export async function getExpenseAnalysisByCategory(companyId: number | undefined
     FROM expenses e
     INNER JOIN expenseCategories ec ON e.categoryId = ec.id
     INNER JOIN expenseInstallments ei ON ei.expenseId = e.id
-    ${whereClause}
+    INNER JOIN (
+      SELECT expenseId, COUNT(*) as numParcelas
+      FROM expenseInstallments
+      GROUP BY expenseId
+    ) pc ON pc.expenseId = e.id
+    ${baseWhere}${dateFilter}
     GROUP BY ec.id, ec.name
     ORDER BY totalAmount DESC
   `));
@@ -5722,6 +5746,7 @@ export async function getExpenseAnalysisByCategory(companyId: number | undefined
 /**
  * Busca análise de despesas por mês
  * Agrupa despesas por mês/ano com totais
+ * Regra híbrida: parceladas (>1 parcela) agrupam por mês do dueDate, pagamento único por competenceMonth
  */
 export async function getExpenseAnalysisByMonth(companyId: number | undefined,
   startDate?: string,
@@ -5732,23 +5757,52 @@ export async function getExpenseAnalysisByMonth(companyId: number | undefined,
   const db = await getDb();
   if (!db) return [];
 
-  // Nova regra: agrupa por mês de vencimento da parcela (ei.dueDate), não por data de criação
-  let whereClause = `WHERE e.status != 'CANCELADA'`;
-  if (companyId) whereClause += ` AND e.companyId = ${companyId}`;
-  if (startDate) whereClause += ` AND DATE(CONVERT_TZ(ei.dueDate, '+00:00', '-03:00')) >= '${startDate}'`;
-  if (endDate) whereClause += ` AND DATE(CONVERT_TZ(ei.dueDate, '+00:00', '-03:00')) <= '${endDate}'`;
-  if (categoryId) whereClause += ` AND e.categoryId = ${categoryId}`;
-  if (supplierId) whereClause += ` AND e.supplierId = ${supplierId}`;
+  let baseWhere = `WHERE e.status != 'CANCELADA'`;
+  if (companyId) baseWhere += ` AND e.companyId = ${companyId}`;
+  if (categoryId) baseWhere += ` AND e.categoryId = ${categoryId}`;
+  if (supplierId) baseWhere += ` AND e.supplierId = ${supplierId}`;
 
+  const startCompetence = startDate ? startDate.substring(0, 7) : null;
+  const endCompetence = endDate ? endDate.substring(0, 7) : null;
+
+  let dateFilter = '';
+  if (startDate || endDate) {
+    const parceladaFilter = [];
+    if (startDate) parceladaFilter.push(`DATE(CONVERT_TZ(ei.dueDate, '+00:00', '-03:00')) >= '${startDate}'`);
+    if (endDate) parceladaFilter.push(`DATE(CONVERT_TZ(ei.dueDate, '+00:00', '-03:00')) <= '${endDate}'`);
+    
+    const unicaFilter = [];
+    if (startCompetence) unicaFilter.push(`e.competenceMonth >= '${startCompetence}'`);
+    if (endCompetence) unicaFilter.push(`e.competenceMonth <= '${endCompetence}'`);
+
+    dateFilter = ` AND (
+      (pc.numParcelas > 1 AND ${parceladaFilter.join(' AND ')})
+      OR
+      (pc.numParcelas = 1 AND ${unicaFilter.join(' AND ')})
+    )`;
+  }
+
+  // Regra híbrida: parceladas agrupam pelo mês do dueDate, únicas pelo competenceMonth
   const result = await db.execute(sql.raw(`
     SELECT 
-      YEAR(CONVERT_TZ(ei.dueDate, '+00:00', '-03:00')) as year,
-      MONTH(CONVERT_TZ(ei.dueDate, '+00:00', '-03:00')) as month,
+      CASE WHEN pc.numParcelas > 1 
+        THEN YEAR(CONVERT_TZ(ei.dueDate, '+00:00', '-03:00'))
+        ELSE CAST(SUBSTRING(e.competenceMonth, 1, 4) AS UNSIGNED)
+      END as year,
+      CASE WHEN pc.numParcelas > 1 
+        THEN MONTH(CONVERT_TZ(ei.dueDate, '+00:00', '-03:00'))
+        ELSE CAST(SUBSTRING(e.competenceMonth, 6, 2) AS UNSIGNED)
+      END as month,
       COUNT(DISTINCT e.id) as totalLancamentos,
       COALESCE(SUM(ei.amount), 0) as totalAmount
     FROM expenses e
     INNER JOIN expenseInstallments ei ON ei.expenseId = e.id
-    ${whereClause}
+    INNER JOIN (
+      SELECT expenseId, COUNT(*) as numParcelas
+      FROM expenseInstallments
+      GROUP BY expenseId
+    ) pc ON pc.expenseId = e.id
+    ${baseWhere}${dateFilter}
     GROUP BY year, month
     ORDER BY year DESC, month DESC
   `));
@@ -5765,6 +5819,7 @@ export async function getExpenseAnalysisByMonth(companyId: number | undefined,
 /**
  * Busca análise de despesas por categoria e mês (matriz)
  * Para comparativo mensal por categoria
+ * Regra híbrida: parceladas (>1 parcela) agrupam por mês do dueDate, pagamento único por competenceMonth
  */
 export async function getExpenseAnalysisByCategoryAndMonth(companyId: number | undefined,
   startDate?: string,
@@ -5775,26 +5830,54 @@ export async function getExpenseAnalysisByCategoryAndMonth(companyId: number | u
   const db = await getDb();
   if (!db) return [];
 
-  // Nova regra: agrupa por mês de vencimento da parcela e categoria
-  let whereClause = `WHERE e.status != 'CANCELADA'`;
-  if (companyId) whereClause += ` AND e.companyId = ${companyId}`;
-  if (startDate) whereClause += ` AND DATE(CONVERT_TZ(ei.dueDate, '+00:00', '-03:00')) >= '${startDate}'`;
-  if (endDate) whereClause += ` AND DATE(CONVERT_TZ(ei.dueDate, '+00:00', '-03:00')) <= '${endDate}'`;
-  if (categoryId) whereClause += ` AND e.categoryId = ${categoryId}`;
-  if (supplierId) whereClause += ` AND e.supplierId = ${supplierId}`;
+  let baseWhere = `WHERE e.status != 'CANCELADA'`;
+  if (companyId) baseWhere += ` AND e.companyId = ${companyId}`;
+  if (categoryId) baseWhere += ` AND e.categoryId = ${categoryId}`;
+  if (supplierId) baseWhere += ` AND e.supplierId = ${supplierId}`;
+
+  const startCompetence = startDate ? startDate.substring(0, 7) : null;
+  const endCompetence = endDate ? endDate.substring(0, 7) : null;
+
+  let dateFilter = '';
+  if (startDate || endDate) {
+    const parceladaFilter = [];
+    if (startDate) parceladaFilter.push(`DATE(CONVERT_TZ(ei.dueDate, '+00:00', '-03:00')) >= '${startDate}'`);
+    if (endDate) parceladaFilter.push(`DATE(CONVERT_TZ(ei.dueDate, '+00:00', '-03:00')) <= '${endDate}'`);
+    
+    const unicaFilter = [];
+    if (startCompetence) unicaFilter.push(`e.competenceMonth >= '${startCompetence}'`);
+    if (endCompetence) unicaFilter.push(`e.competenceMonth <= '${endCompetence}'`);
+
+    dateFilter = ` AND (
+      (pc.numParcelas > 1 AND ${parceladaFilter.join(' AND ')})
+      OR
+      (pc.numParcelas = 1 AND ${unicaFilter.join(' AND ')})
+    )`;
+  }
 
   const result = await db.execute(sql.raw(`
     SELECT 
       ec.id as categoryId,
       ec.name as categoryName,
-      YEAR(CONVERT_TZ(ei.dueDate, '+00:00', '-03:00')) as year,
-      MONTH(CONVERT_TZ(ei.dueDate, '+00:00', '-03:00')) as month,
+      CASE WHEN pc.numParcelas > 1 
+        THEN YEAR(CONVERT_TZ(ei.dueDate, '+00:00', '-03:00'))
+        ELSE CAST(SUBSTRING(e.competenceMonth, 1, 4) AS UNSIGNED)
+      END as year,
+      CASE WHEN pc.numParcelas > 1 
+        THEN MONTH(CONVERT_TZ(ei.dueDate, '+00:00', '-03:00'))
+        ELSE CAST(SUBSTRING(e.competenceMonth, 6, 2) AS UNSIGNED)
+      END as month,
       COUNT(DISTINCT e.id) as totalLancamentos,
       COALESCE(SUM(ei.amount), 0) as totalAmount
     FROM expenses e
     INNER JOIN expenseCategories ec ON e.categoryId = ec.id
     INNER JOIN expenseInstallments ei ON ei.expenseId = e.id
-    ${whereClause}
+    INNER JOIN (
+      SELECT expenseId, COUNT(*) as numParcelas
+      FROM expenseInstallments
+      GROUP BY expenseId
+    ) pc ON pc.expenseId = e.id
+    ${baseWhere}${dateFilter}
     GROUP BY ec.id, ec.name, year, month
     ORDER BY ec.name, year DESC, month DESC
   `));
@@ -5813,6 +5896,7 @@ export async function getExpenseAnalysisByCategoryAndMonth(companyId: number | u
 /**
  * Busca detalhamento de despesas (lançamentos individuais)
  * Com informações de fornecedor e observação
+ * Regra híbrida: parceladas (>1 parcela) filtram por dueDate, pagamento único por competenceMonth
  */
 export async function getExpenseAnalysisDetail(companyId: number | undefined,
   startDate?: string,
@@ -5824,41 +5908,60 @@ export async function getExpenseAnalysisDetail(companyId: number | undefined,
   const db = await getDb();
   if (!db) return [];
 
-  let whereClause = `WHERE e.status != 'CANCELADA'`;
-  if (companyId) whereClause += ` AND e.companyId = ${companyId}`;
-  
-  if (startDate) {
-    whereClause += ` AND DATE(CONVERT_TZ(e.createdAt, '+00:00', '-03:00')) >= '${startDate}'`;
-  }
-  if (endDate) {
-    whereClause += ` AND DATE(CONVERT_TZ(e.createdAt, '+00:00', '-03:00')) <= '${endDate}'`;
-  }
-  if (categoryId) {
-    whereClause += ` AND e.categoryId = ${categoryId}`;
-  }
-  if (supplierId) {
-    whereClause += ` AND e.supplierId = ${supplierId}`;
+  let baseWhere = `WHERE e.status != 'CANCELADA'`;
+  if (companyId) baseWhere += ` AND e.companyId = ${companyId}`;
+  if (categoryId) baseWhere += ` AND e.categoryId = ${categoryId}`;
+  if (supplierId) baseWhere += ` AND e.supplierId = ${supplierId}`;
+
+  const startCompetence = startDate ? startDate.substring(0, 7) : null;
+  const endCompetence = endDate ? endDate.substring(0, 7) : null;
+
+  let dateFilter = '';
+  if (startDate || endDate) {
+    const parceladaFilter = [];
+    if (startDate) parceladaFilter.push(`DATE(CONVERT_TZ(ei.dueDate, '+00:00', '-03:00')) >= '${startDate}'`);
+    if (endDate) parceladaFilter.push(`DATE(CONVERT_TZ(ei.dueDate, '+00:00', '-03:00')) <= '${endDate}'`);
+    
+    const unicaFilter = [];
+    if (startCompetence) unicaFilter.push(`e.competenceMonth >= '${startCompetence}'`);
+    if (endCompetence) unicaFilter.push(`e.competenceMonth <= '${endCompetence}'`);
+
+    dateFilter = ` AND (
+      (pc.numParcelas > 1 AND ${parceladaFilter.join(' AND ')})
+      OR
+      (pc.numParcelas = 1 AND ${unicaFilter.join(' AND ')})
+    )`;
   }
 
   const result = await db.execute(sql.raw(`
     SELECT 
       e.id,
       e.description,
-      e.amount,
+      CASE WHEN pc.numParcelas > 1 THEN ei.amount ELSE e.amount END as amount,
       e.notes,
       e.docType,
       e.docNumber,
       e.paymentMethod,
       e.status,
       e.createdAt,
+      e.competenceMonth,
+      ei.dueDate,
+      ei.installmentNumber,
+      pc.numParcelas,
       ec.id as categoryId,
       ec.name as categoryName,
       p.id as supplierId,
       COALESCE(p.tradeName, p.name) as supplierName
     FROM expenses e
     INNER JOIN expenseCategories ec ON e.categoryId = ec.id
+    INNER JOIN expenseInstallments ei ON ei.expenseId = e.id
+    INNER JOIN (
+      SELECT expenseId, COUNT(*) as numParcelas
+      FROM expenseInstallments
+      GROUP BY expenseId
+    ) pc ON pc.expenseId = e.id
     LEFT JOIN partners p ON e.supplierId = p.id
-    ${whereClause}
+    ${baseWhere}${dateFilter}
     ORDER BY e.createdAt DESC
     LIMIT ${limit}
   `));
@@ -5874,6 +5977,10 @@ export async function getExpenseAnalysisDetail(companyId: number | undefined,
     paymentMethod: row.paymentMethod,
     status: row.status,
     createdAt: row.createdAt,
+    competenceMonth: row.competenceMonth,
+    dueDate: row.dueDate,
+    installmentNumber: row.installmentNumber,
+    numParcelas: parseInt(row.numParcelas || '1', 10),
     categoryId: row.categoryId,
     categoryName: row.categoryName,
     supplierId: row.supplierId,
@@ -5883,6 +5990,7 @@ export async function getExpenseAnalysisDetail(companyId: number | undefined,
 
 /**
  * Busca resumo geral de despesas
+ * Regra híbrida: parceladas (>1 parcela) filtram por dueDate, pagamento único por competenceMonth
  */
 export async function getExpenseAnalysisSummary(companyId: number | undefined,
   startDate?: string,
@@ -5893,13 +6001,30 @@ export async function getExpenseAnalysisSummary(companyId: number | undefined,
   const db = await getDb();
   if (!db) return { totalAmount: 0, totalLancamentos: 0, avgPerLancamento: 0 };
 
-  // Nova regra: soma parcelas pelo mês de vencimento
-  let whereClause = `WHERE e.status != 'CANCELADA'`;
-  if (companyId) whereClause += ` AND e.companyId = ${companyId}`;
-  if (startDate) whereClause += ` AND DATE(CONVERT_TZ(ei.dueDate, '+00:00', '-03:00')) >= '${startDate}'`;
-  if (endDate) whereClause += ` AND DATE(CONVERT_TZ(ei.dueDate, '+00:00', '-03:00')) <= '${endDate}'`;
-  if (categoryId) whereClause += ` AND e.categoryId = ${categoryId}`;
-  if (supplierId) whereClause += ` AND e.supplierId = ${supplierId}`;
+  let baseWhere = `WHERE e.status != 'CANCELADA'`;
+  if (companyId) baseWhere += ` AND e.companyId = ${companyId}`;
+  if (categoryId) baseWhere += ` AND e.categoryId = ${categoryId}`;
+  if (supplierId) baseWhere += ` AND e.supplierId = ${supplierId}`;
+
+  const startCompetence = startDate ? startDate.substring(0, 7) : null;
+  const endCompetence = endDate ? endDate.substring(0, 7) : null;
+
+  let dateFilter = '';
+  if (startDate || endDate) {
+    const parceladaFilter = [];
+    if (startDate) parceladaFilter.push(`DATE(CONVERT_TZ(ei.dueDate, '+00:00', '-03:00')) >= '${startDate}'`);
+    if (endDate) parceladaFilter.push(`DATE(CONVERT_TZ(ei.dueDate, '+00:00', '-03:00')) <= '${endDate}'`);
+    
+    const unicaFilter = [];
+    if (startCompetence) unicaFilter.push(`e.competenceMonth >= '${startCompetence}'`);
+    if (endCompetence) unicaFilter.push(`e.competenceMonth <= '${endCompetence}'`);
+
+    dateFilter = ` AND (
+      (pc.numParcelas > 1 AND ${parceladaFilter.join(' AND ')})
+      OR
+      (pc.numParcelas = 1 AND ${unicaFilter.join(' AND ')})
+    )`;
+  }
 
   const result = await db.execute(sql.raw(`
     SELECT 
@@ -5907,7 +6032,12 @@ export async function getExpenseAnalysisSummary(companyId: number | undefined,
       COALESCE(SUM(ei.amount), 0) as totalAmount
     FROM expenses e
     INNER JOIN expenseInstallments ei ON ei.expenseId = e.id
-    ${whereClause}
+    INNER JOIN (
+      SELECT expenseId, COUNT(*) as numParcelas
+      FROM expenseInstallments
+      GROUP BY expenseId
+    ) pc ON pc.expenseId = e.id
+    ${baseWhere}${dateFilter}
   `));
 
   const rows = result[0] as unknown as any[];
@@ -5928,6 +6058,7 @@ export async function getExpenseAnalysisSummary(companyId: number | undefined,
 /**
  * Busca dados hierárquicos de despesas para matriz expansível
  * Retorna: Categoria > Fornecedor > Lançamento com valores por mês
+ * Regra híbrida: parceladas (>1 parcela) filtram/agrupam por dueDate, pagamento único por competenceMonth
  */
 export async function getExpenseHierarchicalData(companyId: number | undefined,
   startDate?: string,
@@ -5936,11 +6067,28 @@ export async function getExpenseHierarchicalData(companyId: number | undefined,
   const db = await getDb();
   if (!db) return [];
 
-  // Nova regra: filtro e agrupamento por mês de vencimento da parcela (ei.dueDate)
-  let whereClause = `WHERE e.status != 'CANCELADA'`;
-  if (companyId) whereClause += ` AND e.companyId = ${companyId}`;
-  if (startDate) whereClause += ` AND DATE(CONVERT_TZ(ei.dueDate, '+00:00', '-03:00')) >= '${startDate}'`;
-  if (endDate) whereClause += ` AND DATE(CONVERT_TZ(ei.dueDate, '+00:00', '-03:00')) <= '${endDate}'`;
+  let baseWhere = `WHERE e.status != 'CANCELADA'`;
+  if (companyId) baseWhere += ` AND e.companyId = ${companyId}`;
+
+  const startCompetence = startDate ? startDate.substring(0, 7) : null;
+  const endCompetence = endDate ? endDate.substring(0, 7) : null;
+
+  let dateFilter = '';
+  if (startDate || endDate) {
+    const parceladaFilter = [];
+    if (startDate) parceladaFilter.push(`DATE(CONVERT_TZ(ei.dueDate, '+00:00', '-03:00')) >= '${startDate}'`);
+    if (endDate) parceladaFilter.push(`DATE(CONVERT_TZ(ei.dueDate, '+00:00', '-03:00')) <= '${endDate}'`);
+    
+    const unicaFilter = [];
+    if (startCompetence) unicaFilter.push(`e.competenceMonth >= '${startCompetence}'`);
+    if (endCompetence) unicaFilter.push(`e.competenceMonth <= '${endCompetence}'`);
+
+    dateFilter = ` AND (
+      (pc.numParcelas > 1 AND ${parceladaFilter.join(' AND ')})
+      OR
+      (pc.numParcelas = 1 AND ${unicaFilter.join(' AND ')})
+    )`;
+  }
 
   const result = await db.execute(sql.raw(`
     SELECT 
@@ -5948,11 +6096,19 @@ export async function getExpenseHierarchicalData(companyId: number | undefined,
       e.description,
       ei.amount,
       ei.installmentNumber,
+      pc.numParcelas,
       e.notes,
       e.docNumber,
+      e.competenceMonth,
       DATE(CONVERT_TZ(ei.dueDate, '+00:00', '-03:00')) as expenseDate,
-      YEAR(CONVERT_TZ(ei.dueDate, '+00:00', '-03:00')) as year,
-      MONTH(CONVERT_TZ(ei.dueDate, '+00:00', '-03:00')) as month,
+      CASE WHEN pc.numParcelas > 1 
+        THEN YEAR(CONVERT_TZ(ei.dueDate, '+00:00', '-03:00'))
+        ELSE CAST(SUBSTRING(e.competenceMonth, 1, 4) AS UNSIGNED)
+      END as year,
+      CASE WHEN pc.numParcelas > 1 
+        THEN MONTH(CONVERT_TZ(ei.dueDate, '+00:00', '-03:00'))
+        ELSE CAST(SUBSTRING(e.competenceMonth, 6, 2) AS UNSIGNED)
+      END as month,
       COALESCE(ma.id, ec.id) as categoryId,
       COALESCE(ma.name, ec.name, 'N/A') as categoryName,
       COALESCE(p.id, 0) as supplierId,
@@ -5963,11 +6119,16 @@ export async function getExpenseHierarchicalData(companyId: number | undefined,
       ma.classification as classification
     FROM expenses e
     INNER JOIN expenseInstallments ei ON ei.expenseId = e.id
+    INNER JOIN (
+      SELECT expenseId, COUNT(*) as numParcelas
+      FROM expenseInstallments
+      GROUP BY expenseId
+    ) pc ON pc.expenseId = e.id
     LEFT JOIN expenseCategories ec ON e.categoryId = ec.id
     LEFT JOIN managementAccounts ma ON e.managementAccountId = ma.id
     LEFT JOIN accountingMappings am ON ma.id = am.managementAccountId
     LEFT JOIN partners p ON e.supplierId = p.id
-    ${whereClause}
+    ${baseWhere}${dateFilter}
     ORDER BY COALESCE(ma.name, ec.name), p.tradeName, ei.dueDate
   `));
 
@@ -5977,8 +6138,10 @@ export async function getExpenseHierarchicalData(companyId: number | undefined,
     description: row.description,
     amount: parseFloat(row.amount || '0'),
     installmentNumber: row.installmentNumber,
+    numParcelas: parseInt(row.numParcelas || '1', 10),
     notes: row.notes,
     docNumber: row.docNumber,
+    competenceMonth: row.competenceMonth,
     expenseDate: row.expenseDate,
     year: parseInt(row.year, 10),
     month: parseInt(row.month, 10),
@@ -6374,8 +6537,8 @@ export async function getMonthlyClosing(year: number, month: number, companyId?:
     totalPurchases.amount += data.amount;
   }
 
-  // 3. DESPESAS - Total por categoria (regra: por competenceMonth da despesa, que é o mês de competência fiscal)
-  // Nota: dueDate é usado na Análise de Despesas (fluxo de caixa), mas no Fechamento usamos competenceMonth
+  // 3. DESPESAS - Total por categoria
+  // Regra híbrida: parceladas (>1 parcela) usam dueDate, pagamento único usa competenceMonth
   const competenceMonthStr = `${year}-${String(month).padStart(2, '0')}`;
   const expensesResult = await db.execute(sql.raw(`
     SELECT 
@@ -6388,8 +6551,17 @@ export async function getMonthlyClosing(year: number, month: number, companyId?:
     LEFT JOIN expenseCategories ec ON e.categoryId = ec.id
     LEFT JOIN managementAccounts ma ON e.managementAccountId = ma.id
     INNER JOIN expenseInstallments ei ON ei.expenseId = e.id
+    INNER JOIN (
+      SELECT expenseId, COUNT(*) as numParcelas
+      FROM expenseInstallments
+      GROUP BY expenseId
+    ) pc ON pc.expenseId = e.id
     WHERE e.status != 'CANCELADA'
-      AND e.competenceMonth = '${competenceMonthStr}'
+      AND (
+        (pc.numParcelas > 1 AND DATE(CONVERT_TZ(ei.dueDate, '+00:00', '-03:00')) >= '${startDate}' AND DATE(CONVERT_TZ(ei.dueDate, '+00:00', '-03:00')) <= '${endDate}')
+        OR
+        (pc.numParcelas = 1 AND e.competenceMonth = '${competenceMonthStr}')
+      )
       ${companyId ? `AND e.companyId = ${companyId}` : ''}
     GROUP BY ma.id, ma.name, ma.classification, ec.id, ec.name
     ORDER BY totalAmount DESC
@@ -6500,7 +6672,8 @@ export async function getMonthlyClosing(year: number, month: number, companyId?:
 
   const receitaLiquida = receitaBrutaTotal - deducoesTotal;
 
-  // 7. DESPESAS POR CONTA GERENCIAL (usa competenceMonth e inclui despesas sem conta gerencial)
+  // 7. DESPESAS POR CONTA GERENCIAL
+  // Regra híbrida: parceladas (>1 parcela) usam dueDate, pagamento único usa competenceMonth
   const expensesByAccountResult = await db.execute(sql.raw(`
     SELECT 
       COALESCE(ma.id, 0) as accountId,
@@ -6512,10 +6685,19 @@ export async function getMonthlyClosing(year: number, month: number, companyId?:
       COUNT(DISTINCT e.id) as count
     FROM expenses e
     INNER JOIN expenseInstallments ei ON ei.expenseId = e.id
+    INNER JOIN (
+      SELECT expenseId, COUNT(*) as numParcelas
+      FROM expenseInstallments
+      GROUP BY expenseId
+    ) pc ON pc.expenseId = e.id
     LEFT JOIN managementAccounts ma ON e.managementAccountId = ma.id
     LEFT JOIN expenseCategories ec ON e.categoryId = ec.id
     WHERE e.status != 'CANCELADA'
-      AND e.competenceMonth = '${competenceMonthStr}'
+      AND (
+        (pc.numParcelas > 1 AND DATE(CONVERT_TZ(ei.dueDate, '+00:00', '-03:00')) >= '${startDate}' AND DATE(CONVERT_TZ(ei.dueDate, '+00:00', '-03:00')) <= '${endDate}')
+        OR
+        (pc.numParcelas = 1 AND e.competenceMonth = '${competenceMonthStr}')
+      )
       ${companyId ? `AND e.companyId = ${companyId}` : ''}
     GROUP BY COALESCE(ma.id, 0), COALESCE(ma.code, 'SEM'), COALESCE(ma.name, ec.name, 'Sem Classificação'), COALESCE(ma.nature, 'DESPESA'), COALESCE(ma.classification, 'OPERACIONAL')
     ORDER BY total DESC

@@ -175,16 +175,7 @@ export default function FechamentoMensalNovo() {
                 ))}
               </SelectContent>
             </Select>
-            {/* Badge de status do snapshot (automático) */}
-            {snapshotInfo?.hasSnapshot ? (
-              <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium bg-green-100 text-green-700 border border-green-200">
-                <Lock className="h-3.5 w-3.5" /> Estoque Congelado
-              </span>
-            ) : (
-              <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700 border border-amber-200">
-                <Unlock className="h-3.5 w-3.5" /> Estoque em Tempo Real
-              </span>
-            )}
+
             <Button variant="outline" onClick={handlePrint}>
               <Printer className="h-4 w-4 mr-2" />
               Imprimir
@@ -660,15 +651,7 @@ export default function FechamentoMensalNovo() {
                     <Package className="h-5 w-5 text-primary" />
                     Estoque por Categoria + Giro
                   </CardTitle>
-                  {snapshotInfo?.hasSnapshot ? (
-                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700 border border-green-200">
-                      <Lock className="h-3 w-3" /> Estoque Congelado
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-700 border border-amber-200">
-                      <Unlock className="h-3 w-3" /> Estoque em Tempo Real
-                    </span>
-                  )}
+
                 </div>
               </CardHeader>
               <CardContent>
@@ -829,55 +812,25 @@ export default function FechamentoMensalNovo() {
             {/* 7. OUTRAS RECEITAS */}
             {(data as any).otherRevenues && ((data as any).otherRevenues.total > 0 || (data as any).otherRevenues.items?.length > 0) && (
               <Card className="border-t-4 border-t-emerald-500">
-                <CardHeader>
+                <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-lg flex items-center gap-2">
                       <PlusCircle className="h-5 w-5 text-emerald-600" />
                       Outras Receitas
                     </CardTitle>
-                    <div className="text-right">
-                      <div className="text-2xl font-bold text-emerald-600">
-                        {formatCurrency((data as any).otherRevenues.total)}
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        {(data as any).otherRevenues.items?.length || 0} lançamento(s)
-                      </div>
+                    <div className="text-2xl font-bold text-emerald-600">
+                      {formatCurrency((data as any).otherRevenues.total)}
                     </div>
                   </div>
                 </CardHeader>
-                <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Descrição</TableHead>
-                        <TableHead>Parceiro</TableHead>
-                        <TableHead>Conta</TableHead>
-                        <TableHead className="text-right">Valor</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {(data as any).otherRevenues.items?.map((item: any) => (
-                        <TableRow key={item.id}>
-                          <TableCell className="font-medium">{item.description}</TableCell>
-                          <TableCell className="text-sm text-muted-foreground">{item.partnerName}</TableCell>
-                          <TableCell className="text-sm text-muted-foreground">{item.accountName || '—'}</TableCell>
-                          <TableCell className="text-right font-mono text-emerald-600 font-semibold">
-                            {formatCurrency(item.amount)}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                    {(data as any).otherRevenues.items?.length > 1 && (
-                      <TableFooter>
-                        <TableRow className="font-bold">
-                          <TableCell colSpan={3}>Total</TableCell>
-                          <TableCell className="text-right font-mono text-emerald-600">
-                            {formatCurrency((data as any).otherRevenues.total)}
-                          </TableCell>
-                        </TableRow>
-                      </TableFooter>
-                    )}
-                  </Table>
+                <CardContent className="pt-0">
+                  <div className="space-y-1">
+                    {(data as any).otherRevenues.items?.map((item: any) => (
+                      <p key={item.id} className="text-sm text-muted-foreground">
+                        {item.description}{item.partnerName ? ` — ${item.partnerName}` : ''}
+                      </p>
+                    ))}
+                  </div>
                 </CardContent>
               </Card>
             )}
