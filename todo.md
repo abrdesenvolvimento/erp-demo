@@ -1610,3 +1610,12 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 ### Correções do dia
 - [x] Compra duplicada #3960002 (Comercial Bolsão R$237,63) — já resolvida anteriormente
 - [x] Desconsiderar total de compras no período (já tem no Fechamento)
+
+### Correção Banco/Conta no Pagamento (03/03/2026) ✅
+- [x] Dropdown Banco/Conta já existia no ContasPagar.tsx (verificado no código)
+- [x] Regra inteligente: Dinheiro → Caixa Geral automático (campo desabilitado, visual limpo)
+- [x] Regra inteligente: PIX/Transferência/Cartão → Dropdown com contas bancárias (sem Caixa Geral)
+- [x] Aplicar regra em ContasPagar.tsx
+- [x] Aplicar regra em ContasReceber.tsx
+- [x] Aplicar regra em ContasReceberNovo.tsx
+- [x] 10 testes vitest passando (bank-smart-rule.test.ts)

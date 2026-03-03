@@ -413,7 +413,14 @@ export default function ContasReceberNovo() {
                   <Label>Forma de Pagamento</Label>
                   <Select
                     value={paymentForm.paymentMethod}
-                    onValueChange={(value) => setPaymentForm({ ...paymentForm, paymentMethod: value })}
+                    onValueChange={(value) => {
+                      const caixaGeral = bankAccounts?.find(a => a.name.toLowerCase().includes('caixa'));
+                      if (value === 'DINHEIRO' && caixaGeral) {
+                        setPaymentForm({ ...paymentForm, paymentMethod: value, bankAccountId: caixaGeral.id });
+                      } else {
+                        setPaymentForm({ ...paymentForm, paymentMethod: value, bankAccountId: undefined });
+                      }
+                    }}
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -427,24 +434,31 @@ export default function ContasReceberNovo() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div>
-                  <Label>Banco/Conta</Label>
-                  <Select
-                    value={paymentForm.bankAccountId?.toString() || ""}
-                    onValueChange={(value) => setPaymentForm({ ...paymentForm, bankAccountId: value ? parseInt(value) : undefined })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione a conta..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {bankAccounts?.map((account) => (
-                        <SelectItem key={account.id} value={account.id.toString()}>
-                          {account.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                {paymentForm.paymentMethod !== 'DINHEIRO' ? (
+                  <div>
+                    <Label>Banco/Conta *</Label>
+                    <Select
+                      value={paymentForm.bankAccountId?.toString() || ""}
+                      onValueChange={(value) => setPaymentForm({ ...paymentForm, bankAccountId: value ? parseInt(value) : undefined })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione a conta..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {bankAccounts?.filter(a => !a.name.toLowerCase().includes('caixa')).map((account) => (
+                          <SelectItem key={account.id} value={account.id.toString()}>
+                            {account.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                ) : (
+                  <div>
+                    <Label>Banco/Conta</Label>
+                    <Input value="Caixa Geral" disabled className="bg-muted" />
+                  </div>
+                )}
               </div>
               <div>
                 <Label>Observações (opcional)</Label>
