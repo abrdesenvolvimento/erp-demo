@@ -16,6 +16,7 @@ import { getTodayInBrazil, getNowInBrazil, formatDateBR, formatDateTimeBR } from
 import { getTodayBR } from "@/lib/dateUtils";
 import { toast } from "sonner";
 import { usePermissions } from "@/hooks/usePermissions";
+import { useCompany } from "@/contexts/CompanyContext";
 
 const formatCurrency = (value: number) => {
   return new Intl.NumberFormat('pt-BR', {
@@ -26,6 +27,13 @@ const formatCurrency = (value: number) => {
 
 export default function ContasReceberNovo() {
   const permissions = usePermissions();
+  const { activeCompanyId } = useCompany();
+
+  // Query de contas bancárias
+  const { data: bankAccounts } = trpc.accounting.bankAccounts.useQuery(
+    { companyId: activeCompanyId || 1 },
+    { enabled: !!activeCompanyId }
+  );
   const [selectedCustomerId, setSelectedCustomerId] = useState<number | null>(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showDebitModal, setShowDebitModal] = useState(false);
@@ -125,6 +133,7 @@ export default function ContasReceberNovo() {
     paidDate: getTodayBR(),
     paidAmount: "",
     paymentMethod: "DINHEIRO",
+    bankAccountId: undefined as number | undefined,
     notes: ""
   });
 
@@ -133,6 +142,7 @@ export default function ContasReceberNovo() {
       paidDate: getTodayBR(),
       paidAmount: "",
       paymentMethod: "DINHEIRO",
+      bankAccountId: undefined,
       notes: ""
     });
   };
@@ -174,6 +184,7 @@ export default function ContasReceberNovo() {
       paidDate: isToday ? getNowInBrazil() : new Date(paymentForm.paidDate + "T12:00:00"),
       paidAmount: paymentForm.paidAmount,
       paymentMethod: paymentForm.paymentMethod,
+      bankAccountId: paymentForm.bankAccountId,
       notes: paymentForm.notes || undefined
     });
   };
@@ -397,23 +408,43 @@ export default function ContasReceberNovo() {
                   onChange={(e) => setPaymentForm({ ...paymentForm, paidAmount: e.target.value })}
                 />
               </div>
-              <div>
-                <Label>Forma de Pagamento</Label>
-                <Select
-                  value={paymentForm.paymentMethod}
-                  onValueChange={(value) => setPaymentForm({ ...paymentForm, paymentMethod: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="DINHEIRO">Dinheiro</SelectItem>
-                    <SelectItem value="PIX">PIX</SelectItem>
-                    <SelectItem value="CARTAO_DEBITO">Cartão de Débito</SelectItem>
-                    <SelectItem value="CARTAO_CREDITO">Cartão de Crédito</SelectItem>
-                    <SelectItem value="TRANSFERENCIA">Transferência</SelectItem>
-                  </SelectContent>
-                </Select>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Forma de Pagamento</Label>
+                  <Select
+                    value={paymentForm.paymentMethod}
+                    onValueChange={(value) => setPaymentForm({ ...paymentForm, paymentMethod: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="DINHEIRO">Dinheiro</SelectItem>
+                      <SelectItem value="PIX">PIX</SelectItem>
+                      <SelectItem value="CARTAO_DEBITO">Cartão de Débito</SelectItem>
+                      <SelectItem value="CARTAO_CREDITO">Cartão de Crédito</SelectItem>
+                      <SelectItem value="TRANSFERENCIA">Transferência</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Banco/Conta</Label>
+                  <Select
+                    value={paymentForm.bankAccountId?.toString() || ""}
+                    onValueChange={(value) => setPaymentForm({ ...paymentForm, bankAccountId: value ? parseInt(value) : undefined })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione a conta..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {bankAccounts?.map((account) => (
+                        <SelectItem key={account.id} value={account.id.toString()}>
+                          {account.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
               <div>
                 <Label>Observações (opcional)</Label>

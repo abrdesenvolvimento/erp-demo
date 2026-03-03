@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { trpc } from "@/lib/trpc";
-import { Plus, Search, Check, ChevronLeft, Trash2, X } from "lucide-react";
+import { Plus, Search, Check, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -83,15 +83,24 @@ export default function Despesas() {
   const [managementAccountOpen, setManagementAccountOpen] = useState(false);
   const [managementAccountSearch, setManagementAccountSearch] = useState("");
 
+  // Paginação
+  const [currentPage, setCurrentPage] = useState(1);
+  const PAGE_SIZE = 30;
+
   // Queries
-  const { data: expenses = [], refetch } = trpc.expenses.list.useQuery({
+  const { data: expensesResult, refetch } = trpc.expenses.list.useQuery({
     startDate: filterStartDate ? new Date(filterStartDate + 'T12:00:00-03:00') : undefined,
     endDate: filterEndDate ? new Date(filterEndDate + 'T23:59:59-03:00') : undefined,
     supplierId: filterSupplierId,
     docNumber: filterDocNumber || undefined,
     minValue: filterMinValue ? parseFloat(filterMinValue) : undefined,
     maxValue: filterMaxValue ? parseFloat(filterMaxValue) : undefined,
+    page: currentPage,
+    limit: PAGE_SIZE,
   });
+  const expenses = expensesResult?.data || [];
+  const totalExpenses = expensesResult?.total || 0;
+  const totalPages = expensesResult?.totalPages || 0;
   const { data: suppliers = [] } = trpc.partners.list.useQuery({ partnerType: "SUPPLIER" });
   const { data: categories = [] } = trpc.expenses.categories.list.useQuery({ activeOnly: true });
   const { data: managementAccounts = [] } = trpc.managementAccounts.forSelect.useQuery();
@@ -102,6 +111,11 @@ export default function Despesas() {
   );
   
   // Mutations
+  // Resetar página ao mudar filtros
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filterStartDate, filterEndDate, filterSupplierId, filterDocNumber, filterMinValue, filterMaxValue, filterManagementAccountId]);
+
   const createMutation = trpc.expenses.create.useMutation({
     onSuccess: () => {
       toast.success("Despesa registrada com sucesso!");
@@ -942,7 +956,7 @@ export default function Despesas() {
         {/* Cards de Resumo - Acima do título */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <div className="bg-card border rounded-lg p-4">
-            <div className="text-sm text-muted-foreground">Total Ativo</div>
+            <div className="text-sm text-muted-foreground">Total Ativo (página)</div>
             <div className="text-2xl font-bold text-green-600">
               R$ {expenses
                 .filter(e => e.expense.status === 'ATIVA')
@@ -951,7 +965,7 @@ export default function Despesas() {
             </div>
           </div>
           <div className="bg-card border rounded-lg p-4">
-            <div className="text-sm text-muted-foreground">Total Cancelado</div>
+            <div className="text-sm text-muted-foreground">Total Cancelado (página)</div>
             <div className="text-2xl font-bold text-red-600">
               R$ {expenses
                 .filter(e => e.expense.status === 'CANCELADA')
@@ -962,8 +976,11 @@ export default function Despesas() {
           <div className="bg-card border rounded-lg p-4">
             <div className="text-sm text-muted-foreground">Despesas Encontradas</div>
             <div className="text-2xl font-bold">
-              {expenses.length}
+              {totalExpenses}
             </div>
+            {totalPages > 1 && (
+              <div className="text-xs text-muted-foreground mt-1">Página {currentPage} de {totalPages}</div>
+            )}
           </div>
         </div>
 
@@ -1168,20 +1185,8 @@ export default function Despesas() {
               <div className="space-y-4">
                 {expenses
                   .filter(item => {
-                    // Filtro de número de nota
-                    if (filterDocNumber && !item.expense.docNumber?.includes(filterDocNumber)) {
-                      return false;
-                    }
-                    // Filtro de conta gerencial
+                    // Filtro de conta gerencial (aplicado no frontend pois não está no backend)
                     if (filterManagementAccountId && item.expense.managementAccountId !== filterManagementAccountId) {
-                      return false;
-                    }
-                    // Filtro de valor mínimo
-                    if (filterMinValue && parseFloat(item.expense.amount) < parseFloat(filterMinValue)) {
-                      return false;
-                    }
-                    // Filtro de valor máximo
-                    if (filterMaxValue && parseFloat(item.expense.amount) > parseFloat(filterMaxValue)) {
                       return false;
                     }
                     return true;
@@ -1248,6 +1253,73 @@ export default function Despesas() {
                     </div>
                   </div>
                 ))}
+              </div>
+            )}
+
+            {/* Paginação */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between mt-6 pt-4 border-t">
+                <div className="text-sm text-muted-foreground">
+                  Mostrando {((currentPage - 1) * PAGE_SIZE) + 1} a {Math.min(currentPage * PAGE_SIZE, totalExpenses)} de {totalExpenses} despesas
+                </div>
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => setCurrentPage(1)}
+                    disabled={currentPage === 1}
+                  >
+                    <ChevronsLeft className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  
+                  {/* Números de página */}
+                  {(() => {
+                    const pages: number[] = [];
+                    const start = Math.max(1, currentPage - 2);
+                    const end = Math.min(totalPages, currentPage + 2);
+                    for (let i = start; i <= end; i++) pages.push(i);
+                    return pages.map(p => (
+                      <Button
+                        key={p}
+                        variant={p === currentPage ? "default" : "outline"}
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => setCurrentPage(p)}
+                      >
+                        {p}
+                      </Button>
+                    ));
+                  })()}
+                  
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => setCurrentPage(totalPages)}
+                    disabled={currentPage === totalPages}
+                  >
+                    <ChevronsRight className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             )}
           </div>

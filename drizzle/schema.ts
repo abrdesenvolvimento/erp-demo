@@ -402,6 +402,7 @@ export const purchaseInstallments = mysqlTable("purchaseInstallments", {
   paymentMethod: varchar("paymentMethod", { length: 50 }),
   interestAmount: decimal("interestAmount", { precision: 10, scale: 2 }),
   discountAmount: decimal("discountAmount", { precision: 10, scale: 2 }),
+  bankAccountId: int("bankAccountId"),
   notes: text("notes"),
   status: mysqlEnum("status", ["PENDING", "PAID", "OVERDUE", "CANCELLED"]).default("PENDING").notNull(),
   createdAt: timestamp("createdAt").defaultNow(),
@@ -486,6 +487,7 @@ export const expenseInstallments = mysqlTable("expenseInstallments", {
   paymentMethod: varchar("paymentMethod", { length: 50 }), // Mesmas formas de Compras
   interestAmount: decimal("interestAmount", { precision: 10, scale: 2 }),
   discountAmount: decimal("discountAmount", { precision: 10, scale: 2 }),
+  bankAccountId: int("bankAccountId"),
   status: mysqlEnum("status", ["PENDENTE", "PAGO", "VENCIDO", "CANCELADO"]).default("PENDENTE").notNull(),
   notes: text("notes"),
   createdAt: timestamp("createdAt").defaultNow(),
@@ -537,6 +539,7 @@ export const receivableInstallments = mysqlTable("receivableInstallments", {
   paidDate: timestamp("paidDate"),
   paidAmount: decimal("paidAmount", { precision: 10, scale: 2 }),
   paymentMethod: varchar("paymentMethod", { length: 50 }),
+  bankAccountId: int("bankAccountId"),
   status: mysqlEnum("status", ["PENDENTE", "PAGO", "VENCIDO", "PARCIAL"]).default("PENDENTE").notNull(),
   notes: text("notes"),
   createdAt: timestamp("createdAt").defaultNow(),
@@ -560,6 +563,7 @@ export const receivablePayments = mysqlTable("receivablePayments", {
   paidDate: timestamp("paidDate").notNull(), // Data do pagamento
   paidAmount: decimal("paidAmount", { precision: 10, scale: 2 }).notNull(), // Valor pago
   paymentMethod: varchar("paymentMethod", { length: 50 }).notNull(), // Forma de pagamento
+  bankAccountId: int("bankAccountId"),
   notes: text("notes"), // Observações
   createdAt: timestamp("createdAt").defaultNow(),
 }, (table) => ({
@@ -579,6 +583,7 @@ export const customerPayments = mysqlTable("customerPayments", {
   paidDate: timestamp("paidDate").notNull(), // Data do pagamento
   paidAmount: decimal("paidAmount", { precision: 10, scale: 2 }).notNull(), // Valor pago
   paymentMethod: varchar("paymentMethod", { length: 50 }).notNull(), // Forma de pagamento (Dinheiro, PIX, Cartão, etc)
+  bankAccountId: int("bankAccountId"),
   notes: text("notes"), // Observações
   createdBy: varchar("createdBy", { length: 64 }).notNull(), // Usuário que registrou
   companyId: int("companyId"), // Empresa (multiempresa)
@@ -733,7 +738,7 @@ export const chartOfAccounts = mysqlTable("chartOfAccounts", {
   createdAt: timestamp("createdAt").defaultNow(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow(),
 }, (table) => ({
-  codeIdx: uniqueIndex("chart_code_idx").on(table.code),
+  codeCompanyIdx: uniqueIndex("chart_code_company_idx").on(table.code, table.companyId),
   parentIdx: index("parent_idx").on(table.parentCode),
   typeIdx: index("type_idx").on(table.accountType),
   companyIdx: index("chart_company_idx").on(table.companyId),

@@ -7,6 +7,15 @@ import { router, publicProcedure, protectedProcedure } from "../_core/trpc";
 import * as accounting from "../accounting";
 
 export const accountingRouter = router({
+  // Contas Bancárias (para dropdown de pagamento)
+  bankAccounts: publicProcedure
+    .input(z.object({
+      companyId: z.number().optional().default(1)
+    }).optional())
+    .query(async ({ input }) => {
+      return accounting.getBankAccounts(input?.companyId || 1);
+    }),
+
   // Plano de Contas
   chartOfAccounts: router({
     list: publicProcedure
@@ -290,6 +299,8 @@ export const accountingRouter = router({
       endDate: z.string().optional(),
       partnerId: z.number().optional(),
       managementAccountId: z.number().optional(),
+      page: z.number().min(1).optional(),
+      limit: z.number().min(1).max(100).optional(),
     }).optional())
     .query(async ({ input, ctx }) => {
       return accounting.listOtherRevenues(
@@ -297,7 +308,9 @@ export const accountingRouter = router({
         ctx.activeCompanyId,
         input?.startDate,
         input?.endDate,
-        input?.partnerId
+        input?.partnerId,
+        input?.page,
+        input?.limit
       );
     }),
 

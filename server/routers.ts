@@ -1144,6 +1144,8 @@ export const appRouter = router({
         docNumber: z.string().optional(),
         minValue: z.number().optional(),
         maxValue: z.number().optional(),
+        page: z.number().min(1).optional(),
+        limit: z.number().min(1).max(100).optional(),
       }).optional())
       .query(async ({ input, ctx }) => {
         try {
@@ -1302,7 +1304,7 @@ export const appRouter = router({
         })).min(1),
         notes: z.string().optional(),
       }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ input, ctx }) => {
         // Se tiver managementAccountId, buscar o código contábil
         let accountingCode = input.accountingCode;
         if (input.managementAccountId && !accountingCode) {
@@ -1410,10 +1412,11 @@ export const appRouter = router({
             "TRANSFERENCIA",
             "BOLETO"
           ]),
+          bankAccountId: z.number().optional(),
           notes: z.string().optional(),
         }))
         .mutation(async ({ input }) => {
-          await db.payExpenseInstallment({ installmentId: input.id, paidDate: input.paymentDate, paidAmount: input.paymentAmount, paymentMethod: input.paymentMethod, notes: input.notes });
+          await db.payExpenseInstallment({ installmentId: input.id, paidDate: input.paymentDate, paidAmount: input.paymentAmount, paymentMethod: input.paymentMethod, bankAccountId: input.bankAccountId, notes: input.notes });
           return { success: true };
         }),
     }),
@@ -1466,6 +1469,7 @@ export const appRouter = router({
         paidDate: z.date(),
         paidAmount: z.string(),
         paymentMethod: z.string(),
+        bankAccountId: z.number().optional(),
         notes: z.string().optional(),
       }))
       .mutation(async ({ input, ctx }) => {
@@ -1765,6 +1769,7 @@ export const appRouter = router({
         paidDate: z.date(),
         paidAmount: z.string(),
         paymentMethod: z.string(),
+        bankAccountId: z.number().optional(),
         notes: z.string().optional(),
       }))
       .mutation(async ({ input, ctx }) => {
@@ -1781,6 +1786,7 @@ export const appRouter = router({
         paymentMethod: z.string(),
         interestAmount: z.string().optional(),
         discountAmount: z.string().optional(),
+        bankAccountId: z.number().optional(),
         notes: z.string().optional(),
       }))
       .mutation(async ({ input }) => {
@@ -1837,6 +1843,7 @@ export const appRouter = router({
         paidDate: z.date(),
         paidAmount: z.string(),
         paymentMethod: z.string(),
+        bankAccountId: z.number().optional(),
         notes: z.string().optional(),
       }))
       .mutation(async ({ input, ctx }) => {

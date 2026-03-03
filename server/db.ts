@@ -1855,9 +1855,14 @@ export async function getExpenses(filters?: { companyId?: number;
   docNumber?: string;
   minValue?: number;
   maxValue?: number;
+  page?: number;
+  limit?: number;
 }) {
   const db = await getDb();
-  if (!db) return [];
+  if (!db) return { data: [], total: 0, totalPages: 0, page: 1 };
+  
+  const page = filters?.page || 1;
+  const limit = filters?.limit || 30;
   
   let query = db.select({
     expense: expenses,
@@ -1916,12 +1921,12 @@ export async function getExpenses(filters?: { companyId?: number;
     results = await query.orderBy(desc(expenses.issueDate));
   } catch (error) {
     console.error('[getExpenses] Query error:', error);
-    return [];
+    return { data: [], total: 0, totalPages: 0, page };
   }
   
   // Filtro de valor (aplicado após query pois precisa calcular total)
   if (filters?.minValue !== undefined || filters?.maxValue !== undefined) {
-    return results.filter(r => {
+    results = results.filter(r => {
       const total = parseFloat(r.expense.amount || '0');
       if (filters.minValue !== undefined && total < filters.minValue) return false;
       if (filters.maxValue !== undefined && total > filters.maxValue) return false;
@@ -1929,7 +1934,13 @@ export async function getExpenses(filters?: { companyId?: number;
     });
   }
   
-  return results;
+  // Paginação
+  const total = results.length;
+  const totalPages = Math.ceil(total / limit);
+  const offset = (page - 1) * limit;
+  const paginatedData = results.slice(offset, offset + limit);
+  
+  return { data: paginatedData, total, totalPages, page };
 }
 
 export async function getExpenseById(id: number) {
@@ -2325,6 +2336,7 @@ export async function payPurchaseInstallment(data: {
   paymentMethod: string;
   interestAmount?: string;
   discountAmount?: string;
+  bankAccountId?: number;
   notes?: string;
 }) {
   const db = await getDb();
@@ -2354,6 +2366,7 @@ export async function payPurchaseInstallment(data: {
       paymentMethod: data.paymentMethod,
       interestAmount: interestAmount > 0 ? interestAmount.toFixed(2) : null,
       discountAmount: discountAmount > 0 ? discountAmount.toFixed(2) : null,
+      bankAccountId: data.bankAccountId || null,
       notes: data.notes || null,
       status: paidAmount >= installmentAmount ? "PAID" : "PENDING"
     })
@@ -2402,6 +2415,7 @@ export async function payExpenseInstallment(data: {
   paymentMethod: string;
   interestAmount?: string;
   discountAmount?: string;
+  bankAccountId?: number;
   notes?: string;
 }) {
   const db = await getDb();
@@ -2433,6 +2447,7 @@ export async function payExpenseInstallment(data: {
       paymentMethod: data.paymentMethod,
       interestAmount: interestAmount > 0 ? interestAmount.toFixed(2) : null,
       discountAmount: discountAmount > 0 ? discountAmount.toFixed(2) : null,
+      bankAccountId: data.bankAccountId || null,
       notes: data.notes,
       status: newPaidAmount >= installmentAmount ? "PAGO" : "PENDENTE"
     })
@@ -3052,6 +3067,7 @@ export async function registerCustomerPayment(data: {
   paidDate: Date;
   paidAmount: string;
   paymentMethod: string;
+  bankAccountId?: number;
   notes?: string;
   companyId?: number;
 }) {
@@ -3101,6 +3117,7 @@ export async function registerCustomerPayment(data: {
         paidDate: data.paidDate,
         paidAmount: paymentForThisInstallment.toFixed(2),
         paymentMethod: data.paymentMethod,
+        bankAccountId: data.bankAccountId || null,
         notes: data.notes,
         companyId: data.companyId,
       });
@@ -3111,6 +3128,7 @@ export async function registerCustomerPayment(data: {
           paidDate: data.paidDate,
           paidAmount: newPaidAmount.toFixed(2),
           paymentMethod: data.paymentMethod,
+          bankAccountId: data.bankAccountId || null,
           status: newPaidAmount >= installmentAmount ? "PAGO" : "PARCIAL"
         })
         .where(eq(receivableInstallments.id, installment.id!));
@@ -3162,6 +3180,7 @@ export async function registerCustomerPayment(data: {
           paidDate: data.paidDate,
           paidAmount: paymentForThisInstallment.toFixed(2),
           paymentMethod: data.paymentMethod,
+          bankAccountId: data.bankAccountId || null,
           notes: data.notes,
           companyId: data.companyId,
         });
@@ -3172,6 +3191,7 @@ export async function registerCustomerPayment(data: {
             paidDate: data.paidDate,
             paidAmount: newPaidAmount.toFixed(2),
             paymentMethod: data.paymentMethod,
+            bankAccountId: data.bankAccountId || null,
             status: newPaidAmount >= installmentAmount ? "PAGO" : "PARCIAL"
           })
           .where(eq(receivableInstallments.id, installment.id!));
@@ -4096,6 +4116,7 @@ export async function registerPaymentToBalance(data: {
   paidDate: Date;
   paidAmount: string;
   paymentMethod: string;
+  bankAccountId?: number;
   notes?: string;
   createdBy: string;
   companyId?: number;
@@ -4108,6 +4129,7 @@ export async function registerPaymentToBalance(data: {
     paidDate: data.paidDate,
     paidAmount: data.paidAmount,
     paymentMethod: data.paymentMethod,
+    bankAccountId: data.bankAccountId ?? null,
     notes: data.notes ?? null,
     createdBy: data.createdBy,
     companyId: data.companyId ?? null

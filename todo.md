@@ -35,8 +35,8 @@
 - [x] Migradas funções críticas de db.ts para usar dateUtils
 - [x] Migradas funções críticas de routers.ts para usar dateUtils
 - [x] Regra de ouro: "datas de negócio em SP via dateUtils; timestamps de sistema em UTC"
-- [ ] Fase 2: Migrar exibição (PDF/backup) - pendente
-- [ ] Fase 3: Manter timestamps técnicos em UTC - pendente
+- [x] Fase 2: Migrar exibição (PDF/backup) — concluído 25/02
+- [x] Fase 3: Manter timestamps técnicos em UTC — concluído 25/02
 
 ### BUG-05: Backup com Log ✅ (04/02/2026)
 - [x] Migrado de OAuth2 para Service Account
@@ -170,8 +170,8 @@ Automatizar importação de pedidos concluídos do iFood via arquivos JSON
 ### Correções Adicionais (05/02/2026)
 - [x] Coluna Pedido: usar campo codigo_do_pedido_no_ifood
 - [x] Modal Divergência de Valor: mostrar detalhes e opção de corrigir preço do canal
-- [ ] Garantir que pedidos cancelados NÃO aparecem na lista (remover completamente)
-- [ ] Campo Data: usar campo inicio_da_entrega em vez do campo atual
+- [x] Garantir que pedidos cancelados NÃO aparecem na lista (CANCELLED/DECLINED filtrados em ifoodImport.ts)
+- [x] Campo Data: usar campo inicio_da_entrega (ifoodImport.ts linha 370)
 - [x] Corrigir erro de insert no ifoodImportLogs (parâmetros incorretos)
 
 ### Correções Recomendadas por Orion (05/02/2026)
@@ -684,10 +684,10 @@ Despesa de impostos aparece tanto em janeiro quanto em fevereiro após edição 
 - [ ] Verificar se todas as despesas de janeiro foram processadas
 
 ### PROB-03: Compra duplicada #3960002
-- [ ] Excluir compra #3960002 (Comercial Bolsão - R$ 237,63)
-- [ ] Reverter lançamentos contábeis da compra
-- [ ] Reverter parcelas no Contas a Pagar
-- [ ] Implementar endpoint de exclusão de compras confirmadas
+- [x] Excluir compra #3960002 (Comercial Bolsão - R$ 237,63) — já resolvida
+- [x] Reverter lançamentos contábeis da compra
+- [x] Reverter parcelas no Contas a Pagar
+- [x] Implementar endpoint de exclusão de compras confirmadas
 
 ### PROB-04: Impossível cancelar despesa paga à vista
 - [ ] Despesa duplicada precisa ser excluída
@@ -1200,7 +1200,7 @@ Despesa de impostos aparece tanto em janeiro quanto em fevereiro após edição 
 
 - [ ] PROB-01: Receitas de vendas indo para "Outras Receitas Operacionais" (4.2) em vez de "Receita Operacional Bruta" (4.1) — corrigir mapeamento em accountSale
 - [ ] PROB-02: Aluguel aparecendo com valor incorreto (R$20.000,00) no DRE — investigar accountExpenseCreation
-- [ ] PROB-03: Compra duplicada #3960002 (Comercial Bolsão R$237,63) — excluir e reverter lançamentos
+- [x] PROB-03: Compra duplicada #3960002 (Comercial Bolsão R$237,63) — já resolvida
 - [ ] PROB-04: Impossível cancelar despesa paga à vista — implementar cancelamento com reversão contábil
 - [ ] PROB-05 a 10: Divergências de receita, CMV e despesas entre DRE e Análise de Vendas (valores documentados nas linhas 715–740 acima)
 - [x] BUG-09: Contabilização não reconhece despesa de Simples Nacional após alterar competenceMonth — corrigido com reprocessamento contábil automático (08/02)
@@ -1568,3 +1568,45 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Acesso por Empresa: Fases 3-5 (parcelas, contabilidade, testes) — concluído 25/02
 - [x] Pedidos cancelados iFood: não aparecer na lista (já implementado — CANCELLED/DECLINED filtrados em ifoodImport.ts)
 - [x] Campo Data iFood: usar inicio_da_entrega (já implementado — ifoodImport.ts linha 370)
+
+---
+
+## Sprint 03/03/2026 — Melhorias Operacionais (Lote 2)
+
+### 1. Paginação em Despesas e Outras Receitas ✅
+- [x] Backend: adicionar page/limit à query getExpenses (db.ts)
+- [x] Backend: adicionar page/limit à query listOtherRevenues (accounting.ts)
+- [x] Backend: retornar { data, total, totalPages, page }
+- [x] Router: adicionar page/limit ao input das procedures expenses.list e listOtherRevenues
+- [x] Frontend Despesas: controles de paginação (botões de página, indicador "Página X de N")
+- [x] Frontend Outras Receitas: controles de paginação (mesma UX)
+- [x] Filtros resetam página para 1 automaticamente
+- [x] Cards de resumo usam totais gerais (não apenas da página atual)
+- [x] 10 testes vitest passando (pagination.test.ts)
+
+### 2. Contas Bancárias + Campo Banco no Pagamento ✅
+- [x] Editar contas bancárias existentes: Adega (Caixa Geral, Itaú, Inter, C6) e A Brasa (Caixa Geral, Itaú)
+- [x] Renomear Santander→Inter, Bradesco→C6, desativar BB
+- [x] Criar contas para A Brasa (Caixa Geral + Itaú)
+- [x] Adicionar campo bankAccountId nas tabelas de parcelas + customerPayments + receivablePayments
+- [x] Criar endpoint getBankAccounts (filtrar contas 1.1.1.* ativas por empresa)
+- [x] Adicionar dropdown Banco/Conta no modal de pagamento (Contas a Pagar)
+- [x] Adicionar dropdown Banco/Conta no modal de pagamento (Contas a Receber antigo + novo)
+- [x] Passar bankAccountId nas 5 mutations de pagamento (routers.ts)
+- [x] 10 testes vitest passando (bank-accounts.test.ts)
+
+### 3. Impressão do Fechamento em A4
+- [ ] Layout de impressão A4 com logo da empresa ativa
+- [ ] Formatação profissional para apresentar a sócios/contador
+- [ ] CSS @media print com todas as seções do Fechamento
+- [ ] Logo dinâmico por empresa (Adega Beira Rio / A Brasa)
+
+### 4. Redesign da Tela de Metas
+- [ ] Redesenhar com hierarquia visual (gauge/barra de progresso estilizada)
+- [ ] Ícones por departamento/canal (ex: ícone iFood, Balcão, Delivery, etc.)
+- [ ] Comparativo mês a mês (meta vs realizado dos últimos 3 meses)
+- [ ] Destaque visual para metas atingidas (verde) vs atrasadas (vermelho)
+
+### Correções do dia
+- [x] Compra duplicada #3960002 (Comercial Bolsão R$237,63) — já resolvida anteriormente
+- [x] Desconsiderar total de compras no período (já tem no Fechamento)

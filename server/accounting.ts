@@ -45,6 +45,29 @@ export async function getChartOfAccounts(companyId: number = 1) {
     .orderBy(asc(chartOfAccounts.displayOrder));
 }
 
+/**
+ * Retorna contas bancárias (contas analíticas filhas de 1.1.1 - CAIXA E EQUIVALENTES)
+ * Usado no dropdown de Banco/Conta nos modais de pagamento
+ */
+export async function getBankAccounts(companyId: number = 1) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return db.select({
+    id: chartOfAccounts.id,
+    code: chartOfAccounts.code,
+    name: chartOfAccounts.name,
+  })
+    .from(chartOfAccounts)
+    .where(and(
+      eq(chartOfAccounts.companyId, companyId),
+      eq(chartOfAccounts.isActive, true),
+      eq(chartOfAccounts.isAnalytical, true),
+      sql`${chartOfAccounts.code} LIKE '1.1.1.%'`
+    ))
+    .orderBy(asc(chartOfAccounts.code));
+}
+
 export async function getAccountById(id: number) {
   const db = await getDb();
   if (!db) return null;
@@ -817,9 +840,12 @@ export async function getDRE(
 
 import { otherRevenues, InsertOtherRevenue, OtherRevenue } from "../drizzle/schema";
 
-export async function listOtherRevenues(competenceMonth?: string, companyId: number = 1, startDate?: string, endDate?: string, partnerId?: number) {
+export async function listOtherRevenues(competenceMonth?: string, companyId: number = 1, startDate?: string, endDate?: string, partnerId?: number, page?: number, limit?: number) {
   const db = await getDb();
-  if (!db) return [];
+  if (!db) return { data: [], total: 0, totalPages: 0, page: 1 };
+  
+  const pageNum = page || 1;
+  const pageSize = limit || 30;
   
   const conditions: any[] = [eq(otherRevenues.companyId, companyId)];
   if (competenceMonth) {
@@ -841,10 +867,18 @@ export async function listOtherRevenues(competenceMonth?: string, companyId: num
     .orderBy(desc(otherRevenues.revenueDate));
   
   // Converter amount de centavos para reais
-  return results.map(r => ({
+  const allData = results.map(r => ({
     ...r,
     amount: Number(r.amount) / 100
   }));
+  
+  // Paginação
+  const total = allData.length;
+  const totalPages = Math.ceil(total / pageSize);
+  const offset = (pageNum - 1) * pageSize;
+  const paginatedData = allData.slice(offset, offset + pageSize);
+  
+  return { data: paginatedData, total, totalPages, page: pageNum };
 }
 
 export async function createOtherRevenue(data: {

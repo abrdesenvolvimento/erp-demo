@@ -11,8 +11,9 @@ import { Textarea } from "../components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table";
 import { Badge } from "../components/ui/badge";
 import { toast } from "sonner";
-import { DollarSign, User, ChevronRight, ArrowLeft, ChevronLeft, Calendar } from "lucide-react";
+import { DollarSign, User, ChevronRight, ArrowLeft, ChevronLeft, Calendar, Building2 } from "lucide-react";
 import DashboardLayout from "../components/DashboardLayout";
+import { useCompany } from "@/contexts/CompanyContext";
 import { getTodayBR, getNowBR } from "../lib/dateUtils";
 
 // Função para determinar cor baseado no vencimento
@@ -67,6 +68,7 @@ export default function ContasPagar() {
         interestAmount: "",
         discountAmount: "",
         paymentMethod: calendarPayItem.paymentMethod || "",
+        bankAccountId: undefined,
         notes: "",
       });
       setShowPaymentModal(true);
@@ -102,6 +104,7 @@ export default function ContasPagar() {
               interestAmount: "",
               discountAmount: "",
               paymentMethod: item.paymentMethod || "",
+              bankAccountId: undefined,
               notes: "",
             });
             setShowPaymentModal(true);
@@ -134,6 +137,7 @@ export default function ContasPagar() {
       interestAmount: "",
       discountAmount: "",
       paymentMethod: "",
+      bankAccountId: undefined,
       notes: ""
     });
     setShowPaymentModal(true);
@@ -142,14 +146,23 @@ export default function ContasPagar() {
   const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "paid">("all");
   const [showSupplierResults, setShowSupplierResults] = useState(false);
 
+  const { activeCompanyId } = useCompany();
+
   const [paymentForm, setPaymentForm] = useState({
     paidDate: getTodayBR(),
     paidAmount: "",
     interestAmount: "",
     discountAmount: "",
     paymentMethod: "",
+    bankAccountId: undefined as number | undefined,
     notes: ""
   });
+
+  // Query de contas bancárias
+  const { data: bankAccounts } = trpc.accounting.bankAccounts.useQuery(
+    { companyId: activeCompanyId || 1 },
+    { enabled: !!activeCompanyId }
+  );
   
   // Ler parâmetro supplier da URL ao carregar
   useEffect(() => {
@@ -199,6 +212,7 @@ export default function ContasPagar() {
       interestAmount: "",
       discountAmount: "",
       paymentMethod: "",
+      bankAccountId: undefined,
       notes: ""
     });
   };
@@ -220,6 +234,7 @@ export default function ContasPagar() {
       interestAmount: "",
       discountAmount: "",
       paymentMethod: "",
+      bankAccountId: undefined,
       notes: ""
     });
     setShowPaymentModal(true);
@@ -262,6 +277,7 @@ export default function ContasPagar() {
       paidDate,
       paidAmount: baseAmount.toFixed(2),
       paymentMethod: paymentForm.paymentMethod,
+      bankAccountId: paymentForm.bankAccountId,
       interestAmount: interestAmount > 0 ? interestAmount.toFixed(2) : undefined,
       discountAmount: discountAmount > 0 ? discountAmount.toFixed(2) : undefined,
       notes: paymentForm.notes || undefined
@@ -449,6 +465,25 @@ export default function ContasPagar() {
                       <SelectItem value="CARTAO_DEBITO">Débito</SelectItem>
                       <SelectItem value="CARTAO_CREDITO">Crédito</SelectItem>
                       <SelectItem value="TRANSFERENCIA">Transferência Bancária</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="bankAccount">Banco/Conta</Label>
+                  <Select
+                    value={paymentForm.bankAccountId?.toString() || ""}
+                    onValueChange={(value) => setPaymentForm({ ...paymentForm, bankAccountId: value ? parseInt(value) : undefined })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione a conta..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {bankAccounts?.map((account) => (
+                        <SelectItem key={account.id} value={account.id.toString()}>
+                          {account.name}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>

@@ -8,10 +8,10 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { trpc } from "@/lib/trpc";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Plus, Pencil, Trash2, Loader2, FileText, Check, ChevronLeft, X } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, FileText, Check, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, X } from "lucide-react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { getTodayBR, toDateStringBR, getCurrentCompetenceMonthBR } from "@/lib/dateUtils";
 import { toast } from "sonner";
@@ -175,13 +175,27 @@ export default function OutrasReceitas() {
   const [managementAccountOpen, setManagementAccountOpen] = useState(false);
   const [managementAccountSearch, setManagementAccountSearch] = useState("");
 
+  // Paginação
+  const [currentPage, setCurrentPage] = useState(1);
+  const PAGE_SIZE = 30;
+
+  // Resetar página ao mudar filtros
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filterStartDate, filterEndDate, filterPartnerId, filterManagementAccountId, filterMinValue, filterMaxValue]);
+
   // Queries
-  const { data: revenues, isLoading, refetch } = trpc.accounting.listOtherRevenues.useQuery({ 
+  const { data: revenuesResult, isLoading, refetch } = trpc.accounting.listOtherRevenues.useQuery({ 
     startDate: filterStartDate || undefined,
     endDate: filterEndDate || undefined,
     partnerId: filterPartnerId,
     managementAccountId: filterManagementAccountId,
+    page: currentPage,
+    limit: PAGE_SIZE,
   });
+  const revenues = revenuesResult?.data;
+  const totalRevenues = revenuesResult?.total || 0;
+  const totalPages = revenuesResult?.totalPages || 0;
   const { data: partners } = trpc.partners.list.useQuery();
   const { data: managementAccounts = [] } = trpc.accounting.listManagementAccounts.useQuery();
 
@@ -701,7 +715,10 @@ export default function OutrasReceitas() {
           </div>
           <div className="bg-card border rounded-lg p-4">
             <div className="text-sm text-muted-foreground">Receitas Encontradas</div>
-            <div className="text-2xl font-bold">{filteredRevenues.length}</div>
+            <div className="text-2xl font-bold">{totalRevenues}</div>
+            {totalPages > 1 && (
+              <div className="text-xs text-muted-foreground mt-1">Página {currentPage} de {totalPages}</div>
+            )}
           </div>
         </div>
 
@@ -949,6 +966,70 @@ export default function OutrasReceitas() {
                     </div>
                   </div>
                 ))}
+              </div>
+            )}
+
+            {/* Paginação */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between mt-6 pt-4 border-t">
+                <div className="text-sm text-muted-foreground">
+                  Mostrando {((currentPage - 1) * PAGE_SIZE) + 1} a {Math.min(currentPage * PAGE_SIZE, totalRevenues)} de {totalRevenues} receitas
+                </div>
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => setCurrentPage(1)}
+                    disabled={currentPage === 1}
+                  >
+                    <ChevronsLeft className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  {(() => {
+                    const pages: number[] = [];
+                    const start = Math.max(1, currentPage - 2);
+                    const end = Math.min(totalPages, currentPage + 2);
+                    for (let i = start; i <= end; i++) pages.push(i);
+                    return pages.map(p => (
+                      <Button
+                        key={p}
+                        variant={p === currentPage ? "default" : "outline"}
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => setCurrentPage(p)}
+                      >
+                        {p}
+                      </Button>
+                    ));
+                  })()}
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => setCurrentPage(totalPages)}
+                    disabled={currentPage === totalPages}
+                  >
+                    <ChevronsRight className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             )}
           </div>
