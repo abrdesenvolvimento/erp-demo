@@ -773,13 +773,22 @@ export async function getDRE(
 
 import { otherRevenues, InsertOtherRevenue, OtherRevenue } from "../drizzle/schema";
 
-export async function listOtherRevenues(competenceMonth?: string, companyId: number = 1) {
+export async function listOtherRevenues(competenceMonth?: string, companyId: number = 1, startDate?: string, endDate?: string, partnerId?: number) {
   const db = await getDb();
   if (!db) return [];
   
-  const conditions = [eq(otherRevenues.companyId, companyId)];
+  const conditions: any[] = [eq(otherRevenues.companyId, companyId)];
   if (competenceMonth) {
     conditions.push(eq(otherRevenues.competenceMonth, competenceMonth));
+  }
+  if (startDate) {
+    conditions.push(sql`DATE(${otherRevenues.entryDate}) >= ${startDate}`);
+  }
+  if (endDate) {
+    conditions.push(sql`DATE(${otherRevenues.entryDate}) <= ${endDate}`);
+  }
+  if (partnerId) {
+    conditions.push(eq(otherRevenues.partnerId, partnerId));
   }
   
   const results = await db.select()

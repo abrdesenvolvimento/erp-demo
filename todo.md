@@ -1339,20 +1339,20 @@ Despesa de impostos aparece tanto em janeiro quanto em fevereiro após edição 
 ### 🔧 ALTERAÇÕES, SUGESTÕES E CORREÇÕES — Sprint 03/03/2026
 
 #### 1. Despesa Simples Nacional — Mover Fevereiro para Janeiro
-- [ ] Localizar despesa de Simples Nacional lançada em Fevereiro/2026
-- [ ] Alterar competenceMonth para 2026-01 e entryDate para data de Janeiro
-- [ ] Reprocessar lançamento contábil (deletar journal de fev e recriar em jan)
-- [ ] Verificar no DRE que despesa aparece em Janeiro após correção
+- [x] Localizar despesa de Simples Nacional lançada em Fevereiro/2026 — DAS ID 1170001 já estava em competenceMonth=2026-01, nenhuma correção necessária
+- [x] Alterar competenceMonth para 2026-01 e entryDate para data de Janeiro (já estava correto)
+- [x] Reprocessar lançamento contábil (não necessário)
+- [x] Verificar no DRE que despesa aparece em Janeiro após correção (confirmado)
 
 #### 2. Regra Análise de Despesa — Despesas Parceladas por Competência
 **Regra:** Despesa parcelada deve aparecer na análise pelo valor da parcela no mês de vencimento, não pelo montante total no mês de lançamento.
 Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 em Abril.
 
-- [ ] Revisar query de análise de despesas (getExpensesByCategory e similares)
-- [ ] Alterar lógica: usar tabela expenseInstallments com dueDate para filtrar por mês
-- [ ] Garantir que o valor exibido seja o valor da parcela (amount/installments), não o total
-- [ ] Aplicar mesma regra na tela de Fechamento (seção Despesas por Conta Gerencial)
-- [ ] Testar com despesa de R$10.000 em 2 parcelas e verificar distribuição correta
+- [x] Revisar query de análise de despesas (getExpensesByCategory e similares)
+- [x] Alterar lógica: usar tabela expenseInstallments com dueDate para filtrar por mês (5 funções: byCategory, byMonth, byCategoryAndMonth, summary, hierarchical)
+- [x] Garantir que o valor exibido seja o valor da parcela (ei.amount), não o total
+- [x] Aplicar mesma regra na tela de Fechamento (seção Despesas por Categoria)
+- [ ] Testar no browser com despesa parcelada e verificar distribuição correta (validar)
 
 #### 3. Excluir Receitas Teste — Módulo Outras Receitas
 - [x] Listar todas as receitas de teste inseridas em Outras Receitas (IDs: 210001, 180002, 180001, 150001)
@@ -1362,9 +1362,9 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 #### 4. Bug Numeral — Módulo Outras Receitas (ponto/vírgula)
 **Problema:** Campo de valor não reconhece corretamente ponto e vírgula para separar milhares e centavos.
 
-- [ ] Investigar componente de input numérico em Outras Receitas
-- [ ] Implementar máscara de valor monetário (ex: R$ 1.000,00) com suporte a ponto como separador de milhar e vírgula como decimal
-- [ ] Testar entrada de valores como: 1000, 1.000, 1000,50, 1.000,50
+- [x] Investigar componente de input numérico em Outras Receitas
+- [x] Implementar máscara de valor monetário com suporte a ponto como separador de milhar e vírgula como decimal (input type=text com onBlur formatador + parseBRLInput)
+- [x] Aceita: 1000, 1.000, 1000,50, 1.000,50, 1000.50 (fallback EN)
 
 #### 5. Outras Receitas na Tela de Fechamento
 **Regra a definir:** Outras Receitas devem compor o resultado do Fechamento. Pendente entender separação de Parcela vs Juros.

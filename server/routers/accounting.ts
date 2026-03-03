@@ -286,9 +286,19 @@ export const accountingRouter = router({
   listOtherRevenues: protectedProcedure
     .input(z.object({
       competenceMonth: z.string().optional(),
+      startDate: z.string().optional(),
+      endDate: z.string().optional(),
+      partnerId: z.number().optional(),
+      managementAccountId: z.number().optional(),
     }).optional())
     .query(async ({ input, ctx }) => {
-      return accounting.listOtherRevenues(input?.competenceMonth, ctx.activeCompanyId);
+      return accounting.listOtherRevenues(
+        input?.competenceMonth,
+        ctx.activeCompanyId,
+        input?.startDate,
+        input?.endDate,
+        input?.partnerId
+      );
     }),
 
   createOtherRevenue: protectedProcedure

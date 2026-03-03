@@ -22,10 +22,42 @@ import { cn } from "@/lib/utils";
 // Formatação de valores monetários
 const formatCurrency = (value: number | string) => {
   const numValue = typeof value === 'string' ? parseFloat(value) : value;
+  if (isNaN(numValue)) return 'R$ 0,00';
   return new Intl.NumberFormat('pt-BR', {
     style: 'currency',
     currency: 'BRL'
   }).format(numValue);
+};
+
+// Converte string de input monetário PT-BR para número
+// Aceita: "1000", "1.000", "1000,50", "1.000,50", "1000.50" (fallback)
+const parseBRLInput = (raw: string): string => {
+  // Remove tudo exceto dígitos, ponto e vírgula
+  const cleaned = raw.replace(/[^\d.,]/g, '');
+  // Se contém vírgula, é separador decimal PT-BR
+  if (cleaned.includes(',')) {
+    // Remove pontos de milhar e substitui vírgula por ponto
+    return cleaned.replace(/\./g, '').replace(',', '.');
+  }
+  // Se contém ponto e mais de 3 dígitos após, é decimal EN
+  // Se ponto com exatamente 3 dígitos após = milhar (ex: 1.000)
+  if (cleaned.includes('.')) {
+    const parts = cleaned.split('.');
+    if (parts[parts.length - 1].length === 3 && parts.length > 1) {
+      // É separador de milhar: 1.000 → 1000
+      return cleaned.replace(/\./g, '');
+    }
+    // É decimal EN: 1000.50 → aceitar como está
+    return cleaned;
+  }
+  return cleaned;
+};
+
+// Formata valor para exibição no input (sem símbolo R$)
+const formatInputDisplay = (raw: string): string => {
+  const num = parseFloat(parseBRLInput(raw));
+  if (isNaN(num) || raw === '') return raw;
+  return num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 };
 
 // Formatação de data
@@ -286,7 +318,8 @@ export default function OutrasReceitas() {
       toast.error("Descrição é obrigatória");
       return;
     }
-    if (!selectedRevenue.amount || parseFloat(selectedRevenue.amount) <= 0) {
+    const parsedAmount = parseFloat(parseBRLInput(selectedRevenue.amount));
+    if (!selectedRevenue.amount || isNaN(parsedAmount) || parsedAmount <= 0) {
       toast.error("Valor deve ser maior que zero");
       return;
     }
@@ -311,7 +344,7 @@ export default function OutrasReceitas() {
       creditDate: selectedRevenue.creditDate || undefined,
       paymentMethod: selectedRevenue.paymentMethod,
       notes: selectedRevenue.notes || undefined,
-      amount: parseFloat(selectedRevenue.amount),
+      amount: parseFloat(parseBRLInput(selectedRevenue.amount)),
     };
 
     if (selectedRevenue.id) {
@@ -594,11 +627,17 @@ export default function OutrasReceitas() {
                     <div>
                       <Label>Valor *</Label>
                       <Input
-                        type="number"
-                        step="0.01"
+                        type="text"
+                        inputMode="decimal"
                         value={selectedRevenue.amount}
                         onChange={(e) => setSelectedRevenue({ ...selectedRevenue, amount: e.target.value })}
-                        placeholder="0,00"
+                        onBlur={(e) => {
+                          const formatted = formatInputDisplay(e.target.value);
+                          if (formatted !== e.target.value) {
+                            setSelectedRevenue(prev => ({ ...prev, amount: formatted }));
+                          }
+                        }}
+                        placeholder="Ex: 1.000,00"
                       />
                     </div>
                     <div>

@@ -5687,30 +5687,24 @@ export async function getExpenseAnalysisByCategory(companyId: number | undefined
   const db = await getDb();
   if (!db) return [];
 
+  // Nova regra: despesas parceladas são distribuídas por mês de vencimento de cada parcela
+  // Filtro de data é aplicado sobre ei.dueDate (data de vencimento da parcela)
   let whereClause = `WHERE e.status != 'CANCELADA'`;
   if (companyId) whereClause += ` AND e.companyId = ${companyId}`;
-  
-  if (startDate) {
-    whereClause += ` AND DATE(CONVERT_TZ(e.createdAt, '+00:00', '-03:00')) >= '${startDate}'`;
-  }
-  if (endDate) {
-    whereClause += ` AND DATE(CONVERT_TZ(e.createdAt, '+00:00', '-03:00')) <= '${endDate}'`;
-  }
-  if (categoryId) {
-    whereClause += ` AND e.categoryId = ${categoryId}`;
-  }
-  if (supplierId) {
-    whereClause += ` AND e.supplierId = ${supplierId}`;
-  }
+  if (startDate) whereClause += ` AND DATE(CONVERT_TZ(ei.dueDate, '+00:00', '-03:00')) >= '${startDate}'`;
+  if (endDate) whereClause += ` AND DATE(CONVERT_TZ(ei.dueDate, '+00:00', '-03:00')) <= '${endDate}'`;
+  if (categoryId) whereClause += ` AND e.categoryId = ${categoryId}`;
+  if (supplierId) whereClause += ` AND e.supplierId = ${supplierId}`;
 
   const result = await db.execute(sql.raw(`
     SELECT 
       ec.id as categoryId,
       ec.name as categoryName,
-      COUNT(e.id) as totalLancamentos,
-      COALESCE(SUM(e.amount), 0) as totalAmount
+      COUNT(DISTINCT e.id) as totalLancamentos,
+      COALESCE(SUM(ei.amount), 0) as totalAmount
     FROM expenses e
     INNER JOIN expenseCategories ec ON e.categoryId = ec.id
+    INNER JOIN expenseInstallments ei ON ei.expenseId = e.id
     ${whereClause}
     GROUP BY ec.id, ec.name
     ORDER BY totalAmount DESC
@@ -5738,29 +5732,22 @@ export async function getExpenseAnalysisByMonth(companyId: number | undefined,
   const db = await getDb();
   if (!db) return [];
 
+  // Nova regra: agrupa por mês de vencimento da parcela (ei.dueDate), não por data de criação
   let whereClause = `WHERE e.status != 'CANCELADA'`;
   if (companyId) whereClause += ` AND e.companyId = ${companyId}`;
-  
-  if (startDate) {
-    whereClause += ` AND DATE(CONVERT_TZ(e.createdAt, '+00:00', '-03:00')) >= '${startDate}'`;
-  }
-  if (endDate) {
-    whereClause += ` AND DATE(CONVERT_TZ(e.createdAt, '+00:00', '-03:00')) <= '${endDate}'`;
-  }
-  if (categoryId) {
-    whereClause += ` AND e.categoryId = ${categoryId}`;
-  }
-  if (supplierId) {
-    whereClause += ` AND e.supplierId = ${supplierId}`;
-  }
+  if (startDate) whereClause += ` AND DATE(CONVERT_TZ(ei.dueDate, '+00:00', '-03:00')) >= '${startDate}'`;
+  if (endDate) whereClause += ` AND DATE(CONVERT_TZ(ei.dueDate, '+00:00', '-03:00')) <= '${endDate}'`;
+  if (categoryId) whereClause += ` AND e.categoryId = ${categoryId}`;
+  if (supplierId) whereClause += ` AND e.supplierId = ${supplierId}`;
 
   const result = await db.execute(sql.raw(`
     SELECT 
-      YEAR(CONVERT_TZ(e.createdAt, '+00:00', '-03:00')) as year,
-      MONTH(CONVERT_TZ(e.createdAt, '+00:00', '-03:00')) as month,
-      COUNT(e.id) as totalLancamentos,
-      COALESCE(SUM(e.amount), 0) as totalAmount
+      YEAR(CONVERT_TZ(ei.dueDate, '+00:00', '-03:00')) as year,
+      MONTH(CONVERT_TZ(ei.dueDate, '+00:00', '-03:00')) as month,
+      COUNT(DISTINCT e.id) as totalLancamentos,
+      COALESCE(SUM(ei.amount), 0) as totalAmount
     FROM expenses e
+    INNER JOIN expenseInstallments ei ON ei.expenseId = e.id
     ${whereClause}
     GROUP BY year, month
     ORDER BY year DESC, month DESC
@@ -5788,32 +5775,25 @@ export async function getExpenseAnalysisByCategoryAndMonth(companyId: number | u
   const db = await getDb();
   if (!db) return [];
 
+  // Nova regra: agrupa por mês de vencimento da parcela e categoria
   let whereClause = `WHERE e.status != 'CANCELADA'`;
   if (companyId) whereClause += ` AND e.companyId = ${companyId}`;
-  
-  if (startDate) {
-    whereClause += ` AND DATE(CONVERT_TZ(e.createdAt, '+00:00', '-03:00')) >= '${startDate}'`;
-  }
-  if (endDate) {
-    whereClause += ` AND DATE(CONVERT_TZ(e.createdAt, '+00:00', '-03:00')) <= '${endDate}'`;
-  }
-  if (categoryId) {
-    whereClause += ` AND e.categoryId = ${categoryId}`;
-  }
-  if (supplierId) {
-    whereClause += ` AND e.supplierId = ${supplierId}`;
-  }
+  if (startDate) whereClause += ` AND DATE(CONVERT_TZ(ei.dueDate, '+00:00', '-03:00')) >= '${startDate}'`;
+  if (endDate) whereClause += ` AND DATE(CONVERT_TZ(ei.dueDate, '+00:00', '-03:00')) <= '${endDate}'`;
+  if (categoryId) whereClause += ` AND e.categoryId = ${categoryId}`;
+  if (supplierId) whereClause += ` AND e.supplierId = ${supplierId}`;
 
   const result = await db.execute(sql.raw(`
     SELECT 
       ec.id as categoryId,
       ec.name as categoryName,
-      YEAR(CONVERT_TZ(e.createdAt, '+00:00', '-03:00')) as year,
-      MONTH(CONVERT_TZ(e.createdAt, '+00:00', '-03:00')) as month,
-      COUNT(e.id) as totalLancamentos,
-      COALESCE(SUM(e.amount), 0) as totalAmount
+      YEAR(CONVERT_TZ(ei.dueDate, '+00:00', '-03:00')) as year,
+      MONTH(CONVERT_TZ(ei.dueDate, '+00:00', '-03:00')) as month,
+      COUNT(DISTINCT e.id) as totalLancamentos,
+      COALESCE(SUM(ei.amount), 0) as totalAmount
     FROM expenses e
     INNER JOIN expenseCategories ec ON e.categoryId = ec.id
+    INNER JOIN expenseInstallments ei ON ei.expenseId = e.id
     ${whereClause}
     GROUP BY ec.id, ec.name, year, month
     ORDER BY ec.name, year DESC, month DESC
@@ -5913,27 +5893,20 @@ export async function getExpenseAnalysisSummary(companyId: number | undefined,
   const db = await getDb();
   if (!db) return { totalAmount: 0, totalLancamentos: 0, avgPerLancamento: 0 };
 
+  // Nova regra: soma parcelas pelo mês de vencimento
   let whereClause = `WHERE e.status != 'CANCELADA'`;
   if (companyId) whereClause += ` AND e.companyId = ${companyId}`;
-  
-  if (startDate) {
-    whereClause += ` AND DATE(CONVERT_TZ(e.createdAt, '+00:00', '-03:00')) >= '${startDate}'`;
-  }
-  if (endDate) {
-    whereClause += ` AND DATE(CONVERT_TZ(e.createdAt, '+00:00', '-03:00')) <= '${endDate}'`;
-  }
-  if (categoryId) {
-    whereClause += ` AND e.categoryId = ${categoryId}`;
-  }
-  if (supplierId) {
-    whereClause += ` AND e.supplierId = ${supplierId}`;
-  }
+  if (startDate) whereClause += ` AND DATE(CONVERT_TZ(ei.dueDate, '+00:00', '-03:00')) >= '${startDate}'`;
+  if (endDate) whereClause += ` AND DATE(CONVERT_TZ(ei.dueDate, '+00:00', '-03:00')) <= '${endDate}'`;
+  if (categoryId) whereClause += ` AND e.categoryId = ${categoryId}`;
+  if (supplierId) whereClause += ` AND e.supplierId = ${supplierId}`;
 
   const result = await db.execute(sql.raw(`
     SELECT 
-      COUNT(e.id) as totalLancamentos,
-      COALESCE(SUM(e.amount), 0) as totalAmount
+      COUNT(DISTINCT e.id) as totalLancamentos,
+      COALESCE(SUM(ei.amount), 0) as totalAmount
     FROM expenses e
+    INNER JOIN expenseInstallments ei ON ei.expenseId = e.id
     ${whereClause}
   `));
 
@@ -5963,26 +5936,24 @@ export async function getExpenseHierarchicalData(companyId: number | undefined,
   const db = await getDb();
   if (!db) return [];
 
+  // Nova regra: filtro e agrupamento por mês de vencimento da parcela (ei.dueDate)
   let whereClause = `WHERE e.status != 'CANCELADA'`;
   if (companyId) whereClause += ` AND e.companyId = ${companyId}`;
-  
-  if (startDate) {
-    whereClause += ` AND DATE(CONVERT_TZ(e.createdAt, '+00:00', '-03:00')) >= '${startDate}'`;
-  }
-  if (endDate) {
-    whereClause += ` AND DATE(CONVERT_TZ(e.createdAt, '+00:00', '-03:00')) <= '${endDate}'`;
-  }
+  if (startDate) whereClause += ` AND DATE(CONVERT_TZ(ei.dueDate, '+00:00', '-03:00')) >= '${startDate}'`;
+  if (endDate) whereClause += ` AND DATE(CONVERT_TZ(ei.dueDate, '+00:00', '-03:00')) <= '${endDate}'`;
 
   const result = await db.execute(sql.raw(`
     SELECT 
       e.id as expenseId,
       e.description,
-      e.amount,
+      ei.amount,
+      ei.installmentNumber,
+      e.installments as totalInstallments,
       e.notes,
       e.docNumber,
-      DATE(CONVERT_TZ(e.createdAt, '+00:00', '-03:00')) as expenseDate,
-      YEAR(CONVERT_TZ(e.createdAt, '+00:00', '-03:00')) as year,
-      MONTH(CONVERT_TZ(e.createdAt, '+00:00', '-03:00')) as month,
+      DATE(CONVERT_TZ(ei.dueDate, '+00:00', '-03:00')) as expenseDate,
+      YEAR(CONVERT_TZ(ei.dueDate, '+00:00', '-03:00')) as year,
+      MONTH(CONVERT_TZ(ei.dueDate, '+00:00', '-03:00')) as month,
       COALESCE(ma.id, ec.id) as categoryId,
       COALESCE(ma.name, ec.name, 'N/A') as categoryName,
       COALESCE(p.id, 0) as supplierId,
@@ -5992,12 +5963,13 @@ export async function getExpenseHierarchicalData(companyId: number | undefined,
       am.accountingCode as accountingCode,
       ma.classification as classification
     FROM expenses e
+    INNER JOIN expenseInstallments ei ON ei.expenseId = e.id
     LEFT JOIN expenseCategories ec ON e.categoryId = ec.id
     LEFT JOIN managementAccounts ma ON e.managementAccountId = ma.id
     LEFT JOIN accountingMappings am ON ma.id = am.managementAccountId
     LEFT JOIN partners p ON e.supplierId = p.id
     ${whereClause}
-    ORDER BY COALESCE(ma.name, ec.name), p.tradeName, e.createdAt
+    ORDER BY COALESCE(ma.name, ec.name), p.tradeName, ei.dueDate
   `));
 
   const rows = result[0] as unknown as any[];
@@ -6005,6 +5977,8 @@ export async function getExpenseHierarchicalData(companyId: number | undefined,
     expenseId: row.expenseId,
     description: row.description,
     amount: parseFloat(row.amount || '0'),
+    installmentNumber: row.installmentNumber,
+    totalInstallments: row.totalInstallments,
     notes: row.notes,
     docNumber: row.docNumber,
     expenseDate: row.expenseDate,
@@ -6402,18 +6376,19 @@ export async function getMonthlyClosing(year: number, month: number, companyId?:
     totalPurchases.amount += data.amount;
   }
 
-  // 3. DESPESAS - Total por categoria
+  // 3. DESPESAS - Total por categoria (regra: despesas parceladas por mês de vencimento da parcela)
   const expensesResult = await db.execute(sql.raw(`
     SELECT 
       ec.id as categoryId,
       ec.name as categoryName,
-      COUNT(*) as expenseCount,
-      SUM(e.amount) as totalAmount
+      COUNT(DISTINCT e.id) as expenseCount,
+      COALESCE(SUM(ei.amount), 0) as totalAmount
     FROM expenses e
     LEFT JOIN expenseCategories ec ON e.categoryId = ec.id
+    INNER JOIN expenseInstallments ei ON ei.expenseId = e.id
     WHERE e.status != 'CANCELADA'
-      AND DATE(CONVERT_TZ(e.createdAt, '+00:00', '-03:00')) >= '${startDate}'
-      AND DATE(CONVERT_TZ(e.createdAt, '+00:00', '-03:00')) <= '${endDate}'
+      AND DATE(CONVERT_TZ(ei.dueDate, '+00:00', '-03:00')) >= '${startDate}'
+      AND DATE(CONVERT_TZ(ei.dueDate, '+00:00', '-03:00')) <= '${endDate}'
       ${companyId ? `AND e.companyId = ${companyId}` : ''}
     GROUP BY ec.id, ec.name
   `));
