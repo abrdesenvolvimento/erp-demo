@@ -424,3 +424,97 @@ export async function getPurchasesBySupplier(startDate: string, endDate: string,
     };
   });
 }
+
+/**
+ * Captura e persiste o snapshot de estoque final por categoria para um mês fechado.
+ * Idempotente: se já existir snapshot para o mês, atualiza os valores (não duplica).
+ * Retorna o número de categorias salvas.
+ */
+export async function captureMonthlyStockSnapshot(
+  year: number,
+  month: number,
+  companyId: number = 1,
+  capturedBy?: string
+): Promise<{ saved: number; competenceMonth: string }> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const competenceMonth = `${year}-${String(month).padStart(2, '0')}`;
+
+  // Buscar estoque atual por categoria (snapshot no momento do fechamento)
+  const [rows] = await (db as any).$client.query(`
+    SELECT 
+      c.id as categoryId,
+      c.name as categoryName,
+      COUNT(p.id) as totalItems,
+      COALESCE(SUM(p.currentStock * p.avgCost), 0) as totalCost
+    FROM products p
+    INNER JOIN categories c ON p.categoryId = c.id
+    WHERE p.active = 1
+      AND (p.isComposite = 0 OR p.isComposite IS NULL)
+      AND p.companyId = ?
+    GROUP BY c.id, c.name
+    ORDER BY totalCost DESC
+  `, [companyId]);
+
+  let saved = 0;
+  for (const row of rows as any[]) {
+    await (db as any).$client.query(`
+      INSERT INTO monthlyStockSnapshot 
+        (companyId, year, month, competenceMonth, categoryId, categoryName, totalItems, totalCost, snapshotDate, capturedBy)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?)
+      ON DUPLICATE KEY UPDATE
+        categoryName = VALUES(categoryName),
+        totalItems = VALUES(totalItems),
+        totalCost = VALUES(totalCost),
+        snapshotDate = NOW(),
+        capturedBy = VALUES(capturedBy)
+    `, [
+      companyId,
+      year,
+      month,
+      competenceMonth,
+      row.categoryId,
+      row.categoryName,
+      row.totalItems,
+      parseFloat(row.totalCost || '0').toFixed(2),
+      capturedBy || null
+    ]);
+    saved++;
+  }
+
+  return { saved, competenceMonth };
+}
+
+/**
+ * Busca o snapshot de estoque de um mês fechado.
+ * Retorna null se não houver snapshot (mês ainda não fechado).
+ */
+export async function getMonthlyStockSnapshot(
+  year: number,
+  month: number,
+  companyId: number = 1
+): Promise<Array<{ categoryId: number; categoryName: string; totalItems: number; totalCost: number; snapshotDate: Date }> | null> {
+  const db = await getDb();
+  if (!db) return null;
+
+  const competenceMonth = `${year}-${String(month).padStart(2, '0')}`;
+
+  const [rows] = await (db as any).$client.query(`
+    SELECT categoryId, categoryName, totalItems, totalCost, snapshotDate
+    FROM monthlyStockSnapshot
+    WHERE companyId = ? AND competenceMonth = ?
+    ORDER BY totalCost DESC
+  `, [companyId, competenceMonth]);
+
+  const result = rows as any[];
+  if (!result || result.length === 0) return null;
+
+  return result.map(row => ({
+    categoryId: row.categoryId,
+    categoryName: row.categoryName,
+    totalItems: row.totalItems,
+    totalCost: parseFloat(row.totalCost || '0'),
+    snapshotDate: row.snapshotDate,
+  }));
+}

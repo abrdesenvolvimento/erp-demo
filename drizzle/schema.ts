@@ -1143,3 +1143,28 @@ export const calendarHighlights = mysqlTable("calendarHighlights", {
 });
 export type CalendarHighlight = typeof calendarHighlights.$inferSelect;
 export type InsertCalendarHighlight = typeof calendarHighlights.$inferInsert;
+
+// ==================== SNAPSHOT DE ESTOQUE MENSAL ====================
+// Armazena o valor final de estoque por categoria no último dia de cada mês fechado.
+// Uma vez gravado, o snapshot não deve ser alterado (imutável por design).
+export const monthlyStockSnapshot = mysqlTable("monthlyStockSnapshot", {
+  id: int("id").primaryKey().autoincrement(),
+  companyId: int("companyId").notNull().default(1),
+  year: int("year").notNull(),
+  month: int("month").notNull(), // 1-12
+  competenceMonth: varchar("competenceMonth", { length: 7 }).notNull(), // YYYY-MM
+  categoryId: int("categoryId"),
+  categoryName: varchar("categoryName", { length: 200 }),
+  totalItems: int("totalItems").default(0),
+  totalCost: decimal("totalCost", { precision: 14, scale: 2 }).default("0"),
+  snapshotDate: timestamp("snapshotDate").defaultNow(), // quando o snapshot foi capturado
+  capturedBy: varchar("capturedBy", { length: 64 }), // userId que disparou o fechamento
+  notes: text("notes"),
+  createdAt: timestamp("createdAt").defaultNow(),
+}, (table) => ({
+  uniqueMonthCategory: uniqueIndex("monthlyStockSnapshot_month_cat").on(
+    table.companyId, table.year, table.month, table.categoryId
+  ),
+}));
+export type MonthlyStockSnapshot = typeof monthlyStockSnapshot.$inferSelect;
+export type InsertMonthlyStockSnapshot = typeof monthlyStockSnapshot.$inferInsert;

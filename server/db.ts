@@ -5948,7 +5948,6 @@ export async function getExpenseHierarchicalData(companyId: number | undefined,
       e.description,
       ei.amount,
       ei.installmentNumber,
-      e.installments as totalInstallments,
       e.notes,
       e.docNumber,
       DATE(CONVERT_TZ(ei.dueDate, '+00:00', '-03:00')) as expenseDate,
@@ -5978,7 +5977,6 @@ export async function getExpenseHierarchicalData(companyId: number | undefined,
     description: row.description,
     amount: parseFloat(row.amount || '0'),
     installmentNumber: row.installmentNumber,
-    totalInstallments: row.totalInstallments,
     notes: row.notes,
     docNumber: row.docNumber,
     expenseDate: row.expenseDate,
@@ -6376,21 +6374,25 @@ export async function getMonthlyClosing(year: number, month: number, companyId?:
     totalPurchases.amount += data.amount;
   }
 
-  // 3. DESPESAS - Total por categoria (regra: despesas parceladas por mês de vencimento da parcela)
+  // 3. DESPESAS - Total por categoria (regra: por competenceMonth da despesa, que é o mês de competência fiscal)
+  // Nota: dueDate é usado na Análise de Despesas (fluxo de caixa), mas no Fechamento usamos competenceMonth
+  const competenceMonthStr = `${year}-${String(month).padStart(2, '0')}`;
   const expensesResult = await db.execute(sql.raw(`
     SELECT 
-      ec.id as categoryId,
-      ec.name as categoryName,
+      COALESCE(ma.id, ec.id) as categoryId,
+      COALESCE(ma.name, ec.name, 'Sem Categoria') as categoryName,
+      COALESCE(ma.classification, 'OPERACIONAL') as classification,
       COUNT(DISTINCT e.id) as expenseCount,
       COALESCE(SUM(ei.amount), 0) as totalAmount
     FROM expenses e
     LEFT JOIN expenseCategories ec ON e.categoryId = ec.id
+    LEFT JOIN managementAccounts ma ON e.managementAccountId = ma.id
     INNER JOIN expenseInstallments ei ON ei.expenseId = e.id
     WHERE e.status != 'CANCELADA'
-      AND DATE(CONVERT_TZ(ei.dueDate, '+00:00', '-03:00')) >= '${startDate}'
-      AND DATE(CONVERT_TZ(ei.dueDate, '+00:00', '-03:00')) <= '${endDate}'
+      AND e.competenceMonth = '${competenceMonthStr}'
       ${companyId ? `AND e.companyId = ${companyId}` : ''}
-    GROUP BY ec.id, ec.name
+    GROUP BY ma.id, ma.name, ma.classification, ec.id, ec.name
+    ORDER BY totalAmount DESC
   `));
 
   const expensesRows = expensesResult[0] as unknown as any[];
@@ -6567,6 +6569,42 @@ export async function getMonthlyClosing(year: number, month: number, companyId?:
   const netResult = totalSales.revenue - totalSales.cost - totalExpenses.amount;
   const netMargin = totalSales.revenue > 0 ? (netResult / totalSales.revenue) * 100 : 0;
 
+  // 8b. OUTRAS RECEITAS - Lançamentos do módulo Outras Receitas no mês de competência
+  const otherRevenuesResult = await db.execute(sql.raw(`
+    SELECT 
+      orv.id,
+      orv.description,
+      orv.amount,
+      orv.competenceMonth,
+      orv.entryDate,
+      orv.paymentMethod,
+      orv.status,
+      COALESCE(p.tradeName, p.name, 'Sem Parceiro') as partnerName,
+      ma.name as accountName,
+      ma.classification
+    FROM otherRevenues orv
+    LEFT JOIN partners p ON orv.partnerId = p.id
+    LEFT JOIN managementAccounts ma ON orv.managementAccountId = ma.id
+    WHERE orv.status != 'CANCELLED'
+      AND orv.competenceMonth = '${competenceMonthStr}'
+      ${companyId ? `AND orv.companyId = ${companyId}` : ''}
+    ORDER BY orv.entryDate DESC
+  `));
+
+  const otherRevenuesRows = otherRevenuesResult[0] as unknown as any[];
+  const otherRevenuesList = otherRevenuesRows.map(row => ({
+    id: row.id,
+    description: row.description,
+    amount: parseFloat(row.amount || '0') / 100, // armazenado em centavos (12148034 = R$121.480,34)
+    competenceMonth: row.competenceMonth,
+    entryDate: row.entryDate,
+    paymentMethod: row.paymentMethod,
+    partnerName: row.partnerName,
+    accountName: row.accountName,
+    classification: row.classification,
+  }));
+  const totalOtherRevenues = otherRevenuesList.reduce((s, r) => s + r.amount, 0);
+
   // NOVAS SEÇÕES PARA O LAYOUT ATUALIZADO (skip em chamadas recursivas)
   let salesByCategory: any[] = [];
   let purchasesByCategory: any[] = [];
@@ -6672,6 +6710,11 @@ export async function getMonthlyClosing(year: number, month: number, companyId?:
       resultadoOperacional,
       resultadoLiquido,
       margemLiquida: Math.round(margemLiquida * 10) / 10,
+    },
+    // OUTRAS RECEITAS
+    otherRevenues: {
+      total: totalOtherRevenues,
+      items: otherRevenuesList,
     },
     // NOVAS SEÇÕES DO LAYOUT ATUALIZADO
     salesByCategory,

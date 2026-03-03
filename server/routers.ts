@@ -5,6 +5,7 @@ import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, adminProcedure, consultorProcedure, router } from "./_core/trpc";
 import * as db from "./db";
+import { captureMonthlyStockSnapshot, getMonthlyStockSnapshot } from './closingQueries';
 import { getNowInBrazil, formatDateForInput, parseDateAsBrasilia, getTodayInBrazil } from '../shared/dateUtils';
 import { accountingRouter } from './routers/accounting';
 import { ifoodImportRouter } from './routers/ifoodImport';
@@ -2438,6 +2439,41 @@ export const appRouter = router({
       }))
       .query(async ({ input, ctx }) => {
         return await db.getYearlyClosing(input.year, ctx.activeCompanyId);
+      }),
+
+    // Capturar snapshot de estoque para fechar um mês
+    captureStockSnapshot: adminProcedure
+      .input(z.object({
+        year: z.number(),
+        month: z.number(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const result = await captureMonthlyStockSnapshot(
+          input.year,
+          input.month,
+          ctx.activeCompanyId,
+          ctx.user.id
+        );
+        return result;
+      }),
+
+    // Verificar se um mês já tem snapshot de estoque
+    getStockSnapshot: consultorProcedure
+      .input(z.object({
+        year: z.number(),
+        month: z.number(),
+      }))
+      .query(async ({ input, ctx }) => {
+        const snapshot = await getMonthlyStockSnapshot(
+          input.year,
+          input.month,
+          ctx.activeCompanyId
+        );
+        return {
+          hasSnapshot: snapshot !== null,
+          data: snapshot,
+          competenceMonth: `${input.year}-${String(input.month).padStart(2, '0')}`,
+        };
       }),
   }),
 

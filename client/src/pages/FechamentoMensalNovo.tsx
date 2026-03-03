@@ -32,10 +32,15 @@ import {
   Target,
   ArrowUp,
   ArrowDown,
-  Minus
+  Minus,
+  PlusCircle,
+  Lock,
+  Unlock
 } from "lucide-react";
 import { useState, useRef } from "react";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { toast } from "sonner";
+import { useAuth } from "@/_core/hooks/useAuth";
 
 const MONTHS = [
   { value: 1, label: "Janeiro" },
@@ -59,6 +64,7 @@ export default function FechamentoMensalNovo() {
   const [selectedYear, setSelectedYear] = useState(currentYear);
   const [selectedMonth, setSelectedMonth] = useState(currentMonth);
   const reportRef = useRef<HTMLDivElement>(null);
+  const { user } = useAuth();
 
   const { data, isLoading, error } = trpc.closing.monthly.useQuery({
     year: selectedYear,
@@ -120,6 +126,29 @@ export default function FechamentoMensalNovo() {
     );
   };
 
+  // Query para verificar se o mês já tem snapshot de estoque
+  const { data: snapshotInfo, refetch: refetchSnapshot } = trpc.closing.getStockSnapshot.useQuery({
+    year: selectedYear,
+    month: selectedMonth,
+  });
+
+  // Mutation para capturar snapshot e fechar o mês
+  const captureSnapshot = trpc.closing.captureStockSnapshot.useMutation({
+    onSuccess: (result) => {
+      toast.success(`Mês fechado com sucesso! ${result.saved} categorias salvas em snapshot.`);
+      refetchSnapshot();
+    },
+    onError: (err) => {
+      toast.error(`Erro ao fechar mês: ${err.message}`);
+    },
+  });
+
+  const handleClosingMonth = () => {
+    if (confirm(`Confirma o fechamento de ${MONTHS.find(m => m.value === selectedMonth)?.label}/${selectedYear}? O estoque final será congelado.`)) {
+      captureSnapshot.mutate({ year: selectedYear, month: selectedMonth });
+    }
+  };
+
   const handlePrint = () => {
     window.print();
   };
@@ -161,6 +190,21 @@ export default function FechamentoMensalNovo() {
                 ))}
               </SelectContent>
             </Select>
+            {/* Botão de Fechar Mês (apenas admin) */}
+            {user?.role === 'admin' && (
+              <Button
+                variant={snapshotInfo?.hasSnapshot ? "outline" : "default"}
+                onClick={handleClosingMonth}
+                disabled={captureSnapshot.isPending}
+                className={snapshotInfo?.hasSnapshot ? "border-green-500 text-green-700" : ""}
+              >
+                {snapshotInfo?.hasSnapshot ? (
+                  <><Lock className="h-4 w-4 mr-2" />Mês Fechado</>
+                ) : (
+                  <><Unlock className="h-4 w-4 mr-2" />{captureSnapshot.isPending ? 'Fechando...' : 'Fechar Mês'}</>
+                )}
+              </Button>
+            )}
             <Button variant="outline" onClick={handlePrint}>
               <Printer className="h-4 w-4 mr-2" />
               Imprimir
@@ -631,10 +675,21 @@ export default function FechamentoMensalNovo() {
             {/* 5. ESTOQUE POR CATEGORIA + GIRO */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Package className="h-5 w-5 text-primary" />
-                  Estoque por Categoria + Giro
-                </CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Package className="h-5 w-5 text-primary" />
+                    Estoque por Categoria + Giro
+                  </CardTitle>
+                  {snapshotInfo?.hasSnapshot ? (
+                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700 border border-green-200">
+                      <Lock className="h-3 w-3" /> Estoque Congelado
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-700 border border-amber-200">
+                      <Unlock className="h-3 w-3" /> Estoque em Tempo Real
+                    </span>
+                  )}
+                </div>
               </CardHeader>
               <CardContent>
                 <Table>
@@ -791,7 +846,63 @@ export default function FechamentoMensalNovo() {
               </CardContent>
             </Card>
 
-            {/* 7. COMPRAS POR FORNECEDOR */}
+            {/* 7. OUTRAS RECEITAS */}
+            {(data as any).otherRevenues && ((data as any).otherRevenues.total > 0 || (data as any).otherRevenues.items?.length > 0) && (
+              <Card className="border-t-4 border-t-emerald-500">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <PlusCircle className="h-5 w-5 text-emerald-600" />
+                      Outras Receitas
+                    </CardTitle>
+                    <div className="text-right">
+                      <div className="text-2xl font-bold text-emerald-600">
+                        {formatCurrency((data as any).otherRevenues.total)}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {(data as any).otherRevenues.items?.length || 0} lançamento(s)
+                      </div>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Descrição</TableHead>
+                        <TableHead>Parceiro</TableHead>
+                        <TableHead>Conta</TableHead>
+                        <TableHead className="text-right">Valor</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {(data as any).otherRevenues.items?.map((item: any) => (
+                        <TableRow key={item.id}>
+                          <TableCell className="font-medium">{item.description}</TableCell>
+                          <TableCell className="text-sm text-muted-foreground">{item.partnerName}</TableCell>
+                          <TableCell className="text-sm text-muted-foreground">{item.accountName || '—'}</TableCell>
+                          <TableCell className="text-right font-mono text-emerald-600 font-semibold">
+                            {formatCurrency(item.amount)}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                    {(data as any).otherRevenues.items?.length > 1 && (
+                      <TableFooter>
+                        <TableRow className="font-bold">
+                          <TableCell colSpan={3}>Total</TableCell>
+                          <TableCell className="text-right font-mono text-emerald-600">
+                            {formatCurrency((data as any).otherRevenues.total)}
+                          </TableCell>
+                        </TableRow>
+                      </TableFooter>
+                    )}
+                  </Table>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* 8. COMPRAS POR FORNECEDOR */}
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2">

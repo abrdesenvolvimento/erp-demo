@@ -1428,3 +1428,60 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [ ] Popular com as contas bancárias cadastradas no módulo de Contabilidade
 - [ ] Salvar banco/conta no registro de pagamento para rastreabilidade
 - [ ] Revisar campo "Forma de Pagamento" no mesmo modal (entender se está correto ou precisa de ajuste)
+
+#### BUG: Análise de Despesas — Nenhuma despesa encontrada após mudança de lógica
+**Problema:** Após migrar para `expenseInstallments.dueDate`, despesas sem parcelas na tabela (ex: pagamento à vista sem registro em expenseInstallments) não aparecem mais.
+- [ ] Investigar se despesas à vista têm registros em expenseInstallments
+- [ ] Corrigir query para usar LEFT JOIN ou fallback para expenses.createdAt quando não há parcelas
+- [ ] Garantir que DAS (Simples Nacional) aparece em Janeiro no Fechamento
+
+#### BUG: DAS Simples Nacional — Aparece em Fevereiro no Fechamento
+**Problema:** O DAS ID 1170001 tem competenceMonth=2026-01 mas ainda aparece em Fevereiro no Fechamento.
+- [ ] Verificar dueDate das parcelas do DAS na tabela expenseInstallments
+- [ ] Corrigir dueDate se necessário ou ajustar lógica de fallback
+
+#### NOVO: Card de Outras Receitas no Fechamento
+**Escopo:** Criar seção/card no Fechamento que exibe Outras Receitas (otherRevenues) + Lançamentos Extras do Contas a Receber do mês selecionado.
+- [ ] Criar query getOtherRevenuesByMonth no db.ts
+- [ ] Adicionar ao getMonthlyClosing os dados de Outras Receitas
+- [ ] Criar card visual no frontend do Fechamento com total e lista de lançamentos
+- [ ] Incluir Outras Receitas no cálculo do Resultado Líquido
+
+#### NOVO: Snapshot de Estoque Mensal (Congelar Valor Final)
+**Escopo:** Criar tabela monthlyStockSnapshot e job de fechamento para congelar estoque final.
+- [ ] Criar tabela monthlyStockSnapshot no schema (companyId, categoryId, month, year, closingValue, closingQuantity, savedAt)
+- [ ] Executar pnpm db:push para migrar
+- [ ] Criar função saveMonthlyStockSnapshot no db.ts
+- [ ] Criar endpoint/procedure para acionar o snapshot (manual + automático no fechamento)
+- [ ] Alterar query de Estoque por Categoria no Fechamento para usar snapshot quando mês já fechado
+- [ ] Executar snapshot retroativo para Jan/2026 e Fev/2026
+
+
+---
+
+## ✅ CORREÇÕES EXECUTADAS EM 03/03/2026
+
+### Bug: Análise de Despesas - Nenhuma despesa encontrada
+- [x] Causa: coluna inexistente `e.installments` na query `getExpenseHierarchicalData`
+- [x] Correção: removida referência a `e.installments` (coluna não existe na tabela `expenses`)
+- [x] Resultado: análise hierárquica retorna 88 parcelas corretamente
+
+### Bug: DAS no Fechamento aparecia em Fevereiro
+- [x] Causa: query de Fechamento usava `ei.dueDate` (vencimento = 20/02), mas DAS tem competência em Janeiro
+- [x] Correção: query de Fechamento agora usa `e.competenceMonth` para agrupar despesas
+- [x] Resultado: DAS (R$2.396,17) aparece corretamente em Janeiro no Fechamento
+
+### Card de Outras Receitas no Fechamento
+- [x] Adicionada query de `otherRevenues` ao `getMonthlyClosing`
+- [x] Card verde (border-t-emerald-500) exibido após Despesas por Conta Gerencial
+- [x] Mostra: descrição, parceiro, conta gerencial, valor por lançamento + total
+- [x] Visível apenas quando há lançamentos no período
+
+### Snapshot de Estoque Mensal (Congelar Estoque Final)
+- [x] Criada tabela `monthlyStockSnapshot` no banco (via SQL direto)
+- [x] Adicionada ao schema.ts para rastreabilidade
+- [x] Funções `captureMonthlyStockSnapshot` e `getMonthlyStockSnapshot` em `closingQueries.ts`
+- [x] Endpoints: `closing.captureStockSnapshot` (mutation, admin) e `closing.getStockSnapshot` (query, consultor)
+- [x] Botão "Fechar Mês" no header do Fechamento (visível apenas para admin)
+- [x] Badge "Estoque Congelado" / "Estoque em Tempo Real" no card de Estoque por Categoria
+- [ ] Integrar snapshot na query `getStockByCategory` para usar valores congelados quando disponível
