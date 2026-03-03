@@ -1519,3 +1519,11 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Atualizar getExpenseAnalysisByCategory, byMonth, byCategoryAndMonth, summary, detail
 - [x] Atualizar queries de despesas no getMonthlyClosing (Fechamento) - seções 3 e 7
 - [x] 10 testes vitest passando (expense-hybrid-rule.test.ts)
+
+### Outras Receitas no Resultado Líquido do Fechamento (03/03/2026)
+- [x] Mover card de Outras Receitas para acima do card de Resultado Líquido
+- [x] Incluir Outras Receitas no cálculo do Resultado Líquido (Faturamento - CMV - Despesas + Outras Receitas)
+- [x] Ajustar backend (getMonthlyClosing) para somar Outras Receitas ao resultado
+- [x] Ajustar frontend (FechamentoMensalNovo) para posicionar card corretamente
+- [x] Detalhamento de Outras Receitas com tabela (Descrição, Parceiro, Conta Gerencial, Valor)
+- [x] 8 testes vitest passando (other-revenues-result.test.ts)

@@ -6749,8 +6749,9 @@ export async function getMonthlyClosing(year: number, month: number, companyId?:
   // Manter compatibilidade com estrutura antiga
   const grossProfit = totalSales.revenue - totalSales.cost;
   const grossMargin = totalSales.revenue > 0 ? (grossProfit / totalSales.revenue) * 100 : 0;
-  const netResult = totalSales.revenue - totalSales.cost - totalExpenses.amount;
-  const netMargin = totalSales.revenue > 0 ? (netResult / totalSales.revenue) * 100 : 0;
+  // netResult será calculado após buscar Outras Receitas (inclui no resultado)
+  let netResult = 0;
+  let netMargin = 0;
 
   // 8b. OUTRAS RECEITAS - Lançamentos do módulo Outras Receitas no mês de competência
   const otherRevenuesResult = await db.execute(sql.raw(`
@@ -6787,6 +6788,11 @@ export async function getMonthlyClosing(year: number, month: number, companyId?:
     classification: row.classification,
   }));
   const totalOtherRevenues = otherRevenuesList.reduce((s, r) => s + r.amount, 0);
+
+  // Calcular netResult incluindo Outras Receitas no resultado
+  // Resultado Líquido = Faturamento - CMV - Despesas + Outras Receitas
+  netResult = totalSales.revenue - totalSales.cost - totalExpenses.amount + totalOtherRevenues;
+  netMargin = totalSales.revenue > 0 ? (netResult / totalSales.revenue) * 100 : 0;
 
   // NOVAS SEÇÕES PARA O LAYOUT ATUALIZADO (skip em chamadas recursivas)
   let salesByCategory: any[] = [];

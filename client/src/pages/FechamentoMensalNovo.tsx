@@ -202,7 +202,7 @@ export default function FechamentoMensalNovo() {
             </div>
 
             {/* 1. CARDS DE RESUMO COM COMPARATIVO */}
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 print:grid-cols-4">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5 print:grid-cols-5">
               <Card className="border-t-4 border-t-blue-500">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-medium flex items-center gap-2">
@@ -257,6 +257,25 @@ export default function FechamentoMensalNovo() {
                 </CardContent>
               </Card>
 
+              {/* Card Outras Receitas */}
+              <Card className="border-t-4 border-t-emerald-500">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium flex items-center gap-2">
+                    <PlusCircle className="h-4 w-4 text-emerald-500" />
+                    Outras Receitas
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-emerald-600">
+                    {formatCurrency((data as any).otherRevenues?.total || 0)}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {(data as any).otherRevenues?.items?.length || 0} lançamento(s)
+                  </p>
+                </CardContent>
+              </Card>
+
+              {/* Card Resultado Líquido (inclui Outras Receitas) */}
               <Card className={`border-t-4 ${data.results.netResult >= 0 ? 'border-t-green-500' : 'border-t-red-500'}`}>
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-medium flex items-center gap-2">
@@ -809,14 +828,14 @@ export default function FechamentoMensalNovo() {
               </CardContent>
             </Card>
 
-            {/* 7. OUTRAS RECEITAS */}
-            {(data as any).otherRevenues && ((data as any).otherRevenues.total > 0 || (data as any).otherRevenues.items?.length > 0) && (
+            {/* 7. OUTRAS RECEITAS - Detalhamento (se houver lançamentos) */}
+            {(data as any).otherRevenues && (data as any).otherRevenues.items?.length > 0 && (
               <Card className="border-t-4 border-t-emerald-500">
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-lg flex items-center gap-2">
                       <PlusCircle className="h-5 w-5 text-emerald-600" />
-                      Outras Receitas
+                      Outras Receitas — Detalhamento
                     </CardTitle>
                     <div className="text-2xl font-bold text-emerald-600">
                       {formatCurrency((data as any).otherRevenues.total)}
@@ -824,13 +843,32 @@ export default function FechamentoMensalNovo() {
                   </div>
                 </CardHeader>
                 <CardContent className="pt-0">
-                  <div className="space-y-1">
-                    {(data as any).otherRevenues.items?.map((item: any) => (
-                      <p key={item.id} className="text-sm text-muted-foreground">
-                        {item.description}{item.partnerName ? ` — ${item.partnerName}` : ''}
-                      </p>
-                    ))}
-                  </div>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Descrição</TableHead>
+                        <TableHead>Parceiro</TableHead>
+                        <TableHead>Conta Gerencial</TableHead>
+                        <TableHead className="text-right">Valor</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {(data as any).otherRevenues.items.map((item: any) => (
+                        <TableRow key={item.id}>
+                          <TableCell className="font-medium">{item.description}</TableCell>
+                          <TableCell>{item.partnerName || '—'}</TableCell>
+                          <TableCell>{item.accountName || '—'}</TableCell>
+                          <TableCell className="text-right font-medium text-emerald-600">{formatCurrency(item.amount)}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                    <TableFooter>
+                      <TableRow>
+                        <TableCell colSpan={3} className="font-bold">Total</TableCell>
+                        <TableCell className="text-right font-bold text-emerald-600">{formatCurrency((data as any).otherRevenues.total)}</TableCell>
+                      </TableRow>
+                    </TableFooter>
+                  </Table>
                 </CardContent>
               </Card>
             )}
