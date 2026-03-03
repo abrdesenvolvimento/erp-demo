@@ -283,20 +283,36 @@ export async function getStockByCategory(
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  // Estoque FINAL (snapshot atual) por categoria
-  // Excluir produtos compostos (isComposite=1) para alinhar com o Dashboard
-  const finalStockResult = await db.execute(sql.raw(`
-    SELECT 
-      c.id as categoryId,
-      c.name as categoryName,
-      SUM(p.currentStock * p.avgCost) as finalStock
-    FROM products p
-    INNER JOIN categories c ON p.categoryId = c.id
-    WHERE p.active = 1
-      AND (p.isComposite = 0 OR p.isComposite IS NULL)
-      ${companyId ? `AND p.companyId = ${companyId}` : ''}
-    GROUP BY c.id, c.name
+  // Verificar se existe snapshot congelado para o mês
+  const snapshotResult = await db.execute(sql.raw(`
+    SELECT categoryId, categoryName, totalCost as finalStock
+    FROM monthlyStockSnapshot
+    WHERE companyId = ${companyId || 1} AND year = ${year} AND month = ${month}
+    ORDER BY totalCost DESC
   `));
+  const snapshotRows = (snapshotResult[0] as unknown as any[]) || [];
+  const hasSnapshot = snapshotRows.length > 0;
+
+  let finalStockResult: any;
+  if (hasSnapshot) {
+    // Usar valores congelados do snapshot
+    finalStockResult = snapshotResult;
+  } else {
+    // Estoque FINAL (tempo real) por categoria
+    // Excluir produtos compostos (isComposite=1) para alinhar com o Dashboard
+    finalStockResult = await db.execute(sql.raw(`
+      SELECT 
+        c.id as categoryId,
+        c.name as categoryName,
+        SUM(p.currentStock * p.avgCost) as finalStock
+      FROM products p
+      INNER JOIN categories c ON p.categoryId = c.id
+      WHERE p.active = 1
+        AND (p.isComposite = 0 OR p.isComposite IS NULL)
+        ${companyId ? `AND p.companyId = ${companyId}` : ''}
+      GROUP BY c.id, c.name
+    `));
+  }
 
   // Movimentações de estoque no período (entradas e saídas)
   // Excluir produtos compostos para consistência
@@ -442,7 +458,7 @@ export async function captureMonthlyStockSnapshot(
   const competenceMonth = `${year}-${String(month).padStart(2, '0')}`;
 
   // Buscar estoque atual por categoria (snapshot no momento do fechamento)
-  const [rows] = await (db as any).$client.query(`
+  const result = await db.execute(sql.raw(`
     SELECT 
       c.id as categoryId,
       c.name as categoryName,
@@ -452,34 +468,28 @@ export async function captureMonthlyStockSnapshot(
     INNER JOIN categories c ON p.categoryId = c.id
     WHERE p.active = 1
       AND (p.isComposite = 0 OR p.isComposite IS NULL)
-      AND p.companyId = ?
+      AND p.companyId = ${companyId}
     GROUP BY c.id, c.name
     ORDER BY totalCost DESC
-  `, [companyId]);
+  `));
+
+  const rows = (result[0] as unknown as any[]) || [];
 
   let saved = 0;
-  for (const row of rows as any[]) {
-    await (db as any).$client.query(`
+  for (const row of rows) {
+    const totalCostVal = parseFloat(row.totalCost || '0').toFixed(2);
+    const capturedByVal = capturedBy ? `'${capturedBy}'` : 'NULL';
+    await db.execute(sql.raw(`
       INSERT INTO monthlyStockSnapshot 
         (companyId, year, month, competenceMonth, categoryId, categoryName, totalItems, totalCost, snapshotDate, capturedBy)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?)
+      VALUES (${companyId}, ${year}, ${month}, '${competenceMonth}', ${row.categoryId}, '${(row.categoryName || '').replace(/'/g, "''")}', ${row.totalItems}, ${totalCostVal}, NOW(), ${capturedByVal})
       ON DUPLICATE KEY UPDATE
         categoryName = VALUES(categoryName),
         totalItems = VALUES(totalItems),
         totalCost = VALUES(totalCost),
         snapshotDate = NOW(),
         capturedBy = VALUES(capturedBy)
-    `, [
-      companyId,
-      year,
-      month,
-      competenceMonth,
-      row.categoryId,
-      row.categoryName,
-      row.totalItems,
-      parseFloat(row.totalCost || '0').toFixed(2),
-      capturedBy || null
-    ]);
+    `));
     saved++;
   }
 
@@ -500,17 +510,17 @@ export async function getMonthlyStockSnapshot(
 
   const competenceMonth = `${year}-${String(month).padStart(2, '0')}`;
 
-  const [rows] = await (db as any).$client.query(`
+  const result = await db.execute(sql.raw(`
     SELECT categoryId, categoryName, totalItems, totalCost, snapshotDate
     FROM monthlyStockSnapshot
-    WHERE companyId = ? AND competenceMonth = ?
+    WHERE companyId = ${companyId} AND competenceMonth = '${competenceMonth}'
     ORDER BY totalCost DESC
-  `, [companyId, competenceMonth]);
+  `));
 
-  const result = rows as any[];
-  if (!result || result.length === 0) return null;
+  const rows = (result[0] as unknown as any[]) || [];
+  if (!rows || rows.length === 0) return null;
 
-  return result.map(row => ({
+  return rows.map(row => ({
     categoryId: row.categoryId,
     categoryName: row.categoryName,
     totalItems: row.totalItems,

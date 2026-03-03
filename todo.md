@@ -1429,32 +1429,32 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [ ] Salvar banco/conta no registro de pagamento para rastreabilidade
 - [ ] Revisar campo "Forma de Pagamento" no mesmo modal (entender se está correto ou precisa de ajuste)
 
-#### BUG: Análise de Despesas — Nenhuma despesa encontrada após mudança de lógica
+#### BUG: Análise de Despesas — Nenhuma despesa encontrada após mudança de lógica ✅
 **Problema:** Após migrar para `expenseInstallments.dueDate`, despesas sem parcelas na tabela (ex: pagamento à vista sem registro em expenseInstallments) não aparecem mais.
-- [ ] Investigar se despesas à vista têm registros em expenseInstallments
-- [ ] Corrigir query para usar LEFT JOIN ou fallback para expenses.createdAt quando não há parcelas
-- [ ] Garantir que DAS (Simples Nacional) aparece em Janeiro no Fechamento
+- [x] Investigar se despesas à vista têm registros em expenseInstallments (todas têm)
+- [x] Corrigir query: bug era coluna inexistente `e.installments`
+- [x] Garantir que DAS (Simples Nacional) aparece em Janeiro no Fechamento (corrigido via competenceMonth)
 
-#### BUG: DAS Simples Nacional — Aparece em Fevereiro no Fechamento
+#### BUG: DAS Simples Nacional — Aparece em Fevereiro no Fechamento ✅
 **Problema:** O DAS ID 1170001 tem competenceMonth=2026-01 mas ainda aparece em Fevereiro no Fechamento.
-- [ ] Verificar dueDate das parcelas do DAS na tabela expenseInstallments
-- [ ] Corrigir dueDate se necessário ou ajustar lógica de fallback
+- [x] Verificar dueDate das parcelas do DAS na tabela expenseInstallments (dueDate=20/02/2026)
+- [x] Corrigido: query de Fechamento usa competenceMonth em vez de dueDate
 
-#### NOVO: Card de Outras Receitas no Fechamento
+#### NOVO: Card de Outras Receitas no Fechamento ✅
 **Escopo:** Criar seção/card no Fechamento que exibe Outras Receitas (otherRevenues) + Lançamentos Extras do Contas a Receber do mês selecionado.
-- [ ] Criar query getOtherRevenuesByMonth no db.ts
-- [ ] Adicionar ao getMonthlyClosing os dados de Outras Receitas
-- [ ] Criar card visual no frontend do Fechamento com total e lista de lançamentos
-- [ ] Incluir Outras Receitas no cálculo do Resultado Líquido
+- [x] Criar query getOtherRevenuesByMonth no db.ts (inline no getMonthlyClosing)
+- [x] Adicionar ao getMonthlyClosing os dados de Outras Receitas
+- [x] Criar card visual no frontend do Fechamento com total e lista de lançamentos
+- [x] Incluir Outras Receitas no cálculo do Resultado Líquido
 
-#### NOVO: Snapshot de Estoque Mensal (Congelar Valor Final)
+#### NOVO: Snapshot de Estoque Mensal (Congelar Valor Final) ✅
 **Escopo:** Criar tabela monthlyStockSnapshot e job de fechamento para congelar estoque final.
-- [ ] Criar tabela monthlyStockSnapshot no schema (companyId, categoryId, month, year, closingValue, closingQuantity, savedAt)
-- [ ] Executar pnpm db:push para migrar
-- [ ] Criar função saveMonthlyStockSnapshot no db.ts
-- [ ] Criar endpoint/procedure para acionar o snapshot (manual + automático no fechamento)
-- [ ] Alterar query de Estoque por Categoria no Fechamento para usar snapshot quando mês já fechado
-- [ ] Executar snapshot retroativo para Jan/2026 e Fev/2026
+- [x] Criar tabela monthlyStockSnapshot no banco (via SQL direto)
+- [x] Criar funções captureMonthlyStockSnapshot e getMonthlyStockSnapshot
+- [x] Implementar job automático (node-cron) no último dia do mês às 23:59 SP
+- [x] Alterar query de Estoque por Categoria no Fechamento para usar snapshot quando mês já fechado
+- [x] Integrar snapshot na Evolução Mensal de Estoque
+- [x] Executar snapshot retroativo para Jan/2026 e Fev/2026
 
 
 ---
@@ -1484,4 +1484,22 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Endpoints: `closing.captureStockSnapshot` (mutation, admin) e `closing.getStockSnapshot` (query, consultor)
 - [x] Botão "Fechar Mês" no header do Fechamento (visível apenas para admin)
 - [x] Badge "Estoque Congelado" / "Estoque em Tempo Real" no card de Estoque por Categoria
-- [ ] Integrar snapshot na query `getStockByCategory` para usar valores congelados quando disponível
+- [x] Integrar snapshot na query `getStockByCategory` para usar valores congelados quando disponível
+
+
+### BUG: Lançamentos duplicados na Análise de Despesas (03/03/2026)
+- [x] Investigar causa da duplicação — parcelas duplicadas no banco (erro de digitação, 2 parcelas para mesma despesa)
+- [x] Excluídas 5 parcelas duplicadas (Pró-Labore R$3.500 x2 e 3 outras)
+- [x] Não era bug de query, era dado duplicado na tabela expenseInstallments
+
+### Snapshot de Estoque Automático (03/03/2026)
+- [x] Remover botão manual "Fechar Mês" do Fechamento
+- [x] Implementar job automático (node-cron) para capturar estoque no último minuto do último dia do mês (23:59 SP)
+- [x] Integrar snapshot nas queries de Fechamento (getStockByCategory) e Análise de Estoque (Evolução Mensal)
+- [x] Quando snapshot existe para o mês, usar valores congelados; caso contrário, usar estoque em tempo real
+- [x] Snapshots retroativos capturados para Jan/2026 e Fev/2026
+
+### Outras Receitas no DRE (03/03/2026)
+- [x] Incluir Outras Receitas no cálculo do DRE na conta gerencial lançada (seção 7 - OUTRAS RECEITAS)
+- [x] Filtro para não duplicar receitas já contabilizadas (isAccounted = 0)
+- [x] Não mexer na contabilização por enquanto (pendente análise do responsável)

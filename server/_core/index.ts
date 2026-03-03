@@ -10,6 +10,7 @@ import { serveStatic, setupVite } from "./vite";
 import backupRouter from "../backupEndpoint";
 import { initBackupScheduler, getSchedulerStatus, triggerManualBackup } from "../scheduler";
 import { initAccountingScheduler, getAccountingSchedulerStatus, runAccountingBatch, updateAccountingSchedule } from "../accountingScheduler";
+import { initStockSnapshotJob } from "../jobs/stockSnapshot";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -112,6 +113,7 @@ async function startServer() {
     // Inicializar schedulers após servidor estar rodando
     initBackupScheduler();
     initAccountingScheduler();
+    initStockSnapshotJob();
   });
 }
 

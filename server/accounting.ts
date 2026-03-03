@@ -731,6 +731,34 @@ export async function getDRE(
   
   const lucroBruto = totalReceitas - totalCustos;
   const lucroOperacional = lucroBruto - totalDespesas;
+
+  // Buscar Outras Receitas do período (otherRevenues)
+  const dbInstance = await getDb();
+  let outrasReceitasItems: { description: string; value: number; accountName: string }[] = [];
+  let totalOutrasReceitas = 0;
+  if (dbInstance) {
+    const orResult = await dbInstance.execute(sql.raw(`
+      SELECT 
+        ort.description,
+        ort.amount / 100 as value,
+        COALESCE(ma.name, 'Outras Receitas') as accountName
+      FROM otherRevenues ort
+      LEFT JOIN managementAccounts ma ON ort.managementAccountId = ma.id
+      WHERE ort.competenceMonth = '${competenceMonth}'
+        AND ort.companyId = ${companyId}
+        AND ort.status = 'ACTIVE'
+        AND (ort.isAccounted = 0 OR ort.isAccounted IS NULL)
+    `));
+    const orRows = (orResult[0] || []) as unknown as any[];
+    outrasReceitasItems = orRows.map(r => ({
+      description: r.description || 'Outras Receitas',
+      value: parseFloat(r.value || '0'),
+      accountName: r.accountName,
+    }));
+    totalOutrasReceitas = outrasReceitasItems.reduce((sum, r) => sum + r.value, 0);
+  }
+
+  const resultadoLiquido = lucroOperacional + totalOutrasReceitas;
   
   // Montar DRE
   const dre: DRELine[] = [
@@ -762,6 +790,22 @@ export async function getDRE(
     { code: '', description: '', value: 0, level: 0 }, // Linha vazia
     { code: '', description: 'RESULTADO OPERACIONAL', value: lucroOperacional, level: 1, isTotal: true },
   ];
+
+  // Adicionar Outras Receitas se houver
+  if (totalOutrasReceitas > 0) {
+    dre.push({ code: '', description: '', value: 0, level: 0 }); // Linha vazia
+    dre.push({ code: '7', description: 'OUTRAS RECEITAS', value: totalOutrasReceitas, level: 1 });
+    for (const item of outrasReceitasItems) {
+      dre.push({
+        code: '',
+        description: `${item.accountName}: ${item.description}`,
+        value: item.value,
+        level: 2
+      });
+    }
+    dre.push({ code: '', description: '', value: 0, level: 0 }); // Linha vazia
+    dre.push({ code: '', description: 'RESULTADO LÍQUIDO', value: resultadoLiquido, level: 1, isTotal: true });
+  }
   
   return dre;
 }

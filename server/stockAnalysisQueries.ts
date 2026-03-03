@@ -701,10 +701,28 @@ export async function getStockMonthlyEvolution(
     if (runningQty < 0) runningQty = 0;
   }
 
+  // Buscar snapshots congelados para o ano (se existirem)
+  const snapshotResult = await db.execute(sql.raw(`
+    SELECT competenceMonth, SUM(totalCost) as totalValue, SUM(totalItems) as totalItems
+    FROM monthlyStockSnapshot
+    WHERE companyId = ${companyId || 1} AND year = ${year}
+    GROUP BY competenceMonth
+  `));
+  const snapshotRows = (snapshotResult[0] || []) as unknown as any[];
+  const snapshotMap: Record<string, { value: number; qty: number }> = {};
+  for (const r of snapshotRows) {
+    snapshotMap[r.competenceMonth] = {
+      value: parseFloat(r.totalValue || '0'),
+      qty: parseInt(r.totalItems || '0'),
+    };
+  }
+
   // Montar resultado apenas para os meses do ano solicitado
   const results: StockMonthlyEvolution[] = [];
   for (const { ym, label } of yearMonths) {
-    const stock = stockByMonth[ym] || { value: 0, qty: 0 };
+    // Usar snapshot congelado se disponível, senão usar cálculo retroativo
+    const snapshot = snapshotMap[ym];
+    const stock = snapshot || stockByMonth[ym] || { value: 0, qty: 0 };
     const cmv = salesMap[ym]?.costOut || 0;
     const turnover = stock.value > 0 ? cmv / stock.value : 0;
 

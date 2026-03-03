@@ -6500,23 +6500,24 @@ export async function getMonthlyClosing(year: number, month: number, companyId?:
 
   const receitaLiquida = receitaBrutaTotal - deducoesTotal;
 
-  // 7. DESPESAS POR CONTA GERENCIAL
+  // 7. DESPESAS POR CONTA GERENCIAL (usa competenceMonth e inclui despesas sem conta gerencial)
   const expensesByAccountResult = await db.execute(sql.raw(`
     SELECT 
-      ma.id as accountId,
-      ma.code as accountCode,
-      ma.name as accountName,
-      ma.nature,
-      ma.classification,
-      SUM(CAST(e.amount AS DECIMAL(12,2))) as total,
-      COUNT(*) as count
+      COALESCE(ma.id, 0) as accountId,
+      COALESCE(ma.code, 'SEM') as accountCode,
+      COALESCE(ma.name, ec.name, 'Sem Classificação') as accountName,
+      COALESCE(ma.nature, 'DESPESA') as nature,
+      COALESCE(ma.classification, 'OPERACIONAL') as classification,
+      SUM(CAST(ei.amount AS DECIMAL(12,2))) as total,
+      COUNT(DISTINCT e.id) as count
     FROM expenses e
-    INNER JOIN managementAccounts ma ON e.managementAccountId = ma.id
+    INNER JOIN expenseInstallments ei ON ei.expenseId = e.id
+    LEFT JOIN managementAccounts ma ON e.managementAccountId = ma.id
+    LEFT JOIN expenseCategories ec ON e.categoryId = ec.id
     WHERE e.status != 'CANCELADA'
-      AND DATE(CONVERT_TZ(e.createdAt, '+00:00', '-03:00')) >= '${startDate}'
-      AND DATE(CONVERT_TZ(e.createdAt, '+00:00', '-03:00')) <= '${endDate}'
+      AND e.competenceMonth = '${competenceMonthStr}'
       ${companyId ? `AND e.companyId = ${companyId}` : ''}
-    GROUP BY ma.id, ma.code, ma.name, ma.nature, ma.classification
+    GROUP BY COALESCE(ma.id, 0), COALESCE(ma.code, 'SEM'), COALESCE(ma.name, ec.name, 'Sem Classificação'), COALESCE(ma.nature, 'DESPESA'), COALESCE(ma.classification, 'OPERACIONAL')
     ORDER BY total DESC
   `));
 
