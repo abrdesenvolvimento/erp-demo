@@ -218,25 +218,25 @@ Despesas criadas ANTES desta implementação (07/02/2026) não possuem registros
 ## 📈 TELA DE FECHAMENTO - NOVO LAYOUT (22/02/2026)
 
 ### Estrutura Aba Mensal
-- [ ] 1. Cards de Resumo (Faturamento, Lucro Bruto, Despesas, Resultado Líquido) + Comparativo Mês Anterior
-- [ ] 2. Vendas por Canal (Qtd, Faturamento, %, Ticket Médio) + Metas (Meta, Realizado, % Atingido)
-- [ ] 3. Vendas por Categoria (Faturamento, %, Margem) + Compras por Categoria (Valor, %) lado a lado
-- [ ] 4. Faturamento por Tipo de Pagamento (Tipo, Qtd Transações, Faturamento, %)
-- [ ] 5. Estoque por Categoria (Inicial, Final, Variação) + Giro de Estoque (CMV/Estoque Médio)
-- [ ] 6. Despesas por Conta Gerencial (Conta, Classificação, Valor, %)
-- [ ] 7. Compras por Fornecedor (Fornecedor, Valor, %, Qtd Notas)
+- [x] 1. Cards de Resumo (Faturamento, Lucro Bruto, Despesas, Outras Receitas, Resultado Líquido) + Comparativo Mês Anterior
+- [x] 2. Vendas por Canal (Qtd, Faturamento, %, Ticket Médio) + Metas (Meta, Realizado, % Atingido)
+- [x] 3. Vendas por Categoria (Faturamento, %, Margem) + Compras por Categoria (Valor, %) lado a lado
+- [x] 4. Faturamento por Tipo de Pagamento (Tipo, Qtd Transações, Faturamento, %)
+- [x] 5. Estoque por Categoria (Inicial, Final, Variação) + Giro de Estoque (CMV/Estoque Médio)
+- [x] 6. Despesas por Conta Gerencial (Conta, Classificação, Valor, %)
+- [x] 7. Compras por Fornecedor (Fornecedor, Valor, %, Qtd Notas)
 
 ### Backend
-- [ ] Criar queries para cada seção com filtro de competência
-- [ ] Implementar cálculo de giro de estoque
-- [ ] Implementar comparativo mês anterior
-- [ ] Endpoint tRPC consolidado para fechamento mensal
+- [x] Criar queries para cada seção com filtro de competência
+- [x] Implementar cálculo de giro de estoque
+- [x] Implementar comparativo mês anterior
+- [x] Endpoint tRPC consolidado para fechamento mensal
 
 ### Frontend
-- [ ] Refatorar componente Fechamento.tsx
-- [ ] Criar componentes para cada seção
-- [ ] Implementar layout responsivo
-- [ ] Adicionar seletor de competência (mês/ano)
+- [x] Refatorar componente Fechamento.tsx (FechamentoMensalNovo.tsx)
+- [x] Criar componentes para cada seção
+- [x] Implementar layout responsivo
+- [x] Adicionar seletor de competência (mês/ano)
 
 ### Impressão (Fase 2)
 - [ ] Adicionar logo da empresa no cabeçalho
@@ -1525,5 +1525,50 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Incluir Outras Receitas no cálculo do Resultado Líquido (Faturamento - CMV - Despesas + Outras Receitas)
 - [x] Ajustar backend (getMonthlyClosing) para somar Outras Receitas ao resultado
 - [x] Ajustar frontend (FechamentoMensalNovo) para posicionar card corretamente
-- [x] Detalhamento de Outras Receitas com tabela (Descrição, Parceiro, Conta Gerencial, Valor)
+- [x] Detalhamento de Outras Receitas com tabela (Descrição, Parceiro, Conta Gerencial, Valor) — removido a pedido do Gabriel
+- [x] Removida seção 7 de detalhamento (não precisa desse nível de detalhe no fechamento)
 - [x] 8 testes vitest passando (other-revenues-result.test.ts)
+
+---
+
+## 📋 RESUMO CONSOLIDADO - Sprint 03/03/2026
+
+### Entregas do dia:
+
+**1. Lançamentos duplicados na Análise de Despesas**
+- Investigado e resolvido: eram parcelas duplicadas no banco (erro de digitação), não bug de query
+- Excluídas 5 parcelas duplicadas
+
+**2. Snapshot de Estoque Automático**
+- Removido botão manual "Fechar Mês"
+- Implementado job automático (node-cron) para capturar estoque no último minuto do mês (23:59 SP)
+- Snapshots retroativos capturados para Jan/2026 e Fev/2026
+
+**3. Outras Receitas no DRE**
+- Incluídas no cálculo do DRE na conta gerencial lançada (seção 7)
+- Filtro para não duplicar receitas já contabilizadas
+
+**4. Ajustes de Interface**
+- Simplificado card Outras Receitas no Fechamento
+- Removido badge "Estoque Congelado" do header
+
+**5. Regra Híbrida de Despesas (Análise + Fechamento)**
+- Parceladas (>1 parcela): valor da parcela no mês do vencimento (dueDate)
+- Pagamento único (1 parcela): valor no mês de competência (competenceMonth)
+- 8 funções atualizadas (6 análise + 2 fechamento)
+- Corrigido: DAS aparece em Janeiro (competência Jan), Contabilidade 12/2025 voltou para Dezembro
+
+**6. Outras Receitas no Resultado Líquido**
+- Card de Outras Receitas adicionado nos cards de resumo (5 colunas)
+- Fórmula: Resultado = Faturamento - CMV - Despesas + Outras Receitas
+- Empréstimo Pronampe (R$121.480,34) agora compõe o resultado de Janeiro
+
+### Pendências remanescentes (próximas sprints):
+- [ ] Incluir Outras Receitas no DRE contábil (dre.resultadoLiquido) para consistência
+- [ ] Comparativo mês anterior (previousMonth.netResult) incluir Outras Receitas
+- [ ] Impressão do Fechamento: logo da empresa + layout A4
+- [ ] Fase 2 Timezone: migrar exibição (PDF/backup)
+- [ ] Fase 3 Timezone: manter timestamps técnicos em UTC
+- [ ] Acesso por Empresa: Fases 3-5 (parcelas, contabilidade, testes)
+- [ ] Pedidos cancelados iFood: não aparecer na lista
+- [ ] Campo Data iFood: usar inicio_da_entrega

@@ -70,12 +70,8 @@ describe('Outras Receitas no Resultado Líquido - Frontend', () => {
     expect(cardsSection![0]).toContain('emerald');
   });
 
-  it('Seção detalhada de Outras Receitas (seção 7) ainda existe com tabela', () => {
+  it('Seção detalhada de Outras Receitas (seção 7) foi removida do Fechamento', () => {
     const detalhamento = fechamentoContent.includes('Outras Receitas — Detalhamento');
-    expect(detalhamento, 'Seção de detalhamento deve existir').toBe(true);
-    
-    // Deve ter tabela com colunas
-    const tabelaDetalhamento = fechamentoContent.match(/Outras Receitas — Detalhamento[\s\S]*?Descrição[\s\S]*?Parceiro[\s\S]*?Conta Gerencial[\s\S]*?Valor/);
-    expect(tabelaDetalhamento, 'Tabela de detalhamento deve ter colunas corretas').toBeTruthy();
+    expect(detalhamento, 'Seção de detalhamento não deve existir').toBe(false);
   });
 });
