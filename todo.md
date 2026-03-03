@@ -1189,3 +1189,242 @@ Despesa de impostos aparece tanto em janeiro quanto em fevereiro após edição 
 - [x] Correção: substituído `SUM(s.totalAmount)` por `SUM(s.finalAmount)` em stockAnalysisQueries.ts
 - [x] Teste criado: monthly-evolution-fix.test.ts (3 testes passando)
 - [x] Dados confirmados: Jan/26 R$86.864,57 | Fev/26 R$82.409,98 | Mar/26 R$3.121,19
+
+
+---
+
+## 🗂️ LEVANTAMENTO GERAL DE PENDÊNCIAS — Sprint 03/03/2026
+
+> Consolidação de todos os pontos levantados por Gabriel em 03/03/2026. Cada categoria está com o cenário atual e os itens pendentes mapeados.
+
+---
+
+### 📒 CONTABILIZAÇÃO — Revisão Completa
+
+**Cenário atual:** Módulo implementado com reprocessamento, governança contábil e DRE. Porém há divergências de valores e pendências de regras automáticas que ainda não foram resolvidas.
+
+**Pendências mapeadas:**
+
+- [ ] PROB-01: Receitas de vendas indo para "Outras Receitas Operacionais" (4.2) em vez de "Receita Operacional Bruta" (4.1) — corrigir mapeamento em accountSale
+- [ ] PROB-02: Aluguel aparecendo com valor incorreto (R$20.000,00) no DRE — investigar accountExpenseCreation
+- [ ] PROB-03: Compra duplicada #3960002 (Comercial Bolsão R$237,63) — excluir e reverter lançamentos
+- [ ] PROB-04: Impossível cancelar despesa paga à vista — implementar cancelamento com reversão contábil
+- [ ] PROB-05 a 10: Divergências de receita, CMV e despesas entre DRE e Análise de Vendas (valores documentados nas linhas 715–740 acima)
+- [ ] BUG-09: Contabilização não reconhece despesa de Simples Nacional após alterar competenceMonth — verificar campo usado para filtrar (createdAt vs competenceMonth)
+- [ ] Reprocessamento de janeiro: limpar journals antigos antes de reprocessar (implementar limpeza por competência)
+- [ ] BUG-10: Verificar se journal duplicado ainda ocorre após correção do LIMIT (aguardando teste)
+- [ ] Regra Automática: revisar mapeamento completo de contas (receita, CMV, despesas, compras) contra plano de contas atual
+- [ ] Classificação das Contas: auditar se todas as contas gerenciais estão amarradas corretamente às contas contábeis
+- [ ] Plano de Contas: verificar se há contas faltando ou mal classificadas (grupo 3 vs 4 para receitas)
+- [ ] Outras Receitas R$81.725,68 em janeiro: investigar composição — valor parece incorreto (PROB-11)
+- [ ] Despesa Simples Nacional de Fevereiro: mover competência para Janeiro (ver item 1 das Alterações)
+
+---
+
+### 📋 TELA DE FECHAMENTO — Compras por Fornecedor com Dados Teste
+
+**Cenário atual:** A seção "Compras por Fornecedor" na tela de Fechamento exibe compras de teste que foram inseridas durante o desenvolvimento.
+
+- [ ] Identificar e excluir compras de teste que aparecem na seção "Compras por Fornecedor" do Fechamento
+- [ ] Verificar se há outras seções do Fechamento com dados de teste contaminando os relatórios
+
+---
+
+### 🔍 AUDITORIA — Continuidade
+
+**Cenário atual:** Seção de atividade do perfil foi implementada com 8 tipos de ações registradas (Sprint 25/02/2026). A tabela `governanceAuditLog` existe para logs contábeis. Falta implementar o módulo de auditoria operacional completo.
+
+**Anotações existentes a dar continuidade:**
+
+- [ ] Implementar visualização de log de auditoria por usuário (quem fez o quê e quando)
+- [ ] Registrar ações operacionais: criação/edição/cancelamento de vendas, compras, despesas, recebimentos
+- [ ] Registrar alterações de cadastro: produtos, parceiros, contas gerenciais, plano de contas
+- [ ] Implementar filtros na tela de auditoria: por usuário, por tipo de ação, por período, por módulo
+- [ ] Criar tela de Auditoria acessível apenas para admin (menu Administração)
+- [ ] Integrar com governanceAuditLog existente (unificar logs contábeis e operacionais)
+- [ ] Funcionalidade de Histórico de Movimentações por Produto (botão "Movimentações" na tela de produto)
+
+---
+
+### 🏢 MULTIEMPRESA — Pendências Atuais
+
+**Cenário atual:** Fases 1 e 2 concluídas. Isolamento de dados operacionais implementado. Tela de seleção funcionando. Restam gaps de cadastro e comercialização.
+
+- [ ] Cadastro de produto na A Brasa mostra canais da Adega (Balcão, Delivery 99Food, etc.) — filtrar canais por companyId no autocomplete de criação de produto
+- [ ] Sistema de permissões por módulo/pacote contratado (para comercialização com clientes externos)
+- [ ] Multi-tenant com banco de dados separado por cliente externo (análise de viabilidade)
+- [ ] Pacotes de módulos para liberar acesso a terceiros (definir pacotes comerciais)
+- [ ] Empresas internas (Adega + A Brasa) com acesso total; clientes externos com acesso restrito
+- [ ] Perfis e Funções: reorganizar para suportar multiempresa e comercialização (ver seção Perfis abaixo)
+
+---
+
+### 🕐 TIMEZONE — Conclusão do Padrão
+
+**Cenário atual:** Fase 1 concluída (helpers dateUtils, funções críticas de db.ts e routers.ts migradas). Fase 2 (exibição em PDF/backup) e Fase 3 (timestamps técnicos em UTC) pendentes.
+
+- [ ] Fase 2: Migrar exibição de datas em PDF/impressão para usar fuso horário de SP (não UTC)
+- [ ] Fase 2: Migrar exibição de datas em backup para usar fuso horário de SP
+- [ ] Fase 3: Auditar todos os campos de timestamp técnico (createdAt, updatedAt) — manter em UTC mas garantir que exibição ao usuário converta para SP
+- [ ] Auditoria geral: varrer todos os módulos e garantir que nenhuma data de negócio use toISOString() diretamente
+- [ ] Testar casos de borda: vendas próximas à meia-noite, virada de mês, virada de ano
+
+---
+
+### ⚙️ INFRAESTRUTURA E INTEGRAÇÕES
+
+#### Backup
+**Cenário atual:** Backup automático funcionando via S3 (Manus Storage), agendado às 3h diariamente. Google Drive foi descartado.
+
+- [ ] Avaliar backup por empresa (granularidade multiempresa) — hoje é backup global
+- [ ] Implementar restore granular por empresa (extrair dados de uma empresa específica do backup)
+- [ ] Adicionar verificação de integridade pós-backup (checksum ou contagem de registros)
+- [ ] Notificação de sucesso além de falha (hoje só notifica em falha)
+
+#### API WhatsApp
+**Cenário atual:** Credenciais WHATSAPP_ACCESS_TOKEN e WHATSAPP_PHONE_NUMBER_ID estão configuradas no ambiente. Integração não foi implementada no produto.
+
+- [ ] Definir casos de uso: notificações de cobrança? confirmações de pedido? alertas operacionais?
+- [ ] Implementar envio de mensagem via WhatsApp Business API (Meta)
+- [ ] Integrar com módulo de Contas a Receber (notificação de vencimento/cobrança)
+- [ ] Integrar com módulo de Vendas (confirmação de pedido delivery)
+- [ ] Definir templates de mensagem aprovados pela Meta
+
+#### Catálogo Digital
+**Cenário atual:** Não implementado. Ideia registrada para futuro.
+
+- [ ] Definir escopo: catálogo público (sem login) ou privado (com link)?
+- [ ] Definir funcionalidades: listagem de produtos com preço, foto, categoria
+- [ ] Definir se é página pública no mesmo domínio ou subdomínio separado
+- [ ] Avaliar integração com canal de venda (pedido pelo catálogo vira venda no sistema)
+
+---
+
+### 🎨 INTERFACE
+
+#### Metas — Visual "Muito Branco"
+**Cenário atual:** Tela de Metas funcional mas com visual pouco elaborado.
+
+- [ ] Redesenhar tela de Metas com mais hierarquia visual (cards com cor, progresso visual, ícones)
+- [ ] Adicionar gráfico de progresso mensal (gauge ou barra de progresso estilizada)
+- [ ] Comparativo mês a mês (meta vs realizado dos últimos 3 meses)
+- [ ] Destaque visual para metas atingidas vs atrasadas (verde/vermelho)
+
+#### Responsividade Mobile
+**Cenário atual:** Sistema desenvolvido para desktop. Mobile não foi priorizado.
+
+- [ ] Auditoria de responsividade: identificar telas com maior uso mobile (Dashboard, Vendas, Fechamento)
+- [ ] Adaptar sidebar para mobile (menu hamburguer ou bottom navigation)
+- [ ] Adaptar tabelas longas para mobile (scroll horizontal ou cards empilhados)
+- [ ] Adaptar formulários de venda para mobile (teclado numérico, campos maiores)
+- [ ] Testar em dispositivos reais (iOS Safari, Android Chrome)
+
+---
+
+### 👥 PERFIS E FUNÇÕES — Reorganização para Multiempresa e Comercialização
+
+**Cenário atual:** Perfis existentes: Consultor (leitura), Vendedor (vendas), Admin (total). Estrutura simples, não adequada para comercialização.
+
+- [ ] Definir pacotes comerciais (ex: Básico, Operacional, Completo, Contábil)
+- [ ] Mapear quais módulos pertencem a cada pacote
+- [ ] Implementar controle de acesso por módulo/pacote (não apenas por role)
+- [ ] Criar perfis intermediários: Financeiro, Contabilidade, Compras, Estoque, Gerente
+- [ ] Definir matriz de permissões: quem pode criar, editar, cancelar, visualizar em cada módulo
+- [ ] Implementar controle granular no frontend (ocultar menus não autorizados)
+- [ ] Implementar controle granular no backend (protectedProcedure com verificação de permissão)
+- [ ] Clientes externos: acesso isolado por empresa, sem ver empresas internas
+
+---
+
+### 🔧 ALTERAÇÕES, SUGESTÕES E CORREÇÕES — Sprint 03/03/2026
+
+#### 1. Despesa Simples Nacional — Mover Fevereiro para Janeiro
+- [ ] Localizar despesa de Simples Nacional lançada em Fevereiro/2026
+- [ ] Alterar competenceMonth para 2026-01 e entryDate para data de Janeiro
+- [ ] Reprocessar lançamento contábil (deletar journal de fev e recriar em jan)
+- [ ] Verificar no DRE que despesa aparece em Janeiro após correção
+
+#### 2. Regra Análise de Despesa — Despesas Parceladas por Competência
+**Regra:** Despesa parcelada deve aparecer na análise pelo valor da parcela no mês de vencimento, não pelo montante total no mês de lançamento.
+Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 em Abril.
+
+- [ ] Revisar query de análise de despesas (getExpensesByCategory e similares)
+- [ ] Alterar lógica: usar tabela expenseInstallments com dueDate para filtrar por mês
+- [ ] Garantir que o valor exibido seja o valor da parcela (amount/installments), não o total
+- [ ] Aplicar mesma regra na tela de Fechamento (seção Despesas por Conta Gerencial)
+- [ ] Testar com despesa de R$10.000 em 2 parcelas e verificar distribuição correta
+
+#### 3. Excluir Receitas Teste — Módulo Outras Receitas
+- [x] Listar todas as receitas de teste inseridas em Outras Receitas (IDs: 210001, 180002, 180001, 150001)
+- [x] Excluir registros de teste (preservar apenas receitas reais — Pronampe ID 30002 mantido)
+- [x] Verificar se há journals contábeis associados e reverter se necessário (nenhum journal associado encontrado)
+
+#### 4. Bug Numeral — Módulo Outras Receitas (ponto/vírgula)
+**Problema:** Campo de valor não reconhece corretamente ponto e vírgula para separar milhares e centavos.
+
+- [ ] Investigar componente de input numérico em Outras Receitas
+- [ ] Implementar máscara de valor monetário (ex: R$ 1.000,00) com suporte a ponto como separador de milhar e vírgula como decimal
+- [ ] Testar entrada de valores como: 1000, 1.000, 1000,50, 1.000,50
+
+#### 5. Outras Receitas na Tela de Fechamento
+**Regra a definir:** Outras Receitas devem compor o resultado do Fechamento. Pendente entender separação de Parcela vs Juros.
+
+- [ ] Definir regra: Outras Receitas entram como receita bruta? Separadas por tipo?
+- [ ] Entender se há conceito de "parcela de juros" em Outras Receitas (ex: empréstimo com juros)
+- [ ] Implementar exibição de Outras Receitas na seção de Receitas do Fechamento
+- [ ] Garantir que o total do Resultado Líquido inclua Outras Receitas
+
+#### 6. Estoque por Categoria — Congelar Valor Final do Mês Fechado
+**Problema:** O valor de estoque final de meses passados continua sendo atualizado conforme o estoque atual muda. O correto é salvar o snapshot no último minuto do mês e nunca mais alterar.
+
+- [ ] Criar tabela `monthlyStockSnapshot` (companyId, categoryId, month, closingValue, closingQuantity, savedAt)
+- [ ] Implementar job/procedure que salva o snapshot no fechamento do mês (ou ao fechar competência)
+- [ ] Alterar query de Estoque por Categoria no Fechamento para usar snapshot quando mês já fechado
+- [ ] Alterar query de Evolução Mensal do Estoque para usar snapshot de meses passados
+- [ ] Garantir que o mês atual ainda use o valor em tempo real
+
+#### 7. Correção de Datas de Vendas (Planilha Enviada)
+**Vendas a corrigir para 31/01/2026:**
+
+| ID Venda | Pedido | Data Correta |
+|----------|--------|--------------|
+| 46950069 | 385 | 31/01/2026 |
+| 46950047 | 1001 | 31/01/2026 |
+| 46950051 | 1539 | 31/01/2026 |
+| 46950030 | 2335 | 31/01/2026 |
+| 46950052 | 2758 | 31/01/2026 |
+| 46950037 | 4723 | 31/01/2026 |
+| 46950068 | 5456 | 31/01/2026 |
+| 46950050 | 6691 | 31/01/2026 |
+| 46950048 | 6755 | 31/01/2026 |
+| 46950036 | 6787 | 31/01/2026 |
+| 46950049 | 6843 | 31/01/2026 |
+| 58230008 | 2191 | 22/02/2026 |
+| 58230007 | 9841 | 27/02/2026 |
+
+- [x] Executar UPDATE nas vendas acima com as datas corretas (11 vendas → 31/01/2026; 58230008 → 22/02/2026; 58230007 → 27/02/2026)
+- [ ] Verificar impacto contábil (journals associados a essas vendas)
+- [ ] Reprocessar lançamentos contábeis das vendas corrigidas se necessário
+
+#### 8. Corrigir Impresso de Documento — Bobina 80mm
+**Problema:** Layout do comprovante impresso não está adequado para bobina térmica de 80mm.
+
+- [ ] Revisar CSS de impressão (media print) para largura 80mm
+- [ ] Ajustar fontes, margens e quebras de linha para bobina térmica
+- [ ] Testar impressão em impressora térmica real ou emulador
+
+#### 9. Paginação/Lazy Load em Listas de Despesas e Receitas
+**Sugestão:** Em vez de carregar todos os registros, trazer apenas os últimos N e usar filtros para buscar mais.
+
+- [ ] Implementar paginação ou "carregar mais" nas listas de Despesas
+- [ ] Implementar paginação ou "carregar mais" nas listas de Outras Receitas
+- [ ] Definir quantidade padrão de registros iniciais (sugestão: últimos 30)
+- [ ] Garantir que filtros de período/busca funcionem sobre o conjunto completo
+
+#### 10. Modal de Registro de Pagamento — Campo Banco
+**Sugestão:** Adicionar campo de banco/conta no modal de registro de pagamento.
+
+- [ ] Adicionar campo "Banco/Conta" no modal de registro de pagamento (Contas a Pagar e Contas a Receber)
+- [ ] Popular com as contas bancárias cadastradas no módulo de Contabilidade
+- [ ] Salvar banco/conta no registro de pagamento para rastreabilidade
+- [ ] Revisar campo "Forma de Pagamento" no mesmo modal (entender se está correto ou precisa de ajuste)

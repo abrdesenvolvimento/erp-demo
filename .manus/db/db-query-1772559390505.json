@@ -1,0 +1,127 @@
+{
+  "query": "\nSELECT id, platformOrderId, saleDate, createdAt, channelId, finalAmount, companyId\nFROM sales\nWHERE id IN (46950069, 46950047, 46950051, 46950030, 46950052, 46950037, 46950068, 46950050, 46950048, 46950036, 46950049, 58230008, 58230007)\nORDER BY id;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute \nSELECT id, platformOrderId, saleDate, createdAt, channelId, finalAmount, companyId\nFROM sales\nWHERE id IN (46950069, 46950047, 46950051, 46950030, 46950052, 46950037, 46950068, 46950050, 46950048, 46950036, 46950049, 58230008, 58230007)\nORDER BY id;\n",
+  "rows": [
+    {
+      "id": "46950030",
+      "platformOrderId": "2335",
+      "saleDate": "2026-02-01 03:00:37",
+      "createdAt": "2026-02-01 00:00:37",
+      "channelId": "2",
+      "finalAmount": "21.98",
+      "companyId": "1"
+    },
+    {
+      "id": "46950036",
+      "platformOrderId": "6787",
+      "saleDate": "2026-02-01 03:47:55",
+      "createdAt": "2026-02-01 00:47:55",
+      "channelId": "2",
+      "finalAmount": "22.74",
+      "companyId": "1"
+    },
+    {
+      "id": "46950037",
+      "platformOrderId": "4723",
+      "saleDate": "2026-02-01 03:48:30",
+      "createdAt": "2026-02-01 00:48:30",
+      "channelId": "2",
+      "finalAmount": "19.48",
+      "companyId": "1"
+    },
+    {
+      "id": "46950047",
+      "platformOrderId": "1001",
+      "saleDate": "2026-02-01 04:14:21",
+      "createdAt": "2026-02-01 01:14:21",
+      "channelId": "2",
+      "finalAmount": "38.32",
+      "companyId": "1"
+    },
+    {
+      "id": "46950048",
+      "platformOrderId": "6755",
+      "saleDate": "2026-02-01 04:14:49",
+      "createdAt": "2026-02-01 01:14:49",
+      "channelId": "2",
+      "finalAmount": "23.08",
+      "companyId": "1"
+    },
+    {
+      "id": "46950049",
+      "platformOrderId": "6843",
+      "saleDate": "2026-02-01 04:15:13",
+      "createdAt": "2026-02-01 01:15:13",
+      "channelId": "2",
+      "finalAmount": "9.19",
+      "companyId": "1"
+    },
+    {
+      "id": "46950050",
+      "platformOrderId": "6691",
+      "saleDate": "2026-02-01 04:15:39",
+      "createdAt": "2026-02-01 01:15:39",
+      "channelId": "2",
+      "finalAmount": "27.92",
+      "companyId": "1"
+    },
+    {
+      "id": "46950051",
+      "platformOrderId": "1539",
+      "saleDate": "2026-02-01 04:16:02",
+      "createdAt": "2026-02-01 01:16:02",
+      "channelId": "2",
+      "finalAmount": "21.68",
+      "companyId": "1"
+    },
+    {
+      "id": "46950052",
+      "platformOrderId": "2758",
+      "saleDate": "2026-02-01 04:16:31",
+      "createdAt": "2026-02-01 01:16:31",
+      "channelId": "2",
+      "finalAmount": "9.19",
+      "companyId": "1"
+    },
+    {
+      "id": "46950068",
+      "platformOrderId": "5456",
+      "saleDate": "2026-02-01 05:18:53",
+      "createdAt": "2026-02-01 02:18:53",
+      "channelId": "2",
+      "finalAmount": "42.95",
+      "companyId": "1"
+    },
+    {
+      "id": "46950069",
+      "platformOrderId": "385",
+      "saleDate": "2026-02-01 05:19:32",
+      "createdAt": "2026-02-01 02:19:32",
+      "channelId": "2",
+      "finalAmount": "29.87",
+      "companyId": "1"
+    },
+    {
+      "id": "58230007",
+      "platformOrderId": "9841",
+      "saleDate": "2026-03-01 15:33:43",
+      "createdAt": "2026-03-01 15:33:43",
+      "channelId": "2",
+      "finalAmount": "81.36",
+      "companyId": "1"
+    },
+    {
+      "id": "58230008",
+      "platformOrderId": "2191",
+      "saleDate": "2026-03-01 15:35:31",
+      "createdAt": "2026-03-01 15:35:31",
+      "channelId": "2",
+      "finalAmount": "50.28",
+      "companyId": "1"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tplatformOrderId\tsaleDate\tcreatedAt\tchannelId\tfinalAmount\tcompanyId\n46950030\t2335\t2026-02-01 03:00:37\t2026-02-01 00:00:37\t2\t21.98\t1\n46950036\t6787\t2026-02-01 03:47:55\t2026-02-01 00:47:55\t2\t22.74\t1\n46950037\t4723\t2026-02-01 03:48:30\t2026-02-01 00:48:30\t2\t19.48\t1\n46950047\t1001\t2026-02-01 04:14:21\t2026-02-01 01:14:21\t2\t38.32\t1\n46950048\t6755\t2026-02-01 04:14:49\t2026-02-01 01:14:49\t2\t23.08\t1\n46950049\t6843\t2026-02-01 04:15:13\t2026-02-01 01:15:13\t2\t9.19\t1\n46950050\t6691\t2026-02-01 04:15:39\t2026-02-01 01:15:39\t2\t27.92\t1\n46950051\t1539\t2026-02-01 04:16:02\t2026-02-01 01:16:02\t2\t21.68\t1\n46950052\t2758\t2026-02-01 04:16:31\t2026-02-01 01:16:31\t2\t9.19\t1\n46950068\t5456\t2026-02-01 05:18:53\t2026-02-01 02:18:53\t2\t42.95\t1\n46950069\t385\t2026-02-01 05:19:32\t2026-02-01 02:19:32\t2\t29.87\t1\n58230007\t9841\t2026-03-01 15:33:43\t2026-03-01 15:33:43\t2\t81.36\t1\n58230008\t2191\t2026-03-01 15:35:31\t2026-03-01 15:35:31\t2\t50.28\t1\n",
+  "stderr": "",
+  "execution_time_ms": 705
+}
