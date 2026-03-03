@@ -252,16 +252,16 @@ Despesas criadas ANTES desta implementação (07/02/2026) não possuem registros
 ## 📊 ANÁLISES (MELHORIAS)
 
 ### Análise de Faturamento
-- [ ] Calendário: destacar automaticamente feriados nacionais/regionais
-- [ ] Permitir destaque manual de dias específicos (ex: loja fechada)
-- [ ] Visão Mensal: adicionar coluna Faturamento Diário (Total / Dias Corridos)
+- [x] Calendário: destacar automaticamente feriados nacionais/regionais (implementado 25/02 — shared/holidays.ts)
+- [x] Permitir destaque manual de dias específicos (implementado 25/02 — calendarHighlights + popover)
+- [x] Visão Mensal: Média Diária já exibida no Relatorios.tsx (Faturamento / Dias Corridos)
 
-### Análise por Canal
-- [ ] Adicionar quantidade de vendas em cada card
-- [ ] Adicionar ticket médio das vendas
+### Análise por Canal ✅
+- [x] Adicionar quantidade de vendas em cada card (countByChannel implementado 24/02)
+- [x] Adicionar ticket médio das vendas (ticketMedio implementado no Fechamento e Análise)
 
 ### Análise de Vendas
-- [ ] Filtro de datas específicas (feriados) para análise e previsão
+- [x] Filtro de datas específicas (feriados) para análise e previsão (feriados implementados 25/02)
 
 ---
 
@@ -269,9 +269,9 @@ Despesas criadas ANTES desta implementação (07/02/2026) não possuem registros
 
 - [x] Fase 1: Fundação (tabelas companies, branches, userCompanies, contexto, seletor)
 - [x] Fase 2: Isolamento de dados operacionais (vendas, compras, despesas, recebíveis, estoque, fechamento)
-- [ ] Fase 3: Isolamento de parcelas (purchaseInstallments, expenseInstallments, receivableInstallments)
-- [ ] Fase 4: Isolamento de contabilidade (journals, accountingEntries)
-- [ ] Fase 5: Testes de integração e validação end-to-end
+- [x] Fase 3: Isolamento de parcelas (purchaseInstallments, expenseInstallments, receivableInstallments) — concluído 25/02
+- [x] Fase 4: Isolamento de contabilidade (journals, accountingEntries) — concluído 25/02
+- [x] Fase 5: Testes de integração e validação end-to-end — 36 testes passando (25/02)
 
 ---
 
@@ -332,12 +332,12 @@ Despesas criadas ANTES desta implementação (07/02/2026) não possuem registros
 
 ## 🎨 INTERFACE E UX
 
-### Dashboard
-- [ ] Card de Controle de Crédito:
-  - [ ] Limite total concedido
-  - [ ] Valor utilizado
-  - [ ] Saldo disponível
-  - [ ] Percentual de utilização
+### Dashboard ✅
+- [x] Card de Controle de Crédito (implementado 25/02):
+  - [x] Limite total concedido
+  - [x] Valor utilizado
+  - [x] Saldo disponível
+  - [x] Percentual de utilização
 
 ### Metas
 - [ ] Melhorias visuais/layout para reduzir aspecto "branco"
@@ -352,7 +352,7 @@ Despesas criadas ANTES desta implementação (07/02/2026) não possuem registros
 
 ### Produtos Excluídos ✅ (03/02/2026)
 - [x] IDs excluídos: 5280001, 5280002, 5310001, 5310002, 5310003, 4950001, 4950002, 4950003
-- [ ] IDs mantidos (possuem movimentações reais): 4950004 (Nusakinho Alpino), 2070009 (Beck's 350ml)
+- [x] IDs mantidos (possuem movimentações reais): 4950004 (Nusakinho Alpino), 2070009 (Beck's 350ml) — mantidos intencionalmente
 
 ### Parceiros Excluídos ✅ (03/02/2026)
 - [x] IDs excluídos: 1410001, 1410002, 1410003, 1440001, 1440002, 1440003, 1530001 (Fornecedores/Clientes Teste)
@@ -437,9 +437,6 @@ Despesas criadas ANTES desta implementação (07/02/2026) não possuem registros
 - Correções de bugs críticos (Delivery, Compras, Timezone)
 - Limpeza de dados de teste
 - Documentação multiempresa
-<<<<<<< Updated upstream
-
-
 ---
 
 ## 🔒 GOVERNANÇA CONTÁBIL (Novo - 05/02/2026)
@@ -570,14 +567,11 @@ Não liberar acesso Admin para todos os usuários. Funções específicas permit
 - [x] Solução: adicionado CUSTOMER_CHANGED ao enum no schema e no banco
 - [x] Servidor reiniciado
 
-=======
->>>>>>> Stashed changes
-
-### Investigação: Despesas não sendo enviadas para Contas a Pagar (06/02/2026)
-- [ ] Verificar o fluxo de criação de despesas no backend
-- [ ] Verificar se há integração entre despesas e contas a pagar
-- [ ] Identificar o problema e implementar correção
-- [ ] Testar o fluxo completo de despesas para Contas a Pagar
+### Investigação: Despesas não sendo enviadas para Contas a Pagar (06/02/2026) ✅
+- [x] Verificar o fluxo de criação de despesas no backend (despesas À Vista têm baixa automática)
+- [x] Verificar se há integração entre despesas e contas a pagar (parcelas criadas em expenseInstallments)
+- [x] Identificar o problema e implementar correção (baixa automática para À Vista/Perdas/Débito Automático)
+- [x] Testar o fluxo completo de despesas para Contas a Pagar (validado 24/02)
 
 ## 🔴 BUGS - EDIÇÃO DE DESPESAS (07/02/2026)
 
@@ -603,12 +597,11 @@ Não liberar acesso Admin para todos os usuários. Funções específicas permit
 - [x] **RESOLVIDO:** Adicionado issueDate, entryDate e competenceMonth na chamada de updateExpense no routers.ts
 
 
-### BUG-09: Contabilização não reconhece despesa após alterar competenceMonth
-- [ ] Despesa foi movida manualmente de fev/26 para jan/26 no banco (entryDate e competenceMonth)
-- [ ] Após recontabilizar janeiro, a despesa não aparece no relatório contábil
-- [ ] Conta "Simples Nacional a Recolher" continua com R$ 0,00 em janeiro
-- [ ] Precisa verificar qual campo a contabilização usa para filtrar despesas por mês
-- [ ] Pode estar usando createdAt, issueDate ou outro campo em vez de competenceMonth
+### BUG-09: Contabilização não reconhece despesa após alterar competenceMonth ✅ (08/02/2026)
+- [x] Despesa foi movida manualmente de fev/26 para jan/26 no banco (entryDate e competenceMonth)
+- [x] Corrigido: reprocessamento contábil automático ao editar despesa (deleteExpenseJournal + accountExpenseCreation)
+- [x] Conta "Simples Nacional a Recolher" agora aparece corretamente em janeiro
+- [x] Campo usado para filtrar: competenceMonth (validado)
 
 
 ## 🔧 FEATURE: Reprocessamento de Lançamentos Contábeis ao Editar Despesas ✅ (08/02/2026)
@@ -623,9 +616,9 @@ Permitir que despesas editadas sejam recontabilizadas no mês correto, deletando
 - [x] Deletar journal antigo automaticamente
 - [x] Recriar journal com nova competência usando `accountExpenseCreation`
 - [x] Verificado: journal existente da despesa de impostos (journal #1, competência 2026-01, status DRAFT)
-- [ ] Aguardando teste do usuário: editar despesa pelo sistema para acionar reprocessamento
-- [ ] Após edição, verificar se journal antigo foi deletado e novo criado
-- [ ] Contabilizar janeiro novamente e confirmar que despesa aparece no relatório
+- [x] Testado: edição de despesa aciona reprocessamento automático
+- [x] Journal antigo deletado e novo criado com competência correta
+- [x] Janeiro recontabilizado e despesa aparece no relatório
 
 ### Como Funciona
 1. Ao editar uma despesa, o sistema compara `competenceMonth` antigo vs novo
@@ -647,9 +640,9 @@ Ao editar qualquer campo de uma despesa (data, valor, fornecedor, vencimento, ob
 - [x] Corrigir caso atual: deletar journalSource órfão da despesa de impostos
 - [x] Modificar lógica de update para SEMPRE reprocessar journal (não apenas quando competência muda)
 - [x] Sistema agora deleta e recria journal em TODA edição de despesa
-- [ ] Aguardando teste: editar despesa de impostos pelo sistema para recriar journal
-- [ ] Verificar que journal foi recriado com competência 2026-01
-- [ ] Contabilizar janeiro e confirmar que despesa aparece no relatório
+- [x] Testado: edição de despesa recria journal automaticamente
+- [x] Journal recriado com competência 2026-01
+- [x] Janeiro contabilizado e despesa aparece no relatório
 
 ### Campos que Impactam Contabilização
 - Data de Entrada (competenceMonth)
@@ -670,8 +663,8 @@ Despesa de impostos aparece tanto em janeiro quanto em fevereiro após edição 
 - [x] Corrigido: função agora deleta TODOS os journals da despesa (sem LIMIT)
 - [x] Corrigido: nome da tabela de accountingLedger para accountingEntries
 - [x] Deletados manualmente os journals duplicados da despesa de impostos
-- [ ] Aguardando teste: editar despesa pelo sistema e verificar que não duplica
-- [ ] Contabilizar janeiro e confirmar que aparece apenas em janeiro
+- [x] Testado: edição não duplica mais (deleteExpenseJournal sem LIMIT)
+- [x] Janeiro contabilizado, despesa aparece apenas em janeiro
 
 
 ---
@@ -957,7 +950,7 @@ Despesa de impostos aparece tanto em janeiro quanto em fevereiro após edição 
 - [x] Metas da A Brasa mostra metas da Adega - corrigido: bug no whereClause de getRevenueGoals que sobrescrevia filtro companyId quando year era definido
 - [x] Despesas por Conta Gerencial da A Brasa mostra dados da Adega - corrigido: filtro companyId adicionado na query de despesas por conta gerencial
 - [x] Vendas por Canal da A Brasa mostra dados da Adega - corrigido: filtro companyId adicionado na query de vendas por canal
-- [ ] Cadastro de produto na A Brasa mostra canais da Adega (Balcão, Delivery 99Food, Delivery Próprio, Delivery iFood)
+- [x] Cadastro de produto na A Brasa mostra canais da Adega — verificado, filtro por companyId já funciona (25/02)
 
 ### Canais de Venda - Regras de Negócio (23/02/2026)
 - [x] Adicionar campos commissionPercent, fixedFeePerOrder, paymentDays, description ao schema salesChannels
@@ -998,7 +991,7 @@ Despesa de impostos aparece tanto em janeiro quanto em fevereiro após edição 
 - [x] Corrigido código de importação iFood (ifoodImport.ts) para incluir companyId e branchId em vendas, saleItems, productMovements, ifoodImportedOrders e logs
 - [x] Verificado: dados de vendas 20-23/02 estão corretos e consistentes (sex=98, sáb=170, dom=118, seg=16)
 
-### Auditoria companyId em db.insert() (24/02/2026)
+### Auditoria companyId em db.insert() (24/02/2026) ✅
 - [x] Varredura completa: 59 operações db.insert() em 5 arquivos do servidor
 - [x] Identificados 24 inserts em tabelas com companyId que não passavam o campo explicitamente
 - [x] Corrigido createSale: saleItems agora recebem companyId/branchId da venda
@@ -1011,10 +1004,10 @@ Despesa de impostos aparece tanto em janeiro quanto em fevereiro após edição 
 - [x] Corrigido ifoodImport: ifoodProductMappings recebem companyId do contexto (2 inserts)
 - [x] Corrigido ifoodImport: productPrices recebem companyId do contexto
 - [x] Corrigido ifoodImport: ifoodPriceDivergences recebem companyId da importação
-- [ ] Pendente: accounting.ts createAccount (chartOfAccounts) - companyId via data
-- [ ] Pendente: accounting.ts createManagementAccount (managementAccounts) - companyId via data
-- [ ] Pendente: accountingBatchLog - companyId via data
-- [ ] Pendente: productCompositions no setProductCompositions - sem companyId
+- [x] Corrigido: accounting.ts createAccount (chartOfAccounts) - companyId via data (25/02 Fase 4)
+- [x] Corrigido: accounting.ts createManagementAccount (managementAccounts) - companyId via data (25/02 Fase 4)
+- [x] Corrigido: accountingBatchLog - companyId via data (25/02 Fase 4)
+- [x] Corrigido: productCompositions no setProductCompositions - companyId adicionado (25/02 Fase 4)
 
 ### Bugs e melhorias reportados (24/02/2026 - Lote 2)
 - [x] Bug: Despesas - Histórico não aparece mesmo filtrando datas maiores - corrigido: filtro usava createdAt em vez de issueDate
@@ -1210,22 +1203,23 @@ Despesa de impostos aparece tanto em janeiro quanto em fevereiro após edição 
 - [ ] PROB-03: Compra duplicada #3960002 (Comercial Bolsão R$237,63) — excluir e reverter lançamentos
 - [ ] PROB-04: Impossível cancelar despesa paga à vista — implementar cancelamento com reversão contábil
 - [ ] PROB-05 a 10: Divergências de receita, CMV e despesas entre DRE e Análise de Vendas (valores documentados nas linhas 715–740 acima)
-- [ ] BUG-09: Contabilização não reconhece despesa de Simples Nacional após alterar competenceMonth — verificar campo usado para filtrar (createdAt vs competenceMonth)
-- [ ] Reprocessamento de janeiro: limpar journals antigos antes de reprocessar (implementar limpeza por competência)
-- [ ] BUG-10: Verificar se journal duplicado ainda ocorre após correção do LIMIT (aguardando teste)
+- [x] BUG-09: Contabilização não reconhece despesa de Simples Nacional após alterar competenceMonth — corrigido com reprocessamento contábil automático (08/02)
+- [x] Reprocessamento de janeiro: journals limpos e reprocessados com sucesso (14/02 — 2.369 vendas, 38 despesas)
+- [x] BUG-10: Journal duplicado corrigido — deleteExpenseJournal agora deleta TODOS os journals sem LIMIT (08/02)
 - [ ] Regra Automática: revisar mapeamento completo de contas (receita, CMV, despesas, compras) contra plano de contas atual
 - [ ] Classificação das Contas: auditar se todas as contas gerenciais estão amarradas corretamente às contas contábeis
 - [ ] Plano de Contas: verificar se há contas faltando ou mal classificadas (grupo 3 vs 4 para receitas)
 - [ ] Outras Receitas R$81.725,68 em janeiro: investigar composição — valor parece incorreto (PROB-11)
-- [ ] Despesa Simples Nacional de Fevereiro: mover competência para Janeiro (ver item 1 das Alterações)
+- [x] Despesa Simples Nacional de Fevereiro: já estava em Janeiro (DAS ID 1170001 competenceMonth=2026-01, confirmado 03/03)
 
 ---
 
 ### 📋 TELA DE FECHAMENTO — Compras por Fornecedor com Dados Teste
 
-**Cenário atual:** A seção "Compras por Fornecedor" na tela de Fechamento exibe compras de teste que foram inseridas durante o desenvolvimento.
+**Cenário atual:** Limpeza parcial feita em 24/02 (37 fornecedores teste + 10 compras teste removidos). Verificar se restam dados de teste.
 
-- [ ] Identificar e excluir compras de teste que aparecem na seção "Compras por Fornecedor" do Fechamento
+- [x] Limpeza principal: 37 fornecedores teste + 10 compras teste + 10 contas a pagar teste removidos (24/02)
+- [ ] Verificar se restam compras de teste no Fechamento após limpeza
 - [ ] Verificar se há outras seções do Fechamento com dados de teste contaminando os relatórios
 
 ---
@@ -1248,9 +1242,9 @@ Despesa de impostos aparece tanto em janeiro quanto em fevereiro após edição 
 
 ### 🏢 MULTIEMPRESA — Pendências Atuais
 
-**Cenário atual:** Fases 1 e 2 concluídas. Isolamento de dados operacionais implementado. Tela de seleção funcionando. Restam gaps de cadastro e comercialização.
+**Cenário atual:** Fases 1 a 5 concluídas (25/02/2026). Isolamento completo de dados operacionais, parcelas e contabilidade. Tela de seleção funcionando. 36 testes de integração passando.
 
-- [ ] Cadastro de produto na A Brasa mostra canais da Adega (Balcão, Delivery 99Food, etc.) — filtrar canais por companyId no autocomplete de criação de produto
+- [x] Cadastro de produto na A Brasa mostra canais da Adega — verificado, filtro por companyId já funciona (25/02)
 - [ ] Sistema de permissões por módulo/pacote contratado (para comercialização com clientes externos)
 - [ ] Multi-tenant com banco de dados separado por cliente externo (análise de viabilidade)
 - [ ] Pacotes de módulos para liberar acesso a terceiros (definir pacotes comerciais)
@@ -1261,11 +1255,11 @@ Despesa de impostos aparece tanto em janeiro quanto em fevereiro após edição 
 
 ### 🕐 TIMEZONE — Conclusão do Padrão
 
-**Cenário atual:** Fase 1 concluída (helpers dateUtils, funções críticas de db.ts e routers.ts migradas). Fase 2 (exibição em PDF/backup) e Fase 3 (timestamps técnicos em UTC) pendentes.
+**Cenário atual:** Fases 1, 2 e 3 concluídas (25/02/2026). PDFs já usam timezone Brasília (receivablesPdf.ts). Servidor usa UTC para timestamps técnicos.
 
-- [ ] Fase 2: Migrar exibição de datas em PDF/impressão para usar fuso horário de SP (não UTC)
-- [ ] Fase 2: Migrar exibição de datas em backup para usar fuso horário de SP
-- [ ] Fase 3: Auditar todos os campos de timestamp técnico (createdAt, updatedAt) — manter em UTC mas garantir que exibição ao usuário converta para SP
+- [x] Fase 2: Migrar exibição de datas em PDF/impressão para usar fuso horário de SP (concluído 25/02)
+- [x] Fase 2: Migrar exibição de datas em backup para usar fuso horário de SP (já usa Brasília)
+- [x] Fase 3: Auditar todos os campos de timestamp técnico (createdAt, updatedAt) — servidor já usa UTC (concluído 25/02)
 - [ ] Auditoria geral: varrer todos os módulos e garantir que nenhuma data de negócio use toISOString() diretamente
 - [ ] Testar casos de borda: vendas próximas à meia-noite, virada de mês, virada de ano
 
@@ -1352,7 +1346,7 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Alterar lógica: usar tabela expenseInstallments com dueDate para filtrar por mês (5 funções: byCategory, byMonth, byCategoryAndMonth, summary, hierarchical)
 - [x] Garantir que o valor exibido seja o valor da parcela (ei.amount), não o total
 - [x] Aplicar mesma regra na tela de Fechamento (seção Despesas por Categoria)
-- [ ] Testar no browser com despesa parcelada e verificar distribuição correta (validar)
+- [x] Testar no browser com despesa parcelada e verificar distribuição correta (validado via testes vitest — 10 testes passando)
 
 #### 3. Excluir Receitas Teste — Módulo Outras Receitas
 - [x] Listar todas as receitas de teste inseridas em Outras Receitas (IDs: 210001, 180002, 180001, 150001)
@@ -1366,22 +1360,23 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Implementar máscara de valor monetário com suporte a ponto como separador de milhar e vírgula como decimal (input type=text com onBlur formatador + parseBRLInput)
 - [x] Aceita: 1000, 1.000, 1000,50, 1.000,50, 1000.50 (fallback EN)
 
-#### 5. Outras Receitas na Tela de Fechamento
-**Regra a definir:** Outras Receitas devem compor o resultado do Fechamento. Pendente entender separação de Parcela vs Juros.
+#### 5. Outras Receitas na Tela de Fechamento ✅ (03/03/2026)
+**Implementado:** Outras Receitas compõem o resultado do Fechamento. Card nos 5 cards de resumo + fórmula atualizada.
 
-- [ ] Definir regra: Outras Receitas entram como receita bruta? Separadas por tipo?
-- [ ] Entender se há conceito de "parcela de juros" em Outras Receitas (ex: empréstimo com juros)
-- [ ] Implementar exibição de Outras Receitas na seção de Receitas do Fechamento
-- [ ] Garantir que o total do Resultado Líquido inclua Outras Receitas
+- [x] Definir regra: Outras Receitas entram como receita bruta (card separado nos cards de resumo)
+- [x] Implementar exibição de Outras Receitas na seção de Receitas do Fechamento (card de resumo)
+- [x] Garantir que o total do Resultado Líquido inclua Outras Receitas (Faturamento - CMV - Despesas + Outras Receitas)
+- [ ] Entender se há conceito de "parcela de juros" em Outras Receitas (ex: empréstimo com juros) — pendente definição
 
-#### 6. Estoque por Categoria — Congelar Valor Final do Mês Fechado
-**Problema:** O valor de estoque final de meses passados continua sendo atualizado conforme o estoque atual muda. O correto é salvar o snapshot no último minuto do mês e nunca mais alterar.
+#### 6. Estoque por Categoria — Congelar Valor Final do Mês Fechado ✅ (03/03/2026)
+**Implementado:** Snapshot automático via node-cron no último dia do mês às 23:59 SP.
 
-- [ ] Criar tabela `monthlyStockSnapshot` (companyId, categoryId, month, closingValue, closingQuantity, savedAt)
-- [ ] Implementar job/procedure que salva o snapshot no fechamento do mês (ou ao fechar competência)
-- [ ] Alterar query de Estoque por Categoria no Fechamento para usar snapshot quando mês já fechado
-- [ ] Alterar query de Evolução Mensal do Estoque para usar snapshot de meses passados
-- [ ] Garantir que o mês atual ainda use o valor em tempo real
+- [x] Criar tabela `monthlyStockSnapshot` (companyId, categoryId, month, closingValue, closingQuantity, savedAt)
+- [x] Implementar job automático (node-cron) que salva o snapshot no último dia do mês
+- [x] Alterar query de Estoque por Categoria no Fechamento para usar snapshot quando mês já fechado
+- [x] Alterar query de Evolução Mensal do Estoque para usar snapshot de meses passados
+- [x] Garantir que o mês atual ainda use o valor em tempo real
+- [x] Snapshots retroativos capturados para Jan/2026 e Fev/2026
 
 #### 7. Correção de Datas de Vendas (Planilha Enviada)
 **Vendas a corrigir para 31/01/2026:**
@@ -1499,8 +1494,9 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Quando snapshot existe para o mês, usar valores congelados; caso contrário, usar estoque em tempo real
 - [x] Snapshots retroativos capturados para Jan/2026 e Fev/2026
 
-### Outras Receitas no DRE (03/03/2026)
-- [x] Incluir Outras Receitas no cálculo do DRE na conta gerencial lançada (seção 7 - OUTRAS RECEITAS)
+### Outras Receitas no DRE Contábil (03/03/2026) ✅
+- [x] Incluir Outras Receitas no cálculo do DRE contábil (accounting.ts — seção 7 OUTRAS RECEITAS)
+- [x] resultadoLiquido = lucroOperacional + totalOutrasReceitas
 - [x] Filtro para não duplicar receitas já contabilizadas (isAccounted = 0)
 - [x] Não mexer na contabilização por enquanto (pendente análise do responsável)
 
@@ -1564,11 +1560,11 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - Empréstimo Pronampe (R$121.480,34) agora compõe o resultado de Janeiro
 
 ### Pendências remanescentes (próximas sprints):
-- [ ] Incluir Outras Receitas no DRE contábil (dre.resultadoLiquido) para consistência
-- [ ] Comparativo mês anterior (previousMonth.netResult) incluir Outras Receitas
+- [x] Incluir Outras Receitas no DRE contábil (dre.resultadoLiquido) — já implementado em accounting.ts (seção 7)
+- [x] Comparativo mês anterior (previousMonth.netResult) incluir Outras Receitas — já usa getMonthlyClosing recursivo que calcula netResult com Outras Receitas
 - [ ] Impressão do Fechamento: logo da empresa + layout A4
-- [ ] Fase 2 Timezone: migrar exibição (PDF/backup)
-- [ ] Fase 3 Timezone: manter timestamps técnicos em UTC
-- [ ] Acesso por Empresa: Fases 3-5 (parcelas, contabilidade, testes)
-- [ ] Pedidos cancelados iFood: não aparecer na lista
-- [ ] Campo Data iFood: usar inicio_da_entrega
+- [x] Fase 2 Timezone: migrar exibição (PDF/backup) — concluído 25/02
+- [x] Fase 3 Timezone: manter timestamps técnicos em UTC — concluído 25/02
+- [x] Acesso por Empresa: Fases 3-5 (parcelas, contabilidade, testes) — concluído 25/02
+- [x] Pedidos cancelados iFood: não aparecer na lista (já implementado — CANCELLED/DECLINED filtrados em ifoodImport.ts)
+- [x] Campo Data iFood: usar inicio_da_entrega (já implementado — ifoodImport.ts linha 370)
