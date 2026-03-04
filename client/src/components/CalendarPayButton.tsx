@@ -15,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
+import { useAuth } from "@/_core/hooks/useAuth";
 
 interface CalendarPayButtonProps {
   item: {
@@ -33,6 +34,7 @@ interface CalendarPayButtonProps {
 export function CalendarPayButton({ item, onPaymentSuccess }: CalendarPayButtonProps) {
   const [showModal, setShowModal] = useState(false);
   const amount = typeof item.amount === 'string' ? parseFloat(item.amount) : item.amount;
+  const { activeCompanyId } = useAuth();
   
   const [paymentForm, setPaymentForm] = useState({
     paidDate: getTodayBR(),
@@ -40,8 +42,21 @@ export function CalendarPayButton({ item, onPaymentSuccess }: CalendarPayButtonP
     interestAmount: "",
     discountAmount: "",
     paymentMethod: item.paymentMethod || "",
+    bankAccountId: undefined as number | undefined,
     notes: "",
   });
+
+  // Query de contas bancárias
+  const { data: bankAccounts } = trpc.accounting.getBankAccounts.useQuery(
+    { companyId: activeCompanyId! },
+    { enabled: !!activeCompanyId && showModal }
+  );
+
+  // Encontrar Caixa Geral para auto-seleção quando Dinheiro
+  const caixaGeral = bankAccounts?.find((a: any) => a.name.toLowerCase().includes('caixa'));
+  const isDinheiro = paymentForm.paymentMethod === 'DINHEIRO';
+  const showBankDropdown = paymentForm.paymentMethod && !isDinheiro;
+  const bankOptions = bankAccounts?.filter((a: any) => !a.name.toLowerCase().includes('caixa')) || [];
 
   const utils = trpc.useUtils();
   const payInstallmentMutation = trpc.payables.payInstallment.useMutation({
@@ -66,6 +81,8 @@ export function CalendarPayButton({ item, onPaymentSuccess }: CalendarPayButtonP
       return;
     }
 
+    const bankId = isDinheiro ? caixaGeral?.id : paymentForm.bankAccountId;
+
     payInstallmentMutation.mutate({
       installmentId: item.installmentId,
       type: (item.tipo === 'DESPESA' ? 'expense' : 'purchase') as 'purchase' | 'expense',
@@ -75,6 +92,7 @@ export function CalendarPayButton({ item, onPaymentSuccess }: CalendarPayButtonP
       interestAmount: interestAmount > 0 ? interestAmount.toString() : undefined,
       discountAmount: discountAmount > 0 ? discountAmount.toString() : undefined,
       notes: paymentForm.notes,
+      bankAccountId: bankId,
     });
   };
 
@@ -200,7 +218,7 @@ export function CalendarPayButton({ item, onPaymentSuccess }: CalendarPayButtonP
               <Label htmlFor="cal-paymentMethod">Forma de Pagamento *</Label>
               <Select
                 value={paymentForm.paymentMethod}
-                onValueChange={(value) => setPaymentForm({ ...paymentForm, paymentMethod: value })}
+                onValueChange={(value) => setPaymentForm({ ...paymentForm, paymentMethod: value, bankAccountId: undefined })}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione..." />
@@ -214,6 +232,34 @@ export function CalendarPayButton({ item, onPaymentSuccess }: CalendarPayButtonP
                 </SelectContent>
               </Select>
             </div>
+
+            {/* Banco/Conta - Regra inteligente */}
+            {isDinheiro && caixaGeral && (
+              <div className="space-y-1.5">
+                <Label>Banco/Conta</Label>
+                <Input value={caixaGeral.name} disabled className="bg-muted" />
+              </div>
+            )}
+            {showBankDropdown && bankOptions.length > 0 && (
+              <div className="space-y-1.5">
+                <Label>Banco/Conta *</Label>
+                <Select
+                  value={paymentForm.bankAccountId?.toString() || ""}
+                  onValueChange={(value) => setPaymentForm({ ...paymentForm, bankAccountId: parseInt(value) })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione a conta..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {bankOptions.map((account: any) => (
+                      <SelectItem key={account.id} value={account.id.toString()}>
+                        {account.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             {/* Observações */}
             <div className="space-y-1.5">
