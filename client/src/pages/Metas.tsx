@@ -49,11 +49,13 @@ const currentYear = new Date().getFullYear();
 const currentMonth = new Date().getMonth() + 1;
 
 const IFOOD_LOGO_URL = "https://d2xsxph8kpxj0f.cloudfront.net/310519663140687549/7RkrCeS5KipYf8hkuNqrCk/ifood-logo-red_44465bfd.png";
+const NINETY_NINE_FOOD_LOGO_URL = "https://d2xsxph8kpxj0f.cloudfront.net/310519663140687549/7RkrCeS5KipYf8hkuNqrCk/99food-logo_54a15810.png";
 
 /* ─── helpers visuais ─── */
-function ChannelIcon({ name, className = "h-5 w-5" }: { name: string; className?: string }) {
+function ChannelIcon({ name, className = "h-6 w-6" }: { name: string; className?: string }) {
   const n = name.toLowerCase();
-  if (n.includes("ifood") || n.includes("delivery")) return <img src={IFOOD_LOGO_URL} alt="iFood" className={`${className} object-contain`} />;
+  if (n.includes("ifood")) return <img src={IFOOD_LOGO_URL} alt="iFood" className={`${className} object-contain`} />;
+  if (n.includes("99") || n.includes("ninety") || n.includes("99food")) return <img src={NINETY_NINE_FOOD_LOGO_URL} alt="99Food" className={`${className} object-contain rounded`} />;
   if (n.includes("balcão") || n.includes("prazo") || n.includes("balcao")) return <Store className={className} />;
   if (n.includes("geral") || n.includes("all")) return <Target className={className} />;
   return <CreditCard className={className} />;
@@ -61,8 +63,10 @@ function ChannelIcon({ name, className = "h-5 w-5" }: { name: string; className?
 
 function channelColors(name: string) {
   const n = name.toLowerCase();
-  if (n.includes("ifood") || n.includes("delivery"))
+  if (n.includes("ifood"))
     return { gradient: "from-red-500 to-red-600", light: "bg-red-50 dark:bg-red-950/30", text: "text-red-600 dark:text-red-400", border: "border-red-200 dark:border-red-800" };
+  if (n.includes("99") || n.includes("99food"))
+    return { gradient: "from-yellow-500 to-amber-500", light: "bg-yellow-50 dark:bg-yellow-950/30", text: "text-yellow-600 dark:text-yellow-400", border: "border-yellow-200 dark:border-yellow-800" };
   if (n.includes("balcão") || n.includes("prazo") || n.includes("balcao"))
     return { gradient: "from-blue-500 to-blue-600", light: "bg-blue-50 dark:bg-blue-950/30", text: "text-blue-600 dark:text-blue-400", border: "border-blue-200 dark:border-blue-800" };
   if (n.includes("geral") || n.includes("all"))
@@ -249,7 +253,7 @@ export default function Metas() {
                           {/* título + badge */}
                           <div className="flex items-center gap-2 mb-3">
                             <div className={`p-1.5 rounded-lg ${c.light}`}>
-                              <ChannelIcon name={g.channelName} className={`h-4 w-4 ${c.text}`} />
+                              <ChannelIcon name={g.channelName} className={`h-6 w-6 ${c.text}`} />
                             </div>
                             <h3 className="font-semibold text-base">{g.channelName}</h3>
                             {g.achieved && (
@@ -345,7 +349,7 @@ export default function Metas() {
                         <tr key={g.id} className="border-b last:border-0">
                           <td className="py-3 pr-4">
                             <div className="flex items-center gap-2">
-                              <ChannelIcon name={g.channelName} className={`h-4 w-4 ${c.text}`} />
+                              <ChannelIcon name={g.channelName} className={`h-6 w-6 ${c.text}`} />
                               <span className="font-medium">{g.channelName}</span>
                             </div>
                           </td>
@@ -432,7 +436,7 @@ export default function Metas() {
                           return (
                             <div key={goal.id} className={`flex items-center justify-between p-3 rounded-md ${c.light} ${c.border} border`}>
                               <div className="flex items-center gap-2 min-w-0">
-                                <ChannelIcon name={goal.channelName} className={`h-4 w-4 shrink-0 ${c.text}`} />
+                                <ChannelIcon name={goal.channelName} className={`h-6 w-6 shrink-0 ${c.text}`} />
                                 <div className="min-w-0">
                                   <p className="text-sm font-medium truncate">{goal.channelName}</p>
                                   <p className="text-base font-bold tabular-nums">{fmtCurrency(goal.targetAmount)}</p>

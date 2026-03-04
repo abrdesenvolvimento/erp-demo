@@ -1646,3 +1646,7 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 ### Ajustes Metas (03/03/2026)
 - [x] Excluir meta "Geral" de Janeiro (inflava análise de R$85.9k para R$145k) — id 60001 removido do banco
 - [x] Substituir ícone de caminhão pelo logo do iFood na tela de Metas
+
+### Ajustes Visuais Metas - Ícones (03/03/2026)
+- [x] Aumentar tamanho dos ícones de canal na tela de Metas (h-4 w-4 → h-6 w-6)
+- [x] Cadastrar logo do 99Food para uso futuro (quando começarem as vendas) — CDN + ChannelIcon + channelColors preparados
