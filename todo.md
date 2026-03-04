@@ -1642,3 +1642,7 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Cards de metas do ano organizados por mês com cores por canal
 - [x] Histórico com ícones de tendência (verde aumento, vermelho redução)
 - [x] Removido aspecto "branco demais" — backgrounds, gradientes, sombras
+
+### Ajustes Metas (03/03/2026)
+- [x] Excluir meta "Geral" de Janeiro (inflava análise de R$85.9k para R$145k) — id 60001 removido do banco
+- [x] Substituir ícone de caminhão pelo logo do iFood na tela de Metas

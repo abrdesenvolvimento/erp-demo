@@ -1,0 +1,37 @@
+{
+  "query": "SELECT id, companyId, month, year, channelId, targetAmount, notes FROM revenueGoals WHERE month = 1 AND year = 2026;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT id, companyId, month, year, channelId, targetAmount, notes FROM revenueGoals WHERE month = 1 AND year = 2026;",
+  "rows": [
+    {
+      "id": "30002",
+      "companyId": "1",
+      "month": "1",
+      "year": "2026",
+      "channelId": "1",
+      "targetAmount": "61450.00",
+      "notes": "Ajuste de Meta"
+    },
+    {
+      "id": "30003",
+      "companyId": "1",
+      "month": "1",
+      "year": "2026",
+      "channelId": "2",
+      "targetAmount": "24450.00",
+      "notes": "Reajuste (Média diária está a cima do projetado na primeira meta)"
+    },
+    {
+      "id": "60001",
+      "companyId": "1",
+      "month": "1",
+      "year": "2026",
+      "channelId": "NULL",
+      "targetAmount": "60000.00",
+      "notes": "Meta atualizada"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tcompanyId\tmonth\tyear\tchannelId\ttargetAmount\tnotes\n30002\t1\t1\t2026\t1\t61450.00\tAjuste de Meta\n30003\t1\t1\t2026\t2\t24450.00\tReajuste (Média diária está a cima do projetado na primeira meta)\n60001\t1\t1\t2026\tNULL\t60000.00\tMeta atualizada\n",
+  "stderr": "",
+  "execution_time_ms": 363
+}

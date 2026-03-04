@@ -23,7 +23,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { trpc } from "@/lib/trpc";
 import {
   Target, Plus, Edit, TrendingUp, TrendingDown, CheckCircle2,
-  History, Store, Truck, CreditCard, Flame, Trophy, ArrowRight, Calendar,
+  History, Store, CreditCard, Flame, Trophy, ArrowRight, Calendar,
 } from "lucide-react";
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
@@ -48,10 +48,12 @@ const MONTHS = [
 const currentYear = new Date().getFullYear();
 const currentMonth = new Date().getMonth() + 1;
 
+const IFOOD_LOGO_URL = "https://d2xsxph8kpxj0f.cloudfront.net/310519663140687549/7RkrCeS5KipYf8hkuNqrCk/ifood-logo-red_44465bfd.png";
+
 /* ─── helpers visuais ─── */
 function ChannelIcon({ name, className = "h-5 w-5" }: { name: string; className?: string }) {
   const n = name.toLowerCase();
-  if (n.includes("ifood") || n.includes("delivery")) return <Truck className={className} />;
+  if (n.includes("ifood") || n.includes("delivery")) return <img src={IFOOD_LOGO_URL} alt="iFood" className={`${className} object-contain`} />;
   if (n.includes("balcão") || n.includes("prazo") || n.includes("balcao")) return <Store className={className} />;
   if (n.includes("geral") || n.includes("all")) return <Target className={className} />;
   return <CreditCard className={className} />;
