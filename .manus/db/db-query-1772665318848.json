@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE IF NOT EXISTS priceHistory (\n  id INT PRIMARY KEY AUTO_INCREMENT,\n  companyId INT NOT NULL DEFAULT 1,\n  branchId INT NOT NULL DEFAULT 1,\n  productId INT NOT NULL,\n  changeType ENUM('PRECO_VENDA', 'CUSTO_MEDIO') NOT NULL,\n  channelId INT,\n  previousValue DECIMAL(10,2),\n  newValue DECIMAL(10,2) NOT NULL,\n  changePercent DECIMAL(8,2),\n  reason TEXT,\n  userId VARCHAR(64) NOT NULL,\n  userName VARCHAR(200),\n  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\n  INDEX ph_product_idx (productId),\n  INDEX ph_change_type_idx (changeType),\n  INDEX ph_channel_idx (channelId),\n  INDEX ph_date_idx (createdAt),\n  INDEX ph_company_branch_idx (companyId, branchId)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute CREATE TABLE IF NOT EXISTS priceHistory (\n  id INT PRIMARY KEY AUTO_INCREMENT,\n  companyId INT NOT NULL DEFAULT 1,\n  branchId INT NOT NULL DEFAULT 1,\n  productId INT NOT NULL,\n  changeType ENUM('PRECO_VENDA', 'CUSTO_MEDIO') NOT NULL,\n  channelId INT,\n  previousValue DECIMAL(10,2),\n  newValue DECIMAL(10,2) NOT NULL,\n  changePercent DECIMAL(8,2),\n  reason TEXT,\n  userId VARCHAR(64) NOT NULL,\n  userName VARCHAR(200),\n  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\n  INDEX ph_product_idx (productId),\n  INDEX ph_change_type_idx (changeType),\n  INDEX ph_channel_idx (channelId),\n  INDEX ph_date_idx (createdAt),\n  INDEX ph_company_branch_idx (companyId, branchId)\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 449
+}

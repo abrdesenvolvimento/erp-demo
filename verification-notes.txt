@@ -1,0 +1,11 @@
+Verificação visual da página Histórico de Preços (04/03/2026):
+- Página carregou corretamente
+- Header com ícone History e título "Histórico de Preços"
+- Subtítulo: "Rastreamento de todas as alterações de preços de venda e custo médio"
+- 4 cards de resumo: Total de Alterações (0), Média de Aumento (—), Média de Redução (—), Produtos Mais Alterados (0)
+- Tabs: Histórico Completo | Mais Alterados
+- Filtros: Buscar produto, Tipo (Todos os tipos), Canal (Todos os canais)
+- Estado vazio: "Nenhum registro encontrado" com mensagem "As alterações de preço serão registradas automaticamente a partir de agora."
+- Submenu "Auditoria" aparece na sidebar com ícone ClipboardList
+- Link "Histórico de Preços" aparece dentro do submenu Auditoria
+- Tudo funcionando conforme esperado

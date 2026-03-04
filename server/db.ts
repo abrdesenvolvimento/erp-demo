@@ -38,7 +38,8 @@ import {
   governanceSettings, GovernanceSettings, InsertGovernanceSettings,
   governanceAuditLog, GovernanceAuditLog, InsertGovernanceAuditLog,
   accountingBatchLog, AccountingBatchLog, InsertAccountingBatchLog,
-  calendarHighlights, CalendarHighlight, InsertCalendarHighlight
+  calendarHighlights, CalendarHighlight, InsertCalendarHighlight,
+  priceHistory, PriceHistory, InsertPriceHistory
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 import { 
@@ -9382,4 +9383,175 @@ export async function removeCalendarHighlight(id: number, companyId?: number) {
 
   await db.delete(calendarHighlights).where(and(...conditions));
   return { success: true };
+}
+
+
+// ==================== HISTÓRICO DE PREÇOS (AUDITORIA) ====================
+
+/**
+ * Registra uma alteração de preço no histórico.
+ * Chamado automaticamente ao atualizar preço de venda ou custo médio.
+ */
+export async function logPriceChange(data: {
+  companyId: number;
+  branchId: number;
+  productId: number;
+  changeType: 'PRECO_VENDA' | 'CUSTO_MEDIO';
+  channelId?: number | null;
+  previousValue: string | null;
+  newValue: string;
+  reason?: string;
+  userId: string;
+  userName?: string;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const prev = parseFloat(data.previousValue || '0');
+  const next = parseFloat(data.newValue);
+  
+  // Calcular variação percentual
+  let changePercent: string | null = null;
+  if (prev > 0) {
+    changePercent = (((next - prev) / prev) * 100).toFixed(2);
+  }
+
+  const result = await db.insert(priceHistory).values({
+    companyId: data.companyId,
+    branchId: data.branchId,
+    productId: data.productId,
+    changeType: data.changeType,
+    channelId: data.channelId ?? undefined,
+    previousValue: data.previousValue || '0.00',
+    newValue: data.newValue,
+    changePercent,
+    reason: data.reason,
+    userId: data.userId,
+    userName: data.userName,
+  });
+
+  return Number((result as any).insertId);
+}
+
+/**
+ * Buscar histórico de preços de um produto específico
+ */
+export async function getPriceHistoryByProduct(productId: number, companyId?: number, limit?: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  const conditions: SQL[] = [eq(priceHistory.productId, productId)];
+  if (companyId) {
+    conditions.push(eq(priceHistory.companyId, companyId));
+  }
+
+  return await db.select()
+    .from(priceHistory)
+    .where(and(...conditions))
+    .orderBy(desc(priceHistory.createdAt))
+    .limit(limit || 100);
+}
+
+/**
+ * Buscar histórico de preços recente (todas as alterações)
+ */
+export async function getRecentPriceHistory(filters: {
+  companyId?: number;
+  changeType?: 'PRECO_VENDA' | 'CUSTO_MEDIO';
+  channelId?: number;
+  productId?: number;
+  startDate?: Date;
+  endDate?: Date;
+  page?: number;
+  pageSize?: number;
+}) {
+  const db = await getDb();
+  if (!db) return { items: [], total: 0 };
+
+  const conditions: SQL[] = [];
+  
+  if (filters.companyId) {
+    conditions.push(eq(priceHistory.companyId, filters.companyId));
+  }
+  if (filters.changeType) {
+    conditions.push(eq(priceHistory.changeType, filters.changeType));
+  }
+  if (filters.channelId) {
+    conditions.push(eq(priceHistory.channelId, filters.channelId));
+  }
+  if (filters.productId) {
+    conditions.push(eq(priceHistory.productId, filters.productId));
+  }
+  if (filters.startDate) {
+    conditions.push(gte(priceHistory.createdAt, filters.startDate));
+  }
+  if (filters.endDate) {
+    conditions.push(lte(priceHistory.createdAt, filters.endDate));
+  }
+
+  const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+  const page = filters.page || 1;
+  const pageSize = filters.pageSize || 50;
+
+  // Contar total
+  const countResult = await db.select({ count: sql<number>`COUNT(*)` })
+    .from(priceHistory)
+    .where(whereClause);
+  const total = Number(countResult[0]?.count || 0);
+
+  // Buscar itens paginados
+  const items = await db.select()
+    .from(priceHistory)
+    .where(whereClause)
+    .orderBy(desc(priceHistory.createdAt))
+    .limit(pageSize)
+    .offset((page - 1) * pageSize);
+
+  return { items, total };
+}
+
+/**
+ * Buscar estatísticas de alterações de preço (para dashboard)
+ */
+export async function getPriceHistoryStats(companyId: number, startDate?: Date, endDate?: Date) {
+  const db = await getDb();
+  if (!db) return { totalChanges: 0, avgIncrease: 0, avgDecrease: 0, mostChanged: [] };
+
+  const conditions: SQL[] = [eq(priceHistory.companyId, companyId)];
+  if (startDate) conditions.push(gte(priceHistory.createdAt, startDate));
+  if (endDate) conditions.push(lte(priceHistory.createdAt, endDate));
+
+  const whereClause = and(...conditions);
+
+  // Total de alterações
+  const totalResult = await db.select({ count: sql<number>`COUNT(*)` })
+    .from(priceHistory)
+    .where(whereClause);
+  const totalChanges = Number(totalResult[0]?.count || 0);
+
+  // Média de aumento e redução
+  const avgResult = await db.select({
+    avgIncrease: sql<number>`AVG(CASE WHEN CAST(changePercent AS DECIMAL(8,2)) > 0 THEN CAST(changePercent AS DECIMAL(8,2)) ELSE NULL END)`,
+    avgDecrease: sql<number>`AVG(CASE WHEN CAST(changePercent AS DECIMAL(8,2)) < 0 THEN CAST(changePercent AS DECIMAL(8,2)) ELSE NULL END)`,
+  })
+    .from(priceHistory)
+    .where(whereClause);
+
+  // Produtos com mais alterações
+  const mostChanged = await db.select({
+    productId: priceHistory.productId,
+    changeCount: sql<number>`COUNT(*)`,
+  })
+    .from(priceHistory)
+    .where(whereClause)
+    .groupBy(priceHistory.productId)
+    .orderBy(desc(sql`COUNT(*)`))
+    .limit(10);
+
+  return {
+    totalChanges,
+    avgIncrease: Number(avgResult[0]?.avgIncrease || 0),
+    avgDecrease: Number(avgResult[0]?.avgDecrease || 0),
+    mostChanged,
+  };
 }

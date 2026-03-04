@@ -11,6 +11,7 @@ import { accountingRouter } from './routers/accounting';
 import { ifoodImportRouter } from './routers/ifoodImport';
 import { stockAnalysisRouter } from './routers/stockAnalysis';
 import { companyRouter } from './routers/company';
+import { priceHistoryRouter } from './routers/priceHistory';
 
 export const appRouter = router({
   system: systemRouter,
@@ -18,6 +19,7 @@ export const appRouter = router({
   ifoodImport: ifoodImportRouter,
   stockAnalysis: stockAnalysisRouter,
   company: companyRouter,
+  priceHistory: priceHistoryRouter,
 
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
@@ -364,12 +366,69 @@ export const appRouter = router({
           throw new Error("Apenas administradores podem ativar/desativar produtos");
         }
         
+        // === AUDITORIA: Rastrear alterações de custo médio ===
+        if (updateData.avgCost !== undefined) {
+          try {
+            const currentProduct = await db.getProduct(input.id);
+            const oldCost = currentProduct?.avgCost?.toString() || '0.00';
+            const newCost = updateData.avgCost;
+            if (oldCost !== newCost && parseFloat(newCost || '0') !== parseFloat(oldCost)) {
+              await db.logPriceChange({
+                companyId: ctx.activeCompanyId ?? 1,
+                branchId: ctx.activeBranchId ?? 1,
+                productId: input.id,
+                changeType: 'CUSTO_MEDIO',
+                channelId: null,
+                previousValue: oldCost,
+                newValue: newCost || '0.00',
+                userId: ctx.user?.id || 'system',
+                userName: ctx.user?.name || 'Sistema',
+              });
+            }
+          } catch (e) {
+            console.error('[priceHistory] Erro ao registrar alteração de custo:', e);
+          }
+        }
+        
         await db.updateProduct(input.id, updateData);
         
-        // Atualizar preços por canal
+        // === AUDITORIA: Rastrear alterações de preço de venda ===
         if (prices) {
+          // Buscar preços atuais antes de atualizar
+          let currentPrices: any[] = [];
+          try {
+            currentPrices = await db.getProductPrices(input.id);
+          } catch (e) {
+            console.error('[priceHistory] Erro ao buscar preços atuais:', e);
+          }
+          
           for (const [channelId, price] of Object.entries(prices)) {
             if (price && parseFloat(price) > 0) {
+              // Encontrar preço anterior deste canal
+              const currentPrice = currentPrices.find(
+                (p: any) => p.channelId === parseInt(channelId)
+              );
+              const oldPrice = currentPrice?.price?.toString() || '0.00';
+              
+              // Só registrar se houve alteração real
+              if (parseFloat(oldPrice) !== parseFloat(price)) {
+                try {
+                  await db.logPriceChange({
+                    companyId: ctx.activeCompanyId ?? 1,
+                    branchId: ctx.activeBranchId ?? 1,
+                    productId: input.id,
+                    changeType: 'PRECO_VENDA',
+                    channelId: parseInt(channelId),
+                    previousValue: oldPrice,
+                    newValue: price,
+                    userId: ctx.user?.id || 'system',
+                    userName: ctx.user?.name || 'Sistema',
+                  });
+                } catch (e) {
+                  console.error('[priceHistory] Erro ao registrar alteração de preço:', e);
+                }
+              }
+              
               await db.setProductPrice({
                 productId: input.id,
                 channelId: parseInt(channelId),
@@ -414,7 +473,30 @@ export const appRouter = router({
         price: z.string(),
         effectiveFrom: z.date().optional(),
       }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ input, ctx }) => {
+        // === AUDITORIA: Rastrear alteração de preço ===
+        try {
+          const currentPrices = await db.getProductPrices(input.productId);
+          const currentPrice = currentPrices.find(p => p.channelId === input.channelId);
+          const oldPrice = currentPrice?.price?.toString() || '0.00';
+          
+          if (parseFloat(oldPrice) !== parseFloat(input.price)) {
+            await db.logPriceChange({
+              companyId: ctx.activeCompanyId ?? 1,
+              branchId: ctx.activeBranchId ?? 1,
+              productId: input.productId,
+              changeType: 'PRECO_VENDA',
+              channelId: input.channelId,
+              previousValue: oldPrice,
+              newValue: input.price,
+              userId: ctx.user?.id || 'system',
+              userName: ctx.user?.name || 'Sistema',
+            });
+          }
+        } catch (e) {
+          console.error('[priceHistory] Erro ao registrar alteração de preço:', e);
+        }
+        
         const id = await db.setProductPrice(input);
         return { id, success: true };
       }),

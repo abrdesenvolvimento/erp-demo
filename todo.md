@@ -1666,3 +1666,17 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 ### Correções Impressão - Sprint 04/03/2026 (v2)
 - [x] Fechamento A4: reduzir espaçamentos entre colunas das tabelas (table-layout: auto em vez de fixed)
 - [x] Comprovante Venda 80mm: texto cortado na lateral (largura reduzida para 72mm, margens 4mm, fontes menores)
+
+### Módulo Auditoria - Histórico de Preços (04/03/2026)
+- [x] Analisar estrutura atual de preços e logs no banco de dados
+- [x] Criar/verificar tabela de histórico de preços (priceHistory)
+- [x] Implementar queries de consulta de histórico de preços no backend (getRecentPriceHistory, getPriceHistoryStats, logPriceChange)
+- [x] Criar tela de Histórico de Preços no frontend (filtros por produto, canal, tipo)
+- [x] Implementar tracking automático de preço de venda (rota setPrice)
+- [x] Implementar tracking automático de custo médio (rota updateProduct)
+- [x] Submenu "Auditoria" na sidebar com link para Histórico de Preços
+- [x] Paginação, ordenação e filtros funcionando
+- [x] Tab "Mais Alterados" com ranking de produtos
+- [x] 28 testes unitários passando
+- [ ] Exibir gráfico de evolução de preço por produto (futuro)
+- [ ] Integrar com tela de detalhes do produto (futuro)

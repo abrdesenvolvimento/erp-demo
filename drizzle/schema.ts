@@ -1173,3 +1173,31 @@ export const monthlyStockSnapshot = mysqlTable("monthlyStockSnapshot", {
 }));
 export type MonthlyStockSnapshot = typeof monthlyStockSnapshot.$inferSelect;
 export type InsertMonthlyStockSnapshot = typeof monthlyStockSnapshot.$inferInsert;
+
+
+// ==================== HISTÓRICO DE PREÇOS ====================
+// Registra cada alteração de preço de venda (por canal) e custo médio dos produtos.
+// Permite rastrear quem alterou, quando e de quanto para quanto.
+export const priceHistory = mysqlTable("priceHistory", {
+  id: int("id").primaryKey().autoincrement(),
+  companyId: int("companyId").notNull().default(1),
+  branchId: int("branchId").notNull().default(1),
+  productId: int("productId").notNull(),
+  changeType: mysqlEnum("changeType", ["PRECO_VENDA", "CUSTO_MEDIO"]).notNull(),
+  channelId: int("channelId"), // null para custo médio (aplica a todos os canais)
+  previousValue: decimal("previousValue", { precision: 10, scale: 2 }),
+  newValue: decimal("newValue", { precision: 10, scale: 2 }).notNull(),
+  changePercent: decimal("changePercent", { precision: 8, scale: 2 }), // variação percentual
+  reason: text("reason"), // motivo da alteração (opcional)
+  userId: varchar("userId", { length: 64 }).notNull(), // quem alterou
+  userName: varchar("userName", { length: 200 }), // nome do usuário para consulta rápida
+  createdAt: timestamp("createdAt").defaultNow(),
+}, (table) => ({
+  productIdx: index("ph_product_idx").on(table.productId),
+  changeTypeIdx: index("ph_change_type_idx").on(table.changeType),
+  channelIdx: index("ph_channel_idx").on(table.channelId),
+  dateIdx: index("ph_date_idx").on(table.createdAt),
+  companyBranchIdx: index("ph_company_branch_idx").on(table.companyId, table.branchId),
+}));
+export type PriceHistory = typeof priceHistory.$inferSelect;
+export type InsertPriceHistory = typeof priceHistory.$inferInsert;

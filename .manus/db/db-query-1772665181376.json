@@ -1,0 +1,110 @@
+{
+  "query": "SELECT pp.id, pp.productId, pp.channelId, pp.price, pp.effectiveFrom, pp.updatedAt, p.name as productName, c.name as channelName FROM productPrices pp LEFT JOIN products p ON pp.productId = p.id LEFT JOIN salesChannels c ON pp.channelId = c.id LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT pp.id, pp.productId, pp.channelId, pp.price, pp.effectiveFrom, pp.updatedAt, p.name as productName, c.name as channelName FROM productPrices pp LEFT JOIN products p ON pp.productId = p.id LEFT JOIN salesChannels c ON pp.channelId = c.id LIMIT 10;",
+  "rows": [
+    {
+      "id": "240001",
+      "productId": "270001",
+      "channelId": "1",
+      "price": "7.00",
+      "effectiveFrom": "2025-10-23 19:18:16",
+      "updatedAt": "2025-10-23 19:18:16",
+      "productName": "NULL",
+      "channelName": "Balcão / A Prazo"
+    },
+    {
+      "id": "240002",
+      "productId": "270001",
+      "channelId": "2",
+      "price": "8.00",
+      "effectiveFrom": "2025-10-23 19:18:16",
+      "updatedAt": "2025-10-23 19:18:16",
+      "productName": "NULL",
+      "channelName": "Delivery iFood"
+    },
+    {
+      "id": "240003",
+      "productId": "270001",
+      "channelId": "3",
+      "price": "7.50",
+      "effectiveFrom": "2025-10-23 19:18:16",
+      "updatedAt": "2025-10-23 19:18:16",
+      "productName": "NULL",
+      "channelName": "Delivery 99Food"
+    },
+    {
+      "id": "240004",
+      "productId": "270001",
+      "channelId": "4",
+      "price": "7.00",
+      "effectiveFrom": "2025-10-23 19:18:16",
+      "updatedAt": "2025-10-23 19:18:16",
+      "productName": "NULL",
+      "channelName": "Delivery Próprio"
+    },
+    {
+      "id": "240005",
+      "productId": "270002",
+      "channelId": "1",
+      "price": "40.00",
+      "effectiveFrom": "2025-10-23 19:19:21",
+      "updatedAt": "2025-10-23 19:19:21",
+      "productName": "NULL",
+      "channelName": "Balcão / A Prazo"
+    },
+    {
+      "id": "240006",
+      "productId": "270002",
+      "channelId": "2",
+      "price": "45.00",
+      "effectiveFrom": "2025-10-23 19:19:21",
+      "updatedAt": "2025-10-23 19:19:21",
+      "productName": "NULL",
+      "channelName": "Delivery iFood"
+    },
+    {
+      "id": "240007",
+      "productId": "270002",
+      "channelId": "3",
+      "price": "42.00",
+      "effectiveFrom": "2025-10-23 19:19:21",
+      "updatedAt": "2025-10-23 19:19:21",
+      "productName": "NULL",
+      "channelName": "Delivery 99Food"
+    },
+    {
+      "id": "240008",
+      "productId": "270002",
+      "channelId": "4",
+      "price": "43.00",
+      "effectiveFrom": "2025-10-23 19:19:21",
+      "updatedAt": "2025-10-23 19:19:21",
+      "productName": "NULL",
+      "channelName": "Delivery Próprio"
+    },
+    {
+      "id": "270001",
+      "productId": "330001",
+      "channelId": "1",
+      "price": "15.00",
+      "effectiveFrom": "2025-10-29 04:53:08",
+      "updatedAt": "2025-10-29 04:53:08",
+      "productName": "NULL",
+      "channelName": "Balcão / A Prazo"
+    },
+    {
+      "id": "270002",
+      "productId": "330001",
+      "channelId": "2",
+      "price": "18.00",
+      "effectiveFrom": "2025-10-29 04:53:08",
+      "updatedAt": "2025-10-29 04:53:08",
+      "productName": "NULL",
+      "channelName": "Delivery iFood"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tproductId\tchannelId\tprice\teffectiveFrom\tupdatedAt\tproductName\tchannelName\n240001\t270001\t1\t7.00\t2025-10-23 19:18:16\t2025-10-23 19:18:16\tNULL\tBalcão / A Prazo\n240002\t270001\t2\t8.00\t2025-10-23 19:18:16\t2025-10-23 19:18:16\tNULL\tDelivery iFood\n240003\t270001\t3\t7.50\t2025-10-23 19:18:16\t2025-10-23 19:18:16\tNULL\tDelivery 99Food\n240004\t270001\t4\t7.00\t2025-10-23 19:18:16\t2025-10-23 19:18:16\tNULL\tDelivery Próprio\n240005\t270002\t1\t40.00\t2025-10-23 19:19:21\t2025-10-23 19:19:21\tNULL\tBalcão / A Prazo\n240006\t270002\t2\t45.00\t2025-10-23 19:19:21\t2025-10-23 19:19:21\tNULL\tDelivery iFood\n240007\t270002\t3\t42.00\t2025-10-23 19:19:21\t2025-10-23 19:19:21\tNULL\tDelivery 99Food\n240008\t270002\t4\t43.00\t2025-10-23 19:19:21\t2025-10-23 19:19:21\tNULL\tDelivery Próprio\n270001\t330001\t1\t15.00\t2025-10-29 04:53:08\t2025-10-29 04:53:08\tNULL\tBalcão / A Prazo\n270002\t330001\t2\t18.00\t2025-10-29 04:53:08\t2025-10-29 04:53:08\tNULL\tDelivery iFood\n",
+  "stderr": "",
+  "execution_time_ms": 376
+}
