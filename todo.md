@@ -340,7 +340,7 @@ Despesas criadas ANTES desta implementação (07/02/2026) não possuem registros
   - [x] Percentual de utilização
 
 ### Metas
-- [ ] Melhorias visuais/layout para reduzir aspecto "branco"
+- [x] Melhorias visuais/layout para reduzir aspecto "branco"
 - [ ] Manter regras de negócio atuais
 
 ### Responsividade Mobile
@@ -1299,10 +1299,10 @@ Despesa de impostos aparece tanto em janeiro quanto em fevereiro após edição 
 #### Metas — Visual "Muito Branco"
 **Cenário atual:** Tela de Metas funcional mas com visual pouco elaborado.
 
-- [ ] Redesenhar tela de Metas com mais hierarquia visual (cards com cor, progresso visual, ícones)
-- [ ] Adicionar gráfico de progresso mensal (gauge ou barra de progresso estilizada)
-- [ ] Comparativo mês a mês (meta vs realizado dos últimos 3 meses)
-- [ ] Destaque visual para metas atingidas vs atrasadas (verde/vermelho)
+- [x] Redesenhar tela de Metas com mais hierarquia visual (cards com cor, progresso visual, ícones)
+- [x] Adicionar gráfico de progresso mensal (gauge ou barra de progresso estilizada)
+- [x] Comparativo mês a mês (meta vs realizado dos últimos 3 meses)
+- [x] Destaque visual para metas atingidas vs atrasadas (verde/vermelho)
 
 #### Responsividade Mobile
 **Cenário atual:** Sistema desenvolvido para desktop. Mobile não foi priorizado.
@@ -1602,10 +1602,10 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [ ] Logo dinâmico por empresa (Adega Beira Rio / A Brasa)
 
 ### 4. Redesign da Tela de Metas
-- [ ] Redesenhar com hierarquia visual (gauge/barra de progresso estilizada)
-- [ ] Ícones por departamento/canal (ex: ícone iFood, Balcão, Delivery, etc.)
-- [ ] Comparativo mês a mês (meta vs realizado dos últimos 3 meses)
-- [ ] Destaque visual para metas atingidas (verde) vs atrasadas (vermelho)
+- [x] Redesenhar com hierarquia visual (gauge/barra de progresso estilizada)
+- [x] Ícones por departamento/canal (ex: ícone iFood, Balcão, Delivery, etc.)
+- [x] Comparativo mês a mês (meta vs realizado dos últimos 3 meses)
+- [x] Destaque visual para metas atingidas (verde) vs atrasadas (vermelho)
 
 ### Correções do dia
 - [x] Compra duplicada #3960002 (Comercial Bolsão R$237,63) — já resolvida anteriormente
@@ -1631,3 +1631,14 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Corrigido nome da rota tRPC: `getBankAccounts` → `bankAccounts` (rota inexistente retornava 404)
 - [x] Corrigido import: `useAuth()` não exporta `activeCompanyId` → trocado para `useCompany()`
 - [x] Resultado: dropdown Banco/Conta agora aparece corretamente com opções Itaú, Inter, C6
+
+### Redesign Tela de Metas (03/03/2026) ✅
+- [x] Gauge circular SVG com cores por status (verde/amarelo/vermelho)
+- [x] Barra de tempo do mês (dia atual, dias restantes)
+- [x] Ícones por canal (Truck iFood, Store Balcão, Target Geral)
+- [x] Barras de cor no topo dos cards (gradiente por canal)
+- [x] Indicadores inteligentes (valor/dia necessário, tendência on/off track)
+- [x] Comparativo últimos 3 meses com badges coloridos por status
+- [x] Cards de metas do ano organizados por mês com cores por canal
+- [x] Histórico com ícones de tendência (verde aumento, vermelho redução)
+- [x] Removido aspecto "branco demais" — backgrounds, gradientes, sombras
