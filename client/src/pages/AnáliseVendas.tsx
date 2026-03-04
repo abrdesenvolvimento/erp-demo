@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { CalendarIcon, TrendingUp, Package, Download, X } from "lucide-react";
+import { CalendarIcon, TrendingUp, Package, Download, X, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { trpc } from "@/lib/trpc";
@@ -55,6 +55,14 @@ const isHoliday = (dateStr: string) => {
   return holidays.includes(dateStr);
 };
 
+type SortField = 'productName' | 'totalQuantity' | 'totalRevenue' | 'totalCost' | 'profit' | 'margin' | 'saleDate' | 'dayOfWeek' | 'yearMonth' | 'weekLabel' | 'categoryName';
+type SortDir = 'asc' | 'desc';
+
+const SortIcon = ({ field, activeField, activeDir }: { field: SortField; activeField: SortField; activeDir: SortDir }) => {
+  if (activeField !== field) return <ArrowUpDown className="h-3 w-3 ml-1 opacity-30" />;
+  return activeDir === 'asc' ? <ArrowUp className="h-3 w-3 ml-1" /> : <ArrowDown className="h-3 w-3 ml-1" />;
+};
+
 export default function AnáliseVendas() {
   const { user } = useAuth();
   const isAdmin = user?.role === "admin";
@@ -94,6 +102,24 @@ export default function AnáliseVendas() {
   const [enableComparison, setEnableComparison] = useState(false);
   const [comparisonType, setComparisonType] = useState<"value" | "quantity">("value");
   const [comparisonMode, setComparisonMode] = useState<"previous_year" | "previous_month">("previous_year");
+
+  // Estado de ordenação para a matriz produto×mês
+  const [matrixSortField, setMatrixSortField] = useState<string>('total');
+  const [matrixSortDir, setMatrixSortDir] = useState<SortDir>('desc');
+
+  const handleMatrixSort = (field: string) => {
+    if (matrixSortField === field) {
+      setMatrixSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    } else {
+      setMatrixSortField(field);
+      setMatrixSortDir('desc');
+    }
+  };
+
+  const MatrixSortIcon = ({ field }: { field: string }) => {
+    if (matrixSortField !== field) return <ArrowUpDown className="h-3 w-3 ml-1 opacity-30 inline" />;
+    return matrixSortDir === 'asc' ? <ArrowUp className="h-3 w-3 ml-1 inline" /> : <ArrowDown className="h-3 w-3 ml-1 inline" />;
+  };
 
   // Buscar produtos, subcategorias e categorias para filtros
   const { data: products } = trpc.products.list.useQuery(undefined, { enabled: isAdmin });
@@ -1095,9 +1121,10 @@ export default function AnáliseVendas() {
                                 months.map((month) => (
                                   <th 
                                     key={month.yearMonth} 
-                                    className="border px-3 py-2 text-center min-w-[100px] bg-purple-50"
+                                    className="border px-3 py-2 text-center min-w-[100px] bg-purple-50 cursor-pointer hover:bg-purple-100 select-none"
+                                    onClick={() => handleMatrixSort(month.yearMonth)}
                                   >
-                                    <div className="font-semibold">{month.label}</div>
+                                    <div className="font-semibold flex items-center justify-center">{month.label}<MatrixSortIcon field={month.yearMonth} /></div>
                                   </th>
                                 ))
                               ) : groupBy === 'week' ? (
@@ -1145,7 +1172,9 @@ export default function AnáliseVendas() {
                                   );
                                 })
                               )}
-                              <th className="border px-3 py-2 text-center font-semibold bg-blue-50">Total</th>
+                              <th className="border px-3 py-2 text-center font-semibold bg-blue-50 cursor-pointer hover:bg-blue-100 select-none" onClick={() => handleMatrixSort('total')}>
+                                <span className="flex items-center justify-center">Total<MatrixSortIcon field="total" /></span>
+                              </th>
                             </tr>
                           </thead>
                           <tbody>
@@ -1156,8 +1185,38 @@ export default function AnáliseVendas() {
                                 0
                               );
                               
-                              return Array.from(productMap.entries()).map(([productId, product]) => {
+                              // Preparar array com totais para ordenação
+                              const productEntries = Array.from(productMap.entries()).map(([productId, product]) => {
                                 const productTotal = Array.from(product.sales.values()).reduce((sum, sale) => sum + sale.quantity, 0);
+                                // Calcular valor por mês para ordenação
+                                const monthTotals: Record<string, number> = {};
+                                if (groupBy === 'month') {
+                                  months.forEach(month => {
+                                    let qty = 0;
+                                    month.dates.forEach(date => {
+                                      const sale = product.sales.get(date);
+                                      if (sale) qty += sale.quantity;
+                                    });
+                                    monthTotals[month.yearMonth] = qty;
+                                  });
+                                }
+                                return { productId, product, productTotal, monthTotals };
+                              });
+
+                              // Ordenar
+                              productEntries.sort((a, b) => {
+                                let valA: number, valB: number;
+                                if (matrixSortField === 'total') {
+                                  valA = a.productTotal;
+                                  valB = b.productTotal;
+                                } else {
+                                  valA = a.monthTotals[matrixSortField] || 0;
+                                  valB = b.monthTotals[matrixSortField] || 0;
+                                }
+                                return matrixSortDir === 'asc' ? valA - valB : valB - valA;
+                              });
+
+                              return productEntries.map(({ productId, product, productTotal }) => {
                                 const productPercent = grandTotal > 0 ? ((productTotal / grandTotal) * 100).toFixed(1) : '0.0';
                                 
                                 return (

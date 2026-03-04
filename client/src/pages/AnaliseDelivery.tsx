@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { trpc } from "@/lib/trpc";
-import { TrendingUp, TrendingDown, AlertCircle, ArrowLeft, Search, Calendar, Filter, Info } from "lucide-react";
+import { TrendingUp, TrendingDown, AlertCircle, ArrowLeft, Search, Calendar, Filter, Info, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
@@ -12,7 +12,22 @@ import { Link } from "wouter";
 import { useState, useMemo } from "react";
 
 export default function AnaliseDelivery() {
-  const [sortBy, setSortBy] = useState<'netProfit' | 'netMargin' | 'revenue'>('netProfit');
+  const [sortBy, setSortBy] = useState<'netProfit' | 'netMargin' | 'revenue' | 'quantity' | 'cost' | 'grossMargin' | 'ifoodFee'>('netProfit');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
+
+  const handleSort = (field: typeof sortBy) => {
+    if (sortBy === field) {
+      setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortBy(field);
+      setSortDir('desc');
+    }
+  };
+
+  const SortIcon = ({ field }: { field: string }) => {
+    if (sortBy !== field) return <ArrowUpDown className="h-3 w-3 ml-1 opacity-30 inline" />;
+    return sortDir === 'asc' ? <ArrowUp className="h-3 w-3 ml-1 inline" /> : <ArrowDown className="h-3 w-3 ml-1 inline" />;
+  };
   const [searchTerm, setSearchTerm] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -103,9 +118,15 @@ export default function AnaliseDelivery() {
       return true;
     })
     .sort((a: any, b: any) => {
-      if (sortBy === 'netProfit') return parseFloat(b.netProfit) - parseFloat(a.netProfit);
-      if (sortBy === 'netMargin') return parseFloat(b.netMarginPercent) - parseFloat(a.netMarginPercent);
-      return parseFloat(b.revenue) - parseFloat(a.revenue);
+      let valA: number, valB: number;
+      if (sortBy === 'netProfit') { valA = parseFloat(a.netProfit); valB = parseFloat(b.netProfit); }
+      else if (sortBy === 'netMargin') { valA = parseFloat(a.netMarginPercent); valB = parseFloat(b.netMarginPercent); }
+      else if (sortBy === 'quantity') { valA = parseFloat(a.quantity); valB = parseFloat(b.quantity); }
+      else if (sortBy === 'cost') { valA = parseFloat(a.cost); valB = parseFloat(b.cost); }
+      else if (sortBy === 'grossMargin') { valA = parseFloat(a.grossMarginPercent); valB = parseFloat(b.grossMarginPercent); }
+      else if (sortBy === 'ifoodFee') { valA = parseFloat(a.ifoodFee); valB = parseFloat(b.ifoodFee); }
+      else { valA = parseFloat(a.revenue); valB = parseFloat(b.revenue); }
+      return sortDir === 'asc' ? valA - valB : valB - valA;
     }) : [];
 
   // Determinar label da comissão
@@ -199,23 +220,23 @@ export default function AnaliseDelivery() {
                 <Button 
                   variant={sortBy === 'netProfit' ? 'default' : 'outline'} 
                   size="sm"
-                  onClick={() => setSortBy('netProfit')}
+                  onClick={() => handleSort('netProfit')}
                 >
-                  Lucro Líquido
+                  Lucro Líquido {sortBy === 'netProfit' && (sortDir === 'desc' ? '↓' : '↑')}
                 </Button>
                 <Button 
                   variant={sortBy === 'netMargin' ? 'default' : 'outline'} 
                   size="sm"
-                  onClick={() => setSortBy('netMargin')}
+                  onClick={() => handleSort('netMargin')}
                 >
-                  Margem %
+                  Margem % {sortBy === 'netMargin' && (sortDir === 'desc' ? '↓' : '↑')}
                 </Button>
                 <Button 
                   variant={sortBy === 'revenue' ? 'default' : 'outline'} 
                   size="sm"
-                  onClick={() => setSortBy('revenue')}
+                  onClick={() => handleSort('revenue')}
                 >
-                  Faturamento
+                  Faturamento {sortBy === 'revenue' && (sortDir === 'desc' ? '↓' : '↑')}
                 </Button>
               </div>
             </div>
@@ -374,10 +395,18 @@ export default function AnaliseDelivery() {
                   <thead>
                     <tr className="border-b">
                       <th className="text-left py-3 px-2 font-semibold text-sm">Produto</th>
-                      <th className="text-right py-3 px-2 font-semibold text-sm">Qtd</th>
-                      <th className="text-right py-3 px-2 font-semibold text-sm">Faturamento</th>
-                      <th className="text-right py-3 px-2 font-semibold text-sm">Custo</th>
-                      <th className="text-right py-3 px-2 font-semibold text-sm">Mg Bruta</th>
+                      <th className="text-right py-3 px-2 font-semibold text-sm cursor-pointer hover:bg-muted/50 select-none" onClick={() => handleSort('quantity')}>
+                        <span className="flex items-center justify-end">Qtd<SortIcon field="quantity" /></span>
+                      </th>
+                      <th className="text-right py-3 px-2 font-semibold text-sm cursor-pointer hover:bg-muted/50 select-none" onClick={() => handleSort('revenue')}>
+                        <span className="flex items-center justify-end">Faturamento<SortIcon field="revenue" /></span>
+                      </th>
+                      <th className="text-right py-3 px-2 font-semibold text-sm cursor-pointer hover:bg-muted/50 select-none" onClick={() => handleSort('cost')}>
+                        <span className="flex items-center justify-end">Custo<SortIcon field="cost" /></span>
+                      </th>
+                      <th className="text-right py-3 px-2 font-semibold text-sm cursor-pointer hover:bg-muted/50 select-none" onClick={() => handleSort('grossMargin')}>
+                        <span className="flex items-center justify-end">Mg Bruta<SortIcon field="grossMargin" /></span>
+                      </th>
                       <th className="text-right py-3 px-2 font-semibold text-sm">
                         <Tooltip>
                           <TooltipTrigger className="flex items-center gap-1 justify-end">
@@ -391,8 +420,12 @@ export default function AnaliseDelivery() {
                           </TooltipContent>
                         </Tooltip>
                       </th>
-                      <th className="text-right py-3 px-2 font-semibold text-sm">Mg Líquida</th>
-                      <th className="text-right py-3 px-2 font-semibold text-sm">Lucro Líq.</th>
+                      <th className="text-right py-3 px-2 font-semibold text-sm cursor-pointer hover:bg-muted/50 select-none" onClick={() => handleSort('netMargin')}>
+                        <span className="flex items-center justify-end">Mg Líquida<SortIcon field="netMargin" /></span>
+                      </th>
+                      <th className="text-right py-3 px-2 font-semibold text-sm cursor-pointer hover:bg-muted/50 select-none" onClick={() => handleSort('netProfit')}>
+                        <span className="flex items-center justify-end">Lucro Líq.<SortIcon field="netProfit" /></span>
+                      </th>
                       <th className="text-center py-3 px-2 font-semibold text-sm">Status</th>
                     </tr>
                   </thead>

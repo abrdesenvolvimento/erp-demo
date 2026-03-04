@@ -1654,3 +1654,7 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 ### Melhorias Metas - Excluir e Observações (03/03/2026)
 - [x] Adicionar botão de excluir meta (para não precisar excluir direto no banco) — com AlertDialog de confirmação
 - [x] Corrigir exibição das observações ao criar meta (notes já aparece corretamente após redesign)
+
+### Ordenação em Análises (03/03/2026)
+- [x] Adicionar ordenação (maior/menor) na aba Análise de Produto (matriz produto×mês) — colunas meses e Total
+- [x] Adicionar ordenação (maior/menor) na Análise Delivery — colunas Qtd, Faturamento, Custo, Margens, Lucro
