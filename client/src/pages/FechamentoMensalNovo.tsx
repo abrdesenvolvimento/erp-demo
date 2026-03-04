@@ -979,26 +979,22 @@ export default function FechamentoMensalNovo() {
           [class*="CardContent"] {
             padding: 3px 10px 6px !important;
           }
-          /* Tabelas compactas e sem overflow */
+          /* Tabelas compactas - auto layout para ajustar colunas ao conteúdo */
           table {
             font-size: 8px !important;
             width: 100% !important;
-            table-layout: fixed;
+            table-layout: auto;
             border-collapse: collapse;
           }
           th {
-            padding: 3px 4px !important;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            padding: 3px 6px !important;
             white-space: nowrap;
             font-weight: bold !important;
             background: #f3f4f6 !important;
             border-bottom: 1px solid #9ca3af !important;
           }
           td {
-            padding: 2px 4px !important;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            padding: 2px 6px !important;
             white-space: nowrap;
           }
           tfoot td {

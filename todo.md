@@ -1662,3 +1662,7 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 ### Impressões - Sprint 04/03/2026
 - [x] Corrigir impressão do documento de venda para bobina térmica 80mm (largura 80mm, Courier New, logo empresa)
 - [x] Implementar impressão do Fechamento em A4 com logo da empresa (cabeçalho com logo, nome, CNPJ, rodapé, cores preservadas)
+
+### Correções Impressão - Sprint 04/03/2026 (v2)
+- [x] Fechamento A4: reduzir espaçamentos entre colunas das tabelas (table-layout: auto em vez de fixed)
+- [x] Comprovante Venda 80mm: texto cortado na lateral (largura reduzida para 72mm, margens 4mm, fontes menores)

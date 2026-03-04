@@ -303,11 +303,11 @@ export function SaleDetailsModal({ saleId, open, onClose }: SaleDetailsModalProp
           * { margin: 0; padding: 0; box-sizing: border-box; }
           body { 
             font-family: 'Courier New', monospace; 
-            width: 80mm; 
+            width: 72mm; 
             margin: 0 auto; 
-            padding: 4mm;
-            font-size: 10pt;
-            line-height: 1.4;
+            padding: 2mm;
+            font-size: 9pt;
+            line-height: 1.3;
             color: #000;
           }
           .header { 
@@ -317,17 +317,17 @@ export function SaleDetailsModal({ saleId, open, onClose }: SaleDetailsModalProp
             padding-bottom: 10px; 
           }
           .header img { 
-            max-width: 30mm; 
-            max-height: 15mm;
-            margin: 0 auto 5px; 
+            max-width: 25mm; 
+            max-height: 13mm;
+            margin: 0 auto 4px; 
             display: block; 
           }
           .header h1 { 
-            font-size: 13pt; 
+            font-size: 11pt; 
             margin-bottom: 4px; 
             font-weight: bold;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0;
           }
           .header p { 
             font-size: 8pt; 
@@ -346,7 +346,8 @@ export function SaleDetailsModal({ saleId, open, onClose }: SaleDetailsModalProp
           .info-row { 
             display: flex;
             justify-content: space-between;
-            margin-bottom: 3px; 
+            margin-bottom: 2px;
+            font-size: 8pt;
           }
           .info-label {
             font-weight: bold;
@@ -355,10 +356,10 @@ export function SaleDetailsModal({ saleId, open, onClose }: SaleDetailsModalProp
             display: flex;
             justify-content: space-between;
             font-weight: bold;
-            font-size: 9pt;
+            font-size: 8pt;
             border-bottom: 1px solid #000;
-            padding-bottom: 3px;
-            margin-bottom: 5px;
+            padding-bottom: 2px;
+            margin-bottom: 4px;
           }
           .items { 
             margin-bottom: 8px; 
@@ -370,14 +371,15 @@ export function SaleDetailsModal({ saleId, open, onClose }: SaleDetailsModalProp
           }
           .item-name {
             font-weight: bold;
-            font-size: 9pt;
-            margin-bottom: 2px;
+            font-size: 8pt;
+            margin-bottom: 1px;
             word-wrap: break-word;
+            overflow-wrap: break-word;
           }
           .item-details {
             display: flex;
             justify-content: space-between;
-            font-size: 9pt;
+            font-size: 8pt;
           }
           .totals { 
             border-top: 2px dashed #000; 
@@ -391,18 +393,18 @@ export function SaleDetailsModal({ saleId, open, onClose }: SaleDetailsModalProp
           }
           .totals-row.final { 
             font-weight: bold; 
-            font-size: 14pt; 
-            margin-top: 6px;
-            padding-top: 6px;
+            font-size: 12pt; 
+            margin-top: 4px;
+            padding-top: 4px;
             border-top: 2px solid #000;
           }
           .payment-info {
-            margin-top: 10px;
-            padding: 6px;
+            margin-top: 8px;
+            padding: 4px;
             background: #f5f5f5;
             border: 1px solid #ddd;
             text-align: center;
-            font-size: 10pt;
+            font-size: 9pt;
             font-weight: bold;
           }
           .notes {
@@ -455,13 +457,13 @@ export function SaleDetailsModal({ saleId, open, onClose }: SaleDetailsModalProp
           }
           @media print {
             body { 
-              padding: 2mm;
+              padding: 1mm;
               margin: 0;
-              width: 80mm;
+              width: 72mm;
             }
             @page {
               size: 80mm auto;
-              margin: 0;
+              margin: 2mm 4mm;
             }
             .no-print {
               display: none !important;
