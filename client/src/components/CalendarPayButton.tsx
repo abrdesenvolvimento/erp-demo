@@ -15,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
-import { useAuth } from "@/_core/hooks/useAuth";
+import { useCompany } from "@/contexts/CompanyContext";
 
 interface CalendarPayButtonProps {
   item: {
@@ -34,7 +34,7 @@ interface CalendarPayButtonProps {
 export function CalendarPayButton({ item, onPaymentSuccess }: CalendarPayButtonProps) {
   const [showModal, setShowModal] = useState(false);
   const amount = typeof item.amount === 'string' ? parseFloat(item.amount) : item.amount;
-  const { activeCompanyId } = useAuth();
+  const { activeCompanyId } = useCompany();
   
   const [paymentForm, setPaymentForm] = useState({
     paidDate: getTodayBR(),
@@ -47,7 +47,7 @@ export function CalendarPayButton({ item, onPaymentSuccess }: CalendarPayButtonP
   });
 
   // Query de contas bancárias
-  const { data: bankAccounts } = trpc.accounting.getBankAccounts.useQuery(
+  const { data: bankAccounts } = trpc.accounting.bankAccounts.useQuery(
     { companyId: activeCompanyId! },
     { enabled: !!activeCompanyId && showModal }
   );

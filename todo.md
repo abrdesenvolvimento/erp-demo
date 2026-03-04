@@ -1626,3 +1626,8 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Adicionado query getBankAccounts + regra inteligente (Dinheiro=Caixa Geral, PIX/Transferência=escolher conta)
 - [x] bankAccountId passado na mutation payInstallment
 - [x] Contas a Receber já funcionava corretamente (referência)
+
+### BUG-FIX: CalendarPayButton - Dropdown Banco/Conta invisível (03/03/2026) ✅
+- [x] Corrigido nome da rota tRPC: `getBankAccounts` → `bankAccounts` (rota inexistente retornava 404)
+- [x] Corrigido import: `useAuth()` não exporta `activeCompanyId` → trocado para `useCompany()`
+- [x] Resultado: dropdown Banco/Conta agora aparece corretamente com opções Itaú, Inter, C6
