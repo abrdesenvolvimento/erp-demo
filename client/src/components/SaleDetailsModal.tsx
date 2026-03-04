@@ -303,105 +303,173 @@ export function SaleDetailsModal({ saleId, open, onClose }: SaleDetailsModalProp
           * { margin: 0; padding: 0; box-sizing: border-box; }
           body { 
             font-family: 'Courier New', monospace; 
-            width: 56mm; 
-            margin: 0; 
-            padding: 3mm;
-            font-size: 9pt;
-            line-height: 1.3;
+            width: 80mm; 
+            margin: 0 auto; 
+            padding: 4mm;
+            font-size: 10pt;
+            line-height: 1.4;
+            color: #000;
           }
           .header { 
             text-align: center; 
-            margin-bottom: 8px; 
-            border-bottom: 1px dashed #000; 
-            padding-bottom: 8px; 
+            margin-bottom: 10px; 
+            border-bottom: 2px dashed #000; 
+            padding-bottom: 10px; 
           }
           .header img { 
-            max-width: 20mm; 
-            margin: 0 auto 3px; 
+            max-width: 30mm; 
+            max-height: 15mm;
+            margin: 0 auto 5px; 
             display: block; 
           }
           .header h1 { 
-            font-size: 10pt; 
-            margin-bottom: 3px; 
+            font-size: 13pt; 
+            margin-bottom: 4px; 
             font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
           }
           .header p { 
             font-size: 8pt; 
             margin: 2px 0;
+            color: #333;
+          }
+          .divider {
+            border: none;
+            border-top: 1px dashed #000;
+            margin: 8px 0;
           }
           .info { 
             margin-bottom: 8px; 
-            font-size: 8pt;
+            font-size: 9pt;
           }
           .info-row { 
+            display: flex;
+            justify-content: space-between;
             margin-bottom: 3px; 
           }
           .info-label {
             font-weight: bold;
           }
+          .items-header {
+            display: flex;
+            justify-content: space-between;
+            font-weight: bold;
+            font-size: 9pt;
+            border-bottom: 1px solid #000;
+            padding-bottom: 3px;
+            margin-bottom: 5px;
+          }
           .items { 
             margin-bottom: 8px; 
-            border-top: 1px dashed #000;
-            padding-top: 5px;
           }
           .item-row {
-            margin-bottom: 5px;
-            padding-bottom: 5px;
-            border-bottom: 1px dotted #ccc;
+            margin-bottom: 6px;
+            padding-bottom: 4px;
+            border-bottom: 1px dotted #999;
           }
           .item-name {
             font-weight: bold;
+            font-size: 9pt;
             margin-bottom: 2px;
+            word-wrap: break-word;
           }
           .item-details {
             display: flex;
             justify-content: space-between;
-            font-size: 8pt;
+            font-size: 9pt;
           }
           .totals { 
-            border-top: 1px dashed #000; 
+            border-top: 2px dashed #000; 
             padding-top: 8px;
-            font-size: 9pt;
+            font-size: 10pt;
           }
           .totals-row { 
             display: flex; 
             justify-content: space-between; 
-            margin-bottom: 3px;
+            margin-bottom: 4px;
           }
           .totals-row.final { 
             font-weight: bold; 
-            font-size: 11pt; 
-            margin-top: 5px;
-            padding-top: 5px;
-            border-top: 1px solid #000;
+            font-size: 14pt; 
+            margin-top: 6px;
+            padding-top: 6px;
+            border-top: 2px solid #000;
+          }
+          .payment-info {
+            margin-top: 10px;
+            padding: 6px;
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            text-align: center;
+            font-size: 10pt;
+            font-weight: bold;
+          }
+          .notes {
+            margin-top: 10px;
+            padding: 5px;
+            border: 1px dashed #999;
+            font-size: 8pt;
+          }
+          .notes strong {
+            display: block;
+            margin-bottom: 3px;
           }
           .footer { 
             text-align: center; 
-            margin-top: 10px; 
-            border-top: 1px dashed #000; 
-            padding-top: 8px; 
-            font-size: 7pt;
+            margin-top: 12px; 
+            border-top: 2px dashed #000; 
+            padding-top: 10px; 
+            font-size: 8pt;
           }
-          button { 
-            margin-top: 10px;
-            padding: 8px 16px;
+          .footer p {
+            margin: 3px 0;
+          }
+          .footer .thanks {
+            font-size: 10pt;
+            font-weight: bold;
+            margin-bottom: 5px;
+          }
+          .no-print { 
+            text-align: center;
+            margin-top: 20px;
+          }
+          .no-print button { 
+            padding: 10px 24px;
+            font-size: 14px;
             background: #007bff;
             color: white;
             border: none;
-            border-radius: 4px;
+            border-radius: 6px;
             cursor: pointer;
+            margin: 0 5px;
+          }
+          .no-print button:hover {
+            background: #0056b3;
+          }
+          .no-print button.secondary {
+            background: #6c757d;
+          }
+          .no-print button.secondary:hover {
+            background: #545b62;
           }
           @media print {
             body { 
-              padding: 3mm;
+              padding: 2mm;
               margin: 0;
+              width: 80mm;
             }
             @page {
-              size: 56mm auto;
+              size: 80mm auto;
               margin: 0;
             }
-            button {
+            .no-print {
               display: none !important;
+            }
+            .payment-info {
+              background: #f5f5f5 !important;
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
             }
           }
         </style>
@@ -410,7 +478,7 @@ export function SaleDetailsModal({ saleId, open, onClose }: SaleDetailsModalProp
         <div class="header">
           ${activeCompany?.companyLogoUrl ? `<img src="${activeCompany.companyLogoUrl}" alt="${activeCompany.companyName || activeCompany.companyLegalName}">` : ''}
           <h1>${activeCompany?.companyName || activeCompany?.companyLegalName || 'Empresa'}</h1>
-          <p>${activeCompany?.companyLegalName || ''}</p>
+          ${activeCompany?.companyLegalName && activeCompany?.companyName ? `<p>${activeCompany.companyLegalName}</p>` : ''}
           ${activeCompany?.branchStreet ? `<p>${activeCompany.branchStreet}${activeCompany.branchStreetNumber ? ', ' + activeCompany.branchStreetNumber : ''}</p>` : ''}
           ${activeCompany?.branchNeighborhood || activeCompany?.branchCity ? `<p>${activeCompany.branchNeighborhood || ''}${activeCompany.branchCity ? (activeCompany.branchNeighborhood ? ', ' : '') + activeCompany.branchCity : ''}${activeCompany.branchState ? '/' + activeCompany.branchState : ''}</p>` : ''}
           ${activeCompany?.branchZipCode ? `<p>CEP ${activeCompany.branchZipCode}</p>` : ''}
@@ -419,22 +487,29 @@ export function SaleDetailsModal({ saleId, open, onClose }: SaleDetailsModalProp
         
         <div class="info">
           <div class="info-row">
-            <span class="info-label">Venda:</span> #${saleData.id}
+            <span class="info-label">Venda #${saleData.id}</span>
+            <span>${getSaleTypeLabel(saleData.saleType)}</span>
           </div>
           <div class="info-row">
-            <span class="info-label">Tipo:</span> ${getSaleTypeLabel(saleData.saleType)}
+            <span class="info-label">Data:</span>
+            <span>${formatDate(saleData.saleDate)}</span>
           </div>
-          <div class="info-row">
-            <span class="info-label">Data:</span> ${formatDate(saleData.saleDate)}
-          </div>
-          ${saleData.customerId ? `<div class="info-row"><span class="info-label">Cliente:</span> ${saleData.customerId}</div>` : ''}
-          ${saleData.sellerName ? `<div class="info-row"><span class="info-label">Vendedor:</span> ${saleData.sellerName}</div>` : ''}
+          ${saleData.customerName ? `<div class="info-row"><span class="info-label">Cliente:</span><span>${saleData.customerName}</span></div>` : ''}
+          ${saleData.sellerName ? `<div class="info-row"><span class="info-label">Vendedor:</span><span>${saleData.sellerName}</span></div>` : ''}
+          ${saleData.saleType === 'DELIVERY' && saleData.platformOrderId ? `<div class="info-row"><span class="info-label">Pedido:</span><span>#${saleData.platformOrderId}</span></div>` : ''}
+          ${saleData.channelName ? `<div class="info-row"><span class="info-label">Canal:</span><span>${saleData.channelName}</span></div>` : ''}
         </div>
+
+        <hr class="divider">
         
+        <div class="items-header">
+          <span>ITEM</span>
+          <span>VALOR</span>
+        </div>
         <div class="items">
-          ${saleData.items?.map((item: any) => `
+          ${saleData.items?.map((item: any, idx: number) => `
             <div class="item-row">
-              <div class="item-name">${item.productName || 'Produto'}</div>
+              <div class="item-name">${idx + 1}. ${item.productName || 'Produto'}</div>
               <div class="item-details">
                 <span>${item.quantity} x ${formatCurrency(item.unitPrice)}</span>
                 <span>${formatCurrency(item.totalPrice)}</span>
@@ -445,11 +520,11 @@ export function SaleDetailsModal({ saleId, open, onClose }: SaleDetailsModalProp
         
         <div class="totals">
           <div class="totals-row">
-            <span>Subtotal:</span>
+            <span>Subtotal (${saleData.items?.length || 0} ${(saleData.items?.length || 0) === 1 ? 'item' : 'itens'}):</span>
             <span>${formatCurrency(saleData.subtotal)}</span>
           </div>
           ${parseFloat(saleData.discountAmount || '0') > 0 ? `
-            <div class="totals-row">
+            <div class="totals-row" style="color: #c00;">
               <span>Desconto:</span>
               <span>- ${formatCurrency(saleData.discountAmount)}</span>
             </div>
@@ -464,28 +539,31 @@ export function SaleDetailsModal({ saleId, open, onClose }: SaleDetailsModalProp
             <span>TOTAL:</span>
             <span>${formatCurrency(saleData.finalAmount)}</span>
           </div>
-          <div class="totals-row" style="margin-top: 10px;">
-            <span>Pagamento:</span>
-            <span>${getPaymentMethodLabel(saleData.paymentMethod || 'N/A')}</span>
-          </div>
+        </div>
 
+        <div class="payment-info">
+          ${getPaymentMethodLabel(saleData.paymentMethod || 'N/A')}
         </div>
         
         ${saleData.notes ? `
-          <div style="margin-top: 15px; font-size: 11px;">
-            <strong>Observações:</strong><br>
+          <div class="notes">
+            <strong>Obs:</strong>
             ${saleData.notes}
           </div>
         ` : ''}
         
         <div class="footer">
-          <p>Obrigado pela preferência!</p>
+          <p class="thanks">Obrigado pela preferência!</p>
           <p>${new Date().toLocaleString('pt-BR')}</p>
+          <p style="margin-top: 5px; font-size: 7pt;">Documento sem valor fiscal</p>
         </div>
         
-        <div style="text-align: center; margin-top: 20px;">
-          <button onclick="window.print()" style="padding: 10px 20px; font-size: 14px; cursor: pointer;">
+        <div class="no-print">
+          <button onclick="window.print()">
             Imprimir
+          </button>
+          <button class="secondary" onclick="window.close()">
+            Fechar
           </button>
         </div>
       </body>

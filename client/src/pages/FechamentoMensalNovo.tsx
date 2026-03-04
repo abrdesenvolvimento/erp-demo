@@ -41,6 +41,7 @@ import { useState, useRef } from "react";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { toast } from "sonner";
 import { useAuth } from "@/_core/hooks/useAuth";
+import { useCompany } from "@/contexts/CompanyContext";
 
 const MONTHS = [
   { value: 1, label: "Janeiro" },
@@ -65,6 +66,7 @@ export default function FechamentoMensalNovo() {
   const [selectedMonth, setSelectedMonth] = useState(currentMonth);
   const reportRef = useRef<HTMLDivElement>(null);
   const { user } = useAuth();
+  const { activeCompany } = useCompany();
 
   const { data, isLoading, error } = trpc.closing.monthly.useQuery({
     year: selectedYear,
@@ -196,9 +198,32 @@ export default function FechamentoMensalNovo() {
         ) : data ? (
           <div ref={reportRef} className="space-y-6 print:space-y-4">
             {/* Cabeçalho do Relatório (visível na impressão) */}
-            <div className="hidden print:block text-center mb-6">
-              <h1 className="text-2xl font-bold">Fechamento Mensal</h1>
-              <p className="text-lg capitalize">{data.period.monthName} de {data.period.year}</p>
+            <div className="hidden print:block mb-6">
+              <div className="flex items-center justify-between border-b-2 border-gray-800 pb-4 mb-4">
+                <div className="flex items-center gap-4">
+                  {activeCompany?.companyLogoUrl && (
+                    <img 
+                      src={activeCompany.companyLogoUrl} 
+                      alt={activeCompany.companyName || 'Logo'}
+                      className="h-16 w-auto object-contain"
+                    />
+                  )}
+                  <div className="text-left">
+                    <h1 className="text-2xl font-bold">{activeCompany?.companyName || 'Empresa'}</h1>
+                    {activeCompany?.companyLegalName && activeCompany?.companyName && (
+                      <p className="text-xs text-gray-600">{activeCompany.companyLegalName}</p>
+                    )}
+                    {activeCompany?.companyDocNumber && (
+                      <p className="text-xs text-gray-600">CNPJ: {activeCompany.companyDocNumber}</p>
+                    )}
+                  </div>
+                </div>
+                <div className="text-right">
+                  <h2 className="text-xl font-bold">Fechamento Mensal</h2>
+                  <p className="text-lg capitalize font-semibold">{data.period.monthName} de {data.period.year}</p>
+                  <p className="text-xs text-gray-500 mt-1">Gerado em {new Date().toLocaleDateString('pt-BR')}</p>
+                </div>
+              </div>
             </div>
 
             {/* 1. CARDS DE RESUMO COM COMPARATIVO */}
@@ -886,6 +911,13 @@ export default function FechamentoMensalNovo() {
                 </Table>
               </CardContent>
             </Card>
+            {/* Rodapé do Relatório (visível na impressão) */}
+            <div className="hidden print:block mt-8 pt-4 border-t-2 border-gray-300">
+              <div className="flex items-center justify-between text-xs text-gray-500">
+                <p>Relatório gerado pelo ERP {activeCompany?.companyName || 'Adega Beira Rio'}</p>
+                <p>{data.period.monthName} de {data.period.year} — Página 1</p>
+              </div>
+            </div>
           </div>
         ) : null}
       </div>
@@ -895,12 +927,14 @@ export default function FechamentoMensalNovo() {
         @media print {
           @page {
             size: A4 landscape;
-            margin: 8mm;
+            margin: 10mm 12mm;
           }
           body {
             print-color-adjust: exact;
             -webkit-print-color-adjust: exact;
             font-size: 9px !important;
+            background: white !important;
+            color: #111 !important;
           }
           /* Esconder sidebar, header, controles e scrollbars */
           [data-sidebar],
@@ -913,6 +947,10 @@ export default function FechamentoMensalNovo() {
           .print\:block {
             display: block !important;
           }
+          /* Flex para cabeçalho */
+          .print\:block .flex {
+            display: flex !important;
+          }
           /* Mostrar conteúdo em largura total */
           main,
           [data-sidebar-inset],
@@ -922,31 +960,51 @@ export default function FechamentoMensalNovo() {
             width: 100% !important;
             max-width: 100% !important;
           }
-          /* Cards compactos sem sombra */
+          /* Cards compactos com borda fina */
           .border,
           [class*="Card"] {
             box-shadow: none !important;
             border: 1px solid #d1d5db !important;
             break-inside: avoid;
+            border-radius: 4px !important;
+          }
+          /* Manter borda colorida no topo dos cards de resumo */
+          .border-t-4 {
+            border-top-width: 3px !important;
           }
           /* Padding compacto nos cards */
           [class*="CardHeader"] {
-            padding: 8px 12px 4px !important;
+            padding: 6px 10px 3px !important;
           }
           [class*="CardContent"] {
-            padding: 4px 12px 8px !important;
+            padding: 3px 10px 6px !important;
           }
           /* Tabelas compactas e sem overflow */
           table {
             font-size: 8px !important;
             width: 100% !important;
             table-layout: fixed;
+            border-collapse: collapse;
           }
-          th, td {
+          th {
+            padding: 3px 4px !important;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-weight: bold !important;
+            background: #f3f4f6 !important;
+            border-bottom: 1px solid #9ca3af !important;
+          }
+          td {
             padding: 2px 4px !important;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
+          }
+          tfoot td {
+            font-weight: bold !important;
+            background: #f9fafb !important;
+            border-top: 1px solid #9ca3af !important;
           }
           /* Overflow hidden para containers de tabela */
           .overflow-x-auto,
@@ -954,23 +1012,30 @@ export default function FechamentoMensalNovo() {
             overflow: visible !important;
           }
           /* Grid de cards de resumo */
+          .print\:grid-cols-5 {
+            grid-template-columns: repeat(5, 1fr) !important;
+            gap: 6px !important;
+          }
           .print\:grid-cols-4 {
             grid-template-columns: repeat(4, 1fr) !important;
-            gap: 8px !important;
+            gap: 6px !important;
           }
           .print\:grid-cols-2 {
             grid-template-columns: repeat(2, 1fr) !important;
             gap: 8px !important;
           }
           .print\:space-y-4 > * + * {
-            margin-top: 8px !important;
+            margin-top: 6px !important;
           }
-          /* Texto dos cards de resumo menor */
+          /* Texto dos cards de resumo */
           .text-2xl {
-            font-size: 16px !important;
+            font-size: 14px !important;
+          }
+          .text-xl {
+            font-size: 13px !important;
           }
           .text-lg {
-            font-size: 12px !important;
+            font-size: 11px !important;
           }
           .text-sm {
             font-size: 8px !important;
@@ -991,6 +1056,23 @@ export default function FechamentoMensalNovo() {
           /* Evitar quebra de página dentro de cards */
           .space-y-6 > div {
             break-inside: avoid;
+          }
+          /* Cores de texto para impressão */
+          .text-blue-600, .text-blue-500 { color: #2563eb !important; }
+          .text-amber-600, .text-amber-500 { color: #d97706 !important; }
+          .text-red-600, .text-red-500 { color: #dc2626 !important; }
+          .text-green-600, .text-green-500 { color: #16a34a !important; }
+          .text-emerald-600, .text-emerald-500 { color: #059669 !important; }
+          /* Bordas coloridas dos cards */
+          .border-t-blue-500 { border-top-color: #3b82f6 !important; }
+          .border-t-amber-500 { border-top-color: #f59e0b !important; }
+          .border-t-red-500 { border-top-color: #ef4444 !important; }
+          .border-t-green-500 { border-top-color: #22c55e !important; }
+          .border-t-emerald-500 { border-top-color: #10b981 !important; }
+          /* Logo no cabeçalho */
+          .print\:block img {
+            max-height: 50px !important;
+            width: auto !important;
           }
         }
       `}</style>

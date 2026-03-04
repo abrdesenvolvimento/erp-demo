@@ -1658,3 +1658,7 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 ### Ordenação em Análises (03/03/2026)
 - [x] Adicionar ordenação (maior/menor) na aba Análise de Produto (matriz produto×mês) — colunas meses e Total
 - [x] Adicionar ordenação (maior/menor) na Análise Delivery — colunas Qtd, Faturamento, Custo, Margens, Lucro
+
+### Impressões - Sprint 04/03/2026
+- [x] Corrigir impressão do documento de venda para bobina térmica 80mm (largura 80mm, Courier New, logo empresa)
+- [x] Implementar impressão do Fechamento em A4 com logo da empresa (cabeçalho com logo, nome, CNPJ, rodapé, cores preservadas)
