@@ -1,0 +1,37 @@
+{
+  "query": "SELECT id, year, month, channelId, targetAmount, notes, createdAt FROM revenueGoals WHERE year = 2026 AND month = 3 ORDER BY id",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT id, year, month, channelId, targetAmount, notes, createdAt FROM revenueGoals WHERE year = 2026 AND month = 3 ORDER BY id",
+  "rows": [
+    {
+      "id": "120001",
+      "year": "2026",
+      "month": "3",
+      "channelId": "2",
+      "targetAmount": "32530.00",
+      "notes": "Ticket R$36,50 / Pedidos Dia 29 / Dias 30",
+      "createdAt": "2026-03-01 16:24:50"
+    },
+    {
+      "id": "120002",
+      "year": "2026",
+      "month": "3",
+      "channelId": "1",
+      "targetAmount": "69450.00",
+      "notes": "NULL",
+      "createdAt": "2026-03-01 16:29:52"
+    },
+    {
+      "id": "150001",
+      "year": "2026",
+      "month": "3",
+      "channelId": "3",
+      "targetAmount": "1.00",
+      "notes": "Teste",
+      "createdAt": "2026-03-04 02:05:23"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tyear\tmonth\tchannelId\ttargetAmount\tnotes\tcreatedAt\n120001\t2026\t3\t2\t32530.00\tTicket R$36,50 / Pedidos Dia 29 / Dias 30\t2026-03-01 16:24:50\n120002\t2026\t3\t1\t69450.00\tNULL\t2026-03-01 16:29:52\n150001\t2026\t3\t3\t1.00\tTeste\t2026-03-04 02:05:23\n",
+  "stderr": "",
+  "execution_time_ms": 354
+}

@@ -19,11 +19,21 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { trpc } from "@/lib/trpc";
 import {
   Target, Plus, Edit, TrendingUp, TrendingDown, CheckCircle2,
-  History, Store, CreditCard, Flame, Trophy, ArrowRight, Calendar,
+  History, Store, CreditCard, Flame, Trophy, ArrowRight, Calendar, Trash2,
 } from "lucide-react";
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
@@ -150,6 +160,19 @@ export default function Metas() {
     },
     onError: (e) => toast.error("Erro ao salvar meta: " + e.message),
   });
+
+  const deleteMutation = trpc.goals.delete.useMutation({
+    onSuccess: () => {
+      toast.success("Meta excluída com sucesso!");
+      utils.goals.list.invalidate();
+      utils.goals.progress.invalidate();
+      utils.goals.history.invalidate();
+      setDeleteConfirm(null);
+    },
+    onError: (e) => toast.error("Erro ao excluir meta: " + e.message),
+  });
+
+  const [deleteConfirm, setDeleteConfirm] = useState<any>(null);
 
   /* ── dialog helpers ── */
   const openDialog = (goal?: any) => {
@@ -444,9 +467,14 @@ export default function Metas() {
                                 </div>
                               </div>
                               {canEdit && (
-                                <Button variant="ghost" size="icon" className="shrink-0 h-8 w-8" onClick={() => openDialog(goal)} title="Editar meta">
-                                  <Edit className="h-3.5 w-3.5" />
-                                </Button>
+                                <div className="flex items-center gap-0.5 shrink-0">
+                                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openDialog(goal)} title="Editar meta">
+                                    <Edit className="h-3.5 w-3.5" />
+                                  </Button>
+                                  <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50" onClick={() => setDeleteConfirm(goal)} title="Excluir meta">
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                  </Button>
+                                </div>
                               )}
                             </div>
                           );
@@ -559,6 +587,32 @@ export default function Metas() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        {/* ══════════ CONFIRMAÇÃO DE EXCLUSÃO ══════════ */}
+        <AlertDialog open={!!deleteConfirm} onOpenChange={(open) => !open && setDeleteConfirm(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Excluir Meta</AlertDialogTitle>
+              <AlertDialogDescription>
+                Tem certeza que deseja excluir a meta de <strong>{deleteConfirm?.channelName}</strong> de{" "}
+                <strong>{monthLabel(deleteConfirm?.month ?? 0)}/{deleteConfirm?.year}</strong> no valor de{" "}
+                <strong>{fmtCurrency(deleteConfirm?.targetAmount ?? 0)}</strong>?
+                <br /><br />
+                Esta ação não pode ser desfeita. O histórico de alterações desta meta também será removido.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                className="bg-red-600 hover:bg-red-700 text-white"
+                onClick={() => deleteConfirm && deleteMutation.mutate({ id: deleteConfirm.id })}
+                disabled={deleteMutation.isPending}
+              >
+                {deleteMutation.isPending ? "Excluindo..." : "Excluir"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </DashboardLayout>
   );

@@ -6334,6 +6334,14 @@ export async function updateRevenueGoal(id: number, data: {
   return { success: true };
 }
 
+export async function deleteRevenueGoalHistory(goalId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db.execute(sql.raw(`DELETE FROM revenueGoalHistory WHERE goalId = ${goalId}`));
+  return { success: true };
+}
+
 export async function deleteRevenueGoal(id: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");

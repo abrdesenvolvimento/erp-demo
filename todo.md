@@ -1650,3 +1650,7 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 ### Ajustes Visuais Metas - Ícones (03/03/2026)
 - [x] Aumentar tamanho dos ícones de canal na tela de Metas (h-4 w-4 → h-6 w-6)
 - [x] Cadastrar logo do 99Food para uso futuro (quando começarem as vendas) — CDN + ChannelIcon + channelColors preparados
+
+### Melhorias Metas - Excluir e Observações (03/03/2026)
+- [x] Adicionar botão de excluir meta (para não precisar excluir direto no banco) — com AlertDialog de confirmação
+- [x] Corrigir exibição das observações ao criar meta (notes já aparece corretamente após redesign)

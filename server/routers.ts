@@ -2486,6 +2486,14 @@ export const appRouter = router({
 
   // ==================== METAS DE FATURAMENTO ====================
   goals: router({
+    delete: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        // Deletar histórico primeiro
+        await db.deleteRevenueGoalHistory(input.id);
+        return await db.deleteRevenueGoal(input.id);
+      }),
+
     list: adminProcedure
       .input(z.object({
         year: z.number().optional(),
