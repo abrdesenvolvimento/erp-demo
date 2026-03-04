@@ -475,35 +475,35 @@ export default function ContasPagar() {
                     </SelectContent>
                   </Select>
                 </div>
-
-                {paymentForm.paymentMethod && paymentForm.paymentMethod !== 'DINHEIRO' && (
-                  <div>
-                    <Label htmlFor="bankAccount">Banco/Conta *</Label>
-                    <Select
-                      value={paymentForm.bankAccountId?.toString() || ""}
-                      onValueChange={(value) => setPaymentForm({ ...paymentForm, bankAccountId: value ? parseInt(value) : undefined })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione a conta..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {bankAccounts?.filter(a => !a.name.toLowerCase().includes('caixa')).map((account) => (
-                          <SelectItem key={account.id} value={account.id.toString()}>
-                            {account.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-
-                {paymentForm.paymentMethod === 'DINHEIRO' && (
-                  <div>
-                    <Label>Banco/Conta</Label>
-                    <Input value="Caixa Geral" disabled className="bg-muted" />
-                  </div>
-                )}
               </div>
+
+              {paymentForm.paymentMethod && paymentForm.paymentMethod !== 'DINHEIRO' && (
+                <div>
+                  <Label htmlFor="bankAccount">Banco/Conta *</Label>
+                  <Select
+                    value={paymentForm.bankAccountId?.toString() || ""}
+                    onValueChange={(value) => setPaymentForm({ ...paymentForm, bankAccountId: value ? parseInt(value) : undefined })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione a conta..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {bankAccounts?.filter(a => !a.name.toLowerCase().includes('caixa')).map((account) => (
+                        <SelectItem key={account.id} value={account.id.toString()}>
+                          {account.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {paymentForm.paymentMethod === 'DINHEIRO' && (
+                <div>
+                  <Label>Banco/Conta</Label>
+                  <Input value="Caixa Geral" disabled className="bg-muted" />
+                </div>
+              )}
 
               <div className="grid grid-cols-2 gap-4">
                 <div>

@@ -1619,3 +1619,9 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Aplicar regra em ContasReceber.tsx
 - [x] Aplicar regra em ContasReceberNovo.tsx
 - [x] 10 testes vitest passando (bank-smart-rule.test.ts)
+
+### BUG: Dropdown Banco/Conta não aparece no Contas a Pagar (03/03/2026) ✅
+- [x] Modal de pagamento do Contas a Pagar não mostra dropdown Banco/Conta ao selecionar PIX
+- [x] Causa: Banco/Conta estava dentro do mesmo grid grid-cols-2 que Data/Forma de Pagamento (renderização condicional ficava escondida)
+- [x] Correção: Movido Banco/Conta para fora do grid, como bloco independente com space-y-4
+- [x] Contas a Receber já funcionava corretamente (referência)
