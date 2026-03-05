@@ -1201,3 +1201,28 @@ export const priceHistory = mysqlTable("priceHistory", {
 }));
 export type PriceHistory = typeof priceHistory.$inferSelect;
 export type InsertPriceHistory = typeof priceHistory.$inferInsert;
+
+
+// ==================== AUDITORIA - LOG DE ALTERAÇÕES ====================
+
+export const auditLog = mysqlTable("auditLog", {
+  id: int("id").primaryKey().autoincrement(),
+  companyId: int("companyId").notNull().default(1),
+  branchId: int("branchId").notNull().default(1),
+  entityType: varchar("entityType", { length: 50 }).notNull(), // 'PRODUTO', 'PARCEIRO', 'DESPESA', etc.
+  entityId: int("entityId").notNull(), // ID do registro alterado
+  entityName: varchar("entityName", { length: 300 }), // nome do registro para consulta rápida
+  action: mysqlEnum("action", ["CRIACAO", "EDICAO", "EXCLUSAO", "ATIVACAO", "DESATIVACAO"]).notNull(),
+  changes: text("changes"), // JSON com campos alterados: [{field, label, oldValue, newValue}]
+  userId: varchar("userId", { length: 64 }).notNull(),
+  userName: varchar("userName", { length: 200 }),
+  createdAt: timestamp("createdAt").defaultNow(),
+}, (table) => ({
+  entityIdx: index("audit_entity_idx").on(table.entityType, table.entityId),
+  companyIdx: index("audit_company_idx").on(table.companyId),
+  dateIdx: index("audit_date_idx").on(table.createdAt),
+  userIdx: index("audit_user_idx").on(table.userId),
+  actionIdx: index("audit_action_idx").on(table.action),
+}));
+export type AuditLog = typeof auditLog.$inferSelect;
+export type InsertAuditLog = typeof auditLog.$inferInsert;

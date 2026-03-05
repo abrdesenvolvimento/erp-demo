@@ -39,7 +39,8 @@ import {
   governanceAuditLog, GovernanceAuditLog, InsertGovernanceAuditLog,
   accountingBatchLog, AccountingBatchLog, InsertAccountingBatchLog,
   calendarHighlights, CalendarHighlight, InsertCalendarHighlight,
-  priceHistory, PriceHistory, InsertPriceHistory
+  priceHistory, PriceHistory, InsertPriceHistory,
+  auditLog, AuditLog, InsertAuditLog
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 import { 
@@ -9594,4 +9595,197 @@ export async function getPriceHistoryStats(companyId: number, startDate?: Date, 
     avgDecrease: Number(avgResult[0]?.avgDecrease || 0),
     mostChanged,
   };
+}
+
+
+// ==================== AUDITORIA - LOG DE ALTERAÇÕES ====================
+
+/**
+ * Registra uma ação de auditoria no log.
+ * Usado para rastrear criação, edição, exclusão, ativação e desativação de registros.
+ */
+export async function createAuditLog(data: {
+  companyId: number;
+  branchId: number;
+  entityType: string;
+  entityId: number;
+  entityName?: string;
+  action: 'CRIACAO' | 'EDICAO' | 'EXCLUSAO' | 'ATIVACAO' | 'DESATIVACAO';
+  changes?: Array<{ field: string; label: string; oldValue: string | null; newValue: string | null }>;
+  userId: string;
+  userName?: string;
+}) {
+  const db = await getDb();
+  if (!db) return;
+
+  try {
+    await db.insert(auditLog).values({
+      companyId: data.companyId,
+      branchId: data.branchId,
+      entityType: data.entityType,
+      entityId: data.entityId,
+      entityName: data.entityName || null,
+      action: data.action,
+      changes: data.changes ? JSON.stringify(data.changes) : null,
+      userId: data.userId,
+      userName: data.userName || null,
+    });
+  } catch (e) {
+    console.error('[auditLog] Erro ao registrar log de auditoria:', e);
+  }
+}
+
+/**
+ * Busca logs de auditoria com filtros e paginação.
+ */
+export async function getAuditLogs(filters: {
+  companyId?: number;
+  entityType?: string;
+  entityId?: number;
+  action?: string;
+  userId?: string;
+  startDate?: Date;
+  endDate?: Date;
+  search?: string;
+  page?: number;
+  pageSize?: number;
+}) {
+  const db = await getDb();
+  if (!db) return { items: [], total: 0 };
+
+  const page = filters.page || 1;
+  const pageSize = filters.pageSize || 50;
+  const offset = (page - 1) * pageSize;
+
+  const conditions: string[] = [];
+  if (filters.companyId) conditions.push(`a.companyId = ${filters.companyId}`);
+  if (filters.entityType) conditions.push(`a.entityType = '${filters.entityType}'`);
+  if (filters.entityId) conditions.push(`a.entityId = ${filters.entityId}`);
+  if (filters.action) conditions.push(`a.action = '${filters.action}'`);
+  if (filters.userId) conditions.push(`a.userId = '${filters.userId}'`);
+  if (filters.startDate) {
+    const dateStr = filters.startDate.toISOString().split('T')[0];
+    conditions.push(`a.createdAt >= '${dateStr} 03:00:00'`);
+  }
+  if (filters.endDate) {
+    const dateStr = filters.endDate.toISOString().split('T')[0];
+    conditions.push(`a.createdAt < DATE_ADD('${dateStr} 03:00:00', INTERVAL 1 DAY)`);
+  }
+  if (filters.search) {
+    const term = filters.search.replace(/'/g, "\\'");
+    conditions.push(`(a.entityName LIKE '%${term}%' OR a.userName LIKE '%${term}%')`);
+  }
+
+  const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+
+  // Count total
+  const countResult = await db.execute(sql.raw(`
+    SELECT COUNT(*) as total FROM auditLog a ${whereClause}
+  `));
+  const total = parseInt((countResult[0] as any)[0]?.total || '0');
+
+  // Fetch items
+  const result = await db.execute(sql.raw(`
+    SELECT a.* FROM auditLog a
+    ${whereClause}
+    ORDER BY a.createdAt DESC
+    LIMIT ${pageSize} OFFSET ${offset}
+  `));
+
+  const items = (result[0] as any[]).map(row => ({
+    id: row.id,
+    companyId: row.companyId,
+    branchId: row.branchId,
+    entityType: row.entityType,
+    entityId: row.entityId,
+    entityName: row.entityName,
+    action: row.action,
+    changes: row.changes ? JSON.parse(row.changes) : [],
+    userId: row.userId,
+    userName: row.userName,
+    createdAt: row.createdAt,
+  }));
+
+  return { items, total };
+}
+
+/**
+ * Busca estatísticas de auditoria.
+ */
+export async function getAuditStats(companyId?: number) {
+  const db = await getDb();
+  if (!db) return { totalLogs: 0, byEntityType: [], byAction: [], recentUsers: [] };
+
+  const companyFilter = companyId ? `WHERE companyId = ${companyId}` : '';
+
+  // Total de logs
+  const totalResult = await db.execute(sql.raw(`
+    SELECT COUNT(*) as total FROM auditLog ${companyFilter}
+  `));
+  const totalLogs = parseInt((totalResult[0] as any)[0]?.total || '0');
+
+  // Por tipo de entidade
+  const byEntityResult = await db.execute(sql.raw(`
+    SELECT entityType, COUNT(*) as count 
+    FROM auditLog ${companyFilter}
+    GROUP BY entityType ORDER BY count DESC
+  `));
+  const byEntityType = (byEntityResult[0] as any[]).map(r => ({
+    entityType: r.entityType,
+    count: parseInt(r.count),
+  }));
+
+  // Por ação
+  const byActionResult = await db.execute(sql.raw(`
+    SELECT action, COUNT(*) as count 
+    FROM auditLog ${companyFilter}
+    GROUP BY action ORDER BY count DESC
+  `));
+  const byAction = (byActionResult[0] as any[]).map(r => ({
+    action: r.action,
+    count: parseInt(r.count),
+  }));
+
+  // Usuários mais ativos (últimos 30 dias)
+  const recentUsersResult = await db.execute(sql.raw(`
+    SELECT userName, COUNT(*) as count 
+    FROM auditLog 
+    ${companyFilter ? companyFilter + ' AND' : 'WHERE'} createdAt >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+    GROUP BY userName ORDER BY count DESC LIMIT 10
+  `));
+  const recentUsers = (recentUsersResult[0] as any[]).map(r => ({
+    userName: r.userName,
+    count: parseInt(r.count),
+  }));
+
+  return { totalLogs, byEntityType, byAction, recentUsers };
+}
+
+/**
+ * Compara dois objetos e retorna as diferenças como array de changes.
+ * Útil para gerar o campo `changes` do auditLog automaticamente.
+ */
+export function diffChanges(
+  oldObj: Record<string, any>,
+  newObj: Record<string, any>,
+  fieldLabels: Record<string, string>,
+): Array<{ field: string; label: string; oldValue: string | null; newValue: string | null }> {
+  const changes: Array<{ field: string; label: string; oldValue: string | null; newValue: string | null }> = [];
+
+  for (const [field, label] of Object.entries(fieldLabels)) {
+    const oldVal = oldObj[field];
+    const newVal = newObj[field];
+
+    // Ignorar campos undefined no newObj (patch semantics)
+    if (newVal === undefined) continue;
+
+    const oldStr = oldVal !== null && oldVal !== undefined ? String(oldVal) : null;
+    const newStr = newVal !== null && newVal !== undefined ? String(newVal) : null;
+
+    if (oldStr !== newStr) {
+      changes.push({ field, label, oldValue: oldStr, newValue: newStr });
+    }
+  }
+
+  return changes;
 }

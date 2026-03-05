@@ -12,6 +12,7 @@ import { ifoodImportRouter } from './routers/ifoodImport';
 import { stockAnalysisRouter } from './routers/stockAnalysis';
 import { companyRouter } from './routers/company';
 import { priceHistoryRouter } from './routers/priceHistory';
+import { auditLogRouter } from './routers/auditLog';
 
 export const appRouter = router({
   system: systemRouter,
@@ -20,6 +21,7 @@ export const appRouter = router({
   stockAnalysis: stockAnalysisRouter,
   company: companyRouter,
   priceHistory: priceHistoryRouter,
+  auditLog: auditLogRouter,
 
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
@@ -331,6 +333,23 @@ export const appRouter = router({
         } else {
           console.log('[products.create] No compositions to save');
         }
+
+        // === AUDITORIA: Registrar criação de produto ===
+        try {
+          await db.createAuditLog({
+            companyId: ctx.activeCompanyId ?? 1,
+            branchId: ctx.activeBranchId ?? 1,
+            entityType: 'PRODUTO',
+            entityId: id,
+            entityName: input.name,
+            action: 'CRIACAO',
+            changes: [{ field: 'name', label: 'Nome', oldValue: null, newValue: input.name }],
+            userId: ctx.user?.id || 'system',
+            userName: ctx.user?.name || 'Sistema',
+          });
+        } catch (e) {
+          console.error('[auditLog] Erro ao registrar criação de produto:', e);
+        }
         
         return { id, success: true };
       }),
@@ -366,10 +385,17 @@ export const appRouter = router({
           throw new Error("Apenas administradores podem ativar/desativar produtos");
         }
         
+        // === AUDITORIA: Buscar produto atual para comparação ===
+        let currentProduct: any = null;
+        try {
+          currentProduct = await db.getProduct(input.id);
+        } catch (e) {
+          console.error('[auditLog] Erro ao buscar produto atual:', e);
+        }
+
         // === AUDITORIA: Rastrear alterações de custo médio ===
         if (updateData.avgCost !== undefined) {
           try {
-            const currentProduct = await db.getProduct(input.id);
             const oldCost = currentProduct?.avgCost?.toString() || '0.00';
             const newCost = updateData.avgCost;
             if (oldCost !== newCost && parseFloat(newCost || '0') !== parseFloat(oldCost)) {
@@ -391,6 +417,45 @@ export const appRouter = router({
         }
         
         await db.updateProduct(input.id, updateData);
+
+        // === AUDITORIA: Registrar alterações de cadastro ===
+        if (currentProduct) {
+          try {
+            const fieldLabels: Record<string, string> = {
+              name: 'Nome',
+              categoryId: 'Categoria',
+              subcategoryId: 'Subcategoria',
+              ean: 'EAN/Código de Barras',
+              uom: 'Unidade de Medida',
+              minStock: 'Estoque Mínimo',
+              isComposite: 'Produto Composto',
+              notes: 'Observações',
+              active: 'Status Ativo',
+              avgCost: 'Custo Médio',
+            };
+            const changes = db.diffChanges(currentProduct, updateData, fieldLabels);
+            if (changes.length > 0) {
+              // Determinar ação
+              let action: 'EDICAO' | 'ATIVACAO' | 'DESATIVACAO' = 'EDICAO';
+              if (updateData.active === true && !currentProduct.active) action = 'ATIVACAO';
+              if (updateData.active === false && currentProduct.active) action = 'DESATIVACAO';
+
+              await db.createAuditLog({
+                companyId: ctx.activeCompanyId ?? 1,
+                branchId: ctx.activeBranchId ?? 1,
+                entityType: 'PRODUTO',
+                entityId: input.id,
+                entityName: currentProduct.name,
+                action,
+                changes,
+                userId: ctx.user?.id || 'system',
+                userName: ctx.user?.name || 'Sistema',
+              });
+            }
+          } catch (e) {
+            console.error('[auditLog] Erro ao registrar alteração de cadastro:', e);
+          }
+        }
         
         // === AUDITORIA: Rastrear alterações de preço de venda ===
         if (prices) {

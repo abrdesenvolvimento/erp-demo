@@ -117,6 +117,7 @@ const accountingMenuItems = [
 // Submenu de Auditoria
 const auditMenuItems = [
   { icon: History, label: "Histórico de Preços", path: "/historico-precos", roles: ["admin"] },
+  { icon: FileText, label: "Log de Alterações", path: "/log-alteracoes", roles: ["admin"] },
 ];
 
 // Submenu de Análises

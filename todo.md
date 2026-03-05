@@ -1685,3 +1685,17 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Registrar alteração de custo médio na confirmação de compra (confirmPurchaseOrder) - "Alterado por" mostra "Compra #NF"
 - [x] Registrar alteração de custo médio na edição de compra confirmada - "Alterado por" mostra "Edição Compra #NF"
 - [x] Registrar alteração de preço de venda via botão de divergência do importador iFood - "Alterado por" mostra "iFood Divergência (usuário)"
+
+### Filtro de Período - Histórico de Preços (05/03/2026)
+- [x] Adicionar filtro de data início/fim na tela de Histórico de Preços
+- [x] Passar parâmetros de período para a query backend
+
+### Módulo Auditoria - Log de Alterações de Cadastro (05/03/2026)
+- [x] Criar tabela auditLog no schema (entityType, entityId, entityName, action, changes JSON, userId, userName)
+- [x] Implementar função genérica de logging de alterações no backend (createAuditLog, getAuditLogs, getAuditStats, diffChanges)
+- [x] Interceptar alterações de cadastro de produtos (criação, edição, ativação/desativação)
+- [x] Criar tela de Log de Alterações no frontend (filtros por entidade, ação, período, busca)
+- [x] Tab "Resumo" com estatísticas por tipo e usuários mais ativos
+- [x] Dialog de detalhes mostrando campos alterados (antes/depois)
+- [x] Adicionar link no submenu Auditoria
+- [x] 25 testes unitários passando

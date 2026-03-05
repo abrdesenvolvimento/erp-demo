@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { History, TrendingUp, TrendingDown, Minus, Search, ArrowUpDown, ArrowUp, ArrowDown, DollarSign, BarChart3, AlertCircle, Filter, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { History, TrendingUp, TrendingDown, Minus, Search, ArrowUpDown, ArrowUp, ArrowDown, DollarSign, BarChart3, AlertCircle, Filter, X, ChevronLeft, ChevronRight, Calendar } from "lucide-react";
 import { useCompany } from "@/contexts/CompanyContext";
 
 function formatCurrency(value: number | string): string {
@@ -64,6 +64,8 @@ export default function HistoricoPrecos() {
   const [changeType, setChangeType] = useState<string>('all');
   const [channelFilter, setChannelFilter] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [startDate, setStartDate] = useState<string>('');
+  const [endDate, setEndDate] = useState<string>('');
   const [page, setPage] = useState(1);
   const [pageSize] = useState(50);
   const [activeTab, setActiveTab] = useState('historico');
@@ -76,11 +78,16 @@ export default function HistoricoPrecos() {
   const { data: historyData, isLoading: historyLoading } = trpc.priceHistory.getRecent.useQuery({
     changeType: changeType !== 'all' ? changeType as 'PRECO_VENDA' | 'CUSTO_MEDIO' : undefined,
     channelId: channelFilter !== 'all' ? parseInt(channelFilter) : undefined,
+    startDate: startDate || undefined,
+    endDate: endDate || undefined,
     page,
     pageSize,
   });
   
-  const { data: statsData } = trpc.priceHistory.getStats.useQuery();
+  const { data: statsData } = trpc.priceHistory.getStats.useQuery({
+    startDate: startDate || undefined,
+    endDate: endDate || undefined,
+  });
   const { data: channels } = trpc.salesChannels.list.useQuery();
   const { data: allProducts } = trpc.products.list.useQuery({ activeOnly: false });
   
@@ -300,7 +307,26 @@ export default function HistoricoPrecos() {
                     </SelectContent>
                   </Select>
                   
-                  {(changeType !== 'all' || channelFilter !== 'all' || searchTerm) && (
+                  <div className="flex items-center gap-1.5">
+                    <Calendar className="h-4 w-4 text-muted-foreground" />
+                    <Input
+                      type="date"
+                      value={startDate}
+                      onChange={(e) => { setStartDate(e.target.value); setPage(1); }}
+                      className="h-9 w-[140px] text-xs"
+                      placeholder="Data início"
+                    />
+                    <span className="text-xs text-muted-foreground">até</span>
+                    <Input
+                      type="date"
+                      value={endDate}
+                      onChange={(e) => { setEndDate(e.target.value); setPage(1); }}
+                      className="h-9 w-[140px] text-xs"
+                      placeholder="Data fim"
+                    />
+                  </div>
+                  
+                  {(changeType !== 'all' || channelFilter !== 'all' || searchTerm || startDate || endDate) && (
                     <Button
                       variant="ghost"
                       size="sm"
@@ -308,6 +334,8 @@ export default function HistoricoPrecos() {
                         setChangeType('all');
                         setChannelFilter('all');
                         setSearchTerm('');
+                        setStartDate('');
+                        setEndDate('');
                         setPage(1);
                       }}
                       className="h-9 text-xs"

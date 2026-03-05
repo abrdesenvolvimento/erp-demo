@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE IF NOT EXISTS `auditLog` (\n  `id` int NOT NULL AUTO_INCREMENT,\n  `companyId` int NOT NULL DEFAULT 1,\n  `branchId` int NOT NULL DEFAULT 1,\n  `entityType` varchar(50) NOT NULL,\n  `entityId` int NOT NULL,\n  `entityName` varchar(300) DEFAULT NULL,\n  `action` enum('CRIACAO','EDICAO','EXCLUSAO','ATIVACAO','DESATIVACAO') NOT NULL,\n  `changes` text,\n  `userId` varchar(64) NOT NULL,\n  `userName` varchar(200) DEFAULT NULL,\n  `createdAt` timestamp DEFAULT CURRENT_TIMESTAMP,\n  PRIMARY KEY (`id`),\n  INDEX `audit_entity_idx` (`entityType`, `entityId`),\n  INDEX `audit_company_idx` (`companyId`),\n  INDEX `audit_date_idx` (`createdAt`),\n  INDEX `audit_user_idx` (`userId`),\n  INDEX `audit_action_idx` (`action`)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute CREATE TABLE IF NOT EXISTS `auditLog` (\n  `id` int NOT NULL AUTO_INCREMENT,\n  `companyId` int NOT NULL DEFAULT 1,\n  `branchId` int NOT NULL DEFAULT 1,\n  `entityType` varchar(50) NOT NULL,\n  `entityId` int NOT NULL,\n  `entityName` varchar(300) DEFAULT NULL,\n  `action` enum('CRIACAO','EDICAO','EXCLUSAO','ATIVACAO','DESATIVACAO') NOT NULL,\n  `changes` text,\n  `userId` varchar(64) NOT NULL,\n  `userName` varchar(200) DEFAULT NULL,\n  `createdAt` timestamp DEFAULT CURRENT_TIMESTAMP,\n  PRIMARY KEY (`id`),\n  INDEX `audit_entity_idx` (`entityType`, `entityId`),\n  INDEX `audit_company_idx` (`companyId`),\n  INDEX `audit_date_idx` (`createdAt`),\n  INDEX `audit_user_idx` (`userId`),\n  INDEX `audit_action_idx` (`action`)\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 492
+}
