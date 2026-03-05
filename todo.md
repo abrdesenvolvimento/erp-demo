@@ -1680,3 +1680,8 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] 28 testes unitários passando
 - [ ] Exibir gráfico de evolução de preço por produto (futuro)
 - [ ] Integrar com tela de detalhes do produto (futuro)
+
+### Expansão Tracking Histórico de Preços (05/03/2026)
+- [x] Registrar alteração de custo médio na confirmação de compra (confirmPurchaseOrder) - "Alterado por" mostra "Compra #NF"
+- [x] Registrar alteração de custo médio na edição de compra confirmada - "Alterado por" mostra "Edição Compra #NF"
+- [x] Registrar alteração de preço de venda via botão de divergência do importador iFood - "Alterado por" mostra "iFood Divergência (usuário)"

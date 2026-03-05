@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { adminProcedure, protectedProcedure, router } from "../_core/trpc";
-import { getDb } from "../db";
+import { getDb, logPriceChange } from "../db";
 import { 
   ifoodProductMappings, 
   ifoodImportLogs, 
@@ -246,6 +246,8 @@ export const ifoodImportRouter = router({
         ))
         .limit(1);
 
+      const oldPrice = existing.length > 0 ? existing[0].price?.toString() || '0.00' : '0.00';
+
       if (existing.length > 0) {
         // Atualizar preço existente
         await db.update(productPrices)
@@ -265,6 +267,26 @@ export const ifoodImportRouter = router({
           price: input.newPrice.toFixed(2),
           companyId: ctx.activeCompanyId ?? 1,
         });
+      }
+
+      // === AUDITORIA: Rastrear alteração de preço via divergência iFood ===
+      const newPriceStr = input.newPrice.toFixed(2);
+      if (parseFloat(oldPrice) !== parseFloat(newPriceStr)) {
+        try {
+          await logPriceChange({
+            companyId: ctx.activeCompanyId ?? 1,
+            branchId: ctx.activeBranchId ?? 1,
+            productId: input.productId,
+            changeType: 'PRECO_VENDA',
+            channelId: input.channelId,
+            previousValue: oldPrice,
+            newValue: newPriceStr,
+            userId: ctx.user?.id || 'system',
+            userName: `iFood Divergência (${ctx.user?.name || 'Sistema'})`,
+          });
+        } catch (e) {
+          console.error('[priceHistory] Erro ao registrar alteração de preço via iFood:', e);
+        }
       }
 
       return { success: true };

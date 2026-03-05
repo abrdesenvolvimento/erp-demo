@@ -1344,6 +1344,25 @@ export async function confirmPurchaseOrder(purchaseOrderId: number) {
     // Atualizar produto
     await updateProduct(prod.id, updateData);
     
+    // === AUDITORIA: Rastrear alteração de custo médio via compra ===
+    if (parseFloat(currentAvgCost.toFixed(4)) !== parseFloat(newAvgCost.toFixed(4))) {
+      try {
+        await logPriceChange({
+          companyId: purchaseOrderData.purchaseOrder.companyId ?? 1,
+          branchId: purchaseOrderData.purchaseOrder.branchId ?? 1,
+          productId: prod.id,
+          changeType: 'CUSTO_MEDIO',
+          channelId: null,
+          previousValue: currentAvgCost.toFixed(4),
+          newValue: newAvgCost.toFixed(4),
+          userId: purchaseOrderData.purchaseOrder.createdBy || 'system',
+          userName: `Compra #${purchaseOrderData.purchaseOrder.docNumber || purchaseOrderId}`,
+        });
+      } catch (e) {
+        console.error('[priceHistory] Erro ao registrar alteração de custo via compra:', e);
+      }
+    }
+    
     // Registrar movimentação de ENTRADA
     await createProductMovement({
       productId: prod.id,
@@ -1586,6 +1605,27 @@ export async function updatePurchaseOrderItems(
     }
     
     await updateProduct(prod.id, updateData);
+    
+    // === AUDITORIA: Rastrear alteração de custo médio via edição de compra ===
+    const oldAvgCost = currentAvgCostCents / 100;
+    const newAvgCost = newAvgCostCents / 100;
+    if (oldAvgCost.toFixed(4) !== newAvgCost.toFixed(4)) {
+      try {
+        await logPriceChange({
+          companyId: po.purchaseOrder.companyId ?? 1,
+          branchId: po.purchaseOrder.branchId ?? 1,
+          productId: prod.id,
+          changeType: 'CUSTO_MEDIO',
+          channelId: null,
+          previousValue: oldAvgCost.toFixed(4),
+          newValue: newAvgCost.toFixed(4),
+          userId: po.purchaseOrder.createdBy || 'system',
+          userName: `Edição Compra #${po.purchaseOrder.docNumber || purchaseOrderId}`,
+        });
+      } catch (e) {
+        console.error('[priceHistory] Erro ao registrar alteração de custo via edição de compra:', e);
+      }
+    }
     
     // Atualizar custo de produtos compostos
     await updateCompositeProductsUsingComponent(item.productId);
