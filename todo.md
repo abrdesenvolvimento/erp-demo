@@ -1728,3 +1728,9 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 
 ### Correção Cores Tabela Histórico de Preços (06/03/2026)
 - [x] Corrigir lógica de cores na tabela: Custo aumento=vermelho, redução=verde / Venda aumento=verde, redução=vermelho
+
+### Otimização de Desempenho - Telas de Auditoria (06/03/2026)
+- [x] Verificar e garantir paginação no backend (LIMIT/OFFSET) - já existia em todas as telas (50 por página)
+- [x] Otimizar queries dos cards de resumo - já usam COUNT(*)/SUM() agregados no banco
+- [x] Aplicar filtro de período padrão (últimos 30 dias) nas 3 telas de auditoria
+- [x] Criar índices nas tabelas: productMovements(companyId,date), priceHistory(companyId,createdAt), auditLog(companyId,createdAt)

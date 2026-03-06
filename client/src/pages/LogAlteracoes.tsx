@@ -80,8 +80,14 @@ export default function LogAlteracoes() {
   const [entityType, setEntityType] = useState<string>('all');
   const [actionFilter, setActionFilter] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
-  const [startDate, setStartDate] = useState<string>('');
-  const [endDate, setEndDate] = useState<string>('');
+  const [startDate, setStartDate] = useState<string>(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 30);
+    return d.toISOString().split('T')[0];
+  });
+  const [endDate, setEndDate] = useState<string>(() => {
+    return new Date().toISOString().split('T')[0];
+  });
   const [page, setPage] = useState(1);
   const [pageSize] = useState(50);
   const [activeTab, setActiveTab] = useState('logs');

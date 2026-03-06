@@ -1,0 +1,8 @@
+{
+  "query": "\nCREATE INDEX IF NOT EXISTS idx_product_movements_company_date ON productMovements(companyId, date DESC);\nCREATE INDEX IF NOT EXISTS idx_product_movements_type ON productMovements(type);\nCREATE INDEX IF NOT EXISTS idx_price_history_company_date ON priceHistory(companyId, changedAt DESC);\nCREATE INDEX IF NOT EXISTS idx_price_history_type ON priceHistory(changeType);\nCREATE INDEX IF NOT EXISTS idx_audit_log_company_date ON auditLog(companyId, createdAt DESC);\nCREATE INDEX IF NOT EXISTS idx_audit_log_entity ON auditLog(entityType);\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute \nCREATE INDEX IF NOT EXISTS idx_product_movements_company_date ON productMovements(companyId, date DESC);\nCREATE INDEX IF NOT EXISTS idx_product_movements_type ON productMovements(type);\nCREATE INDEX IF NOT EXISTS idx_price_history_company_date ON priceHistory(companyId, changedAt DESC);\nCREATE INDEX IF NOT EXISTS idx_price_history_type ON priceHistory(changeType);\nCREATE INDEX IF NOT EXISTS idx_audit_log_company_date ON auditLog(companyId, createdAt DESC);\nCREATE INDEX IF NOT EXISTS idx_audit_log_entity ON auditLog(entityType);\n",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1072 (42000) at line 4: column does not exist: changedAt"
+  ]
+}
