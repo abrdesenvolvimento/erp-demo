@@ -186,67 +186,88 @@ export default function HistoricoPrecos() {
           </div>
         </div>
         
-        {/* Cards de Resumo */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card>
+        {/* Cards de Resumo - Segmentados por Tipo */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {/* Card Preço de Venda */}
+          <Card className="border-l-4 border-l-blue-500">
             <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-blue-100">
-                  <BarChart3 className="h-5 w-5 text-blue-600" />
+              <div className="flex items-center gap-2 mb-3">
+                <DollarSign className="h-4 w-4 text-blue-600" />
+                <span className="text-sm font-semibold text-blue-700">Preço de Venda</span>
+                <Badge variant="outline" className="ml-auto text-xs">
+                  {(statsData as any)?.venda?.total || 0} alterações
+                </Badge>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 rounded-md bg-red-50">
+                    <TrendingUp className="h-4 w-4 text-red-500" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-muted-foreground leading-tight">Méd. Aumento</p>
+                    <p className="text-lg font-bold text-red-600">
+                      {(statsData as any)?.venda?.avgIncrease ? `+${Number((statsData as any).venda.avgIncrease).toFixed(1)}%` : '—'}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Total de Alterações</p>
-                  <p className="text-2xl font-bold">{statsData?.totalChanges || 0}</p>
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 rounded-md bg-green-50">
+                    <TrendingDown className="h-4 w-4 text-green-500" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-muted-foreground leading-tight">Méd. Redução</p>
+                    <p className="text-lg font-bold text-green-600">
+                      {(statsData as any)?.venda?.avgDecrease ? `${Number((statsData as any).venda.avgDecrease).toFixed(1)}%` : '—'}
+                    </p>
+                  </div>
                 </div>
               </div>
             </CardContent>
           </Card>
           
-          <Card>
+          {/* Card Custo Médio */}
+          <Card className="border-l-4 border-l-purple-500">
             <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-red-100">
-                  <TrendingUp className="h-5 w-5 text-red-600" />
+              <div className="flex items-center gap-2 mb-3">
+                <BarChart3 className="h-4 w-4 text-purple-600" />
+                <span className="text-sm font-semibold text-purple-700">Custo Médio</span>
+                <Badge variant="outline" className="ml-auto text-xs">
+                  {(statsData as any)?.custo?.total || 0} alterações
+                </Badge>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 rounded-md bg-red-50">
+                    <TrendingUp className="h-4 w-4 text-red-500" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-muted-foreground leading-tight">Méd. Aumento</p>
+                    <p className="text-lg font-bold text-red-600">
+                      {(statsData as any)?.custo?.avgIncrease ? `+${Number((statsData as any).custo.avgIncrease).toFixed(1)}%` : '—'}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Média de Aumento</p>
-                  <p className="text-2xl font-bold text-red-600">
-                    {statsData?.avgIncrease ? `+${Number(statsData.avgIncrease).toFixed(1)}%` : '—'}
-                  </p>
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 rounded-md bg-green-50">
+                    <TrendingDown className="h-4 w-4 text-green-500" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-muted-foreground leading-tight">Méd. Redução</p>
+                    <p className="text-lg font-bold text-green-600">
+                      {(statsData as any)?.custo?.avgDecrease ? `${Number((statsData as any).custo.avgDecrease).toFixed(1)}%` : '—'}
+                    </p>
+                  </div>
                 </div>
               </div>
             </CardContent>
           </Card>
-          
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-green-100">
-                  <TrendingDown className="h-5 w-5 text-green-600" />
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Média de Redução</p>
-                  <p className="text-2xl font-bold text-green-600">
-                    {statsData?.avgDecrease ? `${Number(statsData.avgDecrease).toFixed(1)}%` : '—'}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-amber-100">
-                  <AlertCircle className="h-5 w-5 text-amber-600" />
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Produtos Mais Alterados</p>
-                  <p className="text-2xl font-bold">{statsData?.mostChanged?.length || 0}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+        </div>
+        
+        {/* Resumo geral */}
+        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+          <span>Total geral: <strong className="text-foreground">{statsData?.totalChanges || 0}</strong> alterações</span>
+          <span>·</span>
+          <span>Produtos afetados: <strong className="text-foreground">{statsData?.mostChanged?.length || 0}</strong></span>
         </div>
         
         {/* Tabs */}

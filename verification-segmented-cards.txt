@@ -1,0 +1,14 @@
+Verificação Visual - Cards Segmentados Histórico de Preços
+===========================================================
+Data: 06/03/2026
+
+Cards segmentados funcionando:
+- Preço de Venda: 4 alterações, Méd. Aumento +14.5%, Méd. Redução -17.2%
+- Custo Médio: 4 alterações, Méd. Aumento +2.8%, Méd. Redução —
+- Total geral: 8 alterações, Produtos afetados: 8
+
+Observação: O card de Custo Médio está cortado no lado direito (Méd. Redução não visível).
+Isso pode ser porque o viewport está estreito. Precisa verificar responsividade.
+
+A segmentação está clara e resolve o problema reportado pelo Gabriel.
+Agora é fácil distinguir que o aumento de +14.5% é no preço de venda e +2.8% é no custo.

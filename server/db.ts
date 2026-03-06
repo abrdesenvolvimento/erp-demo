@@ -9582,7 +9582,11 @@ export async function getRecentPriceHistory(filters: {
  */
 export async function getPriceHistoryStats(companyId: number, startDate?: Date, endDate?: Date) {
   const db = await getDb();
-  if (!db) return { totalChanges: 0, avgIncrease: 0, avgDecrease: 0, mostChanged: [] };
+  if (!db) return {
+    totalChanges: 0, avgIncrease: 0, avgDecrease: 0, mostChanged: [],
+    venda: { total: 0, avgIncrease: 0, avgDecrease: 0 },
+    custo: { total: 0, avgIncrease: 0, avgDecrease: 0 },
+  };
 
   const conditions: SQL[] = [eq(priceHistory.companyId, companyId)];
   if (startDate) conditions.push(gte(priceHistory.createdAt, startDate));
@@ -9590,19 +9594,27 @@ export async function getPriceHistoryStats(companyId: number, startDate?: Date, 
 
   const whereClause = and(...conditions);
 
-  // Total de alterações
-  const totalResult = await db.select({ count: sql<number>`COUNT(*)` })
-    .from(priceHistory)
-    .where(whereClause);
-  const totalChanges = Number(totalResult[0]?.count || 0);
-
-  // Média de aumento e redução
-  const avgResult = await db.select({
+  // Estatísticas segmentadas por tipo (PRECO_VENDA vs CUSTO_MEDIO)
+  const segmentedResult = await db.select({
+    changeType: priceHistory.changeType,
+    total: sql<number>`COUNT(*)`,
     avgIncrease: sql<number>`AVG(CASE WHEN CAST(changePercent AS DECIMAL(8,2)) > 0 THEN CAST(changePercent AS DECIMAL(8,2)) ELSE NULL END)`,
     avgDecrease: sql<number>`AVG(CASE WHEN CAST(changePercent AS DECIMAL(8,2)) < 0 THEN CAST(changePercent AS DECIMAL(8,2)) ELSE NULL END)`,
   })
     .from(priceHistory)
-    .where(whereClause);
+    .where(whereClause)
+    .groupBy(priceHistory.changeType);
+
+  const vendaStats = segmentedResult.find(r => r.changeType === 'PRECO_VENDA');
+  const custoStats = segmentedResult.find(r => r.changeType === 'CUSTO_MEDIO');
+
+  const totalChanges = segmentedResult.reduce((sum, r) => sum + Number(r.total || 0), 0);
+
+  // Média geral (mantida para compatibilidade)
+  const allIncreases = segmentedResult.filter(r => r.avgIncrease).map(r => Number(r.avgIncrease));
+  const allDecreases = segmentedResult.filter(r => r.avgDecrease).map(r => Number(r.avgDecrease));
+  const avgIncrease = allIncreases.length > 0 ? allIncreases.reduce((a, b) => a + b, 0) / allIncreases.length : 0;
+  const avgDecrease = allDecreases.length > 0 ? allDecreases.reduce((a, b) => a + b, 0) / allDecreases.length : 0;
 
   // Produtos com mais alterações
   const mostChanged = await db.select({
@@ -9617,9 +9629,19 @@ export async function getPriceHistoryStats(companyId: number, startDate?: Date, 
 
   return {
     totalChanges,
-    avgIncrease: Number(avgResult[0]?.avgIncrease || 0),
-    avgDecrease: Number(avgResult[0]?.avgDecrease || 0),
+    avgIncrease,
+    avgDecrease,
     mostChanged,
+    venda: {
+      total: Number(vendaStats?.total || 0),
+      avgIncrease: Number(vendaStats?.avgIncrease || 0),
+      avgDecrease: Number(vendaStats?.avgDecrease || 0),
+    },
+    custo: {
+      total: Number(custoStats?.total || 0),
+      avgIncrease: Number(custoStats?.avgIncrease || 0),
+      avgDecrease: Number(custoStats?.avgDecrease || 0),
+    },
   };
 }
 

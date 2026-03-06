@@ -1715,3 +1715,8 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 
 ### Auditoria de Acertos Manuais de Estoque (06/03/2026)
 - [x] Registrar acerto manual de estoque no auditLog (estoque anterior, novo estoque, quantidade ajustada, justificativa, usuário)
+
+### Segmentação Cards Histórico de Preços (06/03/2026)
+- [x] Segmentar cards de resumo: separar métricas de Custo Médio e Preço de Venda
+- [x] Atualizar backend para retornar estatísticas por tipo (custo vs venda)
+- [x] Redesenhar cards no frontend com seções distintas (borda azul = Venda, borda roxa = Custo)
