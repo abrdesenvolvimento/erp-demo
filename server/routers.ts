@@ -725,7 +725,11 @@ export const appRouter = router({
         notes: z.string().optional(),
       }))
       .mutation(async ({ input, ctx }) => {
-        return await db.adjustProductStock({
+        // Buscar produto antes do acerto para registrar estoque anterior
+        const productBefore = await db.getProduct(input.productId);
+        const stockBefore = productBefore?.currentStock || 0;
+        
+        const result = await db.adjustProductStock({
           productId: input.productId,
           quantity: input.quantity,
           userId: ctx.user.id,
@@ -734,6 +738,45 @@ export const appRouter = router({
           companyId: ctx.activeCompanyId,
           branchId: ctx.activeBranchId,
         });
+
+        // === AUDITORIA: Registrar acerto manual no auditLog ===
+        try {
+          const stockAfter = stockBefore + input.quantity;
+          await db.createAuditLog({
+            companyId: ctx.activeCompanyId ?? 1,
+            branchId: ctx.activeBranchId ?? 1,
+            entityType: 'PRODUTO',
+            entityId: input.productId,
+            entityName: productBefore?.name || `Produto #${input.productId}`,
+            action: 'EDICAO',
+            changes: [
+              {
+                field: 'currentStock',
+                label: 'Estoque (Acerto Manual)',
+                oldValue: String(stockBefore),
+                newValue: String(stockAfter),
+              },
+              {
+                field: 'adjustQuantity',
+                label: 'Quantidade Ajustada',
+                oldValue: null,
+                newValue: `${input.quantity > 0 ? '+' : ''}${input.quantity}`,
+              },
+              {
+                field: 'adjustReason',
+                label: 'Justificativa',
+                oldValue: null,
+                newValue: input.reason,
+              },
+            ],
+            userId: ctx.user.id,
+            userName: ctx.user.name || 'Desconhecido',
+          });
+        } catch (e) {
+          console.error('[auditLog] Erro ao registrar acerto manual de estoque:', e);
+        }
+
+        return result;
       }),
   }),
 

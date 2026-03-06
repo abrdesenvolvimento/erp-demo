@@ -1712,3 +1712,6 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Tab "Produtos Mais Movimentados" com ranking top 10
 - [x] Link "Mov. Estoque" no submenu Auditoria
 - [x] 19 testes unitários passando (stock-movements-audit)
+
+### Auditoria de Acertos Manuais de Estoque (06/03/2026)
+- [x] Registrar acerto manual de estoque no auditLog (estoque anterior, novo estoque, quantidade ajustada, justificativa, usuário)
