@@ -32,6 +32,7 @@ import Categorias from "./pages/Categorias";
 import CanaisVenda from "./pages/CanaisVenda";
 import HistoricoPrecos from "./pages/HistoricoPrecos";
 import LogAlteracoes from "./pages/LogAlteracoes";
+import AuditoriaMovimentacoes from "./pages/AuditoriaMovimentacoes";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
@@ -72,6 +73,7 @@ function Router() {
       <Route path="/canais-venda" component={CanaisVenda} />
       <Route path="/historico-precos" component={HistoricoPrecos} />
       <Route path="/log-alteracoes" component={LogAlteracoes} />
+      <Route path="/auditoria-movimentacoes" component={AuditoriaMovimentacoes} />
       <Route path="/acesso-negado" component={AccessDenied} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />

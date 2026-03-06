@@ -1699,3 +1699,16 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Dialog de detalhes mostrando campos alterados (antes/depois)
 - [x] Adicionar link no submenu Auditoria
 - [x] 25 testes unitários passando
+
+### Expansão Módulo Auditoria (06/03/2026)
+- [x] Corrigir registro de retorno de estoque por cancelamento de venda (ESTORNO registrado em cancelSale)
+- [x] Corrigir registro de retorno de estoque por cancelamento de compra (ESTORNO registrado em cancelPurchaseOrder)
+- [x] Expandir auditoria de cadastro para Parceiros (criação/edição com diff de campos)
+- [x] Expandir auditoria de cadastro para Categorias (criação/edição/ativação/desativação)
+- [x] Expandir auditoria de cadastro para Subcategorias (criação/edição/ativação/desativação)
+- [x] Criar tela de auditoria de movimentações de estoque (entradas, saídas, estornos, perdas, acertos)
+- [x] Cards de resumo por tipo de movimentação
+- [x] Filtros por tipo, produto, período
+- [x] Tab "Produtos Mais Movimentados" com ranking top 10
+- [x] Link "Mov. Estoque" no submenu Auditoria
+- [x] 19 testes unitários passando (stock-movements-audit)

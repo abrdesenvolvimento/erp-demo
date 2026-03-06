@@ -1,0 +1,36 @@
+Verificação Visual - Auditoria de Movimentações de Estoque
+==========================================================
+Data: 06/03/2026
+
+Resultado: FUNCIONANDO CORRETAMENTE
+
+1. Cards de resumo:
+   - Total: 12.902 movimentações
+   - Entradas: 1.073
+   - Saídas: 11.213
+   - Estornos: 0
+   - Perdas: 8
+
+2. Tabela de movimentações:
+   - Dados reais carregando corretamente
+   - Colunas: Data/Hora, Produto, Tipo, Quantidade, Documento, Observação, Responsável
+   - Badges de tipo (Saída em vermelho) funcionando
+   - Quantidades negativas em vermelho
+   - Documentos de venda referenciados corretamente (ex: Venda #59790002)
+   - Paginação: 12.902 movimentações, 259 páginas
+
+3. Filtros:
+   - Busca por produto
+   - Filtro por tipo (dropdown)
+   - Filtro por período (data início/fim)
+
+4. Tabs:
+   - Movimentações (ativa)
+   - Produtos Mais Movimentados
+
+5. Sidebar:
+   - Submenu Auditoria expandido
+   - Link "Mov. Estoque" visível
+
+Observação: Estornos = 0 porque a funcionalidade de estorno no cancelamento 
+foi adicionada agora. Próximos cancelamentos já serão registrados.

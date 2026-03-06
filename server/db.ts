@@ -1484,6 +1484,19 @@ export async function cancelPurchaseOrder(purchaseOrderId: number) {
     
     await updateProduct(prod.id, updateData);
     
+    // Registrar movimentação de ESTORNO no histórico
+    await createProductMovement({
+      productId: prod.id,
+      date: getNowInBrazil(),
+      type: "ESTORNO",
+      quantity: (-quantityPurchased).toString(),
+      documentNumber: po.purchaseOrder.docNumber || `Compra #${purchaseOrderId}`,
+      userId: po.purchaseOrder.createdBy || 'system',
+      notes: `Retorno de estoque - Cancelamento da Compra ${po.purchaseOrder.docNumber || '#' + purchaseOrderId}`,
+      companyId: po.purchaseOrder.companyId || 1,
+      branchId: po.purchaseOrder.branchId || 1,
+    });
+    
     // NOTA: Não recalculamos custo médio ao cancelar, pois isso pode gerar inconsistências
     // O custo médio reflete o histórico de compras e deve ser mantido
   }
@@ -1724,9 +1737,22 @@ export async function cancelSale(saleId: number, userId: string, reason?: string
   // Buscar itens da venda
   const items = await getSaleItems(saleId);
 
-  // Reverter estoque
+  // Reverter estoque e registrar movimentação de ESTORNO
   for (const item of items) {
     await updateProductStockWithCompositions(item.productId, item.quantity);
+    
+    // Registrar movimentação de ESTORNO no histórico
+    await createProductMovement({
+      productId: item.productId,
+      date: getNowInBrazil(),
+      type: "ESTORNO",
+      quantity: item.quantity.toString(),
+      documentNumber: `Venda #${saleId}`,
+      userId: userId,
+      notes: `Retorno de estoque - Cancelamento da Venda #${saleId}${reason ? ` (${reason})` : ''}`,
+      companyId: sale.companyId ? Number(sale.companyId) : 1,
+      branchId: sale.branchId ? Number(sale.branchId) : 1,
+    });
   }
 
   // Reverter saldo do cliente se for venda a prazo
@@ -9788,4 +9814,133 @@ export function diffChanges(
   }
 
   return changes;
+}
+
+
+// ============================================
+// AUDITORIA DE MOVIMENTAÇÕES DE ESTOQUE (GLOBAL)
+// ============================================
+
+/**
+ * Busca movimentações de estoque de TODOS os produtos com filtros e paginação
+ */
+export async function getAllProductMovements(params: {
+  companyId?: number;
+  type?: string;
+  productId?: number;
+  search?: string;
+  startDate?: Date;
+  endDate?: Date;
+  page?: number;
+  pageSize?: number;
+}) {
+  const db = await getDb();
+  if (!db) return { movements: [], total: 0 };
+
+  const page = params.page || 1;
+  const pageSize = params.pageSize || 50;
+  const offset = (page - 1) * pageSize;
+
+  const conditions: any[] = [];
+  
+  if (params.companyId) {
+    conditions.push(eq(productMovements.companyId, params.companyId));
+  }
+  if (params.type) {
+    conditions.push(eq(productMovements.type, params.type as any));
+  }
+  if (params.productId) {
+    conditions.push(eq(productMovements.productId, params.productId));
+  }
+  if (params.startDate) {
+    conditions.push(gte(productMovements.date, params.startDate));
+  }
+  if (params.endDate) {
+    conditions.push(lte(productMovements.date, params.endDate));
+  }
+
+  const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+  // Buscar total
+  const [countResult] = await db.select({
+    count: sql<number>`COUNT(*)`,
+  })
+    .from(productMovements)
+    .innerJoin(products, eq(productMovements.productId, products.id))
+    .where(whereClause ? (params.search 
+      ? and(whereClause, like(products.name, `%${params.search}%`))
+      : whereClause)
+      : (params.search ? like(products.name, `%${params.search}%`) : undefined));
+
+  const total = Number(countResult?.count || 0);
+
+  // Buscar movimentações
+  let query = db
+    .select({
+      id: productMovements.id,
+      productId: productMovements.productId,
+      productName: products.name,
+      date: productMovements.date,
+      type: productMovements.type,
+      quantity: productMovements.quantity,
+      documentNumber: productMovements.documentNumber,
+      userId: productMovements.userId,
+      notes: productMovements.notes,
+      createdAt: productMovements.createdAt,
+      userName: users.name,
+    })
+    .from(productMovements)
+    .innerJoin(products, eq(productMovements.productId, products.id))
+    .leftJoin(users, eq(productMovements.userId, users.id))
+    .where(whereClause ? (params.search 
+      ? and(whereClause, like(products.name, `%${params.search}%`))
+      : whereClause)
+      : (params.search ? like(products.name, `%${params.search}%`) : undefined))
+    .orderBy(desc(productMovements.date))
+    .limit(pageSize)
+    .offset(offset);
+
+  const movements = await query;
+  return { movements, total };
+}
+
+/**
+ * Estatísticas de movimentações de estoque
+ */
+export async function getMovementStats(companyId?: number, startDate?: Date, endDate?: Date) {
+  const db = await getDb();
+  if (!db) return { byType: [], topProducts: [], totalMovements: 0 };
+
+  const conditions: any[] = [];
+  if (companyId) conditions.push(eq(productMovements.companyId, companyId));
+  if (startDate) conditions.push(gte(productMovements.date, startDate));
+  if (endDate) conditions.push(lte(productMovements.date, endDate));
+  const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+  // Contagem por tipo
+  const byType = await db.select({
+    type: productMovements.type,
+    count: sql<number>`COUNT(*)`,
+    totalQty: sql<string>`SUM(ABS(CAST(${productMovements.quantity} AS DECIMAL(10,3))))`,
+  })
+    .from(productMovements)
+    .where(whereClause)
+    .groupBy(productMovements.type);
+
+  // Produtos com mais movimentações
+  const topProducts = await db.select({
+    productId: productMovements.productId,
+    productName: products.name,
+    count: sql<number>`COUNT(*)`,
+  })
+    .from(productMovements)
+    .innerJoin(products, eq(productMovements.productId, products.id))
+    .where(whereClause)
+    .groupBy(productMovements.productId, products.name)
+    .orderBy(sql`COUNT(*) DESC`)
+    .limit(10);
+
+  const totalMovements = byType.reduce((sum, b) => sum + Number(b.count), 0);
+
+  return { byType, topProducts, totalMovements };
 }

@@ -13,6 +13,7 @@ import { stockAnalysisRouter } from './routers/stockAnalysis';
 import { companyRouter } from './routers/company';
 import { priceHistoryRouter } from './routers/priceHistory';
 import { auditLogRouter } from './routers/auditLog';
+import { stockMovementsRouter } from './routers/stockMovements';
 
 export const appRouter = router({
   system: systemRouter,
@@ -22,6 +23,7 @@ export const appRouter = router({
   company: companyRouter,
   priceHistory: priceHistoryRouter,
   auditLog: auditLogRouter,
+  stockMovements: stockMovementsRouter,
 
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
@@ -126,6 +128,24 @@ export const appRouter = router({
       }))
       .mutation(async ({ input, ctx }) => {
         const id = await db.createCategory({ ...input, companyId: ctx.activeCompanyId, branchId: ctx.activeBranchId });
+        
+        // === AUDITORIA: Registrar criação de categoria ===
+        try {
+          await db.createAuditLog({
+            companyId: ctx.activeCompanyId ?? 1,
+            branchId: ctx.activeBranchId ?? 1,
+            entityType: 'CATEGORIA',
+            entityId: id,
+            entityName: input.name,
+            action: 'CRIACAO',
+            changes: [{ field: 'name', label: 'Nome', oldValue: null, newValue: input.name }],
+            userId: ctx.user?.id || 'system',
+            userName: ctx.user?.name || 'Sistema',
+          });
+        } catch (e) {
+          console.error('[auditLog] Erro ao registrar criação de categoria:', e);
+        }
+        
         return { id, success: true };
       }),
 
@@ -137,8 +157,45 @@ export const appRouter = router({
           active: z.boolean().optional(),
         }),
       }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ input, ctx }) => {
+        // === AUDITORIA: Buscar categoria atual para comparação ===
+        let currentCategory: any = null;
+        try {
+          const categories = await db.getCategories(false, ctx.activeCompanyId);
+          currentCategory = categories.find((c: any) => c.id === input.id);
+        } catch (e) {
+          console.error('[auditLog] Erro ao buscar categoria atual:', e);
+        }
+        
         await db.updateCategory(input.id, input.data);
+        
+        // === AUDITORIA: Registrar alterações ===
+        if (currentCategory) {
+          try {
+            const fieldLabels: Record<string, string> = { name: 'Nome', active: 'Status Ativo' };
+            const changes = db.diffChanges(currentCategory, input.data, fieldLabels);
+            if (changes.length > 0) {
+              let action: 'EDICAO' | 'ATIVACAO' | 'DESATIVACAO' = 'EDICAO';
+              if (input.data.active === true && !currentCategory.active) action = 'ATIVACAO';
+              if (input.data.active === false && currentCategory.active) action = 'DESATIVACAO';
+
+              await db.createAuditLog({
+                companyId: ctx.activeCompanyId ?? 1,
+                branchId: ctx.activeBranchId ?? 1,
+                entityType: 'CATEGORIA',
+                entityId: input.id,
+                entityName: currentCategory.name,
+                action,
+                changes,
+                userId: ctx.user?.id || 'system',
+                userName: ctx.user?.name || 'Sistema',
+              });
+            }
+          } catch (e) {
+            console.error('[auditLog] Erro ao registrar alteração de categoria:', e);
+          }
+        }
+        
         return { success: true };
       }),
   }),
@@ -158,6 +215,24 @@ export const appRouter = router({
       }))
       .mutation(async ({ input, ctx }) => {
         const id = await db.createSubcategory({ ...input, companyId: ctx.activeCompanyId, branchId: ctx.activeBranchId });
+        
+        // === AUDITORIA: Registrar criação de subcategoria ===
+        try {
+          await db.createAuditLog({
+            companyId: ctx.activeCompanyId ?? 1,
+            branchId: ctx.activeBranchId ?? 1,
+            entityType: 'CATEGORIA',
+            entityId: id,
+            entityName: input.name,
+            action: 'CRIACAO',
+            changes: [{ field: 'name', label: 'Nome (Subcategoria)', oldValue: null, newValue: input.name }],
+            userId: ctx.user?.id || 'system',
+            userName: ctx.user?.name || 'Sistema',
+          });
+        } catch (e) {
+          console.error('[auditLog] Erro ao registrar criação de subcategoria:', e);
+        }
+        
         return { id, success: true };
       }),
 
@@ -170,8 +245,45 @@ export const appRouter = router({
           active: z.boolean().optional(),
         }),
       }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ input, ctx }) => {
+        // === AUDITORIA: Buscar subcategoria atual ===
+        let currentSub: any = null;
+        try {
+          const subs = await db.getSubcategories(undefined, ctx.activeCompanyId);
+          currentSub = subs.find((s: any) => s.id === input.id);
+        } catch (e) {
+          console.error('[auditLog] Erro ao buscar subcategoria:', e);
+        }
+        
         await db.updateSubcategory(input.id, input.data);
+        
+        // === AUDITORIA: Registrar alterações ===
+        if (currentSub) {
+          try {
+            const fieldLabels: Record<string, string> = { name: 'Nome', categoryId: 'Categoria', active: 'Status Ativo' };
+            const changes = db.diffChanges(currentSub, input.data, fieldLabels);
+            if (changes.length > 0) {
+              let action: 'EDICAO' | 'ATIVACAO' | 'DESATIVACAO' = 'EDICAO';
+              if (input.data.active === true && !currentSub.active) action = 'ATIVACAO';
+              if (input.data.active === false && currentSub.active) action = 'DESATIVACAO';
+
+              await db.createAuditLog({
+                companyId: ctx.activeCompanyId ?? 1,
+                branchId: ctx.activeBranchId ?? 1,
+                entityType: 'CATEGORIA',
+                entityId: input.id,
+                entityName: currentSub.name + ' (Subcategoria)',
+                action,
+                changes,
+                userId: ctx.user?.id || 'system',
+                userName: ctx.user?.name || 'Sistema',
+              });
+            }
+          } catch (e) {
+            console.error('[auditLog] Erro ao registrar alteração de subcategoria:', e);
+          }
+        }
+        
         return { success: true };
       }),
   }),
@@ -666,6 +778,24 @@ export const appRouter = router({
       }))
       .mutation(async ({ input, ctx }) => {
         const id = await db.createPartner({ ...input, companyId: ctx.activeCompanyId, branchId: ctx.activeBranchId });
+        
+        // === AUDITORIA: Registrar criação de parceiro ===
+        try {
+          await db.createAuditLog({
+            companyId: ctx.activeCompanyId ?? 1,
+            branchId: ctx.activeBranchId ?? 1,
+            entityType: 'PARCEIRO',
+            entityId: id,
+            entityName: input.tradeName || input.name,
+            action: 'CRIACAO',
+            changes: [{ field: 'name', label: 'Nome', oldValue: null, newValue: input.name }],
+            userId: ctx.user?.id || 'system',
+            userName: ctx.user?.name || 'Sistema',
+          });
+        } catch (e) {
+          console.error('[auditLog] Erro ao registrar criação de parceiro:', e);
+        }
+        
         return { id, success: true };
       }),
     
@@ -690,9 +820,64 @@ export const appRouter = router({
         creditPolicy: z.enum(["ACTIVE", "BLOCKED"]).optional(),
         active: z.boolean().optional(),
       }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ input, ctx }) => {
         const { id, ...data } = input;
+        
+        // === AUDITORIA: Buscar parceiro atual para comparação ===
+        let currentPartner: any = null;
+        try {
+          currentPartner = await db.getPartner(id);
+        } catch (e) {
+          console.error('[auditLog] Erro ao buscar parceiro atual:', e);
+        }
+        
         await db.updatePartner(id, data);
+        
+        // === AUDITORIA: Registrar alterações de cadastro ===
+        if (currentPartner) {
+          try {
+            const fieldLabels: Record<string, string> = {
+              name: 'Nome',
+              tradeName: 'Nome Fantasia',
+              docNumber: 'CPF/CNPJ',
+              partnerType: 'Tipo',
+              phone: 'Telefone',
+              email: 'E-mail',
+              street: 'Rua',
+              streetNumber: 'Número',
+              complement: 'Complemento',
+              neighborhood: 'Bairro',
+              city: 'Cidade',
+              state: 'Estado',
+              zipCode: 'CEP',
+              notes: 'Observações',
+              creditLimit: 'Limite de Crédito',
+              creditPolicy: 'Política de Crédito',
+              active: 'Status Ativo',
+            };
+            const changes = db.diffChanges(currentPartner, data, fieldLabels);
+            if (changes.length > 0) {
+              let action: 'EDICAO' | 'ATIVACAO' | 'DESATIVACAO' = 'EDICAO';
+              if (data.active === true && !currentPartner.active) action = 'ATIVACAO';
+              if (data.active === false && currentPartner.active) action = 'DESATIVACAO';
+
+              await db.createAuditLog({
+                companyId: ctx.activeCompanyId ?? 1,
+                branchId: ctx.activeBranchId ?? 1,
+                entityType: 'PARCEIRO',
+                entityId: id,
+                entityName: currentPartner.tradeName || currentPartner.name,
+                action,
+                changes,
+                userId: ctx.user?.id || 'system',
+                userName: ctx.user?.name || 'Sistema',
+              });
+            }
+          } catch (e) {
+            console.error('[auditLog] Erro ao registrar alteração de parceiro:', e);
+          }
+        }
+        
         return { success: true };
       }),
     

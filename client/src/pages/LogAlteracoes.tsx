@@ -49,6 +49,7 @@ function getEntityIcon(entityType: string) {
   switch (entityType) {
     case 'PRODUTO': return <Package className="h-4 w-4 text-blue-500" />;
     case 'PARCEIRO': return <Users className="h-4 w-4 text-purple-500" />;
+    case 'CATEGORIA': return <ClipboardList className="h-4 w-4 text-orange-500" />;
     default: return <ClipboardList className="h-4 w-4 text-gray-500" />;
   }
 }
