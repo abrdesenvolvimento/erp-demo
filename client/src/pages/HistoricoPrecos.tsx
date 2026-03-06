@@ -35,23 +35,40 @@ function formatDate(date: string | Date | null): string {
   });
 }
 
-function getChangeIcon(percent: number | string | null | undefined) {
+function getChangeIcon(percent: number | string | null | undefined, changeType?: string) {
   if (percent === null || percent === undefined) return <Minus className="h-4 w-4 text-gray-400" />;
   const num = typeof percent === 'string' ? parseFloat(percent) : percent;
   if (isNaN(num) || num === 0) return <Minus className="h-4 w-4 text-gray-400" />;
-  if (num > 0) return <TrendingUp className="h-4 w-4 text-red-500" />;
-  return <TrendingDown className="h-4 w-4 text-green-500" />;
+  const isCusto = changeType === 'CUSTO_MEDIO';
+  // Venda: aumento = verde (bom), redução = vermelho (ruim)
+  // Custo: aumento = vermelho (ruim), redução = verde (bom)
+  if (num > 0) {
+    return isCusto 
+      ? <TrendingUp className="h-4 w-4 text-red-500" />
+      : <TrendingUp className="h-4 w-4 text-green-500" />;
+  }
+  return isCusto 
+    ? <TrendingDown className="h-4 w-4 text-green-500" />
+    : <TrendingDown className="h-4 w-4 text-red-500" />;
 }
 
-function getChangeBadge(percent: number | string | null | undefined) {
+function getChangeBadge(percent: number | string | null | undefined, changeType?: string) {
   if (percent === null || percent === undefined) return <Badge variant="outline" className="text-gray-500">Novo</Badge>;
   const num = typeof percent === 'string' ? parseFloat(percent) : percent;
   if (isNaN(num)) return <Badge variant="outline" className="text-gray-500">—</Badge>;
   if (num === 0) return <Badge variant="outline" className="text-gray-500">0%</Badge>;
-  if (num > 10) return <Badge className="bg-red-100 text-red-700 border-red-200">{formatPercent(num)}</Badge>;
-  if (num > 0) return <Badge className="bg-amber-100 text-amber-700 border-amber-200">{formatPercent(num)}</Badge>;
-  if (num < -10) return <Badge className="bg-green-100 text-green-700 border-green-200">{formatPercent(num)}</Badge>;
-  return <Badge className="bg-blue-100 text-blue-700 border-blue-200">{formatPercent(num)}</Badge>;
+  const isCusto = changeType === 'CUSTO_MEDIO';
+  // Venda: aumento = verde (bom), redução = vermelho (ruim)
+  // Custo: aumento = vermelho (ruim), redução = verde (bom)
+  const isPositiveForBusiness = isCusto ? (num < 0) : (num > 0);
+  const isNegativeForBusiness = isCusto ? (num > 0) : (num < 0);
+  const absNum = Math.abs(num);
+  
+  if (isNegativeForBusiness && absNum > 10) return <Badge className="bg-red-100 text-red-700 border-red-200">{formatPercent(num)}</Badge>;
+  if (isNegativeForBusiness) return <Badge className="bg-red-50 text-red-600 border-red-200">{formatPercent(num)}</Badge>;
+  if (isPositiveForBusiness && absNum > 10) return <Badge className="bg-green-100 text-green-700 border-green-200">{formatPercent(num)}</Badge>;
+  if (isPositiveForBusiness) return <Badge className="bg-green-50 text-green-600 border-green-200">{formatPercent(num)}</Badge>;
+  return <Badge variant="outline" className="text-gray-500">{formatPercent(num)}</Badge>;
 }
 
 type SortField = 'createdAt' | 'productName' | 'changePercent' | 'newValue' | 'previousValue';
@@ -516,8 +533,8 @@ export default function HistoricoPrecos() {
                               </TableCell>
                               <TableCell className="text-center">
                                 <div className="flex items-center justify-center gap-1">
-                                  {getChangeIcon(item.changePercent)}
-                                  {getChangeBadge(item.changePercent)}
+                                  {getChangeIcon(item.changePercent, item.changeType)}
+                                  {getChangeBadge(item.changePercent, item.changeType)}
                                 </div>
                               </TableCell>
                               <TableCell className="text-sm text-muted-foreground">

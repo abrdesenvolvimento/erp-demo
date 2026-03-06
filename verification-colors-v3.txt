@@ -1,0 +1,17 @@
+Verificação Visual - Cores Corrigidas na Tabela
+================================================
+Data: 06/03/2026
+
+CUSTO (aumento = ruim = vermelho):
+- Amstel 269ml: +1.55% → VERMELHO ✓
+- Heineken 269ml: +0.88% → VERMELHO ✓
+- Heineken 350ml: +2.66% → VERMELHO ✓
+- Original 269ml: +6.18% → VERMELHO ✓
+
+VENDA:
+- Mansão Maromba Double Darkness: -32.04% → VERMELHO (redução de venda = ruim) ✓
+- Mansão Maromba Combo do Job: +19.95% → VERDE (aumento de venda = bom) ✓
+- Budweiser 350ml: -2.33% → VERMELHO (redução de venda = ruim) ✓
+- Guaraná Antarctica 2l: +9.09% → VERDE (aumento de venda = bom) ✓
+
+Todas as cores estão corretas e alinhadas com a semântica dos cards!

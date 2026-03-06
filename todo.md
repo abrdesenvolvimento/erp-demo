@@ -1725,3 +1725,6 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Inverter lógica de cores: Venda (reajuste=verde, redução=vermelho) / Custo (aumento=vermelho, redução=verde)
 - [x] Criar card "Saúde da Margem" com diferença em pp entre Reajuste de Venda e Aumento de Custo
 - [x] Indicador visual: margem protegida (verde), comprimida (vermelho), estável (cinza)
+
+### Correção Cores Tabela Histórico de Preços (06/03/2026)
+- [x] Corrigir lógica de cores na tabela: Custo aumento=vermelho, redução=verde / Venda aumento=verde, redução=vermelho
