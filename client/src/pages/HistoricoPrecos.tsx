@@ -187,7 +187,7 @@ export default function HistoricoPrecos() {
         </div>
         
         {/* Cards de Resumo - Segmentados por Tipo */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           {/* Card Preço de Venda */}
           <Card className="border-l-4 border-l-blue-500">
             <CardContent className="p-4">
@@ -195,28 +195,28 @@ export default function HistoricoPrecos() {
                 <DollarSign className="h-4 w-4 text-blue-600" />
                 <span className="text-sm font-semibold text-blue-700">Preço de Venda</span>
                 <Badge variant="outline" className="ml-auto text-xs">
-                  {(statsData as any)?.venda?.total || 0} alterações
+                  {(statsData as any)?.venda?.total || 0} alt.
                 </Badge>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex items-center gap-2">
-                  <div className="p-1.5 rounded-md bg-red-50">
-                    <TrendingUp className="h-4 w-4 text-red-500" />
+                  <div className="p-1.5 rounded-md bg-green-50">
+                    <TrendingUp className="h-4 w-4 text-green-500" />
                   </div>
                   <div>
-                    <p className="text-[10px] text-muted-foreground leading-tight">Méd. Aumento</p>
-                    <p className="text-lg font-bold text-red-600">
+                    <p className="text-[10px] text-muted-foreground leading-tight">Méd. Reajuste</p>
+                    <p className="text-lg font-bold text-green-600">
                       {(statsData as any)?.venda?.avgIncrease ? `+${Number((statsData as any).venda.avgIncrease).toFixed(1)}%` : '—'}
                     </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="p-1.5 rounded-md bg-green-50">
-                    <TrendingDown className="h-4 w-4 text-green-500" />
+                  <div className="p-1.5 rounded-md bg-red-50">
+                    <TrendingDown className="h-4 w-4 text-red-500" />
                   </div>
                   <div>
                     <p className="text-[10px] text-muted-foreground leading-tight">Méd. Redução</p>
-                    <p className="text-lg font-bold text-green-600">
+                    <p className="text-lg font-bold text-red-600">
                       {(statsData as any)?.venda?.avgDecrease ? `${Number((statsData as any).venda.avgDecrease).toFixed(1)}%` : '—'}
                     </p>
                   </div>
@@ -225,14 +225,14 @@ export default function HistoricoPrecos() {
             </CardContent>
           </Card>
           
-          {/* Card Custo Médio */}
+          {/* Card Custo Médio - cores invertidas: aumento = negativo (vermelho), redução = positivo (verde) */}
           <Card className="border-l-4 border-l-purple-500">
             <CardContent className="p-4">
               <div className="flex items-center gap-2 mb-3">
                 <BarChart3 className="h-4 w-4 text-purple-600" />
                 <span className="text-sm font-semibold text-purple-700">Custo Médio</span>
                 <Badge variant="outline" className="ml-auto text-xs">
-                  {(statsData as any)?.custo?.total || 0} alterações
+                  {(statsData as any)?.custo?.total || 0} alt.
                 </Badge>
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -261,6 +261,47 @@ export default function HistoricoPrecos() {
               </div>
             </CardContent>
           </Card>
+          
+          {/* Card Saúde da Margem - Diferença entre Reajuste de Venda e Aumento de Custo */}
+          {(() => {
+            const vendaAvgIncrease = Number((statsData as any)?.venda?.avgIncrease) || 0;
+            const custoAvgIncrease = Number((statsData as any)?.custo?.avgIncrease) || 0;
+            const hasData = (statsData as any)?.venda?.total > 0 || (statsData as any)?.custo?.total > 0;
+            const diff = vendaAvgIncrease - custoAvgIncrease;
+            const isPositive = diff > 0;
+            const isNeutral = diff === 0;
+            const borderColor = !hasData ? 'border-l-gray-300' : isPositive ? 'border-l-green-500' : isNeutral ? 'border-l-gray-400' : 'border-l-red-500';
+            const statusColor = !hasData ? 'text-gray-400' : isPositive ? 'text-green-600' : isNeutral ? 'text-gray-500' : 'text-red-600';
+            const statusBg = !hasData ? 'bg-gray-50' : isPositive ? 'bg-green-50' : isNeutral ? 'bg-gray-50' : 'bg-red-50';
+            const statusIcon = !hasData || isNeutral ? <Minus className="h-5 w-5 text-gray-400" /> : isPositive ? <TrendingUp className="h-5 w-5 text-green-500" /> : <TrendingDown className="h-5 w-5 text-red-500" />;
+            const statusLabel = !hasData ? 'Sem dados' : isPositive ? 'Margem protegida' : isNeutral ? 'Margem estável' : 'Margem comprimida';
+            
+            return (
+              <Card className={`border-l-4 ${borderColor}`}>
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <AlertCircle className={`h-4 w-4 ${statusColor}`} />
+                    <span className={`text-sm font-semibold ${statusColor}`}>Saúde da Margem</span>
+                  </div>
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className={`p-2 rounded-md ${statusBg}`}>
+                      {statusIcon}
+                    </div>
+                    <div>
+                      <p className={`text-2xl font-bold ${statusColor}`}>
+                        {!hasData ? '—' : `${diff > 0 ? '+' : ''}${diff.toFixed(1)}pp`}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground leading-tight">{statusLabel}</p>
+                    </div>
+                  </div>
+                  <div className="text-[10px] text-muted-foreground mt-1 space-y-0.5">
+                    <p>Reajuste venda: <span className="font-medium text-foreground">{vendaAvgIncrease ? `+${vendaAvgIncrease.toFixed(1)}%` : '—'}</span></p>
+                    <p>Aumento custo: <span className="font-medium text-foreground">{custoAvgIncrease ? `+${custoAvgIncrease.toFixed(1)}%` : '—'}</span></p>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })()}
         </div>
         
         {/* Resumo geral */}

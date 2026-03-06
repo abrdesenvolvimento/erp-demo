@@ -1,0 +1,15 @@
+Verificação Visual - Cards Segmentados v2
+==========================================
+Data: 06/03/2026
+
+Cards funcionando corretamente:
+1. Preço de Venda (borda azul): 4 alt., Méd. Reajuste +14.5% (verde), Méd. Redução -17.2% (vermelho)
+2. Custo Médio (borda roxa): 4 alt., Méd. Aumento +2.8% (vermelho), Méd. Redução — (verde)
+3. Saúde da Margem (borda verde): +11.7pp, "Margem protegida", Reajuste venda: +14.5%, Aumento custo: +2.8%
+
+Lógica de cores:
+- Venda: Reajuste = verde (positivo), Redução = vermelho (negativo) ✓
+- Custo: Aumento = vermelho (negativo), Redução = verde (positivo) ✓
+- Margem: Verde quando reajuste > custo, Vermelho quando custo > reajuste ✓
+
+Card de Saúde da Margem calcula: 14.5% - 2.8% = +11.7pp → "Margem protegida" ✓
