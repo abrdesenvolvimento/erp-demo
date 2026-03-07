@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { Plus, Users, Clock, DollarSign, Settings, ChefHat, X, UtensilsCrossed, RefreshCw, Bell } from "lucide-react";
 import { useLocation } from "wouter";
 import { playUrgentNotification, unlockAudio, isAudioUnlocked } from "@/lib/notificationSound";
+import { requestNotificationPermission, isNotificationPermitted, sendPushNotification } from "@/lib/pushNotification";
 
 type TableStatus = "FREE" | "OCCUPIED" | "WAITING_PAYMENT" | "RESERVED";
 
@@ -42,15 +43,27 @@ export default function SalaoMesas() {
 
   const companyId = activeCompanyId ?? 0;
   const [soundEnabled, setSoundEnabled] = useState(false);
+  const soundEnabledRef = useRef(false); // useRef to avoid stale closure in useEffect
 
   const handleEnableSound = async () => {
-    const ok = await unlockAudio();
-    if (ok) {
+    // Unlock audio (required for iOS)
+    const audioOk = await unlockAudio();
+    if (audioOk) {
       setSoundEnabled(true);
+      soundEnabledRef.current = true;
       playUrgentNotification();
-      toast.success("Sons de notificação ativados!", { icon: "🔔" });
+    }
+
+    // Request push notification permission
+    const permission = await requestNotificationPermission();
+
+    if (audioOk || permission === "granted") {
+      const features = [];
+      if (audioOk) features.push("som");
+      if (permission === "granted") features.push("notificações");
+      toast.success(`Alertas ativados: ${features.join(" e ")}!`, { icon: "🔔" });
     } else {
-      toast.error("Não foi possível ativar o som neste dispositivo");
+      toast.error("Não foi possível ativar alertas neste dispositivo");
     }
   };
 
@@ -65,12 +78,22 @@ export default function SalaoMesas() {
   useEffect(() => {
     const totalReady = tables.reduce((sum: number, t: any) => sum + ((t.activeOrder as any)?.readyItems ?? 0), 0);
     if (totalReady > prevTotalReadyRef.current && prevTotalReadyRef.current > 0) {
+      const newReady = totalReady - prevTotalReadyRef.current;
       toast.success(
-        `Itens prontos para servir!`,
+        `${newReady} item(ns) pronto(s) para servir!`,
         { icon: "🔔", duration: 6000 }
       );
-      if (soundEnabled || isAudioUnlocked()) {
+      // Play sound (works after user unlocks audio)
+      if (soundEnabledRef.current || isAudioUnlocked()) {
         playUrgentNotification();
+      }
+      // Send push notification (works even with screen locked)
+      if (isNotificationPermitted()) {
+        sendPushNotification(
+          "🔔 Item pronto para servir!",
+          `${newReady} item(ns) aguardando entrega no salão.`,
+          { tag: "salon-ready", requireInteraction: true }
+        );
       }
     }
     prevTotalReadyRef.current = totalReady;
@@ -179,27 +202,27 @@ export default function SalaoMesas() {
           <Button variant="outline" size="sm" onClick={() => refetch()}>
             <RefreshCw className="h-4 w-4" />
           </Button>
-          {!soundEnabled && (
+          {!soundEnabled ? (
             <Button
               variant="outline"
               size="sm"
               onClick={handleEnableSound}
-              className="text-orange-600 border-orange-300 hover:bg-orange-50"
-              title="Toque aqui para ativar alertas sonoros (necessário no iOS)"
+              className="text-orange-600 border-orange-300 hover:bg-orange-50 animate-pulse"
+              title="Toque aqui para ativar alertas sonoros e notificações (necessário no iOS)"
             >
               <Bell className="h-4 w-4 mr-1" />
-              <span className="hidden sm:inline">Ativar Sons</span>
+              <span className="hidden sm:inline">Ativar Alertas</span>
             </Button>
-          )}
-          {soundEnabled && (
+          ) : (
             <Button
               variant="outline"
               size="sm"
               className="text-green-600 border-green-300 cursor-default"
               disabled
+              title="Alertas sonoros e notificações ativados"
             >
               <Bell className="h-4 w-4 mr-1" />
-              <span className="hidden sm:inline">Sons Ativos</span>
+              <span className="hidden sm:inline">Alertas Ativos</span>
             </Button>
           )}
           <Button variant="outline" size="sm" onClick={() => setConfigModal(true)}>

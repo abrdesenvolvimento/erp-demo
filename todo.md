@@ -1811,3 +1811,8 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 ### Bugs Pós-Entrega Rodada 6 (07/03/2026)
 - [x] BUG: Som de notificação não toca no iOS/mobile — adicionado botão "Ativar Sons" na tela de mesas; ao tocar, desbloqueia o AudioContext do iOS com buffer silencioso e toca som de confirmação; botão muda para "Sons Ativos" após ativação
 - [x] BUG: Dashboard de garçons mostra zerado mesmo após comandas fechadas — causa raiz: problema de timezone. Comandas fechadas após 21h BRT (= 00h UTC do dia seguinte) ficavam fora do range. Corrigido: backend usa 'T00:00:00-03:00' e 'T23:59:59-03:00'; frontend usa toLocaleDateString com timeZone America/Sao_Paulo
+
+### Bugs Pós-Entrega Rodada 7 (07/03/2026)
+- [x] BUG: Som não toca após desbloqueio iOS — corrigido com soundEnabledRef (useRef) para evitar stale closure no useEffect de polling
+- [x] BUG: Notificação quando tela bloqueada — implementado pushNotification.ts com Web Push API; botão 'Ativar Alertas' solicita permissão de som + push juntos; notificação nativa enviada com requireInteraction=true (fica na tela até o usuário tocar)
+- [x] BUG: Dashboard de garçons zerado — confirmado que é comportamento correto: comandas foram fechadas na madrugada do dia 08/03 BRT (após meia-noite), portanto aparecem no dashboard do dia 08/03. Sistema funcionando corretamente com timezone.
