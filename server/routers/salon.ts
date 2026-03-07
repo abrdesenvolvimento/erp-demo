@@ -8,6 +8,8 @@ import {
   salonOrderPayments,
   salonConfig,
   products,
+  productPrices,
+  salesChannels,
 } from "../../drizzle/schema";
 import { eq, and, or, inArray, gte, lte, lt, sql, isNull } from "drizzle-orm";
 import { getNowInBrazil } from "../../shared/dateUtils";
@@ -284,7 +286,6 @@ export const salonRouter = router({
         .select({
           id: products.id,
           name: products.name,
-          salePrice: sql<string>`COALESCE((SELECT price FROM channelPrices WHERE productId = ${products.id} AND channel = 'BALCAO' AND companyId = ${input.companyId} LIMIT 1), 0)`,
           productionDestination: products.productionDestination,
           availableInSalon: products.availableInSalon,
           active: products.active,
@@ -293,12 +294,32 @@ export const salonRouter = router({
         .where(and(eq(products.id, input.productId), eq(products.companyId, input.companyId)))
         .limit(1);
 
+      // Get the sale price from productPrices (BALCAO channel)
+      let salePrice = 0;
+      try {
+        const balcaoChannel = await db
+          .select({ id: salesChannels.id })
+          .from(salesChannels)
+          .where(and(eq(salesChannels.companyId, input.companyId), eq(salesChannels.type, 'BALCAO')))
+          .limit(1);
+        if (balcaoChannel.length > 0) {
+          const [priceRow] = await db
+            .select({ price: productPrices.price })
+            .from(productPrices)
+            .where(and(eq(productPrices.productId, input.productId), eq(productPrices.channelId, balcaoChannel[0].id)))
+            .limit(1);
+          if (priceRow) salePrice = parseFloat(String(priceRow.price));
+        }
+      } catch (e) {
+        console.error('[addItem] Price lookup failed:', e);
+      }
+
       if (!product) throw new Error("Produto não encontrado");
       if (!product.active) throw new Error("Produto inativo");
       // Allow products with null availableInSalon (not yet configured) — only block explicit false
       if (product.availableInSalon === false) throw new Error("Produto não disponível no salão");
 
-      const unitPrice = parseFloat(product.salePrice) || 0;
+      const unitPrice = salePrice;
       const totalPrice = unitPrice * input.quantity;
 
       const [result] = await db.insert(salonOrderItems).values({
@@ -638,17 +659,41 @@ export const salonRouter = router({
           .orderBy(products.name);
       }
 
-      // Get prices from channelPrices for BALCAO channel
+      // Get prices from productPrices table (joined with salesChannels for BALCAO type)
       const productIds = rows.map(r => r.id);
       let priceMap = new Map<number, number>();
 
       if (productIds.length > 0) {
-        const priceRows = await db.execute(
-          sql`SELECT productId, price FROM channelPrices WHERE productId IN (${sql.join(productIds.map(id => sql`${id}`), sql`, `)}) AND channel = 'BALCAO' AND companyId = ${input.companyId}`
-        ) as any;
-        const priceData = Array.isArray(priceRows[0]) ? priceRows[0] : priceRows;
-        for (const row of priceData) {
-          priceMap.set(row.productId, parseFloat(row.price));
+        try {
+          // Find the BALCAO channel for this company
+          const balcaoChannel = await db
+            .select({ id: salesChannels.id })
+            .from(salesChannels)
+            .where(
+              and(
+                eq(salesChannels.companyId, input.companyId),
+                eq(salesChannels.type, 'BALCAO')
+              )
+            )
+            .limit(1);
+
+          if (balcaoChannel.length > 0) {
+            const priceRows = await db
+              .select({ productId: productPrices.productId, price: productPrices.price })
+              .from(productPrices)
+              .where(
+                and(
+                  inArray(productPrices.productId, productIds),
+                  eq(productPrices.channelId, balcaoChannel[0].id)
+                )
+              );
+            for (const row of priceRows) {
+              priceMap.set(row.productId, parseFloat(String(row.price)));
+            }
+          }
+        } catch (priceErr) {
+          console.error('[listSalonProducts] Price query failed:', priceErr);
+          // Continue without prices rather than failing the whole request
         }
       }
 

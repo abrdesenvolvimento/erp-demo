@@ -1,0 +1,38 @@
+{
+  "query": "SELECT id, name, active, availableInSalon, productionDestination FROM products WHERE companyId = 2 ORDER BY name;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT id, name, active, availableInSalon, productionDestination FROM products WHERE companyId = 2 ORDER BY name;",
+  "rows": [
+    {
+      "id": "6420001",
+      "name": "Cheese Bacon",
+      "active": "1",
+      "availableInSalon": "0",
+      "productionDestination": "NONE"
+    },
+    {
+      "id": "6210001",
+      "name": "Cheese Burguer",
+      "active": "1",
+      "availableInSalon": "1",
+      "productionDestination": "KITCHEN"
+    },
+    {
+      "id": "6420002",
+      "name": "Cheese Salada",
+      "active": "1",
+      "availableInSalon": "0",
+      "productionDestination": "NONE"
+    },
+    {
+      "id": "6660001",
+      "name": "Negroni",
+      "active": "1",
+      "availableInSalon": "0",
+      "productionDestination": "NONE"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tactive\tavailableInSalon\tproductionDestination\n6420001\tCheese Bacon\t1\t0\tNONE\n6210001\tCheese Burguer\t1\t1\tKITCHEN\n6420002\tCheese Salada\t1\t0\tNONE\n6660001\tNegroni\t1\t0\tNONE\n",
+  "stderr": "",
+  "execution_time_ms": 364
+}
