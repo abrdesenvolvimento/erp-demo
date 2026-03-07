@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { trpc } from "@/lib/trpc";
 import { useCompany } from "@/contexts/CompanyContext";
@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { Plus, Users, Clock, DollarSign, Settings, ChefHat, X, UtensilsCrossed, RefreshCw, Bell } from "lucide-react";
 import { useLocation } from "wouter";
+import { playUrgentNotification } from "@/lib/notificationSound";
 
 type TableStatus = "FREE" | "OCCUPIED" | "WAITING_PAYMENT" | "RESERVED";
 
@@ -46,6 +47,20 @@ export default function SalaoMesas() {
     { companyId },
     { enabled: companyId > 0, refetchInterval: 15000 }
   );
+
+  // Track total ready items across all tables for notification
+  const prevTotalReadyRef = useRef<number>(0);
+  useEffect(() => {
+    const totalReady = tables.reduce((sum: number, t: any) => sum + ((t.activeOrder as any)?.readyItems ?? 0), 0);
+    if (totalReady > prevTotalReadyRef.current && prevTotalReadyRef.current > 0) {
+      toast.success(
+        `Itens prontos para servir!`,
+        { icon: "🔔", duration: 6000 }
+      );
+      playUrgentNotification();
+    }
+    prevTotalReadyRef.current = totalReady;
+  }, [tables]);
 
 
   // Mutations

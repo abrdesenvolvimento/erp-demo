@@ -15,6 +15,7 @@ import {
   ArrowLeft, Plus, Minus, Trash2, Send, CreditCard, DollarSign,
   QrCode, Users, Clock, ChefHat, CheckCircle2, Search, X, Bell
 } from "lucide-react";
+import { playUrgentNotification } from "@/lib/notificationSound";
 
 const PAYMENT_METHODS = [
   { value: "CASH", label: "Dinheiro", icon: DollarSign },
@@ -76,12 +77,8 @@ export default function SalaoComanda() {
             `${newReady} item(ns) pronto(s) para servir!`,
             { icon: "🔔", duration: 8000 }
           );
-          // Play notification sound
-          try {
-            const audio = new Audio("data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbsGczFjmR0teleUMlTIzO5tqFUjA3dLjl4ZRiQjlhk8Db0JlnTjpLeLPW1KV0VDdJYJDI2a6Hn3dPKUlbj8nYqnRLLUhSSZOQzNOtcEw0R1BFR0dMTk5QUlRWWFpcXmBiZGZoamxucHJ0dnp8gIKEhoiKjI6QkpSWmJqcnqCipKaoqqyusLK0tri6vL7AwsTGyMrMztDS1NbY2tze4OLk5ujq7O7w8vT2+Pr8/v8=");
-            audio.volume = 0.5;
-            audio.play().catch(() => {});
-          } catch {}
+          // Play notification sound (Web Audio API - works on mobile)
+          playUrgentNotification();
         }
       }
     }
@@ -131,6 +128,15 @@ export default function SalaoComanda() {
       toast.success("Comanda cancelada");
       utils.salon.listTables.invalidate();
       setLocation("/salao/mesas");
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const deliverItemMutation = trpc.salon.updateItemStatus.useMutation({
+    onSuccess: () => {
+      toast.success("Item marcado como entregue!");
+      utils.salon.getOrder.invalidate({ orderId, companyId });
+      utils.salon.listTables.invalidate();
     },
     onError: (e) => toast.error(e.message),
   });
@@ -287,14 +293,32 @@ export default function SalaoComanda() {
                       {parseFloat(String(item.quantity))}x {formatCurrency(item.unitPrice)}
                     </p>
                   </div>
-                  <div className="text-right shrink-0">
+                  <div className="text-right shrink-0 flex flex-col items-end gap-1">
                     <p className="font-semibold text-sm">{formatCurrency(item.totalPrice)}</p>
-                    {!isClosed && item.status !== "DELIVERED" && (
+                    {isReady && !isClosed && (
+                      <button
+                        onClick={() => deliverItemMutation.mutate({ itemId: item.id, status: "DELIVERED", companyId })}
+                        disabled={deliverItemMutation.isPending}
+                        className="flex items-center gap-1 text-[11px] px-2 py-1 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors font-medium"
+                      >
+                        <CheckCircle2 className="h-3 w-3" />
+                        Entregue
+                      </button>
+                    )}
+                    {!isClosed && item.status !== "DELIVERED" && item.status !== "READY" && (
                       <button
                         onClick={() => removeItemMutation.mutate({ itemId: item.id, orderId, companyId })}
-                        className="text-red-400 hover:text-red-600 mt-1"
+                        className="text-red-400 hover:text-red-600"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    )}
+                    {!isClosed && item.status === "READY" && (
+                      <button
+                        onClick={() => removeItemMutation.mutate({ itemId: item.id, orderId, companyId })}
+                        className="text-red-400 hover:text-red-600 text-[10px]"
+                      >
+                        <Trash2 className="h-3 w-3" />
                       </button>
                     )}
                   </div>

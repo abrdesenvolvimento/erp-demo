@@ -1794,3 +1794,8 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] UX: Busca de produtos na comanda — mostrar resultados apenas conforme digita (mínimo 2 caracteres, com loading spinner)
 - [x] FEATURE: Notificação ao garçom quando cozinha/bar marca item como "Pronto" — badge pulsante no card da mesa + banner verde na comanda + toast com som + destaque verde nos itens prontos
 - [x] UX: Remover card "Faturamento Hoje" da tela de mesas do Salão (já existe no Dashboard)
+
+### Melhorias Salão — Rodada 5 (07/03/2026)
+- [x] FEATURE: Botão "Marcar como Entregue" na comanda para itens com status "Pronto" — botão verde com ícone CheckCircle2, chama updateItemStatus(DELIVERED), invalida queries
+- [x] UX: Melhorar alerta sonoro de notificação — Web Audio API com chime ascendente (C5-E5-G5), 3x repetição para urgência, funciona em mobile
+- [ ] PLANEJAMENTO: Sistema de roles para garçom (acesso restrito ao módulo Salão via navegador mobile) — próxima etapa
