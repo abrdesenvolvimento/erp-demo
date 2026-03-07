@@ -15,6 +15,7 @@ import {
   Package, Users, ClipboardList, ArrowRight
 } from "lucide-react";
 import { useCompany } from "@/contexts/CompanyContext";
+import { useDebounce } from "@/hooks/useDebounce";
 
 function formatDate(date: string | Date | null): string {
   if (!date) return '—';
@@ -80,6 +81,7 @@ export default function LogAlteracoes() {
   const [entityType, setEntityType] = useState<string>('all');
   const [actionFilter, setActionFilter] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const debouncedSearch = useDebounce(searchTerm, 300);
   const [startDate, setStartDate] = useState<string>(() => {
     const d = new Date();
     d.setDate(d.getDate() - 30);
@@ -100,7 +102,7 @@ export default function LogAlteracoes() {
   const { data: logsData, isLoading } = trpc.auditLog.list.useQuery({
     entityType: entityType !== 'all' ? entityType : undefined,
     action: actionFilter !== 'all' ? actionFilter : undefined,
-    search: searchTerm || undefined,
+    search: debouncedSearch || undefined,
     startDate: startDate || undefined,
     endDate: endDate || undefined,
     page,

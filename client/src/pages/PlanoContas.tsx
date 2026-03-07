@@ -1,5 +1,6 @@
-import { useAuth } from "@/_core/hooks/useAuth";
 import DashboardLayout from "@/components/DashboardLayout";
+import { useAuth } from "@/_core/hooks/useAuth";
+import { useDebounce } from "@/hooks/useDebounce";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -210,6 +211,7 @@ function TreeNodeComponent({
 export default function PlanoContas() {
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
+  const debouncedSearch = useDebounce(searchTerm, 300);
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set(["1", "2", "3", "4", "5", "6"]));
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingAccount, setEditingAccount] = useState<Account | null>(null);
@@ -255,13 +257,13 @@ export default function PlanoContas() {
 
   // Filtrar por busca
   const filteredTree = useMemo(() => {
-    if (!searchTerm) return tree;
+    if (!debouncedSearch) return tree;
     
     const filterNodes = (nodes: TreeNode[]): TreeNode[] => {
       return nodes.reduce<TreeNode[]>((acc, node) => {
         const matches = 
-          node.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          node.name.toLowerCase().includes(searchTerm.toLowerCase());
+          node.code.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+          node.name.toLowerCase().includes(debouncedSearch.toLowerCase());
         
         const filteredChildren = filterNodes(node.children);
         
@@ -274,11 +276,11 @@ export default function PlanoContas() {
     };
     
     return filterNodes(tree);
-  }, [tree, searchTerm]);
+  }, [tree, debouncedSearch]);
 
   // Expandir todos os nós quando buscar
   useMemo(() => {
-    if (searchTerm) {
+    if (debouncedSearch) {
       const allCodes = new Set<string>();
       const collectCodes = (nodes: TreeNode[]) => {
         nodes.forEach(node => {
@@ -289,7 +291,7 @@ export default function PlanoContas() {
       collectCodes(filteredTree);
       setExpandedNodes(allCodes);
     }
-  }, [searchTerm, filteredTree]);
+  }, [debouncedSearch, filteredTree]);
 
   const toggleNode = (code: string) => {
     setExpandedNodes(prev => {

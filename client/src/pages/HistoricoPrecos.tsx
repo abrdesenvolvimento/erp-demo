@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { History, TrendingUp, TrendingDown, Minus, Search, ArrowUpDown, ArrowUp, ArrowDown, DollarSign, BarChart3, AlertCircle, Filter, X, ChevronLeft, ChevronRight, Calendar } from "lucide-react";
 import { useCompany } from "@/contexts/CompanyContext";
+import { useDebounce } from "@/hooks/useDebounce";
 
 function formatCurrency(value: number | string): string {
   const num = typeof value === 'string' ? parseFloat(value) : value;
@@ -81,6 +82,7 @@ export default function HistoricoPrecos() {
   const [changeType, setChangeType] = useState<string>('all');
   const [channelFilter, setChannelFilter] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const debouncedSearch = useDebounce(searchTerm, 300);
   const [startDate, setStartDate] = useState<string>(() => {
     const d = new Date();
     d.setDate(d.getDate() - 30);
@@ -144,8 +146,8 @@ export default function HistoricoPrecos() {
       channelName: item.channelId ? (channelMap.get(item.channelId) || `Canal #${item.channelId}`) : '—',
     }));
     
-    if (searchTerm.trim()) {
-      const term = searchTerm.toLowerCase();
+    if (debouncedSearch.trim()) {
+      const term = debouncedSearch.toLowerCase();
       items = items.filter(item => item.productName.toLowerCase().includes(term));
     }
     
@@ -173,7 +175,7 @@ export default function HistoricoPrecos() {
     });
     
     return items;
-  }, [historyData, productMap, channelMap, searchTerm, sortField, sortDir]);
+  }, [historyData, productMap, channelMap, debouncedSearch, sortField, sortDir]);
   
   const totalPages = Math.ceil((historyData?.total || 0) / pageSize);
   

@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Link } from "wouter";
 import { useState, useMemo } from "react";
+import { useDebounce } from "@/hooks/useDebounce";
 
 export default function AnaliseDelivery() {
   const [sortBy, setSortBy] = useState<'netProfit' | 'netMargin' | 'revenue' | 'quantity' | 'cost' | 'grossMargin' | 'ifoodFee'>('netProfit');
@@ -29,6 +30,7 @@ export default function AnaliseDelivery() {
     return sortDir === 'asc' ? <ArrowUp className="h-3 w-3 ml-1 inline" /> : <ArrowDown className="h-3 w-3 ml-1 inline" />;
   };
   const [searchTerm, setSearchTerm] = useState('');
+  const debouncedSearch = useDebounce(searchTerm, 300);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [categoryId, setCategoryId] = useState<number | undefined>(undefined);
@@ -106,7 +108,7 @@ export default function AnaliseDelivery() {
   // Filtrar e ordenar produtos
   const filteredAndSortedProducts = products ? [...products]
     .filter((p: any) => {
-      if (searchTerm && !p.productName.toLowerCase().includes(searchTerm.toLowerCase())) {
+      if (debouncedSearch && !p.productName.toLowerCase().includes(debouncedSearch.toLowerCase())) {
         return false;
       }
       if (marginStatus !== 'all') {

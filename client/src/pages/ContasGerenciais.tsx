@@ -47,6 +47,7 @@ import {
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { useDebounce } from "@/hooks/useDebounce";
 
 type ManagementAccount = {
   id: number;
@@ -87,6 +88,7 @@ const COST_TYPE_OPTIONS = [
 
 export default function ContasGerenciais() {
   const [searchTerm, setSearchTerm] = useState("");
+  const debouncedSearch = useDebounce(searchTerm, 300);
   const [filterNature, setFilterNature] = useState<string>("all");
   const [filterClassification, setFilterClassification] = useState<string>("all");
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -157,14 +159,14 @@ export default function ContasGerenciais() {
   const filteredAccounts = useMemo(() => {
     return accounts.filter((account: ManagementAccount) => {
       const matchesSearch =
-        account.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        account.name.toLowerCase().includes(searchTerm.toLowerCase());
+        account.code.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+        account.name.toLowerCase().includes(debouncedSearch.toLowerCase());
       const matchesNature = filterNature === "all" || account.nature === filterNature;
       const matchesClassification =
         filterClassification === "all" || account.classification === filterClassification;
       return matchesSearch && matchesNature && matchesClassification;
     });
-  }, [accounts, searchTerm, filterNature, filterClassification]);
+  }, [accounts, debouncedSearch, filterNature, filterClassification]);
 
   // Get analytical accounts for mapping
   const analyticalAccounts = useMemo(() => {

@@ -13,6 +13,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { cn } from "@/lib/utils";
 
 import { getTodayInBrazil, getNowInBrazil, formatDateBR, formatDateTimeBR } from "@shared/dateUtils";
+import { useDebounce } from "@/hooks/useDebounce";
 import { getTodayBR } from "@/lib/dateUtils";
 import { toast } from "sonner";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -40,6 +41,7 @@ export default function ContasReceberNovo() {
   const [showWhatsAppModal, setShowWhatsAppModal] = useState(false);
   const [whatsAppPhone, setWhatsAppPhone] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
+  const debouncedSearch = useDebounce(searchTerm, 300);
 
   // Estados para autocomplete de cliente na tela principal
   const [clientOpen, setClientOpen] = useState(false);
@@ -219,7 +221,7 @@ export default function ContasReceberNovo() {
 
   // Filtrar clientes
   const filteredCustomers = customers?.filter(c => 
-    c.customerName?.toLowerCase().includes(searchTerm.toLowerCase())
+    c.customerName?.toLowerCase().includes(debouncedSearch.toLowerCase())
   ) || [];
 
   // Calcular total a receber
