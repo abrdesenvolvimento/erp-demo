@@ -1,4 +1,5 @@
 import { useState } from "react";
+import DashboardLayout from "@/components/DashboardLayout";
 import { trpc } from "@/lib/trpc";
 import { useCompany } from "@/contexts/CompanyContext";
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -138,6 +139,7 @@ export default function SalaoMesas() {
   const waitingTables = tables.filter(t => t.status === "WAITING_PAYMENT").length;
 
   return (
+    <DashboardLayout>
     <div className="p-4 md:p-6 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -376,5 +378,6 @@ export default function SalaoMesas() {
         </DialogContent>
       </Dialog>
     </div>
+    </DashboardLayout>
   );
 }

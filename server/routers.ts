@@ -484,6 +484,8 @@ export const appRouter = router({
           isComposite: z.boolean().optional(),
           notes: z.string().optional(),
           active: z.boolean().optional(),
+          productionDestination: z.enum(["KITCHEN", "BAR", "BOTH", "NONE"]).optional(),
+          availableInSalon: z.boolean().optional(),
           prices: z.record(z.string(), z.string()).optional(),
           compositions: z.array(z.object({
             childProductId: z.number(),

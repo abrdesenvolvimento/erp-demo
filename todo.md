@@ -1775,3 +1775,8 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 ### Análises
 - [x] Vendas do salão aparecem com canal "SALÃO" na Análise de Vendas
 - [x] Relatório de gorjeta por garçom (acumulado mensal) — tela SalaoGorjeta
+
+### Bugs Pós-Entrega Fase 1 (07/03/2026)
+- [x] BUG: Campos de salão (Destino de Produção + Disponível no Salão) não salvavam — corrigido: campos não estavam no schema Zod do backend (updateProduct)
+- [x] BUG: Menu lateral sumia nas telas de Salão — corrigido: todas as 5 páginas agora usam DashboardLayout
+- [x] BUG: Busca de produtos na comanda retornava vazio — corrigido: filtro aceita null (não configurado) além de true; addItem também corrigido

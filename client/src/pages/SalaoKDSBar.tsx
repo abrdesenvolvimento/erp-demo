@@ -1,3 +1,4 @@
+import DashboardLayout from "@/components/DashboardLayout";
 import { trpc } from "@/lib/trpc";
 import { useCompany } from "@/contexts/CompanyContext";
 import { Button } from "@/components/ui/button";
@@ -74,6 +75,7 @@ export default function SalaoKDSBar() {
   }
 
   return (
+    <DashboardLayout>
     <div className="p-4 md:p-6 space-y-4 bg-gray-950 min-h-screen">
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -169,5 +171,6 @@ export default function SalaoKDSBar() {
         </div>
       )}
     </div>
+    </DashboardLayout>
   );
 }

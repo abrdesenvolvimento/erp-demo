@@ -9,7 +9,7 @@ import {
   salonConfig,
   products,
 } from "../../drizzle/schema";
-import { eq, and, inArray, gte, lte, lt, sql } from "drizzle-orm";
+import { eq, and, or, inArray, gte, lte, lt, sql, isNull } from "drizzle-orm";
 import { getNowInBrazil } from "../../shared/dateUtils";
 
 // ==================== CONFIGURAÇÕES DO SALÃO ====================
@@ -295,7 +295,8 @@ export const salonRouter = router({
 
       if (!product) throw new Error("Produto não encontrado");
       if (!product.active) throw new Error("Produto inativo");
-      if (!product.availableInSalon) throw new Error("Produto não disponível no salão");
+      // Allow products with null availableInSalon (not yet configured) — only block explicit false
+      if (product.availableInSalon === false) throw new Error("Produto não disponível no salão");
 
       const unitPrice = parseFloat(product.salePrice) || 0;
       const totalPrice = unitPrice * input.quantity;
@@ -609,7 +610,12 @@ export const salonRouter = router({
           and(
             eq(products.companyId, input.companyId),
             eq(products.active, true),
-            eq(products.availableInSalon, true)
+            // Accept products explicitly marked as available OR not yet configured (null)
+            // Once products are configured, only availableInSalon = true will show
+            or(
+              eq(products.availableInSalon, true),
+              isNull(products.availableInSalon)
+            )
           )
         )
         .orderBy(products.name);

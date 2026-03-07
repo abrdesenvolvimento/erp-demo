@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useRoute, useLocation } from "wouter";
+import DashboardLayout from "@/components/DashboardLayout";
 import { trpc } from "@/lib/trpc";
 import { useCompany } from "@/contexts/CompanyContext";
 import { Button } from "@/components/ui/button";
@@ -171,6 +172,7 @@ export default function SalaoComanda() {
   const isClosed = order.status === "CLOSED" || order.status === "CANCELLED";
 
   return (
+    <DashboardLayout>
     <div className="p-4 md:p-6 max-w-2xl mx-auto space-y-4">
       {/* Header */}
       <div className="flex items-center gap-3">
@@ -538,5 +540,6 @@ export default function SalaoComanda() {
         </DialogContent>
       </Dialog>
     </div>
+    </DashboardLayout>
   );
 }
