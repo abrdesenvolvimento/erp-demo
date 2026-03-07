@@ -1807,3 +1807,7 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] FEATURE: Canal de venda "SALAO" — adicionado em schema, db.ts, routers.ts, formatters.ts, todas as telas de análise e filtros
 - [x] FEATURE: Observações por item na comanda — campo notes já existia no schema, KDS agora exibe com destaque amarelo
 - [x] FEATURE: Tela de gestão de garçons — página SalaoGarcons com listagem, estatísticas e link para Gerenciar Acessos
+
+### Bugs Pós-Entrega Rodada 6 (07/03/2026)
+- [x] BUG: Som de notificação não toca no iOS/mobile — adicionado botão "Ativar Sons" na tela de mesas; ao tocar, desbloqueia o AudioContext do iOS com buffer silencioso e toca som de confirmação; botão muda para "Sons Ativos" após ativação
+- [x] BUG: Dashboard de garçons mostra zerado mesmo após comandas fechadas — causa raiz: problema de timezone. Comandas fechadas após 21h BRT (= 00h UTC do dia seguinte) ficavam fora do range. Corrigido: backend usa 'T00:00:00-03:00' e 'T23:59:59-03:00'; frontend usa toLocaleDateString com timeZone America/Sao_Paulo

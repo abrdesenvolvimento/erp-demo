@@ -2,9 +2,42 @@
  * Notification sound utility for the salon module.
  * Generates a pleasant ascending chime using Web Audio API.
  * Works on mobile and desktop browsers.
+ *
+ * iOS/Safari require user interaction to unlock audio context.
+ * Call `unlockAudio()` on a user gesture (button tap) before playing sounds.
  */
 
 let audioContext: AudioContext | null = null;
+let audioUnlocked = false;
+
+/**
+ * Must be called once from a user gesture (tap/click) to unlock audio on iOS.
+ * Returns true if audio is now unlocked.
+ */
+export async function unlockAudio(): Promise<boolean> {
+  try {
+    if (!audioContext || audioContext.state === "closed") {
+      audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    }
+    if (audioContext.state === "suspended") {
+      await audioContext.resume();
+    }
+    // Play a silent buffer to fully unlock on iOS
+    const buffer = audioContext.createBuffer(1, 1, 22050);
+    const source = audioContext.createBufferSource();
+    source.buffer = buffer;
+    source.connect(audioContext.destination);
+    source.start(0);
+    audioUnlocked = true;
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function isAudioUnlocked(): boolean {
+  return audioUnlocked && audioContext !== null && audioContext.state === "running";
+}
 
 function getAudioContext(): AudioContext | null {
   try {

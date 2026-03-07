@@ -18,12 +18,15 @@ export default function SalaoGarcons() {
   const companyId = activeCompanyId ?? 0;
 
   // Date range for performance
+  // Use Brazil local date (not UTC) to avoid timezone issues
+  const getBrazilDateStr = () => {
+    return new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' }); // returns YYYY-MM-DD
+  };
   const [startDate, setStartDate] = useState(() => {
-    const d = new Date();
-    d.setDate(1); // first day of month
-    return d.toISOString().split("T")[0];
+    const today = getBrazilDateStr();
+    return today.substring(0, 7) + '-01'; // first day of current month
   });
-  const [endDate, setEndDate] = useState(() => new Date().toISOString().split("T")[0]);
+  const [endDate, setEndDate] = useState(() => getBrazilDateStr());
 
   const { data: waiters = [], isLoading: loadingWaiters } = trpc.salon.listWaiters.useQuery(
     { companyId },

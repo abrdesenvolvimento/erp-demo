@@ -1,0 +1,34 @@
+{
+  "query": "SELECT id, status, waiterId, waiterName, totalAmount, closedAt FROM salonOrders WHERE companyId = 2 ORDER BY id DESC LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT id, status, waiterId, waiterName, totalAmount, closedAt FROM salonOrders WHERE companyId = 2 ORDER BY id DESC LIMIT 10;",
+  "rows": [
+    {
+      "id": "3",
+      "status": "CLOSED",
+      "waiterId": "j8R68T3wPMAkij5Kb9Zef8",
+      "waiterName": "Gabriel Morais",
+      "totalAmount": "31.89",
+      "closedAt": "2026-03-07 23:30:49"
+    },
+    {
+      "id": "2",
+      "status": "CANCELLED",
+      "waiterId": "3sp2FmLhkenyjqMFmfLoex",
+      "waiterName": "Gabriel Morais",
+      "totalAmount": "28.99",
+      "closedAt": "NULL"
+    },
+    {
+      "id": "1",
+      "status": "CLOSED",
+      "waiterId": "3sp2FmLhkenyjqMFmfLoex",
+      "waiterName": "Gabriel Morais",
+      "totalAmount": "107.78",
+      "closedAt": "2026-03-07 22:15:05"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tstatus\twaiterId\twaiterName\ttotalAmount\tclosedAt\n3\tCLOSED\tj8R68T3wPMAkij5Kb9Zef8\tGabriel Morais\t31.89\t2026-03-07 23:30:49\n2\tCANCELLED\t3sp2FmLhkenyjqMFmfLoex\tGabriel Morais\t28.99\tNULL\n1\tCLOSED\t3sp2FmLhkenyjqMFmfLoex\tGabriel Morais\t107.78\t2026-03-07 22:15:05\n",
+  "stderr": "",
+  "execution_time_ms": 415
+}

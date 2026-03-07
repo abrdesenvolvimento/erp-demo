@@ -882,9 +882,9 @@ export const salonRouter = router({
       const db = await getDb();
       if (!db) throw new Error("DB unavailable");
 
-      const start = new Date(input.startDate);
-      const end = new Date(input.endDate);
-      end.setUTCDate(end.getUTCDate() + 1);
+      // Use Brazil timezone: startDate at 00:00 BRT = 03:00 UTC, endDate at 23:59:59 BRT = next day 02:59:59 UTC
+      const start = new Date(input.startDate + 'T00:00:00-03:00');
+      const end = new Date(input.endDate + 'T23:59:59-03:00');
 
       const orders = await db
         .select({

@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { Plus, Users, Clock, DollarSign, Settings, ChefHat, X, UtensilsCrossed, RefreshCw, Bell } from "lucide-react";
 import { useLocation } from "wouter";
-import { playUrgentNotification } from "@/lib/notificationSound";
+import { playUrgentNotification, unlockAudio, isAudioUnlocked } from "@/lib/notificationSound";
 
 type TableStatus = "FREE" | "OCCUPIED" | "WAITING_PAYMENT" | "RESERVED";
 
@@ -41,6 +41,18 @@ export default function SalaoMesas() {
   const [configModal, setConfigModal] = useState(false);
 
   const companyId = activeCompanyId ?? 0;
+  const [soundEnabled, setSoundEnabled] = useState(false);
+
+  const handleEnableSound = async () => {
+    const ok = await unlockAudio();
+    if (ok) {
+      setSoundEnabled(true);
+      playUrgentNotification();
+      toast.success("Sons de notificação ativados!", { icon: "🔔" });
+    } else {
+      toast.error("Não foi possível ativar o som neste dispositivo");
+    }
+  };
 
   // Queries
   const { data: tables = [], isLoading, refetch } = trpc.salon.listTables.useQuery(
@@ -57,7 +69,9 @@ export default function SalaoMesas() {
         `Itens prontos para servir!`,
         { icon: "🔔", duration: 6000 }
       );
-      playUrgentNotification();
+      if (soundEnabled || isAudioUnlocked()) {
+        playUrgentNotification();
+      }
     }
     prevTotalReadyRef.current = totalReady;
   }, [tables]);
@@ -165,6 +179,29 @@ export default function SalaoMesas() {
           <Button variant="outline" size="sm" onClick={() => refetch()}>
             <RefreshCw className="h-4 w-4" />
           </Button>
+          {!soundEnabled && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleEnableSound}
+              className="text-orange-600 border-orange-300 hover:bg-orange-50"
+              title="Toque aqui para ativar alertas sonoros (necessário no iOS)"
+            >
+              <Bell className="h-4 w-4 mr-1" />
+              <span className="hidden sm:inline">Ativar Sons</span>
+            </Button>
+          )}
+          {soundEnabled && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-green-600 border-green-300 cursor-default"
+              disabled
+            >
+              <Bell className="h-4 w-4 mr-1" />
+              <span className="hidden sm:inline">Sons Ativos</span>
+            </Button>
+          )}
           <Button variant="outline" size="sm" onClick={() => setConfigModal(true)}>
             <Settings className="h-4 w-4 mr-1" />
             Configurar
