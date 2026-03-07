@@ -68,9 +68,11 @@ export default function SalaoKDSBar() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64 bg-gray-950">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400" />
-      </div>
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-64 bg-gray-950 min-h-screen">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400" />
+        </div>
+      </DashboardLayout>
     );
   }
 

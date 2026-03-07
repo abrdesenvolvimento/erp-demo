@@ -1780,3 +1780,9 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] BUG: Campos de salão (Destino de Produção + Disponível no Salão) não salvavam — corrigido: campos não estavam no schema Zod do backend (updateProduct)
 - [x] BUG: Menu lateral sumia nas telas de Salão — corrigido: todas as 5 páginas agora usam DashboardLayout
 - [x] BUG: Busca de produtos na comanda retornava vazio — corrigido: filtro aceita null (não configurado) além de true; addItem também corrigido
+
+### Bugs Pós-Entrega Fase 1 — Rodada 2 (07/03/2026)
+- [x] BUG: Busca de produtos na comanda ainda retornava vazio mesmo após configurar produto — corrigido: campo `availableInSalon` tem `.default(false).notNull()` no schema, então produtos antigos têm valor `false` (não `null`). Implementado fallback: se nenhum produto estiver marcado, mostra todos os ativos; quando pelo menos 1 estiver marcado, filtra apenas os marcados
+- [x] BUG: KDS Cozinha e KDS Bar ficavam com tela branca — corrigido: nome do procedure no backend era `getKdsItems` (minúsculo) mas frontend chamava `getKDSItems` (maiúsculo). Renomeado para `getKDSItems` no backend
+- [x] BUG: KDS ficava branco durante loading — corrigido: estado de loading agora renderiza dentro do DashboardLayout (sidebar visível durante carregamento)
+- [x] Adicionado `companyId` opcional ao input de `updateItemStatus` para compatibilidade com frontend

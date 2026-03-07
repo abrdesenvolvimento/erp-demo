@@ -350,6 +350,7 @@ export const salonRouter = router({
     .input(z.object({
       itemId: z.number(),
       status: z.enum(["PENDING", "IN_PROGRESS", "READY", "DELIVERED", "CANCELLED"]),
+      companyId: z.number().optional(),
     }))
     .mutation(async ({ input }) => {
       const db = await getDb();
@@ -370,7 +371,7 @@ export const salonRouter = router({
     }),
 
   // --- KDS ---
-  getKdsItems: protectedProcedure
+  getKDSItems: protectedProcedure
     .input(z.object({
       companyId: z.number(),
       destination: z.enum(["KITCHEN", "BAR", "BOTH", "ALL"]),
@@ -597,7 +598,8 @@ export const salonRouter = router({
       const db = await getDb();
       if (!db) throw new Error("DB unavailable");
 
-      const rows = await db
+      // First try to get products explicitly marked as available in salon
+      let rows = await db
         .select({
           id: products.id,
           name: products.name,
@@ -610,15 +612,31 @@ export const salonRouter = router({
           and(
             eq(products.companyId, input.companyId),
             eq(products.active, true),
-            // Accept products explicitly marked as available OR not yet configured (null)
-            // Once products are configured, only availableInSalon = true will show
-            or(
-              eq(products.availableInSalon, true),
-              isNull(products.availableInSalon)
-            )
+            eq(products.availableInSalon, true)
           )
         )
         .orderBy(products.name);
+
+      // Fallback: if no products are configured for salon yet, show all active products
+      // This handles backward compatibility when products haven't been configured yet
+      if (rows.length === 0) {
+        rows = await db
+          .select({
+            id: products.id,
+            name: products.name,
+            productionDestination: products.productionDestination,
+            currentStock: products.currentStock,
+            uom: products.uom,
+          })
+          .from(products)
+          .where(
+            and(
+              eq(products.companyId, input.companyId),
+              eq(products.active, true)
+            )
+          )
+          .orderBy(products.name);
+      }
 
       // Get prices from channelPrices for BALCAO channel
       const productIds = rows.map(r => r.id);
