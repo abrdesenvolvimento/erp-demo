@@ -956,7 +956,7 @@ export const appRouter = router({
   sales: router({
     list: protectedProcedure
       .input(z.object({
-        saleType: z.enum(["BALCAO", "DELIVERY", "A_PRAZO"]).optional(),
+        saleType: z.enum(["BALCAO", "DELIVERY", "A_PRAZO", "SALAO"]).optional(),
         customerId: z.number().optional(),
         limit: z.number().optional().default(500), // Reduzido - usar filtro de data para performance
         dateFrom: z.string().optional(), // Formato: YYYY-MM-DD
@@ -978,7 +978,7 @@ export const appRouter = router({
     
     create: protectedProcedure
       .input(z.object({
-        saleType: z.enum(["BALCAO", "DELIVERY", "A_PRAZO"]),
+        saleType: z.enum(["BALCAO", "DELIVERY", "A_PRAZO", "SALAO"]),
         customerId: z.number().optional(),
         channelId: z.number().optional(),
         platformOrderId: z.string().optional(),
@@ -1079,7 +1079,7 @@ export const appRouter = router({
         period: z.enum(['today', 'week', 'month', 'all']).optional().default('month'),
         dateFrom: z.string().optional(), // Formato: YYYY-MM-DD
         dateTo: z.string().optional(),   // Formato: YYYY-MM-DD
-        channel: z.enum(['BALCAO', 'DELIVERY', 'A_PRAZO', 'all']).optional().default('all'),
+        channel: z.enum(['BALCAO', 'DELIVERY', 'A_PRAZO', 'SALAO', 'all']).optional().default('all'),
       }).optional())
       .query(async ({ input, ctx }) => {
         return await db.getSalesStats(
@@ -1235,7 +1235,7 @@ export const appRouter = router({
       .input(z.object({
         startDate: z.date().optional(),
         endDate: z.date().optional(),
-        saleType: z.enum(["BALCAO", "DELIVERY", "A_PRAZO"]).optional(),
+        saleType: z.enum(["BALCAO", "DELIVERY", "A_PRAZO", "SALAO"]).optional(),
         customerId: z.number().optional(),
         paymentMethod: z.string().optional(),
       }).optional())

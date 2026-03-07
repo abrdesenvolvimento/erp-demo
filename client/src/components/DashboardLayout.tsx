@@ -116,9 +116,10 @@ const accountingMenuItems = [
 
 // Submenu do Salão (apenas Hamburgueria)
 const salonMenuItems = [
-  { icon: LayoutGrid, label: "Mesas", path: "/salao/mesas", roles: ["admin", "operacional"] },
+  { icon: LayoutGrid, label: "Mesas", path: "/salao/mesas", roles: ["admin", "operacional", "garcom"] },
   { icon: ChefHat, label: "KDS Cozinha", path: "/salao/kds-cozinha", roles: ["admin", "operacional"] },
   { icon: UtensilsCrossed, label: "KDS Bar", path: "/salao/kds-bar", roles: ["admin", "operacional"] },
+  { icon: Users, label: "Garçons", path: "/salao/garcons", roles: ["admin"] },
   { icon: BarChart2, label: "Gorjeta / Garçom", path: "/salao/gorjeta", roles: ["admin"] },
 ];
 
@@ -317,14 +318,17 @@ function DashboardLayoutContent({
     return saved === 'true';
   });
   
+  // Role efetivo: usa o role da empresa ativa (userCompanies) se disponível, senão fallback para users.role
+  const effectiveRole = activeCompany?.role || user?.role;
+  
   // Filtra itens por role
-  const filteredMainItems = getMenuItemsForRole(mainMenuItems, user?.role);
-  const filteredAnalysisItems = getMenuItemsForRole(analysisMenuItems, user?.role);
-  const filteredFinanceItems = getMenuItemsForRole(financeMenuItems, user?.role);
-  const filteredAccountingItems = getMenuItemsForRole(accountingMenuItems, user?.role);
-  const filteredAdminItems = getMenuItemsForRole(adminMenuItems, user?.role);
-  const filteredAuditItems = getMenuItemsForRole(auditMenuItems, user?.role);
-  const filteredSalonItems = getMenuItemsForRole(salonMenuItems, user?.role);
+  const filteredMainItems = getMenuItemsForRole(mainMenuItems, effectiveRole);
+  const filteredAnalysisItems = getMenuItemsForRole(analysisMenuItems, effectiveRole);
+  const filteredFinanceItems = getMenuItemsForRole(financeMenuItems, effectiveRole);
+  const filteredAccountingItems = getMenuItemsForRole(accountingMenuItems, effectiveRole);
+  const filteredAdminItems = getMenuItemsForRole(adminMenuItems, effectiveRole);
+  const filteredAuditItems = getMenuItemsForRole(auditMenuItems, effectiveRole);
+  const filteredSalonItems = getMenuItemsForRole(salonMenuItems, effectiveRole);
   
   // Verifica se algum item de análise está ativo
   const isAnalysisActive = filteredAnalysisItems.some(item => item.path === location);
@@ -456,7 +460,7 @@ function DashboardLayoutContent({
   // Filtra itens restritos para não-admins
   const getFilteredItems = (items: typeof mainMenuItems) => {
     return items.filter(item => {
-      if (user?.role !== 'admin') {
+      if (effectiveRole !== 'admin') {
         const restrictedPaths = [
           '/compras',
           '/despesas', 
@@ -471,7 +475,7 @@ function DashboardLayoutContent({
 
   const visibleMainItems = getFilteredItems(filteredMainItems);
   const visibleAnalysisItems = filteredAnalysisItems.filter(item => {
-    if (user?.role !== 'admin') {
+    if (effectiveRole !== 'admin') {
       // Consultor pode ver Análise de Faturamento e Fechamento (sem Metas)
       return item.path === '/relatorios' || item.path === '/fechamento';
     }
@@ -480,11 +484,11 @@ function DashboardLayoutContent({
   
   // Filtra itens financeiros por role
   const visibleFinanceItems = filteredFinanceItems.filter(item => {
-    if (user?.role === 'operacional') {
+    if (effectiveRole === 'operacional') {
       // Operacional só pode ver Contas a Receber
       return item.path === '/contas-receber';
     }
-    if (user?.role === 'consultor') {
+    if (effectiveRole === 'consultor') {
       // Consultor pode ver Compras e Despesas (somente visualização)
       // Ocultar Contas a Receber e Contas a Pagar
       return item.path === '/compras' || item.path === '/despesas';
@@ -495,7 +499,7 @@ function DashboardLayoutContent({
   // Filtra itens de contabilidade por role
   const visibleAccountingItems = filteredAccountingItems.filter(item => {
     // Admin e Consultor podem ver todos os itens de contabilidade
-    if (user?.role === 'admin' || user?.role === 'consultor') {
+    if (effectiveRole === 'admin' || effectiveRole === 'consultor') {
       return true;
     }
     return false;
@@ -503,21 +507,24 @@ function DashboardLayoutContent({
 
   // Admin items - apenas admin
   const visibleAdminItems = filteredAdminItems.filter(item => {
-    return user?.role === 'admin';
+    return effectiveRole === 'admin';
   });
   
   // Audit items - apenas admin
   const visibleAuditItems = filteredAuditItems.filter(item => {
-    return user?.role === 'admin';
+    return effectiveRole === 'admin';
   });
   
-  // Salon items - admin e operacional, apenas para empresa Hamburgueria
+  // Salon items - admin, operacional e garcom, apenas para empresa Hamburgueria
   const visibleSalonItems = filteredSalonItems.filter(item => {
-    if (user?.role !== 'admin' && user?.role !== 'operacional') return false;
+    if (effectiveRole !== 'admin' && effectiveRole !== 'operacional' && effectiveRole !== 'garcom') return false;
     // Mostra apenas se a empresa ativa for Hamburgueria (companyId === 2 ou segment === 'Hamburgueria')
     const segment = activeCompany?.segment;
     return segment === 'Hamburgueria' || activeCompanyId === 2;
   });
+
+  // Para garçom: esconder todos os menus exceto salão
+  const isWaiter = effectiveRole === 'garcom';
 
   return (
     <>
@@ -654,8 +661,8 @@ function DashboardLayoutContent({
 
           <SidebarContent className="gap-0">
             <SidebarMenu className="px-2 py-1">
-              {/* Menu principal */}
-              {visibleMainItems.map(item => {
+              {/* Menu principal - escondido para garçom */}
+              {!isWaiter && visibleMainItems.map(item => {
                 const isActive = location === item.path;
                 return (
                   <SidebarMenuItem key={item.path}>
@@ -674,8 +681,8 @@ function DashboardLayoutContent({
                 );
               })}
 
-              {/* Submenu Financeiro */}
-              {visibleFinanceItems.length > 0 && (
+              {/* Submenu Financeiro - escondido para garçom */}
+              {!isWaiter && visibleFinanceItems.length > 0 && (
                 <>
                   {/* Separador visual */}
                   <div className="my-2 mx-2 border-t" style={hasCustomTheme ? { borderColor: companyTheme.separatorColor } : { borderColor: 'var(--border)' }} />
@@ -745,8 +752,8 @@ function DashboardLayoutContent({
                 </>
               )}
 
-              {/* Submenu de Contabilidade */}
-              {visibleAccountingItems.length > 0 && (
+              {/* Submenu de Contabilidade - escondido para garçom */}
+              {!isWaiter && visibleAccountingItems.length > 0 && (
                 <>
                   {/* Separador visual */}
                   <div className="my-2 mx-2 border-t" style={hasCustomTheme ? { borderColor: companyTheme.separatorColor } : { borderColor: 'var(--border)' }} />
@@ -816,8 +823,8 @@ function DashboardLayoutContent({
                 </>
               )}
 
-              {/* Submenu de Análises */}
-              {visibleAnalysisItems.length > 0 && (
+              {/* Submenu de Análises - escondido para garçom */}
+              {!isWaiter && visibleAnalysisItems.length > 0 && (
                 <>
                   {/* Separador visual */}
                   <div className="my-2 mx-2 border-t" style={hasCustomTheme ? { borderColor: companyTheme.separatorColor } : { borderColor: 'var(--border)' }} />
@@ -887,8 +894,8 @@ function DashboardLayoutContent({
                 </>
               )}
 
-              {/* Submenu de Administração */}
-              {visibleAdminItems.length > 0 && (
+              {/* Submenu de Administração - escondido para garçom */}
+              {!isWaiter && visibleAdminItems.length > 0 && (
                 <>
                   {/* Separador visual */}
                   <div className="my-2 mx-2 border-t" style={hasCustomTheme ? { borderColor: companyTheme.separatorColor } : { borderColor: 'var(--border)' }} />
@@ -1018,8 +1025,8 @@ function DashboardLayoutContent({
                 </>
               )}
 
-              {/* Submenu de Auditoria */}
-              {visibleAuditItems.length > 0 && (
+              {/* Submenu de Auditoria - escondido para garçom */}
+              {!isWaiter && visibleAuditItems.length > 0 && (
                 <>
                   {/* Separador visual */}
                   <div className="my-2 mx-2 border-t" style={hasCustomTheme ? { borderColor: companyTheme.separatorColor } : { borderColor: 'var(--border)' }} />
@@ -1114,14 +1121,17 @@ function DashboardLayoutContent({
                       <p className="text-sm font-medium truncate leading-none">
                         {user?.name || "-"}
                       </p>
-                      {user?.role === 'admin' && (
+                      {effectiveRole === 'admin' && (
                         <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium" style={hasCustomTheme ? { backgroundColor: `${companyTheme.accent}30`, color: companyTheme.accent } : undefined}>Admin</span>
                       )}
-                      {user?.role === 'operacional' && (
+                      {effectiveRole === 'operacional' && (
                         <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-700">Operacional</span>
                       )}
-                      {user?.role === 'consultor' && (
+                      {effectiveRole === 'consultor' && (
                         <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-purple-100 text-purple-700">Consultor</span>
+                      )}
+                      {effectiveRole === 'garcom' && (
+                        <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-emerald-100 text-emerald-700">Garçom</span>
                       )}
                     </div>
                     <p className="text-xs truncate mt-1.5" style={hasCustomTheme ? { color: companyTheme.textMuted } : { color: 'var(--muted-foreground)' }}>

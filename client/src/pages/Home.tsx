@@ -6,13 +6,14 @@ import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { trpc } from "@/lib/trpc";
 import { TrendingUp, TrendingDown, AlertTriangle, ShoppingCart, DollarSign, Calendar, Package, Clock, ChevronDown, ChevronRight, Target, CreditCard } from "lucide-react";
 import { Link } from "wouter";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { SaleDetailsModal } from "@/components/SaleDetailsModal";
 import { CompactSalesCalendar } from "@/components/CompactSalesCalendar";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { formatDateBR } from "@shared/dateUtils";
 import { useCompany } from "@/contexts/CompanyContext";
 import { UtensilsCrossed } from "lucide-react";
+import { useLocation } from "wouter";
 
 function SalonDashboardSection() {
   const { data: salonStats, isLoading } = trpc.salon.getDashboardStats.useQuery();
@@ -81,11 +82,13 @@ function SalonDashboardSection() {
 
 export default function Home() {
   const { user } = useAuth();
-  const isAdmin = user?.role === "admin";
-  const isConsultor = user?.role === "consultor";
-  const isOperacional = user?.role === "operacional";
-  const canViewFinancials = isAdmin || isConsultor; // Admin e Consultor podem ver informações financeiras
   const { activeCompany } = useCompany();
+  const effectiveRole = activeCompany?.role || user?.role;
+  const isAdmin = effectiveRole === "admin";
+  const isConsultor = effectiveRole === "consultor";
+  const isOperacional = effectiveRole === "operacional";
+  const isGarcom = effectiveRole === "garcom";
+  const canViewFinancials = isAdmin || isConsultor; // Admin e Consultor podem ver informações financeiras
   const isHamburgueria = activeCompany?.segment === 'Hamburgueria' || activeCompany?.companyId === 2;
   const { data: stats, isLoading } = trpc.dashboard.stats.useQuery();
   const { data: purchaseStats, isLoading: isPurchaseLoading } = trpc.dashboard.purchaseStats.useQuery();
@@ -128,6 +131,24 @@ export default function Home() {
     setExpandedCategories(newExpanded);
   };
 
+  // Garçom é redirecionado automaticamente para a tela de mesas
+  const [, navigate] = useLocation();
+  useEffect(() => {
+    if (isGarcom) {
+      navigate('/salao/mesas');
+    }
+  }, [isGarcom, navigate]);
+
+  if (isGarcom) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <LoadingSpinner size="lg" text="Redirecionando para o Salão..." />
+        </div>
+      </DashboardLayout>
+    );
+  }
+
   if (isLoading) {
     return (
       <DashboardLayout>
@@ -155,6 +176,7 @@ export default function Home() {
     if (saleType === "DELIVERY") {
       return channelName || "Delivery";
     }
+    if (saleType === "SALAO") return "Salão";
     return saleType;
   };
 

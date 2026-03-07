@@ -1798,4 +1798,12 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 ### Melhorias Salão — Rodada 5 (07/03/2026)
 - [x] FEATURE: Botão "Marcar como Entregue" na comanda para itens com status "Pronto" — botão verde com ícone CheckCircle2, chama updateItemStatus(DELIVERED), invalida queries
 - [x] UX: Melhorar alerta sonoro de notificação — Web Audio API com chime ascendente (C5-E5-G5), 3x repetição para urgência, funciona em mobile
-- [ ] PLANEJAMENTO: Sistema de roles para garçom (acesso restrito ao módulo Salão via navegador mobile) — próxima etapa
+- [x] PLANEJAMENTO: Sistema de roles para garçom (acesso restrito ao módulo Salão via navegador mobile) — implementado na Rodada 6
+
+### Melhorias Salão — Rodada 6 (07/03/2026)
+- [x] FEATURE: Sistema de Garçom — role "garcom" no schema (users + userCompanies), cadastro via Gerenciar Acessos
+- [x] FEATURE: Acesso restrito para garçom — DashboardLayout filtra menus, só mostra Salão (Mesas, KDS Cozinha, KDS Bar, Garçons)
+- [x] FEATURE: Rastreamento de garçom por comanda — waiterId já registrado em salonOrders, tela de garçons mostra estatísticas
+- [x] FEATURE: Canal de venda "SALAO" — adicionado em schema, db.ts, routers.ts, formatters.ts, todas as telas de análise e filtros
+- [x] FEATURE: Observações por item na comanda — campo notes já existia no schema, KDS agora exibe com destaque amarelo
+- [x] FEATURE: Tela de gestão de garçons — página SalaoGarcons com listagem, estatísticas e link para Gerenciar Acessos

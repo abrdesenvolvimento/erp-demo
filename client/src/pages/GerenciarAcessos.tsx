@@ -37,7 +37,7 @@ export default function GerenciarAcessos() {
   const [isGrantModalOpen, setIsGrantModalOpen] = useState(false);
   const [grantForm, setGrantForm] = useState({
     userId: "",
-    role: "operacional" as "admin" | "operacional" | "consultor",
+    role: "operacional" as "admin" | "operacional" | "consultor" | "garcom",
   });
 
   // Queries
@@ -93,7 +93,7 @@ export default function GerenciarAcessos() {
     }
   };
 
-  const handleUpdateRole = async (userId: string, newRole: "admin" | "operacional" | "consultor") => {
+  const handleUpdateRole = async (userId: string, newRole: "admin" | "operacional" | "consultor" | "garcom") => {
     if (!selectedCompanyId) return;
     try {
       await updateRoleMutation.mutateAsync({
@@ -113,6 +113,7 @@ export default function GerenciarAcessos() {
       admin: { className: "bg-amber-100 text-amber-700 border-amber-200", label: "Admin" },
       operacional: { className: "bg-blue-100 text-blue-700 border-blue-200", label: "Operacional" },
       consultor: { className: "bg-purple-100 text-purple-700 border-purple-200", label: "Consultor" },
+      garcom: { className: "bg-emerald-100 text-emerald-700 border-emerald-200", label: "Garçom" },
     };
     const c = config[role] || { className: "bg-gray-100 text-gray-700", label: role };
     return <Badge className={c.className}>{c.label}</Badge>;
@@ -256,7 +257,7 @@ export default function GerenciarAcessos() {
                             <TableCell>
                               <Select
                                 value={uc.role}
-                                onValueChange={(value: "admin" | "operacional" | "consultor") =>
+                                onValueChange={(value: "admin" | "operacional" | "consultor" | "garcom") =>
                                   handleUpdateRole(uc.userId, value)
                                 }
                                 disabled={uc.userId === currentUser?.id}
@@ -268,6 +269,7 @@ export default function GerenciarAcessos() {
                                   <SelectItem value="admin">Admin</SelectItem>
                                   <SelectItem value="operacional">Operacional</SelectItem>
                                   <SelectItem value="consultor">Consultor</SelectItem>
+                                  <SelectItem value="garcom">Garçom</SelectItem>
                                 </SelectContent>
                               </Select>
                             </TableCell>
@@ -337,7 +339,7 @@ export default function GerenciarAcessos() {
                 <label className="text-sm font-medium mb-2 block">Permissão na Empresa</label>
                 <Select
                   value={grantForm.role}
-                  onValueChange={(value: "admin" | "operacional" | "consultor") =>
+                  onValueChange={(value: "admin" | "operacional" | "consultor" | "garcom") =>
                     setGrantForm({ ...grantForm, role: value })
                   }
                 >
@@ -361,6 +363,12 @@ export default function GerenciarAcessos() {
                       <div className="flex flex-col">
                         <span>Consultor</span>
                         <span className="text-xs text-muted-foreground">Somente visualização</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="garcom">
+                      <div className="flex flex-col">
+                        <span>Garçom</span>
+                        <span className="text-xs text-muted-foreground">Acesso apenas ao módulo Salão</span>
                       </div>
                     </SelectItem>
                   </SelectContent>

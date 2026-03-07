@@ -368,6 +368,7 @@ export default function FechamentoMensalNovo() {
                             'DELIVERY': 'Delivery',
                             'BALCAO': 'Balcão',
                             'A_PRAZO': 'A Prazo',
+                            'SALAO': 'Salão',
                           };
                           const percentage = data.sales.total.revenue > 0 
                             ? (values.revenue / data.sales.total.revenue) * 100 

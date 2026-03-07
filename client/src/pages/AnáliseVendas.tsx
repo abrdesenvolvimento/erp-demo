@@ -870,6 +870,7 @@ export default function AnáliseVendas() {
                     { value: "BALCAO", label: "Balcão" },
                     { value: "DELIVERY", label: "Delivery" },
                     { value: "A_PRAZO", label: "A Prazo" },
+                    { value: "SALAO", label: "Salão" },
                   ].map((channel) => (
                     <Button
                       key={channel.value}

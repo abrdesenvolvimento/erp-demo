@@ -3,7 +3,8 @@ export function formatSaleType(type: string): string {
   const map: Record<string, string> = {
     'BALCAO': 'Balcão',
     'DELIVERY': 'Delivery',
-    'A_PRAZO': 'A Prazo'
+    'A_PRAZO': 'A Prazo',
+    'SALAO': 'Salão'
   };
   return map[type] || type;
 }

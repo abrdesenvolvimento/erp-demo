@@ -135,7 +135,11 @@ export default function SalaoKDSCozinha() {
                           {parseFloat(String(item.quantity))}x {item.productName}
                         </p>
                         {item.notes && (
-                          <p className="text-xs text-gray-600 mt-0.5 italic">"{item.notes}"</p>
+                          <div className="mt-1 bg-yellow-200 border border-yellow-400 rounded px-2 py-1">
+                            <p className="text-xs text-yellow-900 font-medium">
+                              ⚠️ {item.notes}
+                            </p>
+                          </div>
                         )}
                         <div className="flex items-center gap-1 mt-1">
                           <Clock className="h-3 w-3 text-gray-500" />

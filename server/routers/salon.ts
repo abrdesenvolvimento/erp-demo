@@ -10,6 +10,8 @@ import {
   products,
   productPrices,
   salesChannels,
+  userCompanies,
+  users,
 } from "../../drizzle/schema";
 import { eq, and, or, inArray, gte, lte, lt, sql, isNull } from "drizzle-orm";
 import { getNowInBrazil } from "../../shared/dateUtils";
@@ -315,21 +317,38 @@ export const salonRouter = router({
         .where(and(eq(products.id, input.productId), eq(products.companyId, input.companyId)))
         .limit(1);
 
-      // Get the sale price from productPrices (BALCAO channel)
+      // Get the sale price: prefer SALAO channel, fallback to BALCAO
       let salePrice = 0;
       try {
-        const balcaoChannel = await db
+        // Try SALAO channel first
+        const salaoChannel = await db
           .select({ id: salesChannels.id })
           .from(salesChannels)
-          .where(and(eq(salesChannels.companyId, input.companyId), eq(salesChannels.type, 'BALCAO')))
+          .where(and(eq(salesChannels.companyId, input.companyId), eq(salesChannels.type, 'SALAO')))
           .limit(1);
-        if (balcaoChannel.length > 0) {
+        if (salaoChannel.length > 0) {
           const [priceRow] = await db
             .select({ price: productPrices.price })
             .from(productPrices)
-            .where(and(eq(productPrices.productId, input.productId), eq(productPrices.channelId, balcaoChannel[0].id)))
+            .where(and(eq(productPrices.productId, input.productId), eq(productPrices.channelId, salaoChannel[0].id)))
             .limit(1);
           if (priceRow) salePrice = parseFloat(String(priceRow.price));
+        }
+        // Fallback to BALCAO if no SALAO price
+        if (salePrice === 0) {
+          const balcaoChannel = await db
+            .select({ id: salesChannels.id })
+            .from(salesChannels)
+            .where(and(eq(salesChannels.companyId, input.companyId), eq(salesChannels.type, 'BALCAO')))
+            .limit(1);
+          if (balcaoChannel.length > 0) {
+            const [priceRow] = await db
+              .select({ price: productPrices.price })
+              .from(productPrices)
+              .where(and(eq(productPrices.productId, input.productId), eq(productPrices.channelId, balcaoChannel[0].id)))
+              .limit(1);
+            if (priceRow) salePrice = parseFloat(String(priceRow.price));
+          }
         }
       } catch (e) {
         console.error('[addItem] Price lookup failed:', e);
@@ -565,7 +584,7 @@ export const salonRouter = router({
         {
           companyId: input.companyId,
           branchId: input.branchId,
-          saleType: "BALCAO" as const,
+          saleType: "SALAO" as const,
           saleDate: now,
           subtotal: String(subtotal.toFixed(2)),
           discountAmount: "0.00",
@@ -680,36 +699,66 @@ export const salonRouter = router({
           .orderBy(products.name);
       }
 
-      // Get prices from productPrices table (joined with salesChannels for BALCAO type)
+      // Get prices: prefer SALAO channel, fallback to BALCAO
       const productIds = rows.map(r => r.id);
       let priceMap = new Map<number, number>();
 
       if (productIds.length > 0) {
         try {
-          // Find the BALCAO channel for this company
-          const balcaoChannel = await db
+          // Try SALAO channel first
+          const salaoChannel = await db
             .select({ id: salesChannels.id })
             .from(salesChannels)
             .where(
               and(
                 eq(salesChannels.companyId, input.companyId),
-                eq(salesChannels.type, 'BALCAO')
+                eq(salesChannels.type, 'SALAO')
               )
             )
             .limit(1);
 
-          if (balcaoChannel.length > 0) {
+          if (salaoChannel.length > 0) {
             const priceRows = await db
               .select({ productId: productPrices.productId, price: productPrices.price })
               .from(productPrices)
               .where(
                 and(
                   inArray(productPrices.productId, productIds),
-                  eq(productPrices.channelId, balcaoChannel[0].id)
+                  eq(productPrices.channelId, salaoChannel[0].id)
                 )
               );
             for (const row of priceRows) {
               priceMap.set(row.productId, parseFloat(String(row.price)));
+            }
+          }
+
+          // Fallback: fill missing prices from BALCAO channel
+          const missingIds = productIds.filter(id => !priceMap.has(id));
+          if (missingIds.length > 0) {
+            const balcaoChannel = await db
+              .select({ id: salesChannels.id })
+              .from(salesChannels)
+              .where(
+                and(
+                  eq(salesChannels.companyId, input.companyId),
+                  eq(salesChannels.type, 'BALCAO')
+                )
+              )
+              .limit(1);
+
+            if (balcaoChannel.length > 0) {
+              const priceRows = await db
+                .select({ productId: productPrices.productId, price: productPrices.price })
+                .from(productPrices)
+                .where(
+                  and(
+                    inArray(productPrices.productId, missingIds),
+                    eq(productPrices.channelId, balcaoChannel[0].id)
+                  )
+                );
+              for (const row of priceRows) {
+                priceMap.set(row.productId, parseFloat(String(row.price)));
+              }
             }
           }
         } catch (priceErr) {
@@ -791,6 +840,113 @@ export const salonRouter = router({
       }
 
       return Array.from(byWaiter.values());
+    }),
+
+  // --- Gestão de Garçons ---
+  listWaiters: protectedProcedure
+    .input(z.object({ companyId: z.number() }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("DB unavailable");
+
+      const waiters = await db
+        .select({
+          id: userCompanies.id,
+          userId: userCompanies.userId,
+          companyId: userCompanies.companyId,
+          role: userCompanies.role,
+          userName: users.name,
+          userEmail: users.email,
+          createdAt: userCompanies.createdAt,
+        })
+        .from(userCompanies)
+        .innerJoin(users, eq(users.id, userCompanies.userId))
+        .where(
+          and(
+            eq(userCompanies.companyId, input.companyId),
+            eq(userCompanies.role, 'garcom')
+          )
+        )
+        .orderBy(users.name);
+
+      return waiters;
+    }),
+
+  getWaiterPerformance: protectedProcedure
+    .input(z.object({
+      companyId: z.number(),
+      startDate: z.string(),
+      endDate: z.string(),
+    }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("DB unavailable");
+
+      const start = new Date(input.startDate);
+      const end = new Date(input.endDate);
+      end.setUTCDate(end.getUTCDate() + 1);
+
+      const orders = await db
+        .select({
+          waiterId: salonOrders.waiterId,
+          waiterName: salonOrders.waiterName,
+          totalAmount: salonOrders.totalAmount,
+          tipAmount: salonOrders.tipAmount,
+          subtotal: salonOrders.subtotal,
+          guests: salonOrders.guests,
+          closedAt: salonOrders.closedAt,
+          openedAt: salonOrders.openedAt,
+        })
+        .from(salonOrders)
+        .where(
+          and(
+            eq(salonOrders.companyId, input.companyId),
+            eq(salonOrders.status, "CLOSED"),
+            gte(salonOrders.closedAt, start),
+            lte(salonOrders.closedAt, end)
+          )
+        );
+
+      // Group by waiter
+      const byWaiter = new Map<string, {
+        waiterId: string | null;
+        waiterName: string | null;
+        totalSales: number;
+        totalTips: number;
+        orderCount: number;
+        totalGuests: number;
+        avgServiceTime: number;
+        totalServiceTime: number;
+      }>();
+
+      for (const o of orders) {
+        const key = o.waiterId ?? "unknown";
+        const existing = byWaiter.get(key) ?? {
+          waiterId: o.waiterId,
+          waiterName: o.waiterName,
+          totalSales: 0,
+          totalTips: 0,
+          orderCount: 0,
+          totalGuests: 0,
+          avgServiceTime: 0,
+          totalServiceTime: 0,
+        };
+        existing.totalSales += parseFloat(String(o.totalAmount ?? "0"));
+        existing.totalTips += parseFloat(String(o.tipAmount ?? "0"));
+        existing.orderCount += 1;
+        existing.totalGuests += Number(o.guests ?? 0);
+        if (o.openedAt && o.closedAt) {
+          const serviceTime = (new Date(o.closedAt).getTime() - new Date(o.openedAt).getTime()) / 60000;
+          existing.totalServiceTime += serviceTime;
+        }
+        byWaiter.set(key, existing);
+      }
+
+      return Array.from(byWaiter.values()).map(w => ({
+        ...w,
+        avgTicket: w.orderCount > 0 ? w.totalSales / w.orderCount : 0,
+        avgServiceTime: w.orderCount > 0 ? w.totalServiceTime / w.orderCount : 0,
+      }));
     }),
 
   // --- Dashboard stats ---

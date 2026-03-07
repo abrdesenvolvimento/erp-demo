@@ -652,9 +652,10 @@ export default function Vendas() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Todos</SelectItem>
-                    <SelectItem value="BALCAO">Balcao</SelectItem>
+                    <SelectItem value="BALCAO">Balcão</SelectItem>
                     <SelectItem value="DELIVERY">Delivery</SelectItem>
                     <SelectItem value="A_PRAZO">A Prazo</SelectItem>
+                    <SelectItem value="SALAO">Salão</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

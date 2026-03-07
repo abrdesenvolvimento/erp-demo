@@ -197,7 +197,7 @@ export const companyRouter = router({
       userId: z.string(),
       companyId: z.number(),
       branchId: z.number().optional().default(1),
-      role: z.enum(['admin', 'operacional', 'consultor']).default('operacional'),
+      role: z.enum(['admin', 'operacional', 'consultor', 'garcom']).default('operacional'),
     }))
     .mutation(async ({ input }) => {
       const db = await getDb();
@@ -267,7 +267,7 @@ export const companyRouter = router({
     .input(z.object({
       userId: z.string(),
       companyId: z.number(),
-      role: z.enum(['admin', 'operacional', 'consultor']),
+      role: z.enum(['admin', 'operacional', 'consultor', 'garcom']),
     }))
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();

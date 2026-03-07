@@ -60,7 +60,7 @@ export const userCompanies = mysqlTable("userCompanies", {
   userId: varchar("userId", { length: 64 }).notNull(),
   companyId: int("companyId").notNull(),
   branchId: int("branchId"),
-  role: mysqlEnum("role", ["admin", "operacional", "consultor"]).default("operacional").notNull(),
+  role: mysqlEnum("role", ["admin", "operacional", "consultor", "garcom"]).default("operacional").notNull(),
   isDefault: boolean("isDefault").default(false).notNull(),
   createdAt: timestamp("createdAt").defaultNow(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow(),
@@ -82,7 +82,7 @@ export const users = mysqlTable("users", {
   email: varchar("email", { length: 320 }),
   loginMethod: varchar("loginMethod", { length: 64 }),
   avatarUrl: text("avatarUrl"),
-  role: mysqlEnum("role", ["user", "admin", "operacional", "consultor"]).default("user").notNull(),
+  role: mysqlEnum("role", ["user", "admin", "operacional", "consultor", "garcom"]).default("user").notNull(),
   createdAt: timestamp("createdAt").defaultNow(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow(),
 });
@@ -130,7 +130,7 @@ export const salesChannels = mysqlTable("salesChannels", {
   branchId: int("branchId").notNull().default(1),
   code: varchar("code", { length: 50 }).notNull(),
   name: varchar("name", { length: 100 }).notNull(),
-  type: mysqlEnum("type", ["BALCAO", "DELIVERY"]).notNull(),
+  type: mysqlEnum("type", ["BALCAO", "DELIVERY", "SALAO"]).notNull(),
   active: boolean("active").default(true).notNull(),
   commissionPercent: decimal("commissionPercent", { precision: 5, scale: 2 }).default("0.00"),
   fixedFeePerOrder: decimal("fixedFeePerOrder", { precision: 10, scale: 2 }).default("0.00"),
@@ -271,7 +271,7 @@ export const sales = mysqlTable("sales", {
   id: int("id").primaryKey().autoincrement(),
   companyId: int("companyId").notNull().default(1),
   branchId: int("branchId").notNull().default(1),
-  saleType: mysqlEnum("saleType", ["BALCAO", "DELIVERY", "A_PRAZO"]).notNull(),
+  saleType: mysqlEnum("saleType", ["BALCAO", "DELIVERY", "A_PRAZO", "SALAO"]).notNull(),
   saleDate: timestamp("saleDate").defaultNow(),
   customerId: int("customerId"),
   channelId: int("channelId"),
@@ -763,7 +763,7 @@ export const revenueAccounts = mysqlTable("revenueAccounts", {
     "OUTRAS_RECEITAS"     // Outras receitas (juros, etc.)
   ]).notNull(),
   // Mapeamento automático por tipo de venda
-  saleType: mysqlEnum("saleType", ["BALCAO", "DELIVERY", "A_PRAZO"]),  // NULL = não é receita de venda
+  saleType: mysqlEnum("saleType", ["BALCAO", "DELIVERY", "A_PRAZO", "SALAO"]),  // NULL = não é receita de venda
   isDefault: boolean("isDefault").default(false),  // Conta padrão para o tipo
   isActive: boolean("isActive").default(true).notNull(),
   displayOrder: int("displayOrder").default(0),

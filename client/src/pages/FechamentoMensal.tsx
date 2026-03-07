@@ -79,6 +79,7 @@ export default function FechamentoMensal() {
       case "BALCAO": return "Balcão";
       case "DELIVERY": return "Delivery";
       case "A_PRAZO": return "A Prazo";
+      case "SALAO": return "Salão";
       default: return type;
     }
   };

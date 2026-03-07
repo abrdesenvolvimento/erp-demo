@@ -818,11 +818,13 @@ export async function createSale(saleData: InsertSale, items: Omit<InsertSaleIte
     }
     
     // Determinar tipo de canal
-    let channelType: "BALCAO" | "DELIVERY" | "A_PRAZO" = "BALCAO";
+    let channelType: "BALCAO" | "DELIVERY" | "A_PRAZO" | "SALAO" = "BALCAO";
     if (saleData.saleType === "A_PRAZO") {
       channelType = "A_PRAZO";
     } else if (saleData.saleType === "DELIVERY") {
       channelType = "DELIVERY";
+    } else if (saleData.saleType === "SALAO") {
+      channelType = "SALAO";
     }
     
     // Buscar nome do cliente se for venda a prazo
@@ -864,7 +866,7 @@ export async function getSalesStats(
   period?: 'today' | 'week' | 'month' | 'all',
   dateFrom?: string,
   dateTo?: string,
-  channel?: 'BALCAO' | 'DELIVERY' | 'A_PRAZO',
+  channel?: 'BALCAO' | 'DELIVERY' | 'A_PRAZO' | 'SALAO',
   companyId?: number
 ) {
   const db = await getDb();
@@ -6780,7 +6782,7 @@ export async function getMonthlyClosing(year: number, month: number, companyId?:
   let receitaBrutaTotal = 0;
   let deducoesTotal = 0;
   const receitaByAccount: Array<{ code: string; name: string; type: string; saleType: string | null; total: number }> = [];
-  const receitaBySaleType: Record<string, number> = { BALCAO: 0, DELIVERY: 0, A_PRAZO: 0 };
+  const receitaBySaleType: Record<string, number> = { BALCAO: 0, DELIVERY: 0, A_PRAZO: 0, SALAO: 0 };
 
   for (const row of revenueRows) {
     const total = parseFloat(row.total || '0');
@@ -7012,6 +7014,7 @@ export async function getMonthlyClosing(year: number, month: number, companyId?:
         balcao: receitaBySaleType.BALCAO,
         delivery: receitaBySaleType.DELIVERY,
         aPrazo: receitaBySaleType.A_PRAZO,
+        salao: receitaBySaleType.SALAO,
         byAccount: receitaByAccount.filter(a => a.type === 'RECEITA_BRUTA'),
       },
       deducoes: {
@@ -7456,7 +7459,7 @@ export async function listManagementAccountsGrouped(companyId?: number) {
 // ==================== FUNÇÕES DE RECEITA ====================
 
 // Buscar conta de receita por tipo de venda
-export async function getRevenueAccountBySaleType(saleType: 'BALCAO' | 'DELIVERY' | 'A_PRAZO'): Promise<RevenueAccount | null> {
+export async function getRevenueAccountBySaleType(saleType: 'BALCAO' | 'DELIVERY' | 'A_PRAZO' | 'SALAO'): Promise<RevenueAccount | null> {
   const db = await getDb();
   if (!db) return null;
   
@@ -7513,7 +7516,7 @@ export async function createRevenueEntry(data: InsertRevenueEntry): Promise<numb
 // Criar lançamentos de receita para uma venda (receita bruta + deduções)
 export async function createRevenueEntriesForSale(
   saleId: number,
-  saleType: 'BALCAO' | 'DELIVERY' | 'A_PRAZO',
+  saleType: 'BALCAO' | 'DELIVERY' | 'A_PRAZO' | 'SALAO',
   finalAmount: string | number,
   discountAmount: string | number,
   saleDate: Date
@@ -8361,7 +8364,7 @@ export async function accountSale(data: {
   saleId: number;
   totalAmount: string;
   cmvAmount: string;
-  channelType: "BALCAO" | "DELIVERY" | "A_PRAZO";
+  channelType: "BALCAO" | "DELIVERY" | "A_PRAZO" | "SALAO";
   customerName?: string;
   entryDate: Date;
   createdBy: string;

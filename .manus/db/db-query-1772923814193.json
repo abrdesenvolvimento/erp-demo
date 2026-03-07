@@ -1,0 +1,9 @@
+{
+  "query": "INSERT INTO revenueAccounts (code, name, description, accountType, saleType, isDefault, isActive, displayOrder) VALUES ('RB-SALAO', 'Receita Bruta - Salão', 'Receita de vendas do salão', 'RECEITA_BRUTA', 'SALAO', 1, 1, 4)",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute INSERT INTO revenueAccounts (code, name, description, accountType, saleType, isDefault, isActive, displayOrder) VALUES ('RB-SALAO', 'Receita Bruta - Salão', 'Receita de vendas do salão', 'RECEITA_BRUTA', 'SALAO', 1, 1, 4)",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 371
+}
