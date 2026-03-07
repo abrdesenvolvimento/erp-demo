@@ -1,0 +1,13 @@
+{
+  "query": "SELECT JSON_ARRAYAGG(JSON_OBJECT('id', id, 'name', name, 'companyId', companyId, 'branchId', branchId, 'currentStock', currentStock)) as result FROM products WHERE name LIKE '%Fumax 500%';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT JSON_ARRAYAGG(JSON_OBJECT('id', id, 'name', name, 'companyId', companyId, 'branchId', branchId, 'currentStock', currentStock)) as result FROM products WHERE name LIKE '%Fumax 500%';",
+  "rows": [
+    {
+      "result": "[{\"branchId\": 1, \"companyId\": 1, \"currentStock\": 23, \"id\": 2820001, \"name\": \"Fumax 500gr\"}]"
+    }
+  ],
+  "messages": [],
+  "stdout": "result\n[{\"branchId\": 1, \"companyId\": 1, \"currentStock\": 23, \"id\": 2820001, \"name\": \"Fumax 500gr\"}]\n",
+  "stderr": "",
+  "execution_time_ms": 374
+}

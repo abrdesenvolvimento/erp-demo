@@ -1,0 +1,17 @@
+{
+  "query": "SELECT id, name, companyId, branchId, currentStock FROM products WHERE name LIKE '%Fumax 500%' LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT id, name, companyId, branchId, currentStock FROM products WHERE name LIKE '%Fumax 500%' LIMIT 5;",
+  "rows": [
+    {
+      "id": "2820001",
+      "name": "Fumax 500gr",
+      "companyId": "1",
+      "branchId": "1",
+      "currentStock": "23"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tcompanyId\tbranchId\tcurrentStock\n2820001\tFumax 500gr\t1\t1\t23\n",
+  "stderr": "",
+  "execution_time_ms": 387
+}

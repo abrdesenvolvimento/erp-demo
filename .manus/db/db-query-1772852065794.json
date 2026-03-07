@@ -1,0 +1,26 @@
+{
+  "query": "SELECT id, date, type, quantity, userId, documentNumber FROM productMovements WHERE productId = 2820001 AND userId = 'system';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT id, date, type, quantity, userId, documentNumber FROM productMovements WHERE productId = 2820001 AND userId = 'system';",
+  "rows": [
+    {
+      "id": "25320016",
+      "date": "2026-03-06 21:00:00",
+      "type": "ESTORNO",
+      "quantity": "-600.000",
+      "userId": "system",
+      "documentNumber": "Edição Compra #02032026"
+    },
+    {
+      "id": "25320017",
+      "date": "2026-03-06 21:00:01",
+      "type": "ENTRADA",
+      "quantity": "24.000",
+      "userId": "system",
+      "documentNumber": "Edição Compra #02032026"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tdate\ttype\tquantity\tuserId\tdocumentNumber\n25320016\t2026-03-06 21:00:00\tESTORNO\t-600.000\tsystem\tEdição Compra #02032026\n25320017\t2026-03-06 21:00:01\tENTRADA\t24.000\tsystem\tEdição Compra #02032026\n",
+  "stderr": "",
+  "execution_time_ms": 361
+}

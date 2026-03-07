@@ -1,0 +1,73 @@
+{
+  "query": "SELECT pm.id, pm.productId, pm.type, pm.quantity, pm.documentNumber, pm.date, p.name FROM productMovements pm JOIN products p ON pm.productId = p.id WHERE p.name LIKE '%Fumax 500%' ORDER BY pm.date DESC LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT pm.id, pm.productId, pm.type, pm.quantity, pm.documentNumber, pm.date, p.name FROM productMovements pm JOIN products p ON pm.productId = p.id WHERE p.name LIKE '%Fumax 500%' ORDER BY pm.date DESC LIMIT 10;",
+  "rows": [
+    {
+      "id": "25230025",
+      "productId": "2820001",
+      "type": "SAIDA",
+      "quantity": "-1.000",
+      "documentNumber": "Venda #60000011",
+      "date": "2026-03-07 00:42:14",
+      "name": "Fumax 500gr"
+    },
+    {
+      "id": "23940021",
+      "productId": "2820001",
+      "type": "ENTRADA",
+      "quantity": "600.000",
+      "documentNumber": "02032026",
+      "date": "2026-03-02 21:33:04",
+      "name": "Fumax 500gr"
+    },
+    {
+      "id": "2790091",
+      "productId": "2820001",
+      "type": "ACERTO",
+      "quantity": "-12.000",
+      "documentNumber": "NULL",
+      "date": "2026-01-06 21:53:55",
+      "name": "Fumax 500gr"
+    },
+    {
+      "id": "1410004",
+      "productId": "2820001",
+      "type": "SAIDA",
+      "quantity": "-1.000",
+      "documentNumber": "Venda #36600001",
+      "date": "2026-01-02 20:28:33",
+      "name": "Fumax 500gr"
+    },
+    {
+      "id": "900009",
+      "productId": "2820001",
+      "type": "SAIDA",
+      "quantity": "-1.000",
+      "documentNumber": "Venda #36090004",
+      "date": "2026-01-01 03:34:58",
+      "name": "Fumax 500gr"
+    },
+    {
+      "id": "870020",
+      "productId": "2820001",
+      "type": "SAIDA",
+      "quantity": "-1.000",
+      "documentNumber": "Venda #36060010",
+      "date": "2026-01-01 02:20:56",
+      "name": "Fumax 500gr"
+    },
+    {
+      "id": "810102",
+      "productId": "2820001",
+      "type": "SAIDA",
+      "quantity": "-1.000",
+      "documentNumber": "Venda #36000039",
+      "date": "2025-12-31 19:06:14",
+      "name": "Fumax 500gr"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tproductId\ttype\tquantity\tdocumentNumber\tdate\tname\n25230025\t2820001\tSAIDA\t-1.000\tVenda #60000011\t2026-03-07 00:42:14\tFumax 500gr\n23940021\t2820001\tENTRADA\t600.000\t02032026\t2026-03-02 21:33:04\tFumax 500gr\n2790091\t2820001\tACERTO\t-12.000\tNULL\t2026-01-06 21:53:55\tFumax 500gr\n1410004\t2820001\tSAIDA\t-1.000\tVenda #36600001\t2026-01-02 20:28:33\tFumax 500gr\n900009\t2820001\tSAIDA\t-1.000\tVenda #36090004\t2026-01-01 03:34:58\tFumax 500gr\n870020\t2820001\tSAIDA\t-1.000\tVenda #36060010\t2026-01-01 02:20:56\tFumax 500gr\n810102\t2820001\tSAIDA\t-1.000\tVenda #36000039\t2025-12-31 19:06:14\tFumax 500gr\n",
+  "stderr": "",
+  "execution_time_ms": 373
+}

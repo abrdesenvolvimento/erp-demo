@@ -1738,3 +1738,8 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 ### Bugs Reportados - Movimentações de Estoque (06/03/2026)
 - [x] BUG: Histórico de Movimentações por produto trazendo movimentações de OUTROS produtos — corrigido: .where() encadeado no Drizzle sobrescrevia filtro de productId, trocado para and() com array de condições
 - [x] BUG: Edição de compra confirmada não registrava movimentação de estorno — corrigido: adicionado createProductMovement (ESTORNO + re-ENTRADA) em updatePurchaseOrderItems
+
+### Melhorias e Correções (07/03/2026)
+- [x] Aumentar modal de Histórico de Movimentações do produto para melhor visualização
+- [x] BUG: Tela de Auditoria de Movimentações de Estoque não mostra registros retroativos — corrigido: endDate era parseado como meia-noite UTC, excluindo registros do mesmo dia. Aplicado setHours(23,59,59,999) em todas as funções de auditoria
+- [x] Permitir produtos inativos na Análise de Vendas e Análise por Canal (para consulta de histórico), mas manter bloqueio na tela de Vendas (activeOnly: true)

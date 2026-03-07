@@ -5188,7 +5188,9 @@ export async function getProductMovements(productId: number, companyId?: number,
     conditions.push(gte(productMovements.date, filters.startDate));
   }
   if (filters?.endDate) {
-    conditions.push(lte(productMovements.date, filters.endDate));
+    const endOfDay = new Date(filters.endDate);
+    endOfDay.setHours(23, 59, 59, 999);
+    conditions.push(lte(productMovements.date, endOfDay));
   }
   if (filters?.type) {
     conditions.push(eq(productMovements.type, filters.type as any));
@@ -8986,7 +8988,9 @@ export async function getGovernanceAuditHistory(
     conditions.push(gte(governanceAuditLog.createdAt, filters.startDate));
   }
   if (filters?.endDate) {
-    conditions.push(lte(governanceAuditLog.createdAt, filters.endDate));
+    const endOfDay = new Date(filters.endDate);
+    endOfDay.setHours(23, 59, 59, 999);
+    conditions.push(lte(governanceAuditLog.createdAt, endOfDay));
   }
   
   return db.select()
@@ -9587,7 +9591,9 @@ export async function getRecentPriceHistory(filters: {
     conditions.push(gte(priceHistory.createdAt, filters.startDate));
   }
   if (filters.endDate) {
-    conditions.push(lte(priceHistory.createdAt, filters.endDate));
+    const endOfDay = new Date(filters.endDate);
+    endOfDay.setHours(23, 59, 59, 999);
+    conditions.push(lte(priceHistory.createdAt, endOfDay));
   }
 
   const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
@@ -9624,7 +9630,11 @@ export async function getPriceHistoryStats(companyId: number, startDate?: Date, 
 
   const conditions: SQL[] = [eq(priceHistory.companyId, companyId)];
   if (startDate) conditions.push(gte(priceHistory.createdAt, startDate));
-  if (endDate) conditions.push(lte(priceHistory.createdAt, endDate));
+  if (endDate) {
+    const endOfDay = new Date(endDate);
+    endOfDay.setHours(23, 59, 59, 999);
+    conditions.push(lte(priceHistory.createdAt, endOfDay));
+  }
 
   const whereClause = and(...conditions);
 
@@ -9912,7 +9922,10 @@ export async function getAllProductMovements(params: {
     conditions.push(gte(productMovements.date, params.startDate));
   }
   if (params.endDate) {
-    conditions.push(lte(productMovements.date, params.endDate));
+    // Ajustar endDate para final do dia (23:59:59.999) para incluir registros do dia inteiro
+    const endOfDay = new Date(params.endDate);
+    endOfDay.setHours(23, 59, 59, 999);
+    conditions.push(lte(productMovements.date, endOfDay));
   }
 
   const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
@@ -9970,7 +9983,11 @@ export async function getMovementStats(companyId?: number, startDate?: Date, end
   const conditions: any[] = [];
   if (companyId) conditions.push(eq(productMovements.companyId, companyId));
   if (startDate) conditions.push(gte(productMovements.date, startDate));
-  if (endDate) conditions.push(lte(productMovements.date, endDate));
+  if (endDate) {
+    const endOfDay = new Date(endDate);
+    endOfDay.setHours(23, 59, 59, 999);
+    conditions.push(lte(productMovements.date, endOfDay));
+  }
   const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
   // Contagem por tipo

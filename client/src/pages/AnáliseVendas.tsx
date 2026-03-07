@@ -122,7 +122,7 @@ export default function AnáliseVendas() {
   };
 
   // Buscar produtos, subcategorias e categorias para filtros
-  const { data: products } = trpc.products.list.useQuery(undefined, { enabled: isAdmin });
+  const { data: products } = trpc.products.list.useQuery({ activeOnly: false }, { enabled: isAdmin });
   const { data: subcategories } = trpc.subcategories.list.useQuery(undefined, { enabled: isAdmin });
   const { data: categories } = trpc.categories.list.useQuery(undefined, { enabled: isAdmin });
 
@@ -826,7 +826,7 @@ export default function AnáliseVendas() {
                       {filteredProducts.map((prod) => (
                         <div
                           key={prod.id}
-                          className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
+                          className="px-3 py-2 hover:bg-gray-100 cursor-pointer flex items-center gap-2"
                           onClick={() => {
                             if (!selectedProductIds.includes(prod.id)) {
                               setSelectedProductIds([...selectedProductIds, prod.id]);
@@ -834,7 +834,8 @@ export default function AnáliseVendas() {
                             setProductSearch("");
                           }}
                         >
-                          {prod.name}
+                          <span className={prod.active ? '' : 'text-gray-400'}>{prod.name}</span>
+                          {!prod.active && <span className="text-xs bg-gray-200 text-gray-500 px-1.5 py-0.5 rounded">Inativo</span>}
                         </div>
                       ))}
                     </div>

@@ -1,0 +1,9 @@
+{
+  "query": "INSERT INTO productMovements (companyId, branchId, productId, date, type, quantity, documentNumber, userId, notes) VALUES (1, 1, 2820001, '2026-03-06 21:00:00', 'ESTORNO', '-600.000', 'Edição Compra #02032026', 'system', 'Estorno retroativo - Edição de compra confirmada #02032026 (quantidade corrigida de 600 para 24)'), (1, 1, 2820001, '2026-03-06 21:00:01', 'ENTRADA', '24.000', 'Edição Compra #02032026', 'system', 'Re-entrada retroativa - Edição de compra confirmada #02032026 (quantidade corrigida de 600 para 24)');",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute INSERT INTO productMovements (companyId, branchId, productId, date, type, quantity, documentNumber, userId, notes) VALUES (1, 1, 2820001, '2026-03-06 21:00:00', 'ESTORNO', '-600.000', 'Edição Compra #02032026', 'system', 'Estorno retroativo - Edição de compra confirmada #02032026 (quantidade corrigida de 600 para 24)'), (1, 1, 2820001, '2026-03-06 21:00:01', 'ENTRADA', '24.000', 'Edição Compra #02032026', 'system', 'Re-entrada retroativa - Edição de compra confirmada #02032026 (quantidade corrigida de 600 para 24)');",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 350
+}

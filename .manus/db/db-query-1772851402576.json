@@ -1,0 +1,91 @@
+{
+  "query": "SELECT pm.id, pm.productId, pm.type, pm.quantity, pm.documentNumber, pm.notes, pm.date FROM productMovements pm WHERE pm.documentNumber LIKE '%02032026%' OR pm.notes LIKE '%Fumax%' LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT pm.id, pm.productId, pm.type, pm.quantity, pm.documentNumber, pm.notes, pm.date FROM productMovements pm WHERE pm.documentNumber LIKE '%02032026%' OR pm.notes LIKE '%Fumax%' LIMIT 10;",
+  "rows": [
+    {
+      "id": "23940017",
+      "productId": "1860007",
+      "type": "ENTRADA",
+      "quantity": "20.000",
+      "documentNumber": "02032026",
+      "notes": "Compra confirmada - Fornecedor: Vuelta Abajo",
+      "date": "2026-03-02 21:33:04"
+    },
+    {
+      "id": "23940018",
+      "productId": "1530013",
+      "type": "ENTRADA",
+      "quantity": "10.000",
+      "documentNumber": "02032026",
+      "notes": "Compra confirmada - Fornecedor: Vuelta Abajo",
+      "date": "2026-03-02 21:33:04"
+    },
+    {
+      "id": "23940019",
+      "productId": "1530008",
+      "type": "ENTRADA",
+      "quantity": "10.000",
+      "documentNumber": "02032026",
+      "notes": "Compra confirmada - Fornecedor: Vuelta Abajo",
+      "date": "2026-03-02 21:33:04"
+    },
+    {
+      "id": "23940020",
+      "productId": "1860005",
+      "type": "ENTRADA",
+      "quantity": "10.000",
+      "documentNumber": "02032026",
+      "notes": "Compra confirmada - Fornecedor: Vuelta Abajo",
+      "date": "2026-03-02 21:33:04"
+    },
+    {
+      "id": "23940021",
+      "productId": "2820001",
+      "type": "ENTRADA",
+      "quantity": "600.000",
+      "documentNumber": "02032026",
+      "notes": "Compra confirmada - Fornecedor: Vuelta Abajo",
+      "date": "2026-03-02 21:33:04"
+    },
+    {
+      "id": "23940022",
+      "productId": "1560005",
+      "type": "ENTRADA",
+      "quantity": "560.000",
+      "documentNumber": "02032026",
+      "notes": "Compra confirmada - Fornecedor: Vuelta Abajo",
+      "date": "2026-03-02 21:33:04"
+    },
+    {
+      "id": "23940023",
+      "productId": "1860003",
+      "type": "ENTRADA",
+      "quantity": "14.000",
+      "documentNumber": "02032026",
+      "notes": "Compra confirmada - Fornecedor: Vuelta Abajo",
+      "date": "2026-03-02 21:33:04"
+    },
+    {
+      "id": "23940024",
+      "productId": "1410011",
+      "type": "ENTRADA",
+      "quantity": "10.000",
+      "documentNumber": "02032026",
+      "notes": "Compra confirmada - Fornecedor: Vuelta Abajo",
+      "date": "2026-03-02 21:33:04"
+    },
+    {
+      "id": "23940025",
+      "productId": "6480001",
+      "type": "ENTRADA",
+      "quantity": "12.000",
+      "documentNumber": "02032026",
+      "notes": "Compra confirmada - Fornecedor: Vuelta Abajo",
+      "date": "2026-03-02 21:33:04"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tproductId\ttype\tquantity\tdocumentNumber\tnotes\tdate\n23940017\t1860007\tENTRADA\t20.000\t02032026\tCompra confirmada - Fornecedor: Vuelta Abajo\t2026-03-02 21:33:04\n23940018\t1530013\tENTRADA\t10.000\t02032026\tCompra confirmada - Fornecedor: Vuelta Abajo\t2026-03-02 21:33:04\n23940019\t1530008\tENTRADA\t10.000\t02032026\tCompra confirmada - Fornecedor: Vuelta Abajo\t2026-03-02 21:33:04\n23940020\t1860005\tENTRADA\t10.000\t02032026\tCompra confirmada - Fornecedor: Vuelta Abajo\t2026-03-02 21:33:04\n23940021\t2820001\tENTRADA\t600.000\t02032026\tCompra confirmada - Fornecedor: Vuelta Abajo\t2026-03-02 21:33:04\n23940022\t1560005\tENTRADA\t560.000\t02032026\tCompra confirmada - Fornecedor: Vuelta Abajo\t2026-03-02 21:33:04\n23940023\t1860003\tENTRADA\t14.000\t02032026\tCompra confirmada - Fornecedor: Vuelta Abajo\t2026-03-02 21:33:04\n23940024\t1410011\tENTRADA\t10.000\t02032026\tCompra confirmada - Fornecedor: Vuelta Abajo\t2026-03-02 21:33:04\n23940025\t6480001\tENTRADA\t12.000\t02032026\tCompra confirmada - Fornecedor: Vuelta Abajo\t2026-03-02 21:33:04\n",
+  "stderr": "",
+  "execution_time_ms": 382
+}

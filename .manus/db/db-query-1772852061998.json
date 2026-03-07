@@ -1,0 +1,34 @@
+{
+  "query": "SELECT id, companyId, branchId, productId, date, type, quantity, documentNumber, userId, notes FROM productMovements WHERE productId = 2820001 AND type IN ('ESTORNO', 'ENTRADA') AND userId = 'system' ORDER BY date DESC LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT id, companyId, branchId, productId, date, type, quantity, documentNumber, userId, notes FROM productMovements WHERE productId = 2820001 AND type IN ('ESTORNO', 'ENTRADA') AND userId = 'system' ORDER BY date DESC LIMIT 5;",
+  "rows": [
+    {
+      "id": "25320017",
+      "companyId": "1",
+      "branchId": "1",
+      "productId": "2820001",
+      "date": "2026-03-06 21:00:01",
+      "type": "ENTRADA",
+      "quantity": "24.000",
+      "documentNumber": "Edição Compra #02032026",
+      "userId": "system",
+      "notes": "Re-entrada retroativa - Edição de compra confirmada #02032026 (quantidade corrigida de 600 para 24)"
+    },
+    {
+      "id": "25320016",
+      "companyId": "1",
+      "branchId": "1",
+      "productId": "2820001",
+      "date": "2026-03-06 21:00:00",
+      "type": "ESTORNO",
+      "quantity": "-600.000",
+      "documentNumber": "Edição Compra #02032026",
+      "userId": "system",
+      "notes": "Estorno retroativo - Edição de compra confirmada #02032026 (quantidade corrigida de 600 para 24)"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tcompanyId\tbranchId\tproductId\tdate\ttype\tquantity\tdocumentNumber\tuserId\tnotes\n25320017\t1\t1\t2820001\t2026-03-06 21:00:01\tENTRADA\t24.000\tEdição Compra #02032026\tsystem\tRe-entrada retroativa - Edição de compra confirmada #02032026 (quantidade corrigida de 600 para 24)\n25320016\t1\t1\t2820001\t2026-03-06 21:00:00\tESTORNO\t-600.000\tEdição Compra #02032026\tsystem\tEstorno retroativo - Edição de compra confirmada #02032026 (quantidade corrigida de 600 para 24)\n",
+  "stderr": "",
+  "execution_time_ms": 362
+}

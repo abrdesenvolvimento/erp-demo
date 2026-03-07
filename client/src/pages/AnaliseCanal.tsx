@@ -47,7 +47,7 @@ export default function AnaliseCanal() {
   const [filtersExpanded, setFiltersExpanded] = useState(false);
 
   // Buscar lista de produtos para filtro
-  const { data: products } = trpc.products.list.useQuery();
+  const { data: products } = trpc.products.list.useQuery({ activeOnly: false });
 
   // Produtos filtrados pelo search
   const filteredProducts = useMemo(() => {
@@ -356,10 +356,11 @@ export default function AnaliseCanal() {
                       {filteredProducts.map((product) => (
                         <div
                           key={product.id}
-                          className="px-3 py-2 hover:bg-muted cursor-pointer text-sm"
+                          className="px-3 py-2 hover:bg-muted cursor-pointer text-sm flex items-center gap-2"
                           onClick={() => addProduct(product.id)}
                         >
-                          {product.name}
+                          <span className={product.active ? '' : 'text-muted-foreground'}>{product.name}</span>
+                          {!product.active && <span className="text-xs bg-gray-200 text-gray-500 px-1.5 py-0.5 rounded">Inativo</span>}
                         </div>
                       ))}
                     </div>
