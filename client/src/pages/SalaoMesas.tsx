@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Plus, Users, Clock, DollarSign, Settings, ChefHat, X, UtensilsCrossed, RefreshCw } from "lucide-react";
+import { Plus, Users, Clock, DollarSign, Settings, ChefHat, X, UtensilsCrossed, RefreshCw, Bell } from "lucide-react";
 import { useLocation } from "wouter";
 
 type TableStatus = "FREE" | "OCCUPIED" | "WAITING_PAYMENT" | "RESERVED";
@@ -47,10 +47,6 @@ export default function SalaoMesas() {
     { enabled: companyId > 0, refetchInterval: 15000 }
   );
 
-  const { data: stats } = trpc.salon.getDashboardStats.useQuery(
-    { companyId },
-    { enabled: companyId > 0, refetchInterval: 15000 }
-  );
 
   // Mutations
   const openOrderMutation = trpc.salon.openOrder.useMutation({
@@ -166,7 +162,7 @@ export default function SalaoMesas() {
       </div>
 
       {/* Stats bar */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-3 gap-3">
         <Card className="border-green-200 bg-green-50">
           <CardContent className="p-3">
             <p className="text-xs text-green-600 font-medium">Livres</p>
@@ -183,12 +179,6 @@ export default function SalaoMesas() {
           <CardContent className="p-3">
             <p className="text-xs text-blue-600 font-medium">Aguardando Pgto</p>
             <p className="text-2xl font-bold text-blue-700">{waitingTables}</p>
-          </CardContent>
-        </Card>
-        <Card className="border-primary/20 bg-primary/5">
-          <CardContent className="p-3">
-            <p className="text-xs text-primary font-medium">Faturamento Hoje</p>
-            <p className="text-2xl font-bold text-primary">{formatCurrency(stats?.todayRevenue ?? 0)}</p>
           </CardContent>
         </Card>
       </div>
@@ -240,6 +230,13 @@ export default function SalaoMesas() {
                   <p className="text-xs text-muted-foreground mb-1 truncate">{table.name}</p>
                 )}
 
+                {/* Ready items notification badge */}
+                {order && (order as any).readyItems > 0 && (
+                  <div className="absolute -top-2 -right-2 bg-green-500 text-white rounded-full min-w-[22px] h-[22px] flex items-center justify-center text-[11px] font-bold shadow-md animate-pulse">
+                    {(order as any).readyItems}
+                  </div>
+                )}
+
                 {/* Order info */}
                 {order ? (
                   <div className="space-y-1 mt-2">
@@ -257,6 +254,12 @@ export default function SalaoMesas() {
                       <div className="flex items-center gap-1 text-xs font-semibold text-foreground">
                         <DollarSign className="h-3 w-3" />
                         <span>{formatCurrency(parseFloat(String(order.totalAmount)))}</span>
+                      </div>
+                    )}
+                    {(order as any).readyItems > 0 && (
+                      <div className="flex items-center gap-1 text-xs font-semibold text-green-600 bg-green-50 rounded px-1.5 py-0.5 mt-1">
+                        <Bell className="h-3 w-3" />
+                        <span>{(order as any).readyItems} pronto(s)</span>
                       </div>
                     )}
                     {order.waiterName && (

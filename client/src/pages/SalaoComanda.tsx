@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRoute, useLocation } from "wouter";
 import DashboardLayout from "@/components/DashboardLayout";
 import { trpc } from "@/lib/trpc";
@@ -13,7 +13,7 @@ import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import {
   ArrowLeft, Plus, Minus, Trash2, Send, CreditCard, DollarSign,
-  QrCode, Users, Clock, ChefHat, CheckCircle2, Search, X
+  QrCode, Users, Clock, ChefHat, CheckCircle2, Search, X, Bell
 } from "lucide-react";
 
 const PAYMENT_METHODS = [
@@ -57,10 +57,36 @@ export default function SalaoComanda() {
     { enabled: orderId > 0 && companyId > 0, refetchInterval: 10000 }
   );
 
-  const { data: products = [] } = trpc.salon.listSalonProducts.useQuery(
-    { companyId, search: productSearch || undefined },
-    { enabled: addItemModal && companyId > 0 }
+  const { data: products = [], isFetching: productsFetching } = trpc.salon.listSalonProducts.useQuery(
+    { companyId, search: productSearch },
+    { enabled: addItemModal && companyId > 0 && productSearch.length >= 2 }
   );
+
+  // Track ready items for notification
+  const prevReadyCountRef = useRef<number>(0);
+  useEffect(() => {
+    if (!order?.items) return;
+    const readyCount = order.items.filter((i: any) => i.status === "READY").length;
+    if (readyCount > prevReadyCountRef.current && prevReadyCountRef.current >= 0) {
+      const newReady = readyCount - prevReadyCountRef.current;
+      if (prevReadyCountRef.current > 0 || readyCount > 0) {
+        // Only notify if there are new ready items (not on first load)
+        if (prevReadyCountRef.current > 0) {
+          toast.success(
+            `${newReady} item(ns) pronto(s) para servir!`,
+            { icon: "🔔", duration: 8000 }
+          );
+          // Play notification sound
+          try {
+            const audio = new Audio("data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbsGczFjmR0teleUMlTIzO5tqFUjA3dLjl4ZRiQjlhk8Db0JlnTjpLeLPW1KV0VDdJYJDI2a6Hn3dPKUlbj8nYqnRLLUhSSZOQzNOtcEw0R1BFR0dMTk5QUlRWWFpcXmBiZGZoamxucHJ0dnp8gIKEhoiKjI6QkpSWmJqcnqCipKaoqqyusLK0tri6vL7AwsTGyMrMztDS1NbY2tze4OLk5ujq7O7w8vT2+Pr8/v8=");
+            audio.volume = 0.5;
+            audio.play().catch(() => {});
+          } catch {}
+        }
+      }
+    }
+    prevReadyCountRef.current = readyCount;
+  }, [order?.items]);
 
   // Mutations
   const addItemMutation = trpc.salon.addItem.useMutation({
@@ -212,6 +238,16 @@ export default function SalaoComanda() {
         </Badge>
       </div>
 
+      {/* Ready items notification banner */}
+      {activeItems.filter((i: any) => i.status === "READY").length > 0 && (
+        <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg animate-pulse">
+          <Bell className="h-5 w-5 text-green-600" />
+          <span className="text-sm font-semibold text-green-700">
+            {activeItems.filter((i: any) => i.status === "READY").length} item(ns) pronto(s) para servir!
+          </span>
+        </div>
+      )}
+
       {/* Items list */}
       <Card>
         <CardHeader className="pb-3">
@@ -234,8 +270,9 @@ export default function SalaoComanda() {
           ) : (
             activeItems.map((item: any) => {
               const statusCfg = ITEM_STATUS_CONFIG[item.status] ?? ITEM_STATUS_CONFIG.PENDING;
+              const isReady = item.status === "READY";
               return (
-                <div key={item.id} className="flex items-start gap-3 py-2 border-b last:border-0">
+                <div key={item.id} className={`flex items-start gap-3 py-2 border-b last:border-0 ${isReady ? "bg-green-50 border-l-4 border-l-green-500 pl-2 rounded-r" : ""}`}>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <span className="font-medium text-sm">{item.productName}</span>
@@ -365,9 +402,17 @@ export default function SalaoComanda() {
                   />
                 </div>
                 <div className="max-h-64 overflow-y-auto space-y-1">
-                  {products.length === 0 ? (
+                  {productSearch.length < 2 ? (
                     <p className="text-center text-sm text-muted-foreground py-4">
-                      {productSearch ? "Nenhum produto encontrado" : "Nenhum produto disponível no salão"}
+                      Digite o nome do produto para buscar...
+                    </p>
+                  ) : productsFetching ? (
+                    <div className="flex justify-center py-4">
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary" />
+                    </div>
+                  ) : products.length === 0 ? (
+                    <p className="text-center text-sm text-muted-foreground py-4">
+                      Nenhum produto encontrado
                     </p>
                   ) : (
                     products.map((p: any) => (

@@ -1789,3 +1789,8 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 
 ### Bugs Pós-Entrega Fase 1 — Rodada 3 (07/03/2026)
 - [x] BUG: Busca de produtos na comanda AINDA retorna vazio — causa raiz: código usava tabela inexistente `channelPrices` (SQL raw) ao invés de `productPrices` (Drizzle schema). A query de preços falhava com erro 500, quebrando toda a resposta. Corrigido: substituída query raw por Drizzle query usando `productPrices` + `salesChannels`, com try-catch para não quebrar listagem se preço falhar. Também corrigido `addItem` que tinha o mesmo problema.
+
+### Melhorias Salão — Rodada 4 (07/03/2026)
+- [x] UX: Busca de produtos na comanda — mostrar resultados apenas conforme digita (mínimo 2 caracteres, com loading spinner)
+- [x] FEATURE: Notificação ao garçom quando cozinha/bar marca item como "Pronto" — badge pulsante no card da mesa + banner verde na comanda + toast com som + destaque verde nos itens prontos
+- [x] UX: Remover card "Faturamento Hoje" da tela de mesas do Salão (já existe no Dashboard)

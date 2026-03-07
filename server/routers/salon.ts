@@ -83,7 +83,7 @@ export const salonRouter = router({
         .filter(t => t.status !== "FREE")
         .map(t => t.id);
 
-      let activeOrders: Array<{ tableId: number; id: number; guestCount: number; totalAmount: string; openedAt: Date | null; waiterName: string | null }> = [];
+      let activeOrders: Array<{ tableId: number; id: number; guestCount: number; totalAmount: string; openedAt: Date | null; waiterName: string | null; status: string }> = [];
       if (occupiedTableIds.length > 0) {
         activeOrders = await db
           .select({
@@ -93,6 +93,7 @@ export const salonRouter = router({
             totalAmount: salonOrders.totalAmount,
             openedAt: salonOrders.openedAt,
             waiterName: salonOrders.waiterName,
+            status: salonOrders.status,
           })
           .from(salonOrders)
           .where(
@@ -103,7 +104,27 @@ export const salonRouter = router({
           );
       }
 
-      const ordersByTable = new Map(activeOrders.map(o => [o.tableId, o]));
+      // Count ready items per order for notification badges
+      const orderIds = activeOrders.map(o => o.id);
+      let readyCountByOrder = new Map<number, number>();
+      if (orderIds.length > 0) {
+        const readyCounts = await db
+          .select({
+            orderId: salonOrderItems.orderId,
+            count: sql<number>`COUNT(*)`,
+          })
+          .from(salonOrderItems)
+          .where(
+            and(
+              inArray(salonOrderItems.orderId, orderIds),
+              eq(salonOrderItems.status, "READY")
+            )
+          )
+          .groupBy(salonOrderItems.orderId);
+        readyCountByOrder = new Map(readyCounts.map(r => [r.orderId, Number(r.count)]));
+      }
+
+      const ordersByTable = new Map(activeOrders.map(o => [o.tableId, { ...o, readyItems: readyCountByOrder.get(o.id) ?? 0 }]));
 
       return tables.map(t => ({
         ...t,
