@@ -6,70 +6,73 @@ import { describe, it, expect } from 'vitest';
 
 describe('Correção de endDate em filtros de auditoria', () => {
 
-  it('deve ajustar endDate para final do dia (23:59:59.999)', () => {
-    // Simula o que o backend agora faz
-    const endDate = new Date('2026-03-07'); // meia-noite UTC
-    const endOfDay = new Date(endDate);
-    endOfDay.setHours(23, 59, 59, 999);
-
-    expect(endOfDay.getHours()).toBe(23);
-    expect(endOfDay.getMinutes()).toBe(59);
-    expect(endOfDay.getSeconds()).toBe(59);
-    expect(endOfDay.getMilliseconds()).toBe(999);
-  });
-
-  it('deve incluir registros do mesmo dia que estão após meia-noite UTC', () => {
-    const endDate = new Date('2026-03-07');
-    const endOfDay = new Date(endDate);
-    endOfDay.setHours(23, 59, 59, 999);
-
-    // Registro inserido às 02:00 UTC (23h BRT do dia 06)
-    const recordDate = new Date('2026-03-07T02:00:00.000Z');
-    
-    // Sem correção: meia-noite UTC excluiria o registro
-    expect(recordDate > endDate).toBe(true);
-    
-    // Com correção: final do dia inclui o registro
-    expect(recordDate <= endOfDay).toBe(true);
-  });
-
-  it('deve incluir registros até 23:59:59 do dia selecionado', () => {
-    // Simula o comportamento do backend: endDate chega como Date, setHours ajusta
+  it('deve usar próximo dia meia-noite UTC para filtro de endDate', () => {
+    // Simula o que o backend agora faz: nextDay UTC + lt()
     const endDate = new Date('2026-03-07T00:00:00.000Z');
-    const endOfDay = new Date(endDate);
-    endOfDay.setUTCHours(23, 59, 59, 999);
+    const nextDay = new Date(endDate);
+    nextDay.setUTCDate(nextDay.getUTCDate() + 1);
 
-    // Registro no final do dia UTC
-    const lateRecord = new Date('2026-03-07T23:59:59.000Z');
-    expect(lateRecord.getTime() <= endOfDay.getTime()).toBe(true);
+    expect(nextDay.toISOString()).toBe('2026-03-08T00:00:00.000Z');
+    expect(nextDay.getUTCHours()).toBe(0);
+    expect(nextDay.getUTCMinutes()).toBe(0);
+  });
 
-    // Registro no dia seguinte deve ser excluído
+  it('deve incluir registros de qualquer hora do dia com nextDay UTC', () => {
+    const endDate = new Date('2026-03-07T00:00:00.000Z');
+    const nextDay = new Date(endDate);
+    nextDay.setUTCDate(nextDay.getUTCDate() + 1);
+
+    // Registro inserido às 02:00 UTC
+    const record02 = new Date('2026-03-07T02:00:00.000Z');
+    expect(record02.getTime() < nextDay.getTime()).toBe(true);
+
+    // Registro inserido às 07:19 UTC (que antes era excluído com setHours)
+    const record07 = new Date('2026-03-07T07:19:10.000Z');
+    expect(record07.getTime() < nextDay.getTime()).toBe(true);
+
+    // Registro inserido às 23:59 UTC
+    const record23 = new Date('2026-03-07T23:59:59.000Z');
+    expect(record23.getTime() < nextDay.getTime()).toBe(true);
+  });
+
+  it('deve excluir registros do dia seguinte com nextDay UTC + lt()', () => {
+    const endDate = new Date('2026-03-07T00:00:00.000Z');
+    const nextDay = new Date(endDate);
+    nextDay.setUTCDate(nextDay.getUTCDate() + 1);
+
+    // Registro exatamente na meia-noite do dia seguinte deve ser excluído (lt, não lte)
+    const midnightNext = new Date('2026-03-08T00:00:00.000Z');
+    expect(midnightNext.getTime() < nextDay.getTime()).toBe(false);
+
+    // Registro 1 segundo após meia-noite do dia seguinte
     const nextDayRecord = new Date('2026-03-08T00:00:01.000Z');
-    expect(nextDayRecord.getTime() <= endOfDay.getTime()).toBe(false);
+    expect(nextDayRecord.getTime() < nextDay.getTime()).toBe(false);
   });
 
   it('não deve alterar o startDate (continua como meia-noite UTC)', () => {
     const startDate = new Date('2026-02-05T00:00:00.000Z');
-    // startDate permanece como está - meia-noite UTC
     expect(startDate.getUTCHours()).toBe(0);
     expect(startDate.getUTCMinutes()).toBe(0);
   });
 
-  it('deve funcionar corretamente para todos os meses', () => {
-    const months = [
-      '2026-01-31', '2026-02-28', '2026-03-31',
-      '2026-04-30', '2026-06-30', '2026-12-31',
-    ];
+  it('deve funcionar corretamente para virada de mês e ano', () => {
+    // Final de janeiro -> 1 fevereiro
+    const jan31 = new Date('2026-01-31T00:00:00.000Z');
+    const nextJan = new Date(jan31);
+    nextJan.setUTCDate(nextJan.getUTCDate() + 1);
+    expect(nextJan.toISOString()).toBe('2026-02-01T00:00:00.000Z');
 
-    months.forEach(dateStr => {
-      const endDate = new Date(dateStr);
-      const endOfDay = new Date(endDate);
-      endOfDay.setHours(23, 59, 59, 999);
-      
-      expect(endOfDay.getHours()).toBe(23);
-      expect(endOfDay.getMinutes()).toBe(59);
-      expect(endOfDay.getSeconds()).toBe(59);
-    });
+    // Final de fevereiro -> 1 março
+    const feb28 = new Date('2026-02-28T00:00:00.000Z');
+    const nextFeb = new Date(feb28);
+    nextFeb.setUTCDate(nextFeb.getUTCDate() + 1);
+    expect(nextFeb.toISOString()).toBe('2026-03-01T00:00:00.000Z');
+
+    // Final de dezembro -> 1 janeiro do próximo ano
+    const dec31 = new Date('2026-12-31T00:00:00.000Z');
+    const nextDec = new Date(dec31);
+    nextDec.setUTCDate(nextDec.getUTCDate() + 1);
+    expect(nextDec.toISOString()).toBe('2027-01-01T00:00:00.000Z');
   });
 });
 

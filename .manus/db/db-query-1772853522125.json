@@ -1,0 +1,230 @@
+{
+  "query": "SELECT pm.id, pm.productId, p.name, pm.date, pm.type, pm.quantity, pm.documentNumber, pm.notes, pm.createdAt \nFROM productMovements pm \nJOIN products p ON pm.productId = p.id \nWHERE pm.companyId = 1 AND pm.type IN ('ESTORNO', 'ACERTO') \nORDER BY pm.date DESC \nLIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT pm.id, pm.productId, p.name, pm.date, pm.type, pm.quantity, pm.documentNumber, pm.notes, pm.createdAt \nFROM productMovements pm \nJOIN products p ON pm.productId = p.id \nWHERE pm.companyId = 1 AND pm.type IN ('ESTORNO', 'ACERTO') \nORDER BY pm.date DESC \nLIMIT 20;",
+  "rows": [
+    {
+      "id": "25320012",
+      "productId": "5370001",
+      "name": "Fumax 250gr",
+      "date": "2026-03-07 02:19:10",
+      "type": "ACERTO",
+      "quantity": "-7.000",
+      "documentNumber": "NULL",
+      "notes": "Correção de Estoque",
+      "createdAt": "2026-03-07 02:19:10"
+    },
+    {
+      "id": "25200041",
+      "productId": "2430001",
+      "name": "Rothmans / LM Unidade",
+      "date": "2026-03-06 23:52:59",
+      "type": "ACERTO",
+      "quantity": "50.000",
+      "documentNumber": "NULL",
+      "notes": "Correção de Estoque",
+      "createdAt": "2026-03-06 23:52:58"
+    },
+    {
+      "id": "25320016",
+      "productId": "2820001",
+      "name": "Fumax 500gr",
+      "date": "2026-03-06 21:00:00",
+      "type": "ESTORNO",
+      "quantity": "-600.000",
+      "documentNumber": "Edição Compra #02032026",
+      "notes": "Estorno retroativo - Edição de compra confirmada #02032026 (quantidade corrigida de 600 para 24)",
+      "createdAt": "2026-03-07 02:44:07"
+    },
+    {
+      "id": "25170002",
+      "productId": "1230008",
+      "name": "Cabaré Ice Limão 275ml",
+      "date": "2026-03-06 20:42:12",
+      "type": "ACERTO",
+      "quantity": "6.000",
+      "documentNumber": "NULL",
+      "notes": "Correção Estoque",
+      "createdAt": "2026-03-06 20:42:11"
+    },
+    {
+      "id": "25050001",
+      "productId": "1050004",
+      "name": "Red Bull Melancia 250ml",
+      "date": "2026-03-06 16:42:44",
+      "type": "ACERTO",
+      "quantity": "-25.000",
+      "documentNumber": "NULL",
+      "notes": "Correção de Estoque",
+      "createdAt": "2026-03-06 16:42:43"
+    },
+    {
+      "id": "24810012",
+      "productId": "4470001",
+      "name": "Kyrios Dry 950ml",
+      "date": "2026-03-05 20:41:38",
+      "type": "ACERTO",
+      "quantity": "-18.000",
+      "documentNumber": "NULL",
+      "notes": "Correção de Estoque",
+      "createdAt": "2026-03-05 20:41:38"
+    },
+    {
+      "id": "24810011",
+      "productId": "2550003",
+      "name": "Dober Melancia 900ml",
+      "date": "2026-03-05 20:41:27",
+      "type": "ACERTO",
+      "quantity": "-6.000",
+      "documentNumber": "NULL",
+      "notes": "Correção de Estoque",
+      "createdAt": "2026-03-05 20:41:27"
+    },
+    {
+      "id": "24810010",
+      "productId": "2490014",
+      "name": "Dober Dry 900ml",
+      "date": "2026-03-05 20:41:18",
+      "type": "ACERTO",
+      "quantity": "-26.000",
+      "documentNumber": "NULL",
+      "notes": "Correção de Estoque",
+      "createdAt": "2026-03-05 20:41:18"
+    },
+    {
+      "id": "24780044",
+      "productId": "690013",
+      "name": "Copo Ultra 700ml",
+      "date": "2026-03-05 18:03:44",
+      "type": "ACERTO",
+      "quantity": "-275.000",
+      "documentNumber": "NULL",
+      "notes": "Correção de Estoque",
+      "createdAt": "2026-03-05 18:03:44"
+    },
+    {
+      "id": "24780020",
+      "productId": "720002",
+      "name": "Frescca 510ml",
+      "date": "2026-03-05 18:01:13",
+      "type": "ACERTO",
+      "quantity": "-118.000",
+      "documentNumber": "NULL",
+      "notes": "Correção de Estoque",
+      "createdAt": "2026-03-05 18:01:12"
+    },
+    {
+      "id": "24780019",
+      "productId": "1080001",
+      "name": "Red Bull 250ml",
+      "date": "2026-03-05 17:59:42",
+      "type": "ACERTO",
+      "quantity": "4.000",
+      "documentNumber": "NULL",
+      "notes": "Correção de Estoque",
+      "createdAt": "2026-03-05 17:59:41"
+    },
+    {
+      "id": "24780018",
+      "productId": "690007",
+      "name": "Grau Maça Verde 2l",
+      "date": "2026-03-05 17:58:46",
+      "type": "ACERTO",
+      "quantity": "-10.000",
+      "documentNumber": "NULL",
+      "notes": "Correção de Estoque",
+      "createdAt": "2026-03-05 17:58:45"
+    },
+    {
+      "id": "24780017",
+      "productId": "660013",
+      "name": "Baly Coco e Açai 2l",
+      "date": "2026-03-05 17:58:30",
+      "type": "ACERTO",
+      "quantity": "-2.000",
+      "documentNumber": "NULL",
+      "notes": "Correção de Estoque",
+      "createdAt": "2026-03-05 17:58:29"
+    },
+    {
+      "id": "24780016",
+      "productId": "660009",
+      "name": "Baly Tropical 2l",
+      "date": "2026-03-05 17:58:18",
+      "type": "ACERTO",
+      "quantity": "-8.000",
+      "documentNumber": "NULL",
+      "notes": "Correção de Estoque",
+      "createdAt": "2026-03-05 17:58:17"
+    },
+    {
+      "id": "24780015",
+      "productId": "660011",
+      "name": "Baly Morango e Pêssego 2l",
+      "date": "2026-03-05 17:57:52",
+      "type": "ACERTO",
+      "quantity": "-18.000",
+      "documentNumber": "NULL",
+      "notes": "Correção de Estoque",
+      "createdAt": "2026-03-05 17:57:51"
+    },
+    {
+      "id": "24780014",
+      "productId": "660010",
+      "name": "Baly Melancia 2l",
+      "date": "2026-03-05 17:57:47",
+      "type": "ACERTO",
+      "quantity": "-24.000",
+      "documentNumber": "NULL",
+      "notes": "Correção de Estoque",
+      "createdAt": "2026-03-05 17:57:47"
+    },
+    {
+      "id": "24780013",
+      "productId": "660013",
+      "name": "Baly Coco e Açai 2l",
+      "date": "2026-03-05 17:57:30",
+      "type": "ACERTO",
+      "quantity": "-16.000",
+      "documentNumber": "NULL",
+      "notes": "Correção de Estoque",
+      "createdAt": "2026-03-05 17:57:30"
+    },
+    {
+      "id": "24780012",
+      "productId": "660012",
+      "name": "Baly Maça Verde 2l",
+      "date": "2026-03-05 17:57:14",
+      "type": "ACERTO",
+      "quantity": "-4.000",
+      "documentNumber": "NULL",
+      "notes": "Correção de Estoque",
+      "createdAt": "2026-03-05 17:57:13"
+    },
+    {
+      "id": "24780011",
+      "productId": "660011",
+      "name": "Baly Morango e Pêssego 2l",
+      "date": "2026-03-05 17:56:57",
+      "type": "ACERTO",
+      "quantity": "-6.000",
+      "documentNumber": "NULL",
+      "notes": "Correção de Estoque",
+      "createdAt": "2026-03-05 17:56:57"
+    },
+    {
+      "id": "24780010",
+      "productId": "660010",
+      "name": "Baly Melancia 2l",
+      "date": "2026-03-05 17:56:50",
+      "type": "ACERTO",
+      "quantity": "-6.000",
+      "documentNumber": "NULL",
+      "notes": "Correção de Estoque",
+      "createdAt": "2026-03-05 17:56:50"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tproductId\tname\tdate\ttype\tquantity\tdocumentNumber\tnotes\tcreatedAt\n25320012\t5370001\tFumax 250gr\t2026-03-07 02:19:10\tACERTO\t-7.000\tNULL\tCorreção de Estoque\t2026-03-07 02:19:10\n25200041\t2430001\tRothmans / LM Unidade\t2026-03-06 23:52:59\tACERTO\t50.000\tNULL\tCorreção de Estoque\t2026-03-06 23:52:58\n25320016\t2820001\tFumax 500gr\t2026-03-06 21:00:00\tESTORNO\t-600.000\tEdição Compra #02032026\tEstorno retroativo - Edição de compra confirmada #02032026 (quantidade corrigida de 600 para 24)\t2026-03-07 02:44:07\n25170002\t1230008\tCabaré Ice Limão 275ml\t2026-03-06 20:42:12\tACERTO\t6.000\tNULL\tCorreção Estoque\t2026-03-06 20:42:11\n25050001\t1050004\tRed Bull Melancia 250ml\t2026-03-06 16:42:44\tACERTO\t-25.000\tNULL\tCorreção de Estoque\t2026-03-06 16:42:43\n24810012\t4470001\tKyrios Dry 950ml\t2026-03-05 20:41:38\tACERTO\t-18.000\tNULL\tCorreção de Estoque\t2026-03-05 20:41:38\n24810011\t2550003\tDober Melancia 900ml\t2026-03-05 20:41:27\tACERTO\t-6.000\tNULL\tCorreção de Estoque\t2026-03-05 20:41:27\n24810010\t2490014\tDober Dry 900ml\t2026-03-05 20:41:18\tACERTO\t-26.000\tNULL\tCorreção de Estoque\t2026-03-05 20:41:18\n24780044\t690013\tCopo Ultra 700ml\t2026-03-05 18:03:44\tACERTO\t-275.000\tNULL\tCorreção de Estoque\t2026-03-05 18:03:44\n24780020\t720002\tFrescca 510ml\t2026-03-05 18:01:13\tACERTO\t-118.000\tNULL\tCorreção de Estoque\t2026-03-05 18:01:12\n24780019\t1080001\tRed Bull 250ml\t2026-03-05 17:59:42\tACERTO\t4.000\tNULL\tCorreção de Estoque\t2026-03-05 17:59:41\n24780018\t690007\tGrau Maça Verde 2l\t2026-03-05 17:58:46\tACERTO\t-10.000\tNULL\tCorreção de Estoque\t2026-03-05 17:58:45\n24780017\t660013\tBaly Coco e Açai 2l\t2026-03-05 17:58:30\tACERTO\t-2.000\tNULL\tCorreção de Estoque\t2026-03-05 17:58:29\n24780016\t660009\tBaly Tropical 2l\t2026-03-05 17:58:18\tACERTO\t-8.000\tNULL\tCorreção de Estoque\t2026-03-05 17:58:17\n24780015\t660011\tBaly Morango e Pêssego 2l\t2026-03-05 17:57:52\tACERTO\t-18.000\tNULL\tCorreção de Estoque\t2026-03-05 17:57:51\n24780014\t660010\tBaly Melancia 2l\t2026-03-05 17:57:47\tACERTO\t-24.000\tNULL\tCorreção de Estoque\t2026-03-05 17:57:47\n24780013\t660013\tBaly Coco e Açai 2l\t2026-03-05 17:57:30\tACERTO\t-16.000\tNULL\tCorreção de Estoque\t2026-03-05 17:57:30\n24780012\t660012\tBaly Maça Verde 2l\t2026-03-05 17:57:14\tACERTO\t-4.000\tNULL\tCorreção de Estoque\t2026-03-05 17:57:13\n24780011\t660011\tBaly Morango e Pêssego 2l\t2026-03-05 17:56:57\tACERTO\t-6.000\tNULL\tCorreção de Estoque\t2026-03-05 17:56:57\n24780010\t660010\tBaly Melancia 2l\t2026-03-05 17:56:50\tACERTO\t-6.000\tNULL\tCorreção de Estoque\t2026-03-05 17:56:50\n",
+  "stderr": "",
+  "execution_time_ms": 393
+}

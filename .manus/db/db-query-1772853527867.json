@@ -1,0 +1,90 @@
+{
+  "query": "SELECT pm.id, p.name, pm.date, pm.type, pm.quantity, pm.notes \nFROM productMovements pm \nJOIN products p ON pm.productId = p.id \nWHERE pm.companyId = 1 AND p.name LIKE '%Fumax%' \nORDER BY pm.date DESC \nLIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT pm.id, p.name, pm.date, pm.type, pm.quantity, pm.notes \nFROM productMovements pm \nJOIN products p ON pm.productId = p.id \nWHERE pm.companyId = 1 AND p.name LIKE '%Fumax%' \nORDER BY pm.date DESC \nLIMIT 10;",
+  "rows": [
+    {
+      "id": "25320018",
+      "name": "Fumax 500gr",
+      "date": "2026-03-07 02:59:46",
+      "type": "SAIDA",
+      "quantity": "-1.000",
+      "notes": "Venda A_PRAZO - A Prazo"
+    },
+    {
+      "id": "25320012",
+      "name": "Fumax 250gr",
+      "date": "2026-03-07 02:19:10",
+      "type": "ACERTO",
+      "quantity": "-7.000",
+      "notes": "Correção de Estoque"
+    },
+    {
+      "id": "25230025",
+      "name": "Fumax 500gr",
+      "date": "2026-03-07 00:42:14",
+      "type": "SAIDA",
+      "quantity": "-1.000",
+      "notes": "Venda A_PRAZO - A Prazo"
+    },
+    {
+      "id": "25320017",
+      "name": "Fumax 500gr",
+      "date": "2026-03-06 21:00:01",
+      "type": "ENTRADA",
+      "quantity": "24.000",
+      "notes": "Re-entrada retroativa - Edição de compra confirmada #02032026 (quantidade corrigida de 600 para 24)"
+    },
+    {
+      "id": "25320016",
+      "name": "Fumax 500gr",
+      "date": "2026-03-06 21:00:00",
+      "type": "ESTORNO",
+      "quantity": "-600.000",
+      "notes": "Estorno retroativo - Edição de compra confirmada #02032026 (quantidade corrigida de 600 para 24)"
+    },
+    {
+      "id": "23940021",
+      "name": "Fumax 500gr",
+      "date": "2026-03-02 21:33:04",
+      "type": "ENTRADA",
+      "quantity": "600.000",
+      "notes": "Compra confirmada - Fornecedor: Vuelta Abajo"
+    },
+    {
+      "id": "17520056",
+      "name": "Fumax 250gr",
+      "date": "2026-02-15 00:09:32",
+      "type": "SAIDA",
+      "quantity": "-1.000",
+      "notes": "Venda BALCAO - Cartão de Débito"
+    },
+    {
+      "id": "17460005",
+      "name": "Fumax 250gr",
+      "date": "2026-02-14 20:03:49",
+      "type": "SAIDA",
+      "quantity": "-1.000",
+      "notes": "Venda BALCAO - Cartão de Débito"
+    },
+    {
+      "id": "17400013",
+      "name": "Fumax 250gr",
+      "date": "2026-02-14 16:12:44",
+      "type": "SAIDA",
+      "quantity": "-1.000",
+      "notes": "Venda A_PRAZO - A Prazo"
+    },
+    {
+      "id": "17310003",
+      "name": "Fumax 250gr",
+      "date": "2026-02-14 14:53:45",
+      "type": "SAIDA",
+      "quantity": "-2.000",
+      "notes": "Venda BALCAO - Cartão de Crédito"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tdate\ttype\tquantity\tnotes\n25320018\tFumax 500gr\t2026-03-07 02:59:46\tSAIDA\t-1.000\tVenda A_PRAZO - A Prazo\n25320012\tFumax 250gr\t2026-03-07 02:19:10\tACERTO\t-7.000\tCorreção de Estoque\n25230025\tFumax 500gr\t2026-03-07 00:42:14\tSAIDA\t-1.000\tVenda A_PRAZO - A Prazo\n25320017\tFumax 500gr\t2026-03-06 21:00:01\tENTRADA\t24.000\tRe-entrada retroativa - Edição de compra confirmada #02032026 (quantidade corrigida de 600 para 24)\n25320016\tFumax 500gr\t2026-03-06 21:00:00\tESTORNO\t-600.000\tEstorno retroativo - Edição de compra confirmada #02032026 (quantidade corrigida de 600 para 24)\n23940021\tFumax 500gr\t2026-03-02 21:33:04\tENTRADA\t600.000\tCompra confirmada - Fornecedor: Vuelta Abajo\n17520056\tFumax 250gr\t2026-02-15 00:09:32\tSAIDA\t-1.000\tVenda BALCAO - Cartão de Débito\n17460005\tFumax 250gr\t2026-02-14 20:03:49\tSAIDA\t-1.000\tVenda BALCAO - Cartão de Débito\n17400013\tFumax 250gr\t2026-02-14 16:12:44\tSAIDA\t-1.000\tVenda A_PRAZO - A Prazo\n17310003\tFumax 250gr\t2026-02-14 14:53:45\tSAIDA\t-2.000\tVenda BALCAO - Cartão de Crédito\n",
+  "stderr": "",
+  "execution_time_ms": 376
+}
