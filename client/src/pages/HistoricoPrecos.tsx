@@ -59,11 +59,21 @@ function getChangeBadge(percent: number | string | null | undefined, changeType?
   if (isNaN(num)) return <Badge variant="outline" className="text-gray-500">—</Badge>;
   if (num === 0) return <Badge variant="outline" className="text-gray-500">0%</Badge>;
   const isCusto = changeType === 'CUSTO_MEDIO';
+  const absNum = Math.abs(num);
+  
+  // Outlier: variação > ±200% — destacar com cor âmbar e ícone de alerta
+  if (absNum > 200) {
+    return (
+      <Badge className="bg-amber-100 text-amber-800 border-amber-300" title="Outlier: excluído do cálculo de média">
+        {formatPercent(num)} ⚠
+      </Badge>
+    );
+  }
+  
   // Venda: aumento = verde (bom), redução = vermelho (ruim)
   // Custo: aumento = vermelho (ruim), redução = verde (bom)
   const isPositiveForBusiness = isCusto ? (num < 0) : (num > 0);
   const isNegativeForBusiness = isCusto ? (num > 0) : (num < 0);
-  const absNum = Math.abs(num);
   
   if (isNegativeForBusiness && absNum > 10) return <Badge className="bg-red-100 text-red-700 border-red-200">{formatPercent(num)}</Badge>;
   if (isNegativeForBusiness) return <Badge className="bg-red-50 text-red-600 border-red-200">{formatPercent(num)}</Badge>;
@@ -247,6 +257,12 @@ export default function HistoricoPrecos() {
                   </div>
                 </div>
               </div>
+              {Number((statsData as any)?.venda?.outlierCount) > 0 && (
+                <p className="text-[10px] text-amber-600 mt-2 flex items-center gap-1">
+                  <AlertCircle className="h-3 w-3" />
+                  {(statsData as any).venda.outlierCount} outlier(s) excluído(s) da média (variação {'>'} ±{(statsData as any)?.outlierThreshold || 200}%)
+                </p>
+              )}
             </CardContent>
           </Card>
           
@@ -284,6 +300,12 @@ export default function HistoricoPrecos() {
                   </div>
                 </div>
               </div>
+              {Number((statsData as any)?.custo?.outlierCount) > 0 && (
+                <p className="text-[10px] text-amber-600 mt-2 flex items-center gap-1">
+                  <AlertCircle className="h-3 w-3" />
+                  {(statsData as any).custo.outlierCount} outlier(s) excluído(s) da média (variação {'>'} ±{(statsData as any)?.outlierThreshold || 200}%)
+                </p>
+              )}
             </CardContent>
           </Card>
           
@@ -330,10 +352,19 @@ export default function HistoricoPrecos() {
         </div>
         
         {/* Resumo geral */}
-        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+        <div className="flex items-center gap-4 text-sm text-muted-foreground flex-wrap">
           <span>Total geral: <strong className="text-foreground">{statsData?.totalChanges || 0}</strong> alterações</span>
           <span>·</span>
           <span>Produtos afetados: <strong className="text-foreground">{statsData?.mostChanged?.length || 0}</strong></span>
+          {Number((statsData as any)?.outlierCount) > 0 && (
+            <>
+              <span>·</span>
+              <span className="text-amber-600">
+                <AlertCircle className="h-3 w-3 inline mr-1" />
+                {(statsData as any).outlierCount} outlier(s) excluído(s) das médias
+              </span>
+            </>
+          )}
         </div>
         
         {/* Tabs */}

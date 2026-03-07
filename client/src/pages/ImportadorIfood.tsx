@@ -763,12 +763,16 @@ export default function ImportadorIfood() {
                                 onClick={async () => {
                                 setUpdatingPrice(true);
                                 try {
-                                  await updateChannelPriceMutation.mutateAsync({
+                                  const result = await updateChannelPriceMutation.mutateAsync({
                                     productId: item.productId!,
                                     channelId: 2, // iFood
                                     newPrice: item.ifoodPrice,
                                   });
-                                  toast.success(`Preço atualizado para ${formatCurrency(item.ifoodPrice)}`);
+                                  if ((result as any).skipped) {
+                                    toast.info(`Preço já estava atualizado (${formatCurrency(item.ifoodPrice)})`);
+                                  } else {
+                                    toast.success(`Preço atualizado para ${formatCurrency(item.ifoodPrice)}`);
+                                  }
                                   // Reprocessar arquivos para atualizar preview
                                   if (ordersFile && itemsFile) {
                                     await handleProcessFiles();

@@ -9639,12 +9639,18 @@ export async function getPriceHistoryStats(companyId: number, startDate?: Date, 
 
   const whereClause = and(...conditions);
 
+  // Limiar para outliers: variações acima de ±200% são consideradas atípicas
+  // e excluídas do cálculo de média para não distorcer a análise
+  const OUTLIER_THRESHOLD = 200;
+
   // Estatísticas segmentadas por tipo (PRECO_VENDA vs CUSTO_MEDIO)
+  // Excluindo outliers (variações > ±200%) do cálculo de média
   const segmentedResult = await db.select({
     changeType: priceHistory.changeType,
     total: sql<number>`COUNT(*)`,
-    avgIncrease: sql<number>`AVG(CASE WHEN CAST(changePercent AS DECIMAL(8,2)) > 0 THEN CAST(changePercent AS DECIMAL(8,2)) ELSE NULL END)`,
-    avgDecrease: sql<number>`AVG(CASE WHEN CAST(changePercent AS DECIMAL(8,2)) < 0 THEN CAST(changePercent AS DECIMAL(8,2)) ELSE NULL END)`,
+    avgIncrease: sql<number>`AVG(CASE WHEN CAST(changePercent AS DECIMAL(10,2)) > 0 AND CAST(changePercent AS DECIMAL(10,2)) <= ${OUTLIER_THRESHOLD} THEN CAST(changePercent AS DECIMAL(10,2)) ELSE NULL END)`,
+    avgDecrease: sql<number>`AVG(CASE WHEN CAST(changePercent AS DECIMAL(10,2)) < 0 AND CAST(changePercent AS DECIMAL(10,2)) >= ${-OUTLIER_THRESHOLD} THEN CAST(changePercent AS DECIMAL(10,2)) ELSE NULL END)`,
+    outlierCount: sql<number>`SUM(CASE WHEN ABS(CAST(changePercent AS DECIMAL(10,2))) > ${OUTLIER_THRESHOLD} THEN 1 ELSE 0 END)`,
   })
     .from(priceHistory)
     .where(whereClause)
@@ -9654,6 +9660,7 @@ export async function getPriceHistoryStats(companyId: number, startDate?: Date, 
   const custoStats = segmentedResult.find(r => r.changeType === 'CUSTO_MEDIO');
 
   const totalChanges = segmentedResult.reduce((sum, r) => sum + Number(r.total || 0), 0);
+  const totalOutliers = segmentedResult.reduce((sum, r) => sum + Number(r.outlierCount || 0), 0);
 
   // Média geral (mantida para compatibilidade)
   const allIncreases = segmentedResult.filter(r => r.avgIncrease).map(r => Number(r.avgIncrease));
@@ -9677,15 +9684,19 @@ export async function getPriceHistoryStats(companyId: number, startDate?: Date, 
     avgIncrease,
     avgDecrease,
     mostChanged,
+    outlierCount: totalOutliers,
+    outlierThreshold: OUTLIER_THRESHOLD,
     venda: {
       total: Number(vendaStats?.total || 0),
       avgIncrease: Number(vendaStats?.avgIncrease || 0),
       avgDecrease: Number(vendaStats?.avgDecrease || 0),
+      outlierCount: Number(vendaStats?.outlierCount || 0),
     },
     custo: {
       total: Number(custoStats?.total || 0),
       avgIncrease: Number(custoStats?.avgIncrease || 0),
       avgDecrease: Number(custoStats?.avgDecrease || 0),
+      outlierCount: Number(custoStats?.outlierCount || 0),
     },
   };
 }

@@ -247,12 +247,19 @@ export const ifoodImportRouter = router({
         .limit(1);
 
       const oldPrice = existing.length > 0 ? existing[0].price?.toString() || '0.00' : '0.00';
+      const newPriceStr = input.newPrice.toFixed(2);
+
+      // Se o preço já é o mesmo (ex: já foi corrigido por outro pedido com o mesmo produto),
+      // pular a atualização e o registro de auditoria para evitar duplicação
+      if (parseFloat(oldPrice) === parseFloat(newPriceStr)) {
+        return { success: true, skipped: true, message: 'Preço já está atualizado' };
+      }
 
       if (existing.length > 0) {
         // Atualizar preço existente
         await db.update(productPrices)
           .set({ 
-            price: input.newPrice.toFixed(2),
+            price: newPriceStr,
             updatedAt: getNowInBrazil()
           })
           .where(and(
@@ -264,32 +271,29 @@ export const ifoodImportRouter = router({
         await db.insert(productPrices).values({
           productId: input.productId,
           channelId: input.channelId,
-          price: input.newPrice.toFixed(2),
+          price: newPriceStr,
           companyId: ctx.activeCompanyId ?? 1,
         });
       }
 
       // === AUDITORIA: Rastrear alteração de preço via divergência iFood ===
-      const newPriceStr = input.newPrice.toFixed(2);
-      if (parseFloat(oldPrice) !== parseFloat(newPriceStr)) {
-        try {
-          await logPriceChange({
-            companyId: ctx.activeCompanyId ?? 1,
-            branchId: ctx.activeBranchId ?? 1,
-            productId: input.productId,
-            changeType: 'PRECO_VENDA',
-            channelId: input.channelId,
-            previousValue: oldPrice,
-            newValue: newPriceStr,
-            userId: ctx.user?.id || 'system',
-            userName: `iFood Divergência (${ctx.user?.name || 'Sistema'})`,
-          });
-        } catch (e) {
-          console.error('[priceHistory] Erro ao registrar alteração de preço via iFood:', e);
-        }
+      try {
+        await logPriceChange({
+          companyId: ctx.activeCompanyId ?? 1,
+          branchId: ctx.activeBranchId ?? 1,
+          productId: input.productId,
+          changeType: 'PRECO_VENDA',
+          channelId: input.channelId,
+          previousValue: oldPrice,
+          newValue: newPriceStr,
+          userId: ctx.user?.id || 'system',
+          userName: `iFood Divergência (${ctx.user?.name || 'Sistema'})`,
+        });
+      } catch (e) {
+        console.error('[priceHistory] Erro ao registrar alteração de preço via iFood:', e);
       }
 
-      return { success: true };
+      return { success: true, skipped: false };
     }),
 
   // Processar arquivos JSON do iFood

@@ -1746,3 +1746,5 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] BUG: Auditoria de Movimentações de Estoque — corrigido: setHours(23,59,59) era timezone-dependent (servidor UTC-5), trocado para nextDay UTC + lt() em todas as funções
 - [x] BUG: Filtro de busca por produto na Auditoria de Movimentações — verificado: funciona corretamente após restart do servidor
 - [x] Implementar debounce (300ms) no filtro de busca em 7 telas: Mov. Estoque, Histórico de Preços, Log de Alterações, Contas Gerenciais, Plano de Contas, Análise Delivery, Contas a Receber
+- [x] BUG: Importador iFood edita preço duas vezes — corrigido: updateChannelPrice agora verifica se preço já está atualizado antes de gravar, evitando duplicação no histórico de preços
+- [x] Implementar tratamento de outliers nas estatísticas do Histórico de Preços — variações > ±200% excluídas das médias, com indicador visual âmbar nos cards e nas linhas da tabela
