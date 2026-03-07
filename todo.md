@@ -1734,3 +1734,7 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Otimizar queries dos cards de resumo - já usam COUNT(*)/SUM() agregados no banco
 - [x] Aplicar filtro de período padrão (últimos 30 dias) nas 3 telas de auditoria
 - [x] Criar índices nas tabelas: productMovements(companyId,date), priceHistory(companyId,createdAt), auditLog(companyId,createdAt)
+
+### Bugs Reportados - Movimentações de Estoque (06/03/2026)
+- [x] BUG: Histórico de Movimentações por produto trazendo movimentações de OUTROS produtos — corrigido: .where() encadeado no Drizzle sobrescrevia filtro de productId, trocado para and() com array de condições
+- [x] BUG: Edição de compra confirmada não registrava movimentação de estorno — corrigido: adicionado createProductMovement (ESTORNO + re-ENTRADA) em updatePurchaseOrderItems

@@ -1572,6 +1572,23 @@ export async function updatePurchaseOrderItems(
     const newStock = currentStock - quantityPurchased;
     
     await updateProduct(prod.id, { currentStock: newStock });
+    
+    // Registrar movimentação de ESTORNO para rastreabilidade
+    try {
+      await createProductMovement({
+        companyId: po.purchaseOrder.companyId ?? 1,
+        branchId: po.purchaseOrder.branchId ?? 1,
+        productId: prod.id,
+        date: new Date(),
+        type: 'ESTORNO',
+        quantity: (-quantityPurchased).toString(),
+        documentNumber: `Edição Compra #${po.purchaseOrder.docNumber || purchaseOrderId}`,
+        userId: po.purchaseOrder.createdBy || 'system',
+        notes: `Estorno por edição de compra confirmada #${po.purchaseOrder.docNumber || purchaseOrderId}`,
+      });
+    } catch (e) {
+      console.error('[productMovements] Erro ao registrar estorno por edição de compra:', e);
+    }
   }
   
   // Deletar itens atuais
@@ -1619,6 +1636,23 @@ export async function updatePurchaseOrderItems(
     }
     
     await updateProduct(prod.id, updateData);
+    
+    // Registrar movimentação de ENTRADA para rastreabilidade
+    try {
+      await createProductMovement({
+        companyId: po.purchaseOrder.companyId ?? 1,
+        branchId: po.purchaseOrder.branchId ?? 1,
+        productId: prod.id,
+        date: new Date(),
+        type: 'ENTRADA',
+        quantity: quantity.toString(),
+        documentNumber: `Edição Compra #${po.purchaseOrder.docNumber || purchaseOrderId}`,
+        userId: po.purchaseOrder.createdBy || 'system',
+        notes: `Re-entrada por edição de compra confirmada #${po.purchaseOrder.docNumber || purchaseOrderId}`,
+      });
+    } catch (e) {
+      console.error('[productMovements] Erro ao registrar re-entrada por edição de compra:', e);
+    }
     
     // === AUDITORIA: Rastrear alteração de custo médio via edição de compra ===
     const oldAvgCost = currentAvgCostCents / 100;
@@ -5145,6 +5179,21 @@ export async function getProductMovements(productId: number, companyId?: number,
   const db = await getDb();
   if (!db) return [];
 
+  const conditions: any[] = [eq(productMovements.productId, productId)];
+  
+  if (companyId) {
+    conditions.push(eq(productMovements.companyId, companyId));
+  }
+  if (filters?.startDate) {
+    conditions.push(gte(productMovements.date, filters.startDate));
+  }
+  if (filters?.endDate) {
+    conditions.push(lte(productMovements.date, filters.endDate));
+  }
+  if (filters?.type) {
+    conditions.push(eq(productMovements.type, filters.type as any));
+  }
+
   let query = db
     .select({
       id: productMovements.id,
@@ -5160,23 +5209,8 @@ export async function getProductMovements(productId: number, companyId?: number,
     })
     .from(productMovements)
     .leftJoin(users, eq(productMovements.userId, users.id))
-    .where(eq(productMovements.productId, productId))
+    .where(and(...conditions))
     .$dynamic();
-  if (companyId) {
-    query = query.where(eq(productMovements.companyId, companyId));
-  }
-
-  if (filters?.startDate) {
-    query = query.where(gte(productMovements.date, filters.startDate));
-  }
-
-  if (filters?.endDate) {
-    query = query.where(lte(productMovements.date, filters.endDate));
-  }
-
-  if (filters?.type) {
-    query = query.where(eq(productMovements.type, filters.type as any));
-  }
 
   query = query.orderBy(desc(productMovements.date));
 
