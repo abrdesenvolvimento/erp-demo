@@ -11,6 +11,73 @@ import { SaleDetailsModal } from "@/components/SaleDetailsModal";
 import { CompactSalesCalendar } from "@/components/CompactSalesCalendar";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { formatDateBR } from "@shared/dateUtils";
+import { useCompany } from "@/contexts/CompanyContext";
+import { UtensilsCrossed } from "lucide-react";
+
+function SalonDashboardSection() {
+  const { data: salonStats, isLoading } = trpc.salon.getDashboardStats.useQuery();
+  return (
+    <div className="grid gap-4 md:grid-cols-3">
+      <Link href="/salao/mesas">
+        <Card className="border-t-4 border-t-orange-500 cursor-pointer hover:shadow-md transition-shadow">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Mesas Ocupadas</CardTitle>
+            <UtensilsCrossed className="h-4 w-4 text-orange-500" />
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <div className="text-sm text-muted-foreground">Carregando...</div>
+            ) : (
+              <>
+                <div className="text-2xl font-bold text-orange-600">
+                  {salonStats?.occupiedTables ?? 0} / {salonStats?.totalTables ?? 0}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">mesas em uso agora</p>
+                <p className="text-xs text-orange-600 mt-2">Clique para gerenciar mesas →</p>
+              </>
+            )}
+          </CardContent>
+        </Card>
+      </Link>
+      <Card className="border-t-4 border-t-amber-500">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">Faturamento Salão Hoje</CardTitle>
+          <DollarSign className="h-4 w-4 text-amber-500" />
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="text-sm text-muted-foreground">Carregando...</div>
+          ) : (
+            <>
+              <div className="text-2xl font-bold text-amber-600">
+                R$ {new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2 }).format(parseFloat(salonStats?.todayRevenue ?? '0'))}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">{salonStats?.todayOrders ?? 0} comandas encerradas</p>
+            </>
+          )}
+        </CardContent>
+      </Card>
+      <Card className="border-t-4 border-t-rose-500">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">Ticket Médio Salão</CardTitle>
+          <ShoppingCart className="h-4 w-4 text-rose-500" />
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="text-sm text-muted-foreground">Carregando...</div>
+          ) : (
+            <>
+              <div className="text-2xl font-bold text-rose-600">
+                R$ {new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2 }).format(parseFloat(salonStats?.avgTicket ?? '0'))}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">por comanda hoje</p>
+            </>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
 
 export default function Home() {
   const { user } = useAuth();
@@ -18,6 +85,8 @@ export default function Home() {
   const isConsultor = user?.role === "consultor";
   const isOperacional = user?.role === "operacional";
   const canViewFinancials = isAdmin || isConsultor; // Admin e Consultor podem ver informações financeiras
+  const { activeCompany } = useCompany();
+  const isHamburgueria = activeCompany?.segment === 'Hamburgueria' || activeCompany?.companyId === 2;
   const { data: stats, isLoading } = trpc.dashboard.stats.useQuery();
   const { data: purchaseStats, isLoading: isPurchaseLoading } = trpc.dashboard.purchaseStats.useQuery();
   const { data: marginData, isLoading: isMarginLoading } = trpc.dashboard.grossMarginByCategory.useQuery();
@@ -480,6 +549,17 @@ export default function Home() {
             <CompactSalesCalendar />
           </CardContent>
         </Card>
+        )}
+
+        {/* Seção do Salão — apenas para Hamburgueria */}
+        {isHamburgueria && (
+          <div>
+            <h2 className="text-base font-semibold mb-3 flex items-center gap-2">
+              <UtensilsCrossed className="h-4 w-4 text-orange-600" />
+              Atendimento de Salão
+            </h2>
+            <SalonDashboardSection />
+          </div>
         )}
 
       </div>

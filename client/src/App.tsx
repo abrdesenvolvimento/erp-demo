@@ -33,6 +33,11 @@ import CanaisVenda from "./pages/CanaisVenda";
 import HistoricoPrecos from "./pages/HistoricoPrecos";
 import LogAlteracoes from "./pages/LogAlteracoes";
 import AuditoriaMovimentacoes from "./pages/AuditoriaMovimentacoes";
+import SalaoMesas from "./pages/SalaoMesas";
+import SalaoComanda from "./pages/SalaoComanda";
+import SalaoKDSCozinha from "./pages/SalaoKDSCozinha";
+import SalaoKDSBar from "./pages/SalaoKDSBar";
+import SalaoGorjeta from "./pages/SalaoGorjeta";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
@@ -74,6 +79,11 @@ function Router() {
       <Route path="/historico-precos" component={HistoricoPrecos} />
       <Route path="/log-alteracoes" component={LogAlteracoes} />
       <Route path="/auditoria-movimentacoes" component={AuditoriaMovimentacoes} />
+      <Route path="/salao/mesas" component={SalaoMesas} />
+      <Route path="/salao/comanda/:orderId" component={SalaoComanda} />
+      <Route path="/salao/kds-cozinha" component={SalaoKDSCozinha} />
+      <Route path="/salao/kds-bar" component={SalaoKDSBar} />
+      <Route path="/salao/gorjeta" component={SalaoGorjeta} />
       <Route path="/acesso-negado" component={AccessDenied} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />

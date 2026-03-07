@@ -22,7 +22,7 @@ import {
 import { APP_LOGO, APP_TITLE, getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
-import { LayoutDashboard, LogOut, PanelLeft, Users, Package, ShoppingCart, BarChart3, ShoppingBag, Receipt, DollarSign, CreditCard, UserCircle, Shield, TrendingUp, Bike, ChevronDown, ChevronRight, PieChart, GitCompare, Wallet, Target, FileText, BookOpen, Calculator, Upload, Building2, MapPin, Check, Tags, Store, Settings, History, ClipboardList, PackageOpen } from "lucide-react";
+import { LayoutDashboard, LogOut, PanelLeft, Users, Package, ShoppingCart, BarChart3, ShoppingBag, Receipt, DollarSign, CreditCard, UserCircle, Shield, TrendingUp, Bike, ChevronDown, ChevronRight, PieChart, GitCompare, Wallet, Target, FileText, BookOpen, Calculator, Upload, Building2, MapPin, Check, Tags, Store, Settings, History, ClipboardList, PackageOpen, UtensilsCrossed, LayoutGrid, ChefHat, BarChart2 } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
@@ -114,6 +114,14 @@ const accountingMenuItems = [
   { icon: Shield, label: "Governança Contábil", path: "/governanca-contabil", roles: ["admin"] },
 ];
 
+// Submenu do Salão (apenas Hamburgueria)
+const salonMenuItems = [
+  { icon: LayoutGrid, label: "Mesas", path: "/salao/mesas", roles: ["admin", "operacional"] },
+  { icon: ChefHat, label: "KDS Cozinha", path: "/salao/kds-cozinha", roles: ["admin", "operacional"] },
+  { icon: UtensilsCrossed, label: "KDS Bar", path: "/salao/kds-bar", roles: ["admin", "operacional"] },
+  { icon: BarChart2, label: "Gorjeta / Garçom", path: "/salao/gorjeta", roles: ["admin"] },
+];
+
 // Submenu de Auditoria
 const auditMenuItems = [
   { icon: History, label: "Histórico de Preços", path: "/historico-precos", roles: ["admin"] },
@@ -144,6 +152,7 @@ const FINANCE_SUBMENU_KEY = "finance-submenu-expanded";
 const ACCOUNTING_SUBMENU_KEY = "accounting-submenu-expanded";
 const ADMIN_SUBMENU_KEY = "admin-submenu-expanded";
 const AUDIT_SUBMENU_KEY = "audit-submenu-expanded";
+const SALON_SUBMENU_KEY = "salon-submenu-expanded";
 const DEFAULT_WIDTH = 280;
 const MIN_WIDTH = 200;
 const MAX_WIDTH = 480;
@@ -302,6 +311,12 @@ function DashboardLayoutContent({
     return saved === 'true';
   });
   
+  // Estado do submenu do salão
+  const [salonExpanded, setSalonExpanded] = useState(() => {
+    const saved = localStorage.getItem(SALON_SUBMENU_KEY);
+    return saved === 'true';
+  });
+  
   // Filtra itens por role
   const filteredMainItems = getMenuItemsForRole(mainMenuItems, user?.role);
   const filteredAnalysisItems = getMenuItemsForRole(analysisMenuItems, user?.role);
@@ -309,6 +324,7 @@ function DashboardLayoutContent({
   const filteredAccountingItems = getMenuItemsForRole(accountingMenuItems, user?.role);
   const filteredAdminItems = getMenuItemsForRole(adminMenuItems, user?.role);
   const filteredAuditItems = getMenuItemsForRole(auditMenuItems, user?.role);
+  const filteredSalonItems = getMenuItemsForRole(salonMenuItems, user?.role);
   
   // Verifica se algum item de análise está ativo
   const isAnalysisActive = filteredAnalysisItems.some(item => item.path === location);
@@ -325,8 +341,11 @@ function DashboardLayoutContent({
   // Verifica se algum item de auditoria está ativo
   const isAuditActive = filteredAuditItems.some(item => item.path === location);
   
+  // Verifica se algum item do salão está ativo
+  const isSalonActive = filteredSalonItems.some(item => item.path === location);
+  
   // Encontra o item ativo atual
-  const allItems = [...filteredMainItems, ...filteredAnalysisItems, ...filteredFinanceItems, ...filteredAccountingItems, ...filteredAdminItems, ...filteredAuditItems];
+  const allItems = [...filteredMainItems, ...filteredAnalysisItems, ...filteredFinanceItems, ...filteredAccountingItems, ...filteredAdminItems, ...filteredAuditItems, ...filteredSalonItems];
   const activeMenuItem = allItems.find(item => item.path === location);
   
   const isMobile = useIsMobile();
@@ -351,6 +370,10 @@ function DashboardLayoutContent({
   useEffect(() => {
     localStorage.setItem(AUDIT_SUBMENU_KEY, auditExpanded.toString());
   }, [auditExpanded]);
+  
+  useEffect(() => {
+    localStorage.setItem(SALON_SUBMENU_KEY, salonExpanded.toString());
+  }, [salonExpanded]);
 
   // Expande automaticamente o submenu se um item de análise estiver ativo
   useEffect(() => {
@@ -386,6 +409,13 @@ function DashboardLayoutContent({
       setAuditExpanded(true);
     }
   }, [isAuditActive]);
+  
+  // Expande automaticamente o submenu do salão se ativo
+  useEffect(() => {
+    if (isSalonActive && !salonExpanded) {
+      setSalonExpanded(true);
+    }
+  }, [isSalonActive]);
 
   useEffect(() => {
     if (isCollapsed) {
@@ -479,6 +509,14 @@ function DashboardLayoutContent({
   // Audit items - apenas admin
   const visibleAuditItems = filteredAuditItems.filter(item => {
     return user?.role === 'admin';
+  });
+  
+  // Salon items - admin e operacional, apenas para empresa Hamburgueria
+  const visibleSalonItems = filteredSalonItems.filter(item => {
+    if (user?.role !== 'admin' && user?.role !== 'operacional') return false;
+    // Mostra apenas se a empresa ativa for Hamburgueria (companyId === 2 ou segment === 'Hamburgueria')
+    const segment = activeCompany?.segment;
+    return segment === 'Hamburgueria' || activeCompanyId === 2;
   });
 
   return (
@@ -912,6 +950,66 @@ function DashboardLayoutContent({
                           <item.icon
                             className={`h-4 w-4 ${isActive ? "text-primary" : ""}`}
                           />
+                          <span>{item.label}</span>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })}
+                </>
+              )}
+
+              {/* Submenu do Salão */}
+              {visibleSalonItems.length > 0 && (
+                <>
+                  <div className="my-2 mx-2 border-t" style={hasCustomTheme ? { borderColor: companyTheme.separatorColor } : { borderColor: 'var(--border)' }} />
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      onClick={() => setSalonExpanded(!salonExpanded)}
+                      tooltip="Salão"
+                      className={`h-10 transition-all font-medium ${isSalonActive ? "bg-accent text-accent-foreground" : ""}`}
+                    >
+                      <UtensilsCrossed className={`h-4 w-4 ${isSalonActive ? "text-primary" : ""}`} />
+                      <span className="flex-1">Salão</span>
+                      {!isCollapsed && (
+                        salonExpanded ? (
+                          <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                        ) : (
+                          <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                        )
+                      )}
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  {salonExpanded && !isCollapsed && (
+                    <div className="ml-4 border-l pl-2" style={hasCustomTheme ? { borderColor: companyTheme.separatorColor } : { borderColor: 'var(--border)' }}>
+                      {visibleSalonItems.map(item => {
+                        const isActive = location === item.path;
+                        return (
+                          <SidebarMenuItem key={item.path}>
+                            <SidebarMenuButton
+                              isActive={isActive}
+                              onClick={() => setLocation(item.path)}
+                              tooltip={item.label}
+                              className={`h-9 transition-all font-normal text-sm`}
+                            >
+                              <item.icon className={`h-4 w-4 ${isActive ? "text-primary" : ""}`} />
+                              <span>{item.label}</span>
+                            </SidebarMenuButton>
+                          </SidebarMenuItem>
+                        );
+                      })}
+                    </div>
+                  )}
+                  {isCollapsed && visibleSalonItems.map(item => {
+                    const isActive = location === item.path;
+                    return (
+                      <SidebarMenuItem key={item.path}>
+                        <SidebarMenuButton
+                          isActive={isActive}
+                          onClick={() => setLocation(item.path)}
+                          tooltip={item.label}
+                          className={`h-10 transition-all font-normal`}
+                        >
+                          <item.icon className={`h-4 w-4 ${isActive ? "text-primary" : ""}`} />
                           <span>{item.label}</span>
                         </SidebarMenuButton>
                       </SidebarMenuItem>

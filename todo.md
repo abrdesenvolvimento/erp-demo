@@ -1748,3 +1748,30 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Implementar debounce (300ms) no filtro de busca em 7 telas: Mov. Estoque, Histórico de Preços, Log de Alterações, Contas Gerenciais, Plano de Contas, Análise Delivery, Contas a Receber
 - [x] BUG: Importador iFood edita preço duas vezes — corrigido: updateChannelPrice agora verifica se preço já está atualizado antes de gravar, evitando duplicação no histórico de preços
 - [x] Implementar tratamento de outliers nas estatísticas do Histórico de Preços — variações > ±200% excluídas das médias, com indicador visual âmbar nos cards e nas linhas da tabela
+
+## Módulo de Atendimento de Salão — A Brasa Reúne (Fase 1)
+
+### Schema e Backend
+- [x] Adicionar campos `productionDestination` (KITCHEN/BAR/BOTH/NONE) e `availableInSalon` ao schema de produtos
+- [x] Criar tabela `salonTables` (mesas: id, companyId, number, name, capacity, status, positionX, positionY)
+- [x] Criar tabela `salonOrders` (comandas: id, companyId, tableId, waiterId, guestCount, status, openedAt, closedAt, totalAmount, tipAmount, tipPercent)
+- [x] Criar tabela `salonOrderItems` (itens da comanda: id, orderId, productId, quantity, unitPrice, notes, productionDestination, status, sentAt, readyAt)
+- [x] Criar tabela `salonOrderPayments` (pagamentos: id, orderId, method, amount, createdAt)
+- [x] Criar tabela `salonConfig` (configurações: companyId, defaultTipPercent, tipEnabled, gratuityLabel)
+- [x] Tabelas criadas via SQL direto (drizzle-kit com prompts interativos)
+- [x] Backend: router `salon` com todos os procedures (mesas, comandas, KDS, config, gorjeta, dashboard)
+- [x] Integração: ao fechar comanda, baixar estoque e registrar venda no financeiro
+
+### Frontend
+- [x] Adicionar campos de salão no cadastro de produto (condicional ao segmento Hamburgueria)
+- [x] Tela: SalaoMesas — planta visual de mesas com status colorido, abertura/encerramento de comanda
+- [x] Tela: SalaoComanda — lançamento de pedidos, cardápio, itens, encerramento com gorjeta e divisão
+- [x] Tela: SalaoKDSCozinha — fila de produção em tempo real (atualização a cada 15s)
+- [x] Tela: SalaoKDSBar — fila de produção em tempo real (atualização a cada 15s)
+- [x] Tela: SalaoGorjeta — relatório de gorjeta e comissão por garçom
+- [x] Menu lateral: seção "Salão" condicional ao segmento Hamburgueria
+- [x] Dashboard: cards de Mesas Ocupadas, Faturamento Salão Hoje, Ticket Médio (condicional Hamburgueria)
+
+### Análises
+- [x] Vendas do salão aparecem com canal "SALÃO" na Análise de Vendas
+- [x] Relatório de gorjeta por garçom (acumulado mensal) — tela SalaoGorjeta

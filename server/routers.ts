@@ -14,6 +14,7 @@ import { companyRouter } from './routers/company';
 import { priceHistoryRouter } from './routers/priceHistory';
 import { auditLogRouter } from './routers/auditLog';
 import { stockMovementsRouter } from './routers/stockMovements';
+import { salonRouter } from './routers/salon';
 
 export const appRouter = router({
   system: systemRouter,
@@ -24,6 +25,7 @@ export const appRouter = router({
   priceHistory: priceHistoryRouter,
   auditLog: auditLogRouter,
   stockMovements: stockMovementsRouter,
+  salon: salonRouter,
 
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),

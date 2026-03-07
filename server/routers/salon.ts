@@ -1,0 +1,824 @@
+import { z } from "zod";
+import { router, protectedProcedure } from "../_core/trpc";
+import { getDb, createSale } from "../db";
+import {
+  salonTables,
+  salonOrders,
+  salonOrderItems,
+  salonOrderPayments,
+  salonConfig,
+  products,
+} from "../../drizzle/schema";
+import { eq, and, inArray, gte, lte, lt, sql } from "drizzle-orm";
+import { getNowInBrazil } from "../../shared/dateUtils";
+
+// ==================== CONFIGURAÇÕES DO SALÃO ====================
+
+export const salonRouter = router({
+
+  // --- Config ---
+  getConfig: protectedProcedure
+    .input(z.object({ companyId: z.number() }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("DB unavailable");
+      const [config] = await db
+        .select()
+        .from(salonConfig)
+        .where(eq(salonConfig.companyId, input.companyId))
+        .limit(1);
+      return config ?? null;
+    }),
+
+  saveConfig: protectedProcedure
+    .input(z.object({
+      companyId: z.number(),
+      defaultTipPercent: z.number().min(0).max(100),
+      tipEnabled: z.boolean(),
+      gratuityLabel: z.string().max(100),
+      kitchenLabel: z.string().max(100),
+      barLabel: z.string().max(100),
+    }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("DB unavailable");
+      await db
+        .insert(salonConfig)
+        .values({
+          companyId: input.companyId,
+          defaultTipPercent: String(input.defaultTipPercent),
+          tipEnabled: input.tipEnabled,
+          gratuityLabel: input.gratuityLabel,
+          kitchenLabel: input.kitchenLabel,
+          barLabel: input.barLabel,
+        })
+        .onDuplicateKeyUpdate({
+          set: {
+            defaultTipPercent: String(input.defaultTipPercent),
+            tipEnabled: input.tipEnabled,
+            gratuityLabel: input.gratuityLabel,
+            kitchenLabel: input.kitchenLabel,
+            barLabel: input.barLabel,
+          },
+        });
+      return { success: true };
+    }),
+
+  // --- Mesas ---
+  listTables: protectedProcedure
+    .input(z.object({ companyId: z.number() }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("DB unavailable");
+      const tables = await db
+        .select()
+        .from(salonTables)
+        .where(and(eq(salonTables.companyId, input.companyId), eq(salonTables.active, true)))
+        .orderBy(salonTables.number);
+
+      // For each occupied table, get the active order
+      const occupiedTableIds = tables
+        .filter(t => t.status !== "FREE")
+        .map(t => t.id);
+
+      let activeOrders: Array<{ tableId: number; id: number; guestCount: number; totalAmount: string; openedAt: Date | null; waiterName: string | null }> = [];
+      if (occupiedTableIds.length > 0) {
+        activeOrders = await db
+          .select({
+            tableId: salonOrders.tableId,
+            id: salonOrders.id,
+            guestCount: salonOrders.guestCount,
+            totalAmount: salonOrders.totalAmount,
+            openedAt: salonOrders.openedAt,
+            waiterName: salonOrders.waiterName,
+          })
+          .from(salonOrders)
+          .where(
+            and(
+              inArray(salonOrders.tableId, occupiedTableIds),
+              inArray(salonOrders.status, ["OPEN", "WAITING_PAYMENT"])
+            )
+          );
+      }
+
+      const ordersByTable = new Map(activeOrders.map(o => [o.tableId, o]));
+
+      return tables.map(t => ({
+        ...t,
+        activeOrder: ordersByTable.get(t.id) ?? null,
+      }));
+    }),
+
+  createTable: protectedProcedure
+    .input(z.object({
+      companyId: z.number(),
+      number: z.number().min(1),
+      name: z.string().optional(),
+      capacity: z.number().min(1).default(4),
+      positionX: z.number().default(0),
+      positionY: z.number().default(0),
+    }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("DB unavailable");
+      const [result] = await db.insert(salonTables).values({
+        companyId: input.companyId,
+        number: input.number,
+        name: input.name,
+        capacity: input.capacity,
+        positionX: input.positionX,
+        positionY: input.positionY,
+      });
+      return { id: (result as any).insertId };
+    }),
+
+  updateTable: protectedProcedure
+    .input(z.object({
+      id: z.number(),
+      companyId: z.number(),
+      number: z.number().min(1).optional(),
+      name: z.string().optional(),
+      capacity: z.number().min(1).optional(),
+      positionX: z.number().optional(),
+      positionY: z.number().optional(),
+      active: z.boolean().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("DB unavailable");
+      const { id, companyId, ...updates } = input;
+      await db
+        .update(salonTables)
+        .set(updates)
+        .where(and(eq(salonTables.id, id), eq(salonTables.companyId, companyId)));
+      return { success: true };
+    }),
+
+  deleteTable: protectedProcedure
+    .input(z.object({ id: z.number(), companyId: z.number() }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("DB unavailable");
+      // Soft delete
+      await db
+        .update(salonTables)
+        .set({ active: false })
+        .where(and(eq(salonTables.id, input.id), eq(salonTables.companyId, input.companyId)));
+      return { success: true };
+    }),
+
+  // --- Comandas ---
+  openOrder: protectedProcedure
+    .input(z.object({
+      companyId: z.number(),
+      tableId: z.number(),
+      tableNumber: z.number(),
+      guestCount: z.number().min(1).default(1),
+      waiterId: z.string().optional(),
+      waiterName: z.string().optional(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const db = await getDb();
+      if (!db) throw new Error("DB unavailable");
+
+      // Check if table already has an open order
+      const [existing] = await db
+        .select({ id: salonOrders.id })
+        .from(salonOrders)
+        .where(
+          and(
+            eq(salonOrders.tableId, input.tableId),
+            inArray(salonOrders.status, ["OPEN", "WAITING_PAYMENT"])
+          )
+        )
+        .limit(1);
+
+      if (existing) {
+        throw new Error(`Mesa ${input.tableNumber} já possui uma comanda aberta (#${existing.id})`);
+      }
+
+      // Create order
+      const [result] = await db.insert(salonOrders).values({
+        companyId: input.companyId,
+        tableId: input.tableId,
+        tableNumber: input.tableNumber,
+        guestCount: input.guestCount,
+        waiterId: input.waiterId ?? ctx.user?.id,
+        waiterName: input.waiterName ?? ctx.user?.name ?? null,
+        status: "OPEN",
+      });
+
+      const orderId = (result as any).insertId;
+
+      // Update table status
+      await db
+        .update(salonTables)
+        .set({ status: "OCCUPIED" })
+        .where(eq(salonTables.id, input.tableId));
+
+      return { id: orderId };
+    }),
+
+  getOrder: protectedProcedure
+    .input(z.object({ orderId: z.number(), companyId: z.number() }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("DB unavailable");
+
+      const [order] = await db
+        .select()
+        .from(salonOrders)
+        .where(and(eq(salonOrders.id, input.orderId), eq(salonOrders.companyId, input.companyId)))
+        .limit(1);
+
+      if (!order) return null;
+
+      const items = await db
+        .select()
+        .from(salonOrderItems)
+        .where(and(eq(salonOrderItems.orderId, input.orderId), eq(salonOrderItems.companyId, input.companyId)))
+        .orderBy(salonOrderItems.createdAt);
+
+      const payments = await db
+        .select()
+        .from(salonOrderPayments)
+        .where(eq(salonOrderPayments.orderId, input.orderId));
+
+      return { ...order, items, payments };
+    }),
+
+  listOpenOrders: protectedProcedure
+    .input(z.object({ companyId: z.number() }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("DB unavailable");
+
+      const orders = await db
+        .select()
+        .from(salonOrders)
+        .where(
+          and(
+            eq(salonOrders.companyId, input.companyId),
+            inArray(salonOrders.status, ["OPEN", "WAITING_PAYMENT"])
+          )
+        )
+        .orderBy(salonOrders.openedAt);
+
+      return orders;
+    }),
+
+  addItem: protectedProcedure
+    .input(z.object({
+      orderId: z.number(),
+      companyId: z.number(),
+      productId: z.number(),
+      quantity: z.number().min(0.001),
+      notes: z.string().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("DB unavailable");
+
+      // Get product info
+      const [product] = await db
+        .select({
+          id: products.id,
+          name: products.name,
+          salePrice: sql<string>`COALESCE((SELECT price FROM channelPrices WHERE productId = ${products.id} AND channel = 'BALCAO' AND companyId = ${input.companyId} LIMIT 1), 0)`,
+          productionDestination: products.productionDestination,
+          availableInSalon: products.availableInSalon,
+          active: products.active,
+        })
+        .from(products)
+        .where(and(eq(products.id, input.productId), eq(products.companyId, input.companyId)))
+        .limit(1);
+
+      if (!product) throw new Error("Produto não encontrado");
+      if (!product.active) throw new Error("Produto inativo");
+      if (!product.availableInSalon) throw new Error("Produto não disponível no salão");
+
+      const unitPrice = parseFloat(product.salePrice) || 0;
+      const totalPrice = unitPrice * input.quantity;
+
+      const [result] = await db.insert(salonOrderItems).values({
+        orderId: input.orderId,
+        companyId: input.companyId,
+        productId: input.productId,
+        productName: product.name,
+        quantity: String(input.quantity),
+        unitPrice: String(unitPrice),
+        totalPrice: String(totalPrice),
+        notes: input.notes,
+        productionDestination: product.productionDestination ?? "NONE",
+        status: "PENDING",
+        sentAt: new Date(),
+      });
+
+      // Recalculate order totals
+      await recalcOrderTotals(db, input.orderId);
+
+      return { id: (result as any).insertId };
+    }),
+
+  removeItem: protectedProcedure
+    .input(z.object({
+      itemId: z.number(),
+      orderId: z.number(),
+      companyId: z.number(),
+    }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("DB unavailable");
+
+      await db
+        .update(salonOrderItems)
+        .set({ status: "CANCELLED" })
+        .where(
+          and(
+            eq(salonOrderItems.id, input.itemId),
+            eq(salonOrderItems.orderId, input.orderId),
+            eq(salonOrderItems.companyId, input.companyId)
+          )
+        );
+
+      await recalcOrderTotals(db, input.orderId);
+      return { success: true };
+    }),
+
+  updateItemStatus: protectedProcedure
+    .input(z.object({
+      itemId: z.number(),
+      status: z.enum(["PENDING", "IN_PROGRESS", "READY", "DELIVERED", "CANCELLED"]),
+    }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("DB unavailable");
+
+      const now = new Date();
+      const updates: Record<string, unknown> = { status: input.status };
+      if (input.status === "IN_PROGRESS") updates.sentAt = now;
+      if (input.status === "READY") updates.readyAt = now;
+      if (input.status === "DELIVERED") updates.deliveredAt = now;
+
+      await db
+        .update(salonOrderItems)
+        .set(updates)
+        .where(eq(salonOrderItems.id, input.itemId));
+
+      return { success: true };
+    }),
+
+  // --- KDS ---
+  getKdsItems: protectedProcedure
+    .input(z.object({
+      companyId: z.number(),
+      destination: z.enum(["KITCHEN", "BAR", "BOTH", "ALL"]),
+    }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("DB unavailable");
+
+      const destinations = input.destination === "ALL"
+        ? ["KITCHEN", "BAR", "BOTH"] as const
+        : input.destination === "BOTH"
+          ? ["KITCHEN", "BAR", "BOTH"] as const
+          : [input.destination, "BOTH"] as const;
+
+      const items = await db
+        .select({
+          id: salonOrderItems.id,
+          orderId: salonOrderItems.orderId,
+          tableNumber: salonOrders.tableNumber,
+          waiterName: salonOrders.waiterName,
+          productName: salonOrderItems.productName,
+          quantity: salonOrderItems.quantity,
+          notes: salonOrderItems.notes,
+          productionDestination: salonOrderItems.productionDestination,
+          status: salonOrderItems.status,
+          sentAt: salonOrderItems.sentAt,
+          createdAt: salonOrderItems.createdAt,
+        })
+        .from(salonOrderItems)
+        .innerJoin(salonOrders, eq(salonOrderItems.orderId, salonOrders.id))
+        .where(
+          and(
+            eq(salonOrderItems.companyId, input.companyId),
+            inArray(salonOrderItems.status, ["PENDING", "IN_PROGRESS"]),
+            inArray(salonOrderItems.productionDestination, destinations as any)
+          )
+        )
+        .orderBy(salonOrderItems.sentAt, salonOrderItems.createdAt);
+
+      return items;
+    }),
+
+  // --- Encerramento de Conta ---
+  requestCheckout: protectedProcedure
+    .input(z.object({
+      orderId: z.number(),
+      companyId: z.number(),
+      tipPercent: z.number().min(0).max(100).default(0),
+    }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("DB unavailable");
+
+      const [order] = await db
+        .select()
+        .from(salonOrders)
+        .where(and(eq(salonOrders.id, input.orderId), eq(salonOrders.companyId, input.companyId)))
+        .limit(1);
+
+      if (!order) throw new Error("Comanda não encontrada");
+      if (order.status !== "OPEN") throw new Error("Comanda não está aberta");
+
+      const subtotal = parseFloat(order.subtotal ?? "0");
+      const tipAmount = subtotal * (input.tipPercent / 100);
+      const totalAmount = subtotal + tipAmount;
+
+      await db
+        .update(salonOrders)
+        .set({
+          status: "WAITING_PAYMENT",
+          tipPercent: String(input.tipPercent),
+          tipAmount: String(tipAmount.toFixed(2)),
+          totalAmount: String(totalAmount.toFixed(2)),
+        })
+        .where(eq(salonOrders.id, input.orderId));
+
+      await db
+        .update(salonTables)
+        .set({ status: "WAITING_PAYMENT" })
+        .where(eq(salonTables.id, order.tableId));
+
+      return { subtotal, tipAmount, totalAmount };
+    }),
+
+  closeOrder: protectedProcedure
+    .input(z.object({
+      orderId: z.number(),
+      companyId: z.number(),
+      branchId: z.number().default(1),
+      payments: z.array(z.object({
+        method: z.enum(["CASH", "CREDIT", "DEBIT", "PIX", "VOUCHER"]),
+        amount: z.number().min(0.01),
+      })),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const db = await getDb();
+      if (!db) throw new Error("DB unavailable");
+
+      const [order] = await db
+        .select()
+        .from(salonOrders)
+        .where(and(eq(salonOrders.id, input.orderId), eq(salonOrders.companyId, input.companyId)))
+        .limit(1);
+
+      if (!order) throw new Error("Comanda não encontrada");
+      if (!["OPEN", "WAITING_PAYMENT"].includes(order.status)) {
+        throw new Error("Comanda já foi encerrada");
+      }
+
+      // Get active items
+      const items = await db
+        .select()
+        .from(salonOrderItems)
+        .where(
+          and(
+            eq(salonOrderItems.orderId, input.orderId),
+            inArray(salonOrderItems.status, ["PENDING", "IN_PROGRESS", "READY", "DELIVERED"])
+          )
+        );
+
+      const subtotal = parseFloat(order.subtotal ?? "0");
+      const tipAmount = parseFloat(order.tipAmount ?? "0");
+      const totalAmount = parseFloat(order.totalAmount ?? "0") || subtotal + tipAmount;
+
+      // Record payments
+      for (const payment of input.payments) {
+        await db.insert(salonOrderPayments).values({
+          orderId: input.orderId,
+          companyId: input.companyId,
+          method: payment.method,
+          amount: String(payment.amount),
+        });
+      }
+
+      // Create sale record (integração com módulo de vendas)
+      const now = getNowInBrazil();
+      const paymentMethod = mapPaymentMethod(input.payments);
+
+      // Use the existing createSale helper which handles stock, movements and accounting
+      const saleItems = items.map(item => ({
+        productId: item.productId,
+        quantity: parseInt(String(Math.round(parseFloat(String(item.quantity))))),
+        unitPrice: String(item.unitPrice),
+        totalPrice: String(item.totalPrice),
+        branchId: input.branchId,
+      }));
+
+      const saleId = await createSale(
+        {
+          companyId: input.companyId,
+          branchId: input.branchId,
+          saleType: "BALCAO" as const,
+          saleDate: now,
+          subtotal: String(subtotal.toFixed(2)),
+          discountAmount: "0.00",
+          surchargeAmount: "0.00",
+          finalAmount: String(totalAmount.toFixed(2)),
+          paymentMethod,
+          notes: `Comanda #${input.orderId} - Mesa ${order.tableNumber} - ${order.guestCount} pessoa(s) - SALÃO`,
+          status: "ACTIVE",
+          createdBy: ctx.user?.id ?? "",
+        },
+        saleItems
+      );
+
+      // Close order
+      await db
+        .update(salonOrders)
+        .set({
+          status: "CLOSED",
+          closedAt: now,
+          saleId,
+          totalAmount: String(totalAmount.toFixed(2)),
+        })
+        .where(eq(salonOrders.id, input.orderId));
+
+      // Free the table
+      await db
+        .update(salonTables)
+        .set({ status: "FREE" })
+        .where(eq(salonTables.id, order.tableId));
+
+      return { success: true, saleId, totalAmount };
+    }),
+
+  cancelOrder: protectedProcedure
+    .input(z.object({
+      orderId: z.number(),
+      companyId: z.number(),
+    }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("DB unavailable");
+
+      const [order] = await db
+        .select()
+        .from(salonOrders)
+        .where(and(eq(salonOrders.id, input.orderId), eq(salonOrders.companyId, input.companyId)))
+        .limit(1);
+
+      if (!order) throw new Error("Comanda não encontrada");
+      if (order.status === "CLOSED") throw new Error("Comanda já encerrada");
+
+      await db
+        .update(salonOrders)
+        .set({ status: "CANCELLED" })
+        .where(eq(salonOrders.id, input.orderId));
+
+      await db
+        .update(salonTables)
+        .set({ status: "FREE" })
+        .where(eq(salonTables.id, order.tableId));
+
+      return { success: true };
+    }),
+
+  // --- Produtos disponíveis no salão ---
+  listSalonProducts: protectedProcedure
+    .input(z.object({
+      companyId: z.number(),
+      search: z.string().optional(),
+    }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("DB unavailable");
+
+      const rows = await db
+        .select({
+          id: products.id,
+          name: products.name,
+          productionDestination: products.productionDestination,
+          currentStock: products.currentStock,
+          uom: products.uom,
+        })
+        .from(products)
+        .where(
+          and(
+            eq(products.companyId, input.companyId),
+            eq(products.active, true),
+            eq(products.availableInSalon, true)
+          )
+        )
+        .orderBy(products.name);
+
+      // Get prices from channelPrices for BALCAO channel
+      const productIds = rows.map(r => r.id);
+      let priceMap = new Map<number, number>();
+
+      if (productIds.length > 0) {
+        const priceRows = await db.execute(
+          sql`SELECT productId, price FROM channelPrices WHERE productId IN (${sql.join(productIds.map(id => sql`${id}`), sql`, `)}) AND channel = 'BALCAO' AND companyId = ${input.companyId}`
+        ) as any;
+        const priceData = Array.isArray(priceRows[0]) ? priceRows[0] : priceRows;
+        for (const row of priceData) {
+          priceMap.set(row.productId, parseFloat(row.price));
+        }
+      }
+
+      const result = rows.map(r => ({
+        ...r,
+        salePrice: priceMap.get(r.id) ?? 0,
+      }));
+
+      if (input.search) {
+        const q = input.search.toLowerCase();
+        return result.filter(r => r.name.toLowerCase().includes(q));
+      }
+
+      return result;
+    }),
+
+  // --- Relatório de gorjeta por garçom ---
+  getTipReport: protectedProcedure
+    .input(z.object({
+      companyId: z.number(),
+      startDate: z.string(),
+      endDate: z.string(),
+    }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("DB unavailable");
+
+      const start = new Date(input.startDate);
+      const end = new Date(input.endDate);
+      end.setUTCDate(end.getUTCDate() + 1); // include full end day
+
+      const orders = await db
+        .select({
+          waiterId: salonOrders.waiterId,
+          waiterName: salonOrders.waiterName,
+          tipAmount: salonOrders.tipAmount,
+          totalAmount: salonOrders.totalAmount,
+          closedAt: salonOrders.closedAt,
+          tableNumber: salonOrders.tableNumber,
+        })
+        .from(salonOrders)
+        .where(
+          and(
+            eq(salonOrders.companyId, input.companyId),
+            eq(salonOrders.status, "CLOSED"),
+            gte(salonOrders.closedAt, start),
+            lte(salonOrders.closedAt, end)
+          )
+        )
+        .orderBy(salonOrders.waiterName);
+
+      // Group by waiter
+      const byWaiter = new Map<string, {
+        waiterId: string | null;
+        waiterName: string | null;
+        totalTip: number;
+        totalSales: number;
+        orderCount: number;
+      }>();
+
+      for (const o of orders) {
+        const key = o.waiterId ?? "unknown";
+        const existing = byWaiter.get(key) ?? {
+          waiterId: o.waiterId,
+          waiterName: o.waiterName,
+          totalTip: 0,
+          totalSales: 0,
+          orderCount: 0,
+        };
+        existing.totalTip += parseFloat(String(o.tipAmount ?? "0"));
+        existing.totalSales += parseFloat(String(o.totalAmount ?? "0"));
+        existing.orderCount += 1;
+        byWaiter.set(key, existing);
+      }
+
+      return Array.from(byWaiter.values());
+    }),
+
+  // --- Dashboard stats ---
+  getDashboardStats: protectedProcedure
+    .query(async ({ ctx }) => {
+      const db = await getDb();
+      if (!db) throw new Error("DB unavailable");
+
+      const companyId = ctx.user.companyId;
+      const now = getNowInBrazil();
+      const todayStart = new Date(now);
+      todayStart.setUTCHours(0, 0, 0, 0);
+      const nextDay = new Date(todayStart);
+      nextDay.setUTCDate(nextDay.getUTCDate() + 1);
+
+      // Total tables configured
+      const [totalTablesRow] = await db
+        .select({ count: sql<number>`COUNT(*)` })
+        .from(salonTables)
+        .where(and(eq(salonTables.companyId, companyId), eq(salonTables.active, true)));
+
+      // Open/waiting tables count
+      const [openTablesRow] = await db
+        .select({ count: sql<number>`COUNT(*)` })
+        .from(salonOrders)
+        .where(
+          and(
+            eq(salonOrders.companyId, companyId),
+            inArray(salonOrders.status, ["OPEN", "WAITING_PAYMENT"])
+          )
+        );
+
+      // Today's revenue from salon
+      const [todayRevenueRow] = await db
+        .select({ total: sql<string>`COALESCE(SUM(totalAmount), 0)` })
+        .from(salonOrders)
+        .where(
+          and(
+            eq(salonOrders.companyId, companyId),
+            eq(salonOrders.status, "CLOSED"),
+            gte(salonOrders.closedAt, todayStart),
+            lt(salonOrders.closedAt, nextDay)
+          )
+        );
+
+      // Today's order count
+      const [todayOrdersRow] = await db
+        .select({ count: sql<number>`COUNT(*)` })
+        .from(salonOrders)
+        .where(
+          and(
+            eq(salonOrders.companyId, companyId),
+            eq(salonOrders.status, "CLOSED"),
+            gte(salonOrders.closedAt, todayStart),
+            lt(salonOrders.closedAt, nextDay)
+          )
+        );
+
+      const todayRevenue = parseFloat(String(todayRevenueRow?.total ?? "0"));
+      const todayOrders = Number(todayOrdersRow?.count ?? 0);
+      const avgTicket = todayOrders > 0 ? todayRevenue / todayOrders : 0;
+
+      return {
+        totalTables: Number(totalTablesRow?.count ?? 0),
+        occupiedTables: Number(openTablesRow?.count ?? 0),
+        todayRevenue: todayRevenue.toFixed(2),
+        todayOrders,
+        avgTicket: avgTicket.toFixed(2),
+      };
+    }),
+});
+
+// ==================== HELPERS ====================
+
+async function recalcOrderTotals(db: any, orderId: number) {
+  const [row] = await db
+    .select({ subtotal: sql<string>`COALESCE(SUM(totalPrice), 0)` })
+    .from(salonOrderItems)
+    .where(
+      and(
+        eq(salonOrderItems.orderId, orderId),
+        inArray(salonOrderItems.status, ["PENDING", "IN_PROGRESS", "READY", "DELIVERED"])
+      )
+    );
+
+  const subtotal = parseFloat(String(row?.subtotal ?? "0"));
+
+  // Get current tip percent
+  const [order] = await db
+    .select({ tipPercent: salonOrders.tipPercent })
+    .from(salonOrders)
+    .where(eq(salonOrders.id, orderId))
+    .limit(1);
+
+  const tipPercent = parseFloat(String(order?.tipPercent ?? "0"));
+  const tipAmount = subtotal * (tipPercent / 100);
+  const totalAmount = subtotal + tipAmount;
+
+  await db
+    .update(salonOrders)
+    .set({
+      subtotal: String(subtotal.toFixed(2)),
+      tipAmount: String(tipAmount.toFixed(2)),
+      totalAmount: String(totalAmount.toFixed(2)),
+    })
+    .where(eq(salonOrders.id, orderId));
+}
+
+function mapPaymentMethod(payments: Array<{ method: string; amount: number }>): string {
+  if (payments.length === 1) {
+    const map: Record<string, string> = {
+      CASH: "DINHEIRO",
+      CREDIT: "CREDITO",
+      DEBIT: "DEBITO",
+      PIX: "PIX",
+      VOUCHER: "VOUCHER",
+    };
+    return map[payments[0].method] ?? "DINHEIRO";
+  }
+  return "MISTO";
+}

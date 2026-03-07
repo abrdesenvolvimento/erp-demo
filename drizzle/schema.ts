@@ -163,6 +163,9 @@ export const products = mysqlTable("products", {
   isComposite: boolean("isComposite").default(false).notNull(),
   notes: text("notes"),
   expirationDate: timestamp("expirationDate"),
+  // Campos de Salão (visíveis apenas para empresas do segmento Hamburgueria/Restaurante)
+  productionDestination: mysqlEnum("productionDestination", ["KITCHEN", "BAR", "BOTH", "NONE"]).default("NONE"),
+  availableInSalon: boolean("availableInSalon").default(false).notNull(),
   createdAt: timestamp("createdAt").defaultNow(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow(),
 }, (table) => ({
@@ -1226,3 +1229,117 @@ export const auditLog = mysqlTable("auditLog", {
 }));
 export type AuditLog = typeof auditLog.$inferSelect;
 export type InsertAuditLog = typeof auditLog.$inferInsert;
+
+
+// ==================== MÓDULO DE SALÃO ====================
+
+// Configurações do salão por empresa
+export const salonConfig = mysqlTable("salonConfig", {
+  id: int("id").primaryKey().autoincrement(),
+  companyId: int("companyId").notNull(),
+  defaultTipPercent: decimal("defaultTipPercent", { precision: 5, scale: 2 }).default("10.00"),
+  tipEnabled: boolean("tipEnabled").default(true).notNull(),
+  gratuityLabel: varchar("gratuityLabel", { length: 100 }).default("Gorjeta (10%)"),
+  kitchenLabel: varchar("kitchenLabel", { length: 100 }).default("Cozinha"),
+  barLabel: varchar("barLabel", { length: 100 }).default("Bar"),
+  createdAt: timestamp("createdAt").defaultNow(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow(),
+}, (table) => ({
+  companyIdx: uniqueIndex("salon_config_company_idx").on(table.companyId),
+}));
+
+export type SalonConfig = typeof salonConfig.$inferSelect;
+export type InsertSalonConfig = typeof salonConfig.$inferInsert;
+
+// Mesas do salão
+export const salonTables = mysqlTable("salonTables", {
+  id: int("id").primaryKey().autoincrement(),
+  companyId: int("companyId").notNull(),
+  number: int("number").notNull(),
+  name: varchar("name", { length: 100 }),
+  capacity: int("capacity").default(4),
+  status: mysqlEnum("status", ["FREE", "OCCUPIED", "WAITING_PAYMENT", "RESERVED"]).default("FREE").notNull(),
+  positionX: int("positionX").default(0),
+  positionY: int("positionY").default(0),
+  active: boolean("active").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow(),
+}, (table) => ({
+  companyIdx: index("salon_table_company_idx").on(table.companyId),
+  numberIdx: index("salon_table_number_idx").on(table.companyId, table.number),
+}));
+
+export type SalonTable = typeof salonTables.$inferSelect;
+export type InsertSalonTable = typeof salonTables.$inferInsert;
+
+// Comandas (pedidos de salão)
+export const salonOrders = mysqlTable("salonOrders", {
+  id: int("id").primaryKey().autoincrement(),
+  companyId: int("companyId").notNull(),
+  tableId: int("tableId").notNull(),
+  tableNumber: int("tableNumber").notNull(),
+  waiterId: varchar("waiterId", { length: 64 }),
+  waiterName: varchar("waiterName", { length: 200 }),
+  guestCount: int("guestCount").default(1).notNull(),
+  status: mysqlEnum("status", ["OPEN", "WAITING_PAYMENT", "CLOSED", "CANCELLED"]).default("OPEN").notNull(),
+  subtotal: decimal("subtotal", { precision: 10, scale: 2 }).default("0.00"),
+  tipPercent: decimal("tipPercent", { precision: 5, scale: 2 }).default("0.00"),
+  tipAmount: decimal("tipAmount", { precision: 10, scale: 2 }).default("0.00"),
+  totalAmount: decimal("totalAmount", { precision: 10, scale: 2 }).default("0.00"),
+  notes: text("notes"),
+  openedAt: timestamp("openedAt").defaultNow(),
+  closedAt: timestamp("closedAt"),
+  saleId: int("saleId"), // referência à venda criada ao fechar
+}, (table) => ({
+  companyIdx: index("salon_order_company_idx").on(table.companyId),
+  tableIdx: index("salon_order_table_idx").on(table.tableId),
+  statusIdx: index("salon_order_status_idx").on(table.status),
+  openedIdx: index("salon_order_opened_idx").on(table.openedAt),
+}));
+
+export type SalonOrder = typeof salonOrders.$inferSelect;
+export type InsertSalonOrder = typeof salonOrders.$inferInsert;
+
+// Itens da comanda
+export const salonOrderItems = mysqlTable("salonOrderItems", {
+  id: int("id").primaryKey().autoincrement(),
+  orderId: int("orderId").notNull(),
+  companyId: int("companyId").notNull(),
+  productId: int("productId").notNull(),
+  productName: varchar("productName", { length: 200 }).notNull(),
+  quantity: decimal("quantity", { precision: 10, scale: 3 }).notNull(),
+  unitPrice: decimal("unitPrice", { precision: 10, scale: 2 }).notNull(),
+  totalPrice: decimal("totalPrice", { precision: 10, scale: 2 }).notNull(),
+  notes: text("notes"),
+  productionDestination: mysqlEnum("productionDestination", ["KITCHEN", "BAR", "BOTH", "NONE"]).default("NONE"),
+  status: mysqlEnum("status", ["PENDING", "IN_PROGRESS", "READY", "DELIVERED", "CANCELLED"]).default("PENDING").notNull(),
+  sentAt: timestamp("sentAt"),
+  readyAt: timestamp("readyAt"),
+  deliveredAt: timestamp("deliveredAt"),
+  createdAt: timestamp("createdAt").defaultNow(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow(),
+}, (table) => ({
+  orderIdx: index("salon_item_order_idx").on(table.orderId),
+  companyIdx: index("salon_item_company_idx").on(table.companyId),
+  statusIdx: index("salon_item_status_idx").on(table.status),
+  destinationIdx: index("salon_item_dest_idx").on(table.productionDestination),
+}));
+
+export type SalonOrderItem = typeof salonOrderItems.$inferSelect;
+export type InsertSalonOrderItem = typeof salonOrderItems.$inferInsert;
+
+// Pagamentos da comanda
+export const salonOrderPayments = mysqlTable("salonOrderPayments", {
+  id: int("id").primaryKey().autoincrement(),
+  orderId: int("orderId").notNull(),
+  companyId: int("companyId").notNull(),
+  method: mysqlEnum("method", ["CASH", "CREDIT", "DEBIT", "PIX", "VOUCHER"]).notNull(),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow(),
+}, (table) => ({
+  orderIdx: index("salon_payment_order_idx").on(table.orderId),
+  companyIdx: index("salon_payment_company_idx").on(table.companyId),
+}));
+
+export type SalonOrderPayment = typeof salonOrderPayments.$inferSelect;
+export type InsertSalonOrderPayment = typeof salonOrderPayments.$inferInsert;

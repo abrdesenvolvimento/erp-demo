@@ -54,6 +54,7 @@ import { validateEAN } from "@/lib/validators";
 import ProductMovementsModal from "@/components/ProductMovementsModal";
 import AdjustStockModal from "@/components/AdjustStockModal";
 import { getTodayBR } from "@/lib/dateUtils";
+import { useCompany } from "@/contexts/CompanyContext";
 
 // Componente para gerenciar composições de produtos
 function CompositionsSection({ productId, refreshKey, onSaved }: { productId: number; refreshKey?: number; onSaved?: () => void }) {
@@ -495,12 +496,16 @@ type ProductFormData = {
   notes: string;
   prices: { [channelId: string]: string };
   compositions: { childProductId: number | string; quantity: number | string; childProduct?: any }[];
+  productionDestination: string;
+  availableInSalon: boolean;
 };
 
 export default function Produtos() {
   const { user } = useAuth();
   const permissions = usePermissions();
   const isAdmin = permissions.isAdmin;
+  const { activeCompany } = useCompany();
+  const isHamburgueria = activeCompany?.segment === 'Hamburgueria' || activeCompany?.companyId === 2;
   
   const [search, setSearch] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -717,6 +722,8 @@ export default function Produtos() {
     notes: "",
     prices: {},
     compositions: [],
+    productionDestination: "NONE",
+    availableInSalon: false,
   };
 
   const [formData, setFormData] = useState<ProductFormData>(initialFormData);
@@ -790,6 +797,8 @@ export default function Produtos() {
         notes: product.notes || "",
         prices: pricesData,
         compositions: mappedCompositions,
+        productionDestination: product.productionDestination || "NONE",
+        availableInSalon: product.availableInSalon ?? false,
       });
       
       // Popular campos de busca
@@ -813,6 +822,8 @@ export default function Produtos() {
         notes: product.notes || "",
         prices: {},
         compositions: [],
+        productionDestination: product.productionDestination || "NONE",
+        availableInSalon: product.availableInSalon ?? false,
       });
     }
   };
@@ -879,6 +890,8 @@ export default function Produtos() {
       isComposite: formData.isComposite,
       notes: formData.notes || undefined,
       prices: formData.prices,
+      productionDestination: formData.productionDestination || "NONE",
+      availableInSalon: formData.availableInSalon,
     };
     
     // IMPORTANTE: Ao editar, compositions são gerenciadas separadamente pelo CompositionsSection
@@ -1289,6 +1302,43 @@ export default function Produtos() {
                       disabled={!permissions.canEdit}
                     />
                   </div>
+                  {/* Campos de Salão — apenas para Hamburgueria */}
+                  {isHamburgueria && (
+                    <div className="border rounded-lg p-4 space-y-3 bg-orange-50/50 border-orange-200">
+                      <p className="text-sm font-semibold text-orange-800 flex items-center gap-1.5">
+                        <span>🍔</span> Configurações do Salão
+                      </p>
+                      <div className="grid gap-2">
+                        <Label htmlFor="productionDestination">Destino de Produção</Label>
+                        <Select
+                          value={formData.productionDestination}
+                          onValueChange={(v) => setFormData({ ...formData, productionDestination: v })}
+                          disabled={!permissions.canEdit}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione o destino" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="NONE">Não se aplica</SelectItem>
+                            <SelectItem value="KITCHEN">Cozinha</SelectItem>
+                            <SelectItem value="BAR">Bar</SelectItem>
+                            <SelectItem value="BOTH">Cozinha e Bar</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <Switch
+                          id="availableInSalon"
+                          checked={formData.availableInSalon}
+                          onCheckedChange={(v) => setFormData({ ...formData, availableInSalon: v })}
+                          disabled={!permissions.canEdit}
+                        />
+                        <Label htmlFor="availableInSalon" className="cursor-pointer">
+                          Disponível no cardápio do salão
+                        </Label>
+                      </div>
+                    </div>
+                  )}
                 </div>
                 <DialogFooter>
                   <Button
