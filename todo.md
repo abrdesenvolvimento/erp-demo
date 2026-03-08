@@ -1900,3 +1900,5 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Ampliar modal de pré-visualização da comanda (sm:max-w-2xl)
 - [x] Adicionar colunas detalhadas nos itens: Item / Qtd / Vlr Unit / Total (tela + impressão)
 - [x] Corrigir espaçamento no resumo superior e formato tabular nos itens
+- [x] BUG: Divergência faturamento dashboard — corrigido: 6 registros antigos de sales tinham finalAmount=totalAmount (com taxa), agora todos usam subtotal
+- [ ] [FUTURO] QR Code no documento de vendas para avaliação/cadastro do cliente (promoções, retorno, consumo individualizado)

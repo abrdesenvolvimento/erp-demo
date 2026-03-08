@@ -1,0 +1,9 @@
+{
+  "query": "UPDATE sales SET finalAmount = 71.99, notes = 'Comanda #30002 - Mesa 1 - 1 pessoa(s) - SALÃO | Taxa serviço: R$ 7.20' WHERE id = 60450082",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute UPDATE sales SET finalAmount = 71.99, notes = 'Comanda #30002 - Mesa 1 - 1 pessoa(s) - SALÃO | Taxa serviço: R$ 7.20' WHERE id = 60450082",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 349
+}
