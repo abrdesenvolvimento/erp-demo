@@ -1897,3 +1897,6 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Ajustar cards de faturamento do salão para considerar apenas subtotal (sem taxa de serviço)
 - [x] Ajustar relatório de fechamento de garçom para separar faturamento vs taxa de serviço
 - [x] Adicionar etapa de confirmação da taxa de serviço entre impressão e pagamento (3 etapas: preview → confirma taxa → pagamento)
+- [x] Ampliar modal de pré-visualização da comanda (sm:max-w-2xl)
+- [x] Adicionar colunas detalhadas nos itens: Item / Qtd / Vlr Unit / Total (tela + impressão)
+- [x] Corrigir espaçamento no resumo superior e formato tabular nos itens

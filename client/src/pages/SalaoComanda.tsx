@@ -215,6 +215,9 @@ export default function SalaoComanda() {
         .item-name { flex: 1; }
         .item-qty { width: 30px; text-align: center; }
         .item-price { width: 70px; text-align: right; font-weight: bold; }
+        .print-items-table { width: 100%; border-collapse: collapse; margin: 8px 0; }
+        .print-items-table th { font-size: 11px; padding: 2px 0; border-bottom: 1px solid #000; }
+        .print-items-table td { padding: 3px 0; border-bottom: 1px dashed #ccc; font-size: 12px; }
         .totals { border-top: 1px dashed #000; margin-top: 8px; padding-top: 8px; }
         .total-row { display: flex; justify-content: space-between; padding: 2px 0; }
         .total-row.grand { font-size: 16px; font-weight: bold; margin-top: 4px; border-top: 2px solid #000; padding-top: 6px; }
@@ -593,7 +596,7 @@ export default function SalaoComanda() {
 
       {/* Preview / Print Comanda Modal (Step 1) */}
       <Dialog open={previewModal} onOpenChange={setPreviewModal}>
-        <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <FileText className="h-5 w-5 text-primary" />
@@ -606,25 +609,36 @@ export default function SalaoComanda() {
           <div ref={printRef}>
             <div className="header">
               <h2>Comanda #{orderId}</h2>
-              <p>Mesa {order.tableNumber} • {order.guestCount} pessoa(s)</p>
+              <p>Mesa {order.tableNumber} &bull; {order.guestCount} pessoa(s)</p>
               <p>{order.waiterName ? `Garçom: ${order.waiterName}` : ""}</p>
               <p style={{marginTop: '4px'}}>Abertura: {order.openedAt ? new Date(order.openedAt).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" }) : "—"}</p>
-              <p>Tempo de permanência: {order.openedAt ? (() => {
+              <p>Permanência: {order.openedAt ? (() => {
                 const diffMs = Date.now() - new Date(order.openedAt).getTime();
                 const hours = Math.floor(diffMs / 3600000);
                 const mins = Math.floor((diffMs % 3600000) / 60000);
                 return hours > 0 ? `${hours}h${String(mins).padStart(2, '0')}min` : `${mins}min`;
               })() : "—"}</p>
             </div>
-            <div className="items">
-              {activeItems.map((item: any) => (
-                <div key={item.id} className="item">
-                  <span className="item-name">{item.productName}{item.notes ? ` (${item.notes})` : ""}</span>
-                  <span className="item-qty">{parseFloat(String(item.quantity))}x</span>
-                  <span className="item-price">{formatCurrency(item.totalPrice)}</span>
-                </div>
-              ))}
-            </div>
+            <table className="print-items-table" style={{width: '100%', borderCollapse: 'collapse', marginTop: '8px'}}>
+              <thead>
+                <tr style={{borderBottom: '1px solid #000', fontSize: '11px', textAlign: 'left'}}>
+                  <th style={{padding: '2px 0'}}>Item</th>
+                  <th style={{padding: '2px 4px', textAlign: 'center'}}>Qtd</th>
+                  <th style={{padding: '2px 4px', textAlign: 'right'}}>Vlr Unit</th>
+                  <th style={{padding: '2px 0', textAlign: 'right'}}>Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {activeItems.map((item: any) => (
+                  <tr key={item.id} style={{fontSize: '12px', borderBottom: '1px dashed #ccc'}}>
+                    <td style={{padding: '3px 0'}}>{item.productName}{item.notes ? ` (${item.notes})` : ""}</td>
+                    <td style={{padding: '3px 4px', textAlign: 'center'}}>{parseFloat(String(item.quantity))}</td>
+                    <td style={{padding: '3px 4px', textAlign: 'right'}}>{formatCurrency(item.unitPrice)}</td>
+                    <td style={{padding: '3px 0', textAlign: 'right'}}>{formatCurrency(item.totalPrice)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
             <div className="totals">
               <div className="total-row">
                 <span>Subtotal</span>
@@ -670,17 +684,30 @@ export default function SalaoComanda() {
               })() : "—"}</span>
             </div>
             <Separator />
-            <h3 className="font-semibold text-sm">Itens da Comanda</h3>
-            {activeItems.map((item: any) => (
-              <div key={item.id} className="flex items-center justify-between text-sm py-1 border-b border-dashed last:border-0">
-                <div className="flex-1">
-                  <span className="font-medium">{item.productName}</span>
-                  {item.notes && <span className="text-xs text-muted-foreground ml-1">({item.notes})</span>}
-                </div>
-                <span className="text-muted-foreground mx-2">{parseFloat(String(item.quantity))}x</span>
-                <span className="font-semibold">{formatCurrency(item.totalPrice)}</span>
-              </div>
-            ))}
+            {/* Items table with columns */}
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b text-xs text-muted-foreground">
+                  <th className="text-left py-1 font-medium">Item</th>
+                  <th className="text-center py-1 font-medium w-12">Qtd</th>
+                  <th className="text-right py-1 font-medium w-24">Vlr Unit</th>
+                  <th className="text-right py-1 font-medium w-24">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {activeItems.map((item: any) => (
+                  <tr key={item.id} className="border-b border-dashed last:border-0">
+                    <td className="py-1.5">
+                      <span className="font-medium">{item.productName}</span>
+                      {item.notes && <span className="text-xs text-muted-foreground ml-1">({item.notes})</span>}
+                    </td>
+                    <td className="text-center py-1.5 text-muted-foreground">{parseFloat(String(item.quantity))}</td>
+                    <td className="text-right py-1.5 text-muted-foreground">{formatCurrency(item.unitPrice)}</td>
+                    <td className="text-right py-1.5 font-semibold">{formatCurrency(item.totalPrice)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
             <Separator />
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Subtotal</span>
