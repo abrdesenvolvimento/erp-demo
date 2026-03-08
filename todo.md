@@ -1947,3 +1947,10 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 ### Melhorias pós-publicação v4 (08/03/2026)
 - [x] Exportar relatório de Fechamento por Garçom (PDF individual com taxa de serviço, produtos vendidos, comandas atendidas)
 - [x] Trocar termo "Misto" na forma de pagamento para listar formas usadas (ex: "DINHEIRO + PIX")
+
+### Melhorias pós-publicação v5 (08/03/2026)
+- [x] Dashboard: integrar card "Mesas Ocupadas" junto aos demais, remover "Faturamento Salão Hoje" e "Ticket Médio Salão"
+- [x] Transição de empresa: redirecionar sempre para /dashboard ao trocar empresa
+- [x] Botões "Configurar" e "+Nova Mesa" visíveis apenas para admin
+- [x] Responsividade mobile: ajustar telas de Mesas e Comanda
+- [x] Mover "Fechamento Garçom" do menu Salão para o menu Análises (visível apenas para Hamburgueria)

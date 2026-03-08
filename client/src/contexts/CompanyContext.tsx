@@ -105,6 +105,9 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
     document.cookie = `activeCompanyId=${companyId};path=/;max-age=31536000`;
     document.cookie = `activeBranchId=${branchId};path=/;max-age=31536000`;
     setActiveMutation.mutate({ companyId, branchId });
+    // Redirecionar para o Dashboard ao trocar de empresa
+    window.history.pushState({}, '', '/');
+    window.dispatchEvent(new PopStateEvent('popstate'));
   }, [activeCompanyId, activeBranchId, setActiveMutation]);
 
   const activeCompany = useMemo(() => {

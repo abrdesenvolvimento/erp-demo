@@ -338,13 +338,13 @@ export default function SalaoComanda() {
     <DashboardLayout>
     <div className="p-4 md:p-6 max-w-2xl mx-auto space-y-4">
       {/* Header */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 sm:gap-3">
         <Button variant="ghost" size="sm" onClick={() => setLocation("/salao/mesas")}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
-        <div className="flex-1">
-          <h1 className="text-xl font-bold">Mesa {order.tableNumber} — Comanda #{orderId}</h1>
-          <div className="flex items-center gap-3 text-sm text-muted-foreground mt-0.5">
+        <div className="flex-1 min-w-0">
+          <h1 className="text-base sm:text-xl font-bold truncate">Mesa {order.tableNumber} — Comanda #{orderId}</h1>
+          <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm text-muted-foreground mt-0.5 flex-wrap">
             <span className="flex items-center gap-1">
               <Users className="h-3.5 w-3.5" />
               {order.guestCount} pessoa(s)
@@ -506,17 +506,17 @@ export default function SalaoComanda() {
 
       {/* Actions */}
       {!isClosed && (
-        <div className="flex gap-2">
+        <div className="flex flex-col sm:flex-row gap-2">
           <Button
             variant="outline"
-            className="flex-1 text-red-600 border-red-200 hover:bg-red-50"
+            className="flex-1 text-red-600 border-red-200 hover:bg-red-50 text-sm"
             onClick={() => setCancelConfirm(true)}
           >
             Cancelar Comanda
           </Button>
           {activeItems.length > 0 && (
             <Button
-              className="flex-1"
+              className="flex-1 text-sm"
               onClick={handleRequestCheckout}
               disabled={requestCheckoutMutation.isPending}
             >

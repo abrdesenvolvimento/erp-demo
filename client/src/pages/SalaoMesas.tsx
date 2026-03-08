@@ -26,9 +26,10 @@ const STATUS_CONFIG: Record<TableStatus, { label: string; color: string; bg: str
 };
 
 export default function SalaoMesas() {
-  const { activeCompanyId, activeBranchId } = useCompany();
+  const { activeCompanyId, activeBranchId, activeCompany } = useCompany();
   const { user } = useAuth();
-  const isAdmin = user?.role === "admin";
+  const effectiveRole = activeCompany?.role || user?.role;
+  const isAdmin = effectiveRole === "admin";
   const [, setLocation] = useLocation();
   const utils = trpc.useUtils();
 
@@ -342,15 +343,15 @@ export default function SalaoMesas() {
     <DashboardLayout>
     <div className="p-4 md:p-6 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            <UtensilsCrossed className="h-6 w-6 text-primary" />
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight flex items-center gap-2">
+            <UtensilsCrossed className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
             Salão
           </h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Gestão de mesas e comandas</p>
+          <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">Gestão de mesas e comandas</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
           <Button variant="outline" size="sm" onClick={() => refetch()}>
             <RefreshCw className="h-4 w-4" />
           </Button>
@@ -377,20 +378,24 @@ export default function SalaoMesas() {
               <span className="hidden sm:inline">Alertas Ativos</span>
             </Button>
           )}
-          <Button variant="outline" size="sm" onClick={() => setConfigModal(true)}>
-            <Settings className="h-4 w-4 mr-1" />
-            Configurar
-          </Button>
-          <Button size="sm" onClick={() => setAddTableModal(true)}>
-            <Plus className="h-4 w-4 mr-1" />
-            Nova Mesa
-          </Button>
+          {isAdmin && (
+            <Button variant="outline" size="sm" onClick={() => setConfigModal(true)}>
+              <Settings className="h-4 w-4 mr-1" />
+              Configurar
+            </Button>
+          )}
+          {isAdmin && (
+            <Button size="sm" onClick={() => setAddTableModal(true)}>
+              <Plus className="h-4 w-4 mr-1" />
+              + Nova Mesa
+            </Button>
+          )}
         </div>
       </div>
 
 
       {/* Stats bar */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-3 gap-2 sm:gap-3">
         <Card className="border-green-200 bg-green-50">
           <CardContent className="p-3">
             <p className="text-xs text-green-600 font-medium">Livres</p>
@@ -423,7 +428,7 @@ export default function SalaoMesas() {
           </Button>
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 sm:gap-3">
           {tables.map((table) => {
             const statusCfg = STATUS_CONFIG[table.status as TableStatus] ?? STATUS_CONFIG.FREE;
             const order = table.activeOrder;

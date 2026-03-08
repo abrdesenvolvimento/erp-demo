@@ -119,7 +119,6 @@ const salonMenuItems = [
   { icon: LayoutGrid, label: "Mesas", path: "/salao/mesas", roles: ["admin", "operacional", "garcom"] },
   { icon: ChefHat, label: "KDS Cozinha", path: "/salao/kds-cozinha", roles: ["admin", "operacional"] },
   { icon: UtensilsCrossed, label: "KDS Bar", path: "/salao/kds-bar", roles: ["admin", "operacional"] },
-  { icon: FileText, label: "Fechamento Garçom", path: "/salao/fechamento-garcom", roles: ["admin"] },
   { icon: GitCompare, label: "Transferência", path: "/salao/transferencia", roles: ["admin"] },
 ];
 
@@ -138,6 +137,7 @@ const analysisMenuItems = [
   { icon: GitCompare, label: "Análise por Canal", path: "/analise-canal", roles: ["admin"] },
   { icon: Receipt, label: "Análise de Despesas", path: "/analise-despesas", roles: ["admin"] },
   { icon: Package, label: "Análise de Estoque", path: "/analise-estoque", roles: ["admin"] },
+  { icon: BarChart2, label: "Fechamento Garçom", path: "/salao/fechamento-garcom", roles: ["admin"] },
   { icon: Target, label: "Metas", path: "/metas", roles: ["admin", "consultor"] },
   { icon: FileText, label: "Fechamento", path: "/fechamento", roles: ["admin", "consultor"] },
 ];
@@ -478,6 +478,11 @@ function DashboardLayoutContent({
     if (effectiveRole !== 'admin') {
       // Consultor pode ver Análise de Faturamento e Fechamento (sem Metas)
       return item.path === '/relatorios' || item.path === '/fechamento';
+    }
+    // Fechamento Garçom só aparece para empresa Hamburgueria
+    if (item.path === '/salao/fechamento-garcom') {
+      const segment = activeCompany?.segment;
+      return segment === 'Hamburgueria' || activeCompanyId === 2;
     }
     return true;
   });
