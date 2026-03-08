@@ -5,47 +5,48 @@
  *
  * iOS/Safari require user interaction to unlock audio context.
  * Call `unlockAudio()` on a user gesture (button tap) before playing sounds.
+ *
+ * Persistence: uses localStorage key "salon_sound_enabled" to remember state across page navigations.
  */
+
+const STORAGE_KEY = "salon_sound_enabled";
 
 let audioContext: AudioContext | null = null;
 let audioUnlocked = false;
 
 /**
- * Must be called once from a user gesture (tap/click) to unlock audio on iOS.
- * Returns true if audio is now unlocked.
+ * Read persisted sound preference from localStorage.
  */
-export async function unlockAudio(): Promise<boolean> {
+export function getSoundEnabledFromStorage(): boolean {
+  try {
+    return localStorage.getItem(STORAGE_KEY) === "true";
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Persist sound preference to localStorage.
+ */
+function setSoundEnabledInStorage(value: boolean) {
+  try {
+    localStorage.setItem(STORAGE_KEY, value ? "true" : "false");
+  } catch {
+    // ignore
+  }
+}
+
+/**
+ * Ensure AudioContext is created and running.
+ * On iOS, the context may be suspended after page navigation — this resumes it.
+ */
+async function ensureAudioContext(): Promise<AudioContext | null> {
   try {
     if (!audioContext || audioContext.state === "closed") {
       audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
     }
     if (audioContext.state === "suspended") {
       await audioContext.resume();
-    }
-    // Play a silent buffer to fully unlock on iOS
-    const buffer = audioContext.createBuffer(1, 1, 22050);
-    const source = audioContext.createBufferSource();
-    source.buffer = buffer;
-    source.connect(audioContext.destination);
-    source.start(0);
-    audioUnlocked = true;
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-export function isAudioUnlocked(): boolean {
-  return audioUnlocked && audioContext !== null && audioContext.state === "running";
-}
-
-function getAudioContext(): AudioContext | null {
-  try {
-    if (!audioContext || audioContext.state === "closed") {
-      audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-    }
-    if (audioContext.state === "suspended") {
-      audioContext.resume();
     }
     return audioContext;
   } catch {
@@ -54,12 +55,58 @@ function getAudioContext(): AudioContext | null {
 }
 
 /**
+ * Must be called once from a user gesture (tap/click) to unlock audio on iOS.
+ * Returns true if audio is now unlocked.
+ * Also persists the preference to localStorage.
+ */
+export async function unlockAudio(): Promise<boolean> {
+  try {
+    const ctx = await ensureAudioContext();
+    if (!ctx) return false;
+
+    // Play a silent buffer to fully unlock on iOS
+    const buffer = ctx.createBuffer(1, 1, 22050);
+    const source = ctx.createBufferSource();
+    source.buffer = buffer;
+    source.connect(ctx.destination);
+    source.start(0);
+
+    audioUnlocked = true;
+    setSoundEnabledInStorage(true);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Disable audio and clear localStorage preference.
+ */
+export function disableAudio() {
+  audioUnlocked = false;
+  setSoundEnabledInStorage(false);
+}
+
+export function isAudioUnlocked(): boolean {
+  return audioUnlocked && audioContext !== null && audioContext.state === "running";
+}
+
+/**
+ * Get or create a running AudioContext.
+ * Automatically resumes suspended context (happens after iOS page navigation).
+ */
+async function getRunningAudioContext(): Promise<AudioContext | null> {
+  return ensureAudioContext();
+}
+
+/**
  * Play a pleasant ascending chime notification sound.
  * Uses Web Audio API for better mobile compatibility.
+ * Async to handle iOS context resume.
  */
-export function playNotificationSound() {
-  const ctx = getAudioContext();
-  if (!ctx) return;
+export async function playNotificationSound(): Promise<void> {
+  const ctx = await getRunningAudioContext();
+  if (!ctx || ctx.state !== "running") return;
 
   const now = ctx.currentTime;
 
@@ -110,8 +157,8 @@ export function playNotificationSound() {
  * Play a repeated notification (3 chimes with pauses).
  * Good for urgent alerts on mobile.
  */
-export function playUrgentNotification() {
-  playNotificationSound();
+export async function playUrgentNotification(): Promise<void> {
+  await playNotificationSound();
   setTimeout(() => playNotificationSound(), 800);
   setTimeout(() => playNotificationSound(), 1600);
 }

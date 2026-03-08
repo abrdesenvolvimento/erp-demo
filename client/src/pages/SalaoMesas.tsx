@@ -13,8 +13,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { Plus, Users, Clock, DollarSign, Settings, ChefHat, X, UtensilsCrossed, RefreshCw, Bell } from "lucide-react";
 import { useLocation } from "wouter";
-import { playUrgentNotification, unlockAudio, isAudioUnlocked } from "@/lib/notificationSound";
-import { requestNotificationPermission, isNotificationPermitted, sendPushNotification } from "@/lib/pushNotification";
+import { playUrgentNotification, unlockAudio, isAudioUnlocked, getSoundEnabledFromStorage } from "@/lib/notificationSound";
+import { requestNotificationPermission, isNotificationPermitted, sendPushNotification, getPushGrantedFromStorage } from "@/lib/pushNotification";
 
 type TableStatus = "FREE" | "OCCUPIED" | "WAITING_PAYMENT" | "RESERVED";
 
@@ -42,8 +42,43 @@ export default function SalaoMesas() {
   const [configModal, setConfigModal] = useState(false);
 
   const companyId = activeCompanyId ?? 0;
-  const [soundEnabled, setSoundEnabled] = useState(false);
-  const soundEnabledRef = useRef(false); // useRef to avoid stale closure in useEffect
+
+  // Initialize from localStorage so state persists across page navigations
+  const [soundEnabled, setSoundEnabled] = useState(() => getSoundEnabledFromStorage());
+  const [pushGranted, setPushGranted] = useState(() => getPushGrantedFromStorage());
+  const soundEnabledRef = useRef(getSoundEnabledFromStorage()); // useRef to avoid stale closure in useEffect
+
+  // When page becomes visible again (user navigates back), re-sync state from storage
+  // and resume AudioContext if it was suspended by iOS
+  useEffect(() => {
+    const handleVisibilityChange = async () => {
+      if (document.visibilityState === "visible") {
+        const storedSound = getSoundEnabledFromStorage();
+        const storedPush = getPushGrantedFromStorage();
+        setSoundEnabled(storedSound);
+        setPushGranted(storedPush);
+        soundEnabledRef.current = storedSound;
+        // Resume AudioContext if it was suspended (common on iOS after navigation)
+        if (storedSound) {
+          try {
+            const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+            if (AudioCtx) {
+              // Attempt to resume any existing suspended context
+              const testCtx = new AudioCtx();
+              if (testCtx.state === "suspended") {
+                await testCtx.resume();
+              }
+              testCtx.close();
+            }
+          } catch { /* ignore */ }
+        }
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
+  }, []);
+
+  const alertsActive = soundEnabled || pushGranted;
 
   const handleEnableSound = async () => {
     // Unlock audio (required for iOS)
@@ -51,11 +86,14 @@ export default function SalaoMesas() {
     if (audioOk) {
       setSoundEnabled(true);
       soundEnabledRef.current = true;
-      playUrgentNotification();
+      await playUrgentNotification();
     }
 
     // Request push notification permission
     const permission = await requestNotificationPermission();
+    if (permission === "granted") {
+      setPushGranted(true);
+    }
 
     if (audioOk || permission === "granted") {
       const features = [];
@@ -85,7 +123,7 @@ export default function SalaoMesas() {
       );
       // Play sound (works after user unlocks audio)
       if (soundEnabledRef.current || isAudioUnlocked()) {
-        playUrgentNotification();
+        void playUrgentNotification();
       }
       // Send push notification (works even with screen locked)
       if (isNotificationPermitted()) {
@@ -98,7 +136,6 @@ export default function SalaoMesas() {
     }
     prevTotalReadyRef.current = totalReady;
   }, [tables]);
-
 
   // Mutations
   const openOrderMutation = trpc.salon.openOrder.useMutation({
@@ -202,7 +239,7 @@ export default function SalaoMesas() {
           <Button variant="outline" size="sm" onClick={() => refetch()}>
             <RefreshCw className="h-4 w-4" />
           </Button>
-          {!soundEnabled ? (
+          {!alertsActive ? (
             <Button
               variant="outline"
               size="sm"
@@ -217,9 +254,9 @@ export default function SalaoMesas() {
             <Button
               variant="outline"
               size="sm"
-              className="text-green-600 border-green-300 cursor-default"
-              disabled
-              title="Alertas sonoros e notificações ativados"
+              onClick={handleEnableSound}
+              className="text-green-600 border-green-300 hover:bg-green-50"
+              title="Alertas ativos. Toque para reativar o som se necessário."
             >
               <Bell className="h-4 w-4 mr-1" />
               <span className="hidden sm:inline">Alertas Ativos</span>

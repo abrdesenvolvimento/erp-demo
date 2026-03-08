@@ -1816,3 +1816,8 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] BUG: Som não toca após desbloqueio iOS — corrigido com soundEnabledRef (useRef) para evitar stale closure no useEffect de polling
 - [x] BUG: Notificação quando tela bloqueada — implementado pushNotification.ts com Web Push API; botão 'Ativar Alertas' solicita permissão de som + push juntos; notificação nativa enviada com requireInteraction=true (fica na tela até o usuário tocar)
 - [x] BUG: Dashboard de garçons zerado — confirmado que é comportamento correto: comandas foram fechadas na madrugada do dia 08/03 BRT (após meia-noite), portanto aparecem no dashboard do dia 08/03. Sistema funcionando corretamente com timezone.
+
+### Bugs Pós-Entrega Rodada 8 (07/03/2026)
+- [x] BUG: Estado do botão 'Ativar Alertas' reseta ao navegar para comanda e voltar — corrigido: useState inicializa do localStorage, visibilitychange re-sincroniza ao voltar para a página
+- [x] BUG: Som não toca mesmo após ativar — corrigido: playNotificationSound agora é async e chama ensureAudioContext() que faz resume() automático; SalaoComanda também verifica getSoundEnabledFromStorage() antes de tocar
+- [x] BUG: Notificação push não chega no iOS Safari — documentado: iOS Safari requer PWA (Add to Home Screen) para Web Push; botão 'Alertas Ativos' agora é clicavel para reativar o som após navegação; estado persiste no localStorage

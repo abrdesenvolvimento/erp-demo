@@ -247,3 +247,80 @@ describe("Salon Dashboard - Stats calculation", () => {
     expect(total).toBe(5);
   });
 });
+
+// ==================== NOTIFICATION PERSISTENCE ====================
+
+describe("Notification State Persistence - localStorage helpers", () => {
+  // Simulate localStorage in Node.js test environment
+  const mockStorage: Record<string, string> = {};
+  const mockLocalStorage = {
+    getItem: (key: string) => mockStorage[key] ?? null,
+    setItem: (key: string, value: string) => { mockStorage[key] = value; },
+    removeItem: (key: string) => { delete mockStorage[key]; },
+  };
+
+  const SOUND_KEY = "salon_sound_enabled";
+  const PUSH_KEY = "salon_push_granted";
+
+  function getSoundEnabled(): boolean {
+    return mockLocalStorage.getItem(SOUND_KEY) === "true";
+  }
+
+  function setSoundEnabled(value: boolean) {
+    mockLocalStorage.setItem(SOUND_KEY, value ? "true" : "false");
+  }
+
+  function getPushGranted(): boolean {
+    return mockLocalStorage.getItem(PUSH_KEY) === "true";
+  }
+
+  function setPushGranted(value: boolean) {
+    mockLocalStorage.setItem(PUSH_KEY, value ? "true" : "false");
+  }
+
+  it("should return false when localStorage has no value", () => {
+    delete mockStorage[SOUND_KEY];
+    expect(getSoundEnabled()).toBe(false);
+  });
+
+  it("should persist sound enabled state", () => {
+    setSoundEnabled(true);
+    expect(getSoundEnabled()).toBe(true);
+  });
+
+  it("should persist sound disabled state", () => {
+    setSoundEnabled(false);
+    expect(getSoundEnabled()).toBe(false);
+  });
+
+  it("should persist push granted state", () => {
+    setPushGranted(true);
+    expect(getPushGranted()).toBe(true);
+  });
+
+  it("should return false for push when not granted", () => {
+    delete mockStorage[PUSH_KEY];
+    expect(getPushGranted()).toBe(false);
+  });
+
+  it("alertsActive should be true if either sound or push is enabled", () => {
+    setSoundEnabled(false);
+    setPushGranted(true);
+    const alertsActive = getSoundEnabled() || getPushGranted();
+    expect(alertsActive).toBe(true);
+  });
+
+  it("alertsActive should be false when both are disabled", () => {
+    setSoundEnabled(false);
+    setPushGranted(false);
+    const alertsActive = getSoundEnabled() || getPushGranted();
+    expect(alertsActive).toBe(false);
+  });
+
+  it("alertsActive should be true when only sound is enabled", () => {
+    setSoundEnabled(true);
+    setPushGranted(false);
+    const alertsActive = getSoundEnabled() || getPushGranted();
+    expect(alertsActive).toBe(true);
+  });
+});

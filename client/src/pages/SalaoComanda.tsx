@@ -15,7 +15,7 @@ import {
   ArrowLeft, Plus, Minus, Trash2, Send, CreditCard, DollarSign,
   QrCode, Users, Clock, ChefHat, CheckCircle2, Search, X, Bell
 } from "lucide-react";
-import { playUrgentNotification } from "@/lib/notificationSound";
+import { playUrgentNotification, getSoundEnabledFromStorage, isAudioUnlocked } from "@/lib/notificationSound";
 
 const PAYMENT_METHODS = [
   { value: "CASH", label: "Dinheiro", icon: DollarSign },
@@ -78,7 +78,10 @@ export default function SalaoComanda() {
             { icon: "🔔", duration: 8000 }
           );
           // Play notification sound (Web Audio API - works on mobile)
-          playUrgentNotification();
+          // Only play if user has enabled sound (persisted in localStorage)
+          if (getSoundEnabledFromStorage() || isAudioUnlocked()) {
+            void playUrgentNotification();
+          }
         }
       }
     }
