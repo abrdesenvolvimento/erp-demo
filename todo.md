@@ -1918,3 +1918,10 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] KDS tela vazia com métricas operacionais (pedidos hoje, tempo médio, último pedido)
 - [x] KDS Análise: aba Análise com tempo médio por item (ranking com barra visual + cards de stats)
 - [x] SEFAZ/NFC-e anotado como pendência futura (não prioridade, aguardar reforma tributária)
+
+### Transferência de Comanda (08/03/2026)
+- [x] Backend: endpoint transferOrder (orderId, newWaiterId, reason) — admin only
+- [x] Backend: registrar log de transferência (from, to, reason, timestamp, adminId) — salvo em notes da comanda
+- [x] Frontend: tela administrativa de transferência — visão de garçons com comandas associadas
+- [x] Frontend: modal de transferência com seleção de novo garçom + campo obrigatório de motivo
+- [x] Adicionar rota /salao/transferencia e menu lateral (admin only)

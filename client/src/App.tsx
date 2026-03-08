@@ -40,6 +40,7 @@ import SalaoKDSBar from "./pages/SalaoKDSBar";
 import SalaoGorjeta from "./pages/SalaoGorjeta";
 import SalaoGarcons from "./pages/SalaoGarcons";
 import SalaoFechamentoGarcom from "./pages/SalaoFechamentoGarcom";
+import SalaoTransferencia from "./pages/SalaoTransferencia";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
@@ -88,6 +89,7 @@ function Router() {
       <Route path="/salao/gorjeta" component={SalaoGorjeta} />
       <Route path="/salao/garcons" component={SalaoGarcons} />
       <Route path="/salao/fechamento-garcom" component={SalaoFechamentoGarcom} />
+      <Route path="/salao/transferencia" component={SalaoTransferencia} />
       <Route path="/acesso-negado" component={AccessDenied} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />

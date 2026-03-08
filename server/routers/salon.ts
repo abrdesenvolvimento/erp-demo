@@ -1454,10 +1454,8 @@ export const salonRouter = router({
       return await removePushSubscription(input.endpoint);
     }),
 
-  pushTest: protectedProcedure
-    .input(z.object({
-      companyId: z.number(),
-    }))
+  testPush: protectedProcedure
+    .input(z.object({ companyId: z.number() }))
     .mutation(async ({ input }) => {
       return await sendPushToCompany(input.companyId, {
         title: "\ud83d\udd14 Teste de Notifica\u00e7\u00e3o",
@@ -1465,6 +1463,248 @@ export const salonRouter = router({
         icon: "/logo-abrwf.png",
         data: { url: "/salao/mesas" },
       });
+    }),
+
+  // --- Transferência de Comanda ---
+  getWaiterActiveOrders: protectedProcedure
+    .input(z.object({ companyId: z.number() }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("DB unavailable");
+
+      // Get all waiters for this company
+      const waiters = await db
+        .select({
+          userId: userCompanies.userId,
+          role: userCompanies.role,
+          userName: users.name,
+          userEmail: users.email,
+        })
+        .from(userCompanies)
+        .innerJoin(users, eq(users.id, userCompanies.userId))
+        .where(
+          and(
+            eq(userCompanies.companyId, input.companyId),
+            inArray(userCompanies.role, ['garcom', 'admin'])
+          )
+        )
+        .orderBy(users.name);
+
+      // Get all open/waiting_payment orders for this company
+      const orders = await db
+        .select({
+          id: salonOrders.id,
+          tableNumber: salonOrders.tableNumber,
+          waiterId: salonOrders.waiterId,
+          waiterName: salonOrders.waiterName,
+          guestCount: salonOrders.guestCount,
+          status: salonOrders.status,
+          subtotal: salonOrders.subtotal,
+          totalAmount: salonOrders.totalAmount,
+          openedAt: salonOrders.openedAt,
+          notes: salonOrders.notes,
+        })
+        .from(salonOrders)
+        .where(
+          and(
+            eq(salonOrders.companyId, input.companyId),
+            inArray(salonOrders.status, ["OPEN", "WAITING_PAYMENT"])
+          )
+        )
+        .orderBy(salonOrders.openedAt);
+
+      // Get item count per order
+      const orderIds = orders.map(o => o.id);
+      let itemCounts: Record<number, number> = {};
+      if (orderIds.length > 0) {
+        const counts = await db
+          .select({
+            orderId: salonOrderItems.orderId,
+            count: sql<number>`COUNT(*)`,
+          })
+          .from(salonOrderItems)
+          .where(inArray(salonOrderItems.orderId, orderIds))
+          .groupBy(salonOrderItems.orderId);
+        for (const c of counts) {
+          itemCounts[c.orderId] = Number(c.count);
+        }
+      }
+
+      // Group orders by waiter
+      const waiterMap: Record<string, {
+        userId: string;
+        userName: string | null;
+        userEmail: string | null;
+        role: string;
+        orders: typeof orders;
+      }> = {};
+
+      for (const w of waiters) {
+        waiterMap[w.userId] = {
+          userId: w.userId,
+          userName: w.userName,
+          userEmail: w.userEmail,
+          role: w.role,
+          orders: [],
+        };
+      }
+
+      for (const order of orders) {
+        const wId = order.waiterId ?? 'unknown';
+        if (!waiterMap[wId]) {
+          waiterMap[wId] = {
+            userId: wId,
+            userName: order.waiterName,
+            userEmail: null,
+            role: 'garcom',
+            orders: [],
+          };
+        }
+        (waiterMap[wId].orders as any[]).push({
+          ...order,
+          itemCount: itemCounts[order.id] ?? 0,
+        });
+      }
+
+      return Object.values(waiterMap);
+    }),
+
+  transferOrder: protectedProcedure
+    .input(z.object({
+      orderId: z.number(),
+      companyId: z.number(),
+      newWaiterId: z.string(),
+      newWaiterName: z.string(),
+      reason: z.string().min(1, "Motivo é obrigatório"),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("DB unavailable");
+
+      // Only admin can transfer
+      if (ctx.user?.role !== 'admin') {
+        throw new Error("Apenas administradores podem transferir comandas");
+      }
+
+      // Get current order
+      const [order] = await db
+        .select()
+        .from(salonOrders)
+        .where(
+          and(
+            eq(salonOrders.id, input.orderId),
+            eq(salonOrders.companyId, input.companyId)
+          )
+        )
+        .limit(1);
+
+      if (!order) throw new Error("Comanda não encontrada");
+      if (order.status === 'CLOSED' || order.status === 'CANCELLED') {
+        throw new Error("Não é possível transferir comanda encerrada ou cancelada");
+      }
+
+      const oldWaiterId = order.waiterId;
+      const oldWaiterName = order.waiterName;
+      const now = getNowInBrazil();
+
+      // Build transfer log
+      const transferLog = {
+        type: 'TRANSFER',
+        timestamp: now.toISOString(),
+        adminId: ctx.user.id,
+        adminName: ctx.user.name,
+        fromWaiterId: oldWaiterId,
+        fromWaiterName: oldWaiterName,
+        toWaiterId: input.newWaiterId,
+        toWaiterName: input.newWaiterName,
+        reason: input.reason,
+      };
+
+      // Append to existing notes as JSON log
+      const existingNotes = order.notes ?? '';
+      const separator = existingNotes ? '\n---TRANSFER---\n' : '';
+      const updatedNotes = existingNotes + separator + JSON.stringify(transferLog);
+
+      // Update the order
+      await db
+        .update(salonOrders)
+        .set({
+          waiterId: input.newWaiterId,
+          waiterName: input.newWaiterName,
+          notes: updatedNotes,
+        })
+        .where(eq(salonOrders.id, input.orderId));
+
+      return {
+        success: true,
+        transfer: {
+          orderId: input.orderId,
+          tableNumber: order.tableNumber,
+          from: oldWaiterName,
+          to: input.newWaiterName,
+          reason: input.reason,
+          timestamp: now.toISOString(),
+        },
+      };
+    }),
+
+  getTransferHistory: protectedProcedure
+    .input(z.object({
+      companyId: z.number(),
+      startDate: z.string().optional(),
+      endDate: z.string().optional(),
+    }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("DB unavailable");
+
+      // Search orders that have transfer logs in notes
+      const conditions = [
+        eq(salonOrders.companyId, input.companyId),
+        sql`${salonOrders.notes} LIKE '%TRANSFER%'`,
+      ];
+
+      if (input.startDate) {
+        conditions.push(gte(salonOrders.openedAt, new Date(input.startDate)));
+      }
+      if (input.endDate) {
+        conditions.push(lte(salonOrders.openedAt, new Date(input.endDate)));
+      }
+
+      const orders = await db
+        .select({
+          id: salonOrders.id,
+          tableNumber: salonOrders.tableNumber,
+          status: salonOrders.status,
+          notes: salonOrders.notes,
+          openedAt: salonOrders.openedAt,
+          closedAt: salonOrders.closedAt,
+        })
+        .from(salonOrders)
+        .where(and(...conditions))
+        .orderBy(sql`${salonOrders.openedAt} DESC`)
+        .limit(100);
+
+      // Parse transfer logs from notes
+      const transfers: any[] = [];
+      for (const order of orders) {
+        const notes = order.notes ?? '';
+        const parts = notes.split('---TRANSFER---');
+        for (let i = 1; i < parts.length; i++) {
+          try {
+            const log = JSON.parse(parts[i].trim());
+            transfers.push({
+              orderId: order.id,
+              tableNumber: order.tableNumber,
+              orderStatus: order.status,
+              ...log,
+            });
+          } catch { /* skip malformed */ }
+        }
+      }
+
+      transfers.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+      return transfers;
     }),
 });
 
