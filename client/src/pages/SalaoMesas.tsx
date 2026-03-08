@@ -28,6 +28,7 @@ const STATUS_CONFIG: Record<TableStatus, { label: string; color: string; bg: str
 export default function SalaoMesas() {
   const { activeCompanyId, activeBranchId } = useCompany();
   const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
   const [, setLocation] = useLocation();
   const utils = trpc.useUtils();
 
@@ -40,6 +41,10 @@ export default function SalaoMesas() {
   const [newTableCapacity, setNewTableCapacity] = useState("4");
   const [newTableName, setNewTableName] = useState("");
   const [configModal, setConfigModal] = useState(false);
+  const [editTableModal, setEditTableModal] = useState(false);
+  const [editingTable, setEditingTable] = useState<any>(null);
+  const [editTableName, setEditTableName] = useState("");
+  const [editTableCapacity, setEditTableCapacity] = useState("4");
 
   const companyId = activeCompanyId ?? 0;
 
@@ -209,6 +214,50 @@ export default function SalaoMesas() {
     onError: (e) => toast.error(e.message),
   });
 
+  const updateTableMutation = trpc.salon.updateTable.useMutation({
+    onSuccess: () => {
+      toast.success("Mesa atualizada!");
+      utils.salon.listTables.invalidate();
+      setEditTableModal(false);
+      setEditingTable(null);
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const deleteTableMutation = trpc.salon.deleteTable.useMutation({
+    onSuccess: () => {
+      toast.success("Mesa removida!");
+      utils.salon.listTables.invalidate();
+      setEditTableModal(false);
+      setEditingTable(null);
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const handleEditTable = (table: any, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditingTable(table);
+    setEditTableName(table.name || "");
+    setEditTableCapacity(String(table.capacity || 4));
+    setEditTableModal(true);
+  };
+
+  const handleSaveEditTable = () => {
+    if (!editingTable) return;
+    updateTableMutation.mutate({
+      id: editingTable.id,
+      companyId,
+      name: editTableName || undefined,
+      capacity: parseInt(editTableCapacity) || 4,
+    });
+  };
+
+  const handleDeleteTable = () => {
+    if (!editingTable) return;
+    if (!confirm(`Deseja realmente remover a Mesa ${editingTable.number}?`)) return;
+    deleteTableMutation.mutate({ id: editingTable.id, companyId });
+  };
+
   const handleTableClick = (table: any) => {
     if (table.status === "FREE") {
       setSelectedTable(table);
@@ -369,7 +418,7 @@ export default function SalaoMesas() {
                 onClick={() => handleTableClick(table)}
                 disabled={!isClickable}
                 className={`
-                  relative rounded-xl border-2 p-4 text-left transition-all
+                  group relative rounded-xl border-2 p-4 text-left transition-all
                   ${statusCfg.bg} ${statusCfg.border}
                   ${isClickable ? "cursor-pointer hover:shadow-md hover:scale-[1.02] active:scale-[0.98]" : "cursor-default opacity-60"}
                 `}
@@ -386,6 +435,17 @@ export default function SalaoMesas() {
                     {statusCfg.label}
                   </Badge>
                 </div>
+
+                {/* Edit button for FREE tables (admin only) */}
+                {table.status === "FREE" && isAdmin && (
+                  <button
+                    onClick={(e) => handleEditTable(table, e)}
+                    className="absolute top-1 right-1 p-1 rounded-md hover:bg-black/10 transition-colors opacity-0 group-hover:opacity-100"
+                    title="Editar mesa"
+                  >
+                    <Settings className="h-3 w-3 text-muted-foreground" />
+                  </button>
+                )}
 
                 {/* Table name */}
                 {table.name && (
@@ -523,6 +583,50 @@ export default function SalaoMesas() {
             <Button onClick={handleCreateTable} disabled={createTableMutation.isPending}>
               {createTableMutation.isPending ? "Criando..." : "Criar Mesa"}
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Table Modal */}
+      <Dialog open={editTableModal} onOpenChange={setEditTableModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Editar Mesa {editingTable?.number}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div>
+              <Label>Nome / Identificação (opcional)</Label>
+              <Input
+                value={editTableName}
+                onChange={e => setEditTableName(e.target.value)}
+                placeholder="Ex: Varanda, VIP..."
+                className="mt-1.5"
+              />
+            </div>
+            <div>
+              <Label>Capacidade</Label>
+              <Select value={editTableCapacity} onValueChange={setEditTableCapacity}>
+                <SelectTrigger className="mt-1.5">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {[2, 4, 6, 8, 10, 12].map(n => (
+                    <SelectItem key={n} value={String(n)}>{n} pessoas</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter className="flex justify-between">
+            <Button variant="destructive" size="sm" onClick={handleDeleteTable} disabled={deleteTableMutation.isPending}>
+              {deleteTableMutation.isPending ? "Removendo..." : "Remover Mesa"}
+            </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setEditTableModal(false)}>Cancelar</Button>
+              <Button onClick={handleSaveEditTable} disabled={updateTableMutation.isPending}>
+                {updateTableMutation.isPending ? "Salvando..." : "Salvar"}
+              </Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>

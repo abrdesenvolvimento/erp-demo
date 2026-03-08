@@ -564,16 +564,7 @@ export default function Home() {
           )}
         </div>
 
-        {/* Calendário Compacto de Vendas - Oculto para Operacional */}
-        {!isOperacional && (
-        <Card>
-          <CardContent className="pt-6">
-            <CompactSalesCalendar />
-          </CardContent>
-        </Card>
-        )}
-
-        {/* Seção do Salão — apenas para Hamburgueria */}
+        {/* Seção do Salão — apenas para Hamburgueria (cards no topo, junto com os demais) */}
         {isHamburgueria && (
           <div>
             <h2 className="text-base font-semibold mb-3 flex items-center gap-2">
@@ -582,6 +573,15 @@ export default function Home() {
             </h2>
             <SalonDashboardSection />
           </div>
+        )}
+
+        {/* Calendário Compacto de Vendas - Oculto para Operacional */}
+        {!isOperacional && (
+        <Card>
+          <CardContent className="pt-6">
+            <CompactSalesCalendar />
+          </CardContent>
+        </Card>
         )}
 
       </div>

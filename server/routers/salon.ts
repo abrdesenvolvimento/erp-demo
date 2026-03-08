@@ -87,7 +87,7 @@ export const salonRouter = router({
         .filter(t => t.status !== "FREE")
         .map(t => t.id);
 
-      let activeOrders: Array<{ tableId: number; id: number; guestCount: number; totalAmount: string; openedAt: Date | null; waiterName: string | null; status: string }> = [];
+      let activeOrders: Array<{ tableId: number; id: number; guestCount: number; totalAmount: string | null; openedAt: Date | null; waiterName: string | null; status: string }> = [];
       if (occupiedTableIds.length > 0) {
         activeOrders = await db
           .select({
@@ -364,6 +364,11 @@ export const salonRouter = router({
       const unitPrice = salePrice;
       const totalPrice = unitPrice * input.quantity;
 
+      // Items with no production destination (NONE) go straight to DELIVERED
+      // (e.g., water, napkins — waiter picks them up directly)
+      const destination = product.productionDestination ?? "NONE";
+      const initialStatus = destination === "NONE" ? "DELIVERED" : "PENDING";
+
       const [result] = await db.insert(salonOrderItems).values({
         orderId: input.orderId,
         companyId: input.companyId,
@@ -373,9 +378,10 @@ export const salonRouter = router({
         unitPrice: String(unitPrice),
         totalPrice: String(totalPrice),
         notes: input.notes,
-        productionDestination: product.productionDestination ?? "NONE",
-        status: "PENDING",
+        productionDestination: destination,
+        status: initialStatus,
         sentAt: new Date(),
+        ...(initialStatus === "DELIVERED" ? { deliveredAt: new Date() } : {}),
       });
 
       // Recalculate order totals
@@ -957,7 +963,6 @@ export const salonRouter = router({
             lte(salonOrders.closedAt, end)
           )
         );
-
       // Group by waiter
       const byWaiter = new Map<string, {
         waiterId: string | null;
@@ -1208,7 +1213,19 @@ export const salonRouter = router({
           totalServiceTime: 0,
           productsSold: new Map(),
           paymentBreakdown: new Map(),
-          orders: [],
+          orders: [] as Array<{
+            id: number;
+            tableNumber: number;
+            guestCount: number;
+            subtotal: number;
+            tipAmount: number;
+            totalAmount: number;
+            openedAt: Date | null;
+            closedAt: Date | null;
+            serviceTimeMin: number;
+            items: Array<{ productName: string; quantity: number; unitPrice: number; totalPrice: number }>;
+            payments: Array<{ method: string; amount: number }>;
+          }>,
         };
 
         const subtotal = parseFloat(String(o.subtotal ?? "0"));

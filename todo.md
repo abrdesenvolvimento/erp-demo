@@ -1875,3 +1875,14 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Botões de ação maiores e mais acessíveis (touch-friendly para tablet) — p-3 com rounded-xl
 - [x] Indicador visual de urgência (timer bar + ícone Flame/AlertTriangle + cores progressivas)
 - [x] Animação de entrada para novos pedidos (slideInUp com stagger)
+
+### Melhorias Salão v2 (08/03/2026)
+- [x] Cards do Salão para cima no dashboard da A Brasa Reúne (movidos para logo após cards principais)
+- [x] Remover redundância — Faturamento Salão Hoje já mostra qtd de comandas, Faturamento Diário (calendário) permanece abaixo como visão complementar
+- [x] BUG: Garçom duplicado no ranking — NÃO é bug, são 2 usuários distintos (admin + garçom). Revertido agrupamento para waiterId
+- [x] Permitir editar mesa (descrição e capacidade) após criação — botão de engrenagem em mesas livres (admin)
+- [x] Unificar telas: removidas Garçons e Gorjeta/Garçom do menu, mantido apenas Fechamento Garçom
+- [x] Itens sem KDS (destino NONE): marcados direto como DELIVERED ao adicionar na comanda (ex: água)
+- [x] Alerta sonoro apenas na tela de Mesas (removido som da comanda, mantido apenas vibração + toast)
+- [x] Fluxo de fechamento: pré-visualização/impressão da comanda antes do fechamento efetivo (2 etapas)
+- [ ] [FUTURO] Transfer\u00eancia de comanda entre gar\u00e7ons (al\u00e7ada administrativa)

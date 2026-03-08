@@ -13,9 +13,10 @@ import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import {
   ArrowLeft, Plus, Minus, Trash2, Send, CreditCard, DollarSign,
-  QrCode, Users, Clock, ChefHat, CheckCircle2, Search, X, Bell
+  QrCode, Users, Clock, ChefHat, CheckCircle2, Search, X, Bell,
+  Printer, FileText, ArrowRight
 } from "lucide-react";
-import { playUrgentNotification, getSoundEnabledFromStorage, isAudioUnlocked, vibrateUrgent } from "@/lib/notificationSound";
+import { vibrateUrgent } from "@/lib/notificationSound";
 
 const PAYMENT_METHODS = [
   { value: "CASH", label: "Dinheiro", icon: DollarSign },
@@ -51,6 +52,8 @@ export default function SalaoComanda() {
   const [tipPercent, setTipPercent] = useState(10);
   const [paymentMethod, setPaymentMethod] = useState("DEBIT");
   const [cancelConfirm, setCancelConfirm] = useState(false);
+  const [previewModal, setPreviewModal] = useState(false);
+  const printRef = useRef<HTMLDivElement>(null);
 
   // Queries
   const { data: order, isLoading, refetch } = trpc.salon.getOrder.useQuery(
@@ -84,13 +87,8 @@ export default function SalaoComanda() {
         `${newReady} item(ns) pronto(s) para servir!`,
         { icon: "🔔", duration: 8000 }
       );
-      // Vibrate (works on Android without permission)
+      // Vibrate only (sound alert is on the Mesas page)
       vibrateUrgent();
-      // Play notification sound (Web Audio API - works on mobile)
-      // Only play if user has enabled sound (persisted in localStorage)
-      if (getSoundEnabledFromStorage() || isAudioUnlocked()) {
-        void playUrgentNotification();
-      }
     }
     prevReadyCountRef.current = readyCount;
   }, [order?.items]);
@@ -172,8 +170,50 @@ export default function SalaoComanda() {
   };
 
   const handleRequestCheckout = () => {
+    // Step 1: show preview for client to check
+    setPreviewModal(true);
+  };
+
+  const handleConfirmPreviewAndPay = () => {
+    // Step 2: close preview, open payment modal
+    setPreviewModal(false);
     requestCheckoutMutation.mutate({ orderId, companyId, tipPercent });
     setCheckoutModal(true);
+  };
+
+  const handlePrintComanda = () => {
+    if (!printRef.current) return;
+    const printContent = printRef.current.innerHTML;
+    const win = window.open("", "_blank", "width=400,height=600");
+    if (!win) {
+      toast.error("Popup bloqueado. Permita popups para imprimir.");
+      return;
+    }
+    win.document.write(`
+      <!DOCTYPE html>
+      <html><head><title>Comanda #${orderId} - Mesa ${order?.tableNumber}</title>
+      <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Courier New', monospace; padding: 10mm; font-size: 12px; max-width: 80mm; margin: 0 auto; }
+        .header { text-align: center; margin-bottom: 8px; border-bottom: 1px dashed #000; padding-bottom: 8px; }
+        .header h2 { font-size: 16px; margin-bottom: 4px; }
+        .header p { font-size: 11px; }
+        .items { margin: 8px 0; }
+        .item { display: flex; justify-content: space-between; padding: 3px 0; border-bottom: 1px dotted #ccc; }
+        .item-name { flex: 1; }
+        .item-qty { width: 30px; text-align: center; }
+        .item-price { width: 70px; text-align: right; font-weight: bold; }
+        .totals { border-top: 1px dashed #000; margin-top: 8px; padding-top: 8px; }
+        .total-row { display: flex; justify-content: space-between; padding: 2px 0; }
+        .total-row.grand { font-size: 16px; font-weight: bold; margin-top: 4px; border-top: 2px solid #000; padding-top: 6px; }
+        .footer { text-align: center; margin-top: 12px; font-size: 10px; border-top: 1px dashed #000; padding-top: 8px; }
+        @media print { body { padding: 0; } }
+      </style></head><body>
+      ${printContent}
+      <script>window.onload = function() { window.print(); window.close(); }<\/script>
+      </body></html>
+    `);
+    win.document.close();
   };
 
   const formatCurrency = (v: number | string) =>
@@ -528,7 +568,111 @@ export default function SalaoComanda() {
         </DialogContent>
       </Dialog>
 
-      {/* Checkout Modal */}
+      {/* Preview / Print Comanda Modal (Step 1) */}
+      <Dialog open={previewModal} onOpenChange={setPreviewModal}>
+        <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5 text-primary" />
+              Pré-visualização da Conta — Mesa {order.tableNumber}
+            </DialogTitle>
+            <p className="text-sm text-muted-foreground">Confira os itens antes de prosseguir com o pagamento</p>
+          </DialogHeader>
+
+          {/* Printable content */}
+          <div ref={printRef}>
+            <div className="header">
+              <h2>Comanda #{orderId}</h2>
+              <p>Mesa {order.tableNumber} • {order.guestCount} pessoa(s)</p>
+              <p>{order.waiterName ? `Garçom: ${order.waiterName}` : ""}</p>
+              <p>{order.openedAt ? new Date(order.openedAt).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" }) : ""}</p>
+            </div>
+            <div className="items">
+              {activeItems.map((item: any) => (
+                <div key={item.id} className="item">
+                  <span className="item-name">{item.productName}{item.notes ? ` (${item.notes})` : ""}</span>
+                  <span className="item-qty">{parseFloat(String(item.quantity))}x</span>
+                  <span className="item-price">{formatCurrency(item.totalPrice)}</span>
+                </div>
+              ))}
+            </div>
+            <div className="totals">
+              <div className="total-row">
+                <span>Subtotal</span>
+                <span>{formatCurrency(subtotal)}</span>
+              </div>
+              {tipPercent > 0 && (
+                <div className="total-row">
+                  <span>Gorjeta ({tipPercent}%)</span>
+                  <span>{formatCurrency(tipAmount)}</span>
+                </div>
+              )}
+              <div className="total-row grand">
+                <span>TOTAL</span>
+                <span>{formatCurrency(totalWithTip)}</span>
+              </div>
+              {order.guestCount > 1 && (
+                <div className="total-row">
+                  <span>Por pessoa ({order.guestCount})</span>
+                  <span>{formatCurrency(perPerson)}</span>
+                </div>
+              )}
+            </div>
+            <div className="footer">
+              <p>Obrigado pela preferência!</p>
+            </div>
+          </div>
+
+          {/* Visual preview for screen */}
+          <div className="border rounded-lg p-4 bg-muted/30 space-y-3">
+            <h3 className="font-semibold text-sm">Itens da Comanda</h3>
+            {activeItems.map((item: any) => (
+              <div key={item.id} className="flex items-center justify-between text-sm py-1 border-b border-dashed last:border-0">
+                <div className="flex-1">
+                  <span className="font-medium">{item.productName}</span>
+                  {item.notes && <span className="text-xs text-muted-foreground ml-1">({item.notes})</span>}
+                </div>
+                <span className="text-muted-foreground mx-2">{parseFloat(String(item.quantity))}x</span>
+                <span className="font-semibold">{formatCurrency(item.totalPrice)}</span>
+              </div>
+            ))}
+            <Separator />
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Subtotal</span>
+              <span>{formatCurrency(subtotal)}</span>
+            </div>
+            {tipPercent > 0 && (
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Gorjeta ({tipPercent}%)</span>
+                <span>{formatCurrency(tipAmount)}</span>
+              </div>
+            )}
+            <div className="flex justify-between font-bold text-lg pt-1 border-t">
+              <span>Total</span>
+              <span>{formatCurrency(totalWithTip)}</span>
+            </div>
+            {order.guestCount > 1 && (
+              <div className="flex justify-between text-sm text-muted-foreground">
+                <span>Por pessoa ({order.guestCount})</span>
+                <span>{formatCurrency(perPerson)}</span>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter className="flex flex-col sm:flex-row gap-2">
+            <Button variant="outline" onClick={handlePrintComanda} className="flex-1">
+              <Printer className="h-4 w-4 mr-1" />
+              Imprimir Comanda
+            </Button>
+            <Button onClick={handleConfirmPreviewAndPay} className="flex-1 bg-green-600 hover:bg-green-700">
+              Prosseguir para Pagamento
+              <ArrowRight className="h-4 w-4 ml-1" />
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Checkout Modal (Step 2 - Payment) */}
       <Dialog open={checkoutModal} onOpenChange={setCheckoutModal}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>

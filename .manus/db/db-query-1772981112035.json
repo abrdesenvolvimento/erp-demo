@@ -1,0 +1,22 @@
+{
+  "query": "SELECT waiterId, HEX(waiterId), waiterName, COUNT(*) as cnt FROM salonOrders WHERE companyId = 2 AND status = 'CLOSED' GROUP BY waiterId, waiterName;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT waiterId, HEX(waiterId), waiterName, COUNT(*) as cnt FROM salonOrders WHERE companyId = 2 AND status = 'CLOSED' GROUP BY waiterId, waiterName;",
+  "rows": [
+    {
+      "waiterId": "3sp2FmLhkenyjqMFmfLoex",
+      "HEX(waiterId)": "33737032466D4C686B656E796A714D466D664C6F6578",
+      "waiterName": "Gabriel Morais",
+      "cnt": "1"
+    },
+    {
+      "waiterId": "j8R68T3wPMAkij5Kb9Zef8",
+      "HEX(waiterId)": "6A38523638543377504D416B696A354B62395A656638",
+      "waiterName": "Gabriel Morais",
+      "cnt": "4"
+    }
+  ],
+  "messages": [],
+  "stdout": "waiterId\tHEX(waiterId)\twaiterName\tcnt\n3sp2FmLhkenyjqMFmfLoex\t33737032466D4C686B656E796A714D466D664C6F6578\tGabriel Morais\t1\nj8R68T3wPMAkij5Kb9Zef8\t6A38523638543377504D416B696A354B62395A656638\tGabriel Morais\t4\n",
+  "stderr": "",
+  "execution_time_ms": 348
+}

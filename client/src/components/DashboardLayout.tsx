@@ -119,8 +119,6 @@ const salonMenuItems = [
   { icon: LayoutGrid, label: "Mesas", path: "/salao/mesas", roles: ["admin", "operacional", "garcom"] },
   { icon: ChefHat, label: "KDS Cozinha", path: "/salao/kds-cozinha", roles: ["admin", "operacional"] },
   { icon: UtensilsCrossed, label: "KDS Bar", path: "/salao/kds-bar", roles: ["admin", "operacional"] },
-  { icon: Users, label: "Garçons", path: "/salao/garcons", roles: ["admin"] },
-  { icon: BarChart2, label: "Gorjeta / Garçom", path: "/salao/gorjeta", roles: ["admin"] },
   { icon: FileText, label: "Fechamento Garçom", path: "/salao/fechamento-garcom", roles: ["admin"] },
 ];
 

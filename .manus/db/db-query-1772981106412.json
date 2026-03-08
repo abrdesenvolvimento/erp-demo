@@ -1,0 +1,18 @@
+{
+  "query": "SELECT DISTINCT waiterId, waiterName FROM salonOrders WHERE companyId = 2 AND status = 'CLOSED';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT DISTINCT waiterId, waiterName FROM salonOrders WHERE companyId = 2 AND status = 'CLOSED';",
+  "rows": [
+    {
+      "waiterId": "j8R68T3wPMAkij5Kb9Zef8",
+      "waiterName": "Gabriel Morais"
+    },
+    {
+      "waiterId": "3sp2FmLhkenyjqMFmfLoex",
+      "waiterName": "Gabriel Morais"
+    }
+  ],
+  "messages": [],
+  "stdout": "waiterId\twaiterName\nj8R68T3wPMAkij5Kb9Zef8\tGabriel Morais\n3sp2FmLhkenyjqMFmfLoex\tGabriel Morais\n",
+  "stderr": "",
+  "execution_time_ms": 371
+}

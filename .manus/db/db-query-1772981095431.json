@@ -1,0 +1,20 @@
+{
+  "query": "SELECT waiterId, waiterName, COUNT(*) as cnt FROM salonOrders WHERE companyId = 2 AND status = 'CLOSED' GROUP BY waiterId, waiterName ORDER BY cnt DESC LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT waiterId, waiterName, COUNT(*) as cnt FROM salonOrders WHERE companyId = 2 AND status = 'CLOSED' GROUP BY waiterId, waiterName ORDER BY cnt DESC LIMIT 10;",
+  "rows": [
+    {
+      "waiterId": "j8R68T3wPMAkij5Kb9Zef8",
+      "waiterName": "Gabriel Morais",
+      "cnt": "4"
+    },
+    {
+      "waiterId": "3sp2FmLhkenyjqMFmfLoex",
+      "waiterName": "Gabriel Morais",
+      "cnt": "1"
+    }
+  ],
+  "messages": [],
+  "stdout": "waiterId\twaiterName\tcnt\nj8R68T3wPMAkij5Kb9Zef8\tGabriel Morais\t4\n3sp2FmLhkenyjqMFmfLoex\tGabriel Morais\t1\n",
+  "stderr": "",
+  "execution_time_ms": 700
+}
