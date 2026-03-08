@@ -1839,7 +1839,7 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 
 ### Bugs Pós-Entrega Rodada 10 (08/03/2026)
 - [x] BUG: Som não toca no iOS durante polling — reescrito: substituiu Web Audio API oscillator por HTMLAudioElement com WAV base64 pré-gerado; elemento é "blessed" (play muted) durante gesto do usuário e reutilizado no polling via currentTime=0 + play()
-- [ ] Adicionado botão "Testar Som Agora" no debug banner para validar se o som funciona após o keep-alive
+- [x] Adicionado botão "Testar Som Agora" no debug banner (removido junto com banner)
 
 ### Web Push Server-Side (08/03/2026)
 - [x] Instalar web-push library no servidor
@@ -1851,4 +1851,12 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Atualizar sw.js para receber push events do servidor com vibrate e navigation
 - [x] Atualizar pushNotification.ts com subscribeToPush() e unsubscribeFromPush() usando VAPID
 - [x] Atualizar SalaoMesas.tsx para registrar subscription ao ativar alertas + push test via servidor
-- [ ] Remover banner de debug após confirmar funcionamento
+- [x] Remover banner de debug após confirmar funcionamento
+
+### Bugs Pós-Entrega Rodada 11 (08/03/2026)
+- [x] BUG: Cards do dashboard — corrigido: getDashboardStats usava ctx.user.companyId (inexistente), trocado para ctx.activeCompanyId
+- [x] BUG: Cards da tela de garçom — corrigido: getWaiterPerformance usava salonOrders.guests (inexistente), trocado para salonOrders.guestCount
+- [x] Remover banner de debug amarelo da tela de mesas
+- [x] Reduzir polling para 5s em todas as telas do salão (mesas 15→5s, comanda 10→5s, KDS 8→5s)
+- [ ] Preparar terreno para Fechamento de Garçom (vendas, produtos e gorjetas por garçom)
+- [ ] Redesign visual das telas de KDS (cozinha/bar) para ficarem mais atrativas

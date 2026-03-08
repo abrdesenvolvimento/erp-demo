@@ -1,0 +1,54 @@
+{
+  "query": "SELECT id, companyId, status, totalAmount, tipAmount, waiterId, waiterName, openedAt, closedAt FROM salonOrders WHERE status = 'CLOSED' ORDER BY closedAt DESC LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT id, companyId, status, totalAmount, tipAmount, waiterId, waiterName, openedAt, closedAt FROM salonOrders WHERE status = 'CLOSED' ORDER BY closedAt DESC LIMIT 10;",
+  "rows": [
+    {
+      "id": "6",
+      "companyId": "2",
+      "status": "CLOSED",
+      "totalAmount": "75.89",
+      "tipAmount": "6.90",
+      "waiterId": "j8R68T3wPMAkij5Kb9Zef8",
+      "waiterName": "Gabriel Morais",
+      "openedAt": "2026-03-08 02:37:38",
+      "closedAt": "2026-03-08 02:42:11"
+    },
+    {
+      "id": "4",
+      "companyId": "2",
+      "status": "CLOSED",
+      "totalAmount": "31.89",
+      "tipAmount": "2.90",
+      "waiterId": "j8R68T3wPMAkij5Kb9Zef8",
+      "waiterName": "Gabriel Morais",
+      "openedAt": "2026-03-07 23:45:25",
+      "closedAt": "2026-03-07 23:50:35"
+    },
+    {
+      "id": "3",
+      "companyId": "2",
+      "status": "CLOSED",
+      "totalAmount": "31.89",
+      "tipAmount": "2.90",
+      "waiterId": "j8R68T3wPMAkij5Kb9Zef8",
+      "waiterName": "Gabriel Morais",
+      "openedAt": "2026-03-07 23:26:48",
+      "closedAt": "2026-03-07 23:30:49"
+    },
+    {
+      "id": "1",
+      "companyId": "2",
+      "status": "CLOSED",
+      "totalAmount": "107.78",
+      "tipAmount": "9.80",
+      "waiterId": "3sp2FmLhkenyjqMFmfLoex",
+      "waiterName": "Gabriel Morais",
+      "openedAt": "2026-03-07 20:31:13",
+      "closedAt": "2026-03-07 22:15:05"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tcompanyId\tstatus\ttotalAmount\ttipAmount\twaiterId\twaiterName\topenedAt\tclosedAt\n6\t2\tCLOSED\t75.89\t6.90\tj8R68T3wPMAkij5Kb9Zef8\tGabriel Morais\t2026-03-08 02:37:38\t2026-03-08 02:42:11\n4\t2\tCLOSED\t31.89\t2.90\tj8R68T3wPMAkij5Kb9Zef8\tGabriel Morais\t2026-03-07 23:45:25\t2026-03-07 23:50:35\n3\t2\tCLOSED\t31.89\t2.90\tj8R68T3wPMAkij5Kb9Zef8\tGabriel Morais\t2026-03-07 23:26:48\t2026-03-07 23:30:49\n1\t2\tCLOSED\t107.78\t9.80\t3sp2FmLhkenyjqMFmfLoex\tGabriel Morais\t2026-03-07 20:31:13\t2026-03-07 22:15:05\n",
+  "stderr": "",
+  "execution_time_ms": 427
+}

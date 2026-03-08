@@ -1,0 +1,38 @@
+{
+  "query": "SELECT id, companyId, totalAmount, closedAt, DATE_FORMAT(closedAt, '%Y-%m-%d %H:%i:%s') as closedAtFormatted FROM salonOrders WHERE status = 'CLOSED' ORDER BY closedAt DESC LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT id, companyId, totalAmount, closedAt, DATE_FORMAT(closedAt, '%Y-%m-%d %H:%i:%s') as closedAtFormatted FROM salonOrders WHERE status = 'CLOSED' ORDER BY closedAt DESC LIMIT 10;",
+  "rows": [
+    {
+      "id": "6",
+      "companyId": "2",
+      "totalAmount": "75.89",
+      "closedAt": "2026-03-08 02:42:11",
+      "closedAtFormatted": "2026-03-08 02:42:11"
+    },
+    {
+      "id": "4",
+      "companyId": "2",
+      "totalAmount": "31.89",
+      "closedAt": "2026-03-07 23:50:35",
+      "closedAtFormatted": "2026-03-07 23:50:35"
+    },
+    {
+      "id": "3",
+      "companyId": "2",
+      "totalAmount": "31.89",
+      "closedAt": "2026-03-07 23:30:49",
+      "closedAtFormatted": "2026-03-07 23:30:49"
+    },
+    {
+      "id": "1",
+      "companyId": "2",
+      "totalAmount": "107.78",
+      "closedAt": "2026-03-07 22:15:05",
+      "closedAtFormatted": "2026-03-07 22:15:05"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tcompanyId\ttotalAmount\tclosedAt\tclosedAtFormatted\n6\t2\t75.89\t2026-03-08 02:42:11\t2026-03-08 02:42:11\n4\t2\t31.89\t2026-03-07 23:50:35\t2026-03-07 23:50:35\n3\t2\t31.89\t2026-03-07 23:30:49\t2026-03-07 23:30:49\n1\t2\t107.78\t2026-03-07 22:15:05\t2026-03-07 22:15:05\n",
+  "stderr": "",
+  "execution_time_ms": 361
+}

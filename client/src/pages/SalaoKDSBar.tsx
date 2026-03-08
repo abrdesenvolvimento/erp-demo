@@ -20,7 +20,7 @@ export default function SalaoKDSBar() {
 
   const { data: items = [], isLoading, refetch } = trpc.salon.getKDSItems.useQuery(
     { companyId, destination: "BAR" },
-    { enabled: companyId > 0, refetchInterval: 8000 }
+    { enabled: companyId > 0, refetchInterval: 5000 }
   );
 
   const updateStatusMutation = trpc.salon.updateItemStatus.useMutation({

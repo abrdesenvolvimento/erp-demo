@@ -21,7 +21,7 @@ export default function SalaoKDSCozinha() {
 
   const { data: items = [], isLoading, refetch } = trpc.salon.getKDSItems.useQuery(
     { companyId, destination: "KITCHEN" },
-    { enabled: companyId > 0, refetchInterval: 8000 }
+    { enabled: companyId > 0, refetchInterval: 5000 }
   );
 
   const updateStatusMutation = trpc.salon.updateItemStatus.useMutation({

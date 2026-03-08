@@ -144,13 +144,12 @@ export default function SalaoMesas() {
   // Queries
   const { data: tables = [], isLoading, refetch } = trpc.salon.listTables.useQuery(
     { companyId },
-    { enabled: companyId > 0, refetchInterval: 15000 }
+    { enabled: companyId > 0, refetchInterval: 5000 }
   );
 
   // Track total ready items across all tables for notification
   // -1 = sentinel for "first load, don't alert yet"
   const prevTotalReadyRef = useRef<number>(-1);
-  const [debugInfo, setDebugInfo] = useState({ prev: -1, current: 0, polls: 0, lastAlert: "" });
   useEffect(() => {
     if (tables.length === 0) return; // skip empty initial render
     const totalReady = tables.reduce((sum: number, t: any) => sum + ((t.activeOrder as any)?.readyItems ?? 0), 0);
@@ -158,19 +157,13 @@ export default function SalaoMesas() {
     // First load: just record the baseline, don't alert
     if (prevTotalReadyRef.current === -1) {
       prevTotalReadyRef.current = totalReady;
-      setDebugInfo(d => ({ ...d, prev: totalReady, current: totalReady, polls: d.polls + 1, lastAlert: "baseline set" }));
       return;
     }
-
-    // Update debug info
-    setDebugInfo(d => ({ ...d, prev: prevTotalReadyRef.current, current: totalReady, polls: d.polls + 1 }));
 
     // Alert when ready count increases (new items became READY since last poll)
     if (totalReady > prevTotalReadyRef.current) {
       const newReady = totalReady - prevTotalReadyRef.current;
-      const alertMsg = `ALERT! ${prevTotalReadyRef.current}->${totalReady} (+${newReady}) @ ${new Date().toLocaleTimeString()}`;
-      console.log(`[Salon Alert] ${alertMsg}`);
-      setDebugInfo(d => ({ ...d, lastAlert: alertMsg }));
+      console.log(`[Salon Alert] ${prevTotalReadyRef.current}->${totalReady} (+${newReady})`);
       toast.success(
         `${newReady} item(ns) pronto(s) para servir!`,
         { icon: "\ud83d\udd14", duration: 6000 }
@@ -329,18 +322,6 @@ export default function SalaoMesas() {
         </div>
       </div>
 
-      {/* DEBUG BANNER - TEMPORARY */}
-      <div className="bg-yellow-100 border border-yellow-400 rounded p-2 text-xs font-mono">
-        <div>Polls: {debugInfo.polls} | Prev: {debugInfo.prev} | Current: {debugInfo.current} | Sound: {soundEnabled ? "ON" : "OFF"} | Push: {pushGranted ? "ON" : "OFF"}</div>
-        <div>Last: {debugInfo.lastAlert || "nenhum alerta ainda"}</div>
-        <div>AudioUnlocked: {isAudioUnlocked() ? "YES" : "NO"} | SoundRef: {soundEnabledRef.current ? "YES" : "NO"} | NotifPermitted: {isNotificationPermitted() ? "YES" : "NO"}</div>
-        <div>VAPID Subscribed: {isAlreadySubscribed() ? "YES" : "NO"} | PushMgr: {isPushManagerSupported() ? "YES" : "NO"} | CompanyId: {companyId}</div>
-        <div className="flex gap-2 mt-1">
-          <button className="bg-blue-500 text-white px-2 py-1 rounded text-xs" onClick={() => { vibrateUrgent(); void playUrgentNotification(); setDebugInfo(d => ({...d, lastAlert: `TEST SOUND @ ${new Date().toLocaleTimeString()}`})); }}>Testar Som</button>
-          <button className="bg-purple-500 text-white px-2 py-1 rounded text-xs" onClick={async () => { await unlockAudio(); setSoundEnabled(true); soundEnabledRef.current = true; vibrateUrgent(); await playUrgentNotification(); setDebugInfo(d => ({...d, lastAlert: `RE-UNLOCK+PLAY @ ${new Date().toLocaleTimeString()}`})); }}>Re-unlock + Play</button>
-          <button className="bg-green-600 text-white px-2 py-1 rounded text-xs" onClick={() => { if (companyId > 0) { pushTestMutation.mutate({ companyId }); setDebugInfo(d => ({...d, lastAlert: `SERVER PUSH TEST @ ${new Date().toLocaleTimeString()}`})); } }}>Push Server Test</button>
-        </div>
-      </div>
 
       {/* Stats bar */}
       <div className="grid grid-cols-3 gap-3">

@@ -944,7 +944,7 @@ export const salonRouter = router({
           totalAmount: salonOrders.totalAmount,
           tipAmount: salonOrders.tipAmount,
           subtotal: salonOrders.subtotal,
-          guests: salonOrders.guests,
+          guests: salonOrders.guestCount,
           closedAt: salonOrders.closedAt,
           openedAt: salonOrders.openedAt,
         })
@@ -1006,12 +1006,15 @@ export const salonRouter = router({
       const db = await getDb();
       if (!db) throw new Error("DB unavailable");
 
-      const companyId = ctx.user.companyId;
-      const now = getNowInBrazil();
-      const todayStart = new Date(now);
-      todayStart.setUTCHours(0, 0, 0, 0);
-      const nextDay = new Date(todayStart);
-      nextDay.setUTCDate(nextDay.getUTCDate() + 1);
+      const companyId = ctx.activeCompanyId;
+      if (!companyId) throw new Error("Empresa não selecionada");
+
+      // Calculate "today" in Brazil timezone (UTC-3)
+      // Get current date string in Brazil timezone, then convert to UTC boundaries
+      const nowStr = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' }); // YYYY-MM-DD
+      const todayStart = new Date(nowStr + 'T00:00:00-03:00'); // midnight BRT = 03:00 UTC
+      const nextDay = new Date(nowStr + 'T00:00:00-03:00');
+      nextDay.setDate(nextDay.getDate() + 1);
 
       // Total tables configured
       const [totalTablesRow] = await db

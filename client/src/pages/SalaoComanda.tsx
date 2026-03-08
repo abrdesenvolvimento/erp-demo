@@ -55,7 +55,7 @@ export default function SalaoComanda() {
   // Queries
   const { data: order, isLoading, refetch } = trpc.salon.getOrder.useQuery(
     { orderId, companyId },
-    { enabled: orderId > 0 && companyId > 0, refetchInterval: 10000 }
+    { enabled: orderId > 0 && companyId > 0, refetchInterval: 5000 }
   );
 
   const { data: products = [], isFetching: productsFetching } = trpc.salon.listSalonProducts.useQuery(
