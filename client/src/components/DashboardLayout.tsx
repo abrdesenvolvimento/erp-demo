@@ -121,6 +121,7 @@ const salonMenuItems = [
   { icon: UtensilsCrossed, label: "KDS Bar", path: "/salao/kds-bar", roles: ["admin", "operacional"] },
   { icon: Users, label: "Garçons", path: "/salao/garcons", roles: ["admin"] },
   { icon: BarChart2, label: "Gorjeta / Garçom", path: "/salao/gorjeta", roles: ["admin"] },
+  { icon: FileText, label: "Fechamento Garçom", path: "/salao/fechamento-garcom", roles: ["admin"] },
 ];
 
 // Submenu de Auditoria

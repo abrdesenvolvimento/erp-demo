@@ -1858,5 +1858,20 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] BUG: Cards da tela de garçom — corrigido: getWaiterPerformance usava salonOrders.guests (inexistente), trocado para salonOrders.guestCount
 - [x] Remover banner de debug amarelo da tela de mesas
 - [x] Reduzir polling para 5s em todas as telas do salão (mesas 15→5s, comanda 10→5s, KDS 8→5s)
-- [ ] Preparar terreno para Fechamento de Garçom (vendas, produtos e gorjetas por garçom)
-- [ ] Redesign visual das telas de KDS (cozinha/bar) para ficarem mais atrativas
+- [x] Preparar terreno para Fechamento de Garçom (vendas, produtos e gorjetas por garçom)
+- [x] Redesign visual das telas de KDS (cozinha/bar) para ficarem mais atrativas
+
+### Fechamento de Garçom (08/03/2026)
+- [x] Backend: endpoint getWaiterClosingReport — relatório detalhado com vendas, itens vendidos, gorjetas, métricas por garçom
+- [x] Backend: endpoint getWaiterOrderDetails — incluso dentro do getWaiterClosingReport (orders com items e payments)
+- [x] Frontend: tela SalaoFechamentoGarcom com seleção de garçom, período, relatório visual
+- [x] Frontend: detalhamento por comanda (itens, valores, gorjeta, tempo de atendimento)
+- [x] Frontend: resumo com totais de vendas, gorjetas, ticket médio, produtos mais vendidos
+- [x] Adicionar rota /salao/fechamento-garcom no App.tsx e menu lateral
+
+### Redesign Visual KDS (08/03/2026)
+- [x] KDS Cozinha: redesign com cards maiores, cores mais vibrantes, timer visual, animações
+- [x] KDS Bar: redesign com identidade visual própria (azul/índigo), mesmo padrão de usabilidade
+- [x] Botões de ação maiores e mais acessíveis (touch-friendly para tablet) — p-3 com rounded-xl
+- [x] Indicador visual de urgência (timer bar + ícone Flame/AlertTriangle + cores progressivas)
+- [x] Animação de entrada para novos pedidos (slideInUp com stagger)

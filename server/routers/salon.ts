@@ -1072,6 +1072,247 @@ export const salonRouter = router({
       };
     }),
 
+  // ==================== FECHAMENTO DE GARÇOM ====================
+
+  getWaiterClosingReport: protectedProcedure
+    .input(z.object({
+      companyId: z.number(),
+      waiterId: z.string().optional(), // se vazio, retorna todos
+      startDate: z.string(),
+      endDate: z.string(),
+    }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("DB unavailable");
+
+      // Brazil timezone boundaries
+      const start = new Date(input.startDate + 'T00:00:00-03:00');
+      const end = new Date(input.endDate + 'T23:59:59-03:00');
+
+      const conditions = [
+        eq(salonOrders.companyId, input.companyId),
+        eq(salonOrders.status, "CLOSED"),
+        gte(salonOrders.closedAt, start),
+        lte(salonOrders.closedAt, end),
+      ];
+      if (input.waiterId) {
+        conditions.push(eq(salonOrders.waiterId, input.waiterId));
+      }
+
+      // Get all closed orders in the period
+      const orders = await db
+        .select({
+          id: salonOrders.id,
+          waiterId: salonOrders.waiterId,
+          waiterName: salonOrders.waiterName,
+          tableNumber: salonOrders.tableNumber,
+          guestCount: salonOrders.guestCount,
+          subtotal: salonOrders.subtotal,
+          tipPercent: salonOrders.tipPercent,
+          tipAmount: salonOrders.tipAmount,
+          totalAmount: salonOrders.totalAmount,
+          openedAt: salonOrders.openedAt,
+          closedAt: salonOrders.closedAt,
+        })
+        .from(salonOrders)
+        .where(and(...conditions))
+        .orderBy(salonOrders.closedAt);
+
+      if (orders.length === 0) {
+        return { waiters: [], totals: { totalSales: 0, totalSubtotal: 0, totalTips: 0, totalOrders: 0, totalGuests: 0, avgTicket: 0, avgServiceTime: 0 } };
+      }
+
+      // Get all items for these orders
+      const orderIds = orders.map(o => o.id);
+      const allItems = await db
+        .select({
+          orderId: salonOrderItems.orderId,
+          productId: salonOrderItems.productId,
+          productName: salonOrderItems.productName,
+          quantity: salonOrderItems.quantity,
+          unitPrice: salonOrderItems.unitPrice,
+          totalPrice: salonOrderItems.totalPrice,
+          status: salonOrderItems.status,
+        })
+        .from(salonOrderItems)
+        .where(
+          and(
+            inArray(salonOrderItems.orderId, orderIds),
+            inArray(salonOrderItems.status, ["PENDING", "IN_PROGRESS", "READY", "DELIVERED"])
+          )
+        );
+
+      // Get payments for these orders
+      const allPayments = await db
+        .select({
+          orderId: salonOrderPayments.orderId,
+          method: salonOrderPayments.method,
+          amount: salonOrderPayments.amount,
+        })
+        .from(salonOrderPayments)
+        .where(inArray(salonOrderPayments.orderId, orderIds));
+
+      // Group items by order
+      const itemsByOrder = new Map<number, typeof allItems>();
+      for (const item of allItems) {
+        const list = itemsByOrder.get(item.orderId) ?? [];
+        list.push(item);
+        itemsByOrder.set(item.orderId, list);
+      }
+
+      // Group payments by order
+      const paymentsByOrder = new Map<number, typeof allPayments>();
+      for (const p of allPayments) {
+        const list = paymentsByOrder.get(p.orderId) ?? [];
+        list.push(p);
+        paymentsByOrder.set(p.orderId, list);
+      }
+
+      // Group by waiter
+      const byWaiter = new Map<string, {
+        waiterId: string | null;
+        waiterName: string | null;
+        totalSales: number;
+        totalSubtotal: number;
+        totalTips: number;
+        orderCount: number;
+        totalGuests: number;
+        totalServiceTime: number;
+        productsSold: Map<number, { productId: number; productName: string; quantity: number; totalRevenue: number }>;
+        paymentBreakdown: Map<string, number>;
+        orders: Array<{
+          id: number;
+          tableNumber: number;
+          guestCount: number;
+          subtotal: number;
+          tipAmount: number;
+          totalAmount: number;
+          openedAt: Date | null;
+          closedAt: Date | null;
+          serviceTimeMin: number;
+          items: Array<{ productName: string; quantity: number; unitPrice: number; totalPrice: number }>;
+          payments: Array<{ method: string; amount: number }>;
+        }>;
+      }>();
+
+      for (const o of orders) {
+        const key = o.waiterId ?? "unknown";
+        const existing = byWaiter.get(key) ?? {
+          waiterId: o.waiterId,
+          waiterName: o.waiterName,
+          totalSales: 0,
+          totalSubtotal: 0,
+          totalTips: 0,
+          orderCount: 0,
+          totalGuests: 0,
+          totalServiceTime: 0,
+          productsSold: new Map(),
+          paymentBreakdown: new Map(),
+          orders: [],
+        };
+
+        const subtotal = parseFloat(String(o.subtotal ?? "0"));
+        const tipAmount = parseFloat(String(o.tipAmount ?? "0"));
+        const totalAmount = parseFloat(String(o.totalAmount ?? "0"));
+        const serviceTime = (o.openedAt && o.closedAt)
+          ? (new Date(o.closedAt).getTime() - new Date(o.openedAt).getTime()) / 60000
+          : 0;
+
+        existing.totalSales += totalAmount;
+        existing.totalSubtotal += subtotal;
+        existing.totalTips += tipAmount;
+        existing.orderCount += 1;
+        existing.totalGuests += Number(o.guestCount ?? 0);
+        existing.totalServiceTime += serviceTime;
+
+        // Aggregate products
+        const orderItems = itemsByOrder.get(o.id) ?? [];
+        for (const item of orderItems) {
+          const qty = parseFloat(String(item.quantity));
+          const rev = parseFloat(String(item.totalPrice));
+          const prev = existing.productsSold.get(item.productId);
+          if (prev) {
+            prev.quantity += qty;
+            prev.totalRevenue += rev;
+          } else {
+            existing.productsSold.set(item.productId, {
+              productId: item.productId,
+              productName: item.productName,
+              quantity: qty,
+              totalRevenue: rev,
+            });
+          }
+        }
+
+        // Aggregate payments
+        const orderPayments = paymentsByOrder.get(o.id) ?? [];
+        for (const p of orderPayments) {
+          const amt = parseFloat(String(p.amount));
+          existing.paymentBreakdown.set(p.method, (existing.paymentBreakdown.get(p.method) ?? 0) + amt);
+        }
+
+        // Add order detail
+        existing.orders.push({
+          id: o.id,
+          tableNumber: o.tableNumber,
+          guestCount: Number(o.guestCount ?? 0),
+          subtotal,
+          tipAmount,
+          totalAmount,
+          openedAt: o.openedAt,
+          closedAt: o.closedAt,
+          serviceTimeMin: Math.round(serviceTime),
+          items: orderItems.map(i => ({
+            productName: i.productName,
+            quantity: parseFloat(String(i.quantity)),
+            unitPrice: parseFloat(String(i.unitPrice)),
+            totalPrice: parseFloat(String(i.totalPrice)),
+          })),
+          payments: orderPayments.map(p => ({
+            method: p.method,
+            amount: parseFloat(String(p.amount)),
+          })),
+        });
+
+        byWaiter.set(key, existing);
+      }
+
+      // Convert to serializable format
+      const waiters = Array.from(byWaiter.values()).map(w => ({
+        waiterId: w.waiterId,
+        waiterName: w.waiterName,
+        totalSales: w.totalSales,
+        totalSubtotal: w.totalSubtotal,
+        totalTips: w.totalTips,
+        orderCount: w.orderCount,
+        totalGuests: w.totalGuests,
+        avgTicket: w.orderCount > 0 ? w.totalSales / w.orderCount : 0,
+        avgServiceTime: w.orderCount > 0 ? w.totalServiceTime / w.orderCount : 0,
+        productsSold: Array.from(w.productsSold.values()).sort((a, b) => b.totalRevenue - a.totalRevenue),
+        paymentBreakdown: Object.fromEntries(w.paymentBreakdown),
+        orders: w.orders,
+      })).sort((a, b) => b.totalSales - a.totalSales);
+
+      // Global totals
+      const totals = waiters.reduce(
+        (acc, w) => ({
+          totalSales: acc.totalSales + w.totalSales,
+          totalSubtotal: acc.totalSubtotal + w.totalSubtotal,
+          totalTips: acc.totalTips + w.totalTips,
+          totalOrders: acc.totalOrders + w.orderCount,
+          totalGuests: acc.totalGuests + w.totalGuests,
+          avgTicket: 0,
+          avgServiceTime: 0,
+        }),
+        { totalSales: 0, totalSubtotal: 0, totalTips: 0, totalOrders: 0, totalGuests: 0, avgTicket: 0, avgServiceTime: 0 }
+      );
+      totals.avgTicket = totals.totalOrders > 0 ? totals.totalSales / totals.totalOrders : 0;
+      const totalServiceTime = waiters.reduce((sum, w) => sum + w.avgServiceTime * w.orderCount, 0);
+      totals.avgServiceTime = totals.totalOrders > 0 ? totalServiceTime / totals.totalOrders : 0;
+
+      return { waiters, totals };
+    }),
+
   // ==================== WEB PUSH SUBSCRIPTIONS ====================
 
   pushSubscribe: protectedProcedure
