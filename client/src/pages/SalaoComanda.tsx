@@ -467,31 +467,7 @@ export default function SalaoComanda() {
               <span>{formatCurrency(subtotal)}</span>
             </div>
 
-            {!isClosed && (salonCfg?.tipEnabled !== false) && (
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">{salonCfg?.gratuityLabel || "Taxa de serviço"}</span>
-                <div className="flex items-center gap-2">
-                  {(() => {
-                    const defaultPct = parseFloat(String(salonCfg?.defaultTipPercent ?? "10"));
-                    const presets = new Set([0, defaultPct]);
-                    [5, 10, 12, 15].forEach(p => { if (presets.size < 5) presets.add(p); });
-                    return Array.from(presets).sort((a, b) => a - b).map(p => (
-                      <button
-                        key={p}
-                        onClick={() => setTipPercent(p)}
-                        className={`px-2 py-0.5 rounded text-xs font-medium transition-colors ${
-                          tipPercent === p
-                            ? "bg-primary text-primary-foreground"
-                            : "bg-muted hover:bg-muted/80"
-                        }`}
-                      >
-                        {p === 0 ? "Sem" : `${p}%`}
-                      </button>
-                    ));
-                  })()}
-                </div>
-              </div>
-            )}
+
 
             {tipPercent > 0 && (
               <div className="flex justify-between text-sm">
@@ -835,18 +811,18 @@ export default function SalaoComanda() {
               </div>
               {tipPercent > 0 && (
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">{salonCfg?.gratuityLabel || "Taxa de servi\u00e7o"} ({tipPercent}%)</span>
+                  <span className="text-muted-foreground">{salonCfg?.gratuityLabel || "Taxa de serviço"} ({tipPercent}%)</span>
                   <span>{formatCurrency(tipAmount)}</span>
                 </div>
               )}
               <Separator />
               <div className="flex justify-between font-bold text-lg">
-                <span>{tipPercent > 0 ? "Total com servi\u00e7o" : "Total"}</span>
+                <span>{tipPercent > 0 ? "Total com serviço" : "Total"}</span>
                 <span>{formatCurrency(finalTotal)}</span>
               </div>
               {tipPercent > 0 && (
                 <div className="flex justify-between text-sm text-muted-foreground">
-                  <span>Total sem servi\u00e7o</span>
+                  <span>Total sem serviço</span>
                   <span>{formatCurrency(subtotal)}</span>
                 </div>
               )}
@@ -866,7 +842,7 @@ export default function SalaoComanda() {
                   !splitMode ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground"
                 }`}
               >
-                Pagamento \u00danico
+                Pagamento Único
               </button>
               <button
                 onClick={() => setSplitMode(true)}

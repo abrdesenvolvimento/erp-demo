@@ -42,8 +42,8 @@ export const salonRouter = router({
       defaultTipPercent: z.number().min(0).max(100),
       tipEnabled: z.boolean(),
       gratuityLabel: z.string().max(100),
-      kitchenLabel: z.string().max(100),
-      barLabel: z.string().max(100),
+      kitchenLabel: z.string().max(100).optional().default("Cozinha"),
+      barLabel: z.string().max(100).optional().default("Bar"),
     }))
     .mutation(async ({ input }) => {
       const db = await getDb();

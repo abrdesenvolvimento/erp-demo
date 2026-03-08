@@ -1932,3 +1932,9 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] BUG: Fechamento Garçom mostrando dados de comandas canceladas — mesma correção acima (salonOrders sincronizadas com sales)
 - [x] FIX: Dados históricos corrigidos — 6 salonOrders com vendas canceladas atualizadas para status CANCELLED
 - [x] Transferência de Comanda já estava no menu lateral (confirmado funcionando)
+
+### Correções pós-publicação v2 (08/03/2026)
+- [x] BUG: Erro ao salvar config do Salão — kitchenLabel e barLabel esperando string mas recebendo undefined (tornados opcionais com defaults)
+- [x] Remover seletor de % taxa de serviço da tela de comanda (usar apenas config global)
+- [x] BUG: Texto encoding errado em Pagamento Único e outros textos — corrigido em SalaoComanda.tsx e SalaoMesas.tsx
+- [x] Confirmado: Cancelar Venda já cancela Comanda automaticamente (não precisa botão separado de estorno)

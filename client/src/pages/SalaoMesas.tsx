@@ -125,7 +125,7 @@ export default function SalaoMesas() {
     if (audioOk || permission === "granted") {
       const features = [];
       if (audioOk) features.push("som");
-      if (permission === "granted") features.push("notifica\u00e7\u00f5es");
+      if (permission === "granted") features.push("notificações");
       if (pushSubscribed) features.push("push server");
       // Play test sound + vibration so user confirms it works
       vibrateUrgent();
@@ -139,13 +139,13 @@ export default function SalaoMesas() {
         // Fallback: local notification
         void sendLocalNotification(
           "\ud83d\udd14 Alertas Ativados!",
-          "Voc\u00ea receber\u00e1 notifica\u00e7\u00f5es quando itens ficarem prontos.",
+          "Você receberá notificações quando itens ficarem prontos.",
           { tag: "salon-test", requireInteraction: false }
         );
       }
       toast.success(`Alertas ativados: ${features.join(" e ")}!`, { icon: "\ud83d\udd14" });
     } else {
-      toast.error("N\u00e3o foi poss\u00edvel ativar alertas neste dispositivo");
+      toast.error("Não foi possível ativar alertas neste dispositivo");
     }
   };
 
@@ -191,7 +191,7 @@ export default function SalaoMesas() {
       if (isNotificationPermitted()) {
         void sendLocalNotification(
           "\ud83d\udd14 Item pronto para servir!",
-          `${newReady} item(ns) aguardando entrega no sal\u00e3o.`,
+          `${newReady} item(ns) aguardando entrega no salão.`,
           { tag: "salon-ready", requireInteraction: true }
         );
       }
