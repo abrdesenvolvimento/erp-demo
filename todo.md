@@ -1836,3 +1836,7 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 
 ### Bugs Pós-Entrega Rodada 9 (08/03/2026)
 - [x] BUG: Som e vibração não disparam — corrigido: useRef(-1) como sentinel para primeira carga; dispara alerta sempre que readyItems aumentar após o baseline inicial; mesmo fix aplicado em SalaoComanda; handleEnableSound agora envia notificação de teste + vibração ao ativar
+
+### Bugs Pós-Entrega Rodada 10 (08/03/2026)
+- [ ] BUG: Som não toca no iOS durante polling (apenas no gesto do usuário) — iOS bloqueia Web Audio API fora de user gesture; implementado silent audio keep-alive loop para manter sessão de áudio ativa entre polls
+- [ ] Adicionado botão "Testar Som Agora" no debug banner para validar se o som funciona após o keep-alive

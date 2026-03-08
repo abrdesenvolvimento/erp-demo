@@ -6,6 +6,12 @@
  * iOS/Safari require user interaction to unlock audio context.
  * Call `unlockAudio()` on a user gesture (button tap) before playing sounds.
  *
+ * iOS KEEP-ALIVE STRATEGY:
+ * After the user taps to enable alerts, we start a silent <audio> element
+ * looping continuously. This keeps the iOS audio session alive so that
+ * subsequent Web Audio API calls (from polling/timers) can produce sound
+ * even without a direct user gesture.
+ *
  * Persistence: uses localStorage key "salon_sound_enabled" to remember state across page navigations.
  */
 
@@ -13,6 +19,7 @@ const STORAGE_KEY = "salon_sound_enabled";
 
 let audioContext: AudioContext | null = null;
 let audioUnlocked = false;
+let keepAliveAudio: HTMLAudioElement | null = null;
 
 /**
  * Read persisted sound preference from localStorage.
@@ -37,6 +44,87 @@ function setSoundEnabledInStorage(value: boolean) {
 }
 
 /**
+ * Create a tiny silent WAV as a data URI.
+ * This is a valid 44-byte WAV file with 1 sample of silence.
+ * Used to keep the iOS audio session alive.
+ */
+function createSilentWavDataUri(): string {
+  // Minimal WAV: 44 bytes header + 2 bytes of silence (1 sample, 16-bit mono)
+  const buffer = new ArrayBuffer(46);
+  const view = new DataView(buffer);
+  // "RIFF" chunk descriptor
+  writeString(view, 0, "RIFF");
+  view.setUint32(4, 38, true); // file size - 8
+  writeString(view, 8, "WAVE");
+  // "fmt " sub-chunk
+  writeString(view, 12, "fmt ");
+  view.setUint32(16, 16, true); // sub-chunk size
+  view.setUint16(20, 1, true);  // PCM format
+  view.setUint16(22, 1, true);  // mono
+  view.setUint32(24, 8000, true); // sample rate
+  view.setUint32(28, 16000, true); // byte rate
+  view.setUint16(32, 2, true);  // block align
+  view.setUint16(34, 16, true); // bits per sample
+  // "data" sub-chunk
+  writeString(view, 36, "data");
+  view.setUint32(40, 2, true); // data size
+  view.setInt16(44, 0, true);  // one silent sample
+
+  const bytes = new Uint8Array(buffer);
+  let binary = "";
+  for (let i = 0; i < bytes.length; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return "data:audio/wav;base64," + btoa(binary);
+}
+
+function writeString(view: DataView, offset: number, str: string) {
+  for (let i = 0; i < str.length; i++) {
+    view.setUint8(offset + i, str.charCodeAt(i));
+  }
+}
+
+/**
+ * Start a silent audio loop to keep the iOS audio session alive.
+ * Must be called from a user gesture context.
+ */
+function startKeepAlive() {
+  try {
+    if (keepAliveAudio) {
+      // Already running
+      keepAliveAudio.play().catch(() => {});
+      return;
+    }
+    const audio = new Audio(createSilentWavDataUri());
+    audio.loop = true;
+    audio.volume = 0.01; // near-silent but not zero (iOS may ignore volume=0)
+    audio.setAttribute("playsinline", "true");
+    // Play from user gesture context
+    const playPromise = audio.play();
+    if (playPromise) {
+      playPromise.catch(() => {
+        // If play fails, we'll try again on next user gesture
+        console.warn("[KeepAlive] Silent audio play failed");
+      });
+    }
+    keepAliveAudio = audio;
+  } catch {
+    console.warn("[KeepAlive] Failed to start silent audio loop");
+  }
+}
+
+/**
+ * Stop the keep-alive audio loop.
+ */
+function stopKeepAlive() {
+  if (keepAliveAudio) {
+    keepAliveAudio.pause();
+    keepAliveAudio.src = "";
+    keepAliveAudio = null;
+  }
+}
+
+/**
  * Ensure AudioContext is created and running.
  * On iOS, the context may be suspended after page navigation — this resumes it.
  */
@@ -57,19 +145,25 @@ async function ensureAudioContext(): Promise<AudioContext | null> {
 /**
  * Must be called once from a user gesture (tap/click) to unlock audio on iOS.
  * Returns true if audio is now unlocked.
- * Also persists the preference to localStorage.
+ * Also starts the silent keep-alive loop and persists the preference.
  */
 export async function unlockAudio(): Promise<boolean> {
   try {
     const ctx = await ensureAudioContext();
     if (!ctx) return false;
 
-    // Play a silent buffer to fully unlock on iOS
+    // Play a silent buffer to fully unlock Web Audio API on iOS
     const buffer = ctx.createBuffer(1, 1, 22050);
     const source = ctx.createBufferSource();
     source.buffer = buffer;
     source.connect(ctx.destination);
     source.start(0);
+
+    // Start the silent keep-alive loop to maintain iOS audio session
+    startKeepAlive();
+
+    // Also pre-create the notification Audio element during user gesture
+    preloadNotificationAudio();
 
     audioUnlocked = true;
     setSoundEnabledInStorage(true);
@@ -85,6 +179,7 @@ export async function unlockAudio(): Promise<boolean> {
 export function disableAudio() {
   audioUnlocked = false;
   setSoundEnabledInStorage(false);
+  stopKeepAlive();
 }
 
 export function isAudioUnlocked(): boolean {
@@ -92,21 +187,71 @@ export function isAudioUnlocked(): boolean {
 }
 
 /**
- * Get or create a running AudioContext.
- * Automatically resumes suspended context (happens after iOS page navigation).
+ * Re-activate audio on page return (visibility change).
+ * Call this when the page becomes visible again.
  */
-async function getRunningAudioContext(): Promise<AudioContext | null> {
-  return ensureAudioContext();
+export async function reactivateAudio(): Promise<void> {
+  if (!getSoundEnabledFromStorage()) return;
+  try {
+    const ctx = await ensureAudioContext();
+    if (ctx) {
+      audioUnlocked = true;
+      // Restart keep-alive if it stopped
+      if (keepAliveAudio) {
+        keepAliveAudio.play().catch(() => {});
+      } else {
+        startKeepAlive();
+      }
+    }
+  } catch {
+    // ignore
+  }
+}
+
+// ============================================================
+// HTML Audio element approach for notification sound
+// This works better on iOS because the Audio element was created
+// during a user gesture, and the keep-alive maintains the session.
+// ============================================================
+
+let notificationAudioElement: HTMLAudioElement | null = null;
+
+/**
+ * Pre-create an Audio element during user gesture.
+ * We'll reuse it for notification sounds.
+ */
+function preloadNotificationAudio() {
+  try {
+    if (!notificationAudioElement) {
+      // Create a short beep using oscillator and record it to a blob
+      // For now, we'll use the Web Audio API approach but with the keep-alive
+      notificationAudioElement = new Audio();
+      notificationAudioElement.volume = 1.0;
+    }
+  } catch {
+    // ignore
+  }
 }
 
 /**
  * Play a pleasant ascending chime notification sound.
  * Uses Web Audio API for better mobile compatibility.
- * Async to handle iOS context resume.
+ * The silent keep-alive audio loop ensures iOS allows this even outside user gesture.
  */
 export async function playNotificationSound(): Promise<void> {
-  const ctx = await getRunningAudioContext();
-  if (!ctx || ctx.state !== "running") return;
+  const ctx = await ensureAudioContext();
+  if (!ctx) return;
+
+  // Force resume if suspended (iOS may suspend between polls)
+  if (ctx.state === "suspended") {
+    try {
+      await ctx.resume();
+    } catch {
+      return;
+    }
+  }
+
+  if (ctx.state !== "running") return;
 
   const now = ctx.currentTime;
 

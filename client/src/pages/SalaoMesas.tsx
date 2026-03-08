@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { Plus, Users, Clock, DollarSign, Settings, ChefHat, X, UtensilsCrossed, RefreshCw, Bell } from "lucide-react";
 import { useLocation } from "wouter";
-import { playUrgentNotification, unlockAudio, isAudioUnlocked, getSoundEnabledFromStorage, vibrateUrgent } from "@/lib/notificationSound";
+import { playUrgentNotification, unlockAudio, isAudioUnlocked, getSoundEnabledFromStorage, vibrateUrgent, reactivateAudio } from "@/lib/notificationSound";
 import { requestNotificationPermission, isNotificationPermitted, sendPushNotification, getPushGrantedFromStorage } from "@/lib/pushNotification";
 
 type TableStatus = "FREE" | "OCCUPIED" | "WAITING_PAYMENT" | "RESERVED";
@@ -49,28 +49,18 @@ export default function SalaoMesas() {
   const soundEnabledRef = useRef(getSoundEnabledFromStorage()); // useRef to avoid stale closure in useEffect
 
   // When page becomes visible again (user navigates back), re-sync state from storage
-  // and resume AudioContext if it was suspended by iOS
+  // and resume AudioContext + keep-alive if it was suspended by iOS
   useEffect(() => {
-    const handleVisibilityChange = async () => {
+    const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {
         const storedSound = getSoundEnabledFromStorage();
         const storedPush = getPushGrantedFromStorage();
         setSoundEnabled(storedSound);
         setPushGranted(storedPush);
         soundEnabledRef.current = storedSound;
-        // Resume AudioContext if it was suspended (common on iOS after navigation)
+        // Reactivate audio session (resume AudioContext + restart keep-alive)
         if (storedSound) {
-          try {
-            const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-            if (AudioCtx) {
-              // Attempt to resume any existing suspended context
-              const testCtx = new AudioCtx();
-              if (testCtx.state === "suspended") {
-                await testCtx.resume();
-              }
-              testCtx.close();
-            }
-          } catch { /* ignore */ }
+          void reactivateAudio();
         }
       }
     };
@@ -310,6 +300,7 @@ export default function SalaoMesas() {
         <div>Polls: {debugInfo.polls} | Prev: {debugInfo.prev} | Current: {debugInfo.current} | Sound: {soundEnabled ? "ON" : "OFF"} | Push: {pushGranted ? "ON" : "OFF"}</div>
         <div>Last: {debugInfo.lastAlert || "nenhum alerta ainda"}</div>
         <div>AudioUnlocked: {isAudioUnlocked() ? "YES" : "NO"} | SoundRef: {soundEnabledRef.current ? "YES" : "NO"} | NotifPermitted: {isNotificationPermitted() ? "YES" : "NO"}</div>
+        <button className="mt-1 bg-blue-500 text-white px-2 py-1 rounded text-xs" onClick={() => { vibrateUrgent(); void playUrgentNotification(); setDebugInfo(d => ({...d, lastAlert: `TEST SOUND @ ${new Date().toLocaleTimeString()}`})); }}>Testar Som Agora</button>
       </div>
 
       {/* Stats bar */}
