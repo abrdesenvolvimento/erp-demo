@@ -7,9 +7,17 @@
       content="width=device-width, initial-scale=1.0, maximum-scale=1"
     />
     <link rel="icon" type="image/png" href="%VITE_APP_LOGO%" />
-    <link rel="apple-touch-icon" href="%VITE_APP_LOGO%" />
+    <link rel="apple-touch-icon" href="/logo-abrwf.png" />
+    <link rel="manifest" href="/manifest.json" />
     <title>%VITE_APP_TITLE%</title>
-    
+
+    <!-- PWA / iOS Safari (Add to Home Screen) -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="ABRWF" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="theme-color" content="#1a1a2e" />
+
     <!-- Open Graph / WhatsApp / Facebook -->
     <meta property="og:type" content="website" />
     <meta property="og:title" content="ABRWF" />
@@ -17,13 +25,13 @@
     <meta property="og:image" content="%VITE_APP_LOGO%" />
     <meta property="og:url" content="https://abrwf.com.br" />
     <meta property="og:site_name" content="ABRWF" />
-    
+
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="ABRWF" />
     <meta name="twitter:description" content="Análise Baseada em Resultados" />
     <meta name="twitter:image" content="%VITE_APP_LOGO%" />
-    
+
     <!-- Meta Description -->
     <meta name="description" content="Análise Baseada em Resultados" />
   </head>
@@ -31,6 +39,20 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <!-- Service Worker Registration for PWA Push Notifications -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function() {
+          navigator.serviceWorker.register('/sw.js', { scope: '/' })
+            .then(function(reg) {
+              console.log('[SW] Registered:', reg.scope);
+            })
+            .catch(function(err) {
+              console.warn('[SW] Registration failed:', err);
+            });
+        });
+      }
+    </script>
     <script
       defer
       src="%VITE_ANALYTICS_ENDPOINT%/umami"

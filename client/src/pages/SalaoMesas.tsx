@@ -125,9 +125,9 @@ export default function SalaoMesas() {
       if (soundEnabledRef.current || isAudioUnlocked()) {
         void playUrgentNotification();
       }
-      // Send push notification (works even with screen locked)
+      // Send push notification via Service Worker (works even with screen locked in iOS PWA)
       if (isNotificationPermitted()) {
-        sendPushNotification(
+        void sendPushNotification(
           "🔔 Item pronto para servir!",
           `${newReady} item(ns) aguardando entrega no salão.`,
           { tag: "salon-ready", requireInteraction: true }

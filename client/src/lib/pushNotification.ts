@@ -6,8 +6,10 @@
  * 1. Call `requestNotificationPermission()` once on user gesture
  * 2. Call `sendPushNotification(title, body)` when items are ready
  *
- * Note: iOS Safari 16.4+ supports Web Push Notifications ONLY when the app is added to Home Screen (PWA).
- * For regular Safari browsing on iOS, `Notification` API is not available — use visual fallback instead.
+ * iOS Safari PWA (Add to Home Screen) support:
+ * - iOS 16.4+ supports Web Notifications when the app is added to the Home Screen
+ * - Requires Service Worker registration (sw.js) and manifest.json
+ * - Uses SW.showNotification() for reliable delivery, falls back to new Notification()
  *
  * Persistence: uses localStorage key "salon_push_granted" to remember state across page navigations.
  */
@@ -19,6 +21,19 @@ const STORAGE_KEY = "salon_push_granted";
  */
 export function isNotificationSupported(): boolean {
   return "Notification" in window;
+}
+
+/**
+ * Check if Service Worker is registered and available.
+ */
+async function getServiceWorkerRegistration(): Promise<ServiceWorkerRegistration | null> {
+  if (!("serviceWorker" in navigator)) return null;
+  try {
+    const reg = await navigator.serviceWorker.getRegistration("/");
+    return reg ?? null;
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -46,7 +61,7 @@ export function getPushGrantedFromStorage(): boolean {
  */
 export async function requestNotificationPermission(): Promise<NotificationPermission> {
   if (!isNotificationSupported()) {
-    console.warn("[Push] Notifications not supported in this browser (likely iOS Safari without PWA)");
+    console.warn("[Push] Notifications not supported in this browser");
     return "denied";
   }
 
@@ -79,11 +94,11 @@ export function isNotificationPermitted(): boolean {
 
 /**
  * Send a native browser notification.
- * Works even when the tab is in background.
- * On iOS (added to Home Screen as PWA), works when screen is locked.
+ * Prefers Service Worker showNotification() for better iOS PWA support.
+ * Falls back to new Notification() for desktop browsers.
  * Returns true if notification was sent, false otherwise.
  */
-export function sendPushNotification(
+export async function sendPushNotification(
   title: string,
   body: string,
   options?: {
@@ -92,18 +107,32 @@ export function sendPushNotification(
     tag?: string; // same tag replaces previous notification
     requireInteraction?: boolean; // keep notification until user interacts
   }
-): boolean {
+): Promise<boolean> {
   if (!isNotificationPermitted()) return false;
 
+  const notifOptions = {
+    body,
+    icon: options?.icon ?? "/logo-abrwf.png",
+    badge: options?.badge ?? "/logo-abrwf.png",
+    tag: options?.tag ?? "salon-ready",
+    requireInteraction: options?.requireInteraction ?? true,
+    silent: false,
+  };
+
+  // Try Service Worker first (better iOS PWA support, works with screen locked)
   try {
-    const notification = new Notification(title, {
-      body,
-      icon: options?.icon ?? "/favicon.ico",
-      badge: options?.badge,
-      tag: options?.tag ?? "salon-ready",
-      requireInteraction: options?.requireInteraction ?? false,
-      silent: false, // allow system sound
-    });
+    const swReg = await getServiceWorkerRegistration();
+    if (swReg) {
+      await swReg.showNotification(title, notifOptions);
+      return true;
+    }
+  } catch (e) {
+    console.warn("[Push] SW showNotification failed, falling back:", e);
+  }
+
+  // Fallback: direct Notification API
+  try {
+    const notification = new Notification(title, notifOptions);
 
     // Auto-close after 8 seconds if not requireInteraction
     if (!options?.requireInteraction) {

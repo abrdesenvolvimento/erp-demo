@@ -1821,3 +1821,10 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] BUG: Estado do botão 'Ativar Alertas' reseta ao navegar para comanda e voltar — corrigido: useState inicializa do localStorage, visibilitychange re-sincroniza ao voltar para a página
 - [x] BUG: Som não toca mesmo após ativar — corrigido: playNotificationSound agora é async e chama ensureAudioContext() que faz resume() automático; SalaoComanda também verifica getSoundEnabledFromStorage() antes de tocar
 - [x] BUG: Notificação push não chega no iOS Safari — documentado: iOS Safari requer PWA (Add to Home Screen) para Web Push; botão 'Alertas Ativos' agora é clicavel para reativar o som após navegação; estado persiste no localStorage
+
+### PWA + Push Notifications iOS (08/03/2026)
+- [x] Criar manifest.json com name, short_name, icons, display=standalone, theme_color
+- [x] Adicionar meta tags PWA no index.html (apple-mobile-web-app-capable, apple-mobile-web-app-status-bar-style, theme-color)
+- [x] Criar Service Worker (sw.js) com push event handler para notificações nativas iOS PWA
+- [x] Registrar Service Worker no index.html (script inline no body)
+- [x] Atualizar pushNotification.ts para usar swReg.showNotification() com fallback para new Notification()
