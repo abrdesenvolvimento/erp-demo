@@ -1833,3 +1833,6 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Adicionar navigator.vibrate() no notificationSound.ts como alerta tátil junto com o som
 - [x] Vibrar na tela de mesas (SalaoMesas) quando novos itens ficam prontos
 - [x] Vibrar na tela da comanda (SalaoComanda) quando item fica pronto
+
+### Bugs Pós-Entrega Rodada 9 (08/03/2026)
+- [x] BUG: Som e vibração não disparam — corrigido: useRef(-1) como sentinel para primeira carga; dispara alerta sempre que readyItems aumentar após o baseline inicial; mesmo fix aplicado em SalaoComanda; handleEnableSound agora envia notificação de teste + vibração ao ativar

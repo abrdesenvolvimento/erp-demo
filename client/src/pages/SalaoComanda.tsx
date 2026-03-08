@@ -64,27 +64,32 @@ export default function SalaoComanda() {
   );
 
   // Track ready items for notification
-  const prevReadyCountRef = useRef<number>(0);
+  // -1 = sentinel for "first load, don't alert yet"
+  const prevReadyCountRef = useRef<number>(-1);
   useEffect(() => {
     if (!order?.items) return;
     const readyCount = order.items.filter((i: any) => i.status === "READY").length;
-    if (readyCount > prevReadyCountRef.current && prevReadyCountRef.current >= 0) {
+
+    // First load: just record the baseline, don't alert
+    if (prevReadyCountRef.current === -1) {
+      prevReadyCountRef.current = readyCount;
+      return;
+    }
+
+    // Alert when ready count increases (new items became READY since last poll)
+    if (readyCount > prevReadyCountRef.current) {
       const newReady = readyCount - prevReadyCountRef.current;
-      if (prevReadyCountRef.current > 0 || readyCount > 0) {
-        // Only notify if there are new ready items (not on first load)
-        if (prevReadyCountRef.current > 0) {
-          toast.success(
-            `${newReady} item(ns) pronto(s) para servir!`,
-            { icon: "🔔", duration: 8000 }
-          );
-          // Vibrate always (works on Android without permission)
-          vibrateUrgent();
-          // Play notification sound (Web Audio API - works on mobile)
-          // Only play if user has enabled sound (persisted in localStorage)
-          if (getSoundEnabledFromStorage() || isAudioUnlocked()) {
-            void playUrgentNotification();
-          }
-        }
+      console.log(`[Comanda Alert] ${newReady} new ready items (${prevReadyCountRef.current} \u2192 ${readyCount})`);
+      toast.success(
+        `${newReady} item(ns) pronto(s) para servir!`,
+        { icon: "🔔", duration: 8000 }
+      );
+      // Vibrate (works on Android without permission)
+      vibrateUrgent();
+      // Play notification sound (Web Audio API - works on mobile)
+      // Only play if user has enabled sound (persisted in localStorage)
+      if (getSoundEnabledFromStorage() || isAudioUnlocked()) {
+        void playUrgentNotification();
       }
     }
     prevReadyCountRef.current = readyCount;

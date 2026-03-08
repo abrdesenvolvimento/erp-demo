@@ -86,7 +86,6 @@ export default function SalaoMesas() {
     if (audioOk) {
       setSoundEnabled(true);
       soundEnabledRef.current = true;
-      await playUrgentNotification();
     }
 
     // Request push notification permission
@@ -99,6 +98,19 @@ export default function SalaoMesas() {
       const features = [];
       if (audioOk) features.push("som");
       if (permission === "granted") features.push("notificações");
+      // Play test sound + vibration so user confirms it works
+      vibrateUrgent();
+      if (audioOk) {
+        await playUrgentNotification();
+      }
+      // Send test push notification
+      if (permission === "granted") {
+        void sendPushNotification(
+          "🔔 Alertas Ativados!",
+          "Você receberá notificações quando itens ficarem prontos.",
+          { tag: "salon-test", requireInteraction: false }
+        );
+      }
       toast.success(`Alertas ativados: ${features.join(" e ")}!`, { icon: "🔔" });
     } else {
       toast.error("Não foi possível ativar alertas neste dispositivo");
@@ -112,16 +124,27 @@ export default function SalaoMesas() {
   );
 
   // Track total ready items across all tables for notification
-  const prevTotalReadyRef = useRef<number>(0);
+  // -1 = sentinel for "first load, don't alert yet"
+  const prevTotalReadyRef = useRef<number>(-1);
   useEffect(() => {
+    if (tables.length === 0) return; // skip empty initial render
     const totalReady = tables.reduce((sum: number, t: any) => sum + ((t.activeOrder as any)?.readyItems ?? 0), 0);
-    if (totalReady > prevTotalReadyRef.current && prevTotalReadyRef.current > 0) {
+
+    // First load: just record the baseline, don't alert
+    if (prevTotalReadyRef.current === -1) {
+      prevTotalReadyRef.current = totalReady;
+      return;
+    }
+
+    // Alert when ready count increases (new items became READY since last poll)
+    if (totalReady > prevTotalReadyRef.current) {
       const newReady = totalReady - prevTotalReadyRef.current;
+      console.log(`[Salon Alert] ${newReady} new ready items (${prevTotalReadyRef.current} → ${totalReady})`);
       toast.success(
         `${newReady} item(ns) pronto(s) para servir!`,
         { icon: "🔔", duration: 6000 }
       );
-      // Vibrate always (works on Android without permission, silent on iOS)
+      // Vibrate (works on Android without permission)
       vibrateUrgent();
       // Play sound (works after user unlocks audio)
       if (soundEnabledRef.current || isAudioUnlocked()) {
