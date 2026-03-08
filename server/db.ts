@@ -1823,6 +1823,18 @@ export async function cancelSale(saleId: number, userId: string, reason?: string
       cancellationReason: reason || null,
     })
     .where(eq(sales.id, saleId));
+
+  // Se for venda do salão, cancelar também a comanda correspondente
+  if (sale.saleType === "SALAO") {
+    try {
+      const { salonOrders } = await import("../drizzle/schema");
+      await db.update(salonOrders)
+        .set({ status: "CANCELLED" })
+        .where(eq(salonOrders.saleId, saleId));
+    } catch (e) {
+      console.warn("[cancelSale] Falha ao cancelar comanda do salão:", e);
+    }
+  }
 }
 
 // Editar venda (admin only, 24h limit)

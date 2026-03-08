@@ -173,6 +173,11 @@ export default function SalaoComanda() {
     onError: (e) => toast.error(e.message),
   });
 
+  // Computed values (safe defaults when order not yet loaded)
+  const subtotal = parseFloat(String(order?.subtotal ?? "0"));
+  const tipAmount = subtotal * (tipPercent / 100);
+  const totalWithTip = subtotal + tipAmount;
+
   const handleAddItem = () => {
     if (!selectedProduct) return;
     addItemMutation.mutate({
@@ -323,9 +328,6 @@ export default function SalaoComanda() {
   }
 
   const activeItems = (order.items ?? []).filter((i: any) => i.status !== "CANCELLED");
-  const subtotal = parseFloat(String(order.subtotal ?? "0"));
-  const tipAmount = subtotal * (tipPercent / 100);
-  const totalWithTip = subtotal + tipAmount;
   const perPerson = order.guestCount > 0 ? totalWithTip / order.guestCount : totalWithTip;
 
   const isClosed = order.status === "CLOSED" || order.status === "CANCELLED";

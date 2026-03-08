@@ -1,0 +1,131 @@
+{
+  "query": "SELECT id, tableNumber, status, waiterName, subtotal, tipAmount, totalAmount, openedAt, closedAt FROM salonOrders WHERE companyId = 2 ORDER BY id DESC LIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT id, tableNumber, status, waiterName, subtotal, tipAmount, totalAmount, openedAt, closedAt FROM salonOrders WHERE companyId = 2 ORDER BY id DESC LIMIT 20;",
+  "rows": [
+    {
+      "id": "30005",
+      "tableNumber": "1",
+      "status": "OPEN",
+      "waiterName": "Gabriel Morais",
+      "subtotal": "0.00",
+      "tipAmount": "0.00",
+      "totalAmount": "0.00",
+      "openedAt": "2026-03-08 20:18:46",
+      "closedAt": "NULL"
+    },
+    {
+      "id": "30004",
+      "tableNumber": "9",
+      "status": "WAITING_PAYMENT",
+      "waiterName": "Gabriel Morais",
+      "subtotal": "37.99",
+      "tipAmount": "3.80",
+      "totalAmount": "41.79",
+      "openedAt": "2026-03-08 14:29:12",
+      "closedAt": "NULL"
+    },
+    {
+      "id": "30003",
+      "tableNumber": "4",
+      "status": "CLOSED",
+      "waiterName": "Gabriel Morais",
+      "subtotal": "275.96",
+      "tipAmount": "27.60",
+      "totalAmount": "303.56",
+      "openedAt": "2026-03-08 14:28:43",
+      "closedAt": "2026-03-08 17:05:07"
+    },
+    {
+      "id": "30002",
+      "tableNumber": "1",
+      "status": "CLOSED",
+      "waiterName": "Gabriel Morais",
+      "subtotal": "71.99",
+      "tipAmount": "7.20",
+      "totalAmount": "79.19",
+      "openedAt": "2026-03-08 14:27:44",
+      "closedAt": "2026-03-08 14:38:50"
+    },
+    {
+      "id": "30001",
+      "tableNumber": "1",
+      "status": "CANCELLED",
+      "waiterName": "Gabriel Morais",
+      "subtotal": "0.00",
+      "tipAmount": "0.00",
+      "totalAmount": "0.00",
+      "openedAt": "2026-03-08 14:22:46",
+      "closedAt": "NULL"
+    },
+    {
+      "id": "6",
+      "tableNumber": "1",
+      "status": "CLOSED",
+      "waiterName": "Gabriel Morais",
+      "subtotal": "68.99",
+      "tipAmount": "6.90",
+      "totalAmount": "75.89",
+      "openedAt": "2026-03-08 02:37:38",
+      "closedAt": "2026-03-08 02:42:11"
+    },
+    {
+      "id": "5",
+      "tableNumber": "1",
+      "status": "CANCELLED",
+      "waiterName": "Gabriel Morais",
+      "subtotal": "413.94",
+      "tipAmount": "0.00",
+      "totalAmount": "413.94",
+      "openedAt": "2026-03-08 00:02:04",
+      "closedAt": "NULL"
+    },
+    {
+      "id": "4",
+      "tableNumber": "1",
+      "status": "CLOSED",
+      "waiterName": "Gabriel Morais",
+      "subtotal": "28.99",
+      "tipAmount": "2.90",
+      "totalAmount": "31.89",
+      "openedAt": "2026-03-07 23:45:25",
+      "closedAt": "2026-03-07 23:50:35"
+    },
+    {
+      "id": "3",
+      "tableNumber": "1",
+      "status": "CLOSED",
+      "waiterName": "Gabriel Morais",
+      "subtotal": "28.99",
+      "tipAmount": "2.90",
+      "totalAmount": "31.89",
+      "openedAt": "2026-03-07 23:26:48",
+      "closedAt": "2026-03-07 23:30:49"
+    },
+    {
+      "id": "2",
+      "tableNumber": "1",
+      "status": "CANCELLED",
+      "waiterName": "Gabriel Morais",
+      "subtotal": "28.99",
+      "tipAmount": "0.00",
+      "totalAmount": "28.99",
+      "openedAt": "2026-03-07 22:30:17",
+      "closedAt": "NULL"
+    },
+    {
+      "id": "1",
+      "tableNumber": "1",
+      "status": "CLOSED",
+      "waiterName": "Gabriel Morais",
+      "subtotal": "97.98",
+      "tipAmount": "9.80",
+      "totalAmount": "107.78",
+      "openedAt": "2026-03-07 20:31:13",
+      "closedAt": "2026-03-07 22:15:05"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\ttableNumber\tstatus\twaiterName\tsubtotal\ttipAmount\ttotalAmount\topenedAt\tclosedAt\n30005\t1\tOPEN\tGabriel Morais\t0.00\t0.00\t0.00\t2026-03-08 20:18:46\tNULL\n30004\t9\tWAITING_PAYMENT\tGabriel Morais\t37.99\t3.80\t41.79\t2026-03-08 14:29:12\tNULL\n30003\t4\tCLOSED\tGabriel Morais\t275.96\t27.60\t303.56\t2026-03-08 14:28:43\t2026-03-08 17:05:07\n30002\t1\tCLOSED\tGabriel Morais\t71.99\t7.20\t79.19\t2026-03-08 14:27:44\t2026-03-08 14:38:50\n30001\t1\tCANCELLED\tGabriel Morais\t0.00\t0.00\t0.00\t2026-03-08 14:22:46\tNULL\n6\t1\tCLOSED\tGabriel Morais\t68.99\t6.90\t75.89\t2026-03-08 02:37:38\t2026-03-08 02:42:11\n5\t1\tCANCELLED\tGabriel Morais\t413.94\t0.00\t413.94\t2026-03-08 00:02:04\tNULL\n4\t1\tCLOSED\tGabriel Morais\t28.99\t2.90\t31.89\t2026-03-07 23:45:25\t2026-03-07 23:50:35\n3\t1\tCLOSED\tGabriel Morais\t28.99\t2.90\t31.89\t2026-03-07 23:26:48\t2026-03-07 23:30:49\n2\t1\tCANCELLED\tGabriel Morais\t28.99\t0.00\t28.99\t2026-03-07 22:30:17\tNULL\n1\t1\tCLOSED\tGabriel Morais\t97.98\t9.80\t107.78\t2026-03-07 20:31:13\t2026-03-07 22:15:05\n",
+  "stderr": "",
+  "execution_time_ms": 403
+}

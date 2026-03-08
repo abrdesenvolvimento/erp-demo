@@ -1,0 +1,120 @@
+{
+  "query": "SELECT id, tableNumber, status, waiterName, CAST(subtotal AS CHAR) as sub, CAST(tipAmount AS CHAR) as tip, CAST(totalAmount AS CHAR) as total, DATE_FORMAT(closedAt, '%Y-%m-%d %H:%i') as closed FROM salonOrders WHERE companyId = 2 ORDER BY id DESC LIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT id, tableNumber, status, waiterName, CAST(subtotal AS CHAR) as sub, CAST(tipAmount AS CHAR) as tip, CAST(totalAmount AS CHAR) as total, DATE_FORMAT(closedAt, '%Y-%m-%d %H:%i') as closed FROM salonOrders WHERE companyId = 2 ORDER BY id DESC LIMIT 20;",
+  "rows": [
+    {
+      "id": "30005",
+      "tableNumber": "1",
+      "status": "OPEN",
+      "waiterName": "Gabriel Morais",
+      "sub": "0.00",
+      "tip": "0.00",
+      "total": "0.00",
+      "closed": "NULL"
+    },
+    {
+      "id": "30004",
+      "tableNumber": "9",
+      "status": "WAITING_PAYMENT",
+      "waiterName": "Gabriel Morais",
+      "sub": "37.99",
+      "tip": "3.80",
+      "total": "41.79",
+      "closed": "NULL"
+    },
+    {
+      "id": "30003",
+      "tableNumber": "4",
+      "status": "CLOSED",
+      "waiterName": "Gabriel Morais",
+      "sub": "275.96",
+      "tip": "27.60",
+      "total": "303.56",
+      "closed": "2026-03-08 17:05"
+    },
+    {
+      "id": "30002",
+      "tableNumber": "1",
+      "status": "CLOSED",
+      "waiterName": "Gabriel Morais",
+      "sub": "71.99",
+      "tip": "7.20",
+      "total": "79.19",
+      "closed": "2026-03-08 14:38"
+    },
+    {
+      "id": "30001",
+      "tableNumber": "1",
+      "status": "CANCELLED",
+      "waiterName": "Gabriel Morais",
+      "sub": "0.00",
+      "tip": "0.00",
+      "total": "0.00",
+      "closed": "NULL"
+    },
+    {
+      "id": "6",
+      "tableNumber": "1",
+      "status": "CLOSED",
+      "waiterName": "Gabriel Morais",
+      "sub": "68.99",
+      "tip": "6.90",
+      "total": "75.89",
+      "closed": "2026-03-08 02:42"
+    },
+    {
+      "id": "5",
+      "tableNumber": "1",
+      "status": "CANCELLED",
+      "waiterName": "Gabriel Morais",
+      "sub": "413.94",
+      "tip": "0.00",
+      "total": "413.94",
+      "closed": "NULL"
+    },
+    {
+      "id": "4",
+      "tableNumber": "1",
+      "status": "CLOSED",
+      "waiterName": "Gabriel Morais",
+      "sub": "28.99",
+      "tip": "2.90",
+      "total": "31.89",
+      "closed": "2026-03-07 23:50"
+    },
+    {
+      "id": "3",
+      "tableNumber": "1",
+      "status": "CLOSED",
+      "waiterName": "Gabriel Morais",
+      "sub": "28.99",
+      "tip": "2.90",
+      "total": "31.89",
+      "closed": "2026-03-07 23:30"
+    },
+    {
+      "id": "2",
+      "tableNumber": "1",
+      "status": "CANCELLED",
+      "waiterName": "Gabriel Morais",
+      "sub": "28.99",
+      "tip": "0.00",
+      "total": "28.99",
+      "closed": "NULL"
+    },
+    {
+      "id": "1",
+      "tableNumber": "1",
+      "status": "CLOSED",
+      "waiterName": "Gabriel Morais",
+      "sub": "97.98",
+      "tip": "9.80",
+      "total": "107.78",
+      "closed": "2026-03-07 22:15"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\ttableNumber\tstatus\twaiterName\tsub\ttip\ttotal\tclosed\n30005\t1\tOPEN\tGabriel Morais\t0.00\t0.00\t0.00\tNULL\n30004\t9\tWAITING_PAYMENT\tGabriel Morais\t37.99\t3.80\t41.79\tNULL\n30003\t4\tCLOSED\tGabriel Morais\t275.96\t27.60\t303.56\t2026-03-08 17:05\n30002\t1\tCLOSED\tGabriel Morais\t71.99\t7.20\t79.19\t2026-03-08 14:38\n30001\t1\tCANCELLED\tGabriel Morais\t0.00\t0.00\t0.00\tNULL\n6\t1\tCLOSED\tGabriel Morais\t68.99\t6.90\t75.89\t2026-03-08 02:42\n5\t1\tCANCELLED\tGabriel Morais\t413.94\t0.00\t413.94\tNULL\n4\t1\tCLOSED\tGabriel Morais\t28.99\t2.90\t31.89\t2026-03-07 23:50\n3\t1\tCLOSED\tGabriel Morais\t28.99\t2.90\t31.89\t2026-03-07 23:30\n2\t1\tCANCELLED\tGabriel Morais\t28.99\t0.00\t28.99\tNULL\n1\t1\tCLOSED\tGabriel Morais\t97.98\t9.80\t107.78\t2026-03-07 22:15\n",
+  "stderr": "",
+  "execution_time_ms": 358
+}

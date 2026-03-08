@@ -1885,7 +1885,7 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Itens sem KDS (destino NONE): marcados direto como DELIVERED ao adicionar na comanda (ex: água)
 - [x] Alerta sonoro apenas na tela de Mesas (removido som da comanda, mantido apenas vibração + toast)
 - [x] Fluxo de fechamento: pré-visualização/impressão da comanda antes do fechamento efetivo (2 etapas)
-- [ ] [FUTURO] Transfer\u00eancia de comanda entre gar\u00e7ons (al\u00e7ada administrativa)
+- [x] Transfer\u00eancia de comanda entre gar\u00e7ons (al\u00e7ada administrativa)
 
 ### Ajustes Comanda e Contabilização (08/03/2026)
 - [x] Documento comanda: adicionar campo "Abertura da mesa" (data/hora)
@@ -1925,3 +1925,10 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Frontend: tela administrativa de transferência — visão de garçons com comandas associadas
 - [x] Frontend: modal de transferência com seleção de novo garçom + campo obrigatório de motivo
 - [x] Adicionar rota /salao/transferencia e menu lateral (admin only)
+
+### Correções pós-publicação (08/03/2026)
+- [x] BUG CRÍTICO: Erro "Cannot access 'Ut' before initialization" na tela de comanda — variáveis subtotal/totalWithTip usadas antes de serem definidas (movidas para antes dos handlers)
+- [x] BUG: Dashboard Faturamento Salão e Ticket Médio mostrando valores de comandas canceladas — cancelar venda no módulo Vendas agora também cancela a salonOrder correspondente
+- [x] BUG: Fechamento Garçom mostrando dados de comandas canceladas — mesma correção acima (salonOrders sincronizadas com sales)
+- [x] FIX: Dados históricos corrigidos — 6 salonOrders com vendas canceladas atualizadas para status CANCELLED
+- [x] Transferência de Comanda já estava no menu lateral (confirmado funcionando)
