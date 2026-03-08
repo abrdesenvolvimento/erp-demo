@@ -1896,3 +1896,4 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Separar gorjeta/taxa de serviço na contabilização (sale.finalAmount = subtotal, tip registrado em notes)
 - [x] Ajustar cards de faturamento do salão para considerar apenas subtotal (sem taxa de serviço)
 - [x] Ajustar relatório de fechamento de garçom para separar faturamento vs taxa de serviço
+- [x] Adicionar etapa de confirmação da taxa de serviço entre impressão e pagamento (3 etapas: preview → confirma taxa → pagamento)

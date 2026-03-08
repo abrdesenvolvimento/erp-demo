@@ -53,6 +53,8 @@ export default function SalaoComanda() {
   const [paymentMethod, setPaymentMethod] = useState("DEBIT");
   const [cancelConfirm, setCancelConfirm] = useState(false);
   const [previewModal, setPreviewModal] = useState(false);
+  const [serviceFeeModal, setServiceFeeModal] = useState(false);
+  const [serviceFeeAccepted, setServiceFeeAccepted] = useState(true);
   const printRef = useRef<HTMLDivElement>(null);
 
   // Queries
@@ -175,9 +177,19 @@ export default function SalaoComanda() {
   };
 
   const handleConfirmPreviewAndPay = () => {
-    // Step 2: close preview, open payment modal
+    // Step 2: close preview, open service fee confirmation
     setPreviewModal(false);
-    requestCheckoutMutation.mutate({ orderId, companyId, tipPercent });
+    setServiceFeeAccepted(true); // default to accepted
+    setServiceFeeModal(true);
+  };
+
+  const handleServiceFeeDecision = (accepted: boolean) => {
+    // Step 3: close service fee modal, set tip, open payment
+    setServiceFeeAccepted(accepted);
+    setServiceFeeModal(false);
+    const finalTip = accepted ? tipPercent : 0;
+    if (!accepted) setTipPercent(0);
+    requestCheckoutMutation.mutate({ orderId, companyId, tipPercent: finalTip });
     setCheckoutModal(true);
   };
 
@@ -705,7 +717,7 @@ export default function SalaoComanda() {
               Imprimir Comanda
             </Button>
             <Button onClick={handleConfirmPreviewAndPay} className="flex-1 bg-green-600 hover:bg-green-700">
-              Prosseguir para Pagamento
+              Prosseguir para Fechamento
               <ArrowRight className="h-4 w-4 ml-1" />
             </Button>
           </DialogFooter>
@@ -780,6 +792,53 @@ export default function SalaoComanda() {
               className="bg-green-600 hover:bg-green-700"
             >
               {closeOrderMutation.isPending ? "Encerrando..." : "Confirmar Pagamento"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Service Fee Confirmation Modal (Step 2) */}
+      <Dialog open={serviceFeeModal} onOpenChange={setServiceFeeModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Taxa de Serviço</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="bg-muted rounded-lg p-4 space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Subtotal dos itens</span>
+                <span className="font-semibold">{formatCurrency(subtotal)}</span>
+              </div>
+              <Separator />
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Taxa de serviço (10%)</span>
+                <span className="font-semibold">{formatCurrency(subtotal * 0.10)}</span>
+              </div>
+              <div className="flex justify-between font-bold text-lg pt-1 border-t">
+                <span>Total com taxa</span>
+                <span>{formatCurrency(subtotal * 1.10)}</span>
+              </div>
+            </div>
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+              <p className="text-sm text-amber-800 font-medium">O cliente deseja incluir a taxa de serviço?</p>
+              <p className="text-xs text-amber-600 mt-1">A taxa de serviço (10%) é opcional conforme legislação vigente.</p>
+            </div>
+          </div>
+          <DialogFooter className="flex flex-col sm:flex-row gap-2">
+            <Button
+              variant="outline"
+              onClick={() => handleServiceFeeDecision(false)}
+              className="flex-1 border-red-200 text-red-600 hover:bg-red-50"
+            >
+              <X className="h-4 w-4 mr-1" />
+              Não incluir taxa
+            </Button>
+            <Button
+              onClick={() => handleServiceFeeDecision(true)}
+              className="flex-1 bg-green-600 hover:bg-green-700"
+            >
+              <CheckCircle2 className="h-4 w-4 mr-1" />
+              Incluir taxa (10%)
             </Button>
           </DialogFooter>
         </DialogContent>
