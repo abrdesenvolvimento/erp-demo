@@ -68,6 +68,24 @@ export default function SalaoComanda() {
     { enabled: addItemModal && companyId > 0 && productSearch.length >= 2 }
   );
 
+  const { data: salonCfg } = trpc.salon.getConfig.useQuery(
+    { companyId },
+    { enabled: companyId > 0 }
+  );
+
+  // Set default tip percent from config when it loads
+  const configLoadedRef = useRef(false);
+  useEffect(() => {
+    if (salonCfg && !configLoadedRef.current) {
+      configLoadedRef.current = true;
+      if (salonCfg.tipEnabled) {
+        setTipPercent(parseFloat(String(salonCfg.defaultTipPercent ?? "10")));
+      } else {
+        setTipPercent(0);
+      }
+    }
+  }, [salonCfg]);
+
   // Track ready items for notification
   // -1 = sentinel for "first load, don't alert yet"
   const prevReadyCountRef = useRef<number>(-1);
@@ -403,30 +421,35 @@ export default function SalaoComanda() {
               <span>{formatCurrency(subtotal)}</span>
             </div>
 
-            {!isClosed && (
+            {!isClosed && (salonCfg?.tipEnabled !== false) && (
               <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Taxa de serviço</span>
+                <span className="text-muted-foreground">{salonCfg?.gratuityLabel || "Taxa de serviço"}</span>
                 <div className="flex items-center gap-2">
-                  {[0, 10, 12, 15].map(p => (
-                    <button
-                      key={p}
-                      onClick={() => setTipPercent(p)}
-                      className={`px-2 py-0.5 rounded text-xs font-medium transition-colors ${
-                        tipPercent === p
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-muted hover:bg-muted/80"
-                      }`}
-                    >
-                      {p === 0 ? "Sem" : `${p}%`}
-                    </button>
-                  ))}
+                  {(() => {
+                    const defaultPct = parseFloat(String(salonCfg?.defaultTipPercent ?? "10"));
+                    const presets = new Set([0, defaultPct]);
+                    [5, 10, 12, 15].forEach(p => { if (presets.size < 5) presets.add(p); });
+                    return Array.from(presets).sort((a, b) => a - b).map(p => (
+                      <button
+                        key={p}
+                        onClick={() => setTipPercent(p)}
+                        className={`px-2 py-0.5 rounded text-xs font-medium transition-colors ${
+                          tipPercent === p
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-muted hover:bg-muted/80"
+                        }`}
+                      >
+                        {p === 0 ? "Sem" : `${p}%`}
+                      </button>
+                    ));
+                  })()}
                 </div>
               </div>
             )}
 
             {tipPercent > 0 && (
               <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Taxa de serviço ({tipPercent}%)</span>
+                <span className="text-muted-foreground">{salonCfg?.gratuityLabel || "Taxa de serviço"} ({tipPercent}%)</span>
                 <span>{formatCurrency(tipAmount)}</span>
               </div>
             )}
@@ -450,7 +473,7 @@ export default function SalaoComanda() {
             )}
             {tipPercent > 0 && !isClosed && (
               <p className="text-xs text-muted-foreground italic mt-1">
-                Taxa de serviço ({tipPercent}%) é opcional. Informe ao atendente caso não deseje incluir.
+                {salonCfg?.gratuityLabel || "Taxa de serviço"} ({tipPercent}%) é opcional. Informe ao atendente caso não deseje incluir.
               </p>
             )}
           </CardContent>
@@ -646,7 +669,7 @@ export default function SalaoComanda() {
               </div>
               {tipPercent > 0 && (
                 <div className="total-row">
-                  <span>Taxa de serviço {tipPercent}%</span>
+                  <span>{salonCfg?.gratuityLabel || "Taxa de serviço"} {tipPercent}%</span>
                   <span>{formatCurrency(tipAmount)}</span>
                 </div>
               )}
@@ -666,7 +689,7 @@ export default function SalaoComanda() {
               )}
             </div>
             <div className="footer">
-              <p style={{fontStyle: 'italic', marginBottom: '4px'}}>Taxa de serviço (10%) é opcional.</p>
+              <p style={{fontStyle: 'italic', marginBottom: '4px'}}>{salonCfg?.gratuityLabel || "Taxa de serviço"} ({salonCfg?.defaultTipPercent ?? 10}%) é opcional.</p>
               <p style={{fontStyle: 'italic', marginBottom: '8px'}}>Informe ao atendente caso não deseje incluir.</p>
               <p>Obrigado pela preferência!</p>
             </div>
@@ -715,7 +738,7 @@ export default function SalaoComanda() {
             </div>
             {tipPercent > 0 && (
               <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Taxa de serviço ({tipPercent}%)</span>
+                <span className="text-muted-foreground">{salonCfg?.gratuityLabel || "Taxa de serviço"} ({tipPercent}%)</span>
                 <span>{formatCurrency(tipAmount)}</span>
               </div>
             )}
@@ -734,7 +757,7 @@ export default function SalaoComanda() {
               </div>
             )}
             <p className="text-xs text-muted-foreground italic">
-              Taxa de serviço (10%) é opcional. Informe ao atendente caso não deseje incluir.
+              {salonCfg?.gratuityLabel || "Taxa de serviço"} ({salonCfg?.defaultTipPercent ?? 10}%) é opcional. Informe ao atendente caso não deseje incluir.
             </p>
           </div>
 
@@ -766,7 +789,7 @@ export default function SalaoComanda() {
               </div>
               {tipPercent > 0 && (
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Taxa de serviço ({tipPercent}%)</span>
+                  <span className="text-muted-foreground">{salonCfg?.gratuityLabel || "Taxa de serviço"} ({tipPercent}%)</span>
                   <span>{formatCurrency(tipAmount)}</span>
                 </div>
               )}
@@ -828,7 +851,7 @@ export default function SalaoComanda() {
       <Dialog open={serviceFeeModal} onOpenChange={setServiceFeeModal}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Taxa de Serviço</DialogTitle>
+            <DialogTitle>{salonCfg?.gratuityLabel || "Taxa de Serviço"}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="bg-muted rounded-lg p-4 space-y-2">
@@ -838,17 +861,17 @@ export default function SalaoComanda() {
               </div>
               <Separator />
               <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Taxa de serviço (10%)</span>
-                <span className="font-semibold">{formatCurrency(subtotal * 0.10)}</span>
+                <span className="text-muted-foreground">{salonCfg?.gratuityLabel || "Taxa de serviço"} ({tipPercent}%)</span>
+                <span className="font-semibold">{formatCurrency(tipAmount)}</span>
               </div>
               <div className="flex justify-between font-bold text-lg pt-1 border-t">
                 <span>Total com taxa</span>
-                <span>{formatCurrency(subtotal * 1.10)}</span>
+                <span>{formatCurrency(totalWithTip)}</span>
               </div>
             </div>
             <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-              <p className="text-sm text-amber-800 font-medium">O cliente deseja incluir a taxa de serviço?</p>
-              <p className="text-xs text-amber-600 mt-1">A taxa de serviço (10%) é opcional conforme legislação vigente.</p>
+              <p className="text-sm text-amber-800 font-medium">O cliente deseja incluir a {(salonCfg?.gratuityLabel || "taxa de serviço").toLowerCase()}?</p>
+              <p className="text-xs text-amber-600 mt-1">{salonCfg?.gratuityLabel || "Taxa de serviço"} ({tipPercent}%) é opcional conforme legislação vigente.</p>
             </div>
           </div>
           <DialogFooter className="flex flex-col sm:flex-row gap-2">
@@ -865,7 +888,7 @@ export default function SalaoComanda() {
               className="flex-1 bg-green-600 hover:bg-green-700"
             >
               <CheckCircle2 className="h-4 w-4 mr-1" />
-              Incluir taxa (10%)
+              Incluir {(salonCfg?.gratuityLabel || "taxa").toLowerCase()} ({tipPercent}%)
             </Button>
           </DialogFooter>
         </DialogContent>

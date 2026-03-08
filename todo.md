@@ -1902,3 +1902,8 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Corrigir espaçamento no resumo superior e formato tabular nos itens
 - [x] BUG: Divergência faturamento dashboard — corrigido: 6 registros antigos de sales tinham finalAmount=totalAmount (com taxa), agora todos usam subtotal
 - [ ] [FUTURO] QR Code no documento de vendas para avaliação/cadastro do cliente (promoções, retorno, consumo individualizado)
+
+### Pré-publicação (08/03/2026)
+- [x] Configuração de % taxa de serviço por empresa (modal config em Mesas + comanda usa defaultTipPercent + rótulo dinâmico)
+- [x] Detalhar proposta de Pagamento Dividido (documento completo em docs/PROPOSTA-PAGAMENTO-DIVIDIDO-E-ESTUDO-SEFAZ.md)
+- [x] Estudo de viabilidade integração SEFAZ para emissão de NFC-e (documento completo em docs/)

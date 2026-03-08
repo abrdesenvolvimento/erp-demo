@@ -41,6 +41,9 @@ export default function SalaoMesas() {
   const [newTableCapacity, setNewTableCapacity] = useState("4");
   const [newTableName, setNewTableName] = useState("");
   const [configModal, setConfigModal] = useState(false);
+  const [cfgTipEnabled, setCfgTipEnabled] = useState(true);
+  const [cfgTipPercent, setCfgTipPercent] = useState("10");
+  const [cfgGratuityLabel, setCfgGratuityLabel] = useState("Taxa de serviço");
   const [editTableModal, setEditTableModal] = useState(false);
   const [editingTable, setEditingTable] = useState<any>(null);
   const [editTableName, setEditTableName] = useState("");
@@ -152,6 +155,11 @@ export default function SalaoMesas() {
     { enabled: companyId > 0, refetchInterval: 5000 }
   );
 
+  const { data: salonCfg } = trpc.salon.getConfig.useQuery(
+    { companyId },
+    { enabled: companyId > 0 }
+  );
+
   // Track total ready items across all tables for notification
   // -1 = sentinel for "first load, don't alert yet"
   const prevTotalReadyRef = useRef<number>(-1);
@@ -230,6 +238,15 @@ export default function SalaoMesas() {
       utils.salon.listTables.invalidate();
       setEditTableModal(false);
       setEditingTable(null);
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const saveConfigMutation = trpc.salon.saveConfig.useMutation({
+    onSuccess: () => {
+      toast.success("Configurações salvas!");
+      utils.salon.getConfig.invalidate();
+      setConfigModal(false);
     },
     onError: (e) => toast.error(e.message),
   });
@@ -631,18 +648,94 @@ export default function SalaoMesas() {
         </DialogContent>
       </Dialog>
 
-      {/* Config Modal placeholder */}
-      <Dialog open={configModal} onOpenChange={setConfigModal}>
+      {/* Config Modal */}
+      <Dialog open={configModal} onOpenChange={(open) => {
+        if (open && salonCfg) {
+          setCfgTipEnabled(salonCfg.tipEnabled ?? true);
+          setCfgTipPercent(String(salonCfg.defaultTipPercent ?? "10"));
+          setCfgGratuityLabel(salonCfg.gratuityLabel ?? "Taxa de serviço");
+        }
+        setConfigModal(open);
+      }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Configurações do Salão</DialogTitle>
+            <DialogTitle className="flex items-center gap-2"><Settings className="h-5 w-5" /> Configurações do Salão</DialogTitle>
           </DialogHeader>
-          <div className="py-4 text-center text-muted-foreground text-sm">
-            <ChefHat className="h-10 w-10 mx-auto mb-3 text-muted-foreground/40" />
-            <p>Configurações de gorjeta padrão e etiquetas de produção disponíveis em breve.</p>
+          <div className="space-y-5 py-2">
+            <div className="flex items-center justify-between">
+              <div>
+                <Label className="text-sm font-medium">Taxa de serviço</Label>
+                <p className="text-xs text-muted-foreground">Habilitar taxa de serviço nas comandas</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setCfgTipEnabled(!cfgTipEnabled)}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                  cfgTipEnabled ? "bg-primary" : "bg-muted"
+                }`}
+              >
+                <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  cfgTipEnabled ? "translate-x-6" : "translate-x-1"
+                }`} />
+              </button>
+            </div>
+            {cfgTipEnabled && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="cfgTipPercent">Percentual padrão (%)</Label>
+                  <div className="flex gap-2">
+                    {["5", "10", "12", "15"].map(p => (
+                      <button
+                        key={p}
+                        type="button"
+                        onClick={() => setCfgTipPercent(p)}
+                        className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                          cfgTipPercent === p
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-muted hover:bg-muted/80"
+                        }`}
+                      >
+                        {p}%
+                      </button>
+                    ))}
+                    <Input
+                      id="cfgTipPercent"
+                      type="number"
+                      min="0"
+                      max="100"
+                      step="0.5"
+                      value={cfgTipPercent}
+                      onChange={e => setCfgTipPercent(e.target.value)}
+                      className="w-20 text-center"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="cfgLabel">Rótulo na comanda</Label>
+                  <Input
+                    id="cfgLabel"
+                    value={cfgGratuityLabel}
+                    onChange={e => setCfgGratuityLabel(e.target.value)}
+                    placeholder="Ex: Taxa de serviço"
+                    maxLength={100}
+                  />
+                  <p className="text-xs text-muted-foreground">Como aparece na comanda do cliente (ex: "Taxa de serviço", "Gorjeta")</p>
+                </div>
+              </>
+            )}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setConfigModal(false)}>Fechar</Button>
+            <Button variant="outline" onClick={() => setConfigModal(false)}>Cancelar</Button>
+            <Button onClick={() => {
+              saveConfigMutation.mutate({
+                companyId,
+                tipEnabled: cfgTipEnabled,
+                defaultTipPercent: parseFloat(cfgTipPercent) || 10,
+                gratuityLabel: cfgGratuityLabel || "Taxa de serviço",
+              });
+            }} disabled={saveConfigMutation.isPending}>
+              {saveConfigMutation.isPending ? "Salvando..." : "Salvar"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
