@@ -126,6 +126,7 @@ export default function SalaoMesas() {
   // Track total ready items across all tables for notification
   // -1 = sentinel for "first load, don't alert yet"
   const prevTotalReadyRef = useRef<number>(-1);
+  const [debugInfo, setDebugInfo] = useState({ prev: -1, current: 0, polls: 0, lastAlert: "" });
   useEffect(() => {
     if (tables.length === 0) return; // skip empty initial render
     const totalReady = tables.reduce((sum: number, t: any) => sum + ((t.activeOrder as any)?.readyItems ?? 0), 0);
@@ -133,16 +134,22 @@ export default function SalaoMesas() {
     // First load: just record the baseline, don't alert
     if (prevTotalReadyRef.current === -1) {
       prevTotalReadyRef.current = totalReady;
+      setDebugInfo(d => ({ ...d, prev: totalReady, current: totalReady, polls: d.polls + 1, lastAlert: "baseline set" }));
       return;
     }
+
+    // Update debug info
+    setDebugInfo(d => ({ ...d, prev: prevTotalReadyRef.current, current: totalReady, polls: d.polls + 1 }));
 
     // Alert when ready count increases (new items became READY since last poll)
     if (totalReady > prevTotalReadyRef.current) {
       const newReady = totalReady - prevTotalReadyRef.current;
-      console.log(`[Salon Alert] ${newReady} new ready items (${prevTotalReadyRef.current} → ${totalReady})`);
+      const alertMsg = `ALERT! ${prevTotalReadyRef.current}->${totalReady} (+${newReady}) @ ${new Date().toLocaleTimeString()}`;
+      console.log(`[Salon Alert] ${alertMsg}`);
+      setDebugInfo(d => ({ ...d, lastAlert: alertMsg }));
       toast.success(
         `${newReady} item(ns) pronto(s) para servir!`,
-        { icon: "🔔", duration: 6000 }
+        { icon: "\ud83d\udd14", duration: 6000 }
       );
       // Vibrate (works on Android without permission)
       vibrateUrgent();
@@ -153,8 +160,8 @@ export default function SalaoMesas() {
       // Send push notification via Service Worker (works even with screen locked in iOS PWA)
       if (isNotificationPermitted()) {
         void sendPushNotification(
-          "🔔 Item pronto para servir!",
-          `${newReady} item(ns) aguardando entrega no salão.`,
+          "\ud83d\udd14 Item pronto para servir!",
+          `${newReady} item(ns) aguardando entrega no sal\u00e3o.`,
           { tag: "salon-ready", requireInteraction: true }
         );
       }
@@ -296,6 +303,13 @@ export default function SalaoMesas() {
             Nova Mesa
           </Button>
         </div>
+      </div>
+
+      {/* DEBUG BANNER - TEMPORARY */}
+      <div className="bg-yellow-100 border border-yellow-400 rounded p-2 text-xs font-mono">
+        <div>Polls: {debugInfo.polls} | Prev: {debugInfo.prev} | Current: {debugInfo.current} | Sound: {soundEnabled ? "ON" : "OFF"} | Push: {pushGranted ? "ON" : "OFF"}</div>
+        <div>Last: {debugInfo.lastAlert || "nenhum alerta ainda"}</div>
+        <div>AudioUnlocked: {isAudioUnlocked() ? "YES" : "NO"} | SoundRef: {soundEnabledRef.current ? "YES" : "NO"} | NotifPermitted: {isNotificationPermitted() ? "YES" : "NO"}</div>
       </div>
 
       {/* Stats bar */}

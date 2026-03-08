@@ -1,0 +1,50 @@
+{
+  "query": "SELECT soi.id, soi.orderId, soi.productName, soi.status, soi.sentAt, soi.readyAt FROM salonOrderItems soi JOIN salonOrders so ON soi.orderId = so.id WHERE so.status IN ('OPEN', 'WAITING_PAYMENT') ORDER BY soi.id DESC LIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT soi.id, soi.orderId, soi.productName, soi.status, soi.sentAt, soi.readyAt FROM salonOrderItems soi JOIN salonOrders so ON soi.orderId = so.id WHERE so.status IN ('OPEN', 'WAITING_PAYMENT') ORDER BY soi.id DESC LIMIT 20;",
+  "rows": [
+    {
+      "id": "11",
+      "orderId": "5",
+      "productName": "Negroni",
+      "status": "READY",
+      "sentAt": "2026-03-08 00:53:12",
+      "readyAt": "2026-03-08 00:54:18"
+    },
+    {
+      "id": "10",
+      "orderId": "5",
+      "productName": "Cheese Burguer",
+      "status": "DELIVERED",
+      "sentAt": "2026-03-08 00:38:51",
+      "readyAt": "2026-03-08 00:40:04"
+    },
+    {
+      "id": "9",
+      "orderId": "5",
+      "productName": "Negroni",
+      "status": "DELIVERED",
+      "sentAt": "2026-03-08 00:11:23",
+      "readyAt": "2026-03-08 00:11:58"
+    },
+    {
+      "id": "8",
+      "orderId": "5",
+      "productName": "Cheese Burguer",
+      "status": "DELIVERED",
+      "sentAt": "2026-03-08 00:04:06",
+      "readyAt": "2026-03-08 00:10:17"
+    },
+    {
+      "id": "7",
+      "orderId": "5",
+      "productName": "Cheese Burguer",
+      "status": "DELIVERED",
+      "sentAt": "2026-03-08 00:04:04",
+      "readyAt": "2026-03-08 00:10:12"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\torderId\tproductName\tstatus\tsentAt\treadyAt\n11\t5\tNegroni\tREADY\t2026-03-08 00:53:12\t2026-03-08 00:54:18\n10\t5\tCheese Burguer\tDELIVERED\t2026-03-08 00:38:51\t2026-03-08 00:40:04\n9\t5\tNegroni\tDELIVERED\t2026-03-08 00:11:23\t2026-03-08 00:11:58\n8\t5\tCheese Burguer\tDELIVERED\t2026-03-08 00:04:06\t2026-03-08 00:10:17\n7\t5\tCheese Burguer\tDELIVERED\t2026-03-08 00:04:04\t2026-03-08 00:10:12\n",
+  "stderr": "",
+  "execution_time_ms": 361
+}
