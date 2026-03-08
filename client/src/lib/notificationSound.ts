@@ -1,29 +1,32 @@
 /**
  * Notification sound utility for the salon module.
- * Generates a pleasant ascending chime using Web Audio API.
- * Works on mobile and desktop browsers.
  *
- * iOS/Safari require user interaction to unlock audio context.
- * Call `unlockAudio()` on a user gesture (button tap) before playing sounds.
+ * iOS STRATEGY (the key insight):
+ * iOS Safari blocks audio playback unless it originates from a user gesture.
+ * However, once an HTMLAudioElement has been .play()'d during a user gesture,
+ * that SAME element can be .play()'d again later without a gesture.
  *
- * iOS KEEP-ALIVE STRATEGY:
- * After the user taps to enable alerts, we start a silent <audio> element
- * looping continuously. This keeps the iOS audio session alive so that
- * subsequent Web Audio API calls (from polling/timers) can produce sound
- * even without a direct user gesture.
+ * So the approach is:
+ * 1. On user tap ("Ativar Alertas"), create an <audio> element with a real WAV sound
+ * 2. Play it muted to "bless" it with iOS
+ * 3. Then unmute and play it for real (user hears the test sound)
+ * 4. On polling callbacks, reuse the SAME element: currentTime=0, play()
  *
- * Persistence: uses localStorage key "salon_sound_enabled" to remember state across page navigations.
+ * We also keep a silent <audio> loop running to maintain the iOS audio session.
+ *
+ * Persistence: uses localStorage key "salon_sound_enabled".
  */
 
 const STORAGE_KEY = "salon_sound_enabled";
 
-let audioContext: AudioContext | null = null;
 let audioUnlocked = false;
 let keepAliveAudio: HTMLAudioElement | null = null;
+let notificationAudio: HTMLAudioElement | null = null;
 
-/**
- * Read persisted sound preference from localStorage.
- */
+// ============================================================
+// localStorage persistence
+// ============================================================
+
 export function getSoundEnabledFromStorage(): boolean {
   try {
     return localStorage.getItem(STORAGE_KEY) === "true";
@@ -32,9 +35,6 @@ export function getSoundEnabledFromStorage(): boolean {
   }
 }
 
-/**
- * Persist sound preference to localStorage.
- */
 function setSoundEnabledInStorage(value: boolean) {
   try {
     localStorage.setItem(STORAGE_KEY, value ? "true" : "false");
@@ -43,32 +43,105 @@ function setSoundEnabledInStorage(value: boolean) {
   }
 }
 
+// ============================================================
+// WAV generation helpers
+// ============================================================
+
+function writeString(view: DataView, offset: number, str: string) {
+  for (let i = 0; i < str.length; i++) {
+    view.setUint8(offset + i, str.charCodeAt(i));
+  }
+}
+
 /**
- * Create a tiny silent WAV as a data URI.
- * This is a valid 44-byte WAV file with 1 sample of silence.
- * Used to keep the iOS audio session alive.
+ * Generate a notification chime as a WAV data URI.
+ * Three ascending notes (C5, E5, G5) — a pleasant major chord arpeggio.
+ * Duration: ~0.7 seconds, 22050 Hz sample rate, 16-bit mono.
  */
-function createSilentWavDataUri(): string {
-  // Minimal WAV: 44 bytes header + 2 bytes of silence (1 sample, 16-bit mono)
+function generateChimeWavDataUri(): string {
+  const sampleRate = 22050;
+  const duration = 0.75; // seconds
+  const numSamples = Math.floor(sampleRate * duration);
+  const dataSize = numSamples * 2; // 16-bit = 2 bytes per sample
+  const fileSize = 44 + dataSize;
+
+  const buffer = new ArrayBuffer(fileSize);
+  const view = new DataView(buffer);
+
+  // WAV header
+  writeString(view, 0, "RIFF");
+  view.setUint32(4, fileSize - 8, true);
+  writeString(view, 8, "WAVE");
+  writeString(view, 12, "fmt ");
+  view.setUint32(16, 16, true);       // PCM sub-chunk size
+  view.setUint16(20, 1, true);        // PCM format
+  view.setUint16(22, 1, true);        // mono
+  view.setUint32(24, sampleRate, true);
+  view.setUint32(28, sampleRate * 2, true); // byte rate
+  view.setUint16(32, 2, true);        // block align
+  view.setUint16(34, 16, true);       // bits per sample
+  writeString(view, 36, "data");
+  view.setUint32(40, dataSize, true);
+
+  // Generate three ascending notes: C5 (523Hz), E5 (659Hz), G5 (784Hz)
+  const notes = [
+    { freq: 523.25, start: 0.0,  end: 0.30 },
+    { freq: 659.25, start: 0.15, end: 0.45 },
+    { freq: 783.99, start: 0.30, end: 0.70 },
+  ];
+
+  for (let i = 0; i < numSamples; i++) {
+    const t = i / sampleRate;
+    let sample = 0;
+
+    for (const note of notes) {
+      if (t >= note.start && t <= note.end) {
+        const noteT = t - note.start;
+        const noteDur = note.end - note.start;
+        // Bell-curve envelope: quick attack, exponential decay
+        const attack = Math.min(noteT / 0.02, 1); // 20ms attack
+        const decay = Math.exp(-4 * noteT / noteDur);
+        const envelope = attack * decay;
+        // Fundamental + soft octave harmonic
+        sample += envelope * 0.35 * Math.sin(2 * Math.PI * note.freq * noteT);
+        sample += envelope * 0.10 * Math.sin(2 * Math.PI * note.freq * 2 * noteT);
+      }
+    }
+
+    // Clamp to [-1, 1] and convert to 16-bit
+    sample = Math.max(-1, Math.min(1, sample));
+    view.setInt16(44 + i * 2, Math.floor(sample * 32767), true);
+  }
+
+  // Convert to base64 data URI
+  const bytes = new Uint8Array(buffer);
+  let binary = "";
+  for (let i = 0; i < bytes.length; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return "data:audio/wav;base64," + btoa(binary);
+}
+
+/**
+ * Generate a tiny silent WAV for the keep-alive loop.
+ */
+function generateSilentWavDataUri(): string {
   const buffer = new ArrayBuffer(46);
   const view = new DataView(buffer);
-  // "RIFF" chunk descriptor
   writeString(view, 0, "RIFF");
-  view.setUint32(4, 38, true); // file size - 8
+  view.setUint32(4, 38, true);
   writeString(view, 8, "WAVE");
-  // "fmt " sub-chunk
   writeString(view, 12, "fmt ");
-  view.setUint32(16, 16, true); // sub-chunk size
-  view.setUint16(20, 1, true);  // PCM format
-  view.setUint16(22, 1, true);  // mono
-  view.setUint32(24, 8000, true); // sample rate
-  view.setUint32(28, 16000, true); // byte rate
-  view.setUint16(32, 2, true);  // block align
-  view.setUint16(34, 16, true); // bits per sample
-  // "data" sub-chunk
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true);
+  view.setUint16(22, 1, true);
+  view.setUint32(24, 8000, true);
+  view.setUint32(28, 16000, true);
+  view.setUint16(32, 2, true);
+  view.setUint16(34, 16, true);
   writeString(view, 36, "data");
-  view.setUint32(40, 2, true); // data size
-  view.setInt16(44, 0, true);  // one silent sample
+  view.setUint32(40, 2, true);
+  view.setInt16(44, 0, true);
 
   const bytes = new Uint8Array(buffer);
   let binary = "";
@@ -78,44 +151,30 @@ function createSilentWavDataUri(): string {
   return "data:audio/wav;base64," + btoa(binary);
 }
 
-function writeString(view: DataView, offset: number, str: string) {
-  for (let i = 0; i < str.length; i++) {
-    view.setUint8(offset + i, str.charCodeAt(i));
-  }
-}
+// ============================================================
+// Keep-alive: silent audio loop to maintain iOS audio session
+// ============================================================
 
-/**
- * Start a silent audio loop to keep the iOS audio session alive.
- * Must be called from a user gesture context.
- */
 function startKeepAlive() {
   try {
     if (keepAliveAudio) {
-      // Already running
       keepAliveAudio.play().catch(() => {});
       return;
     }
-    const audio = new Audio(createSilentWavDataUri());
+    const audio = new Audio(generateSilentWavDataUri());
     audio.loop = true;
-    audio.volume = 0.01; // near-silent but not zero (iOS may ignore volume=0)
+    // iOS ignores volume=0, so use near-silent. Use muted=false to keep session.
+    audio.volume = 0.01;
     audio.setAttribute("playsinline", "true");
-    // Play from user gesture context
-    const playPromise = audio.play();
-    if (playPromise) {
-      playPromise.catch(() => {
-        // If play fails, we'll try again on next user gesture
-        console.warn("[KeepAlive] Silent audio play failed");
-      });
-    }
+    audio.play().catch(() => {
+      console.warn("[KeepAlive] Silent audio play failed");
+    });
     keepAliveAudio = audio;
   } catch {
-    console.warn("[KeepAlive] Failed to start silent audio loop");
+    console.warn("[KeepAlive] Failed to start");
   }
 }
 
-/**
- * Stop the keep-alive audio loop.
- */
 function stopKeepAlive() {
   if (keepAliveAudio) {
     keepAliveAudio.pause();
@@ -124,46 +183,52 @@ function stopKeepAlive() {
   }
 }
 
+// ============================================================
+// Notification Audio element — the core iOS trick
+// ============================================================
+
 /**
- * Ensure AudioContext is created and running.
- * On iOS, the context may be suspended after page navigation — this resumes it.
+ * Create and "bless" the notification audio element.
+ * MUST be called from a user gesture (tap).
+ * We play it muted first to unlock it on iOS, then unmute for the real sound.
  */
-async function ensureAudioContext(): Promise<AudioContext | null> {
-  try {
-    if (!audioContext || audioContext.state === "closed") {
-      audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-    }
-    if (audioContext.state === "suspended") {
-      await audioContext.resume();
-    }
-    return audioContext;
-  } catch {
-    return null;
+function createAndBlessNotificationAudio(): HTMLAudioElement {
+  const wavUri = generateChimeWavDataUri();
+  const audio = new Audio(wavUri);
+  audio.setAttribute("playsinline", "true");
+  // iOS Safari bug: audio.volume may be read-only on mobile, so use muted instead
+  audio.muted = true;
+  // Play muted to "bless" this element on iOS
+  const p = audio.play();
+  if (p) {
+    p.then(() => {
+      // Now unmute — the element is blessed
+      audio.pause();
+      audio.muted = false;
+      audio.currentTime = 0;
+    }).catch(() => {
+      // Still try to unmute
+      audio.muted = false;
+    });
   }
+  return audio;
 }
+
+// ============================================================
+// Public API
+// ============================================================
 
 /**
  * Must be called once from a user gesture (tap/click) to unlock audio on iOS.
  * Returns true if audio is now unlocked.
- * Also starts the silent keep-alive loop and persists the preference.
  */
 export async function unlockAudio(): Promise<boolean> {
   try {
-    const ctx = await ensureAudioContext();
-    if (!ctx) return false;
-
-    // Play a silent buffer to fully unlock Web Audio API on iOS
-    const buffer = ctx.createBuffer(1, 1, 22050);
-    const source = ctx.createBufferSource();
-    source.buffer = buffer;
-    source.connect(ctx.destination);
-    source.start(0);
-
-    // Start the silent keep-alive loop to maintain iOS audio session
+    // Start keep-alive loop
     startKeepAlive();
 
-    // Also pre-create the notification Audio element during user gesture
-    preloadNotificationAudio();
+    // Create and bless the notification audio element
+    notificationAudio = createAndBlessNotificationAudio();
 
     audioUnlocked = true;
     setSoundEnabledInStorage(true);
@@ -180,10 +245,14 @@ export function disableAudio() {
   audioUnlocked = false;
   setSoundEnabledInStorage(false);
   stopKeepAlive();
+  if (notificationAudio) {
+    notificationAudio.pause();
+    notificationAudio = null;
+  }
 }
 
 export function isAudioUnlocked(): boolean {
-  return audioUnlocked && audioContext !== null && audioContext.state === "running";
+  return audioUnlocked && notificationAudio !== null;
 }
 
 /**
@@ -193,40 +262,17 @@ export function isAudioUnlocked(): boolean {
 export async function reactivateAudio(): Promise<void> {
   if (!getSoundEnabledFromStorage()) return;
   try {
-    const ctx = await ensureAudioContext();
-    if (ctx) {
-      audioUnlocked = true;
-      // Restart keep-alive if it stopped
-      if (keepAliveAudio) {
-        keepAliveAudio.play().catch(() => {});
-      } else {
-        startKeepAlive();
-      }
+    audioUnlocked = true;
+    // Restart keep-alive if it stopped
+    if (keepAliveAudio) {
+      keepAliveAudio.play().catch(() => {});
+    } else {
+      startKeepAlive();
     }
-  } catch {
-    // ignore
-  }
-}
-
-// ============================================================
-// HTML Audio element approach for notification sound
-// This works better on iOS because the Audio element was created
-// during a user gesture, and the keep-alive maintains the session.
-// ============================================================
-
-let notificationAudioElement: HTMLAudioElement | null = null;
-
-/**
- * Pre-create an Audio element during user gesture.
- * We'll reuse it for notification sounds.
- */
-function preloadNotificationAudio() {
-  try {
-    if (!notificationAudioElement) {
-      // Create a short beep using oscillator and record it to a blob
-      // For now, we'll use the Web Audio API approach but with the keep-alive
-      notificationAudioElement = new Audio();
-      notificationAudioElement.volume = 1.0;
+    // Re-bless the notification audio if it was lost
+    if (!notificationAudio) {
+      // Can't create new blessed audio without user gesture,
+      // but we can try to play the keep-alive to maintain session
     }
   } catch {
     // ignore
@@ -234,74 +280,31 @@ function preloadNotificationAudio() {
 }
 
 /**
- * Play a pleasant ascending chime notification sound.
- * Uses Web Audio API for better mobile compatibility.
- * The silent keep-alive audio loop ensures iOS allows this even outside user gesture.
+ * Play the notification chime sound.
+ * Uses the pre-blessed HTMLAudioElement — works on iOS even from polling/timers.
  */
 export async function playNotificationSound(): Promise<void> {
-  const ctx = await ensureAudioContext();
-  if (!ctx) return;
-
-  // Force resume if suspended (iOS may suspend between polls)
-  if (ctx.state === "suspended") {
-    try {
-      await ctx.resume();
-    } catch {
-      return;
-    }
+  if (!notificationAudio) {
+    console.warn("[Sound] No notification audio element — call unlockAudio() first");
+    return;
   }
-
-  if (ctx.state !== "running") return;
-
-  const now = ctx.currentTime;
-
-  // Three ascending notes: C5, E5, G5 (major chord)
-  const notes = [
-    { freq: 523.25, start: 0, duration: 0.25 },    // C5
-    { freq: 659.25, start: 0.15, duration: 0.25 },  // E5
-    { freq: 783.99, start: 0.30, duration: 0.35 },  // G5
-  ];
-
-  notes.forEach(({ freq, start, duration }) => {
-    // Main oscillator
-    const osc = ctx.createOscillator();
-    osc.type = "sine";
-    osc.frequency.value = freq;
-
-    // Gain envelope (bell curve)
-    const gain = ctx.createGain();
-    gain.gain.setValueAtTime(0, now + start);
-    gain.gain.linearRampToValueAtTime(0.3, now + start + 0.05);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + start + duration);
-
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-
-    osc.start(now + start);
-    osc.stop(now + start + duration);
-
-    // Soft harmonic (octave above, quieter)
-    const osc2 = ctx.createOscillator();
-    osc2.type = "sine";
-    osc2.frequency.value = freq * 2;
-
-    const gain2 = ctx.createGain();
-    gain2.gain.setValueAtTime(0, now + start);
-    gain2.gain.linearRampToValueAtTime(0.08, now + start + 0.05);
-    gain2.gain.exponentialRampToValueAtTime(0.001, now + start + duration);
-
-    osc2.connect(gain2);
-    gain2.connect(ctx.destination);
-
-    osc2.start(now + start);
-    osc2.stop(now + start + duration);
-  });
+  try {
+    notificationAudio.muted = false;
+    notificationAudio.currentTime = 0;
+    const p = notificationAudio.play();
+    if (p) {
+      await p.catch((err) => {
+        console.warn("[Sound] Play failed:", err.message);
+      });
+    }
+  } catch (err) {
+    console.warn("[Sound] playNotificationSound error:", err);
+  }
 }
 
 /**
  * Vibrate the device with an urgent pattern.
  * Works on Android without any permission.
- * iOS (PWA mode) may support it on some versions.
  * Pattern: buzz-pause-buzz-pause-buzz (200ms each, 100ms pauses)
  */
 export function vibrateUrgent(): void {
@@ -321,6 +324,17 @@ export function vibrateUrgent(): void {
 export async function playUrgentNotification(): Promise<void> {
   vibrateUrgent();
   await playNotificationSound();
-  setTimeout(() => playNotificationSound(), 800);
-  setTimeout(() => playNotificationSound(), 1600);
+  // Replay the same element after delays for urgency effect
+  setTimeout(() => {
+    if (notificationAudio) {
+      notificationAudio.currentTime = 0;
+      notificationAudio.play().catch(() => {});
+    }
+  }, 900);
+  setTimeout(() => {
+    if (notificationAudio) {
+      notificationAudio.currentTime = 0;
+      notificationAudio.play().catch(() => {});
+    }
+  }, 1800);
 }

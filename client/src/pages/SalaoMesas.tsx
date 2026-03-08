@@ -300,7 +300,10 @@ export default function SalaoMesas() {
         <div>Polls: {debugInfo.polls} | Prev: {debugInfo.prev} | Current: {debugInfo.current} | Sound: {soundEnabled ? "ON" : "OFF"} | Push: {pushGranted ? "ON" : "OFF"}</div>
         <div>Last: {debugInfo.lastAlert || "nenhum alerta ainda"}</div>
         <div>AudioUnlocked: {isAudioUnlocked() ? "YES" : "NO"} | SoundRef: {soundEnabledRef.current ? "YES" : "NO"} | NotifPermitted: {isNotificationPermitted() ? "YES" : "NO"}</div>
-        <button className="mt-1 bg-blue-500 text-white px-2 py-1 rounded text-xs" onClick={() => { vibrateUrgent(); void playUrgentNotification(); setDebugInfo(d => ({...d, lastAlert: `TEST SOUND @ ${new Date().toLocaleTimeString()}`})); }}>Testar Som Agora</button>
+        <div className="flex gap-2 mt-1">
+          <button className="bg-blue-500 text-white px-2 py-1 rounded text-xs" onClick={() => { vibrateUrgent(); void playUrgentNotification(); setDebugInfo(d => ({...d, lastAlert: `TEST SOUND @ ${new Date().toLocaleTimeString()}`})); }}>Testar Som</button>
+          <button className="bg-purple-500 text-white px-2 py-1 rounded text-xs" onClick={async () => { await unlockAudio(); setSoundEnabled(true); soundEnabledRef.current = true; vibrateUrgent(); await playUrgentNotification(); setDebugInfo(d => ({...d, lastAlert: `RE-UNLOCK+PLAY @ ${new Date().toLocaleTimeString()}`})); }}>Re-unlock + Play</button>
+        </div>
       </div>
 
       {/* Stats bar */}
