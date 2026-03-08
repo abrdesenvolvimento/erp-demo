@@ -1745,15 +1745,17 @@ async function recalcOrderTotals(db: any, orderId: number) {
 }
 
 function mapPaymentMethod(payments: Array<{ method: string; amount: number }>): string {
+  const map: Record<string, string> = {
+    CASH: "DINHEIRO",
+    CREDIT: "CREDITO",
+    DEBIT: "DEBITO",
+    PIX: "PIX",
+    VOUCHER: "VOUCHER",
+  };
   if (payments.length === 1) {
-    const map: Record<string, string> = {
-      CASH: "DINHEIRO",
-      CREDIT: "CREDITO",
-      DEBIT: "DEBITO",
-      PIX: "PIX",
-      VOUCHER: "VOUCHER",
-    };
     return map[payments[0].method] ?? "DINHEIRO";
   }
-  return "MISTO";
+  // List each method used (e.g. "DINHEIRO + PIX")
+  const uniqueMethods = [...new Set(payments.map(p => map[p.method] ?? p.method))];
+  return uniqueMethods.join(" + ");
 }

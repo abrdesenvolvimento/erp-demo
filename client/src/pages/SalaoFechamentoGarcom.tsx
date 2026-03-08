@@ -18,7 +18,7 @@ import {
   Users, DollarSign, Clock, Receipt, Award,
   Calendar, ChevronDown, ChevronUp, CreditCard,
   Banknote, Smartphone, Ticket, TrendingUp,
-  ShoppingBag, User, FileText, ArrowLeft
+  ShoppingBag, User, FileText, ArrowLeft, Download, Printer
 } from "lucide-react";
 import { useLocation } from "wouter";
 
@@ -89,6 +89,104 @@ export default function SalaoFechamentoGarcom() {
 
   const toggleOrder = (id: number) => {
     setExpandedOrder(expandedOrder === id ? null : id);
+  };
+
+  const exportWaiterPDF = (w: NonNullable<typeof report>["waiters"][number]) => {
+    const periodLabel = startDate === endDate
+      ? new Date(startDate + "T12:00:00").toLocaleDateString("pt-BR")
+      : `${new Date(startDate + "T12:00:00").toLocaleDateString("pt-BR")} a ${new Date(endDate + "T12:00:00").toLocaleDateString("pt-BR")}`;
+
+    const paymentRows = Object.entries(w.paymentBreakdown)
+      .map(([method, amount]) => {
+        const label = PAYMENT_LABELS[method]?.label ?? method;
+        return `<tr><td style="padding:4px 8px;border-bottom:1px solid #eee;">${label}</td><td style="padding:4px 8px;border-bottom:1px solid #eee;text-align:right;font-weight:600;">${formatCurrency(amount as number)}</td></tr>`;
+      })
+      .join("");
+
+    const productRows = w.productsSold
+      .map(
+        (p) =>
+          `<tr><td style="padding:4px 8px;border-bottom:1px solid #eee;">${p.productName}</td><td style="padding:4px 8px;border-bottom:1px solid #eee;text-align:center;">${p.quantity}</td><td style="padding:4px 8px;border-bottom:1px solid #eee;text-align:right;font-weight:600;">${formatCurrency(p.totalRevenue)}</td></tr>`
+      )
+      .join("");
+
+    const orderRows = w.orders
+      .map(
+        (o) =>
+          `<tr>
+            <td style="padding:4px 8px;border-bottom:1px solid #eee;font-family:monospace;">#${o.id}</td>
+            <td style="padding:4px 8px;border-bottom:1px solid #eee;">Mesa ${o.tableNumber}</td>
+            <td style="padding:4px 8px;border-bottom:1px solid #eee;text-align:center;">${o.guestCount}</td>
+            <td style="padding:4px 8px;border-bottom:1px solid #eee;text-align:center;">${formatTime(o.openedAt)} - ${formatTime(o.closedAt)}</td>
+            <td style="padding:4px 8px;border-bottom:1px solid #eee;text-align:right;">${formatCurrency(o.subtotal)}</td>
+            <td style="padding:4px 8px;border-bottom:1px solid #eee;text-align:right;color:#16a34a;">${formatCurrency(o.tipAmount)}</td>
+            <td style="padding:4px 8px;border-bottom:1px solid #eee;text-align:right;font-weight:700;">${formatCurrency(o.totalAmount)}</td>
+          </tr>`
+      )
+      .join("");
+
+    const html = `<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Fechamento - ${w.waiterName}</title>
+<style>
+  @page { size: A4; margin: 15mm; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 12px; color: #333; margin: 0; padding: 0; }
+  .header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 12px; margin-bottom: 16px; }
+  .header h1 { font-size: 20px; margin: 0 0 4px; }
+  .header p { margin: 2px 0; color: #666; font-size: 11px; }
+  .summary { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+  .summary-card { flex: 1; min-width: 100px; border: 1px solid #ddd; border-radius: 6px; padding: 8px 12px; text-align: center; }
+  .summary-card .label { font-size: 9px; text-transform: uppercase; color: #888; letter-spacing: 0.5px; }
+  .summary-card .value { font-size: 16px; font-weight: 700; margin-top: 2px; }
+  .section-title { font-size: 13px; font-weight: 700; margin: 16px 0 8px; padding-bottom: 4px; border-bottom: 1px solid #eee; }
+  table { width: 100%; border-collapse: collapse; font-size: 11px; }
+  th { background: #f5f5f5; padding: 6px 8px; text-align: left; font-weight: 600; border-bottom: 2px solid #ddd; }
+  .text-right { text-align: right; }
+  .text-center { text-align: center; }
+  .footer { margin-top: 24px; text-align: center; font-size: 10px; color: #999; border-top: 1px solid #eee; padding-top: 8px; }
+</style></head><body>
+<div class="header">
+  <h1>Relatório de Fechamento</h1>
+  <p><strong>${w.waiterName ?? "Desconhecido"}</strong></p>
+  <p>Período: ${periodLabel}</p>
+</div>
+
+<div class="summary">
+  <div class="summary-card"><div class="label">Faturamento</div><div class="value" style="color:#2563eb;">${formatCurrency(w.totalSales)}</div></div>
+  <div class="summary-card"><div class="label">Subtotal</div><div class="value">${formatCurrency(w.totalSubtotal)}</div></div>
+  <div class="summary-card"><div class="label">Taxa Serviço</div><div class="value" style="color:#16a34a;">${formatCurrency(w.totalTips)}</div></div>
+  <div class="summary-card"><div class="label">Comandas</div><div class="value">${w.orderCount}</div></div>
+  <div class="summary-card"><div class="label">Clientes</div><div class="value">${w.totalGuests}</div></div>
+  <div class="summary-card"><div class="label">Ticket Médio</div><div class="value">${formatCurrency(w.avgTicket)}</div></div>
+  <div class="summary-card"><div class="label">Tempo Médio</div><div class="value">${formatMinutes(w.avgServiceTime)}</div></div>
+</div>
+
+<div class="section-title">Produtos Vendidos</div>
+<table>
+  <thead><tr><th>Produto</th><th class="text-center">Qtd</th><th class="text-right">Receita</th></tr></thead>
+  <tbody>${productRows}</tbody>
+</table>
+
+<div class="section-title">Formas de Pagamento</div>
+<table>
+  <thead><tr><th>Forma</th><th class="text-right">Valor</th></tr></thead>
+  <tbody>${paymentRows}</tbody>
+</table>
+
+<div class="section-title">Comandas Detalhadas</div>
+<table>
+  <thead><tr><th>Comanda</th><th>Mesa</th><th class="text-center">Pessoas</th><th class="text-center">Horário</th><th class="text-right">Subtotal</th><th class="text-right">Taxa Serv.</th><th class="text-right">Total</th></tr></thead>
+  <tbody>${orderRows}</tbody>
+</table>
+
+<div class="footer">Relatório gerado em ${new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })} — ABRWF</div>
+</body></html>`;
+
+    const printWindow = window.open("", "_blank");
+    if (printWindow) {
+      printWindow.document.write(html);
+      printWindow.document.close();
+      setTimeout(() => printWindow.print(), 300);
+    }
   };
 
   return (
@@ -300,6 +398,18 @@ export default function SalaoFechamentoGarcom() {
                             <p className="text-lg font-bold text-blue-600">{formatCurrency(w.totalSales)}</p>
                             <p className="text-sm text-green-600">{formatCurrency(w.totalTips)} taxa serviço</p>
                           </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-8 gap-1.5 text-xs"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              exportWaiterPDF(w);
+                            }}
+                          >
+                            <Printer className="h-3.5 w-3.5" />
+                            <span className="hidden sm:inline">Exportar</span>
+                          </Button>
                           {isExpanded ? (
                             <ChevronUp className="h-5 w-5 text-muted-foreground" />
                           ) : (

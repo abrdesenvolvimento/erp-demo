@@ -1943,3 +1943,7 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Transferência de Comanda agora usa DashboardLayout com sidebar
 - [x] BUG: Impressão de comanda/ticket — CSS ajustado para papel térmico 80mm com @page size auto (comanda, cozinha e bar)
 - [x] BUG: Análise KDS não trazia dados — corrigido: usava coluna 'destination' inexistente, trocado para 'productionDestination' + inclui itens BOTH
+
+### Melhorias pós-publicação v4 (08/03/2026)
+- [x] Exportar relatório de Fechamento por Garçom (PDF individual com taxa de serviço, produtos vendidos, comandas atendidas)
+- [x] Trocar termo "Misto" na forma de pagamento para listar formas usadas (ex: "DINHEIRO + PIX")
