@@ -77,7 +77,8 @@ function handlePrintTicket(group: any, destination: string) {
     <html><head><title>Ticket ${destination}</title>
     <style>
       * { margin: 0; padding: 0; box-sizing: border-box; }
-      body { font-family: 'Courier New', monospace; padding: 8mm; font-size: 14px; max-width: 80mm; margin: 0 auto; }
+      html, body { height: auto !important; min-height: 0 !important; }
+      body { font-family: 'Courier New', monospace; padding: 8mm 6mm 5mm 6mm; font-size: 14px; max-width: 80mm; margin: 0 auto; }
       .header { text-align: center; border-bottom: 2px dashed #000; padding-bottom: 8px; margin-bottom: 8px; }
       .header h2 { font-size: 18px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; }
       .header .mesa { font-size: 28px; font-weight: 900; margin: 4px 0; }
@@ -87,7 +88,8 @@ function handlePrintTicket(group: any, destination: string) {
       .item .name { font-size: 15px; font-weight: 700; flex: 1; }
       .notes { font-size: 12px; font-weight: 700; color: #c00; padding: 2px 0 6px 43px; text-transform: uppercase; }
       .footer { text-align: center; margin-top: 12px; font-size: 10px; border-top: 2px dashed #000; padding-top: 8px; color: #888; }
-      @media print { body { padding: 0; } }
+      @page { size: 80mm auto; margin: 0; }
+      @media print { html, body { height: auto !important; width: 80mm; } body { padding: 2mm 4mm; } }
     </style></head><body>
     <div class="header">
       <h2>BAR</h2>

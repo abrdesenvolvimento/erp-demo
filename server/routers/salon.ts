@@ -1361,7 +1361,7 @@ export const salonRouter = router({
         .where(
           and(
             eq(salonOrderItems.companyId, input.companyId),
-            eq(salonOrderItems.destination, input.destination),
+            inArray(salonOrderItems.productionDestination, [input.destination, "BOTH"]),
             inArray(salonOrderItems.status, ["READY", "DELIVERED"]),
             gte(salonOrderItems.sentAt, todayStart)
           )
@@ -1378,7 +1378,7 @@ export const salonRouter = router({
         .where(
           and(
             eq(salonOrderItems.companyId, input.companyId),
-            eq(salonOrderItems.destination, input.destination),
+            inArray(salonOrderItems.productionDestination, [input.destination, "BOTH"]),
             gte(salonOrderItems.sentAt, todayStart)
           )
         );

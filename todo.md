@@ -1938,3 +1938,8 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Remover seletor de % taxa de serviço da tela de comanda (usar apenas config global)
 - [x] BUG: Texto encoding errado em Pagamento Único e outros textos — corrigido em SalaoComanda.tsx e SalaoMesas.tsx
 - [x] Confirmado: Cancelar Venda já cancela Comanda automaticamente (não precisa botão separado de estorno)
+
+### Correções pós-publicação v3 (08/03/2026)
+- [x] Transferência de Comanda agora usa DashboardLayout com sidebar
+- [x] BUG: Impressão de comanda/ticket — CSS ajustado para papel térmico 80mm com @page size auto (comanda, cozinha e bar)
+- [x] BUG: Análise KDS não trazia dados — corrigido: usava coluna 'destination' inexistente, trocado para 'productionDestination' + inclui itens BOTH

@@ -9,12 +9,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { useState, useMemo } from "react";
-import { ArrowLeftRight, User, UtensilsCrossed, Clock, ChevronDown, ChevronUp, AlertTriangle, History, ArrowLeft } from "lucide-react";
-import { useLocation } from "wouter";
+import { ArrowLeftRight, User, UtensilsCrossed, Clock, ChevronDown, ChevronUp, AlertTriangle, History } from "lucide-react";
+import DashboardLayout from "@/components/DashboardLayout";
 
 export default function SalaoTransferencia() {
   const { user } = useAuth();
-  const [, navigate] = useLocation();
   const activeCompanyId = (user as any)?.activeCompanyId;
 
   const [transferModal, setTransferModal] = useState(false);
@@ -121,20 +120,16 @@ export default function SalaoTransferencia() {
   }
 
   return (
+    <DashboardLayout>
     <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/salao/mesas")}>
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <div>
-            <h1 className="text-2xl font-bold flex items-center gap-2">
-              <ArrowLeftRight className="h-6 w-6 text-blue-600" />
-              Transferência de Comanda
-            </h1>
-            <p className="text-muted-foreground text-sm">Gerencie a transferência de comandas entre garçons</p>
-          </div>
+        <div>
+          <h1 className="text-2xl font-bold flex items-center gap-2">
+            <ArrowLeftRight className="h-6 w-6 text-blue-600" />
+            Transferência de Comanda
+          </h1>
+          <p className="text-muted-foreground text-sm">Gerencie a transferência de comandas entre garçons</p>
         </div>
         <Button
           variant={showHistory ? "default" : "outline"}
@@ -431,5 +426,6 @@ export default function SalaoTransferencia() {
         </DialogContent>
       </Dialog>
     </div>
+    </DashboardLayout>
   );
 }

@@ -273,7 +273,8 @@ export default function SalaoComanda() {
       <html><head><title>Comanda #${orderId} - Mesa ${order?.tableNumber}</title>
       <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Courier New', monospace; padding: 10mm; font-size: 12px; max-width: 80mm; margin: 0 auto; }
+        html, body { height: auto !important; min-height: 0 !important; }
+        body { font-family: 'Courier New', monospace; padding: 10mm 8mm 5mm 8mm; font-size: 12px; max-width: 80mm; margin: 0 auto; }
         .header { text-align: center; margin-bottom: 8px; border-bottom: 1px dashed #000; padding-bottom: 8px; }
         .header h2 { font-size: 16px; margin-bottom: 4px; }
         .header p { font-size: 11px; }
@@ -289,7 +290,8 @@ export default function SalaoComanda() {
         .total-row { display: flex; justify-content: space-between; padding: 2px 0; }
         .total-row.grand { font-size: 16px; font-weight: bold; margin-top: 4px; border-top: 2px solid #000; padding-top: 6px; }
         .footer { text-align: center; margin-top: 12px; font-size: 10px; border-top: 1px dashed #000; padding-top: 8px; }
-        @media print { body { padding: 0; } }
+        @page { size: 80mm auto; margin: 0; }
+        @media print { html, body { height: auto !important; width: 80mm; } body { padding: 2mm 4mm; } }
       </style></head><body>
       ${printContent}
       <script>window.onload = function() { window.print(); window.close(); }<\/script>
