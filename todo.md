@@ -1886,3 +1886,13 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Alerta sonoro apenas na tela de Mesas (removido som da comanda, mantido apenas vibração + toast)
 - [x] Fluxo de fechamento: pré-visualização/impressão da comanda antes do fechamento efetivo (2 etapas)
 - [ ] [FUTURO] Transfer\u00eancia de comanda entre gar\u00e7ons (al\u00e7ada administrativa)
+
+### Ajustes Comanda e Contabilização (08/03/2026)
+- [x] Documento comanda: adicionar campo "Abertura da mesa" (data/hora)
+- [x] Documento comanda: adicionar campo "Tempo de permanência"
+- [x] Documento comanda: separar Subtotal, Taxa de serviço 10% (opcional), Total com serviço, Total sem serviço
+- [x] Documento comanda: adicionar observação "Taxa de serviço (10%) é opcional. Informe ao atendente caso não deseje incluir."
+- [x] Separar gorjeta/taxa de serviço do faturamento nos dashboards (subtotal usado para faturamento, tips separados)
+- [x] Separar gorjeta/taxa de serviço na contabilização (sale.finalAmount = subtotal, tip registrado em notes)
+- [x] Ajustar cards de faturamento do salão para considerar apenas subtotal (sem taxa de serviço)
+- [x] Ajustar relatório de fechamento de garçom para separar faturamento vs taxa de serviço

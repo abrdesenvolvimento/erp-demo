@@ -390,7 +390,7 @@ export default function SalaoComanda() {
 
             {!isClosed && (
               <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Gorjeta</span>
+                <span className="text-muted-foreground">Taxa de serviço</span>
                 <div className="flex items-center gap-2">
                   {[0, 10, 12, 15].map(p => (
                     <button
@@ -411,21 +411,32 @@ export default function SalaoComanda() {
 
             {tipPercent > 0 && (
               <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Gorjeta ({tipPercent}%)</span>
+                <span className="text-muted-foreground">Taxa de serviço ({tipPercent}%)</span>
                 <span>{formatCurrency(tipAmount)}</span>
               </div>
             )}
 
             <Separator />
             <div className="flex justify-between font-bold">
-              <span>Total</span>
+              <span>Total com serviço</span>
               <span className="text-lg">{formatCurrency(totalWithTip)}</span>
             </div>
+            {tipPercent > 0 && (
+              <div className="flex justify-between text-sm text-muted-foreground">
+                <span>Total sem serviço</span>
+                <span>{formatCurrency(subtotal)}</span>
+              </div>
+            )}
             {order.guestCount > 1 && (
               <div className="flex justify-between text-sm text-muted-foreground">
                 <span>Por pessoa ({order.guestCount})</span>
                 <span>{formatCurrency(perPerson)}</span>
               </div>
+            )}
+            {tipPercent > 0 && !isClosed && (
+              <p className="text-xs text-muted-foreground italic mt-1">
+                Taxa de serviço ({tipPercent}%) é opcional. Informe ao atendente caso não deseje incluir.
+              </p>
             )}
           </CardContent>
         </Card>
@@ -585,7 +596,13 @@ export default function SalaoComanda() {
               <h2>Comanda #{orderId}</h2>
               <p>Mesa {order.tableNumber} • {order.guestCount} pessoa(s)</p>
               <p>{order.waiterName ? `Garçom: ${order.waiterName}` : ""}</p>
-              <p>{order.openedAt ? new Date(order.openedAt).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" }) : ""}</p>
+              <p style={{marginTop: '4px'}}>Abertura: {order.openedAt ? new Date(order.openedAt).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" }) : "—"}</p>
+              <p>Tempo de permanência: {order.openedAt ? (() => {
+                const diffMs = Date.now() - new Date(order.openedAt).getTime();
+                const hours = Math.floor(diffMs / 3600000);
+                const mins = Math.floor((diffMs % 3600000) / 60000);
+                return hours > 0 ? `${hours}h${String(mins).padStart(2, '0')}min` : `${mins}min`;
+              })() : "—"}</p>
             </div>
             <div className="items">
               {activeItems.map((item: any) => (
@@ -603,13 +620,17 @@ export default function SalaoComanda() {
               </div>
               {tipPercent > 0 && (
                 <div className="total-row">
-                  <span>Gorjeta ({tipPercent}%)</span>
+                  <span>Taxa de serviço {tipPercent}%</span>
                   <span>{formatCurrency(tipAmount)}</span>
                 </div>
               )}
               <div className="total-row grand">
-                <span>TOTAL</span>
+                <span>Total com serviço</span>
                 <span>{formatCurrency(totalWithTip)}</span>
+              </div>
+              <div className="total-row">
+                <span>Total sem serviço</span>
+                <span>{formatCurrency(subtotal)}</span>
               </div>
               {order.guestCount > 1 && (
                 <div className="total-row">
@@ -619,12 +640,24 @@ export default function SalaoComanda() {
               )}
             </div>
             <div className="footer">
+              <p style={{fontStyle: 'italic', marginBottom: '4px'}}>Taxa de serviço (10%) é opcional.</p>
+              <p style={{fontStyle: 'italic', marginBottom: '8px'}}>Informe ao atendente caso não deseje incluir.</p>
               <p>Obrigado pela preferência!</p>
             </div>
           </div>
 
           {/* Visual preview for screen */}
           <div className="border rounded-lg p-4 bg-muted/30 space-y-3">
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <span>Abertura: {order.openedAt ? new Date(order.openedAt).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" }) : "—"}</span>
+              <span>Permanência: {order.openedAt ? (() => {
+                const diffMs = Date.now() - new Date(order.openedAt).getTime();
+                const hours = Math.floor(diffMs / 3600000);
+                const mins = Math.floor((diffMs % 3600000) / 60000);
+                return hours > 0 ? `${hours}h${String(mins).padStart(2, '0')}min` : `${mins}min`;
+              })() : "—"}</span>
+            </div>
+            <Separator />
             <h3 className="font-semibold text-sm">Itens da Comanda</h3>
             {activeItems.map((item: any) => (
               <div key={item.id} className="flex items-center justify-between text-sm py-1 border-b border-dashed last:border-0">
@@ -643,13 +676,17 @@ export default function SalaoComanda() {
             </div>
             {tipPercent > 0 && (
               <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Gorjeta ({tipPercent}%)</span>
+                <span className="text-muted-foreground">Taxa de serviço ({tipPercent}%)</span>
                 <span>{formatCurrency(tipAmount)}</span>
               </div>
             )}
             <div className="flex justify-between font-bold text-lg pt-1 border-t">
-              <span>Total</span>
+              <span>Total com serviço</span>
               <span>{formatCurrency(totalWithTip)}</span>
+            </div>
+            <div className="flex justify-between text-sm text-muted-foreground">
+              <span>Total sem serviço</span>
+              <span>{formatCurrency(subtotal)}</span>
             </div>
             {order.guestCount > 1 && (
               <div className="flex justify-between text-sm text-muted-foreground">
@@ -657,6 +694,9 @@ export default function SalaoComanda() {
                 <span>{formatCurrency(perPerson)}</span>
               </div>
             )}
+            <p className="text-xs text-muted-foreground italic">
+              Taxa de serviço (10%) é opcional. Informe ao atendente caso não deseje incluir.
+            </p>
           </div>
 
           <DialogFooter className="flex flex-col sm:flex-row gap-2">
@@ -687,14 +727,18 @@ export default function SalaoComanda() {
               </div>
               {tipPercent > 0 && (
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Gorjeta ({tipPercent}%)</span>
+                  <span className="text-muted-foreground">Taxa de serviço ({tipPercent}%)</span>
                   <span>{formatCurrency(tipAmount)}</span>
                 </div>
               )}
               <Separator />
               <div className="flex justify-between font-bold text-lg">
-                <span>Total</span>
+                <span>Total com serviço</span>
                 <span>{formatCurrency(totalWithTip)}</span>
+              </div>
+              <div className="flex justify-between text-sm text-muted-foreground">
+                <span>Total sem serviço</span>
+                <span>{formatCurrency(subtotal)}</span>
               </div>
               {order.guestCount > 1 && (
                 <div className="flex justify-between text-sm text-muted-foreground">

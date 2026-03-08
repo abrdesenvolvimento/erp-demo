@@ -110,7 +110,7 @@ export default function SalaoFechamentoGarcom() {
               Fechamento de Garçom
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
-              Relatório detalhado de vendas, produtos e gorjetas por garçom
+              Relatório detalhado de vendas, produtos e taxa de serviço por garçom
             </p>
           </div>
         </div>
@@ -220,7 +220,7 @@ export default function SalaoFechamentoGarcom() {
               <Card className="border-green-200 bg-gradient-to-br from-green-50 to-green-100/50">
                 <CardContent className="p-3 text-center">
                   <TrendingUp className="h-5 w-5 text-green-600 mx-auto mb-1" />
-                  <p className="text-[10px] text-green-600 font-medium uppercase tracking-wide">Gorjetas</p>
+                  <p className="text-[10px] text-green-600 font-medium uppercase tracking-wide">Taxa Serviço</p>
                   <p className="text-lg font-bold text-green-700">{formatCurrency(report.totals.totalTips)}</p>
                 </CardContent>
               </Card>
@@ -298,7 +298,7 @@ export default function SalaoFechamentoGarcom() {
                         <div className="flex items-center gap-4">
                           <div className="text-right hidden sm:block">
                             <p className="text-lg font-bold text-blue-600">{formatCurrency(w.totalSales)}</p>
-                            <p className="text-sm text-green-600">{formatCurrency(w.totalTips)} gorjeta</p>
+                            <p className="text-sm text-green-600">{formatCurrency(w.totalTips)} taxa serviço</p>
                           </div>
                           {isExpanded ? (
                             <ChevronUp className="h-5 w-5 text-muted-foreground" />
@@ -317,7 +317,7 @@ export default function SalaoFechamentoGarcom() {
                           <p className="text-sm font-bold text-blue-700">{formatCurrency(w.totalSales)}</p>
                         </div>
                         <div className="bg-green-50 rounded-lg p-2 text-center sm:hidden">
-                          <p className="text-[10px] text-green-600 font-medium">Gorjetas</p>
+                          <p className="text-[10px] text-green-600 font-medium">Taxa Serviço</p>
                           <p className="text-sm font-bold text-green-700">{formatCurrency(w.totalTips)}</p>
                         </div>
                         <div className="bg-slate-50 rounded-lg p-2 text-center">
@@ -451,7 +451,7 @@ export default function SalaoFechamentoGarcom() {
                                       <p className="text-sm font-bold">{formatCurrency(order.totalAmount)}</p>
                                       {order.tipAmount > 0 && (
                                         <p className="text-xs text-green-600">
-                                          +{formatCurrency(order.tipAmount)} gorjeta
+                                          +{formatCurrency(order.tipAmount)} taxa serviço
                                         </p>
                                       )}
                                     </div>
@@ -491,7 +491,7 @@ export default function SalaoFechamentoGarcom() {
                                         </tr>
                                         {order.tipAmount > 0 && (
                                           <tr className="text-green-600">
-                                            <td colSpan={3} className="p-1.5 text-right">Gorjeta:</td>
+                                            <td colSpan={3} className="p-1.5 text-right">Taxa de serviço:</td>
                                             <td className="p-1.5 text-right">{formatCurrency(order.tipAmount)}</td>
                                           </tr>
                                         )}

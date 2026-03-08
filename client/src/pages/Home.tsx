@@ -54,6 +54,11 @@ function SalonDashboardSection() {
                 R$ {new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2 }).format(parseFloat(salonStats?.todayRevenue ?? '0'))}
               </div>
               <p className="text-xs text-muted-foreground mt-1">{salonStats?.todayOrders ?? 0} comandas encerradas</p>
+              {parseFloat(salonStats?.todayTips ?? '0') > 0 && (
+                <p className="text-xs text-amber-500 mt-1">
+                  + R$ {new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2 }).format(parseFloat(salonStats?.todayTips ?? '0'))} taxa de serviço
+                </p>
+              )}
             </>
           )}
         </CardContent>

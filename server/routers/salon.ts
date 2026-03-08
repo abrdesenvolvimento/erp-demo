@@ -646,9 +646,9 @@ export const salonRouter = router({
           subtotal: String(subtotal.toFixed(2)),
           discountAmount: "0.00",
           surchargeAmount: "0.00",
-          finalAmount: String(totalAmount.toFixed(2)),
+          finalAmount: String(subtotal.toFixed(2)),
           paymentMethod,
-          notes: `Comanda #${input.orderId} - Mesa ${order.tableNumber} - ${order.guestCount} pessoa(s) - SALÃO`,
+          notes: `Comanda #${input.orderId} - Mesa ${order.tableNumber} - ${order.guestCount} pessoa(s) - SALÃO${tipAmount > 0 ? ` | Taxa serviço: R$ ${tipAmount.toFixed(2)}` : ""}`,
           status: "ACTIVE",
           createdBy: ctx.user?.id ?? "",
         },
@@ -891,7 +891,7 @@ export const salonRouter = router({
           orderCount: 0,
         };
         existing.totalTip += parseFloat(String(o.tipAmount ?? "0"));
-        existing.totalSales += parseFloat(String(o.totalAmount ?? "0"));
+        existing.totalSales += parseFloat(String(o.subtotal ?? o.totalAmount ?? "0"));
         existing.orderCount += 1;
         byWaiter.set(key, existing);
       }
@@ -987,7 +987,7 @@ export const salonRouter = router({
           avgServiceTime: 0,
           totalServiceTime: 0,
         };
-        existing.totalSales += parseFloat(String(o.totalAmount ?? "0"));
+        existing.totalSales += parseFloat(String(o.subtotal ?? "0"));
         existing.totalTips += parseFloat(String(o.tipAmount ?? "0"));
         existing.orderCount += 1;
         existing.totalGuests += Number(o.guests ?? 0);
@@ -1038,9 +1038,12 @@ export const salonRouter = router({
           )
         );
 
-      // Today's revenue from salon
+      // Today's revenue from salon (subtotal only, excluding service fee/tip)
       const [todayRevenueRow] = await db
-        .select({ total: sql<string>`COALESCE(SUM(totalAmount), 0)` })
+        .select({
+          total: sql<string>`COALESCE(SUM(subtotal), 0)`,
+          totalTips: sql<string>`COALESCE(SUM(tipAmount), 0)`,
+        })
         .from(salonOrders)
         .where(
           and(
@@ -1065,6 +1068,7 @@ export const salonRouter = router({
         );
 
       const todayRevenue = parseFloat(String(todayRevenueRow?.total ?? "0"));
+      const todayTips = parseFloat(String(todayRevenueRow?.totalTips ?? "0"));
       const todayOrders = Number(todayOrdersRow?.count ?? 0);
       const avgTicket = todayOrders > 0 ? todayRevenue / todayOrders : 0;
 
@@ -1072,6 +1076,7 @@ export const salonRouter = router({
         totalTables: Number(totalTablesRow?.count ?? 0),
         occupiedTables: Number(openTablesRow?.count ?? 0),
         todayRevenue: todayRevenue.toFixed(2),
+        todayTips: todayTips.toFixed(2),
         todayOrders,
         avgTicket: avgTicket.toFixed(2),
       };
@@ -1235,7 +1240,7 @@ export const salonRouter = router({
           ? (new Date(o.closedAt).getTime() - new Date(o.openedAt).getTime()) / 60000
           : 0;
 
-        existing.totalSales += totalAmount;
+        existing.totalSales += subtotal;
         existing.totalSubtotal += subtotal;
         existing.totalTips += tipAmount;
         existing.orderCount += 1;
