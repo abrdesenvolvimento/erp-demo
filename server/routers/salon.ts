@@ -524,7 +524,8 @@ export const salonRouter = router({
           and(
             eq(salonOrderItems.companyId, input.companyId),
             inArray(salonOrderItems.status, ["PENDING", "IN_PROGRESS"]),
-            inArray(salonOrderItems.productionDestination, destinations as any)
+            inArray(salonOrderItems.productionDestination, destinations as any),
+            sql`${salonOrders.status} != 'CANCELLED'`
           )
         )
         .orderBy(salonOrderItems.sentAt, salonOrderItems.createdAt);
@@ -697,6 +698,17 @@ export const salonRouter = router({
         .update(salonOrders)
         .set({ status: "CANCELLED" })
         .where(eq(salonOrders.id, input.orderId));
+
+      // Cancel all items in KDS (kitchen/bar) that are not yet delivered
+      await db
+        .update(salonOrderItems)
+        .set({ status: "CANCELLED" })
+        .where(
+          and(
+            eq(salonOrderItems.orderId, input.orderId),
+            inArray(salonOrderItems.status, ["PENDING", "IN_PROGRESS", "READY"])
+          )
+        );
 
       await db
         .update(salonTables)
@@ -1347,7 +1359,7 @@ export const salonRouter = router({
       todayStart.setUTCHours(3, 0, 0, 0); // BRT midnight
       if (todayStart > new Date()) todayStart.setDate(todayStart.getDate() - 1);
 
-      // Items completed today (READY or DELIVERED) with timing
+      // Items completed today (READY or DELIVERED) with timing — exclude cancelled
       const completedItems = await db
         .select({
           id: salonOrderItems.id,
@@ -1358,16 +1370,18 @@ export const salonRouter = router({
           orderId: salonOrderItems.orderId,
         })
         .from(salonOrderItems)
+        .innerJoin(salonOrders, eq(salonOrderItems.orderId, salonOrders.id))
         .where(
           and(
             eq(salonOrderItems.companyId, input.companyId),
             inArray(salonOrderItems.productionDestination, [input.destination, "BOTH"]),
             inArray(salonOrderItems.status, ["READY", "DELIVERED"]),
-            gte(salonOrderItems.sentAt, todayStart)
+            gte(salonOrderItems.sentAt, todayStart),
+            sql`${salonOrders.status} != 'CANCELLED'`
           )
         );
 
-      // All items sent today (including pending/in progress)
+      // All items sent today (including pending/in progress) — exclude cancelled orders/items
       const allItemsToday = await db
         .select({
           id: salonOrderItems.id,
@@ -1375,11 +1389,14 @@ export const salonRouter = router({
           sentAt: salonOrderItems.sentAt,
         })
         .from(salonOrderItems)
+        .innerJoin(salonOrders, eq(salonOrderItems.orderId, salonOrders.id))
         .where(
           and(
             eq(salonOrderItems.companyId, input.companyId),
             inArray(salonOrderItems.productionDestination, [input.destination, "BOTH"]),
-            gte(salonOrderItems.sentAt, todayStart)
+            gte(salonOrderItems.sentAt, todayStart),
+            sql`${salonOrders.status} != 'CANCELLED'`,
+            sql`${salonOrderItems.status} != 'CANCELLED'`
           )
         );
 
@@ -1423,6 +1440,151 @@ export const salonRouter = router({
         .sort((a, b) => b.count - a.count);
 
       return { todayOrders, todayItems, avgPrepTimeMin: Math.round(avgPrepTimeMin), lastOrderTime, itemStats };
+    }),
+
+  // ==================== KDS ANALYTICS (DATE RANGE) ====================
+
+  getKDSAnalytics: protectedProcedure
+    .input(z.object({
+      companyId: z.number(),
+      startDate: z.string(),
+      endDate: z.string(),
+      destination: z.enum(["KITCHEN", "BAR", "ALL"]).default("ALL"),
+    }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) return { totalOrders: 0, totalItems: 0, avgPrepTimeMin: 0, peakHour: null, productStats: [], dailyStats: [], destinationBreakdown: { kitchen: 0, bar: 0 } };
+
+      // BRT = UTC-3. Day X in BRT: starts at X T03:00:00Z, ends at (X+1) T02:59:59Z
+      const start = new Date(input.startDate + "T03:00:00.000Z");
+      // End of endDate in BRT = (endDate + 1 day) at 02:59:59 UTC
+      const endBase = new Date(input.endDate + "T03:00:00.000Z");
+      endBase.setUTCDate(endBase.getUTCDate() + 1);
+      const end = new Date(endBase.getTime() - 1); // 02:59:59.999Z of next day
+
+      const destinations = input.destination === "ALL"
+        ? ["KITCHEN", "BAR", "BOTH"] as const
+        : [input.destination, "BOTH"] as const;
+
+      // All completed items in range (READY or DELIVERED), excluding cancelled orders
+      const completedItems = await db
+        .select({
+          id: salonOrderItems.id,
+          productName: salonOrderItems.productName,
+          sentAt: salonOrderItems.sentAt,
+          readyAt: salonOrderItems.readyAt,
+          quantity: salonOrderItems.quantity,
+          orderId: salonOrderItems.orderId,
+          productionDestination: salonOrderItems.productionDestination,
+        })
+        .from(salonOrderItems)
+        .innerJoin(salonOrders, eq(salonOrderItems.orderId, salonOrders.id))
+        .where(
+          and(
+            eq(salonOrderItems.companyId, input.companyId),
+            inArray(salonOrderItems.productionDestination, destinations as any),
+            inArray(salonOrderItems.status, ["READY", "DELIVERED"]),
+            gte(salonOrderItems.sentAt, start),
+            lte(salonOrderItems.sentAt, end),
+            sql`${salonOrders.status} != 'CANCELLED'`
+          )
+        );
+
+      // All non-cancelled items in range
+      const allItems = await db
+        .select({
+          id: salonOrderItems.id,
+          orderId: salonOrderItems.orderId,
+          sentAt: salonOrderItems.sentAt,
+          productionDestination: salonOrderItems.productionDestination,
+        })
+        .from(salonOrderItems)
+        .innerJoin(salonOrders, eq(salonOrderItems.orderId, salonOrders.id))
+        .where(
+          and(
+            eq(salonOrderItems.companyId, input.companyId),
+            inArray(salonOrderItems.productionDestination, destinations as any),
+            gte(salonOrderItems.sentAt, start),
+            lte(salonOrderItems.sentAt, end),
+            sql`${salonOrders.status} != 'CANCELLED'`,
+            sql`${salonOrderItems.status} != 'CANCELLED'`
+          )
+        );
+
+      const totalItems = allItems.length;
+      const uniqueOrders = new Set(allItems.map(i => i.orderId));
+      const totalOrders = uniqueOrders.size;
+
+      // Destination breakdown
+      let kitchenCount = 0, barCount = 0;
+      for (const item of allItems) {
+        if (item.productionDestination === "KITCHEN" || item.productionDestination === "BOTH") kitchenCount++;
+        if (item.productionDestination === "BAR" || item.productionDestination === "BOTH") barCount++;
+      }
+
+      // Prep times and product stats
+      const prepTimes: number[] = [];
+      const productPrepTimes: Record<string, { name: string; times: number[]; count: number }> = {};
+      const hourCounts: Record<number, number> = {};
+      const dayCounts: Record<string, { date: string; orders: Set<number>; items: number; prepTimes: number[] }> = {};
+
+      for (const item of completedItems) {
+        if (item.sentAt && item.readyAt) {
+          const prepMin = (new Date(item.readyAt).getTime() - new Date(item.sentAt).getTime()) / 60000;
+          if (prepMin > 0 && prepMin < 180) {
+            prepTimes.push(prepMin);
+            const name = item.productName;
+            if (!productPrepTimes[name]) productPrepTimes[name] = { name, times: [], count: 0 };
+            productPrepTimes[name].times.push(prepMin);
+            productPrepTimes[name].count += parseFloat(String(item.quantity));
+          }
+        }
+        // Peak hour
+        if (item.sentAt) {
+          const brHour = new Date(new Date(item.sentAt).getTime() - 3 * 3600000).getUTCHours();
+          hourCounts[brHour] = (hourCounts[brHour] || 0) + 1;
+        }
+        // Daily stats
+        if (item.sentAt) {
+          const brDate = new Date(new Date(item.sentAt).getTime() - 3 * 3600000);
+          const dayKey = brDate.toISOString().split("T")[0];
+          if (!dayCounts[dayKey]) dayCounts[dayKey] = { date: dayKey, orders: new Set(), items: 0, prepTimes: [] };
+          dayCounts[dayKey].orders.add(item.orderId);
+          dayCounts[dayKey].items++;
+          if (item.sentAt && item.readyAt) {
+            const pm = (new Date(item.readyAt).getTime() - new Date(item.sentAt).getTime()) / 60000;
+            if (pm > 0 && pm < 180) dayCounts[dayKey].prepTimes.push(pm);
+          }
+        }
+      }
+
+      const avgPrepTimeMin = prepTimes.length > 0 ? Math.round(prepTimes.reduce((a, b) => a + b, 0) / prepTimes.length) : 0;
+
+      // Peak hour
+      let peakHour: string | null = null;
+      let peakCount = 0;
+      for (const [h, c] of Object.entries(hourCounts)) {
+        if (c > peakCount) { peakCount = c; peakHour = `${h.padStart(2, "0")}:00`; }
+      }
+
+      const productStats = Object.values(productPrepTimes)
+        .map(p => ({
+          name: p.name,
+          avgPrepMin: Math.round(p.times.reduce((a, b) => a + b, 0) / p.times.length),
+          count: p.count,
+        }))
+        .sort((a, b) => b.count - a.count);
+
+      const dailyStats = Object.values(dayCounts)
+        .map(d => ({
+          date: d.date,
+          orders: d.orders.size,
+          items: d.items,
+          avgPrepMin: d.prepTimes.length > 0 ? Math.round(d.prepTimes.reduce((a, b) => a + b, 0) / d.prepTimes.length) : 0,
+        }))
+        .sort((a, b) => a.date.localeCompare(b.date));
+
+      return { totalOrders, totalItems, avgPrepTimeMin, peakHour, productStats, dailyStats, destinationBreakdown: { kitchen: kitchenCount, bar: barCount } };
     }),
 
   // ==================== WEB PUSH SUBSCRIPTIONS ====================

@@ -138,6 +138,7 @@ const analysisMenuItems = [
   { icon: Receipt, label: "Análise de Despesas", path: "/analise-despesas", roles: ["admin"] },
   { icon: Package, label: "Análise de Estoque", path: "/analise-estoque", roles: ["admin"] },
   { icon: BarChart2, label: "Fechamento Garçom", path: "/salao/fechamento-garcom", roles: ["admin"] },
+  { icon: BarChart2, label: "Análise KDS", path: "/analise-kds", roles: ["admin"] },
   { icon: Target, label: "Metas", path: "/metas", roles: ["admin", "consultor"] },
   { icon: FileText, label: "Fechamento", path: "/fechamento", roles: ["admin", "consultor"] },
 ];
@@ -479,8 +480,8 @@ function DashboardLayoutContent({
       // Consultor pode ver Análise de Faturamento e Fechamento (sem Metas)
       return item.path === '/relatorios' || item.path === '/fechamento';
     }
-    // Fechamento Garçom só aparece para empresa Hamburgueria
-    if (item.path === '/salao/fechamento-garcom') {
+    // Fechamento Garçom e Análise KDS só aparecem para empresa Hamburgueria
+    if (item.path === '/salao/fechamento-garcom' || item.path === '/analise-kds') {
       const segment = activeCompany?.segment;
       return segment === 'Hamburgueria' || activeCompanyId === 2;
     }

@@ -1,0 +1,46 @@
+{
+  "query": "SELECT soi.status as itemStatus, soi.productionDestination, COUNT(*) as cnt, so.status as orderStatus\nFROM salonOrderItems soi \nJOIN salonOrders so ON soi.orderId = so.id \nWHERE so.companyId = 2 \nAND soi.createdAt >= '2026-03-01' \nAND soi.createdAt <= '2026-03-09'\nGROUP BY soi.status, soi.productionDestination, so.status\nORDER BY so.status, soi.status",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT soi.status as itemStatus, soi.productionDestination, COUNT(*) as cnt, so.status as orderStatus\nFROM salonOrderItems soi \nJOIN salonOrders so ON soi.orderId = so.id \nWHERE so.companyId = 2 \nAND soi.createdAt >= '2026-03-01' \nAND soi.createdAt <= '2026-03-09'\nGROUP BY soi.status, soi.productionDestination, so.status\nORDER BY so.status, soi.status",
+  "rows": [
+    {
+      "itemStatus": "DELIVERED",
+      "productionDestination": "BAR",
+      "cnt": "2",
+      "orderStatus": "CLOSED"
+    },
+    {
+      "itemStatus": "DELIVERED",
+      "productionDestination": "KITCHEN",
+      "cnt": "1",
+      "orderStatus": "CLOSED"
+    },
+    {
+      "itemStatus": "DELIVERED",
+      "productionDestination": "KITCHEN",
+      "cnt": "20",
+      "orderStatus": "CANCELLED"
+    },
+    {
+      "itemStatus": "DELIVERED",
+      "productionDestination": "BAR",
+      "cnt": "19",
+      "orderStatus": "CANCELLED"
+    },
+    {
+      "itemStatus": "CANCELLED",
+      "productionDestination": "KITCHEN",
+      "cnt": "6",
+      "orderStatus": "CANCELLED"
+    },
+    {
+      "itemStatus": "CANCELLED",
+      "productionDestination": "BAR",
+      "cnt": "3",
+      "orderStatus": "CANCELLED"
+    }
+  ],
+  "messages": [],
+  "stdout": "itemStatus\tproductionDestination\tcnt\torderStatus\nDELIVERED\tBAR\t2\tCLOSED\nDELIVERED\tKITCHEN\t1\tCLOSED\nDELIVERED\tKITCHEN\t20\tCANCELLED\nDELIVERED\tBAR\t19\tCANCELLED\nCANCELLED\tKITCHEN\t6\tCANCELLED\nCANCELLED\tBAR\t3\tCANCELLED\n",
+  "stderr": "",
+  "execution_time_ms": 355
+}

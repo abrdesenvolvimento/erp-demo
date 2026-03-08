@@ -1,0 +1,46 @@
+{
+  "query": "SELECT soi.status, soi.productionDestination, COUNT(*) as cnt, so.status as orderStatus\nFROM salonOrderItems soi \nJOIN salonOrders so ON soi.orderId = so.id \nWHERE so.companyId = 2 \nAND soi.createdAt >= '2026-03-01' \nAND soi.createdAt <= '2026-03-09'\nGROUP BY soi.status, soi.productionDestination, so.status",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT soi.status, soi.productionDestination, COUNT(*) as cnt, so.status as orderStatus\nFROM salonOrderItems soi \nJOIN salonOrders so ON soi.orderId = so.id \nWHERE so.companyId = 2 \nAND soi.createdAt >= '2026-03-01' \nAND soi.createdAt <= '2026-03-09'\nGROUP BY soi.status, soi.productionDestination, so.status",
+  "rows": [
+    {
+      "status": "CANCELLED",
+      "productionDestination": "KITCHEN",
+      "cnt": "6",
+      "orderStatus": "CANCELLED"
+    },
+    {
+      "status": "DELIVERED",
+      "productionDestination": "BAR",
+      "cnt": "19",
+      "orderStatus": "CANCELLED"
+    },
+    {
+      "status": "DELIVERED",
+      "productionDestination": "BAR",
+      "cnt": "2",
+      "orderStatus": "CLOSED"
+    },
+    {
+      "status": "DELIVERED",
+      "productionDestination": "KITCHEN",
+      "cnt": "20",
+      "orderStatus": "CANCELLED"
+    },
+    {
+      "status": "DELIVERED",
+      "productionDestination": "KITCHEN",
+      "cnt": "1",
+      "orderStatus": "CLOSED"
+    },
+    {
+      "status": "CANCELLED",
+      "productionDestination": "BAR",
+      "cnt": "3",
+      "orderStatus": "CANCELLED"
+    }
+  ],
+  "messages": [],
+  "stdout": "status\tproductionDestination\tcnt\torderStatus\nCANCELLED\tKITCHEN\t6\tCANCELLED\nDELIVERED\tBAR\t19\tCANCELLED\nDELIVERED\tBAR\t2\tCLOSED\nDELIVERED\tKITCHEN\t20\tCANCELLED\nDELIVERED\tKITCHEN\t1\tCLOSED\nCANCELLED\tBAR\t3\tCANCELLED\n",
+  "stderr": "",
+  "execution_time_ms": 363
+}

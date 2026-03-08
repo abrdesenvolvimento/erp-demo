@@ -1954,3 +1954,9 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Botões "Configurar" e "+Nova Mesa" visíveis apenas para admin
 - [x] Responsividade mobile: ajustar telas de Mesas e Comanda
 - [x] Mover "Fechamento Garçom" do menu Salão para o menu Análises (visível apenas para Hamburgueria)
+
+### Correções e melhorias pós-publicação v6 (08/03/2026)
+- [x] BUG: Cancelar comanda agora cancela itens no KDS automaticamente + dados históricos corrigidos
+- [x] Remover item da comanda — já existia (botão lixeira), confirmado funcionando
+- [x] Métricas KDS agora desconsideram itens/comandas canceladas (era 23x, agora 3x correto)
+- [x] Tela Análise KDS criada no menu Análises com filtro de período, destino (Todos/Cozinha/Bar) e métricas detalhadas
