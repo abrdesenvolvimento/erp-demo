@@ -1840,3 +1840,15 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 ### Bugs Pós-Entrega Rodada 10 (08/03/2026)
 - [x] BUG: Som não toca no iOS durante polling — reescrito: substituiu Web Audio API oscillator por HTMLAudioElement com WAV base64 pré-gerado; elemento é "blessed" (play muted) durante gesto do usuário e reutilizado no polling via currentTime=0 + play()
 - [ ] Adicionado botão "Testar Som Agora" no debug banner para validar se o som funciona após o keep-alive
+
+### Web Push Server-Side (08/03/2026)
+- [x] Instalar web-push library no servidor
+- [x] Gerar VAPID keys e salvar como secrets do projeto
+- [x] Criar tabela pushSubscriptions no schema (endpoint, keys, userId, companyId, createdAt)
+- [x] Criar endpoints tRPC: pushSubscribe, pushUnsubscribe, pushTest no salon router
+- [x] Criar server/webPush.ts com savePushSubscription, removePushSubscription, sendPushToCompany
+- [x] Integrar push no updateItemStatus do KDS — disparar push quando item fica READY (com auto-fetch companyId)
+- [x] Atualizar sw.js para receber push events do servidor com vibrate e navigation
+- [x] Atualizar pushNotification.ts com subscribeToPush() e unsubscribeFromPush() usando VAPID
+- [x] Atualizar SalaoMesas.tsx para registrar subscription ao ativar alertas + push test via servidor
+- [ ] Remover banner de debug após confirmar funcionamento

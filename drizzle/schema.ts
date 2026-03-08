@@ -1343,3 +1343,22 @@ export const salonOrderPayments = mysqlTable("salonOrderPayments", {
 
 export type SalonOrderPayment = typeof salonOrderPayments.$inferSelect;
 export type InsertSalonOrderPayment = typeof salonOrderPayments.$inferInsert;
+
+
+// ==================== WEB PUSH SUBSCRIPTIONS ====================
+
+export const pushSubscriptions = mysqlTable("pushSubscriptions", {
+  id: int("id").primaryKey().autoincrement(),
+  userId: varchar("userId", { length: 64 }).notNull(),
+  companyId: int("companyId").notNull(),
+  endpoint: text("endpoint").notNull(),
+  p256dh: text("p256dh").notNull(),
+  auth: text("auth").notNull(),
+  createdAt: timestamp("createdAt").defaultNow(),
+}, (table) => ({
+  userIdx: index("push_sub_user_idx").on(table.userId),
+  companyIdx: index("push_sub_company_idx").on(table.companyId),
+}));
+
+export type PushSubscription = typeof pushSubscriptions.$inferSelect;
+export type InsertPushSubscription = typeof pushSubscriptions.$inferInsert;

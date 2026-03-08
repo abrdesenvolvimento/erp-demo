@@ -14,7 +14,7 @@ import { toast } from "sonner";
 import { Plus, Users, Clock, DollarSign, Settings, ChefHat, X, UtensilsCrossed, RefreshCw, Bell } from "lucide-react";
 import { useLocation } from "wouter";
 import { playUrgentNotification, unlockAudio, isAudioUnlocked, getSoundEnabledFromStorage, vibrateUrgent, reactivateAudio } from "@/lib/notificationSound";
-import { requestNotificationPermission, isNotificationPermitted, sendPushNotification, getPushGrantedFromStorage } from "@/lib/pushNotification";
+import { requestNotificationPermission, isNotificationPermitted, sendLocalNotification, getPushGrantedFromStorage, subscribeToPush, isAlreadySubscribed, isPushManagerSupported } from "@/lib/pushNotification";
 
 type TableStatus = "FREE" | "OCCUPIED" | "WAITING_PAYMENT" | "RESERVED";
 
@@ -70,6 +70,16 @@ export default function SalaoMesas() {
 
   const alertsActive = soundEnabled || pushGranted;
 
+  // Mutations for push subscription
+  const pushSubscribeMutation = trpc.salon.pushSubscribe.useMutation({
+    onSuccess: () => console.log("[Push] Subscription saved to server"),
+    onError: (e) => console.error("[Push] Failed to save subscription:", e),
+  });
+  const pushTestMutation = trpc.salon.pushTest.useMutation({
+    onSuccess: (data) => console.log("[Push] Test result:", data),
+    onError: (e) => console.error("[Push] Test failed:", e),
+  });
+
   const handleEnableSound = async () => {
     // Unlock audio (required for iOS)
     const audioOk = await unlockAudio();
@@ -84,26 +94,50 @@ export default function SalaoMesas() {
       setPushGranted(true);
     }
 
+    // Subscribe to server-side push (VAPID) if supported
+    let pushSubscribed = false;
+    if (permission === "granted" && isPushManagerSupported() && companyId > 0) {
+      try {
+        const subscription = await subscribeToPush();
+        if (subscription && subscription.endpoint && subscription.keys) {
+          pushSubscribeMutation.mutate({
+            companyId,
+            subscription: {
+              endpoint: subscription.endpoint,
+              keys: subscription.keys as { p256dh: string; auth: string },
+            },
+          });
+          pushSubscribed = true;
+        }
+      } catch (e) {
+        console.error("[Push] VAPID subscription failed:", e);
+      }
+    }
+
     if (audioOk || permission === "granted") {
       const features = [];
       if (audioOk) features.push("som");
-      if (permission === "granted") features.push("notificações");
+      if (permission === "granted") features.push("notifica\u00e7\u00f5es");
+      if (pushSubscribed) features.push("push server");
       // Play test sound + vibration so user confirms it works
       vibrateUrgent();
       if (audioOk) {
         await playUrgentNotification();
       }
-      // Send test push notification
-      if (permission === "granted") {
-        void sendPushNotification(
-          "🔔 Alertas Ativados!",
-          "Você receberá notificações quando itens ficarem prontos.",
+      // Send test push via server (will arrive even with app closed)
+      if (pushSubscribed && companyId > 0) {
+        pushTestMutation.mutate({ companyId });
+      } else if (permission === "granted") {
+        // Fallback: local notification
+        void sendLocalNotification(
+          "\ud83d\udd14 Alertas Ativados!",
+          "Voc\u00ea receber\u00e1 notifica\u00e7\u00f5es quando itens ficarem prontos.",
           { tag: "salon-test", requireInteraction: false }
         );
       }
-      toast.success(`Alertas ativados: ${features.join(" e ")}!`, { icon: "🔔" });
+      toast.success(`Alertas ativados: ${features.join(" e ")}!`, { icon: "\ud83d\udd14" });
     } else {
-      toast.error("Não foi possível ativar alertas neste dispositivo");
+      toast.error("N\u00e3o foi poss\u00edvel ativar alertas neste dispositivo");
     }
   };
 
@@ -147,9 +181,9 @@ export default function SalaoMesas() {
       if (soundEnabledRef.current || isAudioUnlocked()) {
         void playUrgentNotification();
       }
-      // Send push notification via Service Worker (works even with screen locked in iOS PWA)
+      // Send local notification as visual fallback (server-side push handles the real notification)
       if (isNotificationPermitted()) {
-        void sendPushNotification(
+        void sendLocalNotification(
           "\ud83d\udd14 Item pronto para servir!",
           `${newReady} item(ns) aguardando entrega no sal\u00e3o.`,
           { tag: "salon-ready", requireInteraction: true }
@@ -300,9 +334,11 @@ export default function SalaoMesas() {
         <div>Polls: {debugInfo.polls} | Prev: {debugInfo.prev} | Current: {debugInfo.current} | Sound: {soundEnabled ? "ON" : "OFF"} | Push: {pushGranted ? "ON" : "OFF"}</div>
         <div>Last: {debugInfo.lastAlert || "nenhum alerta ainda"}</div>
         <div>AudioUnlocked: {isAudioUnlocked() ? "YES" : "NO"} | SoundRef: {soundEnabledRef.current ? "YES" : "NO"} | NotifPermitted: {isNotificationPermitted() ? "YES" : "NO"}</div>
+        <div>VAPID Subscribed: {isAlreadySubscribed() ? "YES" : "NO"} | PushMgr: {isPushManagerSupported() ? "YES" : "NO"} | CompanyId: {companyId}</div>
         <div className="flex gap-2 mt-1">
           <button className="bg-blue-500 text-white px-2 py-1 rounded text-xs" onClick={() => { vibrateUrgent(); void playUrgentNotification(); setDebugInfo(d => ({...d, lastAlert: `TEST SOUND @ ${new Date().toLocaleTimeString()}`})); }}>Testar Som</button>
           <button className="bg-purple-500 text-white px-2 py-1 rounded text-xs" onClick={async () => { await unlockAudio(); setSoundEnabled(true); soundEnabledRef.current = true; vibrateUrgent(); await playUrgentNotification(); setDebugInfo(d => ({...d, lastAlert: `RE-UNLOCK+PLAY @ ${new Date().toLocaleTimeString()}`})); }}>Re-unlock + Play</button>
+          <button className="bg-green-600 text-white px-2 py-1 rounded text-xs" onClick={() => { if (companyId > 0) { pushTestMutation.mutate({ companyId }); setDebugInfo(d => ({...d, lastAlert: `SERVER PUSH TEST @ ${new Date().toLocaleTimeString()}`})); } }}>Push Server Test</button>
         </div>
       </div>
 

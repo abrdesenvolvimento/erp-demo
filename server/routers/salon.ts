@@ -15,6 +15,8 @@ import {
 } from "../../drizzle/schema";
 import { eq, and, or, inArray, gte, lte, lt, sql, isNull } from "drizzle-orm";
 import { getNowInBrazil } from "../../shared/dateUtils";
+import { sendPushToCompany, savePushSubscription, removePushSubscription } from "../webPush";
+import { pushSubscriptions } from "../../drizzle/schema";
 
 // ==================== CONFIGURAÇÕES DO SALÃO ====================
 
@@ -427,6 +429,55 @@ export const salonRouter = router({
         .update(salonOrderItems)
         .set(updates)
         .where(eq(salonOrderItems.id, input.itemId));
+
+      // Send push notification when item becomes READY
+      if (input.status === "READY") {
+        // Get companyId from input or from the order itself
+        let pushCompanyId = input.companyId;
+        if (!pushCompanyId) {
+          const orderItem = await db
+            .select({ orderId: salonOrderItems.orderId })
+            .from(salonOrderItems)
+            .where(eq(salonOrderItems.id, input.itemId))
+            .limit(1);
+          if (orderItem[0]) {
+            const orderRow = await db
+              .select({ companyId: salonOrders.companyId })
+              .from(salonOrders)
+              .where(eq(salonOrders.id, orderItem[0].orderId))
+              .limit(1);
+            pushCompanyId = orderRow[0]?.companyId;
+          }
+        }
+        if (pushCompanyId) {
+        // Get item details for the notification
+        const item = await db
+          .select({
+            productName: salonOrderItems.productName,
+            orderId: salonOrderItems.orderId,
+          })
+          .from(salonOrderItems)
+          .where(eq(salonOrderItems.id, input.itemId))
+          .limit(1);
+
+        const order = item[0] ? await db
+          .select({ tableNumber: salonOrders.tableNumber })
+          .from(salonOrders)
+          .where(eq(salonOrders.id, item[0].orderId))
+          .limit(1) : [];
+
+        const productName = item[0]?.productName || "Item";
+        const tableNum = order[0]?.tableNumber || "?";
+
+        // Fire and forget — don't block the mutation response
+        sendPushToCompany(pushCompanyId, {
+          title: `🔔 Pronto para servir!`,
+          body: `Mesa ${tableNum}: ${productName} está pronto!`,
+          icon: "/logo-abrwf.png",
+          data: { url: "/salao/mesas" },
+        }).catch((err) => console.error("[WebPush] Error sending push:", err));
+        }
+      }
 
       return { success: true };
     }),
@@ -1016,6 +1067,48 @@ export const salonRouter = router({
         todayOrders,
         avgTicket: avgTicket.toFixed(2),
       };
+    }),
+
+  // ==================== WEB PUSH SUBSCRIPTIONS ====================
+
+  pushSubscribe: protectedProcedure
+    .input(z.object({
+      companyId: z.number(),
+      subscription: z.object({
+        endpoint: z.string(),
+        keys: z.object({
+          p256dh: z.string(),
+          auth: z.string(),
+        }),
+      }),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      return await savePushSubscription(
+        ctx.user.id,
+        input.companyId,
+        input.subscription
+      );
+    }),
+
+  pushUnsubscribe: protectedProcedure
+    .input(z.object({
+      endpoint: z.string(),
+    }))
+    .mutation(async ({ input }) => {
+      return await removePushSubscription(input.endpoint);
+    }),
+
+  pushTest: protectedProcedure
+    .input(z.object({
+      companyId: z.number(),
+    }))
+    .mutation(async ({ input }) => {
+      return await sendPushToCompany(input.companyId, {
+        title: "\ud83d\udd14 Teste de Notifica\u00e7\u00e3o",
+        body: "As notifica\u00e7\u00f5es push est\u00e3o funcionando!",
+        icon: "/logo-abrwf.png",
+        data: { url: "/salao/mesas" },
+      });
     }),
 });
 
