@@ -1335,6 +1335,96 @@ export const salonRouter = router({
       return { waiters, totals };
     }),
 
+  // ==================== KDS ANALYTICS ====================
+
+  getKDSStats: protectedProcedure
+    .input(z.object({ companyId: z.number(), destination: z.enum(["KITCHEN", "BAR"]) }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) return { todayOrders: 0, todayItems: 0, avgPrepTimeMin: 0, lastOrderTime: null, itemStats: [] };
+
+      const todayStart = new Date();
+      todayStart.setUTCHours(3, 0, 0, 0); // BRT midnight
+      if (todayStart > new Date()) todayStart.setDate(todayStart.getDate() - 1);
+
+      // Items completed today (READY or DELIVERED) with timing
+      const completedItems = await db
+        .select({
+          id: salonOrderItems.id,
+          productName: salonOrderItems.productName,
+          sentAt: salonOrderItems.sentAt,
+          readyAt: salonOrderItems.readyAt,
+          quantity: salonOrderItems.quantity,
+          orderId: salonOrderItems.orderId,
+        })
+        .from(salonOrderItems)
+        .where(
+          and(
+            eq(salonOrderItems.companyId, input.companyId),
+            eq(salonOrderItems.destination, input.destination),
+            inArray(salonOrderItems.status, ["READY", "DELIVERED"]),
+            gte(salonOrderItems.sentAt, todayStart)
+          )
+        );
+
+      // All items sent today (including pending/in progress)
+      const allItemsToday = await db
+        .select({
+          id: salonOrderItems.id,
+          orderId: salonOrderItems.orderId,
+          sentAt: salonOrderItems.sentAt,
+        })
+        .from(salonOrderItems)
+        .where(
+          and(
+            eq(salonOrderItems.companyId, input.companyId),
+            eq(salonOrderItems.destination, input.destination),
+            gte(salonOrderItems.sentAt, todayStart)
+          )
+        );
+
+      const todayItems = allItemsToday.length;
+      const uniqueOrders = new Set(allItemsToday.map(i => i.orderId));
+      const todayOrders = uniqueOrders.size;
+
+      // Last order time
+      let lastOrderTime: string | null = null;
+      if (allItemsToday.length > 0) {
+        const sorted = allItemsToday.filter(i => i.sentAt).sort((a, b) => new Date(b.sentAt!).getTime() - new Date(a.sentAt!).getTime());
+        if (sorted[0]?.sentAt) lastOrderTime = new Date(sorted[0].sentAt).toISOString();
+      }
+
+      // Avg prep time
+      const prepTimes: number[] = [];
+      const productPrepTimes: Record<string, { name: string; times: number[]; count: number }> = {};
+
+      for (const item of completedItems) {
+        if (item.sentAt && item.readyAt) {
+          const prepMin = (new Date(item.readyAt).getTime() - new Date(item.sentAt).getTime()) / 60000;
+          if (prepMin > 0 && prepMin < 180) { // ignore outliers > 3h
+            prepTimes.push(prepMin);
+            if (!productPrepTimes[item.productName]) {
+              productPrepTimes[item.productName] = { name: item.productName, times: [], count: 0 };
+            }
+            productPrepTimes[item.productName].times.push(prepMin);
+            productPrepTimes[item.productName].count += parseFloat(String(item.quantity));
+          }
+        }
+      }
+
+      const avgPrepTimeMin = prepTimes.length > 0 ? prepTimes.reduce((a, b) => a + b, 0) / prepTimes.length : 0;
+
+      const itemStats = Object.values(productPrepTimes)
+        .map(p => ({
+          name: p.name,
+          avgPrepMin: Math.round(p.times.reduce((a, b) => a + b, 0) / p.times.length),
+          count: p.count,
+        }))
+        .sort((a, b) => b.count - a.count);
+
+      return { todayOrders, todayItems, avgPrepTimeMin: Math.round(avgPrepTimeMin), lastOrderTime, itemStats };
+    }),
+
   // ==================== WEB PUSH SUBSCRIPTIONS ====================
 
   pushSubscribe: protectedProcedure

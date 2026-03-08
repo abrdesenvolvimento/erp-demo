@@ -51,6 +51,10 @@ export default function SalaoComanda() {
   const [itemNotes, setItemNotes] = useState("");
   const [tipPercent, setTipPercent] = useState(10);
   const [paymentMethod, setPaymentMethod] = useState("DEBIT");
+  const [splitPayments, setSplitPayments] = useState<Array<{ method: string; amount: number }>>([]);
+  const [splitMode, setSplitMode] = useState(false);
+  const [splitMethodToAdd, setSplitMethodToAdd] = useState("DEBIT");
+  const [splitAmountToAdd, setSplitAmountToAdd] = useState("");
   const [cancelConfirm, setCancelConfirm] = useState(false);
   const [previewModal, setPreviewModal] = useState(false);
   const [serviceFeeModal, setServiceFeeModal] = useState(false);
@@ -181,12 +185,48 @@ export default function SalaoComanda() {
   };
 
   const handleCheckout = () => {
+    const finalTotal = tipPercent > 0 ? totalWithTip : subtotal;
+    let payments: Array<{ method: string; amount: number }>;
+    if (splitMode && splitPayments.length > 0) {
+      payments = splitPayments.map(p => ({ method: p.method, amount: p.amount }));
+    } else {
+      payments = [{ method: paymentMethod, amount: finalTotal }];
+    }
     closeOrderMutation.mutate({
       orderId,
       companyId,
       branchId: activeBranchId ?? 1,
-      payments: [{ method: paymentMethod as any, amount: totalWithTip }],
+      payments: payments as any,
     });
+  };
+
+  const splitTotal = splitPayments.reduce((sum, p) => sum + p.amount, 0);
+  const finalTotal = tipPercent > 0 ? totalWithTip : subtotal;
+  const splitRemaining = Math.max(0, finalTotal - splitTotal);
+  const splitComplete = splitMode && Math.abs(splitRemaining) < 0.01;
+
+  const handleAddSplitPayment = () => {
+    const amt = parseFloat(splitAmountToAdd);
+    if (isNaN(amt) || amt <= 0) {
+      toast.error("Informe um valor válido");
+      return;
+    }
+    if (amt > splitRemaining + 0.01) {
+      toast.error("Valor excede o saldo restante");
+      return;
+    }
+    setSplitPayments(prev => [...prev, { method: splitMethodToAdd, amount: amt }]);
+    setSplitAmountToAdd("");
+  };
+
+  const handleRemoveSplitPayment = (index: number) => {
+    setSplitPayments(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleFillRemaining = () => {
+    if (splitRemaining > 0) {
+      setSplitAmountToAdd(splitRemaining.toFixed(2));
+    }
   };
 
   const handleRequestCheckout = () => {
@@ -208,6 +248,10 @@ export default function SalaoComanda() {
     const finalTip = accepted ? tipPercent : 0;
     if (!accepted) setTipPercent(0);
     requestCheckoutMutation.mutate({ orderId, companyId, tipPercent: finalTip });
+    // Reset split payment state
+    setSplitMode(false);
+    setSplitPayments([]);
+    setSplitAmountToAdd("");
     setCheckoutModal(true);
   };
 
@@ -776,11 +820,11 @@ export default function SalaoComanda() {
 
       {/* Checkout Modal (Step 2 - Payment) */}
       <Dialog open={checkoutModal} onOpenChange={setCheckoutModal}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>Fechar Conta — Mesa {order.tableNumber}</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-2">
+          <div className="space-y-4 py-2 max-h-[70vh] overflow-y-auto">
             {/* Summary */}
             <div className="bg-muted rounded-lg p-4 space-y-2">
               <div className="flex justify-between text-sm">
@@ -789,19 +833,21 @@ export default function SalaoComanda() {
               </div>
               {tipPercent > 0 && (
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">{salonCfg?.gratuityLabel || "Taxa de serviço"} ({tipPercent}%)</span>
+                  <span className="text-muted-foreground">{salonCfg?.gratuityLabel || "Taxa de servi\u00e7o"} ({tipPercent}%)</span>
                   <span>{formatCurrency(tipAmount)}</span>
                 </div>
               )}
               <Separator />
               <div className="flex justify-between font-bold text-lg">
-                <span>Total com serviço</span>
-                <span>{formatCurrency(totalWithTip)}</span>
+                <span>{tipPercent > 0 ? "Total com servi\u00e7o" : "Total"}</span>
+                <span>{formatCurrency(finalTotal)}</span>
               </div>
-              <div className="flex justify-between text-sm text-muted-foreground">
-                <span>Total sem serviço</span>
-                <span>{formatCurrency(subtotal)}</span>
-              </div>
+              {tipPercent > 0 && (
+                <div className="flex justify-between text-sm text-muted-foreground">
+                  <span>Total sem servi\u00e7o</span>
+                  <span>{formatCurrency(subtotal)}</span>
+                </div>
+              )}
               {order.guestCount > 1 && (
                 <div className="flex justify-between text-sm text-muted-foreground">
                   <span>Por pessoa</span>
@@ -810,35 +856,152 @@ export default function SalaoComanda() {
               )}
             </div>
 
-            {/* Payment method */}
-            <div>
-              <Label>Forma de pagamento</Label>
-              <div className="grid grid-cols-2 gap-2 mt-2">
-                {PAYMENT_METHODS.map(m => (
-                  <button
-                    key={m.value}
-                    onClick={() => setPaymentMethod(m.value)}
-                    className={`flex items-center gap-2 p-3 rounded-lg border-2 transition-colors ${
-                      paymentMethod === m.value
-                        ? "border-primary bg-primary/5"
-                        : "border-border hover:border-primary/40"
-                    }`}
-                  >
-                    <m.icon className="h-4 w-4" />
-                    <span className="text-sm font-medium">{m.label}</span>
-                    {paymentMethod === m.value && (
-                      <CheckCircle2 className="h-4 w-4 text-primary ml-auto" />
-                    )}
-                  </button>
-                ))}
-              </div>
+            {/* Toggle: Single vs Split */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => { setSplitMode(false); setSplitPayments([]); }}
+                className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium border-2 transition-colors ${
+                  !splitMode ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground"
+                }`}
+              >
+                Pagamento \u00danico
+              </button>
+              <button
+                onClick={() => setSplitMode(true)}
+                className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium border-2 transition-colors ${
+                  splitMode ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground"
+                }`}
+              >
+                Dividir Pagamento
+              </button>
             </div>
+
+            {!splitMode ? (
+              /* Single payment mode */
+              <div>
+                <Label>Forma de pagamento</Label>
+                <div className="grid grid-cols-2 gap-2 mt-2">
+                  {PAYMENT_METHODS.map(m => (
+                    <button
+                      key={m.value}
+                      onClick={() => setPaymentMethod(m.value)}
+                      className={`flex items-center gap-2 p-3 rounded-lg border-2 transition-colors ${
+                        paymentMethod === m.value
+                          ? "border-primary bg-primary/5"
+                          : "border-border hover:border-primary/40"
+                      }`}
+                    >
+                      <m.icon className="h-4 w-4" />
+                      <span className="text-sm font-medium">{m.label}</span>
+                      {paymentMethod === m.value && (
+                        <CheckCircle2 className="h-4 w-4 text-primary ml-auto" />
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              /* Split payment mode */
+              <div className="space-y-3">
+                {/* Already added payments */}
+                {splitPayments.length > 0 && (
+                  <div className="space-y-2">
+                    <Label className="text-xs text-muted-foreground uppercase tracking-wide">Pagamentos adicionados</Label>
+                    {splitPayments.map((p, i) => {
+                      const methodInfo = PAYMENT_METHODS.find(m => m.value === p.method);
+                      return (
+                        <div key={i} className="flex items-center justify-between bg-green-50 border border-green-200 rounded-lg p-3">
+                          <div className="flex items-center gap-2">
+                            {methodInfo && <methodInfo.icon className="h-4 w-4 text-green-700" />}
+                            <span className="text-sm font-medium text-green-800">{methodInfo?.label ?? p.method}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-bold text-green-800">{formatCurrency(p.amount)}</span>
+                            <button
+                              onClick={() => handleRemoveSplitPayment(i)}
+                              className="text-red-500 hover:text-red-700 p-1"
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Remaining balance */}
+                <div className={`rounded-lg p-3 text-center font-bold text-lg ${
+                  splitComplete
+                    ? "bg-green-100 text-green-800 border border-green-300"
+                    : "bg-amber-50 text-amber-800 border border-amber-200"
+                }`}>
+                  {splitComplete
+                    ? <span className="flex items-center justify-center gap-2"><CheckCircle2 className="h-5 w-5" /> Valor completo!</span>
+                    : <span>Saldo restante: {formatCurrency(splitRemaining)}</span>
+                  }
+                </div>
+
+                {/* Add new payment */}
+                {!splitComplete && (
+                  <div className="border rounded-lg p-3 space-y-3">
+                    <Label className="text-xs text-muted-foreground uppercase tracking-wide">Adicionar pagamento</Label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {PAYMENT_METHODS.map(m => (
+                        <button
+                          key={m.value}
+                          onClick={() => setSplitMethodToAdd(m.value)}
+                          className={`flex items-center gap-2 p-2 rounded-lg border-2 transition-colors text-sm ${
+                            splitMethodToAdd === m.value
+                              ? "border-primary bg-primary/5"
+                              : "border-border hover:border-primary/40"
+                          }`}
+                        >
+                          <m.icon className="h-3.5 w-3.5" />
+                          <span className="font-medium">{m.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                    <div className="flex gap-2">
+                      <div className="flex-1 relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">R$</span>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          min="0.01"
+                          max={splitRemaining}
+                          value={splitAmountToAdd}
+                          onChange={(e) => setSplitAmountToAdd(e.target.value)}
+                          placeholder="0,00"
+                          className="pl-9"
+                        />
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleFillRemaining}
+                        className="text-xs whitespace-nowrap"
+                      >
+                        Restante
+                      </Button>
+                      <Button
+                        onClick={handleAddSplitPayment}
+                        size="sm"
+                        className="bg-primary"
+                      >
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setCheckoutModal(false)}>Voltar</Button>
             <Button
               onClick={handleCheckout}
-              disabled={closeOrderMutation.isPending}
+              disabled={closeOrderMutation.isPending || (splitMode && !splitComplete)}
               className="bg-green-600 hover:bg-green-700"
             >
               {closeOrderMutation.isPending ? "Encerrando..." : "Confirmar Pagamento"}

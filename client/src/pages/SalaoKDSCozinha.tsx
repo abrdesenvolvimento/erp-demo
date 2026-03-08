@@ -7,7 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import {
   ChefHat, Clock, CheckCircle2, RefreshCw, Play,
-  Flame, AlertTriangle, Timer
+  Flame, AlertTriangle, Timer, Printer, BarChart3,
+  TrendingUp, Hash, ClipboardList
 } from "lucide-react";
 
 function formatElapsed(date: Date | string | null): string {
@@ -30,7 +31,7 @@ function getUrgencyLevel(date: Date | string | null): "normal" | "warning" | "cr
 function getUrgencyPercent(date: Date | string | null): number {
   if (!date) return 0;
   const diffMin = (Date.now() - new Date(date).getTime()) / 60000;
-  return Math.min(diffMin / 25, 1); // 25 min = 100%
+  return Math.min(diffMin / 25, 1);
 }
 
 const STATUS_CONFIG = {
@@ -39,31 +40,75 @@ const STATUS_CONFIG = {
     border: "border-amber-500/40",
     badge: "bg-amber-500 text-white",
     badgeLabel: "Aguardando",
-    glow: "shadow-amber-500/20",
   },
   IN_PROGRESS: {
     bg: "bg-orange-500/10",
     border: "border-orange-500/50",
     badge: "bg-orange-500 text-white",
     badgeLabel: "Produzindo",
-    glow: "shadow-orange-500/20",
   },
   READY: {
     bg: "bg-emerald-500/10",
     border: "border-emerald-500/50",
     badge: "bg-emerald-500 text-white",
     badgeLabel: "Pronto!",
-    glow: "shadow-emerald-500/20",
   },
 };
+
+function handlePrintTicket(group: any, destination: string) {
+  const win = window.open("", "_blank", "width=400,height=500");
+  if (!win) {
+    toast.error("Popup bloqueado. Permita popups para imprimir.");
+    return;
+  }
+  const now = new Date().toLocaleString("pt-BR");
+  const itemsHtml = group.items
+    .map((item: any) => `
+      <div class="item">
+        <span class="qty">${parseFloat(String(item.quantity))}x</span>
+        <span class="name">${item.productName}</span>
+      </div>
+      ${item.notes ? `<div class="notes">OBS: ${item.notes}</div>` : ""}
+    `)
+    .join("");
+
+  win.document.write(`
+    <!DOCTYPE html>
+    <html><head><title>Ticket ${destination}</title>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body { font-family: 'Courier New', monospace; padding: 8mm; font-size: 14px; max-width: 80mm; margin: 0 auto; }
+      .header { text-align: center; border-bottom: 2px dashed #000; padding-bottom: 8px; margin-bottom: 8px; }
+      .header h2 { font-size: 18px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; }
+      .header .mesa { font-size: 28px; font-weight: 900; margin: 4px 0; }
+      .header .info { font-size: 11px; color: #555; }
+      .item { display: flex; gap: 8px; padding: 6px 0; border-bottom: 1px dotted #ccc; align-items: baseline; }
+      .item .qty { font-weight: 900; font-size: 18px; min-width: 35px; }
+      .item .name { font-size: 15px; font-weight: 700; flex: 1; }
+      .notes { font-size: 12px; font-weight: 700; color: #c00; padding: 2px 0 6px 43px; text-transform: uppercase; }
+      .footer { text-align: center; margin-top: 12px; font-size: 10px; border-top: 2px dashed #000; padding-top: 8px; color: #888; }
+      @media print { body { padding: 0; } }
+    </style></head><body>
+    <div class="header">
+      <h2>${destination === "KITCHEN" ? "COZINHA" : "BAR"}</h2>
+      <div class="mesa">MESA ${group.tableNumber}</div>
+      <div class="info">${now} | Garçom: ${group.waiterName || "—"}</div>
+    </div>
+    <div class="items">${itemsHtml}</div>
+    <div class="footer">Comanda #${group.orderId}</div>
+    <script>window.onload = function() { window.print(); window.close(); }<\/script>
+    </body></html>
+  `);
+  win.document.close();
+}
 
 export default function SalaoKDSCozinha() {
   const { activeCompanyId } = useCompany();
   const utils = trpc.useUtils();
   const companyId = activeCompanyId ?? 0;
   const [now, setNow] = useState(Date.now());
+  const [activeTab, setActiveTab] = useState<"pedidos" | "analise">("pedidos");
 
-  // Update timers every 15 seconds
   useEffect(() => {
     const interval = setInterval(() => setNow(Date.now()), 15000);
     return () => clearInterval(interval);
@@ -74,9 +119,15 @@ export default function SalaoKDSCozinha() {
     { enabled: companyId > 0, refetchInterval: 5000 }
   );
 
+  const { data: stats } = trpc.salon.getKDSStats.useQuery(
+    { companyId, destination: "KITCHEN" },
+    { enabled: companyId > 0, refetchInterval: 30000 }
+  );
+
   const updateStatusMutation = trpc.salon.updateItemStatus.useMutation({
     onSuccess: () => {
       utils.salon.getKDSItems.invalidate();
+      utils.salon.getKDSStats.invalidate();
     },
     onError: (e) => toast.error(e.message),
   });
@@ -98,7 +149,6 @@ export default function SalaoKDSCozinha() {
 
   const groups = Object.values(orderGroups) as any[];
 
-  // Sort: critical first, then warning, then normal
   groups.sort((a: any, b: any) => {
     const aTime = a.items[0]?.sentAt ?? a.items[0]?.createdAt;
     const bTime = b.items[0]?.sentAt ?? b.items[0]?.createdAt;
@@ -161,28 +211,173 @@ export default function SalaoKDSCozinha() {
                 </div>
               </div>
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => refetch()}
-              className="text-gray-400 hover:text-white hover:bg-gray-800/50"
-            >
-              <RefreshCw className="h-4 w-4" />
-            </Button>
+            <div className="flex items-center gap-2">
+              {/* Tab toggle */}
+              <div className="flex bg-gray-800/60 rounded-lg p-0.5">
+                <button
+                  onClick={() => setActiveTab("pedidos")}
+                  className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                    activeTab === "pedidos" ? "bg-orange-500 text-white" : "text-gray-400 hover:text-white"
+                  }`}
+                >
+                  <ClipboardList className="h-3.5 w-3.5 inline mr-1" />
+                  Pedidos
+                </button>
+                <button
+                  onClick={() => setActiveTab("analise")}
+                  className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                    activeTab === "analise" ? "bg-orange-500 text-white" : "text-gray-400 hover:text-white"
+                  }`}
+                >
+                  <BarChart3 className="h-3.5 w-3.5 inline mr-1" />
+                  Análise
+                </button>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => refetch()}
+                className="text-gray-400 hover:text-white hover:bg-gray-800/50"
+              >
+                <RefreshCw className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </div>
 
         {/* Content */}
         <div className="p-4 max-w-[1800px] mx-auto">
-          {groups.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-24 text-center">
+          {activeTab === "analise" ? (
+            /* KDS Analysis Tab */
+            <div className="space-y-6">
+              {/* Stats cards */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="bg-gray-900/80 border border-gray-800/50 rounded-2xl p-5">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Hash className="h-4 w-4 text-orange-400" />
+                    <span className="text-xs text-gray-500 uppercase tracking-wide">Pedidos Hoje</span>
+                  </div>
+                  <p className="text-3xl font-black text-white">{stats?.todayOrders ?? 0}</p>
+                  <p className="text-xs text-gray-600 mt-1">{stats?.todayItems ?? 0} itens</p>
+                </div>
+                <div className="bg-gray-900/80 border border-gray-800/50 rounded-2xl p-5">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Timer className="h-4 w-4 text-amber-400" />
+                    <span className="text-xs text-gray-500 uppercase tracking-wide">Tempo Médio</span>
+                  </div>
+                  <p className="text-3xl font-black text-white">{stats?.avgPrepTimeMin ?? 0}<span className="text-lg text-gray-500">min</span></p>
+                  <p className="text-xs text-gray-600 mt-1">de preparo</p>
+                </div>
+                <div className="bg-gray-900/80 border border-gray-800/50 rounded-2xl p-5">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Clock className="h-4 w-4 text-blue-400" />
+                    <span className="text-xs text-gray-500 uppercase tracking-wide">Último Pedido</span>
+                  </div>
+                  <p className="text-2xl font-black text-white">
+                    {stats?.lastOrderTime
+                      ? new Date(stats.lastOrderTime).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })
+                      : "—"}
+                  </p>
+                  <p className="text-xs text-gray-600 mt-1">horário</p>
+                </div>
+                <div className="bg-gray-900/80 border border-gray-800/50 rounded-2xl p-5">
+                  <div className="flex items-center gap-2 mb-2">
+                    <TrendingUp className="h-4 w-4 text-emerald-400" />
+                    <span className="text-xs text-gray-500 uppercase tracking-wide">Em Fila</span>
+                  </div>
+                  <p className="text-3xl font-black text-white">{pendingCount + inProgressCount}</p>
+                  <p className="text-xs text-gray-600 mt-1">itens ativos</p>
+                </div>
+              </div>
+
+              {/* Item stats table */}
+              <div className="bg-gray-900/80 border border-gray-800/50 rounded-2xl overflow-hidden">
+                <div className="px-5 py-4 border-b border-gray-800/50">
+                  <h3 className="text-white font-bold flex items-center gap-2">
+                    <BarChart3 className="h-4 w-4 text-orange-400" />
+                    Tempo Médio por Item
+                  </h3>
+                  <p className="text-xs text-gray-500 mt-1">Baseado nos itens preparados hoje</p>
+                </div>
+                {stats?.itemStats && stats.itemStats.length > 0 ? (
+                  <div className="divide-y divide-gray-800/30">
+                    {stats.itemStats.map((item: any, idx: number) => (
+                      <div key={item.name} className="flex items-center justify-between px-5 py-3 hover:bg-gray-800/20 transition-colors">
+                        <div className="flex items-center gap-3">
+                          <span className="text-xs text-gray-600 w-6 text-right">#{idx + 1}</span>
+                          <span className="text-white font-medium">{item.name}</span>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <span className="text-xs text-gray-500">{item.count}x preparado{item.count > 1 ? "s" : ""}</span>
+                          <div className="flex items-center gap-1.5">
+                            <div className="w-16 h-2 bg-gray-800 rounded-full overflow-hidden">
+                              <div
+                                className="h-full rounded-full"
+                                style={{
+                                  width: `${Math.min((item.avgPrepMin / (stats.avgPrepTimeMin * 2 || 20)) * 100, 100)}%`,
+                                  background: item.avgPrepMin > (stats.avgPrepTimeMin * 1.5)
+                                    ? "linear-gradient(90deg, #ef4444, #dc2626)"
+                                    : item.avgPrepMin > stats.avgPrepTimeMin
+                                    ? "linear-gradient(90deg, #f59e0b, #d97706)"
+                                    : "linear-gradient(90deg, #22c55e, #16a34a)",
+                                }}
+                              />
+                            </div>
+                            <span className={`text-sm font-bold tabular-nums min-w-[50px] text-right ${
+                              item.avgPrepMin > (stats.avgPrepTimeMin * 1.5)
+                                ? "text-red-400"
+                                : item.avgPrepMin > stats.avgPrepTimeMin
+                                ? "text-amber-400"
+                                : "text-emerald-400"
+                            }`}>
+                              {item.avgPrepMin}min
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="py-12 text-center text-gray-600">
+                    <BarChart3 className="h-10 w-10 mx-auto mb-3 opacity-30" />
+                    <p>Nenhum item preparado hoje ainda</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : groups.length === 0 ? (
+            /* Empty state with metrics */
+            <div className="flex flex-col items-center justify-center py-16 text-center">
               <div className="p-6 bg-emerald-500/10 rounded-full mb-6">
                 <CheckCircle2 className="h-20 w-20 text-emerald-500" />
               </div>
               <p className="text-white text-2xl font-bold">Tudo em dia!</p>
               <p className="text-gray-500 mt-2 text-lg">Nenhum item aguardando produção</p>
+
+              {/* Today's metrics */}
+              {stats && (stats.todayOrders > 0 || stats.todayItems > 0) && (
+                <div className="mt-8 grid grid-cols-3 gap-4 max-w-md">
+                  <div className="bg-gray-900/60 border border-gray-800/40 rounded-xl p-4 text-center">
+                    <p className="text-2xl font-black text-white">{stats.todayOrders}</p>
+                    <p className="text-[10px] text-gray-500 uppercase tracking-wide mt-1">Pedidos hoje</p>
+                  </div>
+                  <div className="bg-gray-900/60 border border-gray-800/40 rounded-xl p-4 text-center">
+                    <p className="text-2xl font-black text-white">{stats.avgPrepTimeMin}<span className="text-sm text-gray-500">min</span></p>
+                    <p className="text-[10px] text-gray-500 uppercase tracking-wide mt-1">Tempo médio</p>
+                  </div>
+                  <div className="bg-gray-900/60 border border-gray-800/40 rounded-xl p-4 text-center">
+                    <p className="text-2xl font-black text-white">
+                      {stats.lastOrderTime
+                        ? new Date(stats.lastOrderTime).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })
+                        : "—"}
+                    </p>
+                    <p className="text-[10px] text-gray-500 uppercase tracking-wide mt-1">Último pedido</p>
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
+            /* Orders grid */
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
               {groups.map((group: any, groupIdx: number) => {
                 const oldestItem = group.items[0];
@@ -242,27 +437,36 @@ export default function SalaoKDSCozinha() {
                             <AlertTriangle className="h-4 w-4 text-amber-500" />
                           )}
                         </div>
-                        <div className="flex items-center gap-1.5">
-                          <Timer
-                            className={`h-4 w-4 ${
-                              urgency === "critical"
-                                ? "text-red-400"
-                                : urgency === "warning"
-                                ? "text-amber-400"
-                                : "text-gray-500"
-                            }`}
-                          />
-                          <span
-                            className={`text-sm font-bold tabular-nums ${
-                              urgency === "critical"
-                                ? "text-red-400"
-                                : urgency === "warning"
-                                ? "text-amber-400"
-                                : "text-gray-400"
-                            }`}
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handlePrintTicket(group, "KITCHEN")}
+                            className="p-1.5 text-gray-500 hover:text-white hover:bg-gray-700/50 rounded-lg transition-colors"
+                            title="Imprimir ticket"
                           >
-                            {formatElapsed(itemTime)}
-                          </span>
+                            <Printer className="h-4 w-4" />
+                          </button>
+                          <div className="flex items-center gap-1">
+                            <Timer
+                              className={`h-4 w-4 ${
+                                urgency === "critical"
+                                  ? "text-red-400"
+                                  : urgency === "warning"
+                                  ? "text-amber-400"
+                                  : "text-gray-500"
+                              }`}
+                            />
+                            <span
+                              className={`text-sm font-bold tabular-nums ${
+                                urgency === "critical"
+                                  ? "text-red-400"
+                                  : urgency === "warning"
+                                  ? "text-amber-400"
+                                  : "text-gray-400"
+                              }`}
+                            >
+                              {formatElapsed(itemTime)}
+                            </span>
+                          </div>
                         </div>
                       </div>
                       {group.waiterName && (
