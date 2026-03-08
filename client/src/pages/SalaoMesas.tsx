@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { Plus, Users, Clock, DollarSign, Settings, ChefHat, X, UtensilsCrossed, RefreshCw, Bell } from "lucide-react";
 import { useLocation } from "wouter";
-import { playUrgentNotification, unlockAudio, isAudioUnlocked, getSoundEnabledFromStorage } from "@/lib/notificationSound";
+import { playUrgentNotification, unlockAudio, isAudioUnlocked, getSoundEnabledFromStorage, vibrateUrgent } from "@/lib/notificationSound";
 import { requestNotificationPermission, isNotificationPermitted, sendPushNotification, getPushGrantedFromStorage } from "@/lib/pushNotification";
 
 type TableStatus = "FREE" | "OCCUPIED" | "WAITING_PAYMENT" | "RESERVED";
@@ -121,6 +121,8 @@ export default function SalaoMesas() {
         `${newReady} item(ns) pronto(s) para servir!`,
         { icon: "🔔", duration: 6000 }
       );
+      // Vibrate always (works on Android without permission, silent on iOS)
+      vibrateUrgent();
       // Play sound (works after user unlocks audio)
       if (soundEnabledRef.current || isAudioUnlocked()) {
         void playUrgentNotification();

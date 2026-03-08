@@ -154,10 +154,27 @@ export async function playNotificationSound(): Promise<void> {
 }
 
 /**
- * Play a repeated notification (3 chimes with pauses).
+ * Vibrate the device with an urgent pattern.
+ * Works on Android without any permission.
+ * iOS (PWA mode) may support it on some versions.
+ * Pattern: buzz-pause-buzz-pause-buzz (200ms each, 100ms pauses)
+ */
+export function vibrateUrgent(): void {
+  try {
+    if ("vibrate" in navigator) {
+      navigator.vibrate([200, 100, 200, 100, 200]);
+    }
+  } catch {
+    // ignore — vibration not supported
+  }
+}
+
+/**
+ * Play a repeated notification (3 chimes with pauses) and vibrate.
  * Good for urgent alerts on mobile.
  */
 export async function playUrgentNotification(): Promise<void> {
+  vibrateUrgent();
   await playNotificationSound();
   setTimeout(() => playNotificationSound(), 800);
   setTimeout(() => playNotificationSound(), 1600);

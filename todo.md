@@ -1828,3 +1828,8 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Criar Service Worker (sw.js) com push event handler para notificações nativas iOS PWA
 - [x] Registrar Service Worker no index.html (script inline no body)
 - [x] Atualizar pushNotification.ts para usar swReg.showNotification() com fallback para new Notification()
+
+### Vibração Android (08/03/2026)
+- [x] Adicionar navigator.vibrate() no notificationSound.ts como alerta tátil junto com o som
+- [x] Vibrar na tela de mesas (SalaoMesas) quando novos itens ficam prontos
+- [x] Vibrar na tela da comanda (SalaoComanda) quando item fica pronto
