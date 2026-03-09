@@ -1731,8 +1731,30 @@ export const salonRouter = router({
       // Se controle de acesso desativado, libera
       if (!config || !config.waiterAccessControl) return { allowed: true, reason: null };
 
-      // Verificar horário de funcionamento
       const now = getNowInBrazil();
+      const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
+      // PRIMEIRO: verificar se garçom tem check-in ativo (liberação do admin)
+      // Check-in ativo SOBREPÕE a restrição de horário
+      const [activeCheckIn] = await db
+        .select()
+        .from(waiterCheckIns)
+        .where(
+          and(
+            eq(waiterCheckIns.companyId, input.companyId),
+            eq(waiterCheckIns.userId, ctx.user.id),
+            eq(waiterCheckIns.date, todayStr),
+            isNull(waiterCheckIns.checkedOutAt)
+          )
+        )
+        .limit(1);
+
+      // Se tem check-in ativo, acesso liberado independente do horário
+      if (activeCheckIn) {
+        return { allowed: true, reason: null };
+      }
+
+      // Sem check-in ativo: verificar horário de funcionamento
       const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
       const opening = config.openingTime || '11:00';
       const closing = config.closingTime || '23:00';
@@ -1746,32 +1768,14 @@ export const salonRouter = router({
       }
 
       if (!withinHours) {
-        return { allowed: false, reason: `Acesso permitido apenas entre ${opening} e ${closing}`, outsideHours: true };
-      }
-
-      // Verificar check-in
-      if (config.requireCheckIn) {
-        const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-        const [checkIn] = await db
-          .select()
-          .from(waiterCheckIns)
-          .where(
-            and(
-              eq(waiterCheckIns.companyId, input.companyId),
-              eq(waiterCheckIns.userId, ctx.user.id),
-              eq(waiterCheckIns.date, todayStr),
-              isNull(waiterCheckIns.checkedOutAt)
-            )
-          )
-          .limit(1);
-
-        if (!checkIn) {
-          // Notificar admin que garçom está aguardando liberação (throttled: 1x a cada 10min)
+        // Fora do horário e sem check-in: bloquear
+        // Se exige check-in, informar que precisa de liberação
+        if (config.requireCheckIn) {
           const waiterName = ctx.user.name || 'Garçom';
           if (shouldNotifyAdmin(ctx.user.id, input.companyId)) {
             void notifyOwner({
               title: `🔔 ${waiterName} aguardando check-in`,
-              content: `O garçom ${waiterName} está tentando acessar o sistema e precisa de liberação.`,
+              content: `O garçom ${waiterName} está tentando acessar o sistema fora do horário e precisa de liberação.`,
             }).catch(() => {});
             void sendPushToCompany(
               input.companyId,
@@ -1779,10 +1783,30 @@ export const salonRouter = router({
               `Acesse Salão > Configurar para liberar o acesso.`
             ).catch(() => {});
           }
-          return { allowed: false, reason: 'Aguardando liberação do administrador. Solicite o check-in ao gerente.', needsCheckIn: true };
+          return { allowed: false, reason: `Fora do horário (${opening} - ${closing}). Solicite liberação ao gerente.`, outsideHours: true, needsCheckIn: true };
         }
+        return { allowed: false, reason: `Acesso permitido apenas entre ${opening} e ${closing}`, outsideHours: true };
       }
 
+      // Dentro do horário: verificar se exige check-in
+      if (config.requireCheckIn) {
+        // Já verificamos acima que não tem check-in ativo
+        const waiterName = ctx.user.name || 'Garçom';
+        if (shouldNotifyAdmin(ctx.user.id, input.companyId)) {
+          void notifyOwner({
+            title: `🔔 ${waiterName} aguardando check-in`,
+            content: `O garçom ${waiterName} está tentando acessar o sistema e precisa de liberação.`,
+          }).catch(() => {});
+          void sendPushToCompany(
+            input.companyId,
+            `🔔 ${waiterName} aguardando check-in`,
+            `Acesse Salão > Configurar para liberar o acesso.`
+          ).catch(() => {});
+        }
+        return { allowed: false, reason: 'Aguardando liberação do administrador. Solicite o check-in ao gerente.', needsCheckIn: true };
+      }
+
+      // Dentro do horário e sem exigência de check-in
       return { allowed: true, reason: null };
     }),
 

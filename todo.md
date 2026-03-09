@@ -1982,3 +1982,6 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 
 ### Funcionalidades v9.2 (09/03/2026)
 - [x] Painel de presença dos garçons no Dashboard (check-in/check-out, status ativo/inativo, resumo diário)
+
+### Correções v9.3 (09/03/2026)
+- [x] BUG: Garçom com check-in ativo ainda bloqueado fora do horário — check-in do admin deve sobrepor restrição de horário
