@@ -160,3 +160,59 @@ describe("Compact History Table - Type Badges", () => {
     expect(badges["DEBIT"]).toBe("Débito");
   });
 });
+
+// ==================== v9.1 Tests ====================
+
+describe("Waiter Notification Throttle", () => {
+  it("should throttle notifications to once per 10 minutes", () => {
+    const throttleMap = new Map<string, number>();
+    const THROTTLE_MS = 10 * 60 * 1000;
+
+    function shouldNotify(waiterId: string, companyId: number): boolean {
+      const key = `${companyId}:${waiterId}`;
+      const lastNotified = throttleMap.get(key) || 0;
+      const now = Date.now();
+      if (now - lastNotified < THROTTLE_MS) return false;
+      throttleMap.set(key, now);
+      return true;
+    }
+
+    // First call should notify
+    expect(shouldNotify("waiter1", 1)).toBe(true);
+    // Immediate second call should be throttled
+    expect(shouldNotify("waiter1", 1)).toBe(false);
+    // Different waiter should still notify
+    expect(shouldNotify("waiter2", 1)).toBe(true);
+    // Same waiter different company should notify
+    expect(shouldNotify("waiter1", 2)).toBe(true);
+  });
+});
+
+describe("Compact History Table - Reverse Order", () => {
+  it("should reverse history to show newest first", () => {
+    const history = [
+      { date: "2026-01-01", type: "SALE", amount: "100.00", balance: "100.00" },
+      { date: "2026-02-01", type: "PAYMENT", amount: "50.00", balance: "50.00" },
+      { date: "2026-03-01", type: "SALE", amount: "200.00", balance: "250.00" },
+    ];
+    const reversed = [...history].reverse();
+    expect(reversed[0].date).toBe("2026-03-01");
+    expect(reversed[1].date).toBe("2026-02-01");
+    expect(reversed[2].date).toBe("2026-01-01");
+  });
+
+  it("should show newest 15 items when truncated", () => {
+    const history = Array.from({ length: 30 }, (_, i) => ({
+      date: `2026-01-${String(i + 1).padStart(2, '0')}`,
+      type: "SALE",
+      amount: "50.00",
+      balance: `${(i + 1) * 50}`,
+    }));
+    const reversed = [...history].reverse();
+    const visible = reversed.slice(0, 15);
+    // First visible should be the newest (Jan 30)
+    expect(visible[0].date).toBe("2026-01-30");
+    // Last visible should be Jan 16
+    expect(visible[14].date).toBe("2026-01-16");
+  });
+});

@@ -166,11 +166,25 @@ export default function SalaoMesas() {
     { enabled: companyId > 0 }
   );
 
-  // Waiter access check
+  // Waiter access check - polls every 60s so if closing time arrives, garçom gets blocked
   const { data: waiterAccess, isLoading: loadingAccess } = trpc.salon.checkWaiterAccess.useQuery(
     { companyId },
-    { enabled: companyId > 0 && effectiveRole === 'garcom', refetchInterval: 30000 }
+    { enabled: companyId > 0 && effectiveRole === 'garcom', refetchInterval: 60000 }
   );
+
+  // Track previous access state to show toast when access is revoked mid-session
+  const prevAccessRef = useRef<boolean | null>(null);
+  useEffect(() => {
+    if (!waiterAccess) return;
+    if (prevAccessRef.current === true && !waiterAccess.allowed) {
+      // Access was just revoked (closing time arrived or admin did checkout)
+      toast.error('Seu acesso foi encerrado.', {
+        description: waiterAccess.reason || 'Horário de funcionamento encerrado.',
+        duration: 10000,
+      });
+    }
+    prevAccessRef.current = waiterAccess.allowed;
+  }, [waiterAccess]);
 
   // Admin: list waiters for check-in management
   const { data: waitersList = [], refetch: refetchWaiters } = trpc.salon.listWaiters.useQuery(
@@ -379,7 +393,11 @@ export default function SalaoMesas() {
               </div>
               <h2 className="text-xl font-bold">Acesso Restrito</h2>
               <p className="text-muted-foreground">{waiterAccess.reason}</p>
-              <p className="text-sm text-muted-foreground">Seu acesso será liberado automaticamente quando o administrador fizer seu check-in.</p>
+              {(waiterAccess as any).outsideHours ? (
+                <p className="text-sm text-muted-foreground">O sistema está fora do horário de funcionamento. Retorne no horário permitido.</p>
+              ) : (
+                <p className="text-sm text-muted-foreground">O administrador já foi notificado. Seu acesso será liberado automaticamente após o check-in.</p>
+              )}
             </CardContent>
           </Card>
         </div>

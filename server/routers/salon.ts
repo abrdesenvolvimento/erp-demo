@@ -18,8 +18,22 @@ import { eq, and, or, inArray, gte, lte, lt, sql, isNull } from "drizzle-orm";
 import { getNowInBrazil } from "../../shared/dateUtils";
 import { sendPushToCompany, savePushSubscription, removePushSubscription } from "../webPush";
 import { pushSubscriptions } from "../../drizzle/schema";
+import { notifyOwner } from "../_core/notification";
 
-// ==================== CONFIGURAÇÕES DO SALÃO ====================
+// Throttle: avoid spamming admin with check-in notifications (max once per 10min per waiter)
+const waiterNotifyThrottle = new Map<string, number>();
+const NOTIFY_THROTTLE_MS = 10 * 60 * 1000; // 10 minutes
+
+function shouldNotifyAdmin(waiterId: string, companyId: number): boolean {
+  const key = `${companyId}:${waiterId}`;
+  const lastNotified = waiterNotifyThrottle.get(key) || 0;
+  const now = Date.now();
+  if (now - lastNotified < NOTIFY_THROTTLE_MS) return false;
+  waiterNotifyThrottle.set(key, now);
+  return true;
+}
+
+// ==================== CONFIGURAÇÕES DO SALÃO ==
 
 export const salonRouter = router({
 
@@ -1732,7 +1746,7 @@ export const salonRouter = router({
       }
 
       if (!withinHours) {
-        return { allowed: false, reason: `Acesso permitido apenas entre ${opening} e ${closing}` };
+        return { allowed: false, reason: `Acesso permitido apenas entre ${opening} e ${closing}`, outsideHours: true };
       }
 
       // Verificar check-in
@@ -1752,7 +1766,20 @@ export const salonRouter = router({
           .limit(1);
 
         if (!checkIn) {
-          return { allowed: false, reason: 'Aguardando libera\u00e7\u00e3o do administrador. Solicite o check-in ao gerente.' };
+          // Notificar admin que garçom está aguardando liberação (throttled: 1x a cada 10min)
+          const waiterName = ctx.user.name || 'Garçom';
+          if (shouldNotifyAdmin(ctx.user.id, input.companyId)) {
+            void notifyOwner({
+              title: `🔔 ${waiterName} aguardando check-in`,
+              content: `O garçom ${waiterName} está tentando acessar o sistema e precisa de liberação.`,
+            }).catch(() => {});
+            void sendPushToCompany(
+              input.companyId,
+              `🔔 ${waiterName} aguardando check-in`,
+              `Acesse Salão > Configurar para liberar o acesso.`
+            ).catch(() => {});
+          }
+          return { allowed: false, reason: 'Aguardando liberação do administrador. Solicite o check-in ao gerente.', needsCheckIn: true };
         }
       }
 

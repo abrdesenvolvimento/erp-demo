@@ -1974,3 +1974,8 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 ### Funcionalidades v9 (09/03/2026)
 - [x] Controle de acesso por horário para Garçom — bloquear acesso fora do horário ou exigir check-in pelo admin
 - [x] Contas a Receber — compactar visualização na tela principal (expandir detalhes sob demanda), manter PDF completo com saldo pendente
+
+### Ajustes v9.1 (09/03/2026)
+- [x] Garçom: auto-suspender acesso quando horário de fechamento chegar (verificação periódica no frontend)
+- [x] Garçom: notificar admin quando garçom tentar acessar e estiver bloqueado (push notification + throttle 10min)
+- [x] Contas a Receber: inverter ordem do histórico para mostrar lançamentos mais recentes primeiro

@@ -728,7 +728,9 @@ function CompactHistoryTable({ history }: { history: any[] }) {
     });
   };
 
-  const visibleHistory = showAll ? history : history.slice(0, COMPACT_LIMIT);
+  // Reverse: most recent first. When truncated, show the last N items (newest).
+  const reversed = useMemo(() => [...history].reverse(), [history]);
+  const visibleHistory = showAll ? reversed : reversed.slice(0, COMPACT_LIMIT);
   const hasMore = history.length > COMPACT_LIMIT;
 
   return (
