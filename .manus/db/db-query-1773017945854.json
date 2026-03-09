@@ -1,0 +1,80 @@
+{
+  "query": "SELECT c.name as company, cat.name as category, COUNT(p.id) as products, SUM(p.currentStock) as totalStock, SUM(p.currentStock * p.avgCost) as stockValue FROM products p INNER JOIN categories cat ON p.categoryId = cat.id INNER JOIN companies c ON p.companyId = c.id WHERE p.active = 1 AND (p.isComposite = 0 OR p.isComposite IS NULL) GROUP BY c.name, cat.name ORDER BY c.name, cat.name",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT c.name as company, cat.name as category, COUNT(p.id) as products, SUM(p.currentStock) as totalStock, SUM(p.currentStock * p.avgCost) as stockValue FROM products p INNER JOIN categories cat ON p.categoryId = cat.id INNER JOIN companies c ON p.companyId = c.id WHERE p.active = 1 AND (p.isComposite = 0 OR p.isComposite IS NULL) GROUP BY c.name, cat.name ORDER BY c.name, cat.name",
+  "rows": [
+    {
+      "company": "A BRASA REUNE BAR E HAMBURGUERIA LTDA",
+      "category": "Bebidas",
+      "products": "2",
+      "totalStock": "-2",
+      "stockValue": "-1.05"
+    },
+    {
+      "company": "A BRASA REUNE BAR E HAMBURGUERIA LTDA",
+      "category": "Lanches",
+      "products": "3",
+      "totalStock": "-2",
+      "stockValue": "-33.00"
+    },
+    {
+      "company": "ADEGA BEIRA RIO ROCHDALE LTDA",
+      "category": "Bebidas",
+      "products": "623",
+      "totalStock": "7049",
+      "stockValue": "78467.94"
+    },
+    {
+      "company": "ADEGA BEIRA RIO ROCHDALE LTDA",
+      "category": "Carvão",
+      "products": "2",
+      "totalStock": "17",
+      "stockValue": "260.00"
+    },
+    {
+      "company": "ADEGA BEIRA RIO ROCHDALE LTDA",
+      "category": "Cigarro",
+      "products": "21",
+      "totalStock": "225",
+      "stockValue": "1894.66"
+    },
+    {
+      "company": "ADEGA BEIRA RIO ROCHDALE LTDA",
+      "category": "Doces / Salgadinhos e Bolachas",
+      "products": "169",
+      "totalStock": "2466",
+      "stockValue": "5400.47"
+    },
+    {
+      "company": "ADEGA BEIRA RIO ROCHDALE LTDA",
+      "category": "Gelo",
+      "products": "1",
+      "totalStock": "73",
+      "stockValue": "438.00"
+    },
+    {
+      "company": "ADEGA BEIRA RIO ROCHDALE LTDA",
+      "category": "Gelo de Sabor",
+      "products": "16",
+      "totalStock": "882",
+      "stockValue": "1129.41"
+    },
+    {
+      "company": "ADEGA BEIRA RIO ROCHDALE LTDA",
+      "category": "Mercearia",
+      "products": "32",
+      "totalStock": "672",
+      "stockValue": "1251.81"
+    },
+    {
+      "company": "ADEGA BEIRA RIO ROCHDALE LTDA",
+      "category": "Tabacaria",
+      "products": "78",
+      "totalStock": "1688",
+      "stockValue": "4341.38"
+    }
+  ],
+  "messages": [],
+  "stdout": "company\tcategory\tproducts\ttotalStock\tstockValue\nA BRASA REUNE BAR E HAMBURGUERIA LTDA\tBebidas\t2\t-2\t-1.05\nA BRASA REUNE BAR E HAMBURGUERIA LTDA\tLanches\t3\t-2\t-33.00\nADEGA BEIRA RIO ROCHDALE LTDA\tBebidas\t623\t7049\t78467.94\nADEGA BEIRA RIO ROCHDALE LTDA\tCarvão\t2\t17\t260.00\nADEGA BEIRA RIO ROCHDALE LTDA\tCigarro\t21\t225\t1894.66\nADEGA BEIRA RIO ROCHDALE LTDA\tDoces / Salgadinhos e Bolachas\t169\t2466\t5400.47\nADEGA BEIRA RIO ROCHDALE LTDA\tGelo\t1\t73\t438.00\nADEGA BEIRA RIO ROCHDALE LTDA\tGelo de Sabor\t16\t882\t1129.41\nADEGA BEIRA RIO ROCHDALE LTDA\tMercearia\t32\t672\t1251.81\nADEGA BEIRA RIO ROCHDALE LTDA\tTabacaria\t78\t1688\t4341.38\n",
+  "stderr": "",
+  "execution_time_ms": 419
+}

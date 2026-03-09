@@ -238,7 +238,8 @@ export async function getSalesByPaymentType(startDate: string, endDate: string, 
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  const result = await db.execute(sql.raw(`
+  // 1. Non-SALAO sales: group by paymentMethod directly
+  const nonSalaoResult = await db.execute(sql.raw(`
     SELECT 
       s.paymentMethod as paymentType,
       COUNT(*) as count,
@@ -246,6 +247,7 @@ export async function getSalesByPaymentType(startDate: string, endDate: string, 
     FROM sales s
     WHERE s.status = 'ACTIVE'
       AND s.paymentMethod IS NOT NULL
+      AND s.saleType != 'SALAO'
       AND DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) >= '${startDate}'
       AND DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) <= '${endDate}'
       ${companyId ? `AND s.companyId = ${companyId}` : ''}
@@ -253,20 +255,61 @@ export async function getSalesByPaymentType(startDate: string, endDate: string, 
     ORDER BY revenue DESC
   `));
 
-  const rows = result[0] as unknown as any[];
-  const totalRevenue = rows.reduce((sum, row) => sum + parseFloat(row.revenue || '0'), 0);
+  // 2. SALAO sales: use salonOrderPayments for individual payment breakdown
+  const salaoResult = await db.execute(sql.raw(`
+    SELECT 
+      sop.method as paymentMethod,
+      COUNT(DISTINCT so.saleId) as count,
+      SUM(sop.amount) as revenue
+    FROM salonOrderPayments sop
+    INNER JOIN salonOrders so ON sop.orderId = so.id
+    INNER JOIN sales s ON so.saleId = s.id
+    WHERE s.status = 'ACTIVE'
+      AND so.status = 'CLOSED'
+      AND DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) >= '${startDate}'
+      AND DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) <= '${endDate}'
+      ${companyId ? `AND s.companyId = ${companyId}` : ''}
+    GROUP BY sop.method
+  `));
 
-  return rows.map(row => {
-    const revenue = parseFloat(row.revenue || '0');
-    const percentage = totalRevenue > 0 ? (revenue / totalRevenue) * 100 : 0;
+  // Map salon payment method codes to friendly names
+  const salonMethodMap: Record<string, string> = {
+    CASH: 'Dinheiro',
+    CREDIT: 'Cart\u00e3o de Cr\u00e9dito',
+    DEBIT: 'Cart\u00e3o de D\u00e9bito',
+    PIX: 'PIX',
+    VOUCHER: 'Voucher',
+  };
 
-    return {
-      paymentType: row.paymentType || 'Não Informado',
-      count: parseInt(row.count || '0'),
-      revenue,
-      percentage: Math.round(percentage * 10) / 10,
-    };
-  });
+  // Aggregate all into a single map
+  const aggregated: Record<string, { count: number; revenue: number }> = {};
+
+  const nonSalaoRows = nonSalaoResult[0] as unknown as any[];
+  for (const row of nonSalaoRows) {
+    const key = row.paymentType || 'N\u00e3o Informado';
+    if (!aggregated[key]) aggregated[key] = { count: 0, revenue: 0 };
+    aggregated[key].count += parseInt(row.count || '0');
+    aggregated[key].revenue += parseFloat(row.revenue || '0');
+  }
+
+  const salaoRows = salaoResult[0] as unknown as any[];
+  for (const row of salaoRows) {
+    const friendlyName = salonMethodMap[row.paymentMethod] || row.paymentMethod;
+    if (!aggregated[friendlyName]) aggregated[friendlyName] = { count: 0, revenue: 0 };
+    aggregated[friendlyName].count += parseInt(row.count || '0');
+    aggregated[friendlyName].revenue += parseFloat(row.revenue || '0');
+  }
+
+  const totalRevenue = Object.values(aggregated).reduce((sum, v) => sum + v.revenue, 0);
+
+  return Object.entries(aggregated)
+    .map(([paymentType, data]) => ({
+      paymentType,
+      count: data.count,
+      revenue: data.revenue,
+      percentage: totalRevenue > 0 ? Math.round((data.revenue / totalRevenue) * 1000) / 10 : 0,
+    }))
+    .sort((a, b) => b.revenue - a.revenue);
 }
 
 /**

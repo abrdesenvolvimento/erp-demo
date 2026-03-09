@@ -69,14 +69,15 @@ export async function getStockAnalysisByCategory(
       c.id as categoryId,
       c.name as categoryName,
       SUM(p.currentStock * p.avgCost) as stockValue,
-      COUNT(CASE WHEN p.currentStock > 0 THEN 1 END) as productCount
+      COUNT(p.id) as productCount,
+      COUNT(CASE WHEN p.currentStock > 0 THEN 1 END) as productsInStock
     FROM products p
     INNER JOIN categories c ON p.categoryId = c.id
     WHERE p.active = 1
       AND (p.isComposite = 0 OR p.isComposite IS NULL)
       ${companyId ? `AND p.companyId = ${companyId}` : ''}
     GROUP BY c.id, c.name
-    HAVING stockValue > 0
+    HAVING productCount > 0
   `));
 
   // 2. CMV por categoria no período
@@ -243,7 +244,6 @@ export async function getStockAnalysisByProduct(
     INNER JOIN categories c ON p.categoryId = c.id
     WHERE p.active = 1
       AND (p.isComposite = 0 OR p.isComposite IS NULL)
-      AND p.currentStock > 0
       ${categoryFilter}
       ${subcategoryFilter}
       ${companyId ? `AND p.companyId = ${companyId}` : ''}

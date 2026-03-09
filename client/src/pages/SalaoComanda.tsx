@@ -139,6 +139,14 @@ export default function SalaoComanda() {
     onError: (e) => toast.error(e.message),
   });
 
+  const decreaseItemMutation = trpc.salon.decreaseItemQuantity.useMutation({
+    onSuccess: (data) => {
+      toast.success(data.newQuantity === 0 ? "Item removido" : "Quantidade reduzida");
+      utils.salon.getOrder.invalidate({ orderId, companyId });
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
   const requestCheckoutMutation = trpc.salon.requestCheckout.useMutation({
     onSuccess: () => {
       utils.salon.getOrder.invalidate({ orderId, companyId });
@@ -436,21 +444,27 @@ export default function SalaoComanda() {
                         Entregue
                       </button>
                     )}
-                    {!isClosed && item.status !== "DELIVERED" && item.status !== "READY" && (
-                      <button
-                        onClick={() => removeItemMutation.mutate({ itemId: item.id, orderId, companyId })}
-                        className="text-red-400 hover:text-red-600"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
-                    )}
-                    {!isClosed && item.status === "READY" && (
-                      <button
-                        onClick={() => removeItemMutation.mutate({ itemId: item.id, orderId, companyId })}
-                        className="text-red-400 hover:text-red-600 text-[10px]"
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </button>
+                    {!isClosed && (item.status !== "DELIVERED" || item.status === "READY") && (
+                      <div className="flex items-center gap-1">
+                        {parseFloat(String(item.quantity)) > 1 && (
+                          <button
+                            onClick={() => decreaseItemMutation.mutate({ itemId: item.id, orderId, companyId })}
+                            disabled={decreaseItemMutation.isPending}
+                            className="text-amber-500 hover:text-amber-700 p-0.5"
+                            title="Diminuir 1 unidade"
+                          >
+                            <Minus className="h-3.5 w-3.5" />
+                          </button>
+                        )}
+                        <button
+                          onClick={() => removeItemMutation.mutate({ itemId: item.id, orderId, companyId })}
+                          disabled={removeItemMutation.isPending}
+                          className="text-red-400 hover:text-red-600 p-0.5"
+                          title="Remover item completo"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
                     )}
                   </div>
                 </div>

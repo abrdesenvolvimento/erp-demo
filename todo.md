@@ -1963,3 +1963,10 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 
 ### Melhorias pós-publicação v7 (09/03/2026)
 - [x] Adicionar gráfico de horário de pico na Análise KDS (barras por hora mostrando volume de pedidos)
+
+### Correções e melhorias v8 (09/03/2026)
+- [x] BUG: Análise de Canal não mostra vendas do Salão (zerado) — vendas SALAO precisam alimentar o canal
+- [x] BUG: Análise de Estoque vindo sem dados para Hamburgueria (relaxado filtro currentStock > 0)
+- [x] BUG: Fechamento - Faturamento por Tipo de Pagamento mostrando tudo em uma linha (ex: "DINHEIRO + DEBITO + CREDITO + PIX") em vez de separar por tipo
+- [x] Investigar timezone KDS Analytics — corrigido para usar getCurrentBrazilDateInfo() no frontend
+- [x] Melhoria: Diminuir quantidade de item na comanda (em vez de só remover completamente)

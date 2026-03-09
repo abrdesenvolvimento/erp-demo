@@ -6,7 +6,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { GitCompare, ShoppingCart, Bike, CreditCard, TrendingUp, CalendarIcon, X, ChevronDown, ChevronUp, Package } from "lucide-react";
+import { GitCompare, ShoppingCart, Bike, CreditCard, TrendingUp, CalendarIcon, X, ChevronDown, ChevronUp, Package, UtensilsCrossed } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { getCurrentBrazilDateInfo } from "@shared/dateUtils";
 import { format, startOfMonth, endOfMonth, subMonths } from "date-fns";
@@ -89,6 +89,16 @@ export default function AnaliseCanal() {
     { enabled: !!dateRange?.from && !!dateRange?.to }
   );
 
+  const { data: salaoData, isLoading: isLoadingSalao } = trpc.salesAnalysis.byValue.useQuery(
+    {
+      startDate: dateRange?.from ?? new Date(),
+      endDate: dateRange?.to ?? new Date(),
+      productIds: selectedProductIds.length > 0 ? selectedProductIds : undefined,
+      channels: ['SALAO'],
+    },
+    { enabled: !!dateRange?.from && !!dateRange?.to }
+  );
+
   // Buscar contagem de vendas por canal (contagem correta, sem duplicação por produto)
   const { data: salesCountByChannel } = trpc.salesAnalysis.countByChannel.useQuery(
     {
@@ -99,7 +109,7 @@ export default function AnaliseCanal() {
     { enabled: !!dateRange?.from && !!dateRange?.to }
   );
 
-  const isLoading = isLoadingBalcao || isLoadingDelivery || isLoadingAPrazo;
+  const isLoading = isLoadingBalcao || isLoadingDelivery || isLoadingAPrazo || isLoadingSalao;
 
   // Taxa de delivery (7%)
   const DELIVERY_FEE_PERCENT = 0.07;
@@ -156,10 +166,11 @@ export default function AnaliseCanal() {
 
     return [
       calculateChannelMetrics(balcaoData, 'Balcão', 'BALCAO'),
+      calculateChannelMetrics(salaoData, 'Salão', 'SALAO'),
       calculateChannelMetrics(deliveryData, 'Delivery', 'DELIVERY'),
       calculateChannelMetrics(aPrazoData, 'A Prazo', 'A_PRAZO'),
     ];
-  }, [balcaoData, deliveryData, aPrazoData, salesCountByChannel]);
+  }, [balcaoData, salaoData, deliveryData, aPrazoData, salesCountByChannel]);
 
   // Calcular totais
   const totals = useMemo(() => {
@@ -185,6 +196,7 @@ export default function AnaliseCanal() {
   const getChannelIcon = (channel: string) => {
     switch (channel) {
       case 'Balcão': return ShoppingCart;
+      case 'Salão': return UtensilsCrossed;
       case 'Delivery': return Bike;
       case 'A Prazo': return CreditCard;
       default: return ShoppingCart;
@@ -195,6 +207,7 @@ export default function AnaliseCanal() {
   const getChannelColor = (channel: string) => {
     switch (channel) {
       case 'Balcão': return 'border-blue-500 bg-blue-50';
+      case 'Salão': return 'border-emerald-500 bg-emerald-50';
       case 'Delivery': return 'border-purple-500 bg-purple-50';
       case 'A Prazo': return 'border-orange-500 bg-orange-50';
       default: return 'border-gray-500 bg-gray-50';
@@ -204,6 +217,7 @@ export default function AnaliseCanal() {
   const getChannelTextColor = (channel: string) => {
     switch (channel) {
       case 'Balcão': return 'text-blue-600';
+      case 'Salão': return 'text-emerald-600';
       case 'Delivery': return 'text-purple-600';
       case 'A Prazo': return 'text-orange-600';
       default: return 'text-gray-600';
@@ -273,7 +287,7 @@ export default function AnaliseCanal() {
               Análise por Canal
             </h1>
             <p className="text-muted-foreground">
-              Compare o desempenho entre Balcão, Delivery e A Prazo
+              Compare o desempenho entre Balcão, Salão, Delivery e A Prazo
             </p>
           </div>
 
@@ -396,7 +410,7 @@ export default function AnaliseCanal() {
         </Card>
 
         {/* Cards de resumo por canal */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {channelMetrics.map((channel) => {
             const Icon = getChannelIcon(channel.channel);
             const revenuePercentage = totals.revenue > 0 

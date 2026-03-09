@@ -4,6 +4,7 @@ import { useCompany } from "@/contexts/CompanyContext";
 import { trpc } from "@/lib/trpc";
 import { useState, useMemo } from "react";
 import { BarChart3, Clock, Flame, TrendingUp, ChefHat, Wine } from "lucide-react";
+import { getCurrentBrazilDateInfo } from "@shared/dateUtils";
 
 function formatDate(d: Date): string {
   const yyyy = d.getFullYear();
@@ -16,13 +17,19 @@ export default function AnaliseKDS() {
   const { activeCompany } = useCompany();
   const companyId = activeCompany?.id ?? 0;
 
-  const today = useMemo(() => new Date(), []);
+  const brazilToday = useMemo(() => {
+    const info = getCurrentBrazilDateInfo();
+    return {
+      dateStr: `${info.year}-${String(info.month).padStart(2, '0')}-${String(info.day).padStart(2, '0')}`,
+      date: info.date,
+    };
+  }, []);
   const [startDate, setStartDate] = useState(() => {
-    const d = new Date(today);
+    const d = new Date(brazilToday.date);
     d.setDate(d.getDate() - 7);
     return formatDate(d);
   });
-  const [endDate, setEndDate] = useState(() => formatDate(today));
+  const [endDate, setEndDate] = useState(() => brazilToday.dateStr);
   const [destination, setDestination] = useState<"ALL" | "KITCHEN" | "BAR">("ALL");
 
   const { data, isLoading } = trpc.salon.getKDSAnalytics.useQuery(

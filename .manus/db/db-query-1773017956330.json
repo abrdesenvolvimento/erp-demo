@@ -1,0 +1,22 @@
+{
+  "query": "SELECT c.id as companyId, c.name as company, COUNT(CASE WHEN p.currentStock > 0 THEN 1 END) as productsWithStock, ROUND(SUM(CASE WHEN p.currentStock > 0 THEN p.currentStock * p.avgCost ELSE 0 END),2) as stockValue FROM products p INNER JOIN companies c ON p.companyId = c.id WHERE p.active = 1 AND (p.isComposite = 0 OR p.isComposite IS NULL) GROUP BY c.id, c.name",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT c.id as companyId, c.name as company, COUNT(CASE WHEN p.currentStock > 0 THEN 1 END) as productsWithStock, ROUND(SUM(CASE WHEN p.currentStock > 0 THEN p.currentStock * p.avgCost ELSE 0 END),2) as stockValue FROM products p INNER JOIN companies c ON p.companyId = c.id WHERE p.active = 1 AND (p.isComposite = 0 OR p.isComposite IS NULL) GROUP BY c.id, c.name",
+  "rows": [
+    {
+      "companyId": "1",
+      "company": "ADEGA BEIRA RIO ROCHDALE LTDA",
+      "productsWithStock": "796",
+      "stockValue": "100376.65"
+    },
+    {
+      "companyId": "2",
+      "company": "A BRASA REUNE BAR E HAMBURGUERIA LTDA",
+      "productsWithStock": "0",
+      "stockValue": "0.00"
+    }
+  ],
+  "messages": [],
+  "stdout": "companyId\tcompany\tproductsWithStock\tstockValue\n1\tADEGA BEIRA RIO ROCHDALE LTDA\t796\t100376.65\n2\tA BRASA REUNE BAR E HAMBURGUERIA LTDA\t0\t0.00\n",
+  "stderr": "",
+  "execution_time_ms": 376
+}

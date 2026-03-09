@@ -415,6 +415,58 @@ export const salonRouter = router({
       return { success: true };
     }),
 
+  // Diminuir quantidade de um item (em vez de remover completamente)
+  decreaseItemQuantity: protectedProcedure
+    .input(z.object({
+      itemId: z.number(),
+      orderId: z.number(),
+      companyId: z.number(),
+    }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("DB unavailable");
+
+      // Buscar item atual
+      const [item] = await db
+        .select()
+        .from(salonOrderItems)
+        .where(
+          and(
+            eq(salonOrderItems.id, input.itemId),
+            eq(salonOrderItems.orderId, input.orderId),
+            eq(salonOrderItems.companyId, input.companyId)
+          )
+        )
+        .limit(1);
+
+      if (!item) throw new Error("Item n\u00e3o encontrado");
+      if (item.status === "CANCELLED") throw new Error("Item j\u00e1 cancelado");
+
+      const currentQty = parseFloat(String(item.quantity));
+      if (currentQty <= 1) {
+        // Se quantidade = 1, cancelar o item
+        await db
+          .update(salonOrderItems)
+          .set({ status: "CANCELLED" })
+          .where(eq(salonOrderItems.id, input.itemId));
+      } else {
+        // Diminuir quantidade e recalcular totalPrice
+        const newQty = currentQty - 1;
+        const unitPrice = parseFloat(String(item.unitPrice));
+        const newTotal = newQty * unitPrice;
+        await db
+          .update(salonOrderItems)
+          .set({
+            quantity: String(newQty),
+            totalPrice: String(newTotal.toFixed(2)),
+          })
+          .where(eq(salonOrderItems.id, input.itemId));
+      }
+
+      await recalcOrderTotals(db, input.orderId);
+      return { success: true, newQuantity: currentQty <= 1 ? 0 : currentQty - 1 };
+    }),
+
   updateItemStatus: protectedProcedure
     .input(z.object({
       itemId: z.number(),
