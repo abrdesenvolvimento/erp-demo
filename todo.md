@@ -1960,3 +1960,6 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Remover item da comanda — já existia (botão lixeira), confirmado funcionando
 - [x] Métricas KDS agora desconsideram itens/comandas canceladas (era 23x, agora 3x correto)
 - [x] Tela Análise KDS criada no menu Análises com filtro de período, destino (Todos/Cozinha/Bar) e métricas detalhadas
+
+### Melhorias pós-publicação v7 (09/03/2026)
+- [x] Adicionar gráfico de horário de pico na Análise KDS (barras por hora mostrando volume de pedidos)

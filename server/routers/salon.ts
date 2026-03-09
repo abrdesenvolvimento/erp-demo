@@ -1526,6 +1526,8 @@ export const salonRouter = router({
       const prepTimes: number[] = [];
       const productPrepTimes: Record<string, { name: string; times: number[]; count: number }> = {};
       const hourCounts: Record<number, number> = {};
+      const hourKitchenCounts: Record<number, number> = {};
+      const hourBarCounts: Record<number, number> = {};
       const dayCounts: Record<string, { date: string; orders: Set<number>; items: number; prepTimes: number[] }> = {};
 
       for (const item of completedItems) {
@@ -1539,10 +1541,13 @@ export const salonRouter = router({
             productPrepTimes[name].count += parseFloat(String(item.quantity));
           }
         }
-        // Peak hour
+        // Peak hour + destination breakdown
         if (item.sentAt) {
           const brHour = new Date(new Date(item.sentAt).getTime() - 3 * 3600000).getUTCHours();
           hourCounts[brHour] = (hourCounts[brHour] || 0) + 1;
+          const dest = item.productionDestination;
+          if (dest === "KITCHEN" || dest === "BOTH") hourKitchenCounts[brHour] = (hourKitchenCounts[brHour] || 0) + 1;
+          if (dest === "BAR" || dest === "BOTH") hourBarCounts[brHour] = (hourBarCounts[brHour] || 0) + 1;
         }
         // Daily stats
         if (item.sentAt) {
@@ -1567,6 +1572,17 @@ export const salonRouter = router({
         if (c > peakCount) { peakCount = c; peakHour = `${h.padStart(2, "0")}:00`; }
       }
 
+      // Hourly stats (all 24 hours for chart, with destination breakdown)
+      const hourlyStats: { hour: string; count: number; kitchen: number; bar: number }[] = [];
+      for (let h = 0; h < 24; h++) {
+        hourlyStats.push({
+          hour: `${String(h).padStart(2, "0")}:00`,
+          count: hourCounts[h] || 0,
+          kitchen: hourKitchenCounts[h] || 0,
+          bar: hourBarCounts[h] || 0,
+        });
+      }
+
       const productStats = Object.values(productPrepTimes)
         .map(p => ({
           name: p.name,
@@ -1584,7 +1600,7 @@ export const salonRouter = router({
         }))
         .sort((a, b) => a.date.localeCompare(b.date));
 
-      return { totalOrders, totalItems, avgPrepTimeMin, peakHour, productStats, dailyStats, destinationBreakdown: { kitchen: kitchenCount, bar: barCount } };
+      return { totalOrders, totalItems, avgPrepTimeMin, peakHour, hourlyStats, productStats, dailyStats, destinationBreakdown: { kitchen: kitchenCount, bar: barCount } };
     }),
 
   // ==================== WEB PUSH SUBSCRIPTIONS ====================
