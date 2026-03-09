@@ -383,25 +383,97 @@ export default function SalaoMesas() {
 
   // Block waiter if access not allowed
   if (effectiveRole === 'garcom' && waiterAccess && !waiterAccess.allowed) {
+    const companyName = activeCompany?.companyName || activeCompany?.companyLegalName || 'Empresa';
+    const companyLogo = activeCompany?.companyLogoUrl;
+    const isOutsideHours = (waiterAccess as any).outsideHours;
+    const needsCheckIn = (waiterAccess as any).needsCheckIn;
+
     return (
-      <DashboardLayout>
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <Card className="max-w-md w-full">
-            <CardContent className="pt-8 pb-8 text-center space-y-4">
-              <div className="mx-auto w-16 h-16 rounded-full bg-orange-100 flex items-center justify-center">
-                <ShieldCheck className="h-8 w-8 text-orange-600" />
-              </div>
-              <h2 className="text-xl font-bold">Acesso Restrito</h2>
-              <p className="text-muted-foreground">{waiterAccess.reason}</p>
-              {(waiterAccess as any).outsideHours ? (
-                <p className="text-sm text-muted-foreground">O sistema está fora do horário de funcionamento. Retorne no horário permitido.</p>
+      <div className="min-h-screen flex flex-col" style={{ background: 'linear-gradient(135deg, #2F2F2F 0%, #1a1a1a 50%, #2F2F2F 100%)' }}>
+        {/* Top accent bar */}
+        <div className="h-1.5" style={{ background: 'linear-gradient(90deg, #F07A00, #FFB347, #F07A00)' }} />
+
+        <div className="flex-1 flex items-center justify-center p-6">
+          <div className="max-w-sm w-full space-y-8">
+            {/* Logo + Company Name */}
+            <div className="text-center space-y-4">
+              {companyLogo ? (
+                <div className="mx-auto w-24 h-24 rounded-2xl overflow-hidden shadow-2xl border-2" style={{ borderColor: '#F07A00' }}>
+                  <img src={companyLogo} alt={companyName} className="w-full h-full object-contain" style={{ filter: 'drop-shadow(0 0 4px rgba(240,122,0,0.3))' }} />
+                </div>
               ) : (
-                <p className="text-sm text-muted-foreground">O administrador já foi notificado. Seu acesso será liberado automaticamente após o check-in.</p>
+                <div className="mx-auto w-24 h-24 rounded-2xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #F07A00, #FFB347)' }}>
+                  <UtensilsCrossed className="h-12 w-12 text-white" />
+                </div>
               )}
-            </CardContent>
-          </Card>
+              <h1 className="text-xl font-bold" style={{ color: '#E5D3B3' }}>{companyName}</h1>
+            </div>
+
+            {/* Status Card */}
+            <div className="rounded-2xl p-6 space-y-5" style={{ backgroundColor: 'rgba(229,211,179,0.08)', border: '1px solid rgba(240,122,0,0.2)' }}>
+              {/* Status icon */}
+              <div className="flex justify-center">
+                <div className="relative">
+                  <div className="w-16 h-16 rounded-full flex items-center justify-center" style={{ background: 'linear-gradient(135deg, rgba(240,122,0,0.2), rgba(255,179,71,0.15))' }}>
+                    {isOutsideHours ? (
+                      <Clock className="h-8 w-8" style={{ color: '#FFB347' }} />
+                    ) : (
+                      <ShieldCheck className="h-8 w-8" style={{ color: '#FFB347' }} />
+                    )}
+                  </div>
+                  {/* Pulsing ring for waiting state */}
+                  {needsCheckIn && (
+                    <div className="absolute inset-0 rounded-full animate-ping" style={{ backgroundColor: 'rgba(240,122,0,0.15)' }} />
+                  )}
+                </div>
+              </div>
+
+              {/* Title */}
+              <div className="text-center space-y-2">
+                <h2 className="text-lg font-bold" style={{ color: '#E5D3B3' }}>
+                  {isOutsideHours ? 'Fora do Horário' : 'Aguardando Liberação'}
+                </h2>
+                <p className="text-sm" style={{ color: 'rgba(229,211,179,0.7)' }}>
+                  {waiterAccess.reason}
+                </p>
+              </div>
+
+              {/* Divider */}
+              <div className="h-px" style={{ background: 'linear-gradient(90deg, transparent, rgba(240,122,0,0.3), transparent)' }} />
+
+              {/* Info */}
+              <div className="text-center space-y-2">
+                {needsCheckIn ? (
+                  <>
+                    <div className="flex items-center justify-center gap-2" style={{ color: '#FFB347' }}>
+                      <Bell className="h-4 w-4 animate-bounce" />
+                      <span className="text-sm font-medium">Gerente notificado</span>
+                    </div>
+                    <p className="text-xs" style={{ color: 'rgba(229,211,179,0.5)' }}>
+                      Seu acesso será liberado automaticamente assim que o gerente aprovar o check-in.
+                    </p>
+                  </>
+                ) : (
+                  <p className="text-xs" style={{ color: 'rgba(229,211,179,0.5)' }}>
+                    O sistema está fora do horário de funcionamento.
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Waiter name badge */}
+            <div className="text-center">
+              <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm" style={{ backgroundColor: 'rgba(240,122,0,0.1)', color: '#FFB347', border: '1px solid rgba(240,122,0,0.2)' }}>
+                <Users className="h-4 w-4" />
+                {user?.name || 'Garçom'}
+              </span>
+            </div>
+          </div>
         </div>
-      </DashboardLayout>
+
+        {/* Bottom accent */}
+        <div className="h-1" style={{ background: 'linear-gradient(90deg, transparent, rgba(240,122,0,0.3), transparent)' }} />
+      </div>
     );
   }
 

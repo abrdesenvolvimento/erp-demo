@@ -1985,3 +1985,7 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 
 ### Correções v9.3 (09/03/2026)
 - [x] BUG: Garçom com check-in ativo ainda bloqueado fora do horário — check-in do admin deve sobrepor restrição de horário
+
+### Melhorias v9.4 (09/03/2026)
+- [x] Redesign tela de bloqueio do garçom com logo da empresa e paleta de cores da marca (A Brasa Reúne: Laranja Brasa, Grafite, Creme Vintage)
+- [x] Melhorar fluxo de check-in — botão rápido de liberação no Dashboard (Painel de Presença)

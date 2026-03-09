@@ -6,7 +6,8 @@ import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { trpc } from "@/lib/trpc";
 import { TrendingUp, TrendingDown, AlertTriangle, ShoppingCart, DollarSign, Calendar, Package, Clock, ChevronDown, ChevronRight, Target, CreditCard, Users, UserCheck, UserX, LogIn, LogOut } from "lucide-react";
 import { Link } from "wouter";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { toast } from "sonner";
 import { SaleDetailsModal } from "@/components/SaleDetailsModal";
 import { CompactSalesCalendar } from "@/components/CompactSalesCalendar";
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -968,9 +969,39 @@ export default function Home() {
 // ==================== Painel de Presença dos Garçons ====================
 
 function WaiterPresencePanel() {
+  const { activeCompanyId } = useCompany();
+  const utils = trpc.useUtils();
   const { data, isLoading } = trpc.salon.waiterPresence.useQuery(undefined, {
     refetchInterval: 60000, // atualiza a cada 60s
   });
+
+  const checkInMutation = trpc.salon.waiterCheckIn.useMutation({
+    onSuccess: () => {
+      toast.success('Garçom liberado!');
+      utils.salon.waiterPresence.invalidate();
+      utils.salon.listWaiters.invalidate();
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const checkOutMutation = trpc.salon.waiterCheckOut.useMutation({
+    onSuccess: () => {
+      toast.success('Check-out realizado');
+      utils.salon.waiterPresence.invalidate();
+      utils.salon.listWaiters.invalidate();
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const handleCheckIn = useCallback((userId: string) => {
+    if (!activeCompanyId) return;
+    checkInMutation.mutate({ companyId: activeCompanyId, userId });
+  }, [activeCompanyId, checkInMutation]);
+
+  const handleCheckOut = useCallback((userId: string) => {
+    if (!activeCompanyId) return;
+    checkOutMutation.mutate({ companyId: activeCompanyId, userId });
+  }, [activeCompanyId, checkOutMutation]);
 
   if (isLoading) {
     return (
@@ -1079,16 +1110,41 @@ function WaiterPresencePanel() {
                   </div>
                 </div>
 
-                {/* Today's stats */}
-                {waiter.todayOrders > 0 && (
-                  <div className="flex-shrink-0 text-right">
-                    <p className="text-sm font-semibold">{waiter.todayOrders}</p>
-                    <p className="text-[10px] text-muted-foreground">pedidos</p>
-                    <p className="text-xs font-medium text-green-700">
-                      R$ {formatCurrency(waiter.todayRevenue)}
-                    </p>
-                  </div>
-                )}
+                {/* Actions + Stats */}
+                <div className="flex-shrink-0 flex flex-col items-end gap-1">
+                  {waiter.status === 'absent' && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 text-xs px-2 border-green-300 text-green-700 hover:bg-green-50"
+                      onClick={() => handleCheckIn(waiter.userId)}
+                      disabled={checkInMutation.isPending}
+                    >
+                      <LogIn className="h-3 w-3 mr-1" />
+                      Liberar
+                    </Button>
+                  )}
+                  {waiter.status === 'active' && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 text-xs px-2 border-red-300 text-red-600 hover:bg-red-50"
+                      onClick={() => handleCheckOut(waiter.userId)}
+                      disabled={checkOutMutation.isPending}
+                    >
+                      <LogOut className="h-3 w-3 mr-1" />
+                      Check-out
+                    </Button>
+                  )}
+                  {waiter.todayOrders > 0 && (
+                    <div className="text-right">
+                      <span className="text-xs font-semibold">{waiter.todayOrders} ped.</span>
+                      <span className="text-xs font-medium text-green-700 ml-1">
+                        R$ {formatCurrency(waiter.todayRevenue)}
+                      </span>
+                    </div>
+                  )}
+                </div>
               </div>
             );
           })}
