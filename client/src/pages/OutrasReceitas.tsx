@@ -11,7 +11,7 @@ import { trpc } from "@/lib/trpc";
 import { useState, useMemo, useEffect } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Plus, Pencil, Trash2, Loader2, FileText, Check, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, X } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, FileText, Check, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, X, Download } from "lucide-react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { getTodayBR, toDateStringBR, getCurrentCompetenceMonthBR } from "@/lib/dateUtils";
 import { toast } from "sonner";
@@ -729,10 +729,40 @@ export default function OutrasReceitas() {
               Receitas não vinculadas a vendas de produtos
             </p>
           </div>
-          <Button onClick={handleNew}>
-            <Plus className="h-4 w-4 mr-2" />
-            Nova Receita
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => {
+              if (!revenues || revenues.length === 0) {
+                toast.error('Nenhuma receita para exportar');
+                return;
+              }
+              const headers = ['ID', 'Data', 'Descrição', 'Conta Gerencial', 'Parceiro', 'Forma Recebimento', 'Valor', 'Status'];
+              const rows = revenues.map((r: any) => [
+                r.id,
+                r.issueDate ? new Date(r.issueDate).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' }) : new Date(r.revenueDate).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' }),
+                r.description,
+                r.managementAccountName || 'N/A',
+                r.partnerName || '',
+                r.paymentMethod || '',
+                parseFloat(r.amount?.toString() || '0').toFixed(2),
+                r.status
+              ]);
+              const BOM = '\uFEFF';
+              const csvContent = [headers, ...rows].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
+              const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+              const a = document.createElement('a');
+              a.href = URL.createObjectURL(blob);
+              a.download = `outras_receitas_${filterStartDate || 'todas'}_${filterEndDate || 'todas'}.csv`;
+              a.click();
+              toast.success('Exportação concluída!');
+            }}>
+              <Download className="h-4 w-4 mr-1" />
+              Excel
+            </Button>
+            <Button onClick={handleNew}>
+              <Plus className="h-4 w-4 mr-2" />
+              Nova Receita
+            </Button>
+          </div>
         </div>
 
         {/* Filtros */}

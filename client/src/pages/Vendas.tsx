@@ -113,8 +113,8 @@ export default function Vendas() {
   // Query de exportação
   const exportSales = trpc.sales.exportSales.useQuery(
     {
-      startDate: filterFromDate ? new Date(filterFromDate) : undefined,
-      endDate: filterToDate ? new Date(filterToDate) : undefined,
+      startDate: filterFromDate ? new Date(filterFromDate + 'T12:00:00') : undefined,
+      endDate: filterToDate ? new Date(filterToDate + 'T12:00:00') : undefined,
       saleType: filterSaleType ? (filterSaleType as "BALCAO" | "DELIVERY" | "A_PRAZO") : undefined,
     },
     { enabled: false } // Não executar automaticamente

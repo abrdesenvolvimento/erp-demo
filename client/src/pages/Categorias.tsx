@@ -784,19 +784,15 @@ export default function Categorias() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Categorias</h1>
           <p className="text-muted-foreground">
-            Gerencie as categorias e subcategorias de produtos e despesas.
+            Gerencie as categorias e subcategorias de produtos.
           </p>
         </div>
 
         <Tabs defaultValue="produtos" className="w-full">
-          <TabsList className="grid w-full max-w-md grid-cols-2">
+          <TabsList className="grid w-full max-w-md grid-cols-1">
             <TabsTrigger value="produtos" className="flex items-center gap-2">
               <Package className="h-4 w-4" />
               Produtos
-            </TabsTrigger>
-            <TabsTrigger value="despesas" className="flex items-center gap-2">
-              <Receipt className="h-4 w-4" />
-              Despesas
             </TabsTrigger>
           </TabsList>
 

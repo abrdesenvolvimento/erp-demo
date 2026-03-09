@@ -84,9 +84,9 @@ const DEFAULT_THEME = {
 const mainMenuItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/", roles: ["admin", "operacional", "consultor"] },
   { icon: Package, label: "Produtos", path: "/produtos", roles: ["admin", "operacional", "consultor"] },
-  { icon: Tags, label: "Categorias", path: "/categorias", roles: ["admin"] },
+  { icon: Tags, label: "Categorias", path: "/categorias", roles: ["admin", "consultor"] },
   { icon: ShoppingCart, label: "Vendas", path: "/vendas", roles: ["admin", "operacional", "consultor"] },
-  { icon: Upload, label: "Importar iFood", path: "/importar-ifood", roles: ["admin"] },
+  { icon: Upload, label: "Importar iFood", path: "/importar-ifood", roles: ["admin", "consultor"] },
   { icon: Users, label: "Parceiros", path: "/parceiros", roles: ["admin", "operacional", "consultor"] },
 ];
 
@@ -111,7 +111,7 @@ const accountingMenuItems = [
   { icon: BookOpen, label: "Plano de Contas", path: "/plano-contas", roles: ["admin", "consultor"] },
   { icon: Calculator, label: "Contas Gerenciais", path: "/contas-gerenciais", roles: ["admin", "consultor"] },
   { icon: FileText, label: "Relatórios Contábeis", path: "/relatorios-contabeis", roles: ["admin", "consultor"] },
-  { icon: Shield, label: "Governança Contábil", path: "/governanca-contabil", roles: ["admin"] },
+  { icon: Shield, label: "Governança Contábil", path: "/governanca-contabil", roles: ["admin", "consultor"] },
 ];
 
 // Submenu do Salão (apenas Hamburgueria)
@@ -131,14 +131,14 @@ const auditMenuItems = [
 
 // Submenu de Análises
 const analysisMenuItems = [
-  { icon: TrendingUp, label: "Análise de Vendas", path: "/analise-vendas", roles: ["admin"] },
+  { icon: TrendingUp, label: "Análise de Vendas", path: "/analise-vendas", roles: ["admin", "consultor"] },
   { icon: BarChart3, label: "Análise de Faturamento", path: "/relatorios", roles: ["admin", "consultor"] },
-  { icon: Bike, label: "Análise Delivery", path: "/analise-delivery", roles: ["admin"] },
-  { icon: GitCompare, label: "Análise por Canal", path: "/analise-canal", roles: ["admin"] },
-  { icon: Receipt, label: "Análise de Despesas", path: "/analise-despesas", roles: ["admin"] },
-  { icon: Package, label: "Análise de Estoque", path: "/analise-estoque", roles: ["admin"] },
-  { icon: BarChart2, label: "Fechamento Garçom", path: "/salao/fechamento-garcom", roles: ["admin"] },
-  { icon: BarChart2, label: "Análise KDS", path: "/analise-kds", roles: ["admin"] },
+  { icon: Bike, label: "Análise Delivery", path: "/analise-delivery", roles: ["admin", "consultor"] },
+  { icon: GitCompare, label: "Análise por Canal", path: "/analise-canal", roles: ["admin", "consultor"] },
+  { icon: Receipt, label: "Análise de Despesas", path: "/analise-despesas", roles: ["admin", "consultor"] },
+  { icon: Package, label: "Análise de Estoque", path: "/analise-estoque", roles: ["admin", "consultor"] },
+  { icon: BarChart2, label: "Fechamento Garçom", path: "/salao/fechamento-garcom", roles: ["admin", "consultor"] },
+  { icon: BarChart2, label: "Análise KDS", path: "/analise-kds", roles: ["admin", "consultor"] },
   { icon: Target, label: "Metas", path: "/metas", roles: ["admin", "consultor"] },
   { icon: FileText, label: "Fechamento", path: "/fechamento", roles: ["admin", "consultor"] },
 ];
@@ -495,9 +495,8 @@ function DashboardLayoutContent({
       return item.path === '/contas-receber';
     }
     if (effectiveRole === 'consultor') {
-      // Consultor pode ver Compras e Despesas (somente visualização)
-      // Ocultar Contas a Receber e Contas a Pagar
-      return item.path === '/compras' || item.path === '/despesas';
+      // Consultor tem acesso de leitura a todos os itens financeiros
+      return true;
     }
     return true;
   });

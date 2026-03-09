@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { trpc } from "@/lib/trpc";
-import { Plus, Search, Check, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Trash2, X } from "lucide-react";
+import { Plus, Search, Check, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Trash2, X, Download } from "lucide-react";
 import { toast } from "sonner";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -991,12 +991,43 @@ export default function Despesas() {
               Gerencie as despesas da empresa
             </p>
           </div>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => {
+              const filtered = expenses.filter(item => {
+                if (filterManagementAccountId && item.expense.managementAccountId !== filterManagementAccountId) return false;
+                return true;
+              });
+              const headers = ['ID', 'Data', 'Descrição', 'Conta Gerencial', 'Fornecedor', 'Documento', 'Forma Pagamento', 'Valor', 'Status'];
+              const rows = filtered.map(item => [
+                item.expense.id,
+                new Date(item.expense.issueDate).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' }),
+                item.expense.description,
+                item.managementAccount?.name || item.category?.name || 'N/A',
+                item.supplier?.name || '',
+                `${item.expense.docType} ${item.expense.docNumber || ''}`.trim(),
+                item.expense.paymentMethod,
+                parseFloat(item.expense.amount?.toString() || '0').toFixed(2),
+                item.expense.status
+              ]);
+              const BOM = '\uFEFF';
+              const csvContent = [headers, ...rows].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
+              const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+              const a = document.createElement('a');
+              a.href = URL.createObjectURL(blob);
+              a.download = `despesas_${filterStartDate}_${filterEndDate}.csv`;
+              a.click();
+              toast.success('Exportação concluída!');
+            }}>
+              <Download className="h-4 w-4 mr-1" />
+              Excel
+            </Button>
 {expensePermissions.canCreate && (
           <Button onClick={() => setIsCreating(true)}>
             <Plus className="h-4 w-4 mr-2" />
             Nova Despesa
           </Button>
           )}
+          </div>
         </div>
 
         {/* Filtros */}

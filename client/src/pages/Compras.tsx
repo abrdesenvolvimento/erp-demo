@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { trpc } from "@/lib/trpc";
-import { Plus, Search, Check, X, Trash2, Package, UserPlus, ChevronLeft } from "lucide-react";
+import { Plus, Search, Check, X, Trash2, Package, UserPlus, ChevronLeft, Download, ShoppingCart, FileText, DollarSign } from "lucide-react";
 import { toast } from "sonner";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -63,6 +63,8 @@ export default function Compras() {
   const [filterDocNumber, setFilterDocNumber] = useState("");
   const [filterMinValue, setFilterMinValue] = useState("");
   const [filterMaxValue, setFilterMaxValue] = useState("");
+  const [filterDocType, setFilterDocType] = useState<string>("ALL");
+  const [filterStatus, setFilterStatus] = useState<string>("ALL");
   
   // Form state
   const [supplierId, setSupplierId] = useState<number | undefined>();
@@ -962,6 +964,8 @@ export default function Compras() {
                           setFilterDocNumber("");
                           setFilterMinValue("");
                           setFilterMaxValue("");
+                          setFilterDocType("ALL");
+                          setFilterStatus("ALL");
                         }}
                         className="w-full"
                       >
@@ -969,6 +973,114 @@ export default function Compras() {
                       </Button>
                     </div>
                   </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label>Tipo de Documento</Label>
+                      <Select value={filterDocType} onValueChange={setFilterDocType}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="ALL">Todos</SelectItem>
+                          <SelectItem value="NOTA_FISCAL">Nota Fiscal</SelectItem>
+                          <SelectItem value="CUPOM">Cupom</SelectItem>
+                          <SelectItem value="SEM_DOCUMENTO">Sem Documento</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label>Status</Label>
+                      <Select value={filterStatus} onValueChange={setFilterStatus}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="ALL">Todos</SelectItem>
+                          <SelectItem value="CONFIRMED">Confirmada</SelectItem>
+                          <SelectItem value="DRAFT">Rascunho</SelectItem>
+                          <SelectItem value="CANCELLED">Cancelada</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Totals Cards */}
+                {(() => {
+                  const filtered = purchases.filter(p => {
+                    if (filterDocType !== "ALL" && p.purchaseOrder.docType !== filterDocType) return false;
+                    if (filterStatus !== "ALL" && p.purchaseOrder.status !== filterStatus) return false;
+                    if (filterDocNumber && !p.purchaseOrder.docNumber?.includes(filterDocNumber)) return false;
+                    if (filterMinValue && parseFloat(p.purchaseOrder.totalAmount.toString()) < parseFloat(filterMinValue)) return false;
+                    if (filterMaxValue && parseFloat(p.purchaseOrder.totalAmount.toString()) > parseFloat(filterMaxValue)) return false;
+                    return true;
+                  });
+                  const totalValue = filtered.reduce((sum, p) => sum + parseFloat(p.purchaseOrder.totalAmount.toString()), 0);
+                  const confirmedValue = filtered.filter(p => p.purchaseOrder.status === "CONFIRMED").reduce((sum, p) => sum + parseFloat(p.purchaseOrder.totalAmount.toString()), 0);
+                  const draftValue = filtered.filter(p => p.purchaseOrder.status === "DRAFT").reduce((sum, p) => sum + parseFloat(p.purchaseOrder.totalAmount.toString()), 0);
+                  return (
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                      <div className="bg-card border rounded-lg p-4">
+                        <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1">
+                          <ShoppingCart className="h-3.5 w-3.5" />
+                          Qtd Compras
+                        </div>
+                        <div className="text-xl font-bold">{filtered.length}</div>
+                      </div>
+                      <div className="bg-card border rounded-lg p-4">
+                        <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1">
+                          <DollarSign className="h-3.5 w-3.5" />
+                          Total
+                        </div>
+                        <div className="text-xl font-bold">R$ {totalValue.toFixed(2)}</div>
+                      </div>
+                      <div className="bg-card border rounded-lg p-4">
+                        <div className="flex items-center gap-2 text-green-600 text-xs mb-1">
+                          <Check className="h-3.5 w-3.5" />
+                          Confirmadas
+                        </div>
+                        <div className="text-xl font-bold text-green-700">R$ {confirmedValue.toFixed(2)}</div>
+                      </div>
+                      <div className="bg-card border rounded-lg p-4">
+                        <div className="flex items-center gap-2 text-yellow-600 text-xs mb-1">
+                          <FileText className="h-3.5 w-3.5" />
+                          Rascunhos
+                        </div>
+                        <div className="text-xl font-bold text-yellow-700">R$ {draftValue.toFixed(2)}</div>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* Export Excel Button */}
+                <div className="flex justify-end">
+                  <Button variant="outline" onClick={() => {
+                    const filtered = purchases.filter(p => {
+                      if (filterDocType !== "ALL" && p.purchaseOrder.docType !== filterDocType) return false;
+                      if (filterStatus !== "ALL" && p.purchaseOrder.status !== filterStatus) return false;
+                      if (filterDocNumber && !p.purchaseOrder.docNumber?.includes(filterDocNumber)) return false;
+                      if (filterMinValue && parseFloat(p.purchaseOrder.totalAmount.toString()) < parseFloat(filterMinValue)) return false;
+                      if (filterMaxValue && parseFloat(p.purchaseOrder.totalAmount.toString()) > parseFloat(filterMaxValue)) return false;
+                      return true;
+                    });
+                    const headers = ['ID', 'Fornecedor', 'Tipo Doc', 'Nº Doc', 'Data', 'Total', 'Status'];
+                    const rows = filtered.map(p => [
+                      p.purchaseOrder.id,
+                      p.supplier?.name || 'N/A',
+                      p.purchaseOrder.docType.replace('_', ' '),
+                      p.purchaseOrder.docNumber || '',
+                      new Date(p.purchaseOrder.postingDate).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' }),
+                      parseFloat(p.purchaseOrder.totalAmount.toString()).toFixed(2),
+                      p.purchaseOrder.status === 'CONFIRMED' ? 'Confirmada' : p.purchaseOrder.status === 'DRAFT' ? 'Rascunho' : 'Cancelada'
+                    ]);
+                    const BOM = '\uFEFF';
+                    const csvContent = [headers, ...rows].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
+                    const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+                    const a = document.createElement('a');
+                    a.href = URL.createObjectURL(blob);
+                    a.download = `compras_${filterStartDate}_${filterEndDate}.csv`;
+                    a.click();
+                    toast.success('Exportação concluída!');
+                  }}>
+                    <Download className="h-4 w-4 mr-1" />
+                    Excel
+                  </Button>
                 </div>
 
                 <div className="bg-card border rounded-lg">
@@ -986,29 +1098,23 @@ export default function Compras() {
                         </tr>
                       </thead>
                       <tbody>
-                        {purchases.length === 0 ? (
+                        {(() => {
+                          const filteredPurchases = purchases.filter(p => {
+                            if (filterDocType !== "ALL" && p.purchaseOrder.docType !== filterDocType) return false;
+                            if (filterStatus !== "ALL" && p.purchaseOrder.status !== filterStatus) return false;
+                            if (filterDocNumber && !p.purchaseOrder.docNumber?.includes(filterDocNumber)) return false;
+                            if (filterMinValue && parseFloat(p.purchaseOrder.totalAmount.toString()) < parseFloat(filterMinValue)) return false;
+                            if (filterMaxValue && parseFloat(p.purchaseOrder.totalAmount.toString()) > parseFloat(filterMaxValue)) return false;
+                            return true;
+                          });
+                          return filteredPurchases.length === 0 ? (
                           <tr>
                             <td colSpan={7} className="text-center py-8 text-muted-foreground">
                               Nenhuma compra registrada
                             </td>
                           </tr>
                         ) : (
-                          purchases
-                            .filter(purchase => {
-                              // Filtro de número de nota
-                              if (filterDocNumber && !purchase.purchaseOrder.docNumber?.includes(filterDocNumber)) {
-                                return false;
-                              }
-                              // Filtro de valor mínimo
-                              if (filterMinValue && parseFloat(purchase.purchaseOrder.totalAmount) < parseFloat(filterMinValue)) {
-                                return false;
-                              }
-                              // Filtro de valor máximo
-                              if (filterMaxValue && parseFloat(purchase.purchaseOrder.totalAmount) > parseFloat(filterMaxValue)) {
-                                return false;
-                              }
-                              return true;
-                            })
+                          filteredPurchases
                             .map((purchase) => (
                             <tr key={purchase.purchaseOrder.id} className="border-b hover:bg-muted/50">
                               <td className="p-4">#{purchase.purchaseOrder.id}</td>
@@ -1115,7 +1221,8 @@ export default function Compras() {
                               </td>
                             </tr>
                           ))
-                        )}
+                        );
+                        })()}
                       </tbody>
                     </table>
                   </div>

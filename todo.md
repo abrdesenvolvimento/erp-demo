@@ -1989,3 +1989,12 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 ### Melhorias v9.4 (09/03/2026)
 - [x] Redesign tela de bloqueio do garçom com logo da empresa e paleta de cores da marca (A Brasa Reúne: Laranja Brasa, Grafite, Creme Vintage)
 - [x] Melhorar fluxo de check-in — botão rápido de liberação no Dashboard (Painel de Presença)
+
+### Reunião Contadora v10 (09/03/2026)
+- [x] Ocultar aba/seção "Despesas" dentro da tela de Categorias (conceito substituído por Conta Gerencial)
+- [x] BUG: Relatório de vendas trazendo dados fora do range de datas (ex: 01/03-09/03 traz dados de 28/02) — corrigido timezone na exportação
+- [x] Compras: adicionar filtro de Tipo de Documento + Status, cards de totais, exportar para Excel
+- [x] Permitir cancelamento de dados de teste criados durante desenvolvimento (Receitas, Despesas, Compras) — funcionalidade já existe nas 3 telas
+- [x] Exportação de Despesas e Outras Receitas para CSV/Excel
+- [x] Replicar acessos de ADM para consultor (apenas leitura) — todas análises, financeiro, contabilidade, categorias, importar iFood
+- [ ] FUTURO: Mapeamento de Tempo de Geração de pedido para Bar/Cozinha, Produção e entrega ao cliente (análise operacional)
