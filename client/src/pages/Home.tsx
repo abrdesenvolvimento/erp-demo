@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { trpc } from "@/lib/trpc";
-import { TrendingUp, TrendingDown, AlertTriangle, ShoppingCart, DollarSign, Calendar, Package, Clock, ChevronDown, ChevronRight, Target, CreditCard } from "lucide-react";
+import { TrendingUp, TrendingDown, AlertTriangle, ShoppingCart, DollarSign, Calendar, Package, Clock, ChevronDown, ChevronRight, Target, CreditCard, Users, UserCheck, UserX, LogIn, LogOut } from "lucide-react";
 import { Link } from "wouter";
 import { useState, useEffect } from "react";
 import { SaleDetailsModal } from "@/components/SaleDetailsModal";
@@ -529,6 +529,9 @@ export default function Home() {
           {isHamburgueria && <SalonOccupiedCard />}
         </div>
 
+        {/* Painel de Presença dos Garçons - apenas para Hamburgueria e Admin */}
+        {isHamburgueria && isAdmin && <WaiterPresencePanel />}
+
         {/* Calendário Compacto de Vendas - Oculto para Operacional */}
         {!isOperacional && (
         <Card>
@@ -959,5 +962,138 @@ export default function Home() {
         </DialogContent>
       </Dialog>
     </DashboardLayout>
+  );
+}
+
+// ==================== Painel de Presença dos Garçons ====================
+
+function WaiterPresencePanel() {
+  const { data, isLoading } = trpc.salon.waiterPresence.useQuery(undefined, {
+    refetchInterval: 60000, // atualiza a cada 60s
+  });
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardContent className="pt-6">
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <Users className="h-4 w-4" />
+            <span className="text-sm">Carregando presença dos garçons...</span>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!data || data.waiters.length === 0) {
+    return null; // Não exibir se não há garçons cadastrados
+  }
+
+  const activeCount = data.waiters.filter(w => w.status === 'active').length;
+  const totalCount = data.waiters.length;
+
+  const formatTime = (dateVal: string | Date | null) => {
+    if (!dateVal) return '--:--';
+    const d = new Date(dateVal);
+    return d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' });
+  };
+
+  const formatCurrency = (value: string | number) => {
+    const num = typeof value === 'string' ? parseFloat(value) : value;
+    return new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num);
+  };
+
+  const statusConfig = {
+    active: { label: 'Ativo', color: 'bg-green-500', textColor: 'text-green-700', bgColor: 'bg-green-50', icon: UserCheck },
+    checked_out: { label: 'Saiu', color: 'bg-gray-400', textColor: 'text-gray-600', bgColor: 'bg-gray-50', icon: LogOut },
+    absent: { label: 'Ausente', color: 'bg-red-400', textColor: 'text-red-600', bgColor: 'bg-red-50', icon: UserX },
+  };
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Users className="h-5 w-5 text-orange-500" />
+            <CardTitle className="text-lg">Presença dos Garçons</CardTitle>
+          </div>
+          <div className="flex items-center gap-3 text-sm">
+            <span className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-green-500" />
+              <span className="font-medium">{activeCount}</span>
+              <span className="text-muted-foreground">ativos</span>
+            </span>
+            <span className="text-muted-foreground">/</span>
+            <span className="text-muted-foreground">{totalCount} total</span>
+            {data.config?.openingTime && data.config?.closingTime && (
+              <span className="text-xs text-muted-foreground border rounded px-2 py-0.5">
+                {data.config.openingTime} - {data.config.closingTime}
+              </span>
+            )}
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {data.waiters.map((waiter) => {
+            const cfg = statusConfig[waiter.status];
+            const StatusIcon = cfg.icon;
+            return (
+              <div
+                key={waiter.userId}
+                className={`flex items-center gap-3 p-3 rounded-lg border ${cfg.bgColor} transition-all`}
+              >
+                {/* Status indicator */}
+                <div className={`flex-shrink-0 w-10 h-10 rounded-full ${cfg.bgColor} border-2 ${waiter.status === 'active' ? 'border-green-400' : waiter.status === 'checked_out' ? 'border-gray-300' : 'border-red-300'} flex items-center justify-center`}>
+                  <StatusIcon className={`h-5 w-5 ${cfg.textColor}`} />
+                </div>
+
+                {/* Info */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <p className="font-medium text-sm truncate">{waiter.name}</p>
+                    <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${
+                      waiter.status === 'active' ? 'bg-green-200 text-green-800' :
+                      waiter.status === 'checked_out' ? 'bg-gray-200 text-gray-700' :
+                      'bg-red-200 text-red-800'
+                    }`}>
+                      {cfg.label}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+                    {waiter.checkedInAt && (
+                      <span className="flex items-center gap-1">
+                        <LogIn className="h-3 w-3" />
+                        {formatTime(waiter.checkedInAt)}
+                      </span>
+                    )}
+                    {waiter.checkedOutAt && (
+                      <span className="flex items-center gap-1">
+                        <LogOut className="h-3 w-3" />
+                        {formatTime(waiter.checkedOutAt)}
+                      </span>
+                    )}
+                    {waiter.status === 'absent' && (
+                      <span className="italic">Sem check-in hoje</span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Today's stats */}
+                {waiter.todayOrders > 0 && (
+                  <div className="flex-shrink-0 text-right">
+                    <p className="text-sm font-semibold">{waiter.todayOrders}</p>
+                    <p className="text-[10px] text-muted-foreground">pedidos</p>
+                    <p className="text-xs font-medium text-green-700">
+                      R$ {formatCurrency(waiter.todayRevenue)}
+                    </p>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </CardContent>
+    </Card>
   );
 }

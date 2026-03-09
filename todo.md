@@ -1979,3 +1979,6 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Garçom: auto-suspender acesso quando horário de fechamento chegar (verificação periódica no frontend)
 - [x] Garçom: notificar admin quando garçom tentar acessar e estiver bloqueado (push notification + throttle 10min)
 - [x] Contas a Receber: inverter ordem do histórico para mostrar lançamentos mais recentes primeiro
+
+### Funcionalidades v9.2 (09/03/2026)
+- [x] Painel de presença dos garçons no Dashboard (check-in/check-out, status ativo/inativo, resumo diário)

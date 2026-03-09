@@ -1899,6 +1899,106 @@ export const salonRouter = router({
       return { success: true };
     }),
 
+  // ==================== PAINEL DE PRESENÇA (DASHBOARD) ====================
+
+  waiterPresence: protectedProcedure
+    .query(async ({ ctx }) => {
+      const db = await getDb();
+      if (!db) return { waiters: [], config: null };
+
+      const companyId = ctx.activeCompanyId;
+      if (!companyId) return { waiters: [], config: null };
+
+      const now = getNowInBrazil();
+      const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
+      // Get salon config for opening/closing times
+      const [config] = await db
+        .select({
+          waiterAccessControl: salonConfig.waiterAccessControl,
+          requireCheckIn: salonConfig.requireCheckIn,
+          openingTime: salonConfig.openingTime,
+          closingTime: salonConfig.closingTime,
+        })
+        .from(salonConfig)
+        .where(eq(salonConfig.companyId, companyId))
+        .limit(1);
+
+      // Get all waiters for this company
+      const waiters = await db
+        .select({
+          userId: userCompanies.userId,
+          userName: users.name,
+          userEmail: users.email,
+        })
+        .from(userCompanies)
+        .innerJoin(users, eq(userCompanies.userId, users.id))
+        .where(
+          and(
+            eq(userCompanies.companyId, companyId),
+            eq(userCompanies.role, 'garcom')
+          )
+        );
+
+      if (waiters.length === 0) return { waiters: [], config: config || null };
+
+      // Get today's check-ins
+      const todayCheckIns = await db
+        .select()
+        .from(waiterCheckIns)
+        .where(
+          and(
+            eq(waiterCheckIns.companyId, companyId),
+            eq(waiterCheckIns.date, todayStr)
+          )
+        );
+
+      // Get today's order count per waiter (closed orders)
+      const nowStr = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+      const todayStart = new Date(nowStr + 'T00:00:00-03:00');
+      const nextDay = new Date(nowStr + 'T00:00:00-03:00');
+      nextDay.setDate(nextDay.getDate() + 1);
+
+      const waiterIds = waiters.map(w => w.userId);
+      const orderCounts = await db
+        .select({
+          waiterId: salonOrders.waiterId,
+          count: sql<number>`COUNT(*)`,
+          revenue: sql<string>`COALESCE(SUM(subtotal), 0)`,
+        })
+        .from(salonOrders)
+        .where(
+          and(
+            eq(salonOrders.companyId, companyId),
+            eq(salonOrders.status, 'CLOSED'),
+            inArray(salonOrders.waiterId, waiterIds),
+            gte(salonOrders.closedAt, todayStart),
+            lt(salonOrders.closedAt, nextDay)
+          )
+        )
+        .groupBy(salonOrders.waiterId);
+
+      const result = waiters.map(w => {
+        const checkIn = todayCheckIns.find(c => c.userId === w.userId);
+        const orders = orderCounts.find(o => o.waiterId === w.userId);
+        return {
+          userId: w.userId,
+          name: w.userName || w.userEmail || 'Sem nome',
+          status: checkIn && !checkIn.checkedOutAt ? 'active' as const : checkIn?.checkedOutAt ? 'checked_out' as const : 'absent' as const,
+          checkedInAt: checkIn?.checkedInAt || null,
+          checkedOutAt: checkIn?.checkedOutAt || null,
+          todayOrders: Number(orders?.count ?? 0),
+          todayRevenue: orders?.revenue ?? '0',
+        };
+      });
+
+      // Sort: active first, then checked_out, then absent
+      const statusOrder = { active: 0, checked_out: 1, absent: 2 };
+      result.sort((a, b) => statusOrder[a.status] - statusOrder[b.status]);
+
+      return { waiters: result, config: config || null };
+    }),
+
   // ==================== WEB PUSH SUBSCRIPTIONS ====================
 
   pushSubscribe: protectedProcedure
