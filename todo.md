@@ -1970,3 +1970,7 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] BUG: Fechamento - Faturamento por Tipo de Pagamento mostrando tudo em uma linha (ex: "DINHEIRO + DEBITO + CREDITO + PIX") em vez de separar por tipo
 - [x] Investigar timezone KDS Analytics — corrigido para usar getCurrentBrazilDateInfo() no frontend
 - [x] Melhoria: Diminuir quantidade de item na comanda (em vez de só remover completamente)
+
+### Funcionalidades v9 (09/03/2026)
+- [x] Controle de acesso por horário para Garçom — bloquear acesso fora do horário ou exigir check-in pelo admin
+- [x] Contas a Receber — compactar visualização na tela principal (expandir detalhes sob demanda), manter PDF completo com saldo pendente

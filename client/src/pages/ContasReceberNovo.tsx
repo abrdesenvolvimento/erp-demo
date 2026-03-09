@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { trpc } from "@/lib/trpc";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, DollarSign, Plus, FileDown, Loader2, MessageCircle, Search, Check, ChevronsUpDown, Users } from "lucide-react";
+import { ArrowLeft, DollarSign, Plus, FileDown, Loader2, MessageCircle, Search, Check, ChevronsUpDown, Users, ChevronDown, ChevronRight, Eye, EyeOff } from "lucide-react";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
@@ -305,83 +305,7 @@ export default function ContasReceberNovo() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="text-left p-2">Data</th>
-                      <th className="text-left p-2">Venda</th>
-                      <th className="text-left p-2">Produto</th>
-                      <th className="text-right p-2">Qtd</th>
-                      <th className="text-right p-2">Valor Unit.</th>
-                      <th className="text-right p-2">Total</th>
-                      <th className="text-right p-2">Débito</th>
-                      <th className="text-right p-2">Crédito</th>
-                      <th className="text-right p-2">Saldo</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {history.history.map((item, index) => {
-                      // Se for venda com produtos, exibir uma linha por produto
-                      if (item.type === 'SALE' && (item as any).items && (item as any).items.length > 0) {
-                        return (item as any).items.map((product: any, productIndex: number) => (
-                          <tr key={`${index}-${productIndex}`} className="border-b hover:bg-muted/50">
-                            {productIndex === 0 && (
-                              <>
-                                <td className="p-2" rowSpan={(item as any).items.length}>
-                                  {item.date ? formatDateTimeBR(new Date(item.date)) : '-'}
-                                </td>
-                                <td className="p-2" rowSpan={(item as any).items.length}>
-                                  {item.description}
-                                </td>
-                              </>
-                            )}
-                            <td className="p-2">{product.productName || '-'}</td>
-                            <td className="p-2 text-right">{product.quantity}</td>
-                            <td className="p-2 text-right">{formatCurrency(parseFloat(product.unitPrice))}</td>
-                            <td className="p-2 text-right">{formatCurrency(parseFloat(product.totalPrice))}</td>
-                            {productIndex === 0 && (
-                              <>
-                                <td className="p-2 text-right text-red-600" rowSpan={(item as any).items.length}>
-                                  {formatCurrency(parseFloat(item.amount))}
-                                </td>
-                                <td className="p-2 text-right" rowSpan={(item as any).items.length}>-</td>
-                                <td className="p-2 text-right font-semibold" rowSpan={(item as any).items.length}>
-                                  {formatCurrency(parseFloat(item.balance))}
-                                </td>
-                              </>
-                            )}
-                          </tr>
-                        ));
-                      }
-                      
-                      // Para pagamentos e débitos, exibir linha única
-                      return (
-                        <tr key={index} className="border-b hover:bg-muted/50">
-                          <td className="p-2">{item.date ? formatDateTimeBR(new Date(item.date)) : '-'}</td>
-                          <td className="p-2" colSpan={2}>
-                            {item.description}
-                            {item.type === 'PAYMENT' && (item as any).notes && <span className="text-xs text-muted-foreground ml-2">({(item as any).notes})</span>}
-                            {item.type === 'DEBIT' && (item as any).notes && <span className="text-xs text-muted-foreground ml-2">({(item as any).notes})</span>}
-                          </td>
-                          <td className="p-2 text-right" colSpan={3}>-</td>
-                          <td className="p-2 text-right text-red-600">
-                            {item.type === 'DEBIT' ? formatCurrency(parseFloat(item.amount)) : '-'}
-                          </td>
-                          <td className="p-2 text-right text-green-600">
-                            {item.type === 'PAYMENT' ? formatCurrency(parseFloat(item.amount)) : '-'}
-                          </td>
-                          <td className="p-2 text-right font-semibold">
-                            {formatCurrency(parseFloat(item.balance))}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+            <CompactHistoryTable history={history.history} />
           </CardContent>
         </Card>
 
@@ -784,5 +708,142 @@ export default function ContasReceberNovo() {
       </Card>
     </div>
     </DashboardLayout>
+  );
+}
+
+// ==================== Compact History Table ====================
+
+function CompactHistoryTable({ history }: { history: any[] }) {
+  const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
+  const [showAll, setShowAll] = useState(false);
+
+  const COMPACT_LIMIT = 15;
+
+  const toggleRow = (index: number) => {
+    setExpandedRows(prev => {
+      const next = new Set(prev);
+      if (next.has(index)) next.delete(index);
+      else next.add(index);
+      return next;
+    });
+  };
+
+  const visibleHistory = showAll ? history : history.slice(0, COMPACT_LIMIT);
+  const hasMore = history.length > COMPACT_LIMIT;
+
+  return (
+    <div className="space-y-2">
+      <div className="overflow-x-auto">
+        <table className="w-full">
+          <thead>
+            <tr className="border-b">
+              <th className="text-left p-2 w-8"></th>
+              <th className="text-left p-2">Data</th>
+              <th className="text-left p-2">Descrição</th>
+              <th className="text-right p-2">Débito</th>
+              <th className="text-right p-2">Crédito</th>
+              <th className="text-right p-2">Saldo</th>
+            </tr>
+          </thead>
+          <tbody>
+            {visibleHistory.map((item, index) => {
+              const hasProducts = item.type === 'SALE' && (item as any).items && (item as any).items.length > 0;
+              const isExpanded = expandedRows.has(index);
+
+              return (
+                <>
+                  {/* Linha principal compacta */}
+                  <tr
+                    key={`main-${index}`}
+                    className={`border-b hover:bg-muted/50 ${hasProducts ? 'cursor-pointer' : ''} ${isExpanded ? 'bg-muted/30' : ''}`}
+                    onClick={() => hasProducts && toggleRow(index)}
+                  >
+                    <td className="p-2 text-center">
+                      {hasProducts && (
+                        isExpanded
+                          ? <ChevronDown className="h-4 w-4 text-muted-foreground inline" />
+                          : <ChevronRight className="h-4 w-4 text-muted-foreground inline" />
+                      )}
+                    </td>
+                    <td className="p-2 text-sm whitespace-nowrap">
+                      {item.date ? formatDateTimeBR(new Date(item.date)) : '-'}
+                    </td>
+                    <td className="p-2 text-sm">
+                      <span className={`inline-flex items-center gap-1.5 ${
+                        item.type === 'PAYMENT' ? 'text-green-700' :
+                        item.type === 'DEBIT' ? 'text-red-700' : ''
+                      }`}>
+                        {item.type === 'SALE' && (
+                          <span className="inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-medium bg-orange-100 text-orange-700 mr-1">Venda</span>
+                        )}
+                        {item.type === 'PAYMENT' && (
+                          <span className="inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-medium bg-green-100 text-green-700 mr-1">Pgto</span>
+                        )}
+                        {item.type === 'DEBIT' && (
+                          <span className="inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-medium bg-red-100 text-red-700 mr-1">Débito</span>
+                        )}
+                        {item.description}
+                        {(item.type === 'PAYMENT' || item.type === 'DEBIT') && (item as any).notes && (
+                          <span className="text-xs text-muted-foreground">({(item as any).notes})</span>
+                        )}
+                        {hasProducts && (
+                          <span className="text-xs text-muted-foreground ml-1">({(item as any).items.length} itens)</span>
+                        )}
+                      </span>
+                    </td>
+                    <td className="p-2 text-right text-sm text-red-600 font-medium">
+                      {(item.type === 'SALE' || item.type === 'DEBIT') ? formatCurrency(parseFloat(item.amount)) : '-'}
+                    </td>
+                    <td className="p-2 text-right text-sm text-green-600 font-medium">
+                      {item.type === 'PAYMENT' ? formatCurrency(parseFloat(item.amount)) : '-'}
+                    </td>
+                    <td className="p-2 text-right text-sm font-semibold">
+                      {formatCurrency(parseFloat(item.balance))}
+                    </td>
+                  </tr>
+
+                  {/* Linhas expandidas com detalhes dos produtos */}
+                  {hasProducts && isExpanded && (item as any).items.map((product: any, pi: number) => (
+                    <tr key={`detail-${index}-${pi}`} className="bg-muted/20 border-b border-dashed">
+                      <td className="p-1"></td>
+                      <td className="p-1"></td>
+                      <td className="p-1 pl-6 text-xs text-muted-foreground">
+                        {product.productName || '-'}
+                        <span className="ml-2 text-muted-foreground/70">
+                          {product.quantity}x {formatCurrency(parseFloat(product.unitPrice))}
+                        </span>
+                      </td>
+                      <td className="p-1 text-right text-xs text-muted-foreground">
+                        {formatCurrency(parseFloat(product.totalPrice))}
+                      </td>
+                      <td className="p-1"></td>
+                      <td className="p-1"></td>
+                    </tr>
+                  ))}
+                </>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Botão Ver Mais / Ver Menos */}
+      {hasMore && (
+        <div className="flex justify-center pt-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowAll(!showAll)}
+            className="text-xs text-muted-foreground"
+          >
+            {showAll ? (
+              <><EyeOff className="h-3 w-3 mr-1" /> Mostrar menos ({COMPACT_LIMIT} de {history.length})</>  
+            ) : (
+              <><Eye className="h-3 w-3 mr-1" /> Ver todos ({history.length} lançamentos)</>  
+            )}
+          </Button>
+        </div>
+      )}
+    </div>
   );
 }

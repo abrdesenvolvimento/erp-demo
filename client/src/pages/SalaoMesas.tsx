@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Plus, Users, Clock, DollarSign, Settings, ChefHat, X, UtensilsCrossed, RefreshCw, Bell } from "lucide-react";
+import { Plus, Users, Clock, DollarSign, Settings, ChefHat, X, UtensilsCrossed, RefreshCw, Bell, ShieldCheck, UserCheck, UserX, LogIn, LogOut } from "lucide-react";
 import { useLocation } from "wouter";
 import { playUrgentNotification, unlockAudio, isAudioUnlocked, getSoundEnabledFromStorage, vibrateUrgent, reactivateAudio } from "@/lib/notificationSound";
 import { requestNotificationPermission, isNotificationPermitted, sendLocalNotification, getPushGrantedFromStorage, subscribeToPush, isAlreadySubscribed, isPushManagerSupported } from "@/lib/pushNotification";
@@ -45,6 +45,11 @@ export default function SalaoMesas() {
   const [cfgTipEnabled, setCfgTipEnabled] = useState(true);
   const [cfgTipPercent, setCfgTipPercent] = useState("10");
   const [cfgGratuityLabel, setCfgGratuityLabel] = useState("Taxa de serviço");
+  // Access control config states
+  const [cfgWaiterAccessControl, setCfgWaiterAccessControl] = useState(false);
+  const [cfgOpeningTime, setCfgOpeningTime] = useState("11:00");
+  const [cfgClosingTime, setCfgClosingTime] = useState("23:00");
+  const [cfgRequireCheckIn, setCfgRequireCheckIn] = useState(true);
   const [editTableModal, setEditTableModal] = useState(false);
   const [editingTable, setEditingTable] = useState<any>(null);
   const [editTableName, setEditTableName] = useState("");
@@ -160,6 +165,33 @@ export default function SalaoMesas() {
     { companyId },
     { enabled: companyId > 0 }
   );
+
+  // Waiter access check
+  const { data: waiterAccess, isLoading: loadingAccess } = trpc.salon.checkWaiterAccess.useQuery(
+    { companyId },
+    { enabled: companyId > 0 && effectiveRole === 'garcom', refetchInterval: 30000 }
+  );
+
+  // Admin: list waiters for check-in management
+  const { data: waitersList = [], refetch: refetchWaiters } = trpc.salon.listWaiters.useQuery(
+    { companyId },
+    { enabled: companyId > 0 && isAdmin }
+  );
+
+  const waiterCheckInMutation = trpc.salon.waiterCheckIn.useMutation({
+    onSuccess: () => { toast.success("Garçom liberado!"); refetchWaiters(); },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const waiterCheckOutMutation = trpc.salon.waiterCheckOut.useMutation({
+    onSuccess: () => { toast.success("Check-out realizado!"); refetchWaiters(); },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const saveAccessConfigMutation = trpc.salon.saveAccessConfig.useMutation({
+    onSuccess: () => { toast.success("Configurações de acesso salvas!"); utils.salon.getConfig.invalidate(); },
+    onError: (e) => toast.error(e.message),
+  });
 
   // Track total ready items across all tables for notification
   // -1 = sentinel for "first load, don't alert yet"
@@ -327,11 +359,31 @@ export default function SalaoMesas() {
     return `${h}h${m > 0 ? m + "m" : ""}`;
   };
 
-  if (isLoading) {
+  if (isLoading || loadingAccess) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
       </div>
+    );
+  }
+
+  // Block waiter if access not allowed
+  if (effectiveRole === 'garcom' && waiterAccess && !waiterAccess.allowed) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <Card className="max-w-md w-full">
+            <CardContent className="pt-8 pb-8 text-center space-y-4">
+              <div className="mx-auto w-16 h-16 rounded-full bg-orange-100 flex items-center justify-center">
+                <ShieldCheck className="h-8 w-8 text-orange-600" />
+              </div>
+              <h2 className="text-xl font-bold">Acesso Restrito</h2>
+              <p className="text-muted-foreground">{waiterAccess.reason}</p>
+              <p className="text-sm text-muted-foreground">Seu acesso será liberado automaticamente quando o administrador fizer seu check-in.</p>
+            </CardContent>
+          </Card>
+        </div>
+      </DashboardLayout>
     );
   }
 
@@ -659,10 +711,14 @@ export default function SalaoMesas() {
           setCfgTipEnabled(salonCfg.tipEnabled ?? true);
           setCfgTipPercent(String(salonCfg.defaultTipPercent ?? "10"));
           setCfgGratuityLabel(salonCfg.gratuityLabel ?? "Taxa de serviço");
+          setCfgWaiterAccessControl(salonCfg.waiterAccessControl ?? false);
+          setCfgOpeningTime(salonCfg.openingTime ?? "11:00");
+          setCfgClosingTime(salonCfg.closingTime ?? "23:00");
+          setCfgRequireCheckIn(salonCfg.requireCheckIn ?? true);
         }
         setConfigModal(open);
       }}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2"><Settings className="h-5 w-5" /> Configurações do Salão</DialogTitle>
           </DialogHeader>
@@ -729,6 +785,112 @@ export default function SalaoMesas() {
               </>
             )}
           </div>
+
+          {/* Separador */}
+          <div className="border-t my-2" />
+
+          {/* Controle de Acesso do Garçom */}
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold flex items-center gap-2">
+              <ShieldCheck className="h-4 w-4" />
+              Controle de Acesso - Garçom
+            </h3>
+            <div className="flex items-center justify-between">
+              <div>
+                <Label className="text-sm font-medium">Restringir acesso por horário</Label>
+                <p className="text-xs text-muted-foreground">Garçom só acessa dentro do horário de funcionamento</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setCfgWaiterAccessControl(!cfgWaiterAccessControl)}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                  cfgWaiterAccessControl ? "bg-primary" : "bg-muted"
+                }`}
+              >
+                <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  cfgWaiterAccessControl ? "translate-x-6" : "translate-x-1"
+                }`} />
+              </button>
+            </div>
+            {cfgWaiterAccessControl && (
+              <>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <Label className="text-xs">Abertura</Label>
+                    <Input
+                      type="time"
+                      value={cfgOpeningTime}
+                      onChange={e => setCfgOpeningTime(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Fechamento</Label>
+                    <Input
+                      type="time"
+                      value={cfgClosingTime}
+                      onChange={e => setCfgClosingTime(e.target.value)}
+                    />
+                  </div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label className="text-sm font-medium">Exigir check-in diário</Label>
+                    <p className="text-xs text-muted-foreground">Admin precisa liberar o garçom no dia</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setCfgRequireCheckIn(!cfgRequireCheckIn)}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                      cfgRequireCheckIn ? "bg-primary" : "bg-muted"
+                    }`}
+                  >
+                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      cfgRequireCheckIn ? "translate-x-6" : "translate-x-1"
+                    }`} />
+                  </button>
+                </div>
+              </>
+            )}
+
+            {/* Lista de Garçons - Check-in */}
+            {cfgWaiterAccessControl && cfgRequireCheckIn && waitersList.length > 0 && (
+              <div className="space-y-2">
+                <Label className="text-xs font-medium text-muted-foreground">Garçons de Hoje</Label>
+                {waitersList.map(w => (
+                  <div key={w.userId} className="flex items-center justify-between p-2 rounded-lg border bg-card">
+                    <div className="flex items-center gap-2">
+                      <div className={`w-2 h-2 rounded-full ${w.checkedIn ? 'bg-green-500' : 'bg-gray-300'}`} />
+                      <span className="text-sm font-medium">{w.name}</span>
+                    </div>
+                    {w.checkedIn ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-7 text-xs text-red-600 border-red-200 hover:bg-red-50"
+                        onClick={() => waiterCheckOutMutation.mutate({ companyId, waiterId: w.userId })}
+                        disabled={waiterCheckOutMutation.isPending}
+                      >
+                        <LogOut className="h-3 w-3 mr-1" />
+                        Check-out
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-7 text-xs text-green-600 border-green-200 hover:bg-green-50"
+                        onClick={() => waiterCheckInMutation.mutate({ companyId, waiterId: w.userId })}
+                        disabled={waiterCheckInMutation.isPending}
+                      >
+                        <LogIn className="h-3 w-3 mr-1" />
+                        Liberar
+                      </Button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
           <DialogFooter>
             <Button variant="outline" onClick={() => setConfigModal(false)}>Cancelar</Button>
             <Button onClick={() => {
@@ -738,8 +900,21 @@ export default function SalaoMesas() {
                 defaultTipPercent: parseFloat(cfgTipPercent) || 10,
                 gratuityLabel: cfgGratuityLabel || "Taxa de serviço",
               });
-            }} disabled={saveConfigMutation.isPending}>
-              {saveConfigMutation.isPending ? "Salvando..." : "Salvar"}
+              if (cfgWaiterAccessControl !== (salonCfg?.waiterAccessControl ?? false)
+                || cfgOpeningTime !== (salonCfg?.openingTime ?? '11:00')
+                || cfgClosingTime !== (salonCfg?.closingTime ?? '23:00')
+                || cfgRequireCheckIn !== (salonCfg?.requireCheckIn ?? true)) {
+                saveAccessConfigMutation.mutate({
+                  companyId,
+                  waiterAccessControl: cfgWaiterAccessControl,
+                  openingTime: cfgOpeningTime,
+                  closingTime: cfgClosingTime,
+                  requireCheckIn: cfgRequireCheckIn,
+                });
+              }
+              setConfigModal(false);
+            }} disabled={saveConfigMutation.isPending || saveAccessConfigMutation.isPending}>
+              {(saveConfigMutation.isPending || saveAccessConfigMutation.isPending) ? "Salvando..." : "Salvar"}
             </Button>
           </DialogFooter>
         </DialogContent>

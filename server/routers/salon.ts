@@ -7,6 +7,7 @@ import {
   salonOrderItems,
   salonOrderPayments,
   salonConfig,
+  waiterCheckIns,
   products,
   productPrices,
   salesChannels,
@@ -1653,6 +1654,222 @@ export const salonRouter = router({
         .sort((a, b) => a.date.localeCompare(b.date));
 
       return { totalOrders, totalItems, avgPrepTimeMin, peakHour, hourlyStats, productStats, dailyStats, destinationBreakdown: { kitchen: kitchenCount, bar: barCount } };
+    }),
+
+  // ==================== CONTROLE DE ACESSO GARÇOM ====================
+
+  // Salvar configurações de acesso do garçom
+  saveAccessConfig: protectedProcedure
+    .input(z.object({
+      companyId: z.number(),
+      waiterAccessControl: z.boolean(),
+      openingTime: z.string().regex(/^\d{2}:\d{2}$/),
+      closingTime: z.string().regex(/^\d{2}:\d{2}$/),
+      requireCheckIn: z.boolean(),
+    }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("DB unavailable");
+      await db
+        .insert(salonConfig)
+        .values({
+          companyId: input.companyId,
+          waiterAccessControl: input.waiterAccessControl,
+          openingTime: input.openingTime,
+          closingTime: input.closingTime,
+          requireCheckIn: input.requireCheckIn,
+        })
+        .onDuplicateKeyUpdate({
+          set: {
+            waiterAccessControl: input.waiterAccessControl,
+            openingTime: input.openingTime,
+            closingTime: input.closingTime,
+            requireCheckIn: input.requireCheckIn,
+          },
+        });
+      return { success: true };
+    }),
+
+  // Verificar se garçom tem acesso (chamado pelo frontend)
+  checkWaiterAccess: protectedProcedure
+    .input(z.object({ companyId: z.number() }))
+    .query(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) return { allowed: true, reason: null };
+
+      // Buscar role do usuário na empresa
+      const [uc] = await db
+        .select({ role: userCompanies.role })
+        .from(userCompanies)
+        .where(and(eq(userCompanies.userId, ctx.user.id), eq(userCompanies.companyId, input.companyId)))
+        .limit(1);
+
+      // Se não é garçom, acesso liberado
+      if (!uc || uc.role !== 'garcom') return { allowed: true, reason: null };
+
+      // Buscar config
+      const [config] = await db
+        .select()
+        .from(salonConfig)
+        .where(eq(salonConfig.companyId, input.companyId))
+        .limit(1);
+
+      // Se controle de acesso desativado, libera
+      if (!config || !config.waiterAccessControl) return { allowed: true, reason: null };
+
+      // Verificar horário de funcionamento
+      const now = getNowInBrazil();
+      const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+      const opening = config.openingTime || '11:00';
+      const closing = config.closingTime || '23:00';
+
+      // Suporta horários que cruzam meia-noite (ex: 18:00 - 02:00)
+      let withinHours = false;
+      if (closing > opening) {
+        withinHours = currentTime >= opening && currentTime <= closing;
+      } else {
+        withinHours = currentTime >= opening || currentTime <= closing;
+      }
+
+      if (!withinHours) {
+        return { allowed: false, reason: `Acesso permitido apenas entre ${opening} e ${closing}` };
+      }
+
+      // Verificar check-in
+      if (config.requireCheckIn) {
+        const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+        const [checkIn] = await db
+          .select()
+          .from(waiterCheckIns)
+          .where(
+            and(
+              eq(waiterCheckIns.companyId, input.companyId),
+              eq(waiterCheckIns.userId, ctx.user.id),
+              eq(waiterCheckIns.date, todayStr),
+              isNull(waiterCheckIns.checkedOutAt)
+            )
+          )
+          .limit(1);
+
+        if (!checkIn) {
+          return { allowed: false, reason: 'Aguardando libera\u00e7\u00e3o do administrador. Solicite o check-in ao gerente.' };
+        }
+      }
+
+      return { allowed: true, reason: null };
+    }),
+
+  // Admin: listar garçons da empresa com status de check-in de hoje
+  listWaiters: protectedProcedure
+    .input(z.object({ companyId: z.number() }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) return [];
+
+      const now = getNowInBrazil();
+      const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
+      const waiters = await db
+        .select({
+          userId: userCompanies.userId,
+          userName: users.name,
+          userEmail: users.email,
+        })
+        .from(userCompanies)
+        .innerJoin(users, eq(userCompanies.userId, users.id))
+        .where(
+          and(
+            eq(userCompanies.companyId, input.companyId),
+            eq(userCompanies.role, 'garcom')
+          )
+        );
+
+      // Buscar check-ins de hoje
+      const todayCheckIns = waiters.length > 0
+        ? await db
+            .select()
+            .from(waiterCheckIns)
+            .where(
+              and(
+                eq(waiterCheckIns.companyId, input.companyId),
+                eq(waiterCheckIns.date, todayStr)
+              )
+            )
+        : [];
+
+      return waiters.map(w => {
+        const checkIn = todayCheckIns.find(c => c.userId === w.userId);
+        return {
+          userId: w.userId,
+          name: w.userName || w.userEmail || 'Sem nome',
+          checkedIn: !!checkIn && !checkIn.checkedOutAt,
+          checkInId: checkIn?.id || null,
+          checkedInAt: checkIn?.checkedInAt || null,
+          checkedOutAt: checkIn?.checkedOutAt || null,
+        };
+      });
+    }),
+
+  // Admin: fazer check-in do garçom
+  waiterCheckIn: protectedProcedure
+    .input(z.object({
+      companyId: z.number(),
+      waiterId: z.string(),
+      notes: z.string().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("DB unavailable");
+
+      const now = getNowInBrazil();
+      const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
+      await db
+        .insert(waiterCheckIns)
+        .values({
+          companyId: input.companyId,
+          userId: input.waiterId,
+          date: todayStr,
+          checkedInBy: ctx.user.id,
+          notes: input.notes || null,
+        })
+        .onDuplicateKeyUpdate({
+          set: {
+            checkedInAt: new Date(),
+            checkedInBy: ctx.user.id,
+            checkedOutAt: null,
+            notes: input.notes || null,
+          },
+        });
+
+      return { success: true };
+    }),
+
+  // Admin: fazer check-out do garçom
+  waiterCheckOut: protectedProcedure
+    .input(z.object({
+      companyId: z.number(),
+      waiterId: z.string(),
+    }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("DB unavailable");
+
+      const now = getNowInBrazil();
+      const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
+      await db
+        .update(waiterCheckIns)
+        .set({ checkedOutAt: new Date() })
+        .where(
+          and(
+            eq(waiterCheckIns.companyId, input.companyId),
+            eq(waiterCheckIns.userId, input.waiterId),
+            eq(waiterCheckIns.date, todayStr)
+          )
+        );
+
+      return { success: true };
     }),
 
   // ==================== WEB PUSH SUBSCRIPTIONS ====================

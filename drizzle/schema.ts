@@ -1242,6 +1242,11 @@ export const salonConfig = mysqlTable("salonConfig", {
   gratuityLabel: varchar("gratuityLabel", { length: 100 }).default("Gorjeta (10%)"),
   kitchenLabel: varchar("kitchenLabel", { length: 100 }).default("Cozinha"),
   barLabel: varchar("barLabel", { length: 100 }).default("Bar"),
+  // Controle de acesso por horário
+  waiterAccessControl: boolean("waiterAccessControl").default(false).notNull(),
+  openingTime: varchar("openingTime", { length: 5 }).default("11:00"), // HH:mm
+  closingTime: varchar("closingTime", { length: 5 }).default("23:00"), // HH:mm
+  requireCheckIn: boolean("requireCheckIn").default(true).notNull(),
   createdAt: timestamp("createdAt").defaultNow(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow(),
 }, (table) => ({
@@ -1250,6 +1255,24 @@ export const salonConfig = mysqlTable("salonConfig", {
 
 export type SalonConfig = typeof salonConfig.$inferSelect;
 export type InsertSalonConfig = typeof salonConfig.$inferInsert;
+
+// Check-in diário do garçom (admin libera acesso)
+export const waiterCheckIns = mysqlTable("waiterCheckIns", {
+  id: int("id").primaryKey().autoincrement(),
+  companyId: int("companyId").notNull(),
+  userId: varchar("userId", { length: 64 }).notNull(),
+  date: varchar("date", { length: 10 }).notNull(), // YYYY-MM-DD em BRT
+  checkedInAt: timestamp("checkedInAt").defaultNow(),
+  checkedInBy: varchar("checkedInBy", { length: 64 }).notNull(), // admin que liberou
+  checkedOutAt: timestamp("checkedOutAt"),
+  notes: text("notes"),
+}, (table) => ({
+  uniqueCheckIn: uniqueIndex("waiter_checkin_unique").on(table.companyId, table.userId, table.date),
+  companyIdx: index("waiter_checkin_company_idx").on(table.companyId),
+}));
+
+export type WaiterCheckIn = typeof waiterCheckIns.$inferSelect;
+export type InsertWaiterCheckIn = typeof waiterCheckIns.$inferInsert;
 
 // Mesas do salão
 export const salonTables = mysqlTable("salonTables", {
