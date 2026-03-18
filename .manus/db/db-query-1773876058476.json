@@ -1,0 +1,21 @@
+{
+  "query": "SHOW FULL COLUMNS FROM ifoodProductMappings WHERE Field = 'ifoodProductName';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SHOW FULL COLUMNS FROM ifoodProductMappings WHERE Field = 'ifoodProductName';",
+  "rows": [
+    {
+      "Field": "ifoodProductName",
+      "Type": "varchar(255)",
+      "Collation": "utf8mb4_bin",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": "",
+      "Privileges": "select,insert,update,references",
+      "Comment": ""
+    }
+  ],
+  "messages": [],
+  "stdout": "Field\tType\tCollation\tNull\tKey\tDefault\tExtra\tPrivileges\tComment\nifoodProductName\tvarchar(255)\tutf8mb4_bin\tYES\t\tNULL\t\tselect,insert,update,references\t\n",
+  "stderr": "",
+  "execution_time_ms": 60
+}

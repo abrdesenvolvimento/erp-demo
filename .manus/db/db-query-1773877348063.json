@@ -1,0 +1,87 @@
+{
+  "query": "SELECT m.id, m.ifoodSku, m.ifoodProductName, m.productId, p.name as productName\nFROM ifoodProductMappings m\nLEFT JOIN products p ON m.productId = p.id\nWHERE (LOWER(m.ifoodProductName) LIKE '%coca cola%' OR LOWER(m.ifoodSku) LIKE '%coca cola%' OR LOWER(p.name) LIKE '%coca cola%')\nLIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT m.id, m.ifoodSku, m.ifoodProductName, m.productId, p.name as productName\nFROM ifoodProductMappings m\nLEFT JOIN products p ON m.productId = p.id\nWHERE (LOWER(m.ifoodProductName) LIKE '%coca cola%' OR LOWER(m.ifoodSku) LIKE '%coca cola%' OR LOWER(p.name) LIKE '%coca cola%')\nLIMIT 20;",
+  "rows": [
+    {
+      "id": "30027",
+      "ifoodSku": "7894900027013",
+      "ifoodProductName": "Coca Cola 2l",
+      "productId": "570001",
+      "productName": "Coca Cola 2l"
+    },
+    {
+      "id": "30028",
+      "ifoodSku": "7894900701517",
+      "ifoodProductName": "Refrigerante Coca-Cola Sem Açúcar Pet 2l",
+      "productId": "570002",
+      "productName": "Coca Cola 2l Zero Açúcar"
+    },
+    {
+      "id": "30029",
+      "ifoodSku": "7894900010015",
+      "ifoodProductName": "Refrigerante Coca Cola Lata 350ml",
+      "productId": "600001",
+      "productName": "Coca Cola 350ml"
+    },
+    {
+      "id": "30030",
+      "ifoodSku": "7894900700015",
+      "ifoodProductName": "Refrigerante Coca Cola Zero Lata 350ml",
+      "productId": "600002",
+      "productName": "Coca Cola 350ml Zero Açucar"
+    },
+    {
+      "id": "30031",
+      "ifoodSku": "7894900701159",
+      "ifoodProductName": "Refrigerante Coca-Cola Zero Lata 310ml",
+      "productId": "630001",
+      "productName": "Coca Cola 310ml Zero Açucar"
+    },
+    {
+      "id": "30032",
+      "ifoodSku": "7894900011159",
+      "ifoodProductName": "Coca-Cola Original Lata 310ml",
+      "productId": "630002",
+      "productName": "Coca Cola 310ml"
+    },
+    {
+      "id": "600007",
+      "ifoodSku": "78912939",
+      "ifoodProductName": "Refrigerante Coca Cola 250ml",
+      "productId": "630003",
+      "productName": "Coca Cola 250ml"
+    },
+    {
+      "id": "30037",
+      "ifoodSku": "7894900701715",
+      "ifoodProductName": "Refrigerante Coca-cola Zero Açucar Garrafa 1l",
+      "productId": "630009",
+      "productName": "Coca Cola 1l Zero Açucar"
+    },
+    {
+      "id": "30038",
+      "ifoodSku": "7894900027044",
+      "ifoodProductName": "Coca-Cola Original 1l",
+      "productId": "630010",
+      "productName": "Coca Cola 1l"
+    },
+    {
+      "id": "30358",
+      "ifoodSku": "7894900701609",
+      "ifoodProductName": "Refrigerante Coca-Cola Zero Açucar Garrafa 600ml",
+      "productId": "660002",
+      "productName": "Coca Cola 600ml"
+    },
+    {
+      "id": "30040",
+      "ifoodSku": "7891020384927",
+      "ifoodProductName": "Refrigerante Coca-Cola PET 600ml",
+      "productId": "660002",
+      "productName": "Coca Cola 600ml"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tifoodSku\tifoodProductName\tproductId\tproductName\n30027\t7894900027013\tCoca Cola 2l\t570001\tCoca Cola 2l\n30028\t7894900701517\tRefrigerante Coca-Cola Sem Açúcar Pet 2l\t570002\tCoca Cola 2l Zero Açúcar\n30029\t7894900010015\tRefrigerante Coca Cola Lata 350ml\t600001\tCoca Cola 350ml\n30030\t7894900700015\tRefrigerante Coca Cola Zero Lata 350ml\t600002\tCoca Cola 350ml Zero Açucar\n30031\t7894900701159\tRefrigerante Coca-Cola Zero Lata 310ml\t630001\tCoca Cola 310ml Zero Açucar\n30032\t7894900011159\tCoca-Cola Original Lata 310ml\t630002\tCoca Cola 310ml\n600007\t78912939\tRefrigerante Coca Cola 250ml\t630003\tCoca Cola 250ml\n30037\t7894900701715\tRefrigerante Coca-cola Zero Açucar Garrafa 1l\t630009\tCoca Cola 1l Zero Açucar\n30038\t7894900027044\tCoca-Cola Original 1l\t630010\tCoca Cola 1l\n30358\t7894900701609\tRefrigerante Coca-Cola Zero Açucar Garrafa 600ml\t660002\tCoca Cola 600ml\n30040\t7891020384927\tRefrigerante Coca-Cola PET 600ml\t660002\tCoca Cola 600ml\n",
+  "stderr": "",
+  "execution_time_ms": 60
+}

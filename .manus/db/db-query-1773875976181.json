@@ -1,0 +1,90 @@
+{
+  "query": "SELECT id, name FROM products WHERE name LIKE '%coca%' OR name LIKE '%Coca%' LIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT id, name FROM products WHERE name LIKE '%coca%' OR name LIKE '%Coca%' LIMIT 20;",
+  "rows": [
+    {
+      "id": "630011",
+      "name": "Coca Cola 1,5l"
+    },
+    {
+      "id": "4200004",
+      "name": "Coca Cola 1,5l Zero Açucar"
+    },
+    {
+      "id": "630010",
+      "name": "Coca Cola 1l"
+    },
+    {
+      "id": "2280007",
+      "name": "Coca Cola 1l Retornável "
+    },
+    {
+      "id": "630009",
+      "name": "Coca Cola 1l Zero Açucar"
+    },
+    {
+      "id": "2520007",
+      "name": "Coca Cola 200ml"
+    },
+    {
+      "id": "630003",
+      "name": "Coca Cola 250ml"
+    },
+    {
+      "id": "630004",
+      "name": "Coca Cola 250ml Zero Açucar"
+    },
+    {
+      "id": "570001",
+      "name": "Coca Cola 2l"
+    },
+    {
+      "id": "630012",
+      "name": "Coca Cola 2l Retornável"
+    },
+    {
+      "id": "630013",
+      "name": "Coca Cola 2l Retornável Zero Açúcar"
+    },
+    {
+      "id": "570002",
+      "name": "Coca Cola 2l Zero Açúcar"
+    },
+    {
+      "id": "630002",
+      "name": "Coca Cola 310ml"
+    },
+    {
+      "id": "630001",
+      "name": "Coca Cola 310ml Zero Açucar"
+    },
+    {
+      "id": "600001",
+      "name": "Coca Cola 350ml"
+    },
+    {
+      "id": "4200003",
+      "name": "Coca Cola 350ml 12 Unidades"
+    },
+    {
+      "id": "600002",
+      "name": "Coca Cola 350ml Zero Açucar"
+    },
+    {
+      "id": "660002",
+      "name": "Coca Cola 600ml"
+    },
+    {
+      "id": "4770001",
+      "name": "Coca Cola 600ml Zero Açúcar"
+    },
+    {
+      "id": "4020001",
+      "name": "Coca Cola com Café 220ml"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\n630011\tCoca Cola 1,5l\n4200004\tCoca Cola 1,5l Zero Açucar\n630010\tCoca Cola 1l\n2280007\tCoca Cola 1l Retornável \n630009\tCoca Cola 1l Zero Açucar\n2520007\tCoca Cola 200ml\n630003\tCoca Cola 250ml\n630004\tCoca Cola 250ml Zero Açucar\n570001\tCoca Cola 2l\n630012\tCoca Cola 2l Retornável\n630013\tCoca Cola 2l Retornável Zero Açúcar\n570002\tCoca Cola 2l Zero Açúcar\n630002\tCoca Cola 310ml\n630001\tCoca Cola 310ml Zero Açucar\n600001\tCoca Cola 350ml\n4200003\tCoca Cola 350ml 12 Unidades\n600002\tCoca Cola 350ml Zero Açucar\n660002\tCoca Cola 600ml\n4770001\tCoca Cola 600ml Zero Açúcar\n4020001\tCoca Cola com Café 220ml\n",
+  "stderr": "",
+  "execution_time_ms": 55
+}

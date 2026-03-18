@@ -1,0 +1,14 @@
+{
+  "query": "SELECT m.ifoodProductName, HEX(SUBSTRING(m.ifoodProductName, 1, 10)) FROM ifoodProductMappings m WHERE m.id = 30027;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT m.ifoodProductName, HEX(SUBSTRING(m.ifoodProductName, 1, 10)) FROM ifoodProductMappings m WHERE m.id = 30027;",
+  "rows": [
+    {
+      "ifoodProductName": "Coca Cola 2l",
+      "HEX(SUBSTRING(m.ifoodProductName, 1, 10))": "436F636120436F6C6120"
+    }
+  ],
+  "messages": [],
+  "stdout": "ifoodProductName\tHEX(SUBSTRING(m.ifoodProductName, 1, 10))\nCoca Cola 2l\t436F636120436F6C6120\n",
+  "stderr": "",
+  "execution_time_ms": 56
+}

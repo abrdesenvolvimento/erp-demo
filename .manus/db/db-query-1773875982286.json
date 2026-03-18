@@ -1,0 +1,31 @@
+{
+  "query": "SELECT COUNT(*) as total FROM ifoodProductMappings; SELECT id, ifoodSku, ifoodProductName, productId FROM ifoodProductMappings LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT COUNT(*) as total FROM ifoodProductMappings; SELECT id, ifoodSku, ifoodProductName, productId FROM ifoodProductMappings LIMIT 5;",
+  "rows": [
+    {
+      "total": "448"
+    },
+    {
+      "total": "id\tifoodSku\tifoodProductName\tproductId"
+    },
+    {
+      "total": "30001\t7897395040307\tCerveja Pilsen Itaipava 269ml\t390001"
+    },
+    {
+      "total": "30002\t7897395099329\tCerveja Puro Malte Petra Lata 350ml\t420002"
+    },
+    {
+      "total": "30003\t7897395099299\tCerveja Puro Malte Petra Origem Lata 269ml\t420004"
+    },
+    {
+      "total": "30004\t7897395020101\tCerveja Pilsen Itaipava 350ml\t420006"
+    },
+    {
+      "total": "30005\t7897395020132\tCaixa Itaipava 350ml  com 12 Unidades\t420007"
+    }
+  ],
+  "messages": [],
+  "stdout": "total\n448\nid\tifoodSku\tifoodProductName\tproductId\n30001\t7897395040307\tCerveja Pilsen Itaipava 269ml\t390001\n30002\t7897395099329\tCerveja Puro Malte Petra Lata 350ml\t420002\n30003\t7897395099299\tCerveja Puro Malte Petra Origem Lata 269ml\t420004\n30004\t7897395020101\tCerveja Pilsen Itaipava 350ml\t420006\n30005\t7897395020132\tCaixa Itaipava 350ml  com 12 Unidades\t420007\n",
+  "stderr": "",
+  "execution_time_ms": 62
+}

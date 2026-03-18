@@ -1,0 +1,70 @@
+{
+  "query": "SELECT id, ifoodSku, ifoodProductName, productId FROM ifoodProductMappings WHERE ifoodProductName LIKE '%oca%' LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT id, ifoodSku, ifoodProductName, productId FROM ifoodProductMappings WHERE ifoodProductName LIKE '%oca%' LIMIT 10;",
+  "rows": [
+    {
+      "id": "30027",
+      "ifoodSku": "7894900027013",
+      "ifoodProductName": "Coca Cola 2l",
+      "productId": "570001"
+    },
+    {
+      "id": "30028",
+      "ifoodSku": "7894900701517",
+      "ifoodProductName": "Refrigerante Coca-Cola Sem Açúcar Pet 2l",
+      "productId": "570002"
+    },
+    {
+      "id": "30029",
+      "ifoodSku": "7894900010015",
+      "ifoodProductName": "Refrigerante Coca Cola Lata 350ml",
+      "productId": "600001"
+    },
+    {
+      "id": "30030",
+      "ifoodSku": "7894900700015",
+      "ifoodProductName": "Refrigerante Coca Cola Zero Lata 350ml",
+      "productId": "600002"
+    },
+    {
+      "id": "30031",
+      "ifoodSku": "7894900701159",
+      "ifoodProductName": "Refrigerante Coca-Cola Zero Lata 310ml",
+      "productId": "630001"
+    },
+    {
+      "id": "30032",
+      "ifoodSku": "7894900011159",
+      "ifoodProductName": "Coca-Cola Original Lata 310ml",
+      "productId": "630002"
+    },
+    {
+      "id": "30037",
+      "ifoodSku": "7894900701715",
+      "ifoodProductName": "Refrigerante Coca-cola Zero Açucar Garrafa 1l",
+      "productId": "630009"
+    },
+    {
+      "id": "30038",
+      "ifoodSku": "7894900027044",
+      "ifoodProductName": "Coca-Cola Original 1l",
+      "productId": "630010"
+    },
+    {
+      "id": "30040",
+      "ifoodSku": "7891020384927",
+      "ifoodProductName": "Refrigerante Coca-Cola PET 600ml",
+      "productId": "660002"
+    },
+    {
+      "id": "30327",
+      "ifoodSku": "7896383730114",
+      "ifoodProductName": "Cachaça Ypioca 160 Anos 700ml",
+      "productId": "3120007"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tifoodSku\tifoodProductName\tproductId\n30027\t7894900027013\tCoca Cola 2l\t570001\n30028\t7894900701517\tRefrigerante Coca-Cola Sem Açúcar Pet 2l\t570002\n30029\t7894900010015\tRefrigerante Coca Cola Lata 350ml\t600001\n30030\t7894900700015\tRefrigerante Coca Cola Zero Lata 350ml\t600002\n30031\t7894900701159\tRefrigerante Coca-Cola Zero Lata 310ml\t630001\n30032\t7894900011159\tCoca-Cola Original Lata 310ml\t630002\n30037\t7894900701715\tRefrigerante Coca-cola Zero Açucar Garrafa 1l\t630009\n30038\t7894900027044\tCoca-Cola Original 1l\t630010\n30040\t7891020384927\tRefrigerante Coca-Cola PET 600ml\t660002\n30327\t7896383730114\tCachaça Ypioca 160 Anos 700ml\t3120007\n",
+  "stderr": "",
+  "execution_time_ms": 57
+}

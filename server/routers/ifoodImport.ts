@@ -75,6 +75,7 @@ export const ifoodImportRouter = router({
 
       const offset = (input.page - 1) * input.limit;
       
+      // Incluir products.name no select para que o leftJoin funcione corretamente no Drizzle
       let query = db.select({
         id: ifoodProductMappings.id,
         ifoodSku: ifoodProductMappings.ifoodSku,
@@ -86,14 +87,15 @@ export const ifoodImportRouter = router({
         updatedBy: ifoodProductMappings.updatedBy,
         createdAt: ifoodProductMappings.createdAt,
         updatedAt: ifoodProductMappings.updatedAt,
+        productName: products.name,
       }).from(ifoodProductMappings)
         .leftJoin(products, eq(ifoodProductMappings.productId, products.id));
       
       const conditions = [];
       if (input.search) {
-        const searchTerm = `%${input.search}%`;
+        const searchTerm = `%${input.search.toLowerCase()}%`;
         conditions.push(
-          sql`(${ifoodProductMappings.ifoodProductName} LIKE ${searchTerm} OR ${ifoodProductMappings.ifoodSku} LIKE ${searchTerm} OR ${products.name} LIKE ${searchTerm})`
+          sql`(LOWER(${ifoodProductMappings.ifoodProductName}) LIKE ${searchTerm} OR LOWER(${ifoodProductMappings.ifoodSku}) LIKE ${searchTerm} OR LOWER(${products.name}) LIKE ${searchTerm})`
         );
       }
       if (input.onlyUnmapped) {
@@ -109,17 +111,6 @@ export const ifoodImportRouter = router({
         .limit(input.limit)
         .offset(offset);
 
-      // Buscar nomes dos produtos vinculados
-      const productIds = mappings.filter(m => m.productId).map(m => m.productId!);
-      let productsMap: Record<number, string> = {};
-      
-      if (productIds.length > 0) {
-        const prods = await db.select({ id: products.id, name: products.name })
-          .from(products)
-          .where(inArray(products.id, productIds));
-        productsMap = Object.fromEntries(prods.map(p => [p.id, p.name]));
-      }
-
       // Contar total
       const [countResult] = await db.select({ count: sql<number>`count(*)` })
         .from(ifoodProductMappings);
@@ -127,7 +118,7 @@ export const ifoodImportRouter = router({
 
       return mappings.map(m => ({
         ...m,
-        productName: m.productId ? productsMap[m.productId] : null,
+        productName: m.productName || null,
       }));
     }),
 

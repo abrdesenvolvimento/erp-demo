@@ -2028,3 +2028,8 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [ ] Importador iFood: avaliar customização visual para melhorar associação
 - [x] Despesas: Observação (notes) exibida na listagem quando preenchida
 - [x] Despesas: lógica de edição documentada (admin only, status ATIVA, reprocessa journal contábil)
+
+### Apontamentos v14 (18/03/2026)
+- [x] De/Para iFood: busca corrigida — collation utf8mb4_bin causava case-sensitive, agora usa LOWER()
+- [x] De/Para iFood: listagem e busca corrigidas — schema Drizzle faltava companyId/branchId (colunas existiam no DB mas não no schema), causando erro 500 "Cannot convert undefined or null to object" no leftJoin com products. Adicionados campos ao schema + products.name incluído no select do leftJoin
+- [ ] Importador iFood: customizações visuais para melhorar usabilidade
