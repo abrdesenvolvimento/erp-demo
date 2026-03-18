@@ -1998,3 +1998,12 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Exportação de Despesas e Outras Receitas para CSV/Excel
 - [x] Replicar acessos de ADM para consultor (apenas leitura) — todas análises, financeiro, contabilidade, categorias, importar iFood
 - [ ] FUTURO: Mapeamento de Tempo de Geração de pedido para Bar/Cozinha, Produção e entrega ao cliente (análise operacional)
+
+### Apontamentos v11 (18/03/2026)
+- [x] Compras: corrigir formatação numeral nos Cards de Totais (falta pontuação R$1.000,00)
+- [x] Compras: exportação analítica implementada (botão 'Excel Analítico' com dados por produto/lançamento)
+- [x] Despesas: corrigir formatação numeral na tela de resumo (valores acima de R$1.000 sem pontuação)
+- [x] Contas a Receber: remover filtro duplicado (mantido apenas o Popover de busca)
+- [x] Contas a Pagar: coluna Data de Pagamento corrigida (status PAID e PAGO tratados)
+- [x] Contas a Pagar: validação obrigatória de banco/conta implementada antes de confirmar pagamento
+- [x] Contas a Pagar: renomeado para "Baixa de Pagamento" + opções atualizadas (Dinheiro, Pix, Crédito em Conta)

@@ -1233,6 +1233,53 @@ export async function addPurchaseOrderItem(data: InsertPurchaseOrderItem) {
   return result[0].insertId;
 }
 
+export async function getPurchaseOrdersWithItems(filters?: { status?: string; supplierId?: number; startDate?: Date; endDate?: Date; docNumber?: string; minValue?: number; maxValue?: number; companyId?: number }) {
+  const db = await getDb();
+  if (!db) return [];
+
+  // Buscar todas as ordens de compra com filtros
+  const orders = await getPurchaseOrders(filters);
+
+  // Para cada ordem, buscar os itens
+  const result = [];
+  for (const order of orders) {
+    const items = await db.select({
+      id: purchaseOrderItems.id,
+      productId: purchaseOrderItems.productId,
+      quantity: purchaseOrderItems.quantity,
+      unitCost: purchaseOrderItems.unitCost,
+      totalCost: purchaseOrderItems.totalCost,
+      expiryDate: purchaseOrderItems.expiryDate,
+      productName: products.name,
+    })
+    .from(purchaseOrderItems)
+    .leftJoin(products, eq(purchaseOrderItems.productId, products.id))
+    .where(eq(purchaseOrderItems.purchaseOrderId, order.purchaseOrder.id));
+
+    for (const item of items) {
+      result.push({
+        purchaseOrderId: order.purchaseOrder.id,
+        supplierName: order.supplier?.tradeName || order.supplier?.name || 'N/A',
+        docType: order.purchaseOrder.docType,
+        docNumber: order.purchaseOrder.docNumber || '',
+        postingDate: order.purchaseOrder.postingDate || order.purchaseOrder.createdAt,
+        status: order.purchaseOrder.status,
+        orderTotal: order.purchaseOrder.totalAmount,
+        discount: order.purchaseOrder.discount,
+        freightCost: order.purchaseOrder.freightCost,
+        chargesCost: order.purchaseOrder.chargesCost,
+        productName: item.productName || 'N/A',
+        quantity: item.quantity,
+        unitCost: item.unitCost,
+        totalCost: item.totalCost,
+        expiryDate: item.expiryDate,
+      });
+    }
+  }
+
+  return result;
+}
+
 export async function getPurchaseOrderItems(purchaseOrderId: number) {
   const db = await getDb();
   if (!db) return [];

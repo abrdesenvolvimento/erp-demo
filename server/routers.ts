@@ -1307,6 +1307,20 @@ export const appRouter = router({
         return await db.getPurchaseOrderItems(input.purchaseOrderId);
       }),
     
+    listWithItems: consultorProcedure
+      .input(z.object({
+        status: z.string().optional(),
+        supplierId: z.number().optional(),
+        startDate: z.date().optional(),
+        endDate: z.date().optional(),
+        docNumber: z.string().optional(),
+        minValue: z.number().optional(),
+        maxValue: z.number().optional(),
+      }).optional())
+      .query(async ({ input, ctx }) => {
+        return await db.getPurchaseOrdersWithItems({ ...input, companyId: ctx.activeCompanyId });
+      }),
+    
     searchProducts: adminProcedure
       .input(z.object({ search: z.string() }))
       .query(async ({ input, ctx }) => {

@@ -259,7 +259,13 @@ export default function ContasPagar() {
     }
 
     if (!paymentForm.paymentMethod) {
-      toast.error("Selecione a forma de pagamento");
+      toast.error("Selecione a baixa de pagamento");
+      return;
+    }
+
+    // Validar banco/conta para pagamentos não em dinheiro
+    if (paymentForm.paymentMethod !== 'DINHEIRO' && !paymentForm.bankAccountId) {
+      toast.error("Selecione o banco/conta para este tipo de pagamento");
       return;
     }
     
@@ -383,7 +389,7 @@ export default function ContasPagar() {
                       </span>
                     </TableCell>
                     <TableCell>
-                      {expense.status === 'PAGO' && expense.paidDate ? (
+                      {(expense.status === 'PAGO' || expense.status === 'PAID') && expense.paidDate ? (
                         <button 
                           onClick={() => handleOpenPaymentDetails(expense)}
                           className="text-blue-600 hover:underline text-sm"
@@ -451,7 +457,7 @@ export default function ContasPagar() {
                 </div>
 
                 <div>
-                  <Label htmlFor="paymentMethod">Forma de Pagamento *</Label>
+                  <Label htmlFor="paymentMethod">Baixa de Pagamento *</Label>
                   <Select
                     value={paymentForm.paymentMethod}
                     onValueChange={(value) => {
@@ -468,10 +474,8 @@ export default function ContasPagar() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="DINHEIRO">Dinheiro</SelectItem>
-                      <SelectItem value="PIX">PIX</SelectItem>
-                      <SelectItem value="CARTAO_DEBITO">Débito</SelectItem>
-                      <SelectItem value="CARTAO_CREDITO">Crédito</SelectItem>
-                      <SelectItem value="TRANSFERENCIA">Transferência Bancária</SelectItem>
+                      <SelectItem value="PIX">Pix</SelectItem>
+                      <SelectItem value="CREDITO_CONTA">Crédito em Conta</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

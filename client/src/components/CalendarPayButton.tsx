@@ -81,6 +81,16 @@ export function CalendarPayButton({ item, onPaymentSuccess }: CalendarPayButtonP
       return;
     }
 
+    if (!paymentForm.paymentMethod) {
+      toast.error("Selecione a baixa de pagamento");
+      return;
+    }
+
+    if (!isDinheiro && !paymentForm.bankAccountId) {
+      toast.error("Selecione o banco/conta para este tipo de pagamento");
+      return;
+    }
+
     const bankId = isDinheiro ? caixaGeral?.id : paymentForm.bankAccountId;
 
     payInstallmentMutation.mutate({
@@ -213,9 +223,9 @@ export function CalendarPayButton({ item, onPaymentSuccess }: CalendarPayButtonP
               </div>
             )}
 
-            {/* Forma de Pagamento */}
+            {/* Baixa de Pagamento */}
             <div className="space-y-1.5">
-              <Label htmlFor="cal-paymentMethod">Forma de Pagamento *</Label>
+              <Label htmlFor="cal-paymentMethod">Baixa de Pagamento *</Label>
               <Select
                 value={paymentForm.paymentMethod}
                 onValueChange={(value) => setPaymentForm({ ...paymentForm, paymentMethod: value, bankAccountId: undefined })}
@@ -225,10 +235,8 @@ export function CalendarPayButton({ item, onPaymentSuccess }: CalendarPayButtonP
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="DINHEIRO">Dinheiro</SelectItem>
-                  <SelectItem value="PIX">PIX</SelectItem>
-                  <SelectItem value="CARTAO_DEBITO">Débito</SelectItem>
-                  <SelectItem value="CARTAO_CREDITO">Crédito</SelectItem>
-                  <SelectItem value="TRANSFERENCIA">Transferência Bancária</SelectItem>
+                  <SelectItem value="PIX">Pix</SelectItem>
+                  <SelectItem value="CREDITO_CONTA">Crédito em Conta</SelectItem>
                 </SelectContent>
               </Select>
             </div>

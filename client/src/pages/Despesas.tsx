@@ -1249,7 +1249,7 @@ export default function Despesas() {
                       </div>
                       <div className="text-right">
                         <div className="text-xl font-bold">
-                          R$ {parseFloat(item.expense.amount).toFixed(2)}
+                          {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(parseFloat(item.expense.amount))}
                         </div>
                         {item.expense.status === "ATIVA" && expensePermissions.canEdit && (
                           <div className="flex gap-2 mt-2 justify-end">

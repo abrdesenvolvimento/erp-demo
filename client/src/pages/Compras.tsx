@@ -1028,28 +1028,28 @@ export default function Compras() {
                           <DollarSign className="h-3.5 w-3.5" />
                           Total
                         </div>
-                        <div className="text-xl font-bold">R$ {totalValue.toFixed(2)}</div>
+                        <div className="text-xl font-bold">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalValue)}</div>
                       </div>
                       <div className="bg-card border rounded-lg p-4">
                         <div className="flex items-center gap-2 text-green-600 text-xs mb-1">
                           <Check className="h-3.5 w-3.5" />
                           Confirmadas
                         </div>
-                        <div className="text-xl font-bold text-green-700">R$ {confirmedValue.toFixed(2)}</div>
+                        <div className="text-xl font-bold text-green-700">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(confirmedValue)}</div>
                       </div>
                       <div className="bg-card border rounded-lg p-4">
                         <div className="flex items-center gap-2 text-yellow-600 text-xs mb-1">
                           <FileText className="h-3.5 w-3.5" />
                           Rascunhos
                         </div>
-                        <div className="text-xl font-bold text-yellow-700">R$ {draftValue.toFixed(2)}</div>
+                        <div className="text-xl font-bold text-yellow-700">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(draftValue)}</div>
                       </div>
                     </div>
                   );
                 })()}
 
-                {/* Export Excel Button */}
-                <div className="flex justify-end">
+                {/* Export Excel Buttons */}
+                <div className="flex justify-end gap-2">
                   <Button variant="outline" onClick={() => {
                     const filtered = purchases.filter(p => {
                       if (filterDocType !== "ALL" && p.purchaseOrder.docType !== filterDocType) return false;
@@ -1062,7 +1062,7 @@ export default function Compras() {
                     const headers = ['ID', 'Fornecedor', 'Tipo Doc', 'Nº Doc', 'Data', 'Total', 'Status'];
                     const rows = filtered.map(p => [
                       p.purchaseOrder.id,
-                      p.supplier?.name || 'N/A',
+                      p.supplier?.tradeName || p.supplier?.name || 'N/A',
                       p.purchaseOrder.docType.replace('_', ' '),
                       p.purchaseOrder.docNumber || '',
                       new Date(p.purchaseOrder.postingDate).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' }),
@@ -1081,6 +1081,16 @@ export default function Compras() {
                     <Download className="h-4 w-4 mr-1" />
                     Excel
                   </Button>
+                  <AnalyticalExportButton
+                    filterStartDate={filterStartDate}
+                    filterEndDate={filterEndDate}
+                    filterSupplierId={filterSupplierId}
+                    filterDocNumber={filterDocNumber}
+                    filterDocType={filterDocType}
+                    filterStatus={filterStatus}
+                    filterMinValue={filterMinValue}
+                    filterMaxValue={filterMaxValue}
+                  />
                 </div>
 
                 <div className="bg-card border rounded-lg">
@@ -1135,7 +1145,7 @@ export default function Compras() {
                                 })}
                               </td>
                               <td className="p-4 font-medium">
-                                R$ {parseFloat(purchase.purchaseOrder.totalAmount.toString()).toFixed(2)}
+                                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(parseFloat(purchase.purchaseOrder.totalAmount.toString()))}
                               </td>
                               <td className="p-4">
                                 <span className={cn(
@@ -1510,5 +1520,114 @@ export default function Compras() {
         </DialogContent>
       </Dialog>
     </DashboardLayout>
+  );
+}
+
+// ============================================================
+// Componente de Exportação Analítica (por lançamento/produto)
+// ============================================================
+function AnalyticalExportButton({
+  filterStartDate,
+  filterEndDate,
+  filterSupplierId,
+  filterDocNumber,
+  filterDocType,
+  filterStatus,
+  filterMinValue,
+  filterMaxValue,
+}: {
+  filterStartDate: string;
+  filterEndDate: string;
+  filterSupplierId?: number;
+  filterDocNumber: string;
+  filterDocType: string;
+  filterStatus: string;
+  filterMinValue: string;
+  filterMaxValue: string;
+}) {
+  const [isExporting, setIsExporting] = useState(false);
+  const utils = trpc.useUtils();
+
+  const handleAnalyticalExport = async () => {
+    setIsExporting(true);
+    try {
+      const data = await utils.purchases.listWithItems.fetch({
+        startDate: filterStartDate ? parseDateInBrazil(filterStartDate) : undefined,
+        endDate: filterEndDate ? parseDateInBrazil(filterEndDate) : undefined,
+        supplierId: filterSupplierId,
+        docNumber: filterDocNumber || undefined,
+        minValue: filterMinValue ? parseFloat(filterMinValue) : undefined,
+        maxValue: filterMaxValue ? parseFloat(filterMaxValue) : undefined,
+      });
+
+      // Aplicar filtros adicionais de docType e status no frontend
+      const filtered = data.filter(row => {
+        if (filterDocType !== "ALL" && row.docType !== filterDocType) return false;
+        if (filterStatus !== "ALL" && row.status !== filterStatus) return false;
+        return true;
+      });
+
+      if (filtered.length === 0) {
+        toast.error("Nenhum lançamento encontrado para exportar");
+        return;
+      }
+
+      const headers = [
+        'ID Compra',
+        'Fornecedor',
+        'Tipo Doc',
+        'Nº Doc',
+        'Data Lançamento',
+        'Status Compra',
+        'Produto',
+        'Quantidade',
+        'Custo Unitário',
+        'Custo Total Item',
+        'Desconto Compra',
+        'Frete',
+        'Encargos',
+        'Total Compra',
+        'Validade'
+      ];
+
+      const rows = filtered.map(row => [
+        row.purchaseOrderId,
+        row.supplierName,
+        row.docType.replace('_', ' '),
+        row.docNumber || '',
+        row.postingDate ? new Date(row.postingDate).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' }) : '',
+        row.status === 'CONFIRMED' ? 'Confirmada' : row.status === 'DRAFT' ? 'Rascunho' : 'Cancelada',
+        row.productName,
+        parseFloat(row.quantity?.toString() || '0').toFixed(3),
+        parseFloat(row.unitCost?.toString() || '0').toFixed(4),
+        parseFloat(row.totalCost?.toString() || '0').toFixed(2),
+        parseFloat(row.discount?.toString() || '0').toFixed(2),
+        parseFloat(row.freightCost?.toString() || '0').toFixed(2),
+        parseFloat(row.chargesCost?.toString() || '0').toFixed(2),
+        parseFloat(row.orderTotal?.toString() || '0').toFixed(2),
+        row.expiryDate ? new Date(row.expiryDate).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' }) : '',
+      ]);
+
+      const BOM = '\uFEFF';
+      const csvContent = [headers, ...rows].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
+      const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `compras_analitico_${filterStartDate}_${filterEndDate}.csv`;
+      a.click();
+      toast.success(`Exportação analítica concluída! ${filtered.length} lançamentos exportados.`);
+    } catch (error) {
+      toast.error("Erro ao exportar dados analíticos");
+      console.error(error);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  return (
+    <Button variant="outline" onClick={handleAnalyticalExport} disabled={isExporting}>
+      <FileText className="h-4 w-4 mr-1" />
+      {isExporting ? "Exportando..." : "Excel Analítico"}
+    </Button>
   );
 }
