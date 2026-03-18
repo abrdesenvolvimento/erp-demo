@@ -548,7 +548,7 @@ export default function ImportadorIfood() {
                                     if (unmappedItem) {
                                       setEditingMapping({
                                         ifoodSku: unmappedItem.ifoodSku,
-                                        ifoodProductName: unmappedItem.ifoodProductName,
+                                        ifoodProductName: unmappedItem.ifoodProductName || unmappedItem.ifoodSku || 'Produto sem nome',
                                       });
                                     }
                                   }}

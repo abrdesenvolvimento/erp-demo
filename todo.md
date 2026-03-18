@@ -2020,3 +2020,11 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 ### Apontamentos v12 — Complementos (18/03/2026)
 - [x] De/Para iFood: permitir edição do produto de destino em mapeamentos existentes (corrigir associações indevidas)
 - [ ] FUTURO: Substituição de item em pedido iFood importado — trocar produto entregue sem alterar receita (valor iFood original mantido, baixa de estoque dos produtos reais entregues, campo de observação do motivo)
+
+### Apontamentos v13 (18/03/2026)
+- [x] Compras: exportação analítica — encargos agora com rateio proporcional por item (proporção do custo)
+- [x] Importador iFood: erro de vinculação corrigido — ifoodProductName null tratado com fallback para SKU
+- [x] De/Para iFood: busca agora inclui nome do produto interno (ABRWF) além do nome iFood e SKU
+- [ ] Importador iFood: avaliar customização visual para melhorar associação
+- [x] Despesas: Observação (notes) exibida na listagem quando preenchida
+- [x] Despesas: lógica de edição documentada (admin only, status ATIVA, reprocessa journal contábil)

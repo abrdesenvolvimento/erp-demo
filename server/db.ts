@@ -1256,7 +1256,16 @@ export async function getPurchaseOrdersWithItems(filters?: { status?: string; su
     .leftJoin(products, eq(purchaseOrderItems.productId, products.id))
     .where(eq(purchaseOrderItems.purchaseOrderId, order.purchaseOrder.id));
 
+    // Calcular total de itens para rateio proporcional
+    const itemsTotal = items.reduce((sum, it) => sum + parseFloat(it.totalCost?.toString() || '0'), 0);
+    const orderDiscount = parseFloat(order.purchaseOrder.discount?.toString() || '0');
+    const orderFreight = parseFloat(order.purchaseOrder.freightCost?.toString() || '0');
+    const orderCharges = parseFloat(order.purchaseOrder.chargesCost?.toString() || '0');
+
     for (const item of items) {
+      const itemTotal = parseFloat(item.totalCost?.toString() || '0');
+      const proportion = itemsTotal > 0 ? itemTotal / itemsTotal : 0;
+
       result.push({
         purchaseOrderId: order.purchaseOrder.id,
         supplierName: order.supplier?.tradeName || order.supplier?.name || 'N/A',
@@ -1265,9 +1274,9 @@ export async function getPurchaseOrdersWithItems(filters?: { status?: string; su
         postingDate: order.purchaseOrder.postingDate || order.purchaseOrder.createdAt,
         status: order.purchaseOrder.status,
         orderTotal: order.purchaseOrder.totalAmount,
-        discount: order.purchaseOrder.discount,
-        freightCost: order.purchaseOrder.freightCost,
-        chargesCost: order.purchaseOrder.chargesCost,
+        discount: (orderDiscount * proportion).toFixed(2),
+        freightCost: (orderFreight * proportion).toFixed(2),
+        chargesCost: (orderCharges * proportion).toFixed(2),
         productName: item.productName || 'N/A',
         quantity: item.quantity,
         unitCost: item.unitCost,

@@ -75,12 +75,25 @@ export const ifoodImportRouter = router({
 
       const offset = (input.page - 1) * input.limit;
       
-      let query = db.select().from(ifoodProductMappings);
+      let query = db.select({
+        id: ifoodProductMappings.id,
+        ifoodSku: ifoodProductMappings.ifoodSku,
+        ifoodProductName: ifoodProductMappings.ifoodProductName,
+        productId: ifoodProductMappings.productId,
+        situation: ifoodProductMappings.situation,
+        companyId: ifoodProductMappings.companyId,
+        createdBy: ifoodProductMappings.createdBy,
+        updatedBy: ifoodProductMappings.updatedBy,
+        createdAt: ifoodProductMappings.createdAt,
+        updatedAt: ifoodProductMappings.updatedAt,
+      }).from(ifoodProductMappings)
+        .leftJoin(products, eq(ifoodProductMappings.productId, products.id));
       
       const conditions = [];
       if (input.search) {
+        const searchTerm = `%${input.search}%`;
         conditions.push(
-          sql`(${ifoodProductMappings.ifoodProductName} LIKE ${`%${input.search}%`} OR ${ifoodProductMappings.ifoodSku} LIKE ${`%${input.search}%`})`
+          sql`(${ifoodProductMappings.ifoodProductName} LIKE ${searchTerm} OR ${ifoodProductMappings.ifoodSku} LIKE ${searchTerm} OR ${products.name} LIKE ${searchTerm})`
         );
       }
       if (input.onlyUnmapped) {
@@ -168,7 +181,7 @@ export const ifoodImportRouter = router({
     .input(z.object({
       id: z.number().optional(),
       ifoodSku: z.string(),
-      ifoodProductName: z.string().optional(),
+      ifoodProductName: z.string().nullable().optional(),
       productId: z.number().nullable(),
       situation: z.string().optional(),
     }))
@@ -191,11 +204,11 @@ export const ifoodImportRouter = router({
             updatedBy: ctx.user.id,
           })
           .where(eq(ifoodProductMappings.ifoodSku, input.ifoodSku));
-      } else if (input.ifoodProductName) {
+      } else {
         // Criar novo
            await db.insert(ifoodProductMappings).values({
           ifoodSku: input.ifoodSku,
-          ifoodProductName: input.ifoodProductName,
+          ifoodProductName: input.ifoodProductName || input.ifoodSku,
           productId: input.productId,
           situation: input.situation || "Manual",
           createdBy: ctx.user.id,

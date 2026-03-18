@@ -1248,6 +1248,7 @@ export default function Despesas() {
                           {item.supplier && <div>Fornecedor: {item.supplier.name}</div>}
                           <div>Documento: {item.expense.docType} {item.expense.docNumber && `- ${item.expense.docNumber}`}</div>
                           <div>Forma de Pagamento: {item.expense.paymentMethod}</div>
+                          {item.expense.notes && <div className="text-xs mt-1 italic text-muted-foreground/80">Obs: {item.expense.notes}</div>}
                         </div>
                       </div>
                       <div className="text-right">
