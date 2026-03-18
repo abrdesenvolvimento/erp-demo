@@ -2007,3 +2007,16 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Contas a Pagar: coluna Data de Pagamento corrigida (status PAID e PAGO tratados)
 - [x] Contas a Pagar: validação obrigatória de banco/conta implementada antes de confirmar pagamento
 - [x] Contas a Pagar: renomeado para "Baixa de Pagamento" + opções atualizadas (Dinheiro, Pix, Crédito em Conta)
+
+### Apontamentos v12 (18/03/2026)
+- [x] Contas a Receber: redesenhar filtro — substituir Popover sobreposto por barra de busca inline (menos poluído)
+- [x] A Brasa Reúne: conta gerencial corrigida — filtro por companyId adicionado + contas copiadas para empresa 2
+- [x] De/Para iFood: permitir edição do produto associado (alterar mapeamento existente)
+- [x] Despesas (Lançamento): removido texto "(Opcional)" ao lado do campo Fornecedor
+- [x] Despesas: corrigida lógica de parcelas — botão 'Dividir Igualmente' agora usa soma das parcelas existentes
+- [x] Análise de Vendas: mês e ano atual selecionados por padrão + botões Todos/Nenhum para meses
+- [x] Análise de Canal: Canal Salão oculto para empresas com segmento 'Adega' (exibido apenas na A Brasa)
+
+### Apontamentos v12 — Complementos (18/03/2026)
+- [x] De/Para iFood: permitir edição do produto de destino em mapeamentos existentes (corrigir associações indevidas)
+- [ ] FUTURO: Substituição de item em pedido iFood importado — trocar produto entregue sem alterar receita (valor iFood original mantido, baixa de estoque dos produtos reais entregues, campo de observação do motivo)

@@ -1,0 +1,9 @@
+{
+  "query": "INSERT INTO accountingMappings (managementAccountId, accountingCode, accountingName, effectiveDate, endDate, notes, createdAt, updatedAt)\nSELECT ma2.id, am.accountingCode, am.accountingName, am.effectiveDate, am.endDate, am.notes, NOW(), NOW()\nFROM accountingMappings am\nJOIN managementAccounts ma1 ON am.managementAccountId = ma1.id AND ma1.companyId = 1\nJOIN managementAccounts ma2 ON ma2.companyId = 2 AND ma2.code = ma1.code;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute INSERT INTO accountingMappings (managementAccountId, accountingCode, accountingName, effectiveDate, endDate, notes, createdAt, updatedAt)\nSELECT ma2.id, am.accountingCode, am.accountingName, am.effectiveDate, am.endDate, am.notes, NOW(), NOW()\nFROM accountingMappings am\nJOIN managementAccounts ma1 ON am.managementAccountId = ma1.id AND ma1.companyId = 1\nJOIN managementAccounts ma2 ON ma2.companyId = 2 AND ma2.code = ma1.code;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 72
+}

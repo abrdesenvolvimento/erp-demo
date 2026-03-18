@@ -41,7 +41,6 @@ export default function ContasReceberNovo() {
   const [whatsAppPhone, setWhatsAppPhone] = useState("");
 
   // Estados para autocomplete de cliente na tela principal
-  const [clientOpen, setClientOpen] = useState(false);
   const [clientSearch, setClientSearch] = useState("");
 
   // Estados para autocomplete de conta gerencial
@@ -216,8 +215,12 @@ export default function ContasReceberNovo() {
     });
   };
 
-  // Filtrar clientes
-  const filteredCustomers = customers || [];
+  // Filtrar clientes pela busca inline
+  const filteredCustomers = clientSearch
+    ? (customers || []).filter(c =>
+        c.customerName?.toLowerCase().includes(clientSearch.toLowerCase())
+      )
+    : (customers || []);
 
   // Calcular total a receber
   const totalReceivable = customers?.reduce((sum, c) => sum + parseFloat(c.totalPending || "0"), 0) || 0;
@@ -606,67 +609,15 @@ export default function ContasReceberNovo() {
             <Users className="h-5 w-5" />
             Contas a Receber - Conta Corrente
           </CardTitle>
-          <div className="mt-4">
-            <Popover open={clientOpen} onOpenChange={setClientOpen}>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  role="combobox"
-                  aria-expanded={clientOpen}
-                  className="w-full justify-between"
-                >
-                  <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
-                  Buscar cliente por nome...
-                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-[500px] p-0" align="start">
-                <Command shouldFilter={false}>
-                  <CommandInput
-                    placeholder="Digite o nome do cliente..."
-                    value={clientSearch}
-                    onValueChange={setClientSearch}
-                  />
-                  <CommandList className="max-h-[400px]">
-                    <CommandEmpty>Nenhum cliente encontrado.</CommandEmpty>
-                    <CommandGroup heading="Clientes com Saldo Devedor">
-                      {(customers || [])
-                        .filter(c =>
-                          c.customerName?.toLowerCase().includes(clientSearch.toLowerCase())
-                        )
-                        .map((customer) => (
-                          <CommandItem
-                            key={customer.customerId}
-                            value={customer.customerId.toString()}
-                            onSelect={() => {
-                              setSelectedCustomerId(customer.customerId);
-                              setClientOpen(false);
-                              setClientSearch("");
-                            }}
-                          >
-                            <div className="flex-1 flex items-center justify-between">
-                              <div>
-                                <div className="font-medium">{customer.customerName}</div>
-                                <div className="text-xs text-muted-foreground">
-                                  {customer.salesCount} transações
-                                </div>
-                              </div>
-                              <div className="text-right">
-                                <div className="font-bold text-orange-600">
-                                  {formatCurrency(parseFloat(customer.totalPending || "0"))}
-                                </div>
-                                <div className="text-xs text-muted-foreground">pendente</div>
-                              </div>
-                            </div>
-                          </CommandItem>
-                        ))}
-                    </CommandGroup>
-                  </CommandList>
-                </Command>
-              </PopoverContent>
-            </Popover>
+          <div className="relative mt-2">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar cliente por nome..."
+              value={clientSearch}
+              onChange={(e) => setClientSearch(e.target.value)}
+              className="pl-9"
+            />
           </div>
-
         </CardHeader>
         <CardContent>
           {loadingCustomers ? (

@@ -1011,7 +1011,7 @@ export async function listManagementAccounts(companyId: number = 1) {
   const db = await getDb();
   if (!db) return [];
   
-  // Buscar contas gerenciais com suas amarrações
+  // Buscar contas gerenciais com suas amarrações (filtrado por empresa)
   const accounts = await db.select({
     id: managementAccounts.id,
     code: managementAccounts.code,
@@ -1028,6 +1028,7 @@ export async function listManagementAccounts(companyId: number = 1) {
   })
   .from(managementAccounts)
   .leftJoin(accountingMappings, eq(managementAccounts.id, accountingMappings.managementAccountId))
+  .where(eq(managementAccounts.companyId, companyId))
   .orderBy(asc(managementAccounts.displayOrder), asc(managementAccounts.code));
   
   return accounts;

@@ -455,7 +455,7 @@ export default function Despesas() {
               <div className="max-w-3xl mx-auto space-y-6">
                 {/* Fornecedor */}
                 <div className="bg-card border rounded-lg p-6">
-                  <h3 className="text-lg font-semibold mb-4">Fornecedor (Opcional)</h3>
+                  <h3 className="text-lg font-semibold mb-4">Fornecedor</h3>
                   <Popover open={supplierOpen} onOpenChange={setSupplierOpen}>
                     <PopoverTrigger asChild>
                       <Button
@@ -859,15 +859,18 @@ export default function Despesas() {
                           variant="outline"
                           size="sm"
                           onClick={() => {
-                            if (!amount || parseFloat(amount) <= 0) {
-                              toast.error("Preencha o valor total da despesa primeiro");
+                            // Calcular o total a partir dos valores já preenchidos nas parcelas
+                            const totalFromParcelas = dueDates.reduce((sum, d) => sum + (parseFloat(d.amount) || 0), 0);
+                            const totalToUse = totalFromParcelas > 0 ? totalFromParcelas : (amount ? parseFloat(amount) : 0);
+                            if (totalToUse <= 0) {
+                              toast.error("Preencha o valor em pelo menos uma parcela antes de dividir");
                               return;
                             }
-                            if (dueDates.length === 0) {
-                              toast.error("Adicione pelo menos uma parcela");
+                            if (dueDates.length < 2) {
+                              toast.error("Adicione pelo menos 2 parcelas para dividir");
                               return;
                             }
-                            const total = parseFloat(amount);
+                            const total = totalToUse;
                             const count = dueDates.length;
                             const perInstallment = total / count;
                             const remainder = total - (Math.floor(perInstallment * 100) / 100) * count;

@@ -1,0 +1,8 @@
+{
+  "query": "INSERT INTO managementAccounts (companyId, branchId, code, name, description, nature, costType, classification, impactMargin, impactPayroll, isActive, displayOrder, createdAt, updatedAt)\nSELECT 2, 1, code, name, description, nature, costType, classification, impactMargin, impactPayroll, isActive, displayOrder, NOW(), NOW()\nFROM managementAccounts\nWHERE companyId = 1 AND isActive = 1;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute INSERT INTO managementAccounts (companyId, branchId, code, name, description, nature, costType, classification, impactMargin, impactPayroll, isActive, displayOrder, createdAt, updatedAt)\nSELECT 2, 1, code, name, description, nature, costType, classification, impactMargin, impactPayroll, isActive, displayOrder, NOW(), NOW()\nFROM managementAccounts\nWHERE companyId = 1 AND isActive = 1;",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1062 (23000) at line 1: Duplicate entry '?' for key 'managementAccounts.code_idx'"
+  ]
+}

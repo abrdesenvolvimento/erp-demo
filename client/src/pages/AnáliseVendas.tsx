@@ -68,8 +68,8 @@ export default function AnáliseVendas() {
   const isAdmin = user?.role === "admin";
 
   // Novos filtros de período
-  const [selectedMonths, setSelectedMonths] = useState<number[]>([]); // Vazio - usuário escolhe o período
-  const [selectedYears, setSelectedYears] = useState<number[]>([2025]); // Anos disponíveis: 2022-2026
+  const [selectedMonths, setSelectedMonths] = useState<number[]>([new Date().getMonth() + 1]); // Mês atual selecionado por padrão
+  const [selectedYears, setSelectedYears] = useState<number[]>([new Date().getFullYear()]); // Ano atual selecionado por padrão
   const [selectedDays, setSelectedDays] = useState<number[]>([]); // Vazio - usuário escolhe os dias
   const [filtersExpanded, setFiltersExpanded] = useState(true); // Controle de expansão dos filtros
 
@@ -621,7 +621,27 @@ export default function AnáliseVendas() {
               
               {/* Filtro de Mês */}
               <div className="mt-3">
-                <Label className="text-sm">Mês(es)</Label>
+                <div className="flex items-center justify-between mb-2">
+                  <Label className="text-sm">Mês(es) ({selectedMonths.length} selecionados)</Label>
+                  <div className="flex gap-1">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setSelectedMonths(Array.from({ length: 12 }, (_, i) => i + 1))}
+                      className="h-7 text-xs"
+                    >
+                      Todos
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setSelectedMonths([])}
+                      className="h-7 text-xs"
+                    >
+                      Nenhum
+                    </Button>
+                  </div>
+                </div>
                 <div className="grid grid-cols-6 gap-2 mt-2">
                   {["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"].map((month, idx) => (
                     <Button

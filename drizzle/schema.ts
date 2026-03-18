@@ -686,7 +686,7 @@ export const managementAccounts = mysqlTable("managementAccounts", {
   createdAt: timestamp("createdAt").defaultNow(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow(),
 }, (table) => ({
-  codeIdx: uniqueIndex("code_idx").on(table.code),
+  codeIdx: uniqueIndex("code_idx").on(table.companyId, table.code),
   nameIdx: index("name_idx").on(table.name),
   natureIdx: index("nature_idx").on(table.nature),
   classificationIdx: index("classification_idx").on(table.classification),

@@ -637,7 +637,8 @@ export default function ImportadorIfood() {
                               setProductSearch("");
                             }}
                           >
-                            <Edit2 className="w-4 h-4" />
+                            <Edit2 className="w-4 h-4 mr-1" />
+                            {mapping.productId ? 'Editar' : 'Vincular'}
                           </Button>
                         </TableCell>
                       </TableRow>
@@ -819,9 +820,9 @@ export default function ImportadorIfood() {
         <Dialog open={!!editingMapping} onOpenChange={() => setEditingMapping(null)}>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
-              <DialogTitle>Vincular Produto</DialogTitle>
+              <DialogTitle>{editingMapping?.productName ? 'Editar Vínculo' : 'Vincular Produto'}</DialogTitle>
               <DialogDescription>
-                Vincule o produto do iFood a um produto do ABRWF
+                {editingMapping?.productName ? 'Altere o produto vinculado ao item do iFood' : 'Vincule o produto do iFood a um produto do ABRWF'}
               </DialogDescription>
             </DialogHeader>
             
@@ -833,8 +834,16 @@ export default function ImportadorIfood() {
                   <p className="text-sm text-muted-foreground mt-1">SKU: {editingMapping.ifoodSku}</p>
                 </div>
 
+                {editingMapping.productName && (
+                  <div className="p-4 border rounded-lg border-green-200 bg-green-50">
+                    <p className="text-sm text-muted-foreground">Vínculo atual:</p>
+                    <p className="font-medium text-green-700">{editingMapping.productName}</p>
+                    <p className="text-xs text-muted-foreground mt-1">Selecione outro produto abaixo para alterar o vínculo</p>
+                  </div>
+                )}
+
                 <div className="space-y-2">
-                  <Label>Buscar produto no ABRWF:</Label>
+                  <Label>{editingMapping.productName ? 'Alterar vínculo - Buscar produto:' : 'Buscar produto no ABRWF:'}</Label>
                   <Input
                     placeholder="Digite o nome ou EAN do produto..."
                     value={productSearch}

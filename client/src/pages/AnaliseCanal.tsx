@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
+import { useCompany } from "@/contexts/CompanyContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -31,6 +32,8 @@ interface ChannelData {
 
 export default function AnaliseCanal() {
   const todayInfo = getCurrentBrazilDateInfo();
+  const { activeCompany } = useCompany();
+  const showSalao = activeCompany?.segment !== 'Adega';
   
   // Estado para período flexível
   const [dateRange, setDateRange] = useState<DateRange | undefined>(() => {
@@ -164,13 +167,14 @@ export default function AnaliseCanal() {
       };
     };
 
-    return [
+    const channels = [
       calculateChannelMetrics(balcaoData, 'Balcão', 'BALCAO'),
-      calculateChannelMetrics(salaoData, 'Salão', 'SALAO'),
+      ...(showSalao ? [calculateChannelMetrics(salaoData, 'Salão', 'SALAO')] : []),
       calculateChannelMetrics(deliveryData, 'Delivery', 'DELIVERY'),
       calculateChannelMetrics(aPrazoData, 'A Prazo', 'A_PRAZO'),
     ];
-  }, [balcaoData, salaoData, deliveryData, aPrazoData, salesCountByChannel]);
+    return channels;
+  }, [balcaoData, salaoData, deliveryData, aPrazoData, salesCountByChannel, showSalao]);
 
   // Calcular totais
   const totals = useMemo(() => {
