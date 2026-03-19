@@ -63,6 +63,8 @@ export default function ImportadorIfood() {
   const [productSearch, setProductSearch] = useState("");
   const [newMappingSku, setNewMappingSku] = useState("");
   const [newMappingIfoodName, setNewMappingIfoodName] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const PAGE_SIZE = 50;
   
   // Divergência de valor state
   const [divergenceModal, setDivergenceModal] = useState<{
@@ -74,7 +76,7 @@ export default function ImportadorIfood() {
   const [deleteConfirmModal, setDeleteConfirmModal] = useState<{ logId: number; ordersCount: number } | null>(null);
   
   // Queries
-  const mappingsQuery = trpc.ifoodImport.listMappings.useQuery({ search: searchMapping, limit: 100 });
+  const mappingsQuery = trpc.ifoodImport.listMappings.useQuery({ search: searchMapping, page: currentPage, limit: PAGE_SIZE });
   const historyQuery = trpc.ifoodImport.listImportHistory.useQuery({ limit: 20 });
   const searchProductsQuery = trpc.ifoodImport.searchProducts.useQuery(
     { search: productSearch },
@@ -303,9 +305,11 @@ export default function ImportadorIfood() {
         {/* Header com identidade iFood */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#EA1D2C] flex items-center justify-center shadow-sm">
-              <span className="text-white font-bold text-lg">iF</span>
-            </div>
+            <img
+              src="https://d2xsxph8kpxj0f.cloudfront.net/310519663140687549/7RkrCeS5KipYf8hkuNqrCk/ifood-logo_024583d8.png"
+              alt="iFood"
+              className="w-10 h-10 object-contain"
+            />
             <div>
               <h1 className="text-2xl font-bold text-gray-800">Importador iFood</h1>
               <p className="text-sm text-gray-500">Importe pedidos do iFood para o sistema de vendas</p>
@@ -629,7 +633,7 @@ export default function ImportadorIfood() {
                     <Input
                       placeholder="Buscar por nome, SKU ou EAN..."
                       value={searchMapping}
-                      onChange={(e) => setSearchMapping(e.target.value)}
+                      onChange={(e) => { setSearchMapping(e.target.value); setCurrentPage(1); }}
                       className="w-72 pl-9 border-gray-300 focus:border-[#EA1D2C] focus:ring-[#EA1D2C]/20"
                     />
                   </div>
@@ -647,7 +651,7 @@ export default function ImportadorIfood() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {mappingsQuery.data?.map((mapping, idx) => {
+                    {mappingsQuery.data?.items?.map((mapping, idx) => {
                       const isUnmappedProduct = (mapping as any).source === 'product';
                       return (
                         <TableRow key={isUnmappedProduct ? `prod-${mapping.productId}` : `map-${mapping.id}`} className={isUnmappedProduct ? 'bg-blue-50/50' : ''}>
@@ -720,7 +724,7 @@ export default function ImportadorIfood() {
                         </TableRow>
                       );
                     })}
-                    {mappingsQuery.data?.length === 0 && !mappingsQuery.isLoading && (
+                    {(!mappingsQuery.data?.items || mappingsQuery.data.items.length === 0) && !mappingsQuery.isLoading && (
                       <TableRow>
                         <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
                           {searchMapping ? 'Nenhum produto encontrado para esta busca' : 'Nenhum mapeamento cadastrado'}
@@ -729,12 +733,60 @@ export default function ImportadorIfood() {
                     )}
                   </TableBody>
                 </Table>
-                {searchMapping && searchMapping.length >= 2 && mappingsQuery.data && mappingsQuery.data.some((m: any) => m.source === 'product') && (
+                {searchMapping && searchMapping.length >= 2 && mappingsQuery.data?.items?.some((m: any) => m.source === 'product') && (
                   <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                     <p className="text-sm text-blue-700">
                       <Package className="w-4 h-4 inline mr-1" />
                       Os itens em <strong>azul</strong> são produtos ABRWF que ainda não possuem mapeamento iFood. Clique em "Criar Vínculo" para associá-los.
                     </p>
+                  </div>
+                )}
+
+                {/* Pagination Controls */}
+                {mappingsQuery.data?.pagination && mappingsQuery.data.pagination.totalPages > 1 && (
+                  <div className="mt-4 flex items-center justify-between border-t border-gray-200 pt-4">
+                    <p className="text-sm text-gray-500">
+                      Mostrando página <strong>{mappingsQuery.data.pagination.page}</strong> de <strong>{mappingsQuery.data.pagination.totalPages}</strong>
+                      {" "}({mappingsQuery.data.pagination.total} mapeamentos)
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={currentPage <= 1}
+                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                        className="text-xs"
+                      >
+                        Anterior
+                      </Button>
+                      {Array.from({ length: Math.min(5, mappingsQuery.data.pagination.totalPages) }, (_, i) => {
+                        const totalPages = mappingsQuery.data!.pagination.totalPages;
+                        let startPage = Math.max(1, currentPage - 2);
+                        if (startPage + 4 > totalPages) startPage = Math.max(1, totalPages - 4);
+                        const pageNum = startPage + i;
+                        if (pageNum > totalPages) return null;
+                        return (
+                          <Button
+                            key={pageNum}
+                            variant={pageNum === currentPage ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => setCurrentPage(pageNum)}
+                            className={`text-xs min-w-[32px] ${pageNum === currentPage ? 'bg-[#EA1D2C] hover:bg-[#C8101E] text-white' : ''}`}
+                          >
+                            {pageNum}
+                          </Button>
+                        );
+                      })}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={!mappingsQuery.data.pagination.hasMore}
+                        onClick={() => setCurrentPage(p => p + 1)}
+                        className="text-xs"
+                      >
+                        Próximo
+                      </Button>
+                    </div>
                   </div>
                 )}
               </CardContent>

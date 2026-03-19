@@ -107,6 +107,15 @@ export const ifoodImportRouter = router({
         mappingQuery = mappingQuery.where(and(...conditions)) as any;
       }
       
+      // Count total mappings for pagination
+      let countQuery = db.select({ count: sql<number>`COUNT(*)` })
+        .from(ifoodProductMappings)
+        .leftJoin(products, eq(ifoodProductMappings.productId, products.id));
+      if (conditions.length > 0) {
+        countQuery = countQuery.where(and(...conditions)) as any;
+      }
+      const [{ count: totalMappings }] = await countQuery;
+
       const mappings = await mappingQuery
         .orderBy(ifoodProductMappings.ifoodProductName)
         .limit(input.limit)
@@ -166,7 +175,20 @@ export const ifoodImportRouter = router({
         }));
       }
 
-      return [...mappingResults, ...unmappedProducts];
+      const items = [...mappingResults, ...unmappedProducts];
+      const totalItems = Number(totalMappings) + unmappedProducts.length;
+      const totalPages = Math.ceil(Number(totalMappings) / input.limit);
+
+      return {
+        items,
+        pagination: {
+          page: input.page,
+          limit: input.limit,
+          total: Number(totalMappings),
+          totalPages: totalPages || 1,
+          hasMore: input.page < totalPages,
+        },
+      };
     }),
 
   // Buscar produtos para vincular
