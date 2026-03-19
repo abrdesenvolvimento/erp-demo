@@ -553,7 +553,7 @@ export const ifoodImportRouter = router({
             hasUnmapped = true;
             processedItems.push({
               ifoodSku: sku,
-              ifoodProductName: item.produto,
+              ifoodProductName: item.produto || sku || '',
               quantity: quantity,
               ifoodPrice: ifoodPrice,
               productId: null,
@@ -594,7 +594,7 @@ export const ifoodImportRouter = router({
 
             processedItems.push({
               ifoodSku: sku,
-              ifoodProductName: item.produto,
+              ifoodProductName: item.produto || sku || '',
               quantity: quantity,
               ifoodPrice: ifoodPrice,
               productId: mapping.productId,
@@ -669,7 +669,7 @@ export const ifoodImportRouter = router({
         paymentMethod: z.string().optional(),
         items: z.array(z.object({
           ifoodSku: z.string(),
-          ifoodProductName: z.string(),
+          ifoodProductName: z.string().nullable().default(''),
           quantity: z.number(),
           ifoodPrice: z.number(),
           productId: z.number().nullable(),
