@@ -11,7 +11,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
-import { Upload, FileJson, ArrowRight, CheckCircle2, AlertCircle, AlertTriangle, Search, Edit2, Trash2, Package, History, Loader2, ExternalLink } from "lucide-react";
+import { Upload, FileJson, ArrowRight, CheckCircle2, AlertCircle, AlertTriangle, Search, Edit2, Trash2, Package, History, Loader2, ExternalLink, Download } from "lucide-react";
+import * as XLSX from "xlsx";
 
 interface ProcessedOrder {
   ifoodOrderId: string;
@@ -91,6 +92,40 @@ export default function ImportadorIfood() {
   const deleteImportMutation = trpc.ifoodImport.deleteImport.useMutation();
   
   const utils = trpc.useUtils();
+  const [isExporting, setIsExporting] = useState(false);
+
+  const handleExportMappings = async () => {
+    setIsExporting(true);
+    try {
+      const data = await utils.ifoodImport.exportMappings.fetch();
+      if (!data || data.length === 0) {
+        toast.error("Nenhum mapeamento para exportar");
+        return;
+      }
+      const wsData = data.map(row => ({
+        'SKU iFood': row.skuIfood,
+        'Produto iFood': row.produtoIfood,
+        'Produto ABRWF': row.produtoABRWF,
+        'EAN ABRWF': row.eanABRWF,
+        'Situação': row.situacao,
+      }));
+      const ws = XLSX.utils.json_to_sheet(wsData);
+      // Auto-width columns
+      const colWidths = Object.keys(wsData[0]).map(key => ({
+        wch: Math.max(key.length, ...wsData.map(row => String((row as any)[key] || '').length)) + 2
+      }));
+      ws['!cols'] = colWidths;
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'De-Para iFood');
+      XLSX.writeFile(wb, `depara-ifood-${new Date().toISOString().slice(0,10)}.xlsx`);
+      toast.success(`${data.length} mapeamentos exportados com sucesso!`);
+    } catch (err) {
+      toast.error("Erro ao exportar mapeamentos");
+      console.error(err);
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   // Handlers
   const handleFileChange = (type: "orders" | "items") => (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -306,7 +341,7 @@ export default function ImportadorIfood() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <img
-              src="https://d2xsxph8kpxj0f.cloudfront.net/310519663140687549/7RkrCeS5KipYf8hkuNqrCk/ifood-logo_024583d8.png"
+              src="https://d2xsxph8kpxj0f.cloudfront.net/310519663140687549/7RkrCeS5KipYf8hkuNqrCk/ifood-logo-official_825ad8bc.jpg"
               alt="iFood"
               className="w-10 h-10 object-contain"
             />
@@ -470,18 +505,20 @@ export default function ImportadorIfood() {
                 </div>
 
                 {/* Orders Table */}
-                <Card className="border border-gray-200 shadow-sm">
-                  <CardHeader>
+                <Card className="border border-gray-200 shadow-sm overflow-hidden">
+                  <CardHeader className="bg-gray-50/50 border-b border-gray-100">
                     <div className="flex items-center justify-between">
-                      <CardTitle className="text-lg text-gray-800">Pedidos para Importar</CardTitle>
-                      <div className="flex items-center gap-4">
-                        <span className="text-sm text-muted-foreground">
-                          {selectedOrders.size} selecionado(s)
-                        </span>
+                      <div>
+                        <CardTitle className="text-lg text-gray-800">Pedidos para Importar</CardTitle>
+                        <p className="text-sm text-gray-500 mt-0.5">{selectedOrders.size} de {previewData.orders.length} pedido(s) selecionado(s)</p>
+                      </div>
+                      <div className="flex items-center gap-3">
                         <Button
                           variant="outline"
+                          size="sm"
                           onClick={handleProcessFiles}
                           disabled={!ordersFile || !itemsFile || isProcessing}
+                          className="border-gray-300 hover:border-[#EA1D2C]/50 hover:text-[#EA1D2C]"
                         >
                           {isProcessing ? (
                             <>
@@ -493,12 +530,10 @@ export default function ImportadorIfood() {
                         </Button>
                         <Button
                           onClick={() => {
-                            console.log('[Button Click] selectedOrders.size:', selectedOrders.size);
-                            console.log('[Button Click] isImporting:', isImporting);
                             handleImportOrders();
                           }}
                           disabled={selectedOrders.size === 0 || isImporting}
-                          className="bg-[#EA1D2C] hover:bg-[#C8101E] text-white"
+                          className="bg-[#EA1D2C] hover:bg-[#C8101E] text-white shadow-sm"
                         >
                           {isImporting ? (
                             <>
@@ -533,7 +568,7 @@ export default function ImportadorIfood() {
                       </TableHeader>
                       <TableBody>
                         {previewData.orders.map((order) => (
-                          <TableRow key={order.ifoodOrderId} className={order.status === "missing_product" || order.status === "cancelled" ? "opacity-50" : ""}>
+                          <TableRow key={order.ifoodOrderId} className={`transition-colors ${order.status === "missing_product" || order.status === "cancelled" ? "opacity-50 bg-gray-50/50" : "hover:bg-[#EA1D2C]/[0.02]"}`}>
                             <TableCell>
                               <Checkbox
                                 checked={selectedOrders.has(order.ifoodOrderId)}
@@ -566,21 +601,20 @@ export default function ImportadorIfood() {
                                 <Button
                                   type="button"
                                   size="sm"
-                                  variant="outline"
                                   onClick={() => {
-                                    toast.info(`Clique detectado! Pedido #${order.ifoodOrderCode}`);
                                     handleImportSingleOrder(order);
                                   }}
                                   disabled={isImporting}
+                                  className="bg-[#EA1D2C] hover:bg-[#C8101E] text-white text-xs h-7 px-3"
                                 >
-                                  {isImporting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Importar"}
+                                  {isImporting ? <Loader2 className="w-3 h-3 animate-spin" /> : "Importar"}
                                 </Button>
                               )}
                               {order.status === "missing_product" && (
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  className="text-red-600 border-red-300 hover:bg-red-50"
+                                  className="text-[#EA1D2C] border-[#EA1D2C]/30 hover:bg-[#EA1D2C]/5 text-xs h-7 px-3"
                                   onClick={() => {
                                     // Abrir modal de De/Para para o primeiro item não mapeado
                                     const unmappedItem = order.items.find(i => !i.isMapped);
@@ -599,7 +633,7 @@ export default function ImportadorIfood() {
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  className="text-yellow-600 border-yellow-300 hover:bg-yellow-50"
+                                  className="text-amber-600 border-amber-300 hover:bg-amber-50 text-xs h-7 px-3"
                                   onClick={() => {
                                     const divergentItems = order.items.filter(i => i.hasPriceDivergence);
                                     setDivergenceModal({ order, items: divergentItems });
@@ -628,14 +662,26 @@ export default function ImportadorIfood() {
                     <CardTitle className="text-lg text-gray-800">De/Para de Produtos</CardTitle>
                     <CardDescription className="text-gray-500">Vincule produtos do iFood aos produtos do ABRWF. Pesquise para encontrar também produtos sem mapeamento.</CardDescription>
                   </div>
-                  <div className="relative">
-                    <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                    <Input
-                      placeholder="Buscar por nome, SKU ou EAN..."
-                      value={searchMapping}
-                      onChange={(e) => { setSearchMapping(e.target.value); setCurrentPage(1); }}
-                      className="w-72 pl-9 border-gray-300 focus:border-[#EA1D2C] focus:ring-[#EA1D2C]/20"
-                    />
+                  <div className="flex items-center gap-3">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleExportMappings}
+                      disabled={isExporting}
+                      className="border-[#EA1D2C]/30 text-[#EA1D2C] hover:bg-[#EA1D2C]/5 hover:border-[#EA1D2C]/50 text-xs"
+                    >
+                      {isExporting ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Download className="w-4 h-4 mr-1" />}
+                      Exportar Excel
+                    </Button>
+                    <div className="relative">
+                      <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                      <Input
+                        placeholder="Buscar por nome, SKU ou EAN..."
+                        value={searchMapping}
+                        onChange={(e) => { setSearchMapping(e.target.value); setCurrentPage(1); }}
+                        className="w-72 pl-9 border-gray-300 focus:border-[#EA1D2C] focus:ring-[#EA1D2C]/20"
+                      />
+                    </div>
                   </div>
                 </div>
               </CardHeader>

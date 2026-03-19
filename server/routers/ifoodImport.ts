@@ -191,6 +191,33 @@ export const ifoodImportRouter = router({
       };
     }),
 
+  // Exportar todos os mapeamentos para Excel
+  exportMappings: adminProcedure
+    .query(async ({ ctx }) => {
+      const db = await getDb();
+      if (!db) throw new Error("Database not available");
+
+      const mappings = await db.select({
+        id: ifoodProductMappings.id,
+        ifoodSku: ifoodProductMappings.ifoodSku,
+        ifoodProductName: ifoodProductMappings.ifoodProductName,
+        productId: ifoodProductMappings.productId,
+        situation: ifoodProductMappings.situation,
+        productName: products.name,
+        productEan: products.ean,
+      }).from(ifoodProductMappings)
+        .leftJoin(products, eq(ifoodProductMappings.productId, products.id))
+        .orderBy(ifoodProductMappings.ifoodProductName);
+
+      return mappings.map(m => ({
+        skuIfood: m.ifoodSku || '',
+        produtoIfood: m.ifoodProductName || '',
+        produtoABRWF: m.productName || 'Não vinculado',
+        eanABRWF: m.productEan || '',
+        situacao: m.productId ? (m.situation || 'Vinculado') : 'Pendente',
+      }));
+    }),
+
   // Buscar produtos para vincular
   searchProducts: protectedProcedure
     .input(z.object({ search: z.string() }))
