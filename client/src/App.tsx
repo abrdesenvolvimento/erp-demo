@@ -25,6 +25,7 @@ import OutrasReceitas from "./pages/OutrasReceitas";
 import ContasGerenciais from "./pages/ContasGerenciais";
 import GovernancaContabil from "./pages/GovernancaContabil";
 import ImportadorIfood from "./pages/ImportadorIfood";
+import ImportarVendas from "./pages/ImportarVendas";
 import AnaliseEstoque from "./pages/AnaliseEstoque";
 import AccessDenied from "./pages/AccessDenied";
 import GerenciarAcessos from "./pages/GerenciarAcessos";
@@ -75,6 +76,8 @@ function Router() {
       <Route path="/outras-receitas" component={OutrasReceitas} />
       <Route path="/contas-gerenciais" component={ContasGerenciais} />
       <Route path="/governanca-contabil" component={GovernancaContabil} />
+      <Route path="/importar-vendas/ifood" component={ImportadorIfood} />
+      <Route path="/importar-vendas" component={ImportarVendas} />
       <Route path="/importar-ifood" component={ImportadorIfood} />
       <Route path="/minha-conta" component={MinhaConta} />
       <Route path="/gerenciar-acessos" component={GerenciarAcessos} />

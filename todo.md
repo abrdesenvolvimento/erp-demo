@@ -2042,3 +2042,7 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Importador iFood: animação de entrada (splash) com logo iFood ao acessar a tela — overlay com gradiente branco→rosa, logo com bounce entrance, barra de progresso vermelha, glow pulsante, fade-out suave em 2.4s
 - [x] BUG: Importação iFood falha com "Invalid input: expected string, received null" no campo ifoodProductName — corrigido schema Zod para aceitar null com default '' e adicionado fallback (item.produto || sku || '') nos processedItems
 - [x] Importador iFood: reduzida animação de entrada — removido overlay fullscreen, agora apenas fade-in sutil no header com logo girando levemente e underline vermelho se expandindo sob o título
+- [x] Renomear "Importar iFood" para "Importar Vendas" no menu lateral — atualizado sidebar com ícone ShoppingBag e path /importar-vendas, isActive com startsWith para destacar em sub-rotas
+- [x] Criar página hub "Importar Vendas" com grid de seleção de importadores — 4 cards (iFood ativo, 99Food/Mercado Livre/Importação Própria em "Em breve"), logos, badges de status, hover effects
+- [x] Animação de entrada no grid de seleção — stagger fade-in dos cards com cubic-bezier bounce, transição zoom-out ao clicar no card do iFood antes de navegar
+- [x] Ajustar rotas: /importar-vendas (hub) e /importar-vendas/ifood (importador atual) — wouter Switch com rotas ordenadas corretamente

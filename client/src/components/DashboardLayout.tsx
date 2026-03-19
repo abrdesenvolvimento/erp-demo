@@ -86,7 +86,7 @@ const mainMenuItems = [
   { icon: Package, label: "Produtos", path: "/produtos", roles: ["admin", "operacional", "consultor"] },
   { icon: Tags, label: "Categorias", path: "/categorias", roles: ["admin", "consultor"] },
   { icon: ShoppingCart, label: "Vendas", path: "/vendas", roles: ["admin", "operacional", "consultor"] },
-  { icon: Upload, label: "Importar iFood", path: "/importar-ifood", roles: ["admin", "consultor"] },
+  { icon: Upload, label: "Importar Vendas", path: "/importar-vendas", roles: ["admin", "consultor"] },
   { icon: Users, label: "Parceiros", path: "/parceiros", roles: ["admin", "operacional", "consultor"] },
 ];
 
@@ -668,7 +668,7 @@ function DashboardLayoutContent({
             <SidebarMenu className="px-2 py-1">
               {/* Menu principal - escondido para garçom */}
               {!isWaiter && visibleMainItems.map(item => {
-                const isActive = location === item.path;
+                const isActive = item.path === '/' ? location === '/' : location.startsWith(item.path);
                 return (
                   <SidebarMenuItem key={item.path}>
                     <SidebarMenuButton
