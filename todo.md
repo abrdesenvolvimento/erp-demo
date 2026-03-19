@@ -2046,3 +2046,5 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Criar página hub "Importar Vendas" com grid de seleção de importadores — 4 cards (iFood ativo, 99Food/Mercado Livre/Importação Própria em "Em breve"), logos, badges de status, hover effects
 - [x] Animação de entrada no grid de seleção — stagger fade-in dos cards com cubic-bezier bounce, transição zoom-out ao clicar no card do iFood antes de navegar
 - [x] Ajustar rotas: /importar-vendas (hub) e /importar-vendas/ifood (importador atual) — wouter Switch com rotas ordenadas corretamente
+- [x] Importador iFood: botão "Voltar" no header para retornar ao hub Importar Vendas — link com seta ← em cinza, hover em vermelho iFood
+- [x] Importador iFood: breadcrumb "← Importar Vendas > iFood" no topo — navegação funcional de volta ao hub, "iFood" em vermelho como página ativa

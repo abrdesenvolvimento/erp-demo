@@ -11,7 +11,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
-import { Upload, FileJson, ArrowRight, CheckCircle2, AlertCircle, AlertTriangle, Search, Edit2, Trash2, Package, History, Loader2, ExternalLink, Download } from "lucide-react";
+import { Upload, FileJson, ArrowRight, ArrowLeft, CheckCircle2, AlertCircle, AlertTriangle, Search, Edit2, Trash2, Package, History, Loader2, ExternalLink, Download, ChevronRight } from "lucide-react";
+import { Link } from "wouter";
 import * as XLSX from "xlsx";
 
 interface ProcessedOrder {
@@ -362,6 +363,16 @@ export default function ImportadorIfood() {
       `}</style>
 
       <div className="space-y-6">
+        {/* Breadcrumb + Voltar */}
+        <div className="flex items-center gap-2 text-sm">
+          <Link href="/importar-vendas" className="flex items-center gap-1.5 text-gray-500 hover:text-[#EA1D2C] transition-colors">
+            <ArrowLeft className="w-4 h-4" />
+            <span>Importar Vendas</span>
+          </Link>
+          <ChevronRight className="w-3.5 h-3.5 text-gray-400" />
+          <span className="text-[#EA1D2C] font-medium">iFood</span>
+        </div>
+
         {/* Header com identidade iFood */}
         <div className="flex items-center justify-between">
           <div
