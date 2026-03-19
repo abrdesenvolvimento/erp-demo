@@ -2039,3 +2039,4 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] De/Para iFood: exportação da tabela de mapeamentos para Excel — botão "Exportar Excel" no De/Para, gera arquivo .xlsx com SKU iFood, Produto iFood, Produto ABRWF, EAN ABRWF e Situação. Exportou 448 mapeamentos com sucesso
 - [x] Importador iFood: substituído logo por arquivo oficial enviado pelo Gabriel (JPEG 736x736) — atualizado no Importador iFood e na tela de Metas
 - [x] Importador iFood: customização visual na aba Preview — header com bg cinza sutil, contagem de selecionados, botões de ação compactos com cores iFood, hover rows estilizados, botão "Importar" individual em vermelho iFood
+- [x] Importador iFood: animação de entrada (splash) com logo iFood ao acessar a tela — overlay com gradiente branco→rosa, logo com bounce entrance, barra de progresso vermelha, glow pulsante, fade-out suave em 2.4s
