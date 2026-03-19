@@ -11,7 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
-import { Upload, FileJson, ArrowRight, CheckCircle2, AlertCircle, AlertTriangle, Search, Edit2, Trash2, Package, History, Loader2 } from "lucide-react";
+import { Upload, FileJson, ArrowRight, CheckCircle2, AlertCircle, AlertTriangle, Search, Edit2, Trash2, Package, History, Loader2, ExternalLink } from "lucide-react";
 
 interface ProcessedOrder {
   ifoodOrderId: string;
@@ -61,6 +61,8 @@ export default function ImportadorIfood() {
   const [searchMapping, setSearchMapping] = useState("");
   const [editingMapping, setEditingMapping] = useState<any>(null);
   const [productSearch, setProductSearch] = useState("");
+  const [newMappingSku, setNewMappingSku] = useState("");
+  const [newMappingIfoodName, setNewMappingIfoodName] = useState("");
   
   // Divergência de valor state
   const [divergenceModal, setDivergenceModal] = useState<{
@@ -238,6 +240,29 @@ export default function ImportadorIfood() {
     }
   };
 
+  const handleCreateNewMapping = async () => {
+    if (!editingMapping || !newMappingSku.trim()) {
+      toast.error("Informe o SKU/EAN do produto no iFood");
+      return;
+    }
+
+    try {
+      await updateMappingMutation.mutateAsync({
+        ifoodSku: newMappingSku.trim(),
+        ifoodProductName: newMappingIfoodName.trim() || editingMapping.productName || '',
+        productId: editingMapping.productId,
+        situation: "Vinculado Manualmente",
+      });
+      toast.success("Mapeamento criado com sucesso");
+      setEditingMapping(null);
+      setNewMappingSku("");
+      setNewMappingIfoodName("");
+      utils.ifoodImport.listMappings.invalidate();
+    } catch (error: any) {
+      toast.error(error.message || "Erro ao criar mapeamento");
+    }
+  };
+
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("pt-BR", {
       style: "currency",
@@ -262,11 +287,11 @@ export default function ImportadorIfood() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "ready":
-        return <Badge className="bg-green-500"><CheckCircle2 className="w-3 h-3 mr-1" /> Pronto</Badge>;
+        return <Badge className="bg-[#50A773] hover:bg-[#50A773]/90 text-white"><CheckCircle2 className="w-3 h-3 mr-1" /> Pronto</Badge>;
       case "missing_product":
-        return <Badge variant="destructive"><AlertCircle className="w-3 h-3 mr-1" /> Produto não localizado</Badge>;
+        return <Badge className="bg-[#EA1D2C] hover:bg-[#EA1D2C]/90 text-white"><AlertCircle className="w-3 h-3 mr-1" /> Não localizado</Badge>;
       case "price_divergence":
-        return <Badge className="bg-yellow-500"><AlertTriangle className="w-3 h-3 mr-1" /> Divergência de preço</Badge>;
+        return <Badge className="bg-amber-500 hover:bg-amber-500/90 text-white"><AlertTriangle className="w-3 h-3 mr-1" /> Divergência de preço</Badge>;
       default:
         return <Badge variant="secondary">{status}</Badge>;
     }
@@ -275,23 +300,31 @@ export default function ImportadorIfood() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold">Importador iFood</h1>
-          <p className="text-muted-foreground">Importe pedidos do iFood para o sistema de vendas</p>
+        {/* Header com identidade iFood */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-[#EA1D2C] flex items-center justify-center shadow-sm">
+              <span className="text-white font-bold text-lg">iF</span>
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-800">Importador iFood</h1>
+              <p className="text-sm text-gray-500">Importe pedidos do iFood para o sistema de vendas</p>
+            </div>
+          </div>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList>
-            <TabsTrigger value="upload" className="flex items-center gap-2">
+          <TabsList className="bg-gray-100/80 p-1">
+            <TabsTrigger value="upload" className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:text-[#EA1D2C] data-[state=active]:shadow-sm">
               <Upload className="w-4 h-4" /> Upload
             </TabsTrigger>
-            <TabsTrigger value="preview" className="flex items-center gap-2" disabled={!previewData}>
+            <TabsTrigger value="preview" className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:text-[#EA1D2C] data-[state=active]:shadow-sm" disabled={!previewData}>
               <FileJson className="w-4 h-4" /> Preview
             </TabsTrigger>
-            <TabsTrigger value="depara" className="flex items-center gap-2">
+            <TabsTrigger value="depara" className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:text-[#EA1D2C] data-[state=active]:shadow-sm">
               <ArrowRight className="w-4 h-4" /> De/Para
             </TabsTrigger>
-            <TabsTrigger value="historico" className="flex items-center gap-2">
+            <TabsTrigger value="historico" className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:text-[#EA1D2C] data-[state=active]:shadow-sm">
               <History className="w-4 h-4" /> Histórico
             </TabsTrigger>
           </TabsList>
@@ -309,7 +342,7 @@ export default function ImportadorIfood() {
                 <CardContent>
                   <div className="space-y-4">
                     <Label htmlFor="orders-file" className="cursor-pointer">
-                      <div className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${ordersFile ? "border-green-500 bg-green-50" : "border-gray-300 hover:border-primary"}`}>
+                      <div className={`border-2 border-dashed rounded-xl p-8 text-center transition-all duration-200 ${ordersFile ? "border-[#50A773] bg-green-50" : "border-gray-300 hover:border-[#EA1D2C] hover:bg-red-50/30"}`}>
                         {ordersFile ? (
                           <>
                             <CheckCircle2 className="w-12 h-12 mx-auto text-green-500 mb-2" />
@@ -346,7 +379,7 @@ export default function ImportadorIfood() {
                 <CardContent>
                   <div className="space-y-4">
                     <Label htmlFor="items-file" className="cursor-pointer">
-                      <div className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${itemsFile ? "border-green-500 bg-green-50" : "border-gray-300 hover:border-primary"}`}>
+                      <div className={`border-2 border-dashed rounded-xl p-8 text-center transition-all duration-200 ${itemsFile ? "border-[#50A773] bg-green-50" : "border-gray-300 hover:border-[#EA1D2C] hover:bg-red-50/30"}`}>
                         {itemsFile ? (
                           <>
                             <CheckCircle2 className="w-12 h-12 mx-auto text-green-500 mb-2" />
@@ -379,6 +412,7 @@ export default function ImportadorIfood() {
                 size="lg"
                 onClick={handleProcessFiles}
                 disabled={!ordersFile || !itemsFile || isProcessing}
+                className="bg-[#EA1D2C] hover:bg-[#C8101E] text-white shadow-md"
               >
                 {isProcessing ? (
                   <>
@@ -397,45 +431,45 @@ export default function ImportadorIfood() {
           <TabsContent value="preview" className="space-y-4">
             {previewData && (
               <>
-                {/* Summary Cards */}
+                {/* Summary Cards - estilo iFood */}
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                  <Card>
-                    <CardContent className="pt-4">
-                      <div className="text-2xl font-bold">{previewData.summary.totalOrders}</div>
-                      <p className="text-sm text-muted-foreground">Total de Pedidos</p>
+                  <Card className="border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                    <CardContent className="pt-5 pb-4">
+                      <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Total de Pedidos</p>
+                      <div className="text-3xl font-bold text-gray-800">{previewData.summary.totalOrders}</div>
                     </CardContent>
                   </Card>
-                  <Card className="border-green-200 bg-green-50">
-                    <CardContent className="pt-4">
-                      <div className="text-2xl font-bold text-green-600">{previewData.summary.readyCount}</div>
-                      <p className="text-sm text-green-600">Prontos</p>
+                  <Card className="border border-[#50A773]/30 bg-[#50A773]/5 shadow-sm hover:shadow-md transition-shadow">
+                    <CardContent className="pt-5 pb-4">
+                      <p className="text-xs font-medium text-[#50A773] uppercase tracking-wide mb-1">Prontos</p>
+                      <div className="text-3xl font-bold text-[#50A773]">{previewData.summary.readyCount}</div>
                     </CardContent>
                   </Card>
-                  <Card className="border-yellow-200 bg-yellow-50">
-                    <CardContent className="pt-4">
-                      <div className="text-2xl font-bold text-yellow-600">{previewData.summary.priceDivergenceCount}</div>
-                      <p className="text-sm text-yellow-600">Divergência Preço</p>
+                  <Card className="border border-amber-300/50 bg-amber-50/50 shadow-sm hover:shadow-md transition-shadow">
+                    <CardContent className="pt-5 pb-4">
+                      <p className="text-xs font-medium text-amber-600 uppercase tracking-wide mb-1">Divergência Preço</p>
+                      <div className="text-3xl font-bold text-amber-600">{previewData.summary.priceDivergenceCount}</div>
                     </CardContent>
                   </Card>
-                  <Card className="border-red-200 bg-red-50">
-                    <CardContent className="pt-4">
-                      <div className="text-2xl font-bold text-red-600">{previewData.summary.missingProductCount}</div>
-                      <p className="text-sm text-red-600">Produto não localizado</p>
+                  <Card className="border border-[#EA1D2C]/20 bg-[#EA1D2C]/5 shadow-sm hover:shadow-md transition-shadow">
+                    <CardContent className="pt-5 pb-4">
+                      <p className="text-xs font-medium text-[#EA1D2C] uppercase tracking-wide mb-1">Não localizado</p>
+                      <div className="text-3xl font-bold text-[#EA1D2C]">{previewData.summary.missingProductCount}</div>
                     </CardContent>
                   </Card>
-                  <Card>
-                    <CardContent className="pt-4">
-                      <div className="text-2xl font-bold">{formatCurrency(previewData.summary.totalValue)}</div>
-                      <p className="text-sm text-muted-foreground">Valor Total</p>
+                  <Card className="border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                    <CardContent className="pt-5 pb-4">
+                      <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Valor Total</p>
+                      <div className="text-2xl font-bold text-gray-800">{formatCurrency(previewData.summary.totalValue)}</div>
                     </CardContent>
                   </Card>
                 </div>
 
                 {/* Orders Table */}
-                <Card>
+                <Card className="border border-gray-200 shadow-sm">
                   <CardHeader>
                     <div className="flex items-center justify-between">
-                      <CardTitle>Pedidos para Importar</CardTitle>
+                      <CardTitle className="text-lg text-gray-800">Pedidos para Importar</CardTitle>
                       <div className="flex items-center gap-4">
                         <span className="text-sm text-muted-foreground">
                           {selectedOrders.size} selecionado(s)
@@ -460,6 +494,7 @@ export default function ImportadorIfood() {
                             handleImportOrders();
                           }}
                           disabled={selectedOrders.size === 0 || isImporting}
+                          className="bg-[#EA1D2C] hover:bg-[#C8101E] text-white"
                         >
                           {isImporting ? (
                             <>
@@ -582,20 +617,20 @@ export default function ImportadorIfood() {
 
           {/* Tab De/Para */}
           <TabsContent value="depara" className="space-y-4">
-            <Card>
-              <CardHeader>
+            <Card className="border border-gray-200 shadow-sm">
+              <CardHeader className="pb-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <CardTitle>De/Para de Produtos</CardTitle>
-                    <CardDescription>Vincule produtos do iFood aos produtos do ABRWF</CardDescription>
+                    <CardTitle className="text-lg text-gray-800">De/Para de Produtos</CardTitle>
+                    <CardDescription className="text-gray-500">Vincule produtos do iFood aos produtos do ABRWF. Pesquise para encontrar também produtos sem mapeamento.</CardDescription>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Search className="w-4 h-4 text-muted-foreground" />
+                  <div className="relative">
+                    <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
                     <Input
-                      placeholder="Buscar produto..."
+                      placeholder="Buscar por nome, SKU ou EAN..."
                       value={searchMapping}
                       onChange={(e) => setSearchMapping(e.target.value)}
-                      className="w-64"
+                      className="w-72 pl-9 border-gray-300 focus:border-[#EA1D2C] focus:ring-[#EA1D2C]/20"
                     />
                   </div>
                 </div>
@@ -604,7 +639,7 @@ export default function ImportadorIfood() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>SKU iFood</TableHead>
+                      <TableHead>SKU / EAN</TableHead>
                       <TableHead>Produto iFood</TableHead>
                       <TableHead>Produto ABRWF</TableHead>
                       <TableHead>Situação</TableHead>
@@ -612,49 +647,106 @@ export default function ImportadorIfood() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {mappingsQuery.data?.map((mapping) => (
-                      <TableRow key={mapping.id}>
-                        <TableCell className="font-mono text-sm">{mapping.ifoodSku}</TableCell>
-                        <TableCell>{mapping.ifoodProductName}</TableCell>
-                        <TableCell>
-                          {mapping.productName ? (
-                            <span className="text-green-600">{mapping.productName}</span>
-                          ) : (
-                            <span className="text-red-500">Não vinculado</span>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={mapping.productId ? "default" : "destructive"}>
-                            {mapping.situation || "Pendente"}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              setEditingMapping(mapping);
-                              setProductSearch("");
-                            }}
-                          >
-                            <Edit2 className="w-4 h-4 mr-1" />
-                            {mapping.productId ? 'Editar' : 'Vincular'}
-                          </Button>
+                    {mappingsQuery.data?.map((mapping, idx) => {
+                      const isUnmappedProduct = (mapping as any).source === 'product';
+                      return (
+                        <TableRow key={isUnmappedProduct ? `prod-${mapping.productId}` : `map-${mapping.id}`} className={isUnmappedProduct ? 'bg-blue-50/50' : ''}>
+                          <TableCell className="font-mono text-sm">
+                            {mapping.ifoodSku || <span className="text-muted-foreground italic">-</span>}
+                          </TableCell>
+                          <TableCell>
+                            {isUnmappedProduct ? (
+                              <span className="text-muted-foreground italic">Sem registro iFood</span>
+                            ) : (
+                              mapping.ifoodProductName || <span className="text-muted-foreground italic">-</span>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            {mapping.productName ? (
+                              <span className={isUnmappedProduct ? 'text-blue-600 font-medium' : 'text-green-600'}>{mapping.productName}</span>
+                            ) : (
+                              <span className="text-red-500">Não vinculado</span>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            {isUnmappedProduct ? (
+                              <Badge variant="outline" className="border-blue-300 text-blue-600 bg-blue-50 text-xs">
+                                Sem mapeamento iFood
+                              </Badge>
+                            ) : mapping.productId ? (
+                              <Badge className="bg-[#50A773]/10 text-[#50A773] border border-[#50A773]/30 hover:bg-[#50A773]/20 text-xs">
+                                {mapping.situation || "Vinculado Manualmente"}
+                              </Badge>
+                            ) : (
+                              <Badge className="bg-amber-50 text-amber-600 border border-amber-300 hover:bg-amber-100 text-xs">
+                                {mapping.situation || "Pendente"}
+                              </Badge>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {isUnmappedProduct ? (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="border-blue-300 text-blue-600 hover:bg-blue-100 rounded-lg text-xs"
+                                onClick={() => {
+                                  setEditingMapping({
+                                    ...mapping,
+                                    ifoodSku: '',
+                                    ifoodProductName: '',
+                                    _isNewMapping: true,
+                                  });
+                                  setProductSearch("");
+                                }}
+                              >
+                                <Package className="w-4 h-4 mr-1" />
+                                Criar Vínculo
+                              </Button>
+                            ) : (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-gray-600 hover:text-[#EA1D2C] hover:bg-[#EA1D2C]/5 rounded-lg text-xs"
+                                onClick={() => {
+                                  setEditingMapping(mapping);
+                                  setProductSearch("");
+                                }}
+                              >
+                                <Edit2 className="w-4 h-4 mr-1" />
+                                {mapping.productId ? 'Editar' : 'Vincular'}
+                              </Button>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                    {mappingsQuery.data?.length === 0 && !mappingsQuery.isLoading && (
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                          {searchMapping ? 'Nenhum produto encontrado para esta busca' : 'Nenhum mapeamento cadastrado'}
                         </TableCell>
                       </TableRow>
-                    ))}
+                    )}
                   </TableBody>
                 </Table>
+                {searchMapping && searchMapping.length >= 2 && mappingsQuery.data && mappingsQuery.data.some((m: any) => m.source === 'product') && (
+                  <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <p className="text-sm text-blue-700">
+                      <Package className="w-4 h-4 inline mr-1" />
+                      Os itens em <strong>azul</strong> são produtos ABRWF que ainda não possuem mapeamento iFood. Clique em "Criar Vínculo" para associá-los.
+                    </p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
 
           {/* Tab Histórico */}
           <TabsContent value="historico" className="space-y-4">
-            <Card>
+            <Card className="border border-gray-200 shadow-sm">
               <CardHeader>
-                <CardTitle>Histórico de Importações</CardTitle>
-                <CardDescription>Últimas importações realizadas</CardDescription>
+                <CardTitle className="text-lg text-gray-800">Histórico de Importações</CardTitle>
+                <CardDescription className="text-gray-500">Últimas importações realizadas</CardDescription>
               </CardHeader>
               <CardContent>
                 <Table>
@@ -674,8 +766,8 @@ export default function ImportadorIfood() {
                         <TableCell>{log.importedOrders} pedidos</TableCell>
                         <TableCell>{formatCurrency(Number(log.totalValue || 0))}</TableCell>
                         <TableCell>
-                          <Badge className={log.status === "SUCCESS" ? "bg-green-500" : "bg-red-500"}>
-                            {log.status}
+                          <Badge className={log.status === "SUCCESS" ? "bg-[#50A773] hover:bg-[#50A773]/90" : "bg-[#EA1D2C] hover:bg-[#EA1D2C]/90"}>
+                            {log.status === "SUCCESS" ? "Sucesso" : log.status}
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right">
@@ -817,24 +909,77 @@ export default function ImportadorIfood() {
         </Dialog>
 
         {/* Modal de Edição de Vínculo */}
-        <Dialog open={!!editingMapping} onOpenChange={() => setEditingMapping(null)}>
+        <Dialog open={!!editingMapping} onOpenChange={() => { setEditingMapping(null); setNewMappingSku(''); setNewMappingIfoodName(''); }}>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
-              <DialogTitle>{editingMapping?.productName ? 'Editar Vínculo' : 'Vincular Produto'}</DialogTitle>
+              <DialogTitle>
+                {editingMapping?._isNewMapping ? 'Criar Mapeamento iFood' : editingMapping?.productName ? 'Editar Vínculo' : 'Vincular Produto'}
+              </DialogTitle>
               <DialogDescription>
-                {editingMapping?.productName ? 'Altere o produto vinculado ao item do iFood' : 'Vincule o produto do iFood a um produto do ABRWF'}
+                {editingMapping?._isNewMapping 
+                  ? 'Crie um mapeamento iFood para este produto ABRWF informando o SKU/EAN do iFood'
+                  : editingMapping?.productName 
+                    ? 'Altere o produto vinculado ao item do iFood' 
+                    : 'Vincule o produto do iFood a um produto do ABRWF'}
               </DialogDescription>
             </DialogHeader>
             
-            {editingMapping && (
+            {editingMapping && editingMapping._isNewMapping ? (
+              /* Fluxo: Criar novo mapeamento a partir de produto ABRWF */
+              <div className="space-y-4">
+                <div className="p-4 border rounded-lg border-blue-200 bg-blue-50">
+                  <p className="text-sm text-muted-foreground">Produto ABRWF:</p>
+                  <p className="font-medium text-blue-700">{editingMapping.productName}</p>
+                  {editingMapping.ifoodSku && (
+                    <p className="text-sm text-muted-foreground mt-1">EAN: {editingMapping.ifoodSku}</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label>SKU/EAN do produto no iFood <span className="text-red-500">*</span></Label>
+                  <Input
+                    placeholder="Ex: 7894900011159"
+                    value={newMappingSku}
+                    onChange={(e) => setNewMappingSku(e.target.value)}
+                    className="font-mono"
+                  />
+                  <p className="text-xs text-muted-foreground">Código que identifica o produto no iFood (geralmente o EAN/código de barras)</p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Nome do produto no iFood (opcional)</Label>
+                  <Input
+                    placeholder="Ex: Refrigerante Coca-Cola Lata 350ml"
+                    value={newMappingIfoodName}
+                    onChange={(e) => setNewMappingIfoodName(e.target.value)}
+                  />
+                  <p className="text-xs text-muted-foreground">Se não informado, será usado o nome do produto ABRWF</p>
+                </div>
+
+                <DialogFooter className="gap-2">
+                  <Button variant="outline" onClick={() => { setEditingMapping(null); setNewMappingSku(''); setNewMappingIfoodName(''); }}>
+                    Cancelar
+                  </Button>
+                  <Button 
+                    onClick={handleCreateNewMapping}
+                    disabled={!newMappingSku.trim()}
+                    className="bg-blue-600 hover:bg-blue-700"
+                  >
+                    <Package className="w-4 h-4 mr-2" />
+                    Criar Mapeamento
+                  </Button>
+                </DialogFooter>
+              </div>
+            ) : editingMapping && (
+              /* Fluxo: Editar mapeamento existente ou vincular produto iFood a ABRWF */
               <div className="space-y-4">
                 <div className="p-4 bg-muted rounded-lg">
                   <p className="text-sm text-muted-foreground">Produto iFood:</p>
-                  <p className="font-medium">{editingMapping.ifoodProductName}</p>
+                  <p className="font-medium">{editingMapping.ifoodProductName || <span className="italic text-muted-foreground">-</span>}</p>
                   <p className="text-sm text-muted-foreground mt-1">SKU: {editingMapping.ifoodSku}</p>
                 </div>
 
-                {editingMapping.productName && (
+                {editingMapping.productName && !editingMapping._isNewMapping && (
                   <div className="p-4 border rounded-lg border-green-200 bg-green-50">
                     <p className="text-sm text-muted-foreground">Vínculo atual:</p>
                     <p className="font-medium text-green-700">{editingMapping.productName}</p>
@@ -879,14 +1024,14 @@ export default function ImportadorIfood() {
                     )}
                   </div>
                 )}
+
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setEditingMapping(null)}>
+                    Cancelar
+                  </Button>
+                </DialogFooter>
               </div>
             )}
-
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setEditingMapping(null)}>
-                Cancelar
-              </Button>
-            </DialogFooter>
           </DialogContent>
         </Dialog>
 

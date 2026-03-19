@@ -2032,4 +2032,5 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 ### Apontamentos v14 (18/03/2026)
 - [x] De/Para iFood: busca corrigida — collation utf8mb4_bin causava case-sensitive, agora usa LOWER()
 - [x] De/Para iFood: listagem e busca corrigidas — schema Drizzle faltava companyId/branchId (colunas existiam no DB mas não no schema), causando erro 500 "Cannot convert undefined or null to object" no leftJoin com products. Adicionados campos ao schema + products.name incluído no select do leftJoin
-- [ ] Importador iFood: customizações visuais para melhorar usabilidade
+- [x] De/Para iFood: busca expandida — inclui todos os produtos ABRWF (não apenas mapeamentos existentes), permitindo mapeamento preventivo e criação de vínculo manual. Produtos sem mapeamento aparecem com badge azul "Sem mapeamento iFood" e botão "Criar Vínculo"
+- [x] Importador iFood: customização visual — cores iFood (#EA1D2C vermelho, #50A773 verde), header com ícone iF, tabs com destaque vermelho, badges de status estilizados, cards de resumo com layout iFood, botões de ação em vermelho iFood

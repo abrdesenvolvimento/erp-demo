@@ -61,7 +61,7 @@ function parseIfoodDate(dateStr: string): Date {
 }
 
 export const ifoodImportRouter = router({
-  // Listar mapeamentos De/Para (alias para compatibilidade com frontend)
+  // Listar mapeamentos De/Para + produtos ABRWF sem mapeamento (busca expandida)
   listMappings: adminProcedure
     .input(z.object({
       search: z.string().optional(),
@@ -69,14 +69,15 @@ export const ifoodImportRouter = router({
       page: z.number().default(1),
       limit: z.number().default(50),
     }))
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
       const db = await getDb();
       if (!db) throw new Error("Database not available");
 
       const offset = (input.page - 1) * input.limit;
+      const companyId = ctx.activeCompanyId ?? 1;
       
-      // Incluir products.name no select para que o leftJoin funcione corretamente no Drizzle
-      let query = db.select({
+      // 1. Buscar mapeamentos existentes (com leftJoin para nome do produto ABRWF)
+      let mappingQuery = db.select({
         id: ifoodProductMappings.id,
         ifoodSku: ifoodProductMappings.ifoodSku,
         ifoodProductName: ifoodProductMappings.ifoodProductName,
@@ -103,23 +104,69 @@ export const ifoodImportRouter = router({
       }
       
       if (conditions.length > 0) {
-        query = query.where(and(...conditions)) as any;
+        mappingQuery = mappingQuery.where(and(...conditions)) as any;
       }
       
-      const mappings = await query
+      const mappings = await mappingQuery
         .orderBy(ifoodProductMappings.ifoodProductName)
         .limit(input.limit)
         .offset(offset);
 
-      // Contar total
-      const [countResult] = await db.select({ count: sql<number>`count(*)` })
-        .from(ifoodProductMappings);
-      const total = countResult?.count || 0;
-
-      return mappings.map(m => ({
-        ...m,
+      // Formatar mapeamentos existentes
+      const mappingResults = mappings.map(m => ({
+        id: m.id,
+        ifoodSku: m.ifoodSku,
+        ifoodProductName: m.ifoodProductName,
+        productId: m.productId,
+        situation: m.situation,
+        companyId: m.companyId,
+        createdBy: m.createdBy,
+        updatedBy: m.updatedBy,
+        createdAt: m.createdAt,
+        updatedAt: m.updatedAt,
         productName: m.productName || null,
+        source: 'mapping' as const,
       }));
+
+      // 2. Se houver busca, também buscar produtos ABRWF sem mapeamento iFood
+      let unmappedProducts: typeof mappingResults = [];
+      if (input.search && input.search.trim().length >= 2) {
+        const searchTerm = `%${input.search.toLowerCase()}%`;
+        
+        // Buscar produtos ABRWF que NÃO têm mapeamento iFood
+        const abrwfProducts = await db.select({
+          id: products.id,
+          name: products.name,
+          ean: products.ean,
+        })
+        .from(products)
+        .where(and(
+          eq(products.active, true),
+          eq(products.companyId, companyId),
+          sql`(LOWER(${products.name}) LIKE ${searchTerm} OR ${products.ean} LIKE ${searchTerm})`,
+          // Excluir produtos que já têm mapeamento (evitar duplicatas)
+          sql`${products.id} NOT IN (SELECT COALESCE(productId, 0) FROM ifoodProductMappings WHERE productId IS NOT NULL)`
+        ))
+        .orderBy(products.name)
+        .limit(Math.max(0, input.limit - mappingResults.length));
+
+        unmappedProducts = abrwfProducts.map(p => ({
+          id: 0, // Sem ID de mapeamento
+          ifoodSku: p.ean || '',
+          ifoodProductName: null,
+          productId: p.id,
+          situation: 'Sem mapeamento iFood',
+          companyId: companyId,
+          createdBy: null,
+          updatedBy: null,
+          createdAt: null,
+          updatedAt: null,
+          productName: p.name,
+          source: 'product' as const,
+        }));
+      }
+
+      return [...mappingResults, ...unmappedProducts];
     }),
 
   // Buscar produtos para vincular
