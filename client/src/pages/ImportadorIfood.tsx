@@ -58,25 +58,12 @@ export default function ImportadorIfood() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
 
-  // Splash animation state
-  const [showSplash, setShowSplash] = useState(true);
-  const [splashFading, setSplashFading] = useState(false);
-  const [splashProgress, setSplashProgress] = useState(0);
+  // Subtle header entrance animation state
+  const [headerAnimated, setHeaderAnimated] = useState(false);
 
   useEffect(() => {
-    if (!showSplash) return;
-    const startTime = Date.now();
-    const duration = 1800;
-    const interval = setInterval(() => {
-      const elapsed = Date.now() - startTime;
-      const pct = Math.min((elapsed / duration) * 100, 100);
-      const eased = 100 * (1 - Math.pow(1 - pct / 100, 3));
-      setSplashProgress(eased);
-      if (pct >= 100) clearInterval(interval);
-    }, 20);
-    const fadeTimer = setTimeout(() => setSplashFading(true), 1800);
-    const hideTimer = setTimeout(() => setShowSplash(false), 2400);
-    return () => { clearInterval(interval); clearTimeout(fadeTimer); clearTimeout(hideTimer); };
+    const timer = setTimeout(() => setHeaderAnimated(true), 50);
+    return () => clearTimeout(timer);
   }, []);
   
   // De/Para state
@@ -357,105 +344,53 @@ export default function ImportadorIfood() {
 
   return (
     <DashboardLayout>
-      {/* Splash animation de entrada */}
-      {showSplash && (
-        <div
-          className="fixed inset-0 z-[9999] flex items-center justify-center"
-          style={{
-            background: 'linear-gradient(135deg, #FFFFFF 0%, #FFF5F5 30%, #FFE8E8 60%, #FFDADA 100%)',
-            opacity: splashFading ? 0 : 1,
-            transition: 'opacity 0.6s ease-out',
-          }}
-        >
-          {/* Glow vermelho decorativo */}
-          <div
-            className="absolute rounded-full blur-3xl"
-            style={{
-              width: '350px',
-              height: '350px',
-              background: 'radial-gradient(circle, rgba(234,29,44,0.15) 0%, transparent 70%)',
-              animation: 'ifoodPulse 2s ease-in-out infinite',
-            }}
-          />
-
-          <div className="flex flex-col items-center gap-7 relative z-10">
-            {/* Logo iFood */}
-            <div
-              className="rounded-2xl overflow-hidden shadow-2xl bg-white p-4"
-              style={{
-                animation: 'ifoodLogoEntrance 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards',
-                border: '2px solid rgba(234,29,44,0.15)',
-              }}
-            >
-              <img
-                src="https://d2xsxph8kpxj0f.cloudfront.net/310519663140687549/7RkrCeS5KipYf8hkuNqrCk/ifood-logo-official_825ad8bc.jpg"
-                alt="iFood"
-                className="h-28 w-28 object-contain"
-              />
-            </div>
-
-            {/* Texto */}
-            <p
-              className="text-lg font-semibold tracking-wide text-gray-700"
-              style={{ animation: 'ifoodSlideUp 0.6s ease-out 0.3s both' }}
-            >
-              Importador iFood
-            </p>
-
-            {/* Barra de progresso */}
-            <div className="w-56 flex flex-col items-center gap-3">
-              <div
-                className="w-full h-1.5 rounded-full overflow-hidden bg-[#EA1D2C]/10"
-                style={{ animation: 'ifoodSlideUp 0.6s ease-out 0.5s both' }}
-              >
-                <div
-                  className="h-full rounded-full"
-                  style={{
-                    width: `${splashProgress}%`,
-                    background: 'linear-gradient(90deg, #EA1D2C80, #EA1D2C)',
-                    boxShadow: '0 0 12px rgba(234,29,44,0.4)',
-                    transition: 'width 0.05s linear',
-                  }}
-                />
-              </div>
-              <p
-                className="text-xs font-medium text-gray-400"
-                style={{ animation: 'ifoodSlideUp 0.6s ease-out 0.7s both' }}
-              >
-                Preparando ambiente...
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* CSS animations para splash iFood */}
+      {/* CSS para animação sutil de entrada no header */}
       <style>{`
-        @keyframes ifoodLogoEntrance {
-          0% { opacity: 0; transform: scale(0.5) translateY(20px); }
-          100% { opacity: 1; transform: scale(1) translateY(0); }
+        @keyframes ifoodHeaderFadeIn {
+          0% { opacity: 0; transform: translateY(-8px) scale(0.95); }
+          100% { opacity: 1; transform: translateY(0) scale(1); }
         }
-        @keyframes ifoodSlideUp {
-          0% { opacity: 0; transform: translateY(12px); }
-          100% { opacity: 1; transform: translateY(0); }
+        @keyframes ifoodLogoSpin {
+          0% { opacity: 0; transform: rotate(-15deg) scale(0.8); }
+          60% { transform: rotate(3deg) scale(1.05); }
+          100% { opacity: 1; transform: rotate(0deg) scale(1); }
         }
-        @keyframes ifoodPulse {
-          0%, 100% { transform: scale(1); opacity: 0.4; }
-          50% { transform: scale(1.15); opacity: 0.6; }
+        @keyframes ifoodUnderline {
+          0% { width: 0; }
+          100% { width: 100%; }
         }
       `}</style>
 
       <div className="space-y-6">
         {/* Header com identidade iFood */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
+          <div
+            className="flex items-center gap-3"
+            style={{
+              animation: headerAnimated ? 'ifoodHeaderFadeIn 0.5s ease-out forwards' : 'none',
+              opacity: headerAnimated ? undefined : 0,
+            }}
+          >
             <img
               src="https://d2xsxph8kpxj0f.cloudfront.net/310519663140687549/7RkrCeS5KipYf8hkuNqrCk/ifood-logo-official_825ad8bc.jpg"
               alt="iFood"
               className="w-10 h-10 object-contain"
+              style={{
+                animation: headerAnimated ? 'ifoodLogoSpin 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.1s forwards' : 'none',
+                opacity: headerAnimated ? undefined : 0,
+              }}
             />
             <div>
-              <h1 className="text-2xl font-bold text-gray-800">Importador iFood</h1>
+              <div className="relative">
+                <h1 className="text-2xl font-bold text-gray-800">Importador iFood</h1>
+                <div
+                  className="absolute bottom-0 left-0 h-0.5 bg-[#EA1D2C]/30 rounded-full"
+                  style={{
+                    animation: headerAnimated ? 'ifoodUnderline 0.8s ease-out 0.4s forwards' : 'none',
+                    width: headerAnimated ? undefined : 0,
+                  }}
+                />
+              </div>
               <p className="text-sm text-gray-500">Importe pedidos do iFood para o sistema de vendas</p>
             </div>
           </div>
