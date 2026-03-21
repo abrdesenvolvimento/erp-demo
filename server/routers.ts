@@ -2802,6 +2802,12 @@ export const appRouter = router({
         );
       }),
 
+    // Anos disponíveis com lançamentos
+    availableYears: adminProcedure
+      .query(async ({ ctx }) => {
+        return await db.getExpenseAvailableYears(ctx.activeCompanyId);
+      }),
+
     // Detalhamento de lançamentos
     detail: adminProcedure
       .input(z.object({

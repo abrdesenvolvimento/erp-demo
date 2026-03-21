@@ -6354,6 +6354,49 @@ export async function getExpenseHierarchicalData(companyId: number | undefined,
 }
 
 
+/**
+ * Retorna anos distintos que possuem lançamentos de despesas.
+ * Considera tanto competenceMonth (pagamento único) quanto dueDate de parcelas (parceladas).
+ */
+export async function getExpenseAvailableYears(companyId: number | undefined): Promise<number[]> {
+  const db = await getDb();
+  if (!db) return [new Date().getFullYear()];
+
+  let companyFilter = '';
+  if (companyId) companyFilter = `AND e.companyId = ${companyId}`;
+
+  const result = await db.execute(sql.raw(`
+    SELECT DISTINCT yr FROM (
+      SELECT CAST(SUBSTRING(e.competenceMonth, 1, 4) AS UNSIGNED) as yr
+      FROM expenses e
+      INNER JOIN expenseInstallments ei ON ei.expenseId = e.id
+      INNER JOIN (
+        SELECT expenseId, COUNT(*) as numParcelas
+        FROM expenseInstallments
+        GROUP BY expenseId
+      ) pc ON pc.expenseId = e.id
+      WHERE e.status != 'CANCELADA' ${companyFilter}
+        AND pc.numParcelas = 1
+      UNION
+      SELECT YEAR(CONVERT_TZ(ei.dueDate, '+00:00', '-03:00')) as yr
+      FROM expenses e
+      INNER JOIN expenseInstallments ei ON ei.expenseId = e.id
+      INNER JOIN (
+        SELECT expenseId, COUNT(*) as numParcelas
+        FROM expenseInstallments
+        GROUP BY expenseId
+      ) pc ON pc.expenseId = e.id
+      WHERE e.status != 'CANCELADA' ${companyFilter}
+        AND pc.numParcelas > 1
+    ) years
+    ORDER BY yr ASC
+  `));
+
+  const rows = result[0] as unknown as any[];
+  const years = rows.map(r => parseInt(r.yr, 10)).filter(y => !isNaN(y));
+  return years.length > 0 ? years : [new Date().getFullYear()];
+}
+
 // ==================== METAS DE FATURAMENTO ====================
 
 export async function getRevenueGoals(year?: number, companyId?: number) {

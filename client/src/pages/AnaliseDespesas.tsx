@@ -53,6 +53,10 @@ export default function AnaliseDespesas() {
   const currentYear = new Date().getFullYear();
   const currentMonth = new Date().getMonth() + 1; // 1-12
   const [selectedYears, setSelectedYears] = useState<number[]>([currentYear]);
+
+  // Buscar anos disponíveis dinamicamente do banco
+  const { data: availableYears } = trpc.expenseAnalysis.availableYears.useQuery();
+  const yearsToShow = availableYears && availableYears.length > 0 ? availableYears : [currentYear];
   const [selectedMonths, setSelectedMonths] = useState<number[]>([]); // vazio = todos os meses
   
   // Estados de expansão
@@ -256,7 +260,7 @@ export default function AnaliseDespesas() {
             <div>
               <label className="text-sm font-medium text-muted-foreground mb-2 block">Ano</label>
               <div className="flex gap-2 flex-wrap">
-                {[2024, 2025, 2026].map(year => (
+                {yearsToShow.map(year => (
                   <Button
                     key={year}
                     variant={selectedYears.includes(year) ? "default" : "outline"}

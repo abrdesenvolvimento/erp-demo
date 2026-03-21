@@ -2048,3 +2048,8 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Ajustar rotas: /importar-vendas (hub) e /importar-vendas/ifood (importador atual) — wouter Switch com rotas ordenadas corretamente
 - [x] Importador iFood: botão "Voltar" no header para retornar ao hub Importar Vendas — link com seta ← em cinza, hover em vermelho iFood
 - [x] Importador iFood: breadcrumb "← Importar Vendas > iFood" no topo — navegação funcional de volta ao hub, "iFood" em vermelho como página ativa
+
+### Apontamentos v22 (21/03/2026)
+- [x] BUG: Análise de Despesas — filtro de ano agora dinâmico: endpoint `availableYears` consulta DISTINCT anos de competenceMonth (parcela única) e dueDate (parceladas), mostrando 2025/2026/2027 automaticamente
+- [ ] [DISCUSSÃO] Fechamento Anual — criar guia com visão Mês ao Lado de Mês (Jan | Fev | Mar | ... | Dez) consolidando receitas + despesas + resultado. Definir formato ideal (DRE anual simplificado?)
+- [ ] [DISCUSSÃO] Despesas com Imóvel Alugado — avaliar tratamento separado das despesas de ocupação (aluguel, condomínio, IPTU, seguro). Valor alto (R$ 197k) distorce análise das demais despesas operacionais. Possibilidades: seção própria no DRE, rateio por filial, indicador % sobre faturamento
