@@ -2055,4 +2055,4 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [ ] [DISCUSSÃO] Despesas com Imóvel Alugado — avaliar tratamento separado das despesas de ocupação (aluguel, condomínio, IPTU, seguro). Valor alto (R$ 197k) distorce análise das demais despesas operacionais. Possibilidades: seção própria no DRE, rateio por filial, indicador % sobre faturamento
 
 ### Apontamentos v23 (01/04/2026)
-- [x] A Brasa Reúne: atualizar logo no sistema com versão final enviada pelo Gabriel (fundo preto, selo laranja/carvão com chama) — CDN atualizado, banco de dados atualizado (id=2)
+- [x] A Brasa Reúne: atualizar logo no sistema com versão final enviada pelo Gabriel (fundo preto, selo laranja/carvão com chama) — SVG convertido para PNG (512x512) via cairosvg, CDN atualizado, banco de dados atualizado (id=2). Logo renderizando corretamente (naturalWidth=512, complete=true)
