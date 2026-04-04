@@ -493,14 +493,15 @@ export async function captureMonthlyStockSnapshot(
   year: number,
   month: number,
   companyId: number = 1,
-  capturedBy?: string
+  capturedBy?: string,
+  snapshotType: 'OPENING' | 'CLOSING' = 'CLOSING'
 ): Promise<{ saved: number; competenceMonth: string }> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
   const competenceMonth = `${year}-${String(month).padStart(2, '0')}`;
 
-  // Buscar estoque atual por categoria (snapshot no momento do fechamento)
+  // Buscar estoque atual por categoria (snapshot no momento da captura)
   const result = await db.execute(sql.raw(`
     SELECT 
       c.id as categoryId,
@@ -524,8 +525,8 @@ export async function captureMonthlyStockSnapshot(
     const capturedByVal = capturedBy ? `'${capturedBy}'` : 'NULL';
     await db.execute(sql.raw(`
       INSERT INTO monthlyStockSnapshot 
-        (companyId, year, month, competenceMonth, categoryId, categoryName, totalItems, totalCost, snapshotDate, capturedBy)
-      VALUES (${companyId}, ${year}, ${month}, '${competenceMonth}', ${row.categoryId}, '${(row.categoryName || '').replace(/'/g, "''")}', ${row.totalItems}, ${totalCostVal}, NOW(), ${capturedByVal})
+        (companyId, year, month, competenceMonth, snapshotType, categoryId, categoryName, totalItems, totalCost, snapshotDate, capturedBy)
+      VALUES (${companyId}, ${year}, ${month}, '${competenceMonth}', '${snapshotType}', ${row.categoryId}, '${(row.categoryName || '').replace(/'/g, "''")}', ${row.totalItems}, ${totalCostVal}, NOW(), ${capturedByVal})
       ON DUPLICATE KEY UPDATE
         categoryName = VALUES(categoryName),
         totalItems = VALUES(totalItems),
@@ -536,6 +537,7 @@ export async function captureMonthlyStockSnapshot(
     saved++;
   }
 
+  console.log(`[StockSnapshot] ${snapshotType} Co${companyId} ${competenceMonth}: ${saved} categorias salvas`);
   return { saved, competenceMonth };
 }
 
@@ -546,17 +548,19 @@ export async function captureMonthlyStockSnapshot(
 export async function getMonthlyStockSnapshot(
   year: number,
   month: number,
-  companyId: number = 1
-): Promise<Array<{ categoryId: number; categoryName: string; totalItems: number; totalCost: number; snapshotDate: Date }> | null> {
+  companyId: number = 1,
+  snapshotType?: 'OPENING' | 'CLOSING'
+): Promise<Array<{ categoryId: number; categoryName: string; totalItems: number; totalCost: number; snapshotDate: Date; snapshotType: string }> | null> {
   const db = await getDb();
   if (!db) return null;
 
   const competenceMonth = `${year}-${String(month).padStart(2, '0')}`;
+  const typeFilter = snapshotType ? ` AND snapshotType = '${snapshotType}'` : '';
 
   const result = await db.execute(sql.raw(`
-    SELECT categoryId, categoryName, totalItems, totalCost, snapshotDate
+    SELECT categoryId, categoryName, totalItems, totalCost, snapshotDate, snapshotType
     FROM monthlyStockSnapshot
-    WHERE companyId = ${companyId} AND competenceMonth = '${competenceMonth}'
+    WHERE companyId = ${companyId} AND competenceMonth = '${competenceMonth}'${typeFilter}
     ORDER BY totalCost DESC
   `));
 
@@ -569,5 +573,6 @@ export async function getMonthlyStockSnapshot(
     totalItems: row.totalItems,
     totalCost: parseFloat(row.totalCost || '0'),
     snapshotDate: row.snapshotDate,
+    snapshotType: row.snapshotType,
   }));
 }

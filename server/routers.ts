@@ -2847,33 +2847,37 @@ export const appRouter = router({
         return await db.getYearlyClosing(input.year, ctx.activeCompanyId);
       }),
 
-    // Capturar snapshot de estoque para fechar um mês
+    // Capturar snapshot de estoque para fechar um mês (OPENING ou CLOSING)
     captureStockSnapshot: adminProcedure
       .input(z.object({
         year: z.number(),
         month: z.number(),
+        snapshotType: z.enum(['OPENING', 'CLOSING']).default('CLOSING'),
       }))
       .mutation(async ({ input, ctx }) => {
         const result = await captureMonthlyStockSnapshot(
           input.year,
           input.month,
           ctx.activeCompanyId,
-          ctx.user.id
+          ctx.user.id,
+          input.snapshotType
         );
         return result;
       }),
 
-    // Verificar se um mês já tem snapshot de estoque
+    // Verificar se um mês já tem snapshot de estoque (OPENING e/ou CLOSING)
     getStockSnapshot: consultorProcedure
       .input(z.object({
         year: z.number(),
         month: z.number(),
+        snapshotType: z.enum(['OPENING', 'CLOSING']).optional(),
       }))
       .query(async ({ input, ctx }) => {
         const snapshot = await getMonthlyStockSnapshot(
           input.year,
           input.month,
-          ctx.activeCompanyId
+          ctx.activeCompanyId,
+          input.snapshotType
         );
         return {
           hasSnapshot: snapshot !== null,

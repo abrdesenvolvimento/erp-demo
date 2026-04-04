@@ -2058,3 +2058,10 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] A Brasa Reúne: atualizar logo no sistema com versão final enviada pelo Gabriel (fundo preto, selo laranja/carvão com chama) — SVG convertido para PNG (512x512) via cairosvg, CDN atualizado, banco de dados atualizado (id=2). Logo renderizando corretamente (naturalWidth=512, complete=true)
 - [x] Tela Selecionar Empresa: logo ABRWF com muito espaçamento no container — removido container com borda/sombra, logo agora exibido limpo com object-contain
 - [x] A Brasa Reúne: remover fundo preto do logo, deixar apenas o selo circular com transparência — processado com Pillow, CDN atualizado, DB atualizado
+
+### Apontamentos v28 (04/04/2026)
+- [x] Snapshot de Estoque: adicionar campo `snapshotType` (OPENING/CLOSING) para capturar estoque inicial e final do mês
+- [x] Snapshot de Estoque: corrigir job para iterar por TODAS as empresas ativas (não apenas companyId=1)
+- [x] Snapshot de Estoque: capturar snapshot de ABERTURA no 1º dia do mês (00:05) e FECHAMENTO no último dia (23:55) + safety net dia 2 às 06:00
+- [x] Snapshot de Estoque: capturar snapshot de abertura de Abril 2026 para ambas as empresas (baseline) — Co1: 8 categorias R$90.403, Co2: 2 categorias R$16,50
+- [x] Snapshot de Estoque: atualizar queries de fechamento e análise para usar snapshots opening/closing — router atualizado com parâmetro snapshotType
