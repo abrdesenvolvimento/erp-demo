@@ -49,7 +49,8 @@ import {
   getSalesByPaymentType, 
   getStockByCategory, 
   getPurchasesBySupplier,
-  getSalesByChannel 
+  getSalesByChannel,
+  getMonthlyStockSnapshot 
 } from './closingQueries';
 import { 
   getTodayInBrazil, 
@@ -7176,53 +7177,197 @@ export async function getYearlyClosing(year: number, companyId?: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  const monthlyData: any[] = [];
-  
-  // Buscar dados de cada mês
-  for (let month = 1; month <= 12; month++) {
-    const data = await getMonthlyClosing(year, month, companyId);
-    monthlyData.push({
-      month,
-      monthName: data.period.monthName,
-      ...data.results,
-      salesCount: data.sales.total.count,
-      purchasesTotal: data.purchases.total.amount,
-      expensesTotal: data.expenses.total.amount,
-    });
-  }
-
-  // Calcular totais anuais
-  const yearTotals = monthlyData.reduce((acc, m) => ({
-    revenue: acc.revenue + m.revenue,
-    cost: acc.cost + m.cost,
-    grossProfit: acc.grossProfit + m.grossProfit,
-    operationalExpenses: acc.operationalExpenses + m.operationalExpenses,
-    netResult: acc.netResult + m.netResult,
-    salesCount: acc.salesCount + m.salesCount,
-    purchasesTotal: acc.purchasesTotal + m.purchasesTotal,
-    expensesTotal: acc.expensesTotal + m.expensesTotal,
-  }), {
-    revenue: 0,
-    cost: 0,
-    grossProfit: 0,
-    operationalExpenses: 0,
-    netResult: 0,
-    salesCount: 0,
-    purchasesTotal: 0,
-    expensesTotal: 0,
+  // Helper para mapear dados de um mês
+  const mapMonthData = (month: number, data: any) => ({
+    month,
+    monthName: data.period.monthName,
+    receitaBruta: data.dre.receitaBruta.total,
+    receitaBalcao: data.dre.receitaBruta.balcao,
+    receitaDelivery: data.dre.receitaBruta.delivery,
+    receitaAPrazo: data.dre.receitaBruta.aPrazo,
+    receitaSalao: data.dre.receitaBruta.salao,
+    deducoes: data.dre.deducoes.total,
+    deducoesByAccount: data.dre.deducoes.byAccount,
+    receitaLiquida: data.dre.receitaLiquida,
+    cmv: data.dre.cmv,
+    lucroBruto: data.dre.lucroBruto,
+    margemBruta: data.dre.margemBruta,
+    despOperacionais: data.dre.despesas.operacionais,
+    despAdministrativas: data.dre.despesas.administrativas,
+    despFinanceiras: data.dre.despesas.financeiras,
+    despOutras: data.dre.despesas.outras,
+    despTotal: data.dre.despesas.total,
+    despByClassification: data.dre.despesas.byClassification,
+    despByAccount: data.dre.despesas.byAccount,
+    resultadoOperacional: data.dre.resultadoOperacional,
+    resultadoLiquido: data.dre.resultadoLiquido,
+    margemLiquida: data.dre.margemLiquida,
+    outrasReceitas: data.otherRevenues.total,
+    salesCount: data.sales.total.count,
+    salesRevenue: data.sales.total.revenue,
+    salesCost: data.sales.total.cost,
+    purchasesTotal: data.purchases.total.amount,
+    purchasesCount: data.purchases.total.count,
+    cashReceived: data.cashFlow.received,
+    cashPaid: data.cashFlow.paid,
+    cashBalance: data.cashFlow.balance,
   });
 
-  yearTotals.grossMargin = yearTotals.revenue > 0 
-    ? Math.round((yearTotals.grossProfit / yearTotals.revenue) * 1000) / 10 
-    : 0;
-  yearTotals.netMargin = yearTotals.revenue > 0 
-    ? Math.round((yearTotals.netResult / yearTotals.revenue) * 1000) / 10 
-    : 0;
+  // PARALELO: Buscar todos os 12 meses do ano atual + 12 meses do ano anterior + snapshots de estoque
+  // Executar em lotes de 4 para não sobrecarregar o banco
+  const batchSize = 4;
+  const monthlyDre: any[] = new Array(12);
+  
+  for (let batchStart = 0; batchStart < 12; batchStart += batchSize) {
+    const batchEnd = Math.min(batchStart + batchSize, 12);
+    const promises = [];
+    for (let i = batchStart; i < batchEnd; i++) {
+      promises.push(
+        getMonthlyClosing(year, i + 1, companyId, true)
+          .then(data => { monthlyDre[i] = mapMonthData(i + 1, data); })
+      );
+    }
+    await Promise.all(promises);
+  }
+
+  // PARALELO: Buscar snapshots de estoque (todos de uma vez)
+  const stockPromises = [];
+  for (let month = 1; month <= 12; month++) {
+    stockPromises.push(
+      Promise.all([
+        getMonthlyStockSnapshot(year, month, companyId || 1, 'OPENING'),
+        getMonthlyStockSnapshot(year, month, companyId || 1, 'CLOSING'),
+      ]).then(([openingSnapshot, closingSnapshot]) => {
+        const openingTotal = openingSnapshot ? openingSnapshot.reduce((s, r) => s + r.totalCost, 0) : null;
+        const closingTotal = closingSnapshot ? closingSnapshot.reduce((s, r) => s + r.totalCost, 0) : null;
+        return {
+          month,
+          openingStock: openingTotal,
+          closingStock: closingTotal,
+          purchases: monthlyDre[month - 1].purchasesTotal,
+          cmv: monthlyDre[month - 1].cmv,
+          variation: openingTotal !== null && closingTotal !== null ? closingTotal - openingTotal : null,
+          hasData: openingTotal !== null || closingTotal !== null,
+        };
+      })
+    );
+  }
+  const stockEvolution = await Promise.all(stockPromises);
+
+  // Calcular totais anuais
+  const totals = monthlyDre.reduce((acc, m) => ({
+    receitaBruta: acc.receitaBruta + m.receitaBruta,
+    receitaBalcao: acc.receitaBalcao + m.receitaBalcao,
+    receitaDelivery: acc.receitaDelivery + m.receitaDelivery,
+    receitaAPrazo: acc.receitaAPrazo + m.receitaAPrazo,
+    receitaSalao: acc.receitaSalao + m.receitaSalao,
+    deducoes: acc.deducoes + m.deducoes,
+    receitaLiquida: acc.receitaLiquida + m.receitaLiquida,
+    cmv: acc.cmv + m.cmv,
+    lucroBruto: acc.lucroBruto + m.lucroBruto,
+    despOperacionais: acc.despOperacionais + m.despOperacionais,
+    despAdministrativas: acc.despAdministrativas + m.despAdministrativas,
+    despFinanceiras: acc.despFinanceiras + m.despFinanceiras,
+    despOutras: acc.despOutras + m.despOutras,
+    despTotal: acc.despTotal + m.despTotal,
+    resultadoOperacional: acc.resultadoOperacional + m.resultadoOperacional,
+    resultadoLiquido: acc.resultadoLiquido + m.resultadoLiquido,
+    outrasReceitas: acc.outrasReceitas + m.outrasReceitas,
+    salesCount: acc.salesCount + m.salesCount,
+    salesRevenue: acc.salesRevenue + m.salesRevenue,
+    salesCost: acc.salesCost + m.salesCost,
+    purchasesTotal: acc.purchasesTotal + m.purchasesTotal,
+    purchasesCount: acc.purchasesCount + m.purchasesCount,
+    cashReceived: acc.cashReceived + m.cashReceived,
+    cashPaid: acc.cashPaid + m.cashPaid,
+    cashBalance: acc.cashBalance + m.cashBalance,
+  }), {
+    receitaBruta: 0, receitaBalcao: 0, receitaDelivery: 0, receitaAPrazo: 0, receitaSalao: 0,
+    deducoes: 0, receitaLiquida: 0, cmv: 0, lucroBruto: 0,
+    despOperacionais: 0, despAdministrativas: 0, despFinanceiras: 0, despOutras: 0, despTotal: 0,
+    resultadoOperacional: 0, resultadoLiquido: 0, outrasReceitas: 0,
+    salesCount: 0, salesRevenue: 0, salesCost: 0, purchasesTotal: 0, purchasesCount: 0,
+    cashReceived: 0, cashPaid: 0, cashBalance: 0,
+  });
+
+  // Calcular margens anuais
+  const margemBruta = totals.receitaLiquida > 0 
+    ? Math.round((totals.lucroBruto / totals.receitaLiquida) * 1000) / 10 : 0;
+  const margemLiquida = totals.receitaLiquida > 0 
+    ? Math.round((totals.resultadoLiquido / totals.receitaLiquida) * 1000) / 10 : 0;
+
+  // Consolidar despesas por conta gerencial (anual)
+  const despByAccountAnnual: Record<string, { code: string; name: string; classification: string; total: number }> = {};
+  for (const m of monthlyDre) {
+    if (m.despByAccount) {
+      for (const acc of m.despByAccount) {
+        const key = acc.code || acc.name;
+        if (!despByAccountAnnual[key]) {
+          despByAccountAnnual[key] = { code: acc.code, name: acc.name, classification: acc.classification, total: 0 };
+        }
+        despByAccountAnnual[key].total += acc.total;
+      }
+    }
+  }
+
+  // PARALELO: Buscar dados do ano anterior para comparação (em lotes de 4)
+  let previousYearTotals: any = null;
+  try {
+    const prevYear = year - 1;
+    let prevTotals = {
+      receitaBruta: 0, receitaLiquida: 0, lucroBruto: 0, despTotal: 0,
+      resultadoLiquido: 0, outrasReceitas: 0, salesCount: 0, cmv: 0,
+    };
+    const prevMonthlyData: any[] = new Array(12);
+    for (let batchStart = 0; batchStart < 12; batchStart += batchSize) {
+      const batchEnd = Math.min(batchStart + batchSize, 12);
+      const promises = [];
+      for (let i = batchStart; i < batchEnd; i++) {
+        promises.push(
+          getMonthlyClosing(prevYear, i + 1, companyId, true)
+            .then(data => { prevMonthlyData[i] = data; })
+        );
+      }
+      await Promise.all(promises);
+    }
+    for (const data of prevMonthlyData) {
+      if (data) {
+        prevTotals.receitaBruta += data.dre.receitaBruta.total;
+        prevTotals.receitaLiquida += data.dre.receitaLiquida;
+        prevTotals.lucroBruto += data.dre.lucroBruto;
+        prevTotals.despTotal += data.dre.despesas.total;
+        prevTotals.resultadoLiquido += data.dre.resultadoLiquido;
+        prevTotals.outrasReceitas += data.otherRevenues.total;
+        prevTotals.salesCount += data.sales.total.count;
+        prevTotals.cmv += data.dre.cmv;
+      }
+    }
+    previousYearTotals = prevTotals;
+  } catch (e) {
+    console.warn(`Não foi possível carregar dados do ano anterior (${year - 1})`);
+  }
 
   return {
     year,
-    months: monthlyData,
-    totals: yearTotals,
+    months: monthlyDre,
+    stockEvolution,
+    totals: {
+      ...totals,
+      margemBruta,
+      margemLiquida,
+    },
+    despByAccountAnnual: Object.values(despByAccountAnnual).sort((a, b) => b.total - a.total),
+    previousYear: previousYearTotals,
+    // Compatibilidade com estrutura antiga
+    legacy: {
+      revenue: totals.salesRevenue,
+      cost: totals.salesCost,
+      grossProfit: totals.lucroBruto,
+      grossMargin: margemBruta,
+      operationalExpenses: totals.despTotal,
+      netResult: totals.resultadoLiquido,
+      netMargin: margemLiquida,
+    },
   };
 }
 

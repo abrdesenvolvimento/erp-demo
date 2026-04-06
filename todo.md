@@ -2051,7 +2051,7 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 
 ### Apontamentos v22 (21/03/2026)
 - [x] BUG: Análise de Despesas — filtro de ano agora dinâmico: endpoint `availableYears` consulta DISTINCT anos de competenceMonth (parcela única) e dueDate (parceladas), mostrando 2025/2026/2027 automaticamente
-- [ ] [DISCUSSÃO] Fechamento Anual — criar guia com visão Mês ao Lado de Mês (Jan | Fev | Mar | ... | Dez) consolidando receitas + despesas + resultado. Definir formato ideal (DRE anual simplificado?)
+- [x] [DISCUSSÃO] Fechamento Anual — criar guia com visão Mês ao Lado de Mês (Jan | Fev | Mar | ... | Dez) consolidando receitas + despesas + resultado. Implementado como DRE Gerencial anual com 4 abas
 - [ ] [DISCUSSÃO] Despesas com Imóvel Alugado — avaliar tratamento separado das despesas de ocupação (aluguel, condomínio, IPTU, seguro). Valor alto (R$ 197k) distorce análise das demais despesas operacionais. Possibilidades: seção própria no DRE, rateio por filial, indicador % sobre faturamento
 
 ### Apontamentos v23 (01/04/2026)
@@ -2068,3 +2068,14 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 
 ### Apontamentos v29 (06/04/2026)
 - [x] BUG: Backup automático falha em produção — `mysqldump: not found`. Reescrito: banco exportado via SQL puro (mysql2/promise + SHOW CREATE TABLE + SELECT), código via archiver (Node.js nativo). Testado: 66.62 MB DB + 4.42 MB código, upload S3 OK
+
+### Apontamentos v30 (06/04/2026) — Fechamento Anual
+- [x] Fechamento Anual: Backend — queries para agregar dados mensais (receitas, deduções, CMV, despesas operacionais, despesas ocupação, resultado financeiro) por mês/ano/empresa
+- [x] Fechamento Anual: Backend — tRPC procedures para DRE anual, estoque mensal, e indicadores
+- [x] Fechamento Anual: Frontend — página FechamentoAnual com 5 cards de resumo anual
+- [x] Fechamento Anual: Frontend — aba DRE Mês a Mês (tabela Jan→Dez + Total + AV%)
+- [x] Fechamento Anual: Frontend — aba Gráficos (barras Receita vs Despesa + linha Margem)
+- [x] Fechamento Anual: Frontend — aba Estoque Mensal (Abertura → Fechamento com CMV e Giro)
+- [x] Fechamento Anual: Frontend — aba Indicadores (KPIs consolidados)
+- [x] Fechamento Anual: Registrar rota e adicionar no sidebar
+- [x] Fechamento Anual: Performance — otimizado getYearlyClosing com queries paralelas (lotes de 4) para evitar timeout em empresas com grande volume de dados (Adega Beira Rio 2025)
