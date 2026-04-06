@@ -5,9 +5,9 @@
  */
 
 import { Router, Request, Response } from 'express';
-import { execSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
+import mysql from 'mysql2/promise';
 import { google } from 'googleapis';
 import {
   createBackupLog,
@@ -58,10 +58,36 @@ function getServiceAccountAuth() {
 }
 
 /**
- * Fazer dump do banco de dados
+ * Escapar valor SQL para INSERT statements
+ */
+function escapeSqlValue(value: any): string {
+  if (value === null || value === undefined) return 'NULL';
+  if (typeof value === 'number') return String(value);
+  if (typeof value === 'boolean') return value ? '1' : '0';
+  if (value instanceof Date) {
+    return `'${value.toISOString().slice(0, 19).replace('T', ' ')}'`;
+  }
+  if (Buffer.isBuffer(value)) {
+    return `X'${value.toString('hex')}'`;
+  }
+  // Escapar strings
+  const escaped = String(value)
+    .replace(/\\/g, '\\\\')
+    .replace(/'/g, "\\'") 
+    .replace(/"/g, '\\"')
+    .replace(/\n/g, '\\n')
+    .replace(/\r/g, '\\r')
+    .replace(/\t/g, '\\t')
+    .replace(/\x00/g, '\\0');
+  return `'${escaped}'`;
+}
+
+/**
+ * Fazer dump do banco de dados usando queries SQL puras (sem mysqldump)
+ * Compatível com qualquer ambiente Node.js
  */
 async function backupDatabase(): Promise<{ file: string; size: number }> {
-  console.log('[Backup] Iniciando backup do banco de dados...');
+  console.log('[Backup] Iniciando backup do banco de dados (SQL puro)...');
   
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
   const backupFile = path.join(BACKUP_DIR, `database-${timestamp}.sql`);
@@ -71,7 +97,7 @@ async function backupDatabase(): Promise<{ file: string; size: number }> {
     throw new Error('DATABASE_URL não configurado');
   }
   
-  // Parse da URL de conexão (mysql://user:password@host:port/database?params)
+  // Parse da URL de conexão
   const urlMatch = databaseUrl.match(/mysql:\/\/([^:]+):([^@]+)@([^:]+):(\d+)\/([^?]+)/);
   if (!urlMatch) {
     throw new Error('DATABASE_URL em formato inválido');
@@ -80,37 +106,147 @@ async function backupDatabase(): Promise<{ file: string; size: number }> {
   const [, user, password, host, port, database] = urlMatch;
   const cleanDatabase = database.split('?')[0];
   
-  // Executar mysqldump
-  const command = `mysqldump -h ${host} -P ${port} -u ${user} -p${password} --ssl-mode=REQUIRED ${cleanDatabase} > ${backupFile}`;
-  execSync(command, { stdio: 'pipe' });
+  // Criar conexão direta via mysql2
+  const connection = await mysql.createConnection({
+    host,
+    port: parseInt(port),
+    user,
+    password,
+    database: cleanDatabase,
+    ssl: { rejectUnauthorized: true },
+    connectTimeout: 30000,
+  });
   
-  const stats = fs.statSync(backupFile);
-  console.log(`[Backup] ✓ Banco de dados exportado: ${(stats.size / 1024 / 1024).toFixed(2)} MB`);
-  
-  return { file: backupFile, size: stats.size };
+  try {
+    const writeStream = fs.createWriteStream(backupFile);
+    
+    // Header
+    const now = new Date().toISOString();
+    writeStream.write(`-- ABRWF ERP Database Backup\n`);
+    writeStream.write(`-- Generated: ${now}\n`);
+    writeStream.write(`-- Method: Pure SQL (Node.js mysql2)\n`);
+    writeStream.write(`-- Database: ${cleanDatabase}\n\n`);
+    writeStream.write(`SET NAMES utf8mb4;\n`);
+    writeStream.write(`SET FOREIGN_KEY_CHECKS = 0;\n\n`);
+    
+    // Listar todas as tabelas
+    const [tables] = await connection.query('SHOW TABLES') as any[];
+    const tableKey = Object.keys(tables[0])[0];
+    const tableNames = tables.map((t: any) => t[tableKey]) as string[];
+    
+    console.log(`[Backup] Encontradas ${tableNames.length} tabelas`);
+    
+    let totalRows = 0;
+    
+    for (const tableName of tableNames) {
+      console.log(`[Backup] Exportando: ${tableName}...`);
+      
+      // Obter CREATE TABLE
+      const [createResult] = await connection.query(`SHOW CREATE TABLE \`${tableName}\``) as any[];
+      const createSql = createResult[0]['Create Table'];
+      
+      writeStream.write(`-- -----------------------------------------------\n`);
+      writeStream.write(`-- Table: ${tableName}\n`);
+      writeStream.write(`-- -----------------------------------------------\n`);
+      writeStream.write(`DROP TABLE IF EXISTS \`${tableName}\`;\n`);
+      writeStream.write(`${createSql};\n\n`);
+      
+      // Exportar dados em lotes de 500 registros
+      const BATCH_SIZE = 500;
+      let offset = 0;
+      let hasMore = true;
+      
+      while (hasMore) {
+        const [rows] = await connection.query(
+          `SELECT * FROM \`${tableName}\` LIMIT ${BATCH_SIZE} OFFSET ${offset}`
+        ) as any[];
+        
+        if (rows.length === 0) {
+          hasMore = false;
+          break;
+        }
+        
+        // Gerar INSERT statements
+        const columns = Object.keys(rows[0]);
+        const columnList = columns.map(c => `\`${c}\``).join(', ');
+        
+        // Agrupar em INSERT de até 50 rows por statement
+        const ROWS_PER_INSERT = 50;
+        for (let i = 0; i < rows.length; i += ROWS_PER_INSERT) {
+          const batch = rows.slice(i, i + ROWS_PER_INSERT);
+          const values = batch.map((row: any) => {
+            const vals = columns.map(col => escapeSqlValue(row[col]));
+            return `(${vals.join(', ')})`;
+          }).join(',\n');
+          
+          writeStream.write(`INSERT INTO \`${tableName}\` (${columnList}) VALUES\n${values};\n`);
+        }
+        
+        totalRows += rows.length;
+        offset += BATCH_SIZE;
+        
+        if (rows.length < BATCH_SIZE) {
+          hasMore = false;
+        }
+      }
+      
+      writeStream.write('\n');
+    }
+    
+    // Footer
+    writeStream.write(`SET FOREIGN_KEY_CHECKS = 1;\n`);
+    writeStream.write(`-- Backup complete: ${tableNames.length} tables, ${totalRows} rows\n`);
+    
+    // Aguardar finalização da escrita
+    await new Promise<void>((resolve, reject) => {
+      writeStream.end(() => resolve());
+      writeStream.on('error', reject);
+    });
+    
+    const stats = fs.statSync(backupFile);
+    console.log(`[Backup] ✓ Banco exportado: ${tableNames.length} tabelas, ${totalRows} registros, ${(stats.size / 1024 / 1024).toFixed(2)} MB`);
+    
+    return { file: backupFile, size: stats.size };
+  } finally {
+    await connection.end();
+  }
 }
 
 /**
- * Fazer ZIP do código
+ * Fazer ZIP do código usando archiver (sem dependência de binário externo)
  */
 async function backupCode(): Promise<{ file: string; size: number }> {
   console.log('[Backup] Iniciando backup do código...');
   
+  const archiver = (await import('archiver')).default;
+  
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
   const backupFile = path.join(BACKUP_DIR, `code-${timestamp}.zip`);
   
-  // Excluir diretórios desnecessários
   const excludeDirs = ['node_modules', '.git', 'backups', 'dist', 'coverage', '.next'];
-  const excludeArgs = excludeDirs.map(dir => `-x "${dir}/*"`).join(' ');
   
-  // Criar ZIP
-  const command = `cd ${process.cwd()} && zip -r -q ${backupFile} . ${excludeArgs}`;
-  execSync(command, { stdio: 'pipe' });
-  
-  const stats = fs.statSync(backupFile);
-  console.log(`[Backup] ✓ Código exportado: ${(stats.size / 1024 / 1024).toFixed(2)} MB`);
-  
-  return { file: backupFile, size: stats.size };
+  return new Promise<{ file: string; size: number }>((resolve, reject) => {
+    const output = fs.createWriteStream(backupFile);
+    const archive = archiver('zip', { zlib: { level: 6 } });
+    
+    output.on('close', () => {
+      const size = archive.pointer();
+      console.log(`[Backup] ✓ Código exportado: ${(size / 1024 / 1024).toFixed(2)} MB`);
+      resolve({ file: backupFile, size });
+    });
+    
+    archive.on('error', (err: Error) => reject(err));
+    archive.pipe(output);
+    
+    // Adicionar todos os arquivos exceto os diretórios ignorados
+    archive.glob('**/*', {
+      cwd: process.cwd(),
+      ignore: excludeDirs.map(d => `${d}/**`),
+      dot: true,
+    });
+    
+    archive.finalize();
+  });
 }
 
 /**

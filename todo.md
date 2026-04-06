@@ -2065,3 +2065,6 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Snapshot de Estoque: capturar snapshot de ABERTURA no 1º dia do mês (00:05) e FECHAMENTO no último dia (23:55) + safety net dia 2 às 06:00
 - [x] Snapshot de Estoque: capturar snapshot de abertura de Abril 2026 para ambas as empresas (baseline) — Co1: 8 categorias R$90.403, Co2: 2 categorias R$16,50
 - [x] Snapshot de Estoque: atualizar queries de fechamento e análise para usar snapshots opening/closing — router atualizado com parâmetro snapshotType
+
+### Apontamentos v29 (06/04/2026)
+- [x] BUG: Backup automático falha em produção — `mysqldump: not found`. Reescrito: banco exportado via SQL puro (mysql2/promise + SHOW CREATE TABLE + SELECT), código via archiver (Node.js nativo). Testado: 66.62 MB DB + 4.42 MB código, upload S3 OK
