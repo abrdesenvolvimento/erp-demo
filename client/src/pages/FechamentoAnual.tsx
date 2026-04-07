@@ -167,10 +167,10 @@ export default function FechamentoAnual() {
     // Canais de venda dinâmicos: só mostrar se houver valor > 0 no total anual
     const channelRows: DreRow[] = [];
     const channelDefs = [
-      { label: "Vendas Balcão", field: "receitaBalcao", totalField: "receitaBalcao" },
-      { label: "Vendas Delivery", field: "receitaDelivery", totalField: "receitaDelivery" },
-      { label: "Vendas A Prazo", field: "receitaAPrazo", totalField: "receitaAPrazo" },
-      { label: "Vendas Salão", field: "receitaSalao", totalField: "receitaSalao" },
+      { label: "Balcão", field: "receitaBalcao", totalField: "receitaBalcao" },
+      { label: "Delivery", field: "receitaDelivery", totalField: "receitaDelivery" },
+      { label: "A Prazo", field: "receitaAPrazo", totalField: "receitaAPrazo" },
+      { label: "Salão", field: "receitaSalao", totalField: "receitaSalao" },
     ];
     for (const ch of channelDefs) {
       const totalVal = (t as any)[ch.totalField] || 0;
@@ -180,24 +180,24 @@ export default function FechamentoAnual() {
     }
 
     // Despesas itemizadas por conta gerencial (mês a mês)
-    // Agrupar contas por classificação para manter organizado
-    const despesaItemRows: DreRow[] = [];
+    // Agrupar por classificação com subtotais
+    const despesaGroupRows: DreRow[] = [];
+    const classificationOrder = ['OPERACIONAL', 'ADMINISTRATIVA', 'FINANCEIRA', 'NAO_OPERACIONAL', 'COMERCIAL', 'PATRIMONIAL'];
+    const classLabels: Record<string, string> = {
+      OPERACIONAL: 'Operacionais',
+      COMERCIAL: 'Comerciais',
+      ADMINISTRATIVA: 'Administrativas',
+      FINANCEIRA: 'Financeiras',
+      NAO_OPERACIONAL: 'Outras Despesas',
+      PATRIMONIAL: 'Patrimoniais',
+    };
+
     if (data.despByAccountAnnual && data.despByAccountAnnual.length > 0) {
-      // Agrupar por classificação
-      const classifications = ['OPERACIONAL', 'COMERCIAL', 'ADMINISTRATIVA', 'FINANCEIRA', 'NAO_OPERACIONAL', 'PATRIMONIAL'];
-      const classLabels: Record<string, string> = {
-        OPERACIONAL: 'Operacionais',
-        COMERCIAL: 'Comerciais',
-        ADMINISTRATIVA: 'Administrativas',
-        FINANCEIRA: 'Financeiras',
-        NAO_OPERACIONAL: 'Não Operacionais',
-        PATRIMONIAL: 'Patrimoniais',
-      };
-      for (const cls of classifications) {
+      for (const cls of classificationOrder) {
         const accounts = data.despByAccountAnnual.filter((a: any) => a.classification === cls);
         if (accounts.length === 0) continue;
         // Sub-header da classificação
-        despesaItemRows.push({
+        despesaGroupRows.push({
           label: classLabels[cls] || cls,
           values: Array(12).fill(null),
           total: null,
@@ -215,76 +215,137 @@ export default function FechamentoAnual() {
             return found ? found.total : 0;
           });
           const totalVal = monthValues.reduce((s: number, v: number) => s + v, 0);
-          despesaItemRows.push({
+          const rb = t.receitaBruta || 1;
+          despesaGroupRows.push({
             label: accountName,
             values: monthValues,
             total: totalVal,
-            av: rl > 0 ? Math.round((totalVal / rl) * 1000) / 10 : null,
+            av: rb > 0 ? Math.round((totalVal / rb) * 1000) / 10 : null,
             indent: 2,
             className: "text-red-600",
           });
         }
+        // Subtotal do grupo
+        const groupMonthTotals = months.map((_: any, mi: number) => {
+          return accounts.reduce((sum: number, acc: any) => {
+            const mv = months[mi];
+            if (!mv.despByAccount) return sum;
+            const found = mv.despByAccount.find((a: any) => a.name === acc.name);
+            return sum + (found ? found.total : 0);
+          }, 0);
+        });
+        const groupTotal = groupMonthTotals.reduce((s: number, v: number) => s + v, 0);
+        despesaGroupRows.push({
+          label: `Total ${classLabels[cls] || cls}`,
+          values: groupMonthTotals,
+          total: groupTotal,
+          isSubtotal: true,
+          bold: true,
+          indent: 1,
+          className: "text-red-600",
+        });
+        // Espaço entre grupos
+        despesaGroupRows.push(separator());
       }
     } else {
-      // Fallback: mostrar por classificação agregada
-      despesaItemRows.push(row("Operacionais", "despOperacionais", { indent: 1, className: "text-red-600" }));
-      despesaItemRows.push(row("Administrativas", "despAdministrativas", { indent: 1, className: "text-red-600" }));
-      despesaItemRows.push(row("Financeiras", "despFinanceiras", { indent: 1, className: "text-red-600" }));
-      despesaItemRows.push(row("Outras Despesas", "despOutras", { indent: 1, className: "text-red-600" }));
+      despesaGroupRows.push(row("Operacionais", "despOperacionais", { indent: 1, className: "text-red-600" }));
+      despesaGroupRows.push(row("Administrativas", "despAdministrativas", { indent: 1, className: "text-red-600" }));
+      despesaGroupRows.push(row("Financeiras", "despFinanceiras", { indent: 1, className: "text-red-600" }));
+      despesaGroupRows.push(row("Outras Despesas", "despOutras", { indent: 1, className: "text-red-600" }));
     }
 
+    // Outras Receitas itemizadas
+    const outrasReceitasRows: DreRow[] = [];
+    if (data.outrasReceitasByType) {
+      for (const item of data.outrasReceitasByType) {
+        const monthValues = months.map((m: any) => {
+          if (!m.outrasReceitasByAccount) return 0;
+          const found = m.outrasReceitasByAccount.find((a: any) => a.name === item.name);
+          return found ? found.total : 0;
+        });
+        const totalVal = monthValues.reduce((s: number, v: number) => s + v, 0);
+        if (totalVal > 0) {
+          outrasReceitasRows.push({
+            label: item.name,
+            values: monthValues,
+            total: totalVal,
+            indent: 1,
+            className: "text-emerald-600",
+          });
+        }
+      }
+    }
+    if (outrasReceitasRows.length === 0) {
+      outrasReceitasRows.push(row("Outras Receitas", "outrasReceitas", { indent: 1, className: "text-emerald-600" }));
+    }
+
+    // Resumo Final: Receita > CMV > Margem > Receita Líquida > Despesa > Resultado > % Resultado
+    const receitaLiquidaCalc = months.map((m: any) => (m.receitaBruta || 0) - (m.cmv || 0));
+    const receitaLiquidaTotal = receitaLiquidaCalc.reduce((s: number, v: number) => s + v, 0);
+    const resultadoCalc = months.map((m: any, i: number) => receitaLiquidaCalc[i] - (m.despTotal || 0));
+    const resultadoTotal = resultadoCalc.reduce((s: number, v: number) => s + v, 0);
+
     return [
-      // RECEITAS
-      { label: "RECEITAS", values: Array(12).fill(null), total: null, isHeader: true },
+      // SEÇÃO 1: RECEITA DE VENDAS
+      { label: "Receita de Vendas", values: Array(12).fill(null), total: null, isHeader: true },
       ...channelRows,
-      row("RECEITA BRUTA", "receitaBruta", { isSubtotal: true, bold: true }),
+      row("Total Receita", "receitaBruta", { isSubtotal: true, bold: true }),
 
       separator(),
 
-      // DEDUÇÕES
-      { label: "DEDUÇÕES", values: Array(12).fill(null), total: null, isHeader: true },
-      row("Taxas e Deduções", "deducoes", { indent: 1, className: "text-red-600" }),
-      row("RECEITA LÍQUIDA", "receitaLiquida", { isSubtotal: true, bold: true }),
-
-      separator(),
-
-      // CMV
-      { label: "CUSTO DAS MERCADORIAS VENDIDAS", values: Array(12).fill(null), total: null, isHeader: true },
-      row("CMV", "cmv", { indent: 1, className: "text-red-600" }),
-      row("LUCRO BRUTO", "lucroBruto", { isSubtotal: true, bold: true }),
-      {
-        label: "Margem Bruta %",
-        values: months.map((m: any) => m.margemBruta ?? null),
-        total: t.margemBruta ?? null,
-        av: null,
-        indent: 1,
-        className: "text-muted-foreground italic",
-      },
-
-      separator(),
-
-      // DESPESAS (itemizadas por conta gerencial)
-      { label: "DESPESAS", values: Array(12).fill(null), total: null, isHeader: true },
-      ...despesaItemRows,
+      // SEÇÃO 2: DESPESAS (agrupadas com subtotais)
+      { label: "Despesas", values: Array(12).fill(null), total: null, isHeader: true },
+      ...despesaGroupRows,
       row("TOTAL DESPESAS", "despTotal", { isSubtotal: true, bold: true, className: "text-red-600" }),
 
       separator(),
 
-      // OUTRAS RECEITAS
-      { label: "OUTRAS RECEITAS", values: Array(12).fill(null), total: null, isHeader: true },
-      row("Outras Receitas", "outrasReceitas", { indent: 1, className: "text-emerald-600" }),
+      // SEÇÃO 3: OUTRAS RECEITAS
+      { label: "Outras Receitas", values: Array(12).fill(null), total: null, isHeader: true },
+      ...outrasReceitasRows,
+      {
+        label: "Total Outras Receitas",
+        values: months.map((m: any) => m.outrasReceitas || 0),
+        total: t.outrasReceitas || 0,
+        isSubtotal: true,
+        bold: true,
+        className: "text-emerald-600",
+      },
 
       separator(),
+      separator(),
 
-      // RESULTADO
-      row("RESULTADO OPERACIONAL", "resultadoOperacional", { isSubtotal: true, bold: true }),
-      row("RESULTADO LÍQUIDO", "resultadoLiquido", { isTotal: true, bold: true }),
+      // SEÇÃO 4: RESUMO FINAL
+      row("Total Receita", "receitaBruta", { bold: true }),
+      row("CMV", "cmv", { className: "text-red-600" }),
       {
-        label: "Margem Líquida %",
-        values: months.map((m: any) => m.margemLiquida ?? null),
-        total: t.margemLiquida ?? null,
-        av: null,
-        indent: 1,
+        label: "% Margem",
+        values: months.map((m: any) => m.margemBruta ?? null),
+        total: t.margemBruta ?? null,
+        className: "text-muted-foreground italic",
+      },
+      {
+        label: "Receita Líquida",
+        values: receitaLiquidaCalc,
+        total: receitaLiquidaTotal,
+        bold: true,
+        isSubtotal: true,
+      },
+      row("Despesa", "despTotal", { className: "text-red-600" }),
+      {
+        label: "Resultado",
+        values: resultadoCalc,
+        total: resultadoTotal,
+        bold: true,
+        isTotal: true,
+      },
+      {
+        label: "% Resultado",
+        values: months.map((m: any, i: number) => {
+          const rec = m.receitaBruta || 0;
+          return rec > 0 ? (resultadoCalc[i] / rec) * 100 : null;
+        }),
+        total: t.receitaBruta > 0 ? (resultadoTotal / t.receitaBruta) * 100 : null,
         className: "text-muted-foreground italic",
       },
     ];
@@ -305,7 +366,7 @@ export default function FechamentoAnual() {
               Fechamento Anual
             </h1>
             <p className="text-muted-foreground mt-1">
-              DRE Gerencial — Visão Mês a Mês
+              Visão Mês a Mês
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -484,8 +545,8 @@ export default function FechamentoAnual() {
               <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="dre" className="flex items-center gap-1.5">
                   <BarChart3 className="h-4 w-4" />
-                  <span className="hidden sm:inline">DRE Mês a Mês</span>
-                  <span className="sm:hidden">DRE</span>
+                  <span className="hidden sm:inline">Visão Mês a Mês</span>
+                  <span className="sm:hidden">Mensal</span>
                 </TabsTrigger>
                 <TabsTrigger value="charts" className="flex items-center gap-1.5">
                   <PieChart className="h-4 w-4" />
@@ -504,13 +565,13 @@ export default function FechamentoAnual() {
                 </TabsTrigger>
               </TabsList>
 
-              {/* ABA 1: DRE MÊS A MÊS */}
+              {/* ABA 1: VISÃO MÊS A MÊS */}
               <TabsContent value="dre" className="mt-4">
                 <Card>
                   <CardHeader>
                     <CardTitle className="text-lg flex items-center gap-2">
                       <BarChart3 className="h-5 w-5 text-primary" />
-                      DRE Gerencial — {selectedYear}
+                      Fechamento Anual — {selectedYear}
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="p-0">
@@ -530,7 +591,7 @@ export default function FechamentoAnual() {
                               Total
                             </TableHead>
                             <TableHead className="text-right min-w-[70px] font-bold bg-muted">
-                              AV%
+                              %
                             </TableHead>
                           </TableRow>
                         </TableHeader>
@@ -611,60 +672,7 @@ export default function FechamentoAnual() {
                   </CardContent>
                 </Card>
 
-                {/* Despesas por Conta Gerencial (Anual) */}
-                {data.despByAccountAnnual && data.despByAccountAnnual.length > 0 && (
-                  <Card className="mt-4">
-                    <CardHeader>
-                      <CardTitle className="text-lg flex items-center gap-2">
-                        <Receipt className="h-5 w-5 text-red-500" />
-                        Despesas por Conta Gerencial — {selectedYear}
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Código</TableHead>
-                            <TableHead>Conta Gerencial</TableHead>
-                            <TableHead>Classificação</TableHead>
-                            <TableHead className="text-right">Total Anual</TableHead>
-                            <TableHead className="text-right">% Receita Líq.</TableHead>
-                            <TableHead className="text-right">Média Mensal</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {data.despByAccountAnnual.map((acc: any, idx: number) => (
-                            <TableRow key={idx}>
-                              <TableCell className="font-mono text-sm">{acc.code}</TableCell>
-                              <TableCell className="font-medium">{acc.name}</TableCell>
-                              <TableCell>
-                                <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium
-                                  ${acc.classification === 'Operacional' ? 'bg-orange-100 text-orange-700' :
-                                    acc.classification === 'Administrativa' ? 'bg-blue-100 text-blue-700' :
-                                    acc.classification === 'Financeira' ? 'bg-purple-100 text-purple-700' :
-                                    'bg-gray-100 text-gray-700'}`}
-                                >
-                                  {acc.classification}
-                                </span>
-                              </TableCell>
-                              <TableCell className="text-right font-bold text-red-600">
-                                {formatCurrencyFull(acc.total)}
-                              </TableCell>
-                              <TableCell className="text-right text-muted-foreground">
-                                {data.totals.receitaLiquida > 0
-                                  ? formatPercent((acc.total / data.totals.receitaLiquida) * 100)
-                                  : "—"}
-                              </TableCell>
-                              <TableCell className="text-right text-muted-foreground">
-                                {formatCurrencyFull(acc.total / 12)}
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </CardContent>
-                  </Card>
-                )}
+
               </TabsContent>
 
               {/* ABA 2: GRÁFICOS */}
@@ -1085,9 +1093,9 @@ export default function FechamentoAnual() {
               </TabsContent>
             </Tabs>
 
-            {/* Versão para impressão do DRE (sempre visível no print) */}
+            {/* Versão para impressão (sempre visível no print) */}
             <div className="hidden print:block">
-              <h3 className="text-lg font-bold mb-2">DRE Gerencial — {selectedYear}</h3>
+              <h3 className="text-lg font-bold mb-2">Fechamento Anual — {selectedYear}</h3>
               <table className="w-full text-xs border-collapse">
                 <thead>
                   <tr className="border-b-2">

@@ -2084,3 +2084,13 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] BUG: Faturamento divergente — Corrigido: DRE agora usa tabela `sales` (fonte real) em vez de `revenueEntries` (contabilização incompleta). Delivery estava com R$27.790 em vez de R$91.510
 - [x] Vendas Salão — Corrigido: canais de venda agora são dinâmicos, só aparecem se totalVal > 0 no ano
 - [x] Despesas na DRE — Corrigido: despesas agora itemizadas por conta gerencial, agrupadas por classificação (Operacionais, Administrativas, Financeiras, Não Operacionais)
+
+### Apontamentos v32 (07/04/2026) — Reestruturar Fechamento Anual conforme modelo Excel
+- [x] Remover subtítulo "DRE Gerencial — Visão Mês a Mês", deixar apenas "Visão Mês a Mês"
+- [x] Verificar e remover seção de Deduções (não faz parte do modelo)
+- [x] Reestruturar tabela: Seção 1 = Receita de Vendas (canais + Total Receita)
+- [x] Reestruturar tabela: Seção 2 = Despesas agrupadas (Operacionais, Administrativas, Financeiras, Outras Despesas) com subtotais por grupo + TOTAL DESPESAS
+- [x] Reestruturar tabela: Seção 3 = Outras Receitas (Empréstimos, Outras Receitas, Total)
+- [x] Reestruturar tabela: Seção 4 = Resumo Final (Total Receita, CMV, % Margem, Receita Líquida, Despesa, Resultado, % Resultado)
+- [x] Receita Líquida no modelo = Receita - CMV (não Receita - Deduções)
+- [x] Remover coluna AV% da tabela, manter apenas % no Total

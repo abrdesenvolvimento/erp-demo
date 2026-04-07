@@ -7205,6 +7205,15 @@ export async function getYearlyClosing(year: number, companyId?: number) {
     resultadoLiquido: data.dre.resultadoLiquido,
     margemLiquida: data.dre.margemLiquida,
     outrasReceitas: data.otherRevenues.total,
+    outrasReceitasByAccount: (() => {
+      // Agrupar outras receitas por conta gerencial
+      const byAccount: Record<string, number> = {};
+      for (const item of (data.otherRevenues.items || [])) {
+        const name = item.accountName || item.description || 'Outras';
+        byAccount[name] = (byAccount[name] || 0) + item.amount;
+      }
+      return Object.entries(byAccount).map(([name, total]) => ({ name, total }));
+    })(),
     salesCount: data.sales.total.count,
     salesRevenue: data.sales.total.revenue,
     salesCost: data.sales.total.cost,
@@ -7359,6 +7368,17 @@ export async function getYearlyClosing(year: number, companyId?: number) {
       margemLiquida,
     },
     despByAccountAnnual: Object.values(despByAccountAnnual).sort((a, b) => b.total - a.total),
+    // Outras Receitas agrupadas por conta gerencial (anual)
+    outrasReceitasByType: (() => {
+      const byName: Record<string, number> = {};
+      for (const m of monthlyDre) {
+        if (!m?.outrasReceitasByAccount) continue;
+        for (const item of m.outrasReceitasByAccount) {
+          byName[item.name] = (byName[item.name] || 0) + item.total;
+        }
+      }
+      return Object.entries(byName).map(([name, total]) => ({ name, total })).sort((a, b) => b.total - a.total);
+    })(),
     previousYear: previousYearTotals,
     // Compatibilidade com estrutura antiga
     legacy: {
