@@ -164,13 +164,79 @@ export default function FechamentoAnual() {
       isSeparator: true,
     });
 
+    // Canais de venda dinâmicos: só mostrar se houver valor > 0 no total anual
+    const channelRows: DreRow[] = [];
+    const channelDefs = [
+      { label: "Vendas Balcão", field: "receitaBalcao", totalField: "receitaBalcao" },
+      { label: "Vendas Delivery", field: "receitaDelivery", totalField: "receitaDelivery" },
+      { label: "Vendas A Prazo", field: "receitaAPrazo", totalField: "receitaAPrazo" },
+      { label: "Vendas Salão", field: "receitaSalao", totalField: "receitaSalao" },
+    ];
+    for (const ch of channelDefs) {
+      const totalVal = (t as any)[ch.totalField] || 0;
+      if (totalVal > 0) {
+        channelRows.push(row(ch.label, ch.field, { indent: 1 }));
+      }
+    }
+
+    // Despesas itemizadas por conta gerencial (mês a mês)
+    // Agrupar contas por classificação para manter organizado
+    const despesaItemRows: DreRow[] = [];
+    if (data.despByAccountAnnual && data.despByAccountAnnual.length > 0) {
+      // Agrupar por classificação
+      const classifications = ['OPERACIONAL', 'COMERCIAL', 'ADMINISTRATIVA', 'FINANCEIRA', 'NAO_OPERACIONAL', 'PATRIMONIAL'];
+      const classLabels: Record<string, string> = {
+        OPERACIONAL: 'Operacionais',
+        COMERCIAL: 'Comerciais',
+        ADMINISTRATIVA: 'Administrativas',
+        FINANCEIRA: 'Financeiras',
+        NAO_OPERACIONAL: 'Não Operacionais',
+        PATRIMONIAL: 'Patrimoniais',
+      };
+      for (const cls of classifications) {
+        const accounts = data.despByAccountAnnual.filter((a: any) => a.classification === cls);
+        if (accounts.length === 0) continue;
+        // Sub-header da classificação
+        despesaItemRows.push({
+          label: classLabels[cls] || cls,
+          values: Array(12).fill(null),
+          total: null,
+          isHeader: false,
+          indent: 1,
+          bold: true,
+          className: "text-muted-foreground text-xs uppercase",
+        });
+        // Cada conta gerencial
+        for (const acc of accounts) {
+          const accountName = acc.name;
+          const monthValues = months.map((m: any) => {
+            if (!m.despByAccount) return 0;
+            const found = m.despByAccount.find((a: any) => a.name === accountName);
+            return found ? found.total : 0;
+          });
+          const totalVal = monthValues.reduce((s: number, v: number) => s + v, 0);
+          despesaItemRows.push({
+            label: accountName,
+            values: monthValues,
+            total: totalVal,
+            av: rl > 0 ? Math.round((totalVal / rl) * 1000) / 10 : null,
+            indent: 2,
+            className: "text-red-600",
+          });
+        }
+      }
+    } else {
+      // Fallback: mostrar por classificação agregada
+      despesaItemRows.push(row("Operacionais", "despOperacionais", { indent: 1, className: "text-red-600" }));
+      despesaItemRows.push(row("Administrativas", "despAdministrativas", { indent: 1, className: "text-red-600" }));
+      despesaItemRows.push(row("Financeiras", "despFinanceiras", { indent: 1, className: "text-red-600" }));
+      despesaItemRows.push(row("Outras Despesas", "despOutras", { indent: 1, className: "text-red-600" }));
+    }
+
     return [
       // RECEITAS
       { label: "RECEITAS", values: Array(12).fill(null), total: null, isHeader: true },
-      row("Vendas Balcão", "receitaBalcao", { indent: 1 }),
-      row("Vendas Delivery", "receitaDelivery", { indent: 1 }),
-      row("Vendas A Prazo", "receitaAPrazo", { indent: 1 }),
-      row("Vendas Salão", "receitaSalao", { indent: 1 }),
+      ...channelRows,
       row("RECEITA BRUTA", "receitaBruta", { isSubtotal: true, bold: true }),
 
       separator(),
@@ -197,12 +263,9 @@ export default function FechamentoAnual() {
 
       separator(),
 
-      // DESPESAS
+      // DESPESAS (itemizadas por conta gerencial)
       { label: "DESPESAS", values: Array(12).fill(null), total: null, isHeader: true },
-      row("Operacionais", "despOperacionais", { indent: 1, className: "text-red-600" }),
-      row("Administrativas", "despAdministrativas", { indent: 1, className: "text-red-600" }),
-      row("Financeiras", "despFinanceiras", { indent: 1, className: "text-red-600" }),
-      row("Outras Despesas", "despOutras", { indent: 1, className: "text-red-600" }),
+      ...despesaItemRows,
       row("TOTAL DESPESAS", "despTotal", { isSubtotal: true, bold: true, className: "text-red-600" }),
 
       separator(),

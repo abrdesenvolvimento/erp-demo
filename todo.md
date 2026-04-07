@@ -2079,3 +2079,8 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Fechamento Anual: Frontend — aba Indicadores (KPIs consolidados)
 - [x] Fechamento Anual: Registrar rota e adicionar no sidebar
 - [x] Fechamento Anual: Performance — otimizado getYearlyClosing com queries paralelas (lotes de 4) para evitar timeout em empresas com grande volume de dados (Adega Beira Rio 2025)
+
+### Apontamentos v31 (07/04/2026) — Correções Fechamento Anual
+- [x] BUG: Faturamento divergente — Corrigido: DRE agora usa tabela `sales` (fonte real) em vez de `revenueEntries` (contabilização incompleta). Delivery estava com R$27.790 em vez de R$91.510
+- [x] Vendas Salão — Corrigido: canais de venda agora são dinâmicos, só aparecem se totalVal > 0 no ano
+- [x] Despesas na DRE — Corrigido: despesas agora itemizadas por conta gerencial, agrupadas por classificação (Operacionais, Administrativas, Financeiras, Não Operacionais)

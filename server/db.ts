@@ -7122,21 +7122,23 @@ export async function getMonthlyClosing(year: number, month: number, companyId?:
     // NOVA ESTRUTURA: DRE Contábil
     dre: {
       receitaBruta: {
-        total: receitaBrutaTotal,
-        balcao: receitaBySaleType.BALCAO,
-        delivery: receitaBySaleType.DELIVERY,
-        aPrazo: receitaBySaleType.A_PRAZO,
-        salao: receitaBySaleType.SALAO,
+        // Usar dados da tabela sales (fonte real) em vez de revenueEntries (contabilização pode estar incompleta)
+        total: totalSales.revenue,
+        balcao: salesByType.BALCAO?.revenue || 0,
+        delivery: salesByType.DELIVERY?.revenue || 0,
+        aPrazo: salesByType.A_PRAZO?.revenue || 0,
+        salao: salesByType.SALAO?.revenue || 0,
         byAccount: receitaByAccount.filter(a => a.type === 'RECEITA_BRUTA'),
       },
       deducoes: {
         total: deducoesTotal,
         byAccount: receitaByAccount.filter(a => a.type === 'DEDUCAO'),
       },
-      receitaLiquida,
+      // Recalcular receita líquida usando dados da tabela sales
+      receitaLiquida: totalSales.revenue - deducoesTotal,
       cmv,
-      lucroBruto,
-      margemBruta: Math.round(margemBruta * 10) / 10,
+      lucroBruto: (totalSales.revenue - deducoesTotal) - cmv,
+      margemBruta: (totalSales.revenue - deducoesTotal) > 0 ? Math.round(((totalSales.revenue - deducoesTotal - cmv) / (totalSales.revenue - deducoesTotal)) * 1000) / 10 : 0,
       despesas: {
         operacionais: despesasOperacionais,
         administrativas: despesasAdministrativas,
@@ -7146,9 +7148,9 @@ export async function getMonthlyClosing(year: number, month: number, companyId?:
         byClassification: expensesByClassification,
         byAccount: expensesByAccount,
       },
-      resultadoOperacional,
-      resultadoLiquido,
-      margemLiquida: Math.round(margemLiquida * 10) / 10,
+      resultadoOperacional: ((totalSales.revenue - deducoesTotal) - cmv) - despesasOperacionais - despesasAdministrativas,
+      resultadoLiquido: ((totalSales.revenue - deducoesTotal) - cmv) - despesasOperacionais - despesasAdministrativas - despesasFinanceiras - outrasDespesas,
+      margemLiquida: (totalSales.revenue - deducoesTotal) > 0 ? Math.round(((((totalSales.revenue - deducoesTotal) - cmv) - despesasOperacionais - despesasAdministrativas - despesasFinanceiras - outrasDespesas) / (totalSales.revenue - deducoesTotal)) * 1000) / 10 : 0,
     },
     // OUTRAS RECEITAS
     otherRevenues: {
