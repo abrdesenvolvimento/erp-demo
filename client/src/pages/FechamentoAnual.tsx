@@ -197,7 +197,7 @@ export default function FechamentoAnual() {
     const preOpMonthTotals = months.map((m: any) => {
       if (!m.despByAccount) return 0;
       return m.despByAccount
-        .filter((a: any) => a.isPreOperacional)
+        .filter((a: any) => a.isInvestimentoOperacional)
         .reduce((sum: number, a: any) => sum + a.total, 0);
     });
     const preOpTotal = preOpMonthTotals.reduce((s: number, v: number) => s + v, 0);
@@ -210,8 +210,8 @@ export default function FechamentoAnual() {
 
     if (data.despByAccountAnnual && data.despByAccountAnnual.length > 0) {
       // Filtrar contas NÃO pré-operacionais
-      const regularAccounts = data.despByAccountAnnual.filter((a: any) => !a.isPreOperacional);
-      const preOpAccounts = data.despByAccountAnnual.filter((a: any) => a.isPreOperacional);
+      const regularAccounts = data.despByAccountAnnual.filter((a: any) => !a.isInvestimentoOperacional);
+      const preOpAccounts = data.despByAccountAnnual.filter((a: any) => a.isInvestimentoOperacional);
 
       for (const cls of classificationOrder) {
         const accounts = regularAccounts.filter((a: any) => a.classification === cls);
@@ -231,7 +231,7 @@ export default function FechamentoAnual() {
           const accountName = acc.name;
           const monthValues = months.map((m: any) => {
             if (!m.despByAccount) return 0;
-            const found = m.despByAccount.find((a: any) => a.name === accountName && !a.isPreOperacional);
+            const found = m.despByAccount.find((a: any) => a.name === accountName && !a.isInvestimentoOperacional);
             return found ? found.total : 0;
           });
           const totalVal = monthValues.reduce((s: number, v: number) => s + v, 0);
@@ -241,7 +241,6 @@ export default function FechamentoAnual() {
             total: totalVal,
             av: rb > 0 ? Math.round((totalVal / rb) * 1000) / 10 : null,
             indent: 2,
-            className: "text-red-600",
           });
         }
         // Subtotal do grupo
@@ -249,7 +248,7 @@ export default function FechamentoAnual() {
           return accounts.reduce((sum: number, acc: any) => {
             const mv = months[mi];
             if (!mv.despByAccount) return sum;
-            const found = mv.despByAccount.find((a: any) => a.name === acc.name && !a.isPreOperacional);
+            const found = mv.despByAccount.find((a: any) => a.name === acc.name && !a.isInvestimentoOperacional);
             return sum + (found ? found.total : 0);
           }, 0);
         });
@@ -261,7 +260,6 @@ export default function FechamentoAnual() {
           isSubtotal: true,
           bold: true,
           indent: 1,
-          className: "text-red-600",
         });
         despesaGroupRows.push(separator());
       }
@@ -272,7 +270,7 @@ export default function FechamentoAnual() {
           const accountName = acc.name;
           const monthValues = months.map((m: any) => {
             if (!m.despByAccount) return 0;
-            const found = m.despByAccount.find((a: any) => a.name === accountName && a.isPreOperacional);
+            const found = m.despByAccount.find((a: any) => a.name === accountName && a.isInvestimentoOperacional);
             return found ? found.total : 0;
           });
           const totalVal = monthValues.reduce((s: number, v: number) => s + v, 0);
@@ -287,10 +285,10 @@ export default function FechamentoAnual() {
         }
       }
     } else {
-      despesaGroupRows.push(row("Operacionais", "despOperacionais", { indent: 1, className: "text-red-600" }));
-      despesaGroupRows.push(row("Administrativas", "despAdministrativas", { indent: 1, className: "text-red-600" }));
-      despesaGroupRows.push(row("Financeiras", "despFinanceiras", { indent: 1, className: "text-red-600" }));
-      despesaGroupRows.push(row("Outras Despesas", "despOutras", { indent: 1, className: "text-red-600" }));
+      despesaGroupRows.push(row("Operacionais", "despOperacionais", { indent: 1 }));
+      despesaGroupRows.push(row("Administrativas", "despAdministrativas", { indent: 1 }));
+      despesaGroupRows.push(row("Financeiras", "despFinanceiras", { indent: 1 }));
+      despesaGroupRows.push(row("Outras Despesas", "despOutras", { indent: 1 }));
     }
 
     // Outras Receitas itemizadas
@@ -350,7 +348,6 @@ export default function FechamentoAnual() {
         av: rb > 0 ? Math.round((despSemPreOpTotal / rb) * 1000) / 10 : null,
         isSubtotal: true,
         bold: true,
-        className: "text-red-600",
       },
 
       separator(),
@@ -358,7 +355,7 @@ export default function FechamentoAnual() {
 
       // SEÇÃO 3: RESUMO FINAL
       row("Total Receita", "receitaBruta", { bold: true }),
-      row("CMV", "cmv", { className: "text-red-600" }),
+      row("CMV", "cmv"),
       {
         label: "% Margem",
         values: months.map((m: any) => m.margemBruta ?? null),
@@ -376,17 +373,17 @@ export default function FechamentoAnual() {
         label: "Despesa",
         values: despSemPreOpMonthTotals,
         total: despSemPreOpTotal,
-        className: "text-red-600",
       },
     ];
 
-    // RESULTADO SEM PRÉ-OPERACIONAL
+    // RESULTADO SEM INVESTIMENTOS OPERACIONAIS
     rows.push({
       label: "Resultado",
       values: resultadoSemPreOp,
       total: resultadoSemPreOpTotal,
       bold: true,
       isTotal: true,
+      className: resultadoSemPreOpTotal >= 0 ? 'text-green-600' : 'text-red-600',
     });
     rows.push({
       label: "% Resultado",
@@ -395,20 +392,20 @@ export default function FechamentoAnual() {
         return rec > 0 ? (resultadoSemPreOp[i] / rec) * 100 : null;
       }),
       total: t.receitaBruta > 0 ? (resultadoSemPreOpTotal / t.receitaBruta) * 100 : null,
-      className: "text-muted-foreground italic",
+      className: resultadoSemPreOpTotal >= 0 ? 'text-green-600 italic' : 'text-red-600 italic',
     });
 
-    // Se houver despesas pré-operacionais ou outras receitas, mostrar segundo resultado
+    // Se houver investimentos operacionais ou outras receitas, mostrar segundo resultado
     if (preOpTotal > 0 || (t.outrasReceitas || 0) > 0) {
       rows.push(separator());
       rows.push(separator());
 
-      // SEÇÃO: PRÉ-OPERACIONAL + OUTRAS RECEITAS
+      // SEÇÃO: INVESTIMENTOS OPERACIONAIS + OUTRAS RECEITAS
       if (preOperacionalRows.length > 0) {
-        rows.push({ label: "Despesas Pré-Operacionais", values: Array(12).fill(null), total: null, isHeader: true });
+        rows.push({ label: "Investimentos Operacionais", values: Array(12).fill(null), total: null, isHeader: true });
         rows.push(...preOperacionalRows);
         rows.push({
-          label: "Total Pré-Operacional",
+          label: "Total Investimentos Operacionais",
           values: preOpMonthTotals,
           total: preOpTotal,
           av: rb > 0 ? Math.round((preOpTotal / rb) * 1000) / 10 : null,
@@ -435,20 +432,21 @@ export default function FechamentoAnual() {
 
       // RESULTADO COM PRÉ-OPERACIONAL + OUTRAS RECEITAS
       rows.push({
-        label: "Resultado c/ Pré-Operacional",
+        label: "Resultado c/ Investimentos",
         values: resultadoComPreOp,
         total: resultadoComPreOpTotal,
         bold: true,
         isTotal: true,
+        className: resultadoComPreOpTotal >= 0 ? 'text-green-600' : 'text-red-600',
       });
       rows.push({
-        label: "% Resultado c/ Pré-Op.",
+        label: "% Resultado c/ Investimentos",
         values: months.map((m: any, i: number) => {
           const rec = m.receitaBruta || 0;
           return rec > 0 ? (resultadoComPreOp[i] / rec) * 100 : null;
         }),
         total: t.receitaBruta > 0 ? (resultadoComPreOpTotal / t.receitaBruta) * 100 : null,
-        className: "text-muted-foreground italic",
+        className: resultadoComPreOpTotal >= 0 ? 'text-green-600 italic' : 'text-red-600 italic',
       });
     }
 
@@ -584,7 +582,7 @@ export default function FechamentoAnual() {
                   {(() => {
                     // Calcular despesas sem pré-operacional
                     const preOpTotalCard = data.despByAccountAnnual
-                      ?.filter((a: any) => a.isPreOperacional)
+                      ?.filter((a: any) => a.isInvestimentoOperacional)
                       .reduce((s: number, a: any) => s + a.total, 0) || 0;
                     const despSemPreOp = data.totals.despTotal - preOpTotalCard;
                     return (
@@ -632,7 +630,7 @@ export default function FechamentoAnual() {
               {(() => {
                 // Calcular resultado operacional (sem pré-op)
                 const preOpTotalCard = data.despByAccountAnnual
-                  ?.filter((a: any) => a.isPreOperacional)
+                  ?.filter((a: any) => a.isInvestimentoOperacional)
                   .reduce((s: number, a: any) => s + a.total, 0) || 0;
                 const despSemPreOp = data.totals.despTotal - preOpTotalCard;
                 const recLiquida = data.totals.receitaBruta - data.totals.cmv;

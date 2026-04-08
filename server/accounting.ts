@@ -763,7 +763,7 @@ export async function getDRE(
     const orResult = await dbInstance.execute(sql.raw(`
       SELECT 
         ort.description,
-        ort.amount / 100 as value,
+        ort.amount as value,
         COALESCE(ma.name, 'Outras Receitas') as accountName
       FROM otherRevenues ort
       LEFT JOIN managementAccounts ma ON ort.managementAccountId = ma.id
@@ -866,11 +866,7 @@ export async function listOtherRevenues(competenceMonth?: string, companyId: num
     .where(and(...conditions))
     .orderBy(desc(otherRevenues.revenueDate));
   
-  // Converter amount de centavos para reais
-  const allData = results.map(r => ({
-    ...r,
-    amount: Number(r.amount) / 100
-  }));
+  const allData = results;
   
   // Paginação
   const total = allData.length;

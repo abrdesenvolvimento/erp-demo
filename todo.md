@@ -2104,3 +2104,10 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Frontend: criar seção "Resultado Sem Pré-Operacional" (Receita Líquida - Despesas operacionais)
 - [x] Frontend: criar seção "Resultado Com Pré-Operacional" (Resultado anterior - Pré-Operacional + Outras Receitas)
 - [ ] Interface de Contas Gerenciais: adicionar toggle isPreOperacional na criação/edição (pendente)
+
+### Apontamentos v34 (08/04/2026) — Ajustes Fechamento Anual + Bug Receita
+- [x] Fechamento Anual: remover cor vermelha das linhas de despesa (manter apenas separação de grupo)
+- [x] Fechamento Anual: renomear "Pré-Operacional" para "Investimentos Operacionais" (flag, backend, frontend)
+- [x] Fechamento Anual: renomear campo isPreOperacional para isInvestimentoOperacional no banco e schema
+- [x] Fechamento Anual: resultado negativo em vermelho, positivo em verde (valor e %)
+- [x] BUG Receita: ao editar receita (ex: alterar conta gerencial), o valor original era multiplicado por 100 — causa: divisão /100 indevida em listOtherRevenues e queries DRE. Corrigido em 3 locais + 3 registros restaurados no banco
