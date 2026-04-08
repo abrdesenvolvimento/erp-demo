@@ -6930,6 +6930,7 @@ export async function getMonthlyClosing(year: number, month: number, companyId?:
       COALESCE(ma.name, ec.name, 'Sem Classificação') as accountName,
       COALESCE(ma.nature, 'DESPESA') as nature,
       COALESCE(ma.classification, 'OPERACIONAL') as classification,
+      COALESCE(ma.isPreOperacional, 0) as isPreOperacional,
       SUM(CAST(ei.amount AS DECIMAL(12,2))) as total,
       COUNT(DISTINCT e.id) as count
     FROM expenses e
@@ -6948,12 +6949,12 @@ export async function getMonthlyClosing(year: number, month: number, companyId?:
         (pc.numParcelas = 1 AND e.competenceMonth = '${competenceMonthStr}')
       )
       ${companyId ? `AND e.companyId = ${companyId}` : ''}
-    GROUP BY COALESCE(ma.id, 0), COALESCE(ma.code, 'SEM'), COALESCE(ma.name, ec.name, 'Sem Classificação'), COALESCE(ma.nature, 'DESPESA'), COALESCE(ma.classification, 'OPERACIONAL')
+    GROUP BY COALESCE(ma.id, 0), COALESCE(ma.code, 'SEM'), COALESCE(ma.name, ec.name, 'Sem Classificação'), COALESCE(ma.nature, 'DESPESA'), COALESCE(ma.classification, 'OPERACIONAL'), COALESCE(ma.isPreOperacional, 0)
     ORDER BY total DESC
   `));
 
   const expensesByAccountRows = expensesByAccountResult[0] as unknown as any[];
-  const expensesByAccount: Array<{ code: string; name: string; nature: string; classification: string; total: number; count: number }> = [];
+  const expensesByAccount: Array<{ code: string; name: string; nature: string; classification: string; isPreOperacional: boolean; total: number; count: number }> = [];
   const expensesByClassification: Record<string, number> = {
     OPERACIONAL: 0,
     ADMINISTRATIVA: 0,
@@ -6972,6 +6973,7 @@ export async function getMonthlyClosing(year: number, month: number, companyId?:
       name: row.accountName,
       nature: row.nature,
       classification: classification,
+      isPreOperacional: row.isPreOperacional === 1 || row.isPreOperacional === true,
       total,
       count: parseInt(row.count || '0')
     });
@@ -7308,13 +7310,13 @@ export async function getYearlyClosing(year: number, companyId?: number) {
     ? Math.round((totals.resultadoLiquido / totals.receitaLiquida) * 1000) / 10 : 0;
 
   // Consolidar despesas por conta gerencial (anual)
-  const despByAccountAnnual: Record<string, { code: string; name: string; classification: string; total: number }> = {};
+  const despByAccountAnnual: Record<string, { code: string; name: string; classification: string; isPreOperacional: boolean; total: number }> = {};
   for (const m of monthlyDre) {
     if (m.despByAccount) {
       for (const acc of m.despByAccount) {
         const key = acc.code || acc.name;
         if (!despByAccountAnnual[key]) {
-          despByAccountAnnual[key] = { code: acc.code, name: acc.name, classification: acc.classification, total: 0 };
+          despByAccountAnnual[key] = { code: acc.code, name: acc.name, classification: acc.classification, isPreOperacional: acc.isPreOperacional || false, total: 0 };
         }
         despByAccountAnnual[key].total += acc.total;
       }

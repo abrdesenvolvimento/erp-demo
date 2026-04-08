@@ -682,6 +682,7 @@ export const managementAccounts = mysqlTable("managementAccounts", {
   impactMargin: boolean("impactMargin").default(false),  // Impacta margem de contribuição
   impactPayroll: boolean("impactPayroll").default(false),  // Impacta folha de pagamento
   isActive: boolean("isActive").default(true).notNull(),
+  isPreOperacional: boolean("isPreOperacional").default(false).notNull(),  // Despesa pré-operacional (ex: imóvel em reforma antes de operar)
   displayOrder: int("displayOrder").default(0),  // Ordem de exibição
   createdAt: timestamp("createdAt").defaultNow(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow(),

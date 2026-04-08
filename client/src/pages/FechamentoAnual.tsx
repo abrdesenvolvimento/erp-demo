@@ -180,8 +180,9 @@ export default function FechamentoAnual() {
     }
 
     // Despesas itemizadas por conta gerencial (mês a mês)
-    // Agrupar por classificação com subtotais
+    // Separar despesas operacionais das pré-operacionais
     const despesaGroupRows: DreRow[] = [];
+    const preOperacionalRows: DreRow[] = [];
     const classificationOrder = ['OPERACIONAL', 'ADMINISTRATIVA', 'FINANCEIRA', 'NAO_OPERACIONAL', 'COMERCIAL', 'PATRIMONIAL'];
     const classLabels: Record<string, string> = {
       OPERACIONAL: 'Operacionais',
@@ -192,9 +193,28 @@ export default function FechamentoAnual() {
       PATRIMONIAL: 'Patrimoniais',
     };
 
+    // Calcular total de despesas pré-operacionais por mês
+    const preOpMonthTotals = months.map((m: any) => {
+      if (!m.despByAccount) return 0;
+      return m.despByAccount
+        .filter((a: any) => a.isPreOperacional)
+        .reduce((sum: number, a: any) => sum + a.total, 0);
+    });
+    const preOpTotal = preOpMonthTotals.reduce((s: number, v: number) => s + v, 0);
+
+    // Calcular total de despesas SEM pré-operacional por mês
+    const despSemPreOpMonthTotals = months.map((m: any, i: number) => (m.despTotal || 0) - preOpMonthTotals[i]);
+    const despSemPreOpTotal = despSemPreOpMonthTotals.reduce((s: number, v: number) => s + v, 0);
+
+    const rb = t.receitaBruta || 1; // base para % sobre faturamento
+
     if (data.despByAccountAnnual && data.despByAccountAnnual.length > 0) {
+      // Filtrar contas NÃO pré-operacionais
+      const regularAccounts = data.despByAccountAnnual.filter((a: any) => !a.isPreOperacional);
+      const preOpAccounts = data.despByAccountAnnual.filter((a: any) => a.isPreOperacional);
+
       for (const cls of classificationOrder) {
-        const accounts = data.despByAccountAnnual.filter((a: any) => a.classification === cls);
+        const accounts = regularAccounts.filter((a: any) => a.classification === cls);
         if (accounts.length === 0) continue;
         // Sub-header da classificação
         despesaGroupRows.push({
@@ -211,11 +231,10 @@ export default function FechamentoAnual() {
           const accountName = acc.name;
           const monthValues = months.map((m: any) => {
             if (!m.despByAccount) return 0;
-            const found = m.despByAccount.find((a: any) => a.name === accountName);
+            const found = m.despByAccount.find((a: any) => a.name === accountName && !a.isPreOperacional);
             return found ? found.total : 0;
           });
           const totalVal = monthValues.reduce((s: number, v: number) => s + v, 0);
-          const rb = t.receitaBruta || 1;
           despesaGroupRows.push({
             label: accountName,
             values: monthValues,
@@ -230,7 +249,7 @@ export default function FechamentoAnual() {
           return accounts.reduce((sum: number, acc: any) => {
             const mv = months[mi];
             if (!mv.despByAccount) return sum;
-            const found = mv.despByAccount.find((a: any) => a.name === acc.name);
+            const found = mv.despByAccount.find((a: any) => a.name === acc.name && !a.isPreOperacional);
             return sum + (found ? found.total : 0);
           }, 0);
         });
@@ -244,8 +263,28 @@ export default function FechamentoAnual() {
           indent: 1,
           className: "text-red-600",
         });
-        // Espaço entre grupos
         despesaGroupRows.push(separator());
+      }
+
+      // Pré-operacionais separadas
+      if (preOpAccounts.length > 0) {
+        for (const acc of preOpAccounts) {
+          const accountName = acc.name;
+          const monthValues = months.map((m: any) => {
+            if (!m.despByAccount) return 0;
+            const found = m.despByAccount.find((a: any) => a.name === accountName && a.isPreOperacional);
+            return found ? found.total : 0;
+          });
+          const totalVal = monthValues.reduce((s: number, v: number) => s + v, 0);
+          preOperacionalRows.push({
+            label: accountName,
+            values: monthValues,
+            total: totalVal,
+            av: rb > 0 ? Math.round((totalVal / rb) * 1000) / 10 : null,
+            indent: 1,
+            className: "text-orange-600",
+          });
+        }
       }
     } else {
       despesaGroupRows.push(row("Operacionais", "despOperacionais", { indent: 1, className: "text-red-600" }));
@@ -279,13 +318,21 @@ export default function FechamentoAnual() {
       outrasReceitasRows.push(row("Outras Receitas", "outrasReceitas", { indent: 1, className: "text-emerald-600" }));
     }
 
-    // Resumo Final: Receita > CMV > Margem > Receita Líquida > Despesa > Resultado > % Resultado
+    // Cálculos para Resumo Final
     const receitaLiquidaCalc = months.map((m: any) => (m.receitaBruta || 0) - (m.cmv || 0));
     const receitaLiquidaTotal = receitaLiquidaCalc.reduce((s: number, v: number) => s + v, 0);
-    const resultadoCalc = months.map((m: any, i: number) => receitaLiquidaCalc[i] - (m.despTotal || 0));
-    const resultadoTotal = resultadoCalc.reduce((s: number, v: number) => s + v, 0);
 
-    return [
+    // Resultado SEM pré-operacional (operacional puro)
+    const resultadoSemPreOp = months.map((m: any, i: number) => receitaLiquidaCalc[i] - despSemPreOpMonthTotals[i]);
+    const resultadoSemPreOpTotal = resultadoSemPreOp.reduce((s: number, v: number) => s + v, 0);
+
+    // Resultado COM pré-operacional + outras receitas
+    const resultadoComPreOp = months.map((m: any, i: number) => 
+      receitaLiquidaCalc[i] - despSemPreOpMonthTotals[i] - preOpMonthTotals[i] + (m.outrasReceitas || 0)
+    );
+    const resultadoComPreOpTotal = resultadoComPreOp.reduce((s: number, v: number) => s + v, 0);
+
+    const rows: DreRow[] = [
       // SEÇÃO 1: RECEITA DE VENDAS
       { label: "Receita de Vendas", values: Array(12).fill(null), total: null, isHeader: true },
       ...channelRows,
@@ -293,29 +340,23 @@ export default function FechamentoAnual() {
 
       separator(),
 
-      // SEÇÃO 2: DESPESAS (agrupadas com subtotais)
+      // SEÇÃO 2: DESPESAS (sem pré-operacional)
       { label: "Despesas", values: Array(12).fill(null), total: null, isHeader: true },
       ...despesaGroupRows,
-      row("TOTAL DESPESAS", "despTotal", { isSubtotal: true, bold: true, className: "text-red-600" }),
-
-      separator(),
-
-      // SEÇÃO 3: OUTRAS RECEITAS
-      { label: "Outras Receitas", values: Array(12).fill(null), total: null, isHeader: true },
-      ...outrasReceitasRows,
       {
-        label: "Total Outras Receitas",
-        values: months.map((m: any) => m.outrasReceitas || 0),
-        total: t.outrasReceitas || 0,
+        label: "TOTAL DESPESAS",
+        values: despSemPreOpMonthTotals,
+        total: despSemPreOpTotal,
+        av: rb > 0 ? Math.round((despSemPreOpTotal / rb) * 1000) / 10 : null,
         isSubtotal: true,
         bold: true,
-        className: "text-emerald-600",
+        className: "text-red-600",
       },
 
       separator(),
       separator(),
 
-      // SEÇÃO 4: RESUMO FINAL
+      // SEÇÃO 3: RESUMO FINAL
       row("Total Receita", "receitaBruta", { bold: true }),
       row("CMV", "cmv", { className: "text-red-600" }),
       {
@@ -331,24 +372,87 @@ export default function FechamentoAnual() {
         bold: true,
         isSubtotal: true,
       },
-      row("Despesa", "despTotal", { className: "text-red-600" }),
       {
-        label: "Resultado",
-        values: resultadoCalc,
-        total: resultadoTotal,
-        bold: true,
-        isTotal: true,
-      },
-      {
-        label: "% Resultado",
-        values: months.map((m: any, i: number) => {
-          const rec = m.receitaBruta || 0;
-          return rec > 0 ? (resultadoCalc[i] / rec) * 100 : null;
-        }),
-        total: t.receitaBruta > 0 ? (resultadoTotal / t.receitaBruta) * 100 : null,
-        className: "text-muted-foreground italic",
+        label: "Despesa",
+        values: despSemPreOpMonthTotals,
+        total: despSemPreOpTotal,
+        className: "text-red-600",
       },
     ];
+
+    // RESULTADO SEM PRÉ-OPERACIONAL
+    rows.push({
+      label: "Resultado",
+      values: resultadoSemPreOp,
+      total: resultadoSemPreOpTotal,
+      bold: true,
+      isTotal: true,
+    });
+    rows.push({
+      label: "% Resultado",
+      values: months.map((m: any, i: number) => {
+        const rec = m.receitaBruta || 0;
+        return rec > 0 ? (resultadoSemPreOp[i] / rec) * 100 : null;
+      }),
+      total: t.receitaBruta > 0 ? (resultadoSemPreOpTotal / t.receitaBruta) * 100 : null,
+      className: "text-muted-foreground italic",
+    });
+
+    // Se houver despesas pré-operacionais ou outras receitas, mostrar segundo resultado
+    if (preOpTotal > 0 || (t.outrasReceitas || 0) > 0) {
+      rows.push(separator());
+      rows.push(separator());
+
+      // SEÇÃO: PRÉ-OPERACIONAL + OUTRAS RECEITAS
+      if (preOperacionalRows.length > 0) {
+        rows.push({ label: "Despesas Pré-Operacionais", values: Array(12).fill(null), total: null, isHeader: true });
+        rows.push(...preOperacionalRows);
+        rows.push({
+          label: "Total Pré-Operacional",
+          values: preOpMonthTotals,
+          total: preOpTotal,
+          av: rb > 0 ? Math.round((preOpTotal / rb) * 1000) / 10 : null,
+          isSubtotal: true,
+          bold: true,
+          className: "text-orange-600",
+        });
+        rows.push(separator());
+      }
+
+      // OUTRAS RECEITAS
+      rows.push({ label: "Outras Receitas", values: Array(12).fill(null), total: null, isHeader: true });
+      rows.push(...outrasReceitasRows);
+      rows.push({
+        label: "Total Outras Receitas",
+        values: months.map((m: any) => m.outrasReceitas || 0),
+        total: t.outrasReceitas || 0,
+        isSubtotal: true,
+        bold: true,
+        className: "text-emerald-600",
+      });
+
+      rows.push(separator());
+
+      // RESULTADO COM PRÉ-OPERACIONAL + OUTRAS RECEITAS
+      rows.push({
+        label: "Resultado c/ Pré-Operacional",
+        values: resultadoComPreOp,
+        total: resultadoComPreOpTotal,
+        bold: true,
+        isTotal: true,
+      });
+      rows.push({
+        label: "% Resultado c/ Pré-Op.",
+        values: months.map((m: any, i: number) => {
+          const rec = m.receitaBruta || 0;
+          return rec > 0 ? (resultadoComPreOp[i] / rec) * 100 : null;
+        }),
+        total: t.receitaBruta > 0 ? (resultadoComPreOpTotal / t.receitaBruta) * 100 : null,
+        className: "text-muted-foreground italic",
+      });
+    }
+
+    return rows;
   }, [data]);
 
   const handlePrint = () => {
@@ -473,23 +577,34 @@ export default function FechamentoAnual() {
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-medium flex items-center gap-2">
                     <Receipt className="h-4 w-4 text-red-500" />
-                    Despesas Totais
+                    Despesas Operacionais
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-red-600">
-                    {formatCurrencyFull(data.totals.despTotal)}
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {data.totals.receitaLiquida > 0
-                      ? formatPercent((data.totals.despTotal / data.totals.receitaLiquida) * 100)
-                      : "—"} da receita líquida
-                  </p>
-                  <YearComparison
-                    current={data.totals.despTotal}
-                    previous={data.previousYear?.despTotal}
-                    invertColors
-                  />
+                  {(() => {
+                    // Calcular despesas sem pré-operacional
+                    const preOpTotalCard = data.despByAccountAnnual
+                      ?.filter((a: any) => a.isPreOperacional)
+                      .reduce((s: number, a: any) => s + a.total, 0) || 0;
+                    const despSemPreOp = data.totals.despTotal - preOpTotalCard;
+                    return (
+                      <>
+                        <div className="text-2xl font-bold text-red-600">
+                          {formatCurrencyFull(despSemPreOp)}
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {data.totals.receitaBruta > 0
+                            ? formatPercent((despSemPreOp / data.totals.receitaBruta) * 100)
+                            : "—"} do faturamento
+                        </p>
+                        <YearComparison
+                          current={despSemPreOp}
+                          previous={data.previousYear?.despTotal}
+                          invertColors
+                        />
+                      </>
+                    );
+                  })()}
                 </CardContent>
               </Card>
 
@@ -514,30 +629,42 @@ export default function FechamentoAnual() {
                 </CardContent>
               </Card>
 
-              <Card className={`border-t-4 ${data.totals.resultadoLiquido >= 0 ? 'border-t-green-500' : 'border-t-red-500'}`}>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium flex items-center gap-2">
-                    {data.totals.resultadoLiquido >= 0 ? (
-                      <TrendingUp className="h-4 w-4 text-green-500" />
-                    ) : (
-                      <TrendingDown className="h-4 w-4 text-red-500" />
-                    )}
-                    Resultado Líquido
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className={`text-2xl font-bold ${data.totals.resultadoLiquido >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    {formatCurrencyFull(data.totals.resultadoLiquido)}
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Margem: {formatPercent(data.totals.margemLiquida)}
-                  </p>
-                  <YearComparison
-                    current={data.totals.resultadoLiquido}
-                    previous={data.previousYear?.resultadoLiquido}
-                  />
-                </CardContent>
-              </Card>
+              {(() => {
+                // Calcular resultado operacional (sem pré-op)
+                const preOpTotalCard = data.despByAccountAnnual
+                  ?.filter((a: any) => a.isPreOperacional)
+                  .reduce((s: number, a: any) => s + a.total, 0) || 0;
+                const despSemPreOp = data.totals.despTotal - preOpTotalCard;
+                const recLiquida = data.totals.receitaBruta - data.totals.cmv;
+                const resultadoOp = recLiquida - despSemPreOp;
+                const margemOp = data.totals.receitaBruta > 0 ? (resultadoOp / data.totals.receitaBruta) * 100 : 0;
+                return (
+                  <Card className={`border-t-4 ${resultadoOp >= 0 ? 'border-t-green-500' : 'border-t-red-500'}`}>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-medium flex items-center gap-2">
+                        {resultadoOp >= 0 ? (
+                          <TrendingUp className="h-4 w-4 text-green-500" />
+                        ) : (
+                          <TrendingDown className="h-4 w-4 text-red-500" />
+                        )}
+                        Resultado Operacional
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className={`text-2xl font-bold ${resultadoOp >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        {formatCurrencyFull(resultadoOp)}
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Margem: {formatPercent(margemOp)}
+                      </p>
+                      <YearComparison
+                        current={resultadoOp}
+                        previous={data.previousYear?.resultadoLiquido}
+                      />
+                    </CardContent>
+                  </Card>
+                );
+              })()}
             </div>
 
             {/* 2. ABAS */}

@@ -2094,3 +2094,13 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Reestruturar tabela: Seção 4 = Resumo Final (Total Receita, CMV, % Margem, Receita Líquida, Despesa, Resultado, % Resultado)
 - [x] Receita Líquida no modelo = Receita - CMV (não Receita - Deduções)
 - [x] Remover coluna AV% da tabela, manter apenas % no Total
+
+### Apontamentos v33 (08/04/2026) — Melhorias Fechamento Anual (modelo v2)
+- [x] % Despesa sobre Faturamento: mudar cálculo de % para valor_despesa / faturamento_total (não % sobre total_despesas)
+- [x] Flag isPreOperacional: adicionar campo boolean na tabela managementAccounts para marcar contas pré-operacionais
+- [x] Marcar conta "Imóvel Alugado" como isPreOperacional no banco
+- [x] Backend: separar despesas pré-operacionais no retorno do getYearlyClosing
+- [x] Frontend Resumo Final: separar "Despesa" (sem pré-operacional) e "Despesa Pré-Operacional" como linhas distintas
+- [x] Frontend: criar seção "Resultado Sem Pré-Operacional" (Receita Líquida - Despesas operacionais)
+- [x] Frontend: criar seção "Resultado Com Pré-Operacional" (Resultado anterior - Pré-Operacional + Outras Receitas)
+- [ ] Interface de Contas Gerenciais: adicionar toggle isPreOperacional na criação/edição (pendente)
