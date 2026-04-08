@@ -2111,3 +2111,9 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Fechamento Anual: renomear campo isPreOperacional para isInvestimentoOperacional no banco e schema
 - [x] Fechamento Anual: resultado negativo em vermelho, positivo em verde (valor e %)
 - [x] BUG Receita: ao editar receita (ex: alterar conta gerencial), o valor original era multiplicado por 100 — causa: divisão /100 indevida em listOtherRevenues e queries DRE. Corrigido em 3 locais + 3 registros restaurados no banco
+
+### Apontamentos v35 (08/04/2026) — Ajustes Visuais Fechamento Anual
+- [x] Cards na impressão: números cortados/desenquadrados ao gerar PDF — ajustado CSS @media print (print:text-lg, print:whitespace-nowrap, print:grid-cols-5)
+- [x] Título: trocar "Fechamento Anual" + subtítulo para apenas "Análise de Resultado Anual"
+- [x] Remover texto "Conta" do cabeçalho da primeira coluna da tabela DRE
+- [x] Título na impressão: trocar "Fechamento Anual — DRE" para "Análise de Resultado Anual"

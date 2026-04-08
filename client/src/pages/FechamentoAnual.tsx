@@ -465,7 +465,7 @@ export default function FechamentoAnual() {
           <div>
             <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
               <CalendarDays className="h-6 w-6 text-primary" />
-              Fechamento Anual
+              Análise de Resultado Anual
             </h1>
             <p className="text-muted-foreground mt-1">
               Visão Mês a Mês
@@ -520,7 +520,7 @@ export default function FechamentoAnual() {
                   </div>
                 </div>
                 <div className="text-right">
-                  <h2 className="text-xl font-bold">Fechamento Anual — DRE</h2>
+                  <h2 className="text-xl font-bold">Análise de Resultado Anual</h2>
                   <p className="text-lg font-semibold">{selectedYear}</p>
                   <p className="text-xs text-gray-500 mt-1">Gerado em {new Date().toLocaleDateString('pt-BR')}</p>
                 </div>
@@ -528,7 +528,7 @@ export default function FechamentoAnual() {
             </div>
 
             {/* 1. CARDS DE RESUMO ANUAL */}
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5 print:grid-cols-5">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5 print:grid-cols-5 print:gap-2">
               <Card className="border-t-4 border-t-blue-500">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-medium flex items-center gap-2">
@@ -537,7 +537,7 @@ export default function FechamentoAnual() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-blue-600">
+                  <div className="text-2xl font-bold text-blue-600 print:text-lg print:whitespace-nowrap">
                     {formatCurrencyFull(data.totals.receitaBruta)}
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">
@@ -558,7 +558,7 @@ export default function FechamentoAnual() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-amber-600">
+                  <div className="text-2xl font-bold text-amber-600 print:text-lg print:whitespace-nowrap">
                     {formatCurrencyFull(data.totals.lucroBruto)}
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">
@@ -587,7 +587,7 @@ export default function FechamentoAnual() {
                     const despSemPreOp = data.totals.despTotal - preOpTotalCard;
                     return (
                       <>
-                        <div className="text-2xl font-bold text-red-600">
+                        <div className="text-2xl font-bold text-red-600 print:text-lg print:whitespace-nowrap">
                           {formatCurrencyFull(despSemPreOp)}
                         </div>
                         <p className="text-xs text-muted-foreground mt-1">
@@ -614,7 +614,7 @@ export default function FechamentoAnual() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-emerald-600">
+                  <div className="text-2xl font-bold text-emerald-600 print:text-lg print:whitespace-nowrap">
                     {formatCurrencyFull(data.totals.outrasReceitas)}
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">
@@ -649,7 +649,7 @@ export default function FechamentoAnual() {
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className={`text-2xl font-bold ${resultadoOp >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      <div className={`text-2xl font-bold print:text-lg print:whitespace-nowrap ${resultadoOp >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                         {formatCurrencyFull(resultadoOp)}
                       </div>
                       <p className="text-xs text-muted-foreground mt-1">
@@ -696,7 +696,7 @@ export default function FechamentoAnual() {
                   <CardHeader>
                     <CardTitle className="text-lg flex items-center gap-2">
                       <BarChart3 className="h-5 w-5 text-primary" />
-                      Fechamento Anual — {selectedYear}
+                      Análise de Resultado Anual — {selectedYear}
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="p-0">
@@ -705,7 +705,7 @@ export default function FechamentoAnual() {
                         <TableHeader>
                           <TableRow className="bg-muted/50">
                             <TableHead className="sticky left-0 bg-muted/50 z-10 min-w-[200px] font-bold">
-                              Conta
+                              &nbsp;
                             </TableHead>
                             {MONTH_NAMES.map((m) => (
                               <TableHead key={m} className="text-right min-w-[90px] font-bold">
@@ -1220,11 +1220,11 @@ export default function FechamentoAnual() {
 
             {/* Versão para impressão (sempre visível no print) */}
             <div className="hidden print:block">
-              <h3 className="text-lg font-bold mb-2">Fechamento Anual — {selectedYear}</h3>
+              <h3 className="text-lg font-bold mb-2">Análise de Resultado Anual — {selectedYear}</h3>
               <table className="w-full text-xs border-collapse">
                 <thead>
                   <tr className="border-b-2">
-                    <th className="text-left py-1 pr-2">Conta</th>
+                    <th className="text-left py-1 pr-2">&nbsp;</th>
                     {MONTH_NAMES.map(m => (
                       <th key={m} className="text-right py-1 px-1">{m}</th>
                     ))}

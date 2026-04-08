@@ -184,3 +184,28 @@
   box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
 }
 
+/* Print styles for Análise de Resultado Anual */
+@media print {
+  .print\:grid-cols-5 > * {
+    padding: 0.25rem !important;
+    overflow: hidden;
+  }
+  .print\:grid-cols-5 [class*="CardHeader"] {
+    padding: 0.25rem 0.5rem !important;
+  }
+  .print\:grid-cols-5 [class*="CardContent"] {
+    padding: 0.25rem 0.5rem !important;
+  }
+  /* Ensure card borders print */
+  [class*="border-t-4"] {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  /* Reduce card text sizes for print */
+  .print\:grid-cols-5 .text-sm {
+    font-size: 0.65rem !important;
+  }
+  .print\:grid-cols-5 .text-xs {
+    font-size: 0.6rem !important;
+  }
+}
