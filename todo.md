@@ -2117,3 +2117,9 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Título: trocar "Fechamento Anual" + subtítulo para apenas "Análise de Resultado Anual"
 - [x] Remover texto "Conta" do cabeçalho da primeira coluna da tabela DRE
 - [x] Título na impressão: trocar "Fechamento Anual — DRE" para "Análise de Resultado Anual"
+
+### Apontamentos v36 (08/04/2026) — Correção Fluxo de Caixa Anual
+- [x] Fluxo de Caixa: corrigir cálculo — incluir vendas à vista (Balcão + Delivery) como entrada de caixa
+- [x] Fluxo de Caixa: revisar lógica de Recebido vs Pago para refletir movimentação real de caixa
+- [x] Fluxo de Caixa: card no Fechamento Anual com breakdown detalhado (Entradas: Vendas à Vista + Recebimentos A Prazo + Outras Receitas / Saídas: Pagamento Compras + Pagamento Despesas)
+- [x] Fluxo de Caixa: testes vitest para validar consistência dos cálculos (5 testes passando)

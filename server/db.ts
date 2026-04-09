@@ -7105,11 +7105,16 @@ export async function getMonthlyClosing(year: number, month: number, companyId?:
       byCategory: expensesByCategory,
     },
     cashFlow: {
-      received: totalReceived,
-      paid: purchasePayments + expensePayments,
+      // Entradas: vendas à vista (Balcão + Delivery) + recebimentos de vendas a prazo + outras receitas
+      vendasAVista: (salesByType.BALCAO?.revenue || 0) + (salesByType.DELIVERY?.revenue || 0),
+      recebimentosPrazo: totalReceived,
+      outrasReceitasCaixa: totalOtherRevenues,
+      received: (salesByType.BALCAO?.revenue || 0) + (salesByType.DELIVERY?.revenue || 0) + totalReceived + totalOtherRevenues,
+      // Saídas: pagamentos de compras + pagamentos de despesas
       purchasePayments,
       expensePayments,
-      balance: totalReceived - (purchasePayments + expensePayments),
+      paid: purchasePayments + expensePayments,
+      balance: ((salesByType.BALCAO?.revenue || 0) + (salesByType.DELIVERY?.revenue || 0) + totalReceived + totalOtherRevenues) - (purchasePayments + expensePayments),
     },
     // Estrutura antiga (compatibilidade)
     results: {
@@ -7224,6 +7229,11 @@ export async function getYearlyClosing(year: number, companyId?: number) {
     cashReceived: data.cashFlow.received,
     cashPaid: data.cashFlow.paid,
     cashBalance: data.cashFlow.balance,
+    cashVendasAVista: data.cashFlow.vendasAVista,
+    cashRecebimentosPrazo: data.cashFlow.recebimentosPrazo,
+    cashOutrasReceitas: data.cashFlow.outrasReceitasCaixa,
+    cashPurchasePayments: data.cashFlow.purchasePayments,
+    cashExpensePayments: data.cashFlow.expensePayments,
   });
 
   // PARALELO: Buscar todos os 12 meses do ano atual + 12 meses do ano anterior + snapshots de estoque
@@ -7294,6 +7304,11 @@ export async function getYearlyClosing(year: number, companyId?: number) {
     cashReceived: acc.cashReceived + m.cashReceived,
     cashPaid: acc.cashPaid + m.cashPaid,
     cashBalance: acc.cashBalance + m.cashBalance,
+    cashVendasAVista: acc.cashVendasAVista + (m.cashVendasAVista || 0),
+    cashRecebimentosPrazo: acc.cashRecebimentosPrazo + (m.cashRecebimentosPrazo || 0),
+    cashOutrasReceitas: acc.cashOutrasReceitas + (m.cashOutrasReceitas || 0),
+    cashPurchasePayments: acc.cashPurchasePayments + (m.cashPurchasePayments || 0),
+    cashExpensePayments: acc.cashExpensePayments + (m.cashExpensePayments || 0),
   }), {
     receitaBruta: 0, receitaBalcao: 0, receitaDelivery: 0, receitaAPrazo: 0, receitaSalao: 0,
     deducoes: 0, receitaLiquida: 0, cmv: 0, lucroBruto: 0,
@@ -7301,6 +7316,8 @@ export async function getYearlyClosing(year: number, companyId?: number) {
     resultadoOperacional: 0, resultadoLiquido: 0, outrasReceitas: 0,
     salesCount: 0, salesRevenue: 0, salesCost: 0, purchasesTotal: 0, purchasesCount: 0,
     cashReceived: 0, cashPaid: 0, cashBalance: 0,
+    cashVendasAVista: 0, cashRecebimentosPrazo: 0, cashOutrasReceitas: 0,
+    cashPurchasePayments: 0, cashExpensePayments: 0,
   });
 
   // Calcular margens anuais

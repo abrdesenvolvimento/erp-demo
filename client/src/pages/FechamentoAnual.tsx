@@ -1132,7 +1132,7 @@ export default function FechamentoAnual() {
                   </Card>
 
                   {/* Fluxo de Caixa */}
-                  <Card>
+                  <Card className="col-span-1 md:col-span-3">
                     <CardHeader className="pb-2">
                       <CardTitle className="text-sm font-medium text-muted-foreground">Fluxo de Caixa Anual</CardTitle>
                     </CardHeader>
@@ -1140,9 +1140,22 @@ export default function FechamentoAnual() {
                       <div className={`text-3xl font-bold ${data.totals.cashBalance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                         {formatCurrencyFull(data.totals.cashBalance)}
                       </div>
-                      <div className="flex justify-between text-xs text-muted-foreground mt-2">
-                        <span>Recebido: {formatCurrency(data.totals.cashReceived)}</span>
-                        <span>Pago: {formatCurrency(data.totals.cashPaid)}</span>
+                      <div className="grid grid-cols-2 gap-4 mt-4 text-sm">
+                        <div>
+                          <p className="font-semibold text-green-700 mb-1">Entradas: {formatCurrency(data.totals.cashReceived)}</p>
+                          <div className="space-y-0.5 text-xs text-muted-foreground pl-2">
+                            <p>Vendas à Vista (Balcão + Delivery): {formatCurrency(data.totals.cashVendasAVista || 0)}</p>
+                            <p>Recebimentos A Prazo: {formatCurrency(data.totals.cashRecebimentosPrazo || 0)}</p>
+                            <p>Outras Receitas: {formatCurrency(data.totals.cashOutrasReceitas || 0)}</p>
+                          </div>
+                        </div>
+                        <div>
+                          <p className="font-semibold text-red-700 mb-1">Saídas: {formatCurrency(data.totals.cashPaid)}</p>
+                          <div className="space-y-0.5 text-xs text-muted-foreground pl-2">
+                            <p>Pagamento de Compras: {formatCurrency(data.totals.cashPurchasePayments || 0)}</p>
+                            <p>Pagamento de Despesas: {formatCurrency(data.totals.cashExpensePayments || 0)}</p>
+                          </div>
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
