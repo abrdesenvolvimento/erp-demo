@@ -6858,13 +6858,14 @@ export async function getMonthlyClosing(year: number, month: number, companyId?:
   const purchasePayments = parseFloat(purchasePaymentsRows[0]?.total || '0');
   const expensePayments = parseFloat(expensePaymentsRows[0]?.total || '0');
 
-  // 5. CONTAS A RECEBER - Recebimentos no mês
+  // 5. CONTAS A RECEBER - Recebimentos no mês (baixas de vendas a prazo)
+  // Usa customerPayments que é a tabela principal de recebimentos de clientes
   const receivablesResult = await db.execute(sql.raw(`
-    SELECT COALESCE(SUM(paidAmount), 0) as totalReceived
-    FROM receivablePayments rp
-    WHERE DATE(CONVERT_TZ(rp.paidDate, '+00:00', '-03:00')) >= '${startDate}'
-      AND DATE(CONVERT_TZ(rp.paidDate, '+00:00', '-03:00')) <= '${endDate}'
-      ${companyId ? `AND rp.companyId = ${companyId}` : ''}
+    SELECT COALESCE(SUM(cp.paidAmount), 0) as totalReceived
+    FROM customerPayments cp
+    WHERE DATE(CONVERT_TZ(cp.paidDate, '+00:00', '-03:00')) >= '${startDate}'
+      AND DATE(CONVERT_TZ(cp.paidDate, '+00:00', '-03:00')) <= '${endDate}'
+      ${companyId ? `AND cp.companyId = ${companyId}` : ''}
   `));
 
   const receivablesRows = receivablesResult[0] as unknown as any[];

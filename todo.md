@@ -2123,3 +2123,4 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Fluxo de Caixa: revisar lógica de Recebido vs Pago para refletir movimentação real de caixa
 - [x] Fluxo de Caixa: card no Fechamento Anual com breakdown detalhado (Entradas: Vendas à Vista + Recebimentos A Prazo + Outras Receitas / Saídas: Pagamento Compras + Pagamento Despesas)
 - [x] Fluxo de Caixa: testes vitest para validar consistência dos cálculos (5 testes passando)
+- [x] Fluxo de Caixa: Recebimentos A Prazo corrigido — query alterada de receivablePayments para customerPayments (tabela principal de baixas)
