@@ -995,12 +995,12 @@ function WaiterPresencePanel() {
 
   const handleCheckIn = useCallback((userId: string) => {
     if (!activeCompanyId) return;
-    checkInMutation.mutate({ companyId: activeCompanyId, userId });
+    checkInMutation.mutate({ companyId: activeCompanyId, waiterId: userId });
   }, [activeCompanyId, checkInMutation]);
 
   const handleCheckOut = useCallback((userId: string) => {
     if (!activeCompanyId) return;
-    checkOutMutation.mutate({ companyId: activeCompanyId, userId });
+    checkOutMutation.mutate({ companyId: activeCompanyId, waiterId: userId });
   }, [activeCompanyId, checkOutMutation]);
 
   if (isLoading) {
