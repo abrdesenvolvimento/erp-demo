@@ -166,10 +166,17 @@ export default function SalaoMesas() {
     { enabled: companyId > 0 }
   );
 
-  // Waiter access check - polls every 60s so if closing time arrives, garçom gets blocked
+  // Waiter access check - polls every 5s when blocked (fast auto-refresh on liberation), 30s when allowed
   const { data: waiterAccess, isLoading: loadingAccess } = trpc.salon.checkWaiterAccess.useQuery(
     { companyId },
-    { enabled: companyId > 0 && effectiveRole === 'garcom', refetchInterval: 60000 }
+    {
+      enabled: companyId > 0 && effectiveRole === 'garcom',
+      refetchInterval: (query) => {
+        const data = query.state.data as any;
+        // Poll faster when access is blocked so garçom sees liberation almost instantly
+        return data && !data.allowed ? 5000 : 30000;
+      },
+    }
   );
 
   // Track previous access state to show toast when access is revoked mid-session

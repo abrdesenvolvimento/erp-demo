@@ -2125,3 +2125,4 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Fluxo de Caixa: testes vitest para validar consistência dos cálculos (5 testes passando)
 - [x] Fluxo de Caixa: Recebimentos A Prazo corrigido — query alterada de receivablePayments para customerPayments (tabela principal de baixas)
 - [x] Bug: Liberar garçom no Dashboard retorna erro "Invalid input: expected string, received undefined" — corrigido: handleCheckIn/handleCheckOut enviavam userId em vez de waiterId
+- [x] Melhoria: Tela 'Fora do Horário' do garçom atualiza automaticamente (polling 5s quando bloqueado, 30s quando liberado)
