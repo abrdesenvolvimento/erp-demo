@@ -586,7 +586,15 @@ export default function Produtos() {
         const precoDeliveryProprio = product.prices?.find((p: any) => p.channelId === DELIVERY_PROPRIO_ID)?.price || '';
         const precoDeliveryIFood = product.prices?.find((p: any) => p.channelId === DELIVERY_IFOOD_ID)?.price || '';
         
-        return {
+        // Mapear destino de produção para label legível
+        const destinoMap: Record<string, string> = {
+          'KITCHEN': 'Cozinha',
+          'BAR': 'Bar',
+          'BOTH': 'Ambos (Cozinha + Bar)',
+          'NONE': 'Nenhum',
+        };
+        
+        const baseData: Record<string, any> = {
           'ID': product.id,
           'Nome': product.name,
           'EAN': product.ean || '',
@@ -602,14 +610,23 @@ export default function Produtos() {
           'Preço Delivery iFood': precoDeliveryIFood ? parseFloat(precoDeliveryIFood).toFixed(2) : '',
           'Tipo': product.isComposite ? 'Composto' : 'Simples',
           'Ativo': product.active ? 'Sim' : 'Não',
-          'Observações': product.notes || '',
         };
+        
+        // Incluir colunas de salão para empresas com salão ativo
+        if (isHamburgueria) {
+          baseData['Destino Produção'] = destinoMap[product.productionDestination || 'NONE'] || 'Nenhum';
+          baseData['Disponível Salão'] = product.availableInSalon ? 'Sim' : 'Não';
+        }
+        
+        baseData['Observações'] = product.notes || '';
+        
+        return baseData;
       });
       
       const ws = XLSX.utils.json_to_sheet(exportData);
       
       // Ajustar largura das colunas
-      ws['!cols'] = [
+      const baseCols = [
         { wch: 8 },   // ID
         { wch: 40 },  // Nome
         { wch: 15 },  // EAN
@@ -625,8 +642,19 @@ export default function Produtos() {
         { wch: 18 },  // Preço Delivery iFood
         { wch: 10 },  // Tipo
         { wch: 8 },   // Ativo
-        { wch: 30 },  // Observações
       ];
+      
+      // Adicionar colunas de salão se aplicável
+      if (isHamburgueria) {
+        baseCols.push(
+          { wch: 22 },  // Destino Produção
+          { wch: 16 },  // Disponível Salão
+        );
+      }
+      
+      baseCols.push({ wch: 30 });  // Observações
+      
+      ws['!cols'] = baseCols;
       
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, 'Produtos');
