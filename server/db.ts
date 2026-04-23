@@ -5326,9 +5326,16 @@ export async function adjustProductStock(data: {
   }
 
   // Atualizar estoque
+  // Se o estoque resultante é zero, limpar a data de vencimento
+  // (o produto foi totalmente consumido/zerado, a data antiga não é mais relevante)
+  const updateSet: any = { currentStock: newStock };
+  if (newStock === 0) {
+    updateSet.expirationDate = null;
+  }
+  
   await db
     .update(products)
-    .set({ currentStock: newStock })
+    .set(updateSet)
     .where(eq(products.id, data.productId));
 
   // Registrar movimentação
