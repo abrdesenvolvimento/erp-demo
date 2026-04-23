@@ -2107,13 +2107,21 @@ export async function getExpenses(filters?: { companyId?: number;
     });
   }
   
+  // Calcular totais gerais (sobre TODOS os resultados, não apenas a página)
+  const totalActiveAmount = results
+    .filter(r => r.expense.status === 'ATIVA')
+    .reduce((sum, r) => sum + parseFloat(r.expense.amount || '0'), 0);
+  const totalCancelledAmount = results
+    .filter(r => r.expense.status === 'CANCELADA')
+    .reduce((sum, r) => sum + parseFloat(r.expense.amount || '0'), 0);
+  
   // Paginação
   const total = results.length;
   const totalPages = Math.ceil(total / limit);
   const offset = (page - 1) * limit;
   const paginatedData = results.slice(offset, offset + limit);
   
-  return { data: paginatedData, total, totalPages, page };
+  return { data: paginatedData, total, totalPages, page, totalActiveAmount, totalCancelledAmount };
 }
 
 export async function getExpenseById(id: number) {

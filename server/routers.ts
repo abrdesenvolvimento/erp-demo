@@ -1550,6 +1550,23 @@ export const appRouter = router({
         }
       }),
     
+    // Exportação: retorna TODOS os registros sem paginação
+    exportAll: consultorProcedure
+      .input(z.object({
+        categoryId: z.number().optional(),
+        status: z.enum(["ATIVA", "CANCELADA"]).optional(),
+        supplierId: z.number().optional(),
+        startDate: z.date().optional(),
+        endDate: z.date().optional(),
+        docNumber: z.string().optional(),
+        minValue: z.number().optional(),
+        maxValue: z.number().optional(),
+      }).optional())
+      .query(async ({ input, ctx }) => {
+        const result = await db.getExpenses({ ...input, companyId: ctx.activeCompanyId, page: 1, limit: 99999 });
+        return result.data;
+      }),
+
     get: consultorProcedure
       .input(z.object({ id: z.number() }))
       .query(async ({ input }) => {

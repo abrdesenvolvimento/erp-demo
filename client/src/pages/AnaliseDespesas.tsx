@@ -58,6 +58,7 @@ export default function AnaliseDespesas() {
   const { data: availableYears } = trpc.expenseAnalysis.availableYears.useQuery();
   const yearsToShow = availableYears && availableYears.length > 0 ? availableYears : [currentYear];
   const [selectedMonths, setSelectedMonths] = useState<number[]>([]); // vazio = todos os meses
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<number[]>([]); // vazio = todas as categorias
   
   // Estados de expansão
   const [expandedCategories, setExpandedCategories] = useState<Set<number>>(new Set());
@@ -96,6 +97,11 @@ export default function AnaliseDespesas() {
     // Filtrar por meses selecionados (se houver)
     if (selectedMonths.length > 0) {
       filteredData = filteredData.filter((item: ExpenseItem) => selectedMonths.includes(item.month));
+    }
+
+    // Filtrar por tipo de despesa (categoria/conta gerencial) selecionado
+    if (selectedCategoryIds.length > 0) {
+      filteredData = filteredData.filter((item: any) => selectedCategoryIds.includes(item.categoryId));
     }
 
     // Coletar todos os meses únicos
@@ -146,7 +152,21 @@ export default function AnaliseDespesas() {
     });
 
     return { hierarchicalData: categories, allMonths, grandTotal };
-  }, [rawData, selectedYears, selectedMonths]);
+  }, [rawData, selectedYears, selectedMonths, selectedCategoryIds]);
+
+  // Extrair categorias únicas dos dados brutos para o filtro
+  const availableCategories = useMemo(() => {
+    if (!rawData || rawData.length === 0) return [];
+    const catMap = new Map<number, string>();
+    rawData.forEach((item: any) => {
+      if (item.categoryId && !catMap.has(item.categoryId)) {
+        catMap.set(item.categoryId, item.categoryName || 'N/A');
+      }
+    });
+    return Array.from(catMap.entries())
+      .map(([id, name]) => ({ id, name }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [rawData]);
 
   // Toggle ano
   const toggleYear = (year: number) => {
@@ -198,10 +218,20 @@ export default function AnaliseDespesas() {
     });
   };
 
+  // Toggle categoria de despesa
+  const toggleCategoryFilter = (categoryId: number) => {
+    setSelectedCategoryIds(prev =>
+      prev.includes(categoryId)
+        ? prev.filter(c => c !== categoryId)
+        : [...prev, categoryId]
+    );
+  };
+
   // Limpar filtros
   const clearFilters = () => {
     setSelectedYears([currentYear]);
     setSelectedMonths([]);
+    setSelectedCategoryIds([]);
     setExpandedCategories(new Set());
     setExpandedSuppliers(new Set());
   };
@@ -296,6 +326,32 @@ export default function AnaliseDespesas() {
                 ))}
               </div>
             </div>
+
+            {/* Filtro de Tipo de Despesa (Conta Gerencial) */}
+            {availableCategories.length > 0 && (
+              <div>
+                <label className="text-sm font-medium text-muted-foreground mb-2 block">Tipo de Despesa (Conta Gerencial)</label>
+                <div className="flex gap-2 flex-wrap">
+                  <Button
+                    variant={selectedCategoryIds.length === 0 ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setSelectedCategoryIds([])}
+                  >
+                    Todas
+                  </Button>
+                  {availableCategories.map(cat => (
+                    <Button
+                      key={cat.id}
+                      variant={selectedCategoryIds.includes(cat.id) ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => toggleCategoryFilter(cat.id)}
+                    >
+                      {cat.name}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 

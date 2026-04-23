@@ -34,6 +34,7 @@ const PAYMENT_METHODS = [
 export default function Despesas() {
   const { user } = useAuth();
   const { expenses: expensePermissions } = usePermissions();
+  const utils = trpc.useUtils();
   const [isCreating, setIsCreating] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editingExpenseId, setEditingExpenseId] = useState<number | null>(null);
@@ -959,20 +960,16 @@ export default function Despesas() {
         {/* Cards de Resumo - Acima do título */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <div className="bg-card border rounded-lg p-4">
-            <div className="text-sm text-muted-foreground">Total Ativo (página)</div>
+            <div className="text-sm text-muted-foreground">Total Ativo (geral)</div>
             <div className="text-2xl font-bold text-green-600">
-              R$ {expenses
-                .filter(e => e.expense.status === 'ATIVA')
-                .reduce((sum, e) => sum + parseFloat(e.expense.amount), 0)
+              R$ {(expensesResult?.totalActiveAmount ?? 0)
                 .toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>
           </div>
           <div className="bg-card border rounded-lg p-4">
-            <div className="text-sm text-muted-foreground">Total Cancelado (página)</div>
+            <div className="text-sm text-muted-foreground">Total Cancelado (geral)</div>
             <div className="text-2xl font-bold text-red-600">
-              R$ {expenses
-                .filter(e => e.expense.status === 'CANCELADA')
-                .reduce((sum, e) => sum + parseFloat(e.expense.amount), 0)
+              R$ {(expensesResult?.totalCancelledAmount ?? 0)
                 .toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>
           </div>
@@ -995,31 +992,44 @@ export default function Despesas() {
             </p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => {
-              const filtered = expenses.filter(item => {
-                if (filterManagementAccountId && item.expense.managementAccountId !== filterManagementAccountId) return false;
-                return true;
-              });
-              const headers = ['ID', 'Data', 'Descrição', 'Conta Gerencial', 'Fornecedor', 'Documento', 'Forma Pagamento', 'Valor', 'Status'];
-              const rows = filtered.map(item => [
-                item.expense.id,
-                new Date(item.expense.issueDate).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' }),
-                item.expense.description,
-                item.managementAccount?.name || item.category?.name || 'N/A',
-                item.supplier?.name || '',
-                `${item.expense.docType} ${item.expense.docNumber || ''}`.trim(),
-                item.expense.paymentMethod,
-                parseFloat(item.expense.amount?.toString() || '0').toFixed(2),
-                item.expense.status
-              ]);
-              const BOM = '\uFEFF';
-              const csvContent = [headers, ...rows].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
-              const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
-              const a = document.createElement('a');
-              a.href = URL.createObjectURL(blob);
-              a.download = `despesas_${filterStartDate}_${filterEndDate}.csv`;
-              a.click();
-              toast.success('Exportação concluída!');
+            <Button variant="outline" onClick={async () => {
+              try {
+                toast.info('Exportando todas as despesas...');
+                const allData = await utils.expenses.exportAll.fetch({
+                  startDate: filterStartDate ? new Date(filterStartDate + 'T12:00:00-03:00') : undefined,
+                  endDate: filterEndDate ? new Date(filterEndDate + 'T23:59:59-03:00') : undefined,
+                  supplierId: filterSupplierId,
+                  docNumber: filterDocNumber || undefined,
+                  minValue: filterMinValue ? parseFloat(filterMinValue) : undefined,
+                  maxValue: filterMaxValue ? parseFloat(filterMaxValue) : undefined,
+                });
+                const filtered = allData.filter(item => {
+                  if (filterManagementAccountId && item.expense.managementAccountId !== filterManagementAccountId) return false;
+                  return true;
+                });
+                const headers = ['ID', 'Data', 'Descrição', 'Conta Gerencial', 'Fornecedor', 'Documento', 'Forma Pagamento', 'Valor', 'Status'];
+                const rows = filtered.map(item => [
+                  item.expense.id,
+                  new Date(item.expense.issueDate).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' }),
+                  item.expense.description,
+                  item.managementAccount?.name || item.category?.name || 'N/A',
+                  item.supplier?.name || '',
+                  `${item.expense.docType} ${item.expense.docNumber || ''}`.trim(),
+                  item.expense.paymentMethod,
+                  parseFloat(item.expense.amount?.toString() || '0').toFixed(2),
+                  item.expense.status
+                ]);
+                const BOM = '\uFEFF';
+                const csvContent = [headers, ...rows].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
+                const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = `despesas_${filterStartDate}_${filterEndDate}.csv`;
+                a.click();
+                toast.success(`Exportação concluída! ${filtered.length} despesas exportadas.`);
+              } catch (error) {
+                toast.error('Erro ao exportar despesas');
+              }
             }}>
               <Download className="h-4 w-4 mr-1" />
               Excel

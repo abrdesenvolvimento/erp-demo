@@ -2128,3 +2128,6 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Melhoria: Tela 'Fora do Horário' do garçom atualiza automaticamente (polling 5s quando bloqueado, 30s quando liberado)
 - [x] Exportação inventário: incluir colunas 'Destino Produção' e 'Disponível Salão' para empresas com salão ativo (Hamburgueria)
 - [x] Bug: Ao zerar estoque via acerto manual, a data de vencimento antiga agora é automaticamente limpa (expirationDate = null)
+- [x] Bug: Exportação de despesas em Excel agora busca TODOS os registros via endpoint exportAll (não apenas a página atual)
+- [x] Bug: Cards de total de despesas agora mostram totais gerais (totalActiveAmount/totalCancelledAmount do backend)
+- [x] Melhoria: Filtro por tipo de despesa (Conta Gerencial) adicionado na Análise de Despesas
