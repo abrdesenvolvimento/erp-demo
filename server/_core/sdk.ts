@@ -292,10 +292,16 @@ class SDKServer {
       throw ForbiddenError("User not found");
     }
 
-    await db.upsertUser({
-      id: user.id,
-      lastSignedIn: signedInAt,
-    });
+    // Update lastSignedIn but don't let it break authentication
+    try {
+      await db.upsertUser({
+        id: user.id,
+        lastSignedIn: signedInAt,
+      });
+    } catch (error) {
+      // Transient DB errors should NOT prevent authentication
+      console.warn("[Auth] Failed to update lastSignedIn (non-fatal):", error);
+    }
 
     return user;
   }

@@ -1,7 +1,7 @@
 import { getLoginUrl } from "@/const";
 import { trpc } from "@/lib/trpc";
 import { TRPCClientError } from "@trpc/client";
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 
 type UseAuthOptions = {
   redirectOnUnauthenticated?: boolean;
@@ -12,11 +12,40 @@ export function useAuth(options?: UseAuthOptions) {
   const { redirectOnUnauthenticated = false, redirectPath = getLoginUrl() } =
     options ?? {};
   const utils = trpc.useUtils();
+  const retryCountRef = useRef(0);
+  const maxRetries = 2;
 
   const meQuery = trpc.auth.me.useQuery(undefined, {
     retry: false,
     refetchOnWindowFocus: false,
+    // Stale time: keep the result for 30 seconds before refetching
+    staleTime: 30_000,
   });
+
+  // If auth.me returns null but we have a session cookie, retry automatically
+  // This handles transient DB failures during cold start
+  useEffect(() => {
+    if (meQuery.isLoading || meQuery.isFetching) return;
+    
+    // If we got a user, reset retry count
+    if (meQuery.data) {
+      retryCountRef.current = 0;
+      return;
+    }
+
+    // If auth.me returned null (no user), check if we have a session cookie
+    const hasSessionCookie = document.cookie.includes('app_session_id');
+    if (hasSessionCookie && retryCountRef.current < maxRetries) {
+      // We have a cookie but auth failed - likely a transient error
+      // Retry after a short delay
+      retryCountRef.current++;
+      console.warn(`[Auth] Session cookie exists but auth.me returned null. Retry ${retryCountRef.current}/${maxRetries}`);
+      const timer = setTimeout(() => {
+        meQuery.refetch();
+      }, 1000 * retryCountRef.current); // 1s, 2s delay
+      return () => clearTimeout(timer);
+    }
+  }, [meQuery.data, meQuery.isLoading, meQuery.isFetching]);
 
   const logoutMutation = trpc.auth.logout.useMutation({
     onSuccess: () => {
@@ -39,6 +68,7 @@ export function useAuth(options?: UseAuthOptions) {
       // Limpar cookies de empresa ativa para forçar tela de seleção no próximo login
       document.cookie = "activeCompanyId=;path=/;max-age=0";
       document.cookie = "activeBranchId=;path=/;max-age=0";
+      retryCountRef.current = maxRetries; // Don't retry after explicit logout
       utils.auth.me.setData(undefined, null);
       await utils.auth.me.invalidate();
     }
@@ -49,9 +79,14 @@ export function useAuth(options?: UseAuthOptions) {
       "manus-runtime-user-info",
       JSON.stringify(meQuery.data)
     );
+    
+    // Consider "loading" if we have a session cookie but no user yet and haven't exhausted retries
+    const hasSessionCookie = typeof document !== 'undefined' && document.cookie.includes('app_session_id');
+    const isRetrying = !meQuery.data && hasSessionCookie && retryCountRef.current < maxRetries;
+    
     return {
       user: meQuery.data ?? null,
-      loading: meQuery.isLoading || logoutMutation.isPending,
+      loading: meQuery.isLoading || meQuery.isFetching || logoutMutation.isPending || isRetrying,
       error: meQuery.error ?? logoutMutation.error ?? null,
       isAuthenticated: Boolean(meQuery.data),
     };
@@ -59,6 +94,7 @@ export function useAuth(options?: UseAuthOptions) {
     meQuery.data,
     meQuery.error,
     meQuery.isLoading,
+    meQuery.isFetching,
     logoutMutation.error,
     logoutMutation.isPending,
   ]);

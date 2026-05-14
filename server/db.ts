@@ -68,11 +68,17 @@ let _db: ReturnType<typeof drizzle> | null = null;
 
 export async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
-    try {
-      _db = drizzle(process.env.DATABASE_URL);
-    } catch (error) {
-      console.warn("[Database] Failed to connect:", error);
-      _db = null;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        _db = drizzle(process.env.DATABASE_URL);
+        break;
+      } catch (error) {
+        console.warn(`[Database] Connection attempt ${attempt + 1}/3 failed:`, error);
+        _db = null;
+        if (attempt < 2) {
+          await new Promise(r => setTimeout(r, 500 * (attempt + 1)));
+        }
+      }
     }
   }
   return _db;
@@ -135,9 +141,28 @@ export async function upsertUser(user: InsertUser): Promise<void> {
 
 export async function getUser(id: string) {
   const db = await getDb();
-  if (!db) return undefined;
-  const result = await db.select().from(users).where(eq(users.id, id)).limit(1);
-  return result.length > 0 ? result[0] : undefined;
+  if (!db) {
+    console.warn("[Database] Cannot get user: database not available");
+    return undefined;
+  }
+  try {
+    const result = await db.select().from(users).where(eq(users.id, id)).limit(1);
+    return result.length > 0 ? result[0] : undefined;
+  } catch (error) {
+    console.error("[Database] Failed to get user (retrying once):", error);
+    // Retry once after a short delay
+    try {
+      await new Promise(r => setTimeout(r, 500));
+      _db = null; // Force reconnection
+      const db2 = await getDb();
+      if (!db2) return undefined;
+      const result = await db2.select().from(users).where(eq(users.id, id)).limit(1);
+      return result.length > 0 ? result[0] : undefined;
+    } catch (retryError) {
+      console.error("[Database] Retry also failed:", retryError);
+      return undefined;
+    }
+  }
 }
 
 export async function getAllUsers() {

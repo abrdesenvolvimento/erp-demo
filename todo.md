@@ -2160,3 +2160,15 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] A página intermediária "Entrando no sistema..." garante que o browser processa o Set-Cookie antes de navegar para /
 - [x] Meta-refresh como fallback caso JavaScript esteja desabilitado
 - [x] Debug endpoints /api/debug/cookie-set e /api/debug/cookie-check para diagnóstico de cookies em produção
+
+### Apontamentos v40 (14/05/2026) — Fix Login Loop (Resiliência Auth)
+- [x] Bug: Login loop intermitente — auth.me retorna null apesar de cookie válido (debug/auth confirma que auth funciona)
+- [x] Diagnóstico: Erro transitório no DB (cold start / connection pool) causa authenticateRequest falhar → ctx.user = null → login screen
+- [x] Fix: authenticateRequest agora wrapa lastSignedIn upsert em try-catch (erro não-fatal)
+- [x] Fix: context.ts agora loga quando auth falha apesar de ter session cookie (para diagnóstico)
+- [x] Fix: useAuth agora faz retry automático (até 2x) quando auth.me retorna null mas session cookie existe
+- [x] Fix: useAuth mantém loading=true durante retries para evitar flash da tela de login
+- [x] Fix: main.tsx agora usa debounce (3 erros consecutivos em 5s) antes de redirecionar para login
+- [x] Fix: getDb() agora tenta conectar até 3x com delay progressivo no cold start
+- [x] Fix: getUser() agora faz retry com reconnect se primeira tentativa falhar
+- [x] Debug endpoint /api/debug/auth mostra passo a passo da autenticação (cookie → JWT → DB)

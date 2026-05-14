@@ -17,8 +17,13 @@ export async function createContext(
 
   try {
     user = await sdk.authenticateRequest(opts.req);
-  } catch (error) {
+  } catch (error: any) {
     // Authentication is optional for public procedures.
+    // Log the error to help diagnose intermittent auth failures
+    const hasCookie = !!opts.req.headers.cookie?.includes('app_session_id');
+    if (hasCookie) {
+      console.error('[Auth Context] Auth failed despite having session cookie:', error?.message || error);
+    }
     user = null;
   }
 
