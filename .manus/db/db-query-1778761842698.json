@@ -1,0 +1,122 @@
+{
+  "query": "SELECT id, name, active, companyId, branchId FROM categories ORDER BY id DESC LIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user dFii8SSTCuEA646.root --database 7RkrCeS5KipYf8hkuNqrCk --execute SELECT id, name, active, companyId, branchId FROM categories ORDER BY id DESC LIMIT 20;",
+  "rows": [
+    {
+      "id": "150002",
+      "name": "INGREDIENTES",
+      "active": "1",
+      "companyId": "2",
+      "branchId": "2"
+    },
+    {
+      "id": "150001",
+      "name": "EMBALAGENS",
+      "active": "1",
+      "companyId": "2",
+      "branchId": "2"
+    },
+    {
+      "id": "120002",
+      "name": "SOBREMESAS",
+      "active": "1",
+      "companyId": "2",
+      "branchId": "2"
+    },
+    {
+      "id": "120001",
+      "name": "ENTRADAS E ACOMPANHAMENTOS",
+      "active": "1",
+      "companyId": "2",
+      "branchId": "2"
+    },
+    {
+      "id": "90002",
+      "name": "PARA COMPARTILHAR",
+      "active": "1",
+      "companyId": "2",
+      "branchId": "2"
+    },
+    {
+      "id": "90001",
+      "name": "BEBIIDAS",
+      "active": "1",
+      "companyId": "2",
+      "branchId": "2"
+    },
+    {
+      "id": "60001",
+      "name": "BURGERS",
+      "active": "1",
+      "companyId": "2",
+      "branchId": "2"
+    },
+    {
+      "id": "30001",
+      "name": "Mercearia",
+      "active": "1",
+      "companyId": "1",
+      "branchId": "1"
+    },
+    {
+      "id": "15",
+      "name": "Outros",
+      "active": "1",
+      "companyId": "1",
+      "branchId": "1"
+    },
+    {
+      "id": "14",
+      "name": "Gelo",
+      "active": "1",
+      "companyId": "1",
+      "branchId": "1"
+    },
+    {
+      "id": "13",
+      "name": "Carvão",
+      "active": "1",
+      "companyId": "1",
+      "branchId": "1"
+    },
+    {
+      "id": "12",
+      "name": "Gelo de Sabor",
+      "active": "1",
+      "companyId": "1",
+      "branchId": "1"
+    },
+    {
+      "id": "11",
+      "name": "Cigarro",
+      "active": "1",
+      "companyId": "1",
+      "branchId": "1"
+    },
+    {
+      "id": "10",
+      "name": "Tabacaria",
+      "active": "1",
+      "companyId": "1",
+      "branchId": "1"
+    },
+    {
+      "id": "9",
+      "name": "Doces / Salgadinhos e Bolachas",
+      "active": "1",
+      "companyId": "1",
+      "branchId": "1"
+    },
+    {
+      "id": "8",
+      "name": "Bebidas",
+      "active": "1",
+      "companyId": "1",
+      "branchId": "1"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tactive\tcompanyId\tbranchId\n150002\tINGREDIENTES\t1\t2\t2\n150001\tEMBALAGENS\t1\t2\t2\n120002\tSOBREMESAS\t1\t2\t2\n120001\tENTRADAS E ACOMPANHAMENTOS\t1\t2\t2\n90002\tPARA COMPARTILHAR\t1\t2\t2\n90001\tBEBIIDAS\t1\t2\t2\n60001\tBURGERS\t1\t2\t2\n30001\tMercearia\t1\t1\t1\n15\tOutros\t1\t1\t1\n14\tGelo\t1\t1\t1\n13\tCarvão\t1\t1\t1\n12\tGelo de Sabor\t1\t1\t1\n11\tCigarro\t1\t1\t1\n10\tTabacaria\t1\t1\t1\n9\tDoces / Salgadinhos e Bolachas\t1\t1\t1\n8\tBebidas\t1\t1\t1\n",
+  "stderr": "",
+  "execution_time_ms": 322
+}
