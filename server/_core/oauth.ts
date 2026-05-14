@@ -2,6 +2,7 @@ import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 import type { Express, Request, Response } from "express";
 import * as db from "../db";
 import { getSessionCookieOptions, getCanonicalOrigin } from "./cookies";
+import { getAuthLog } from "./context";
 import { sdk } from "./sdk";
 import { ENV } from "./env";
 
@@ -13,6 +14,19 @@ function getQueryParam(req: Request, key: string): string | undefined {
 export function registerOAuthRoutes(app: Express) {
   // Trust proxy - required for correct req.protocol behind Cloud Run/Cloudflare
   app.set('trust proxy', true);
+
+  // Auth log endpoint - shows last 50 auth attempts
+  app.get("/api/debug/auth-log", (req: Request, res: Response) => {
+    const log = getAuthLog();
+    const summary = {
+      total: log.length,
+      successes: log.filter(e => e.success).length,
+      failures: log.filter(e => !e.success).length,
+      failuresWithCookie: log.filter(e => !e.success && e.hasCookie).length,
+      recentEntries: log.slice(-20),
+    };
+    res.json(summary);
+  });
 
   // Debug endpoint to check request headers (temporary)
   app.get("/api/debug/headers", (req: Request, res: Response) => {
