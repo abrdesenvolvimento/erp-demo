@@ -22,38 +22,64 @@ export const getLoginUrl = () => {
 
 /**
  * Warm up the server before redirecting to OAuth.
- * This ensures the Cloud Run container is active when the OAuth callback returns.
- * Retries up to 3 times with increasing timeout to handle cold starts.
+ * Pings /api/ping with aggressive retry to ensure the Cloud Run container
+ * is fully initialized before the OAuth flow begins.
+ * Uses 15s timeout per attempt to handle cold starts that take 10+ seconds.
  */
 export const warmUpAndLogin = async () => {
   const loginUrl = getLoginUrl();
   
-  // Try to ping the server up to 3 times to ensure it's warm
-  for (let attempt = 0; attempt < 3; attempt++) {
+  // Show a visual indicator that we're warming up
+  const overlay = document.createElement('div');
+  overlay.id = 'warmup-overlay';
+  overlay.innerHTML = `
+    <div style="position:fixed;inset:0;background:rgba(255,255,255,0.9);display:flex;align-items:center;justify-content:center;z-index:99999;font-family:system-ui,-apple-system,sans-serif;">
+      <div style="text-align:center;">
+        <div style="width:40px;height:40px;border:4px solid #e5e7eb;border-top-color:#2563eb;border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 16px;"></div>
+        <p style="color:#6b7280;font-size:14px;margin:0;">Conectando ao servidor...</p>
+      </div>
+    </div>
+    <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+  `;
+  document.body.appendChild(overlay);
+  
+  let serverReady = false;
+  
+  // Try to ping the server with aggressive retry
+  for (let attempt = 0; attempt < 4; attempt++) {
     try {
       const controller = new AbortController();
-      // Increase timeout with each attempt: 5s, 10s, 15s
-      const timeout = setTimeout(() => controller.abort(), 5000 + (attempt * 5000));
+      // 15 second timeout - enough for cold start
+      const timeout = setTimeout(() => controller.abort(), 15000);
       
       const response = await fetch('/api/ping', { 
         signal: controller.signal,
-        credentials: 'include' 
+        credentials: 'include',
+        // Bypass cache to ensure we hit the actual server
+        cache: 'no-store',
       });
       clearTimeout(timeout);
       
       if (response.ok) {
         console.log(`[WarmUp] Server is ready (attempt ${attempt + 1})`);
-        break; // Server is warm, proceed to login
+        serverReady = true;
+        break;
       }
     } catch (e) {
-      console.log(`[WarmUp] Ping attempt ${attempt + 1} failed, ${attempt < 2 ? 'retrying...' : 'proceeding anyway'}`);
-      // Small delay before retry
-      if (attempt < 2) {
-        await new Promise(r => setTimeout(r, 1000));
+      console.log(`[WarmUp] Ping attempt ${attempt + 1}/4 failed, ${attempt < 3 ? 'retrying...' : 'proceeding anyway'}`);
+      // Short delay before retry
+      if (attempt < 3) {
+        await new Promise(r => setTimeout(r, 1500));
       }
     }
   }
   
-  // Now redirect to OAuth - container should be warm
+  // If server responded, wait a tiny bit more to ensure it's fully ready
+  if (serverReady) {
+    await new Promise(r => setTimeout(r, 200));
+  }
+  
+  // Remove overlay and redirect to OAuth
+  overlay.remove();
   window.location.href = loginUrl;
 };

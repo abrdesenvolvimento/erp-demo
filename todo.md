@@ -2172,3 +2172,12 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Fix: getDb() agora tenta conectar até 3x com delay progressivo no cold start
 - [x] Fix: getUser() agora faz retry com reconnect se primeira tentativa falhar
 - [x] Debug endpoint /api/debug/auth mostra passo a passo da autenticação (cookie → JWT → DB)
+
+### Apontamentos v41 (14/05/2026) — Fix 503 Service Unavailable no OAuth Callback
+- [x] Bug Crítico: OAuth callback retorna 503 "Service Unavailable" quando Cloud Run está em cold start
+- [x] Diagnóstico: Cloud Run retorna 503 ANTES do Express inicializar — código server-side nunca executa
+- [x] Fix: Service Worker (sw-auth.js) intercepta requests ao /api/oauth/callback e faz retry automático (até 5x com backoff exponencial)
+- [x] Fix: SW faz ping /api/ping antes de cada retry para acordar o container
+- [x] Fix: warmUpAndLogin melhorado com timeout de 15s (suficiente para cold start de 10s) e 4 tentativas
+- [x] Fix: warmUpAndLogin mostra overlay visual "Conectando ao servidor..." durante warm-up
+- [x] Fix: SW registrado em main.tsx com scope "/" para interceptar todas as rotas /api/*

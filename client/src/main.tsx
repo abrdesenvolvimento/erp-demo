@@ -94,6 +94,20 @@ const trpcClient = trpc.createClient({
   ],
 });
 
+// Register Service Worker for OAuth callback 503 retry
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw-auth.js', { scope: '/' })
+    .then(reg => console.log('[SW] Auth retry worker registered', reg.scope))
+    .catch(err => console.warn('[SW] Registration failed:', err));
+  
+  // Listen for retry messages from SW
+  navigator.serviceWorker.addEventListener('message', (event) => {
+    if (event.data?.type === 'oauth-retry') {
+      console.log(`[SW] OAuth callback retry ${event.data.attempt}/${event.data.maxRetries}`);
+    }
+  });
+}
+
 createRoot(document.getElementById("root")!).render(
   <trpc.Provider client={trpcClient} queryClient={queryClient}>
     <QueryClientProvider client={queryClient}>
