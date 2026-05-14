@@ -201,6 +201,17 @@ export function registerOAuthRoutes(app: Express) {
       const cookieOptions = getSessionCookieOptions(req);
       res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
 
+      // Set a NON-httpOnly marker cookie so JavaScript can detect that a session exists.
+      // The actual session cookie is httpOnly (not readable by JS), so this marker
+      // allows the frontend to know it should retry auth.me if it returns null.
+      res.cookie('logged_in', '1', {
+        path: '/',
+        sameSite: 'lax',
+        secure: cookieOptions.secure,
+        httpOnly: false, // Intentionally readable by JavaScript
+        maxAge: ONE_YEAR_MS,
+      });
+
       console.log(`[OAuth] Callback completed successfully in ${Date.now() - startTime}ms`);
       console.log(`[OAuth] Cookie options: ${JSON.stringify(cookieOptions)}`);
       console.log(`[OAuth] Token length: ${sessionToken.length}`);
@@ -230,8 +241,19 @@ export function registerOAuthRoutes(app: Express) {
   <p>Entrando no sistema...</p>
 </div>
 <script>
-  // Navigate after a brief delay to ensure cookie is stored
-  setTimeout(function() { window.location.replace('/'); }, 500);
+  // Navigate after a delay to ensure cookies are fully stored.
+  // We also ping the server to keep it warm before loading the SPA.
+  function proceed() {
+    // Verify the marker cookie is accessible
+    if (document.cookie.includes('logged_in=1')) {
+      window.location.replace('/');
+    } else {
+      // Cookie not yet visible, retry in 500ms
+      setTimeout(proceed, 500);
+    }
+  }
+  // Wait 1.5s then check cookie and navigate
+  setTimeout(proceed, 1500);
 </script>
 </body></html>`);
     } catch (error: any) {

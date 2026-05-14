@@ -2181,3 +2181,13 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Fix: warmUpAndLogin melhorado com timeout de 15s (suficiente para cold start de 10s) e 4 tentativas
 - [x] Fix: warmUpAndLogin mostra overlay visual "Conectando ao servidor..." durante warm-up
 - [x] Fix: SW registrado em main.tsx com scope "/" para interceptar todas as rotas /api/*
+
+### Apontamentos v42 (14/05/2026) — Fix definitivo: Marker Cookie + Retry Agressivo
+- [x] Bug Identificado: Cookie de sessão (app_session_id) é httpOnly — JavaScript NÃO consegue ler via document.cookie
+- [x] Bug: useAuth tentava checar document.cookie.includes('app_session_id') que SEMPRE retornava false
+- [x] Bug: Sem detecção de sessão existente, o retry nunca era ativado e login screen aparecia imediatamente
+- [x] Fix: Cookie marker "logged_in=1" (não-httpOnly) setado junto com o cookie de sessão no OAuth callback
+- [x] Fix: useAuth agora checa logged_in=1 para saber se sessão existe e faz até 4 retries com backoff
+- [x] Fix: main.tsx global error handler ignora UNAUTHORIZED quando logged_in marker existe (erro transitório)
+- [x] Fix: Logout limpa o marker logged_in tanto no client (document.cookie) quanto no server (clearCookie)
+- [x] Fix: Callback HTML page espera 1.5s e verifica se logged_in=1 está acessível antes de navegar para /

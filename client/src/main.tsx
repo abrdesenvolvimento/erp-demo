@@ -30,6 +30,15 @@ const redirectToLoginIfUnauthorized = (error: unknown) => {
     return;
   }
 
+  // If the logged_in marker exists, the user HAS a valid session.
+  // The UNAUTHORIZED error is likely transient (cold start, DB timeout).
+  // Do NOT redirect - let the useAuth retry logic handle it.
+  const hasLoginMarker = document.cookie.includes('logged_in=1');
+  if (hasLoginMarker) {
+    console.warn('[Auth] UNAUTHORIZED error but logged_in marker exists - ignoring (transient)');
+    return;
+  }
+
   const now = Date.now();
 
   // Reset counter if too much time has passed since last error

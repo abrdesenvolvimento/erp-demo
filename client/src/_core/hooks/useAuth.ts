@@ -1,49 +1,72 @@
 import { getLoginUrl } from "@/const";
 import { trpc } from "@/lib/trpc";
 import { TRPCClientError } from "@trpc/client";
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 type UseAuthOptions = {
   redirectOnUnauthenticated?: boolean;
   redirectPath?: string;
 };
 
+/**
+ * Check if the non-httpOnly marker cookie "logged_in" exists.
+ * This marker is set alongside the httpOnly session cookie during OAuth callback.
+ * Since the session cookie is httpOnly, JavaScript cannot read it directly.
+ */
+function hasLoginMarker(): boolean {
+  if (typeof document === 'undefined') return false;
+  return document.cookie.includes('logged_in=1');
+}
+
 export function useAuth(options?: UseAuthOptions) {
   const { redirectOnUnauthenticated = false, redirectPath = getLoginUrl() } =
     options ?? {};
   const utils = trpc.useUtils();
   const retryCountRef = useRef(0);
-  const maxRetries = 2;
+  const maxRetries = 4; // More retries to handle cold start
+  const [isRetrying, setIsRetrying] = useState(false);
 
   const meQuery = trpc.auth.me.useQuery(undefined, {
-    retry: false,
+    retry: (failureCount, error) => {
+      // Retry on network errors or 5xx errors (cold start)
+      if (error instanceof TRPCClientError) {
+        const httpStatus = error.data?.httpStatus;
+        if (httpStatus && httpStatus >= 500) return failureCount < 3;
+      }
+      return false;
+    },
+    retryDelay: (attemptIndex) => Math.min(1000 * (attemptIndex + 1), 5000),
     refetchOnWindowFocus: false,
-    // Stale time: keep the result for 30 seconds before refetching
     staleTime: 30_000,
   });
 
-  // If auth.me returns null but we have a session cookie, retry automatically
-  // This handles transient DB failures during cold start
+  // If auth.me returns null but we have the login marker cookie, retry automatically.
+  // This handles transient DB failures during cold start.
   useEffect(() => {
     if (meQuery.isLoading || meQuery.isFetching) return;
     
     // If we got a user, reset retry count
     if (meQuery.data) {
       retryCountRef.current = 0;
+      setIsRetrying(false);
       return;
     }
 
-    // If auth.me returned null (no user), check if we have a session cookie
-    const hasSessionCookie = document.cookie.includes('app_session_id');
-    if (hasSessionCookie && retryCountRef.current < maxRetries) {
-      // We have a cookie but auth failed - likely a transient error
-      // Retry after a short delay
+    // If auth.me returned null (no user), check if we have the login marker
+    if (hasLoginMarker() && retryCountRef.current < maxRetries) {
+      // We have a marker cookie but auth failed - likely a transient error (cold start)
       retryCountRef.current++;
-      console.warn(`[Auth] Session cookie exists but auth.me returned null. Retry ${retryCountRef.current}/${maxRetries}`);
+      setIsRetrying(true);
+      console.warn(`[Auth] Login marker exists but auth.me returned null. Retry ${retryCountRef.current}/${maxRetries}`);
+      
+      // Exponential backoff: 1s, 2s, 3s, 4s
+      const delay = 1000 * retryCountRef.current;
       const timer = setTimeout(() => {
         meQuery.refetch();
-      }, 1000 * retryCountRef.current); // 1s, 2s delay
+      }, delay);
       return () => clearTimeout(timer);
+    } else {
+      setIsRetrying(false);
     }
   }, [meQuery.data, meQuery.isLoading, meQuery.isFetching]);
 
@@ -65,10 +88,13 @@ export function useAuth(options?: UseAuthOptions) {
       }
       throw error;
     } finally {
-      // Limpar cookies de empresa ativa para forçar tela de seleção no próximo login
+      // Clear the login marker cookie
+      document.cookie = "logged_in=;path=/;max-age=0";
+      // Clear company cookies
       document.cookie = "activeCompanyId=;path=/;max-age=0";
       document.cookie = "activeBranchId=;path=/;max-age=0";
       retryCountRef.current = maxRetries; // Don't retry after explicit logout
+      setIsRetrying(false);
       utils.auth.me.setData(undefined, null);
       await utils.auth.me.invalidate();
     }
@@ -79,10 +105,6 @@ export function useAuth(options?: UseAuthOptions) {
       "manus-runtime-user-info",
       JSON.stringify(meQuery.data)
     );
-    
-    // Consider "loading" if we have a session cookie but no user yet and haven't exhausted retries
-    const hasSessionCookie = typeof document !== 'undefined' && document.cookie.includes('app_session_id');
-    const isRetrying = !meQuery.data && hasSessionCookie && retryCountRef.current < maxRetries;
     
     return {
       user: meQuery.data ?? null,
@@ -97,11 +119,12 @@ export function useAuth(options?: UseAuthOptions) {
     meQuery.isFetching,
     logoutMutation.error,
     logoutMutation.isPending,
+    isRetrying,
   ]);
 
   useEffect(() => {
     if (!redirectOnUnauthenticated) return;
-    if (meQuery.isLoading || logoutMutation.isPending) return;
+    if (meQuery.isLoading || logoutMutation.isPending || isRetrying) return;
     if (state.user) return;
     if (typeof window === "undefined") return;
     if (window.location.pathname === redirectPath) return;
@@ -113,6 +136,7 @@ export function useAuth(options?: UseAuthOptions) {
     logoutMutation.isPending,
     meQuery.isLoading,
     state.user,
+    isRetrying,
   ]);
 
   return {
