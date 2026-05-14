@@ -2131,3 +2131,14 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Bug: Exportação de despesas em Excel agora busca TODOS os registros via endpoint exportAll (não apenas a página atual)
 - [x] Bug: Cards de total de despesas agora mostram totais gerais (totalActiveAmount/totalCancelledAmount do backend)
 - [x] Melhoria: Filtro por tipo de despesa (Conta Gerencial) adicionado na Análise de Despesas
+
+### Apontamentos v37 (14/05/2026) — Fix Login em Loop (Cloud Run Cold Start)
+- [x] Bug Crítico: Login em loop na produção — Cloud Run cold start (503) faz OAuth callback falhar antes do código executar
+- [x] Solução: warmUpAndLogin() no frontend faz ping em /api/ping antes de redirecionar para OAuth, garantindo container ativo
+- [x] Endpoint /api/ping adicionado ao servidor (resposta leve "pong", sem DB)
+- [x] Endpoint /api/oauth/health adicionado para monitoramento
+- [x] OAuth callback com retry logic: se falhar, redireciona para novo login (até 2 tentativas), container já quente na 2ª
+- [x] Logging detalhado no OAuth callback (tempo de cada etapa: token exchange, user info, upsert, session)
+- [x] DashboardLayout.tsx: botão Sign in usa warmUpAndLogin() em vez de redirect direto
+- [x] main.tsx: handler de erro UNAUTHORIZED usa warmUpAndLogin() em vez de redirect direto
+- [x] 7 testes vitest validando a implementação do warm-up
