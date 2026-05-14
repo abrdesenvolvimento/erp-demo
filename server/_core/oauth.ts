@@ -60,6 +60,70 @@ export function registerOAuthRoutes(app: Express) {
     });
   });
 
+  // Auth debug endpoint - shows EXACTLY where authentication fails
+  app.get("/api/debug/auth", async (req: Request, res: Response) => {
+    const result: Record<string, any> = { steps: [] };
+    try {
+      // Step 1: Parse cookies
+      const cookieHeader = req.headers.cookie;
+      result.hasCookieHeader = !!cookieHeader;
+      result.cookieNames = cookieHeader ? cookieHeader.split(';').map(c => c.trim().split('=')[0]) : [];
+      result.steps.push('1. Cookie header parsed');
+
+      // Step 2: Extract session cookie
+      const { parse } = await import('cookie');
+      const cookies = cookieHeader ? parse(cookieHeader) : {};
+      const sessionCookie = cookies[COOKIE_NAME];
+      result.hasSessionCookie = !!sessionCookie;
+      result.sessionCookieLength = sessionCookie?.length || 0;
+      result.sessionCookiePrefix = sessionCookie?.substring(0, 20) || null;
+      result.steps.push('2. Session cookie extracted: ' + (sessionCookie ? 'found' : 'NOT FOUND'));
+
+      if (!sessionCookie) {
+        result.error = 'No session cookie found';
+        res.json(result);
+        return;
+      }
+
+      // Step 3: Verify JWT
+      try {
+        const session = await sdk.verifySession(sessionCookie);
+        result.sessionValid = !!session;
+        result.sessionData = session ? { openId: session.openId?.substring(0, 10) + '...', appId: session.appId?.substring(0, 10) + '...', name: session.name } : null;
+        result.steps.push('3. JWT verified: ' + (session ? 'VALID' : 'INVALID'));
+
+        if (!session) {
+          result.error = 'JWT verification returned null';
+          res.json(result);
+          return;
+        }
+
+        // Step 4: Get user from DB
+        const { getUser } = await import('../db');
+        const user = await getUser(session.openId);
+        result.userFound = !!user;
+        result.userId = user?.id?.substring(0, 10) + '...' || null;
+        result.userName = user?.name || null;
+        result.steps.push('4. DB user lookup: ' + (user ? 'FOUND' : 'NOT FOUND'));
+
+        if (!user) {
+          result.error = 'User not found in database';
+        } else {
+          result.success = true;
+          result.message = 'Authentication would succeed';
+        }
+      } catch (jwtError: any) {
+        result.sessionValid = false;
+        result.jwtError = jwtError?.message || String(jwtError);
+        result.steps.push('3. JWT verification FAILED: ' + result.jwtError);
+        result.error = 'JWT verification threw error';
+      }
+    } catch (e: any) {
+      result.error = 'Unexpected error: ' + (e?.message || String(e));
+    }
+    res.json(result);
+  });
+
   // Health/keep-alive endpoint - lightweight, no DB
   app.get("/api/oauth/health", (req: Request, res: Response) => {
     res.json({
