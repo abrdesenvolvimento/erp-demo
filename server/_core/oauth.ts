@@ -16,6 +16,8 @@ export function registerOAuthRoutes(app: Express) {
 
   // Debug endpoint to check request headers (temporary)
   app.get("/api/debug/headers", (req: Request, res: Response) => {
+    const cookies = req.headers.cookie;
+    const hasCookie = cookies ? cookies.includes(COOKIE_NAME) : false;
     res.json({
       protocol: req.protocol,
       secure: req.secure,
@@ -28,6 +30,33 @@ export function registerOAuthRoutes(app: Express) {
       referer: req.headers['referer'],
       canonicalOrigin: getCanonicalOrigin(req),
       cookieOptions: getSessionCookieOptions(req),
+      cookieHeader: cookies ? `${cookies.substring(0, 50)}...` : null,
+      hasSessionCookie: hasCookie,
+      allCookieNames: cookies ? cookies.split(';').map(c => c.trim().split('=')[0]) : [],
+    });
+  });
+
+  // Cookie test: Step 1 - Set a test cookie and redirect
+  app.get("/api/debug/cookie-set", (req: Request, res: Response) => {
+    const cookieOptions = getSessionCookieOptions(req);
+    res.cookie('debug_test', 'cookie_works_' + Date.now(), { ...cookieOptions, maxAge: 60000 });
+    console.log(`[Debug] Setting test cookie with options: ${JSON.stringify(cookieOptions)}`);
+    res.redirect(302, '/api/debug/cookie-check');
+  });
+
+  // Cookie test: Step 2 - Check if the test cookie was received
+  app.get("/api/debug/cookie-check", (req: Request, res: Response) => {
+    const cookies = req.headers.cookie;
+    const hasDebugCookie = cookies ? cookies.includes('debug_test') : false;
+    const hasSessionCookie = cookies ? cookies.includes(COOKIE_NAME) : false;
+    res.json({
+      cookieHeader: cookies || null,
+      hasDebugCookie,
+      hasSessionCookie,
+      allCookieNames: cookies ? cookies.split(';').map(c => c.trim().split('=')[0]) : [],
+      message: hasDebugCookie 
+        ? 'Cookie test PASSED - cookies work correctly'
+        : 'Cookie test FAILED - browser is not sending cookies back',
     });
   });
 
@@ -94,7 +123,12 @@ export function registerOAuthRoutes(app: Express) {
       const cookieOptions = getSessionCookieOptions(req);
       res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
 
-      console.log(`[OAuth] Callback completed successfully in ${Date.now() - startTime}ms, cookie: ${JSON.stringify(cookieOptions)}`);
+      // Log the exact Set-Cookie that will be sent
+      const setCookieHeaders = res.getHeader('set-cookie');
+      console.log(`[OAuth] Callback completed successfully in ${Date.now() - startTime}ms`);
+      console.log(`[OAuth] Cookie options: ${JSON.stringify(cookieOptions)}`);
+      console.log(`[OAuth] Set-Cookie header: ${JSON.stringify(setCookieHeaders)}`);
+      console.log(`[OAuth] Token length: ${sessionToken.length}`);
       res.redirect(302, "/");
     } catch (error: any) {
       const elapsed = Date.now() - startTime;
