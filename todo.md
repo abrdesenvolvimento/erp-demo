@@ -2142,3 +2142,14 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] DashboardLayout.tsx: botão Sign in usa warmUpAndLogin() em vez de redirect direto
 - [x] main.tsx: handler de erro UNAUTHORIZED usa warmUpAndLogin() em vez de redirect direto
 - [x] 7 testes vitest validando a implementação do warm-up
+
+### Apontamentos v38 (14/05/2026) — Fix Login Loop (Cookie + Host Mismatch)
+- [x] Bug Crítico: Login loop persistia mesmo após warm-up — causa raiz: host/origin mismatch no Cloud Run
+- [x] Diagnóstico: req.get('host') retornava hostname interno do Cloud Run (*.a.run.app) em vez do domínio público (abrwf.manus.space)
+- [x] Fix: getCanonicalOrigin() em cookies.ts — detecta domínio público via x-forwarded-host, Origin, Referer headers
+- [x] Fix: Cookie sameSite alterado de "none" para "lax" — sameSite:none requer secure:true, que pode falhar atrás de proxy
+- [x] Fix: OAuth callback retry agora usa state parameter (base64 da redirectUri original) em vez de req.get('host')
+- [x] Fix: warmUpAndLogin melhorado com 3 tentativas de ping (5s, 10s, 15s timeout progressivo)
+- [x] Fix: app.set('trust proxy', true) para detecção correta de HTTPS atrás de Cloud Run/Cloudflare
+- [x] Debug endpoint /api/debug/headers mostra canonicalOrigin para diagnóstico
+- [x] 11 testes vitest validando cookie config, canonical origin, retry logic e warm-up

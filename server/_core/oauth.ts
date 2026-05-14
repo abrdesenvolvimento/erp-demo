@@ -1,7 +1,7 @@
 import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 import type { Express, Request, Response } from "express";
 import * as db from "../db";
-import { getSessionCookieOptions } from "./cookies";
+import { getSessionCookieOptions, getCanonicalOrigin } from "./cookies";
 import { sdk } from "./sdk";
 import { ENV } from "./env";
 
@@ -25,6 +25,8 @@ export function registerOAuthRoutes(app: Express) {
       xForwardedFor: req.headers['x-forwarded-for'],
       xForwardedHost: req.headers['x-forwarded-host'],
       origin: req.headers['origin'],
+      referer: req.headers['referer'],
+      canonicalOrigin: getCanonicalOrigin(req),
       cookieOptions: getSessionCookieOptions(req),
     });
   });
@@ -49,7 +51,9 @@ export function registerOAuthRoutes(app: Express) {
     const retryCount = parseInt(getQueryParam(req, "retry") || "0");
     const startTime = Date.now();
 
-    console.log(`[OAuth] Callback received - code length: ${code?.length || 0}, retry: ${retryCount}`);
+    // Derive the canonical public origin for this request
+    const canonicalOrigin = getCanonicalOrigin(req);
+    console.log(`[OAuth] Callback received - code length: ${code?.length || 0}, retry: ${retryCount}, canonicalOrigin: ${canonicalOrigin}, host: ${req.get('host')}`);
 
     if (!code || !state) {
       res.status(400).json({ error: "code and state are required" });
@@ -90,7 +94,7 @@ export function registerOAuthRoutes(app: Express) {
       const cookieOptions = getSessionCookieOptions(req);
       res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
 
-      console.log(`[OAuth] Callback completed successfully in ${Date.now() - startTime}ms`);
+      console.log(`[OAuth] Callback completed successfully in ${Date.now() - startTime}ms, cookie: ${JSON.stringify(cookieOptions)}`);
       res.redirect(302, "/");
     } catch (error: any) {
       const elapsed = Date.now() - startTime;
@@ -101,15 +105,28 @@ export function registerOAuthRoutes(app: Express) {
       // If this is a cold start issue (token expired/invalid), redirect back to login
       // The container is now warm, so the next attempt should succeed
       if (retryCount < 2) {
-        // Redirect back to the OAuth login page to get a fresh code
+        // Use the STATE parameter to recover the original public redirectUri
+        // The state is base64(redirectUri) - decode it to get the original callback URL
+        let publicRedirectUri: string;
+        try {
+          const decodedState = Buffer.from(state, 'base64').toString('utf-8');
+          // If the decoded state looks like a valid URL, use its origin
+          if (decodedState.startsWith('http')) {
+            const stateUrl = new URL(decodedState);
+            publicRedirectUri = `${stateUrl.origin}/api/oauth/callback`;
+          } else {
+            publicRedirectUri = `${canonicalOrigin}/api/oauth/callback`;
+          }
+        } catch {
+          publicRedirectUri = `${canonicalOrigin}/api/oauth/callback`;
+        }
+
         const appId = ENV.appId || process.env.VITE_APP_ID;
-        const origin = `${req.protocol}://${req.get('host')}`;
-        const redirectUri = `${origin}/api/oauth/callback`;
         const oauthPortalUrl = process.env.VITE_OAUTH_PORTAL_URL || 'https://manus.im/app-auth';
-        const newState = Buffer.from(redirectUri).toString('base64');
-        const loginUrl = `${oauthPortalUrl}?appId=${appId}&redirectUri=${encodeURIComponent(redirectUri)}&state=${newState}&type=signIn`;
+        const newState = Buffer.from(publicRedirectUri).toString('base64');
+        const loginUrl = `${oauthPortalUrl}?appId=${appId}&redirectUri=${encodeURIComponent(publicRedirectUri)}&state=${newState}&type=signIn&retry=${retryCount + 1}`;
         
-        console.log(`[OAuth] Redirecting to login for retry (attempt ${retryCount + 1})`);
+        console.log(`[OAuth] Redirecting to login for retry (attempt ${retryCount + 1}), redirectUri: ${publicRedirectUri}`);
         res.redirect(302, loginUrl);
       } else {
         // After 2 retries, show error page

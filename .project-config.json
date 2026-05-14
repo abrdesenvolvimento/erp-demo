@@ -1,0 +1,49 @@
+{
+  "build_command": "pnpm run build",
+  "capabilities": [
+    "db",
+    "server",
+    "user"
+  ],
+  "dev_command": "pnpm run dev",
+  "env_vars": {
+    "DATABASE_URL": "mysql://dFii8SSTCuEA646.root:PMHJyQvA2HA5c3N72JU5@gateway02.us-east-1.prod.aws.tidbcloud.com:4000/7RkrCeS5KipYf8hkuNqrCk?ssl={\"rejectUnauthorized\":true}"
+  },
+  "experiments": null,
+  "git_remote": {
+    "repo_url": "s3://vida-prod-gitrepo/webdev-git/310519663140687549/7RkrCeS5KipYf8hkuNqrCk",
+    "access_key_id": "ASIAZV3A2ECZOYANIKTC",
+    "secret_access_key": "rMtZEzjV6MAkgJQLS0QqM21lbDjXlrSUCyiEkJqz",
+    "session_token": "IQoJb3JpZ2luX2VjEJ3//////////wEaCXVzLWVhc3QtMSJIMEYCIQCyaDlbQkA9IdorErH76inTzjm94hirXoGJoJLOggE9nwIhAMbCqZj6evYaXWVq1kNzQo+bpWQkt+j9lz2YXsXFeaWrKvYDCGYQBBoMNjY1Mzg2MDk4ODY2IgxVxc4zmNfoKw7Ogzkq0wOybCzhbHtHqLZNT/22HZafKIdR2U4ScdyDEUT5Fi5Tux5v/iwFeiWui8BEd1VxtDZApvA0Fa3wQ0gMcr6Jwt18O8NeyaHK1x0zr4MPffV+PdlacvYuWBpUxip+ALMgDmMZ1J3CVb6yg/bphZUZ1GBah9SI8W43yPbmtC6U5GWJu5d0fbxXsDlmn4joWeeS/NOuAw9bLsLoAsW3TmKJwcXDBbPFIoJv8az6tmZRgE7eXyf6oDDUZZkpP3ST9+t28HyuMelfeOUlGCxgtd/N0L6U1Kmr2goUiqhTeZWoLR2SIrZmh4t/+AMqhSvGyM8liUvlYzmo/H50DLOk5fSnh0KNdWL8Q+V4r3cHk+gT6pvSx/yQT6wC2jMKzOFxJ8Fmhs6C2CMyY0wAOpSmNAA0cCQMnChT11rE9S031cFUcsjpOIGE54iBW2v0/nLAGd4Id0dgtYJ6mtXfpcGUhASMd0JvcJPsQLbtxMf0eGbgKVSKvC5VHkxuFfnxxqMda6oJjjUqpyQzxYW9OSK07oQKEDqUOH+qlSBpLCSsQRldUbltlBkREpqHEcqc1O8l07YkYhxtBy2mX6xGML5X76gJOEkOkCDmtLyB4Sep2xsXSMO2YHnIKjC935jQBjqcAUW+qW/uSTP27I9pDLooM1lfpbR+8ZCyBqVdGD5VcxWqJionuMPRB0uTnFCRdCKR2zLkYFYYkV18xL+Z9Eg0XIFrx5Pxxv5WCfrsW4tdQC953NVKCiThUHu1ayTC/GdUYV/jfCMASaYNxoFtoa7eSJnptbYY+RM0H8eAjGRLswEtTZ3+I/1M78uh4wIpX6FpoEZVKc6iR/d4Dl/NpQ==",
+    "expiration": "2026-05-15T08:25:33.000Z"
+  },
+  "name": "erp-demo",
+  "path": "/home/ubuntu/erp-demo",
+  "port": 3000,
+  "secrets": {
+    "BACKUP_EMAIL_NOTIFICATION": "comercial@adegabeirario.com.br",
+    "BUILT_IN_FORGE_API_KEY": "PQ2sSwpZLmGeAxbGXHB2H2",
+    "BUILT_IN_FORGE_API_URL": "https://forge.manus.ai",
+    "GOOGLE_DRIVE_CREDENTIALS": "{\"type\":\"service_account\",\"project_id\":\"erp-adega-backup\",\"private_key_id\":\"f29ccd3a0478e578baf772e626eb950da1c903c4\",\"private_key\":\"-----BEGIN PRIVATE KEY-----\\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCkEg9BFPJztfdV\\n5O3yTfy1Ye8vlF4Vwpna5D4LFdL6S40kprM2nUT2P0MS6fM/01RZFdr0d0GZPqLG\\n2iFs2qebOYfYLO1pdOa+PYirUUqiO3/x37u62Gg35sspI3q17ZPiYsCsa2VHfB1w\\nbuIu9HfPWUn5qV2vkKQ+8xif9vZ+n196XakzfCJ2nKe2BTAeK7lNWKz2NIkhoc7s\\n7k63Qw4fhNaM4M0VAdQF7rq/2sjsgpzKQxCHkM6aznbrZehj2sxnYyp7xI5ohOLZ\\nuPkHZENyDJFm7oae+WgprI8Pui67OB973Sc4qdj/SDm4JkpyUv+xcoikQkN/soDk\\n4tCUTQEXAgMBAAECggEATfF+aa6n16yUiauuFrRR32FdHb9gSvod2U0g5GdDyUBn\\nFwhSjxl7j3hSRwP5WVLt+TxWvliBQ2nsLoel5W6ivS1BicMeLkEo9SuKZ8jAqf2W\\nNLPTHVp9eEEeNrbyLsdkv+GmIsMKZEFkQuuKbEAbQtfqOr7pEOSoAne+NRA/3brZ\\nUNMpSflT6CMVqUe7C7M7vpwFYOlqgm5igyN6h74a5IMy+uLJ96xHsxWT5e1B7K98\\nsYRY1ns1+zaREdbjNjyK5i4Y8iHMe5fW8nDEVT6Ax4x23xfVvTXCfcK7SfJHI9wU\\ndtWr+JP1tjXJo5JYHNFPOAvMj25uvCKaDN0Mf2t7kQKBgQDfXBHyQs1SK/Ke5MhG\\n7nvprZn4v4C0Ccm6g6uOqKmWFuOuJupWsBls2aBbMGUhrQ5FI5ruSxAUf21HPF9+\\noqNFg9Zbht5nky6Oqa/gBPrAKCuxcOsA11sm/X3UUBYSmG8KEx3ibphNwjxC/ILu\\nOOFhj2JABy7EBAFkG+TPp6zE3QKBgQC8C/jY22Gni5TBl0H5KLpsMtTSmLEj4fJA\\nosTmJnCILXtrrJzQQzW7lzioYhQFMulnP8SdFyfe3+S2Hlu84A2qOSvSnzsNahBE\\nvlIGbSqgdjAFecxswhz7iCIXT+q/tq6jKG3w+7uuk9TTJrIMW5JxFDVg8S803gnl\\n0FFRx98UgwKBgQCvxY7B7VwSzE70R+psF4UgEePXYyzvgbxksPWzIHvEh2LJTAqi\\nCZcYl/KfkGglpkBSnIByAlQ3LUhcBODJkUeXjvaDtJEVRTggQN0NGB4UVgh8bPYj\\nBVbQSjBZgmS8YYUQkpaz+ICWwMIXnQuUWOLUmbeh14Uv8E7/7wuTdsp5aQKBgH2l\\nDi9vXe+BzvIO67DcKruStyrDhVBxbtkLKL6SnowOv7FxExIAZk2iO+QeLDxRCSzI\\nqclAqI49UObyn98yYU8Ehihj5iQPYzFbbRkIJfwzG+D8wb9Fb/IMwqKK7lIMcOFp\\naRQkTwHVmtU+vKaPJOjTVNsiK6WKWlioeT1Ia+CbAoGAb4Pf+fwMUTxkKTcFQyZo\\naiU2WRyPj+l2UMdXOLCZqVb1s4Io1l0PvIJZnitxGZgd2o4mCo/n3r7lseffRmCd\\nWPjnOadcMGU3Eaq/UtnnBciPaMQzs+1nPfvRiNKFbuBIAUTkw6XHg+waiL2bOrml\\nsRYJBPS0ZlP6Kb3MclMI4zQ=\\n-----END PRIVATE KEY-----\\n\",\"client_email\":\"backup-erp@erp-adega-backup.iam.gserviceaccount.com\",\"client_id\":\"110964703565217953802\",\"auth_uri\":\"https://accounts.google.com/o/oauth2/auth\",\"token_uri\":\"https://oauth2.googleapis.com/token\",\"auth_provider_x509_cert_url\":\"https://www.googleapis.com/oauth2/v1/certs\",\"client_x509_cert_url\":\"https://www.googleapis.com/robot/v1/metadata/x509/backup-erp%40erp-adega-backup.iam.gserviceaccount.com\",\"universe_domain\":\"googleapis.com\"}",
+    "GOOGLE_DRIVE_FOLDER_ID": "13i3fDVFXLpiiu_pP8xoFyzw9eZXsecYl",
+    "JWT_SECRET": "JLJUr9LkBteicxqSgr8fyQ",
+    "OAUTH_SERVER_URL": "https://api.manus.im",
+    "OWNER_NAME": "Gabriel Morais",
+    "OWNER_OPEN_ID": "3sp2FmLhkenyjqMFmfLoex",
+    "VAPID_PRIVATE_KEY": "zDrkHdLkISyNWjt3HT3o7njFFrKYF83OkOo3MaUHsWs",
+    "VAPID_PUBLIC_KEY": "BGPyHYz43EC2ke0I8PehsFM4Iz00TUgzCfhNyP2erxm4F5qRSZynBRF-l9mUl8SUs65k__eWzpjkUoNGsR4sUH0",
+    "VITE_ANALYTICS_ENDPOINT": "https://manus-analytics.com",
+    "VITE_ANALYTICS_WEBSITE_ID": "b2a420f9-cfce-4de1-95b9-7c2b76810e19",
+    "VITE_APP_ID": "7RkrCeS5KipYf8hkuNqrCk",
+    "VITE_APP_LOGO": "https://files.manuscdn.com/user_upload_by_module/web_dev_logo/310519663140687549/rtpNzWXHGtjhycOe.png",
+    "VITE_APP_TITLE": "ABRWF",
+    "VITE_FRONTEND_FORGE_API_KEY": "",
+    "VITE_FRONTEND_FORGE_API_URL": "https://forge.manus.ai",
+    "VITE_OAUTH_PORTAL_URL": "https://manus.im",
+    "VITE_VAPID_PUBLIC_KEY": "BGPyHYz43EC2ke0I8PehsFM4Iz00TUgzCfhNyP2erxm4F5qRSZynBRF-l9mUl8SUs65k__eWzpjkUoNGsR4sUH0",
+    "WHATSAPP_ACCESS_TOKEN": "EAAMlOD0f888BQXvOg80hyDll4YrkkJHrmwTSoQCxtpNDfzOswJse3AN55oGZAf2Ih70DGNd30ZCuqJ5zxrAeAg897rZCEbM0NhgZBzCXBFa7Me7Nf4JbbWU483Uu1zLmeUZBHDzeJ5b8hHeophvoyoaP6xTkQ5ZCEQNH3o4w9mY7TSlBlLRXirBgQGtuva08DKvgZDZD",
+    "WHATSAPP_PHONE_NUMBER_ID": "1005788860213963"
+  },
+  "template_id": "web-db-user",
+  "test_command": "pnpm test"
+}

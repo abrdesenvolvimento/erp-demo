@@ -23,24 +23,35 @@ export const getLoginUrl = () => {
 /**
  * Warm up the server before redirecting to OAuth.
  * This ensures the Cloud Run container is active when the OAuth callback returns.
- * Returns a promise that resolves when the server is ready (or after timeout).
+ * Retries up to 3 times with increasing timeout to handle cold starts.
  */
 export const warmUpAndLogin = async () => {
   const loginUrl = getLoginUrl();
   
-  try {
-    // Ping the server to wake up the container (fire and forget with timeout)
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 8000);
-    
-    await fetch('/api/ping', { 
-      signal: controller.signal,
-      credentials: 'include' 
-    });
-    clearTimeout(timeout);
-  } catch (e) {
-    // If ping fails, still redirect - the container might wake up in time
-    console.log('[WarmUp] Server ping failed, proceeding with login anyway');
+  // Try to ping the server up to 3 times to ensure it's warm
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const controller = new AbortController();
+      // Increase timeout with each attempt: 5s, 10s, 15s
+      const timeout = setTimeout(() => controller.abort(), 5000 + (attempt * 5000));
+      
+      const response = await fetch('/api/ping', { 
+        signal: controller.signal,
+        credentials: 'include' 
+      });
+      clearTimeout(timeout);
+      
+      if (response.ok) {
+        console.log(`[WarmUp] Server is ready (attempt ${attempt + 1})`);
+        break; // Server is warm, proceed to login
+      }
+    } catch (e) {
+      console.log(`[WarmUp] Ping attempt ${attempt + 1} failed, ${attempt < 2 ? 'retrying...' : 'proceeding anyway'}`);
+      // Small delay before retry
+      if (attempt < 2) {
+        await new Promise(r => setTimeout(r, 1000));
+      }
+    }
   }
   
   // Now redirect to OAuth - container should be warm
