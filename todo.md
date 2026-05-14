@@ -2191,3 +2191,9 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Fix: main.tsx global error handler ignora UNAUTHORIZED quando logged_in marker existe (erro transitório)
 - [x] Fix: Logout limpa o marker logged_in tanto no client (document.cookie) quanto no server (clearCookie)
 - [x] Fix: Callback HTML page espera 1.5s e verifica se logged_in=1 está acessível antes de navegar para /
+
+### Apontamentos v43 (14/05/2026) — Heartbeat Keep-Alive + Content-Type Fix
+- [x] Fix: Heartbeat endpoint /api/scheduled/keep-alive adicionado para manter container Cloud Run aquecido
+- [ ] Pendente: Criar cron job heartbeat via manus-heartbeat CLI após deploy (a cada 5 min)
+- [x] Fix: Content-Type explícito 'text/html; charset=utf-8' na resposta HTML do OAuth callback (iOS Safari baixava como arquivo)
+- [x] Fix: Cache-Control 'no-store' na resposta do callback para evitar caching

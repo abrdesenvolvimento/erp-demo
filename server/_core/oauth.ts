@@ -222,6 +222,8 @@ export function registerOAuthRoutes(app: Express) {
       // 1. Receives the Set-Cookie header in a 200 response (browser stores it)
       // 2. Uses JavaScript/meta-refresh to navigate to / after a small delay
       // This ensures the cookie is properly stored before navigation.
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
       res.status(200).send(`<!DOCTYPE html>
 <html><head>
 <meta charset="utf-8">

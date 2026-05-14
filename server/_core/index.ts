@@ -85,6 +85,11 @@ async function startServer() {
     }
   });
   
+  // Heartbeat keep-alive endpoint (prevents Cloud Run cold starts)
+  app.post('/api/scheduled/keep-alive', (req, res) => {
+    res.json({ ok: true, ts: new Date().toISOString() });
+  });
+
   // tRPC API
   app.use(
     "/api/trpc",
