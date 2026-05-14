@@ -11,6 +11,24 @@ function getQueryParam(req: Request, key: string): string | undefined {
 }
 
 export function registerOAuthRoutes(app: Express) {
+  // Trust proxy - required for correct req.protocol behind Cloud Run/Cloudflare
+  app.set('trust proxy', true);
+
+  // Debug endpoint to check request headers (temporary)
+  app.get("/api/debug/headers", (req: Request, res: Response) => {
+    res.json({
+      protocol: req.protocol,
+      secure: req.secure,
+      hostname: req.hostname,
+      host: req.get('host'),
+      xForwardedProto: req.headers['x-forwarded-proto'],
+      xForwardedFor: req.headers['x-forwarded-for'],
+      xForwardedHost: req.headers['x-forwarded-host'],
+      origin: req.headers['origin'],
+      cookieOptions: getSessionCookieOptions(req),
+    });
+  });
+
   // Health/keep-alive endpoint - lightweight, no DB
   app.get("/api/oauth/health", (req: Request, res: Response) => {
     res.json({
