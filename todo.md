@@ -2153,3 +2153,10 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Fix: app.set('trust proxy', true) para detecção correta de HTTPS atrás de Cloud Run/Cloudflare
 - [x] Debug endpoint /api/debug/headers mostra canonicalOrigin para diagnóstico
 - [x] 11 testes vitest validando cookie config, canonical origin, retry logic e warm-up
+
+### Apontamentos v39 (14/05/2026) — Fix Login Loop (WKWebView Cookie Issue)
+- [x] Bug Crítico: Login loop persistia em iOS in-app browser (WKWebView) — causa raiz: WKWebView descarta Set-Cookie em respostas 302
+- [x] Fix: OAuth callback success path agora retorna HTML 200 com spinner + JS redirect em vez de 302 redirect
+- [x] A página intermediária "Entrando no sistema..." garante que o browser processa o Set-Cookie antes de navegar para /
+- [x] Meta-refresh como fallback caso JavaScript esteja desabilitado
+- [x] Debug endpoints /api/debug/cookie-set e /api/debug/cookie-check para diagnóstico de cookies em produção

@@ -123,13 +123,39 @@ export function registerOAuthRoutes(app: Express) {
       const cookieOptions = getSessionCookieOptions(req);
       res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
 
-      // Log the exact Set-Cookie that will be sent
-      const setCookieHeaders = res.getHeader('set-cookie');
       console.log(`[OAuth] Callback completed successfully in ${Date.now() - startTime}ms`);
       console.log(`[OAuth] Cookie options: ${JSON.stringify(cookieOptions)}`);
-      console.log(`[OAuth] Set-Cookie header: ${JSON.stringify(setCookieHeaders)}`);
       console.log(`[OAuth] Token length: ${sessionToken.length}`);
-      res.redirect(302, "/");
+
+      // IMPORTANT: Do NOT use 302 redirect here.
+      // iOS WKWebView (in-app browsers) often drops Set-Cookie headers from 302 responses.
+      // Instead, send an HTML page that:
+      // 1. Receives the Set-Cookie header in a 200 response (browser stores it)
+      // 2. Uses JavaScript/meta-refresh to navigate to / after a small delay
+      // This ensures the cookie is properly stored before navigation.
+      res.status(200).send(`<!DOCTYPE html>
+<html><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Entrando...</title>
+<meta http-equiv="refresh" content="1;url=/">
+<style>
+  body { display:flex; align-items:center; justify-content:center; min-height:100vh; margin:0; font-family:system-ui,-apple-system,sans-serif; background:#f8f9fa; }
+  .loader { text-align:center; }
+  .spinner { width:40px; height:40px; border:4px solid #e5e7eb; border-top-color:#2563eb; border-radius:50%; animation:spin 0.8s linear infinite; margin:0 auto 16px; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  p { color:#6b7280; font-size:14px; }
+</style>
+</head><body>
+<div class="loader">
+  <div class="spinner"></div>
+  <p>Entrando no sistema...</p>
+</div>
+<script>
+  // Navigate after a brief delay to ensure cookie is stored
+  setTimeout(function() { window.location.replace('/'); }, 500);
+</script>
+</body></html>`);
     } catch (error: any) {
       const elapsed = Date.now() - startTime;
       const errMsg = error?.response?.data ? JSON.stringify(error.response.data) : error?.message || String(error);
