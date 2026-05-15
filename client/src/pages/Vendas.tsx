@@ -250,7 +250,10 @@ export default function Vendas() {
         'Cliente': row.customerName,
         'Produto': row.productName,
         'Quantidade': row.quantity,
-        'Data/Hora': new Date(row.saleDate).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }),
+        'Data/Hora': (() => {
+          const m = row.saleDate?.match(/(\d{4})-(\d{2})-(\d{2})\s+(\d{2}):(\d{2})/);
+          return m ? `${m[3]}/${m[2]}/${m[1]} ${m[4]}:${m[5]}` : row.saleDate || '-';
+        })(),
         'Valor Unitário': `R$ ${parseFloat(row.unitPrice).toFixed(2).replace('.', ',')}`,
         'Valor Total': `R$ ${parseFloat(row.totalPrice).toFixed(2).replace('.', ',')}`,
         'Forma de Pagamento': row.paymentMethod || '-',
@@ -486,13 +489,23 @@ export default function Vendas() {
   };
 
   const formatDateTime = (dateString: string) => {
+    // Server retorna datas já convertidas para Brasília via CONVERT_TZ
+    // NÃO usar timeZone aqui para evitar dupla conversão
+    // Formato do server: '2026-05-14 23:54:22.000000'
+    // Parsear manualmente para evitar diferenças entre browsers
+    if (!dateString) return '-';
+    const match = dateString.match(/(\d{4})-(\d{2})-(\d{2})\s+(\d{2}):(\d{2})/);
+    if (match) {
+      const [, year, month, day, hour, minute] = match;
+      return `${day}/${month}/${year}, ${hour}:${minute}`;
+    }
+    // Fallback
     return new Date(dateString).toLocaleString('pt-BR', {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
       hour: '2-digit',
-      minute: '2-digit',
-      timeZone: 'America/Sao_Paulo'
+      minute: '2-digit'
     });
   };
 

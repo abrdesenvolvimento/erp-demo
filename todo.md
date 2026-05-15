@@ -2228,3 +2228,13 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Fix: Adicionado timeZone: 'America/Sao_Paulo' na exportação Excel de vendas
 - [x] Verificado: Queries de análise (DATE/DAY/YEARWEEK com CONVERT_TZ) estão corretas — retornam strings de data, não timestamps
 - [x] Regra: Servidor retorna datas em UTC, frontend converte com timeZone: 'America/Sao_Paulo'
+
+### Bug v45.2 (15/05/2026) — Horário ainda incorreto + lentidão ao filtrar vendas
+- [x] Fix: Horário mostrando ~03:00 (UTC) — causa: new Date('YYYY-MM-DD HH:MM:SS') interpreta como hora local no Safari/iOS, não UTC
+- [x] Fix: Restaurado CONVERT_TZ no SELECT de getSales, getSale, getSalesForExport (server retorna Brasília)
+- [x] Fix: Frontend agora parseia datas com regex ao invés de new Date() — funciona igual em todos os browsers
+- [x] Fix: Atualizado formatDateTimeBR e formatDateBR em shared/dateUtils.ts com parsing manual
+- [x] Fix: Atualizado formatDateTime em Vendas.tsx, formatTime em Home.tsx, export Excel
+- [x] Fix: canEditOrCancel em SaleDetailsModal agora usa offset -03:00 para cálculo correto
+- [x] Verificado: Query de vendas com filtro usa índice idx_sales_company_saledate (4ms DB, 9ms warm)
+- [x] Regra definitiva: Server retorna datas Brasília via CONVERT_TZ + Frontend parseia com regex (sem new Date)

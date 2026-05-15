@@ -1025,6 +1025,11 @@ function WaiterPresencePanel() {
 
   const formatTime = (dateVal: string | Date | null) => {
     if (!dateVal) return '--:--';
+    // Server retorna datas já convertidas para Brasília
+    if (typeof dateVal === 'string') {
+      const match = dateVal.match(/(\d{2}):(\d{2})/);
+      if (match) return `${match[1]}:${match[2]}`;
+    }
     const d = new Date(dateVal);
     return d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' });
   };

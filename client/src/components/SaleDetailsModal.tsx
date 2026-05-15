@@ -108,7 +108,11 @@ export function SaleDetailsModal({ saleId, open, onClose }: SaleDetailsModalProp
   // Verificar se venda tem menos de 24h
   const canEditOrCancel = () => {
     if (!saleData?.saleDate) return false;
-    const saleDate = new Date(saleData.saleDate);
+    // Server retorna saleDate já em Brasília via CONVERT_TZ
+    // Para calcular diferença, converter ambos para o mesmo referencial
+    const saleDateStr = String(saleData.saleDate);
+    // Parsear a data de Brasília e converter para UTC adicionando 3h
+    const saleDate = new Date(saleDateStr.replace(' ', 'T') + '-03:00');
     const now = new Date();
     const hoursDiff = (now.getTime() - saleDate.getTime()) / (1000 * 60 * 60);
     return hoursDiff <= 24 && saleData.status !== "CANCELLED";

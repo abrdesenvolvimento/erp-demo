@@ -102,11 +102,20 @@ export function formatDateForInput(date: Date | string): string {
 
 /**
  * Formata data para exibição em pt-BR (DD/MM/YYYY)
+ * Server retorna datas já convertidas para Brasília via CONVERT_TZ.
+ * Parseamos manualmente para evitar diferenças entre browsers.
  */
 export function formatDateBR(date: Date | string | null | undefined): string {
   if (!date) return '-';
+  if (typeof date === 'string') {
+    // Formato do server: '2026-05-14' ou '2026-05-14 23:54:22' ou '2026-05-14 23:54:22.000000'
+    const match = date.match(/(\d{4})-(\d{2})-(\d{2})/);
+    if (match) {
+      return `${match[3]}/${match[2]}/${match[1]}`;
+    }
+  }
+  // Fallback para Date objects (ex: new Date())
   const d = typeof date === 'string' ? new Date(date) : date;
-  
   return d.toLocaleDateString('pt-BR', {
     timeZone: BRAZIL_TIMEZONE,
     day: '2-digit',
@@ -117,11 +126,26 @@ export function formatDateBR(date: Date | string | null | undefined): string {
 
 /**
  * Formata data e hora para exibição em pt-BR (DD/MM/YYYY HH:MM)
+ * Server retorna datas já convertidas para Brasília via CONVERT_TZ.
+ * Parseamos manualmente para evitar diferenças entre browsers.
  */
 export function formatDateTimeBR(date: Date | string | null | undefined): string {
   if (!date) return '-';
+  if (typeof date === 'string') {
+    // Formato do server: '2026-05-14 23:54:22' ou '2026-05-14 23:54:22.000000'
+    const match = date.match(/(\d{4})-(\d{2})-(\d{2})\s+(\d{2}):(\d{2})/);
+    if (match) {
+      const [, year, month, day, hour, minute] = match;
+      return `${day}/${month}/${year}, ${hour}:${minute}`;
+    }
+    // Pode ser só data sem hora
+    const dateOnly = date.match(/(\d{4})-(\d{2})-(\d{2})/);
+    if (dateOnly) {
+      return `${dateOnly[3]}/${dateOnly[2]}/${dateOnly[1]}`;
+    }
+  }
+  // Fallback para Date objects
   const d = typeof date === 'string' ? new Date(date) : date;
-  
   return d.toLocaleString('pt-BR', {
     timeZone: BRAZIL_TIMEZONE,
     day: '2-digit',
