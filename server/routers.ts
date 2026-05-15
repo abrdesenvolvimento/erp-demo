@@ -2315,8 +2315,26 @@ export const appRouter = router({
   // ==================== DASHBOARD ====================
   dashboard: router({
     stats: protectedProcedure.query(async ({ ctx }) => {
-      const products = await db.getProducts({ activeOnly: false, companyId: ctx.activeCompanyId });
-      const recentSales = await db.getSales({ limit: 10, companyId: ctx.activeCompanyId });
+      // OTIMIZAÇÃO v45: Paralelizar todas as queries independentes com Promise.all
+      const [
+        products,
+        recentSales,
+        dailyRevenue,
+        monthlyRevenue,
+        monthlyPurchases,
+        totalPendingReceivables,
+        categories,
+        channels,
+      ] = await Promise.all([
+        db.getProducts({ activeOnly: false, companyId: ctx.activeCompanyId }),
+        db.getSales({ limit: 10, companyId: ctx.activeCompanyId }),
+        db.getDashboardDailyRevenue(ctx.activeCompanyId),
+        db.getDashboardMonthlyRevenue(ctx.activeCompanyId),
+        db.getDashboardMonthlyPurchases(ctx.activeCompanyId),
+        db.getTotalPendingReceivables(ctx.activeCompanyId),
+        db.getCategories(true, ctx.activeCompanyId),
+        db.getSalesChannels(true, ctx.activeCompanyId),
+      ]);
       
       // Usar horário de Brasília (GMT-3) para cálculos de data
       const today = getTodayInBrazil();
@@ -2326,12 +2344,6 @@ export const appRouter = router({
         p.currentStock !== null && p.minStock !== null && p.currentStock < p.minStock
       );
       
-      // OTIMIZAÇÃO: Usar queries SQL diretas ao invés de buscar todas as vendas e filtrar em JavaScript
-      // Isso resolve o problema de limite de 10.000 vendas e melhora performance significativamente
-      const dailyRevenue = await db.getDashboardDailyRevenue(ctx.activeCompanyId);
-      const monthlyRevenue = await db.getDashboardMonthlyRevenue(ctx.activeCompanyId);
-      const monthlyPurchases = await db.getDashboardMonthlyPurchases(ctx.activeCompanyId);
-      
       const todayRevenue = dailyRevenue.total;
       const todayRevenueBalcao = dailyRevenue.balcao;
       const todayRevenueDelivery = dailyRevenue.delivery;
@@ -2339,14 +2351,6 @@ export const appRouter = router({
       const monthRevenue = monthlyRevenue.total;
       const monthRevenueBalcao = monthlyRevenue.balcao + monthlyRevenue.aPrazo; // Balcão + A Prazo
       const monthRevenueDelivery = monthlyRevenue.delivery;
-      
-      // Total pendente a receber
-      const totalPendingReceivables = await db.getTotalPendingReceivables(ctx.activeCompanyId);
-      
-      // Valor em estoque por categoria (excluindo produtos compostos)
-      // Usa mesma lógica da Análise de Estoque: SUM(currentStock * avgCost) por categoria
-      // Inclui produtos com estoque negativo para refletir divergências de inventário
-      const categories = await db.getCategories(true, ctx.activeCompanyId);
       const stockValueByCategory = categories.map(cat => {
         const categoryProducts = products.filter(p => p.active && !p.isComposite && p.categoryId === cat.id);
         const value = categoryProducts.reduce((sum, p) => {
@@ -2409,17 +2413,21 @@ export const appRouter = router({
       }).sort((a, b) => a.daysUntilExpiration - b.daysUntilExpiration);
       
       // Buscar vendas recentes com detalhes (cliente e canal)
-      const channels = await db.getSalesChannels(true, ctx.activeCompanyId);
-      const recentSalesWithDetails = [];
-      for (const sale of recentSales.slice(0, 5)) {
-        const customer = sale.customerId ? await db.getPartner(sale.customerId) : null;
+      // OTIMIZAÇÃO v45: channels já foi buscado no Promise.all acima; buscar clientes em paralelo
+      const recentSalesSlice = recentSales.slice(0, 5);
+      const uniqueCustomerIds = [...new Set(recentSalesSlice.filter(s => s.customerId).map(s => s.customerId!))];
+      const customerResults = await Promise.all(uniqueCustomerIds.map(id => db.getPartner(id)));
+      const customerMap = new Map(uniqueCustomerIds.map((id, i) => [id, customerResults[i]]));
+      
+      const recentSalesWithDetails = recentSalesSlice.map(sale => {
+        const customer = sale.customerId ? customerMap.get(sale.customerId) : null;
         const channel = sale.channelId ? channels.find(c => c.id === sale.channelId) : null;
-        recentSalesWithDetails.push({
+        return {
           ...sale,
           customerTradeName: customer?.tradeName || null,
           channelName: channel?.name || null,
-        });
-      }
+        };
+      });
       
       return {
         lowStockCount: lowStockProducts.length,

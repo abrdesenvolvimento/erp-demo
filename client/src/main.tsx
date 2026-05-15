@@ -8,7 +8,19 @@ import App from "./App";
 import { warmUpAndLogin } from "./const";
 import "./index.css";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1, // Apenas 1 retry para queries (padrão é 3)
+      retryDelay: 1000,
+      staleTime: 30_000, // 30s - evita refetch desnecessário
+      refetchOnWindowFocus: false, // Evita refetch ao voltar para a aba
+    },
+    mutations: {
+      retry: false, // NUNCA fazer retry automático em mutations (causa duplicação)
+    },
+  },
+});
 
 // Debounced redirect: only redirect after multiple consecutive UNAUTHORIZED errors
 // This prevents transient DB/network errors from causing login loops

@@ -122,6 +122,23 @@ function saleDateRangeWhereNoAlias(startStr: string, endStr: string): string {
   return `saleDate >= '${utcStart}' AND saleDate < '${utcEnd}'`;
 }
 
+/**
+ * OTIMIZAÇÃO v45: Converter saleDate de UTC para Brasília (UTC-3) em JavaScript
+ * Isso evita usar CONVERT_TZ no SELECT do SQL, permitindo que ORDER BY saleDate use índice
+ */
+function convertSaleDatesToBrazil(rows: any[]): any[] {
+  if (!rows || rows.length === 0) return rows;
+  return rows.map(row => {
+    if (row.saleDate) {
+      const utcDate = new Date(row.saleDate);
+      // Subtrair 3 horas (UTC-3 = Brasília)
+      const brazilDate = new Date(utcDate.getTime() - 3 * 60 * 60 * 1000);
+      return { ...row, saleDate: brazilDate };
+    }
+    return row;
+  });
+}
+
 export async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
     for (let attempt = 0; attempt < 3; attempt++) {
@@ -700,8 +717,7 @@ export async function getSales(filters?: { saleType?: string; customerId?: numbe
     
     const result = await db.execute(sql.raw(`
       SELECT 
-        id, saleType, 
-        CONVERT_TZ(saleDate, '+00:00', '-03:00') as saleDate,
+        id, saleType, saleDate,
         customerId, channelId, platformOrderId,
         subtotal, discountAmount, surchargeAmount, finalAmount,
         paymentMethod, requiresAdminApproval, adminApprovedBy, notes,
@@ -713,10 +729,12 @@ export async function getSales(filters?: { saleType?: string; customerId?: numbe
       ${limitClause}
     `));
     
-    return (result[0] as unknown as any[]) || [];
+    // OTIMIZAÇÃO v45: Converter timezone em JS ao invés de SQL
+    // Isso permite que o ORDER BY saleDate use o índice idx_sales_company_saledate
+    return convertSaleDatesToBrazil(result[0] as unknown as any[]);
   }
   
-  // Query padrão sem filtro de data - usar SQL para converter timezone
+  // Query padrão sem filtro de data
   let whereConditions = `1=1`;
   if (filters?.companyId) whereConditions += ` AND companyId = ${filters.companyId}`;
   
@@ -732,8 +750,7 @@ export async function getSales(filters?: { saleType?: string; customerId?: numbe
   
   const result = await db.execute(sql.raw(`
     SELECT 
-      id, saleType, 
-      CONVERT_TZ(saleDate, '+00:00', '-03:00') as saleDate,
+      id, saleType, saleDate,
       customerId, channelId, platformOrderId,
       subtotal, discountAmount, surchargeAmount, finalAmount,
       paymentMethod, requiresAdminApproval, adminApprovedBy, notes,
@@ -745,7 +762,7 @@ export async function getSales(filters?: { saleType?: string; customerId?: numbe
     ${limitClause}
   `));
   
-  return (result[0] as unknown as any[]) || [];
+  return convertSaleDatesToBrazil(result[0] as unknown as any[]);
 }
 
 export async function getSale(id: number) {

@@ -2208,3 +2208,15 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Fix: 20+ queries de análise de vendas otimizadas com helper saleDateRangeWhere()
 - [x] Fix: Fechamento mensal otimizado (compras, despesas, recebíveis) — removido CONVERT_TZ em WHERE
 - [x] Fix: getGrossMarginByCategory otimizado com UTC boundaries direto no Drizzle (sem filtro JS)
+
+### Apontamentos v45 (15/05/2026) — Lentidão residual + Erro de token ao salvar venda
+- [x] Investigar: Erro de token — React Query fazia 3 retries automáticos em mutations (padrão), causando toast de erro + venda salva no retry
+- [x] Investigar: Lentidão residual — dashboard.stats executava 8+ queries sequenciais + N+1 para clientes
+- [x] Investigar: Query getSales (recent sales) fazia full table scan (130k rows) por CONVERT_TZ no SELECT impedindo uso de índice
+- [x] Fix: Desabilitar retry em mutations (retry: false) para evitar duplicação e falsos erros
+- [x] Fix: Configurar QueryClient com staleTime=30s e refetchOnWindowFocus=false
+- [x] Fix: Paralelizar dashboard.stats com Promise.all (8 queries em paralelo)
+- [x] Fix: Eliminar N+1 na busca de clientes das vendas recentes (Promise.all + Map)
+- [x] Fix: Remover CONVERT_TZ do SELECT em getSales e converter timezone em JS
+- [x] Fix: Criar índice idx_sales_company_saledate (companyId, saleDate DESC)
+- [x] Resultado: Dashboard warm 281ms (antes ~1500ms sequencial), Recent sales 8ms (antes 664ms)
