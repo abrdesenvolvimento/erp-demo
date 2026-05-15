@@ -14,15 +14,16 @@ describe('Idempotency Guard: confirmPurchaseOrder', () => {
     expect(DB_TS).toContain('Ignorando');
   });
 
-  it('should set status to CONFIRMED immediately (before processing items)', () => {
-    // The status update must happen BEFORE the item processing loop
+  it('should set status to CONFIRMED AFTER processing all items (not before)', () => {
+    // v47 fix: Status must change to CONFIRMED AFTER all items are processed
     const confirmFnStart = DB_TS.indexOf('export async function confirmPurchaseOrder');
-    const statusUpdatePos = DB_TS.indexOf('MARCAR STATUS COMO CONFIRMED IMEDIATAMENTE', confirmFnStart);
+    const statusUpdatePos = DB_TS.indexOf('MARCAR COMO CONFIRMED SOMENTE APÓS TODOS OS ITENS PROCESSADOS', confirmFnStart);
     const itemLoopPos = DB_TS.indexOf('for (const item of items)', confirmFnStart);
     
     expect(statusUpdatePos).toBeGreaterThan(-1);
     expect(itemLoopPos).toBeGreaterThan(-1);
-    expect(statusUpdatePos).toBeLessThan(itemLoopPos);
+    // Status update must come AFTER the item loop, not before
+    expect(statusUpdatePos).toBeGreaterThan(itemLoopPos);
   });
 
   it('should reject confirmation of CANCELLED purchase orders', () => {

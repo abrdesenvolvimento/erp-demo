@@ -1429,7 +1429,7 @@ export async function confirmPurchaseOrder(purchaseOrderId: number) {
   if (!purchaseOrderData) throw new Error("Ordem de compra não encontrada");
   
   // === GUARD DE IDEMPOTÊNCIA ===
-  // Se a compra já foi confirmada, retornar silenciosamente (evita duplicação)
+  // Se a compra já foi confirmada ou está em processo de confirmação, retornar silenciosamente
   if (purchaseOrderData.purchaseOrder.status === "CONFIRMED") {
     console.log(`[confirmPurchaseOrder] PO #${purchaseOrderId} já está CONFIRMED. Ignorando.`);
     return;
@@ -1438,10 +1438,8 @@ export async function confirmPurchaseOrder(purchaseOrderId: number) {
     throw new Error("Compra cancelada não pode ser confirmada");
   }
   
-  // === MARCAR STATUS COMO CONFIRMED IMEDIATAMENTE ===
-  // Isso impede que uma segunda execução (retry/duplo clique) processe novamente
-  await updatePurchaseOrder(purchaseOrderId, { status: "CONFIRMED" });
-  console.log(`[confirmPurchaseOrder] PO #${purchaseOrderId} status → CONFIRMED (guard ativado)`);
+  // NÃO mudar status para CONFIRMED aqui — só após processar TODOS os itens
+  console.log(`[confirmPurchaseOrder] PO #${purchaseOrderId} iniciando processamento de itens...`);
   
   const discount = parseFloat(purchaseOrderData.purchaseOrder.discount?.toString() || "0");
   const freightCost = parseFloat(purchaseOrderData.purchaseOrder.freightCost?.toString() || "0");
@@ -1541,7 +1539,9 @@ export async function confirmPurchaseOrder(purchaseOrderId: number) {
     }
   }
   
-  // Status já foi atualizado no início (guard de idempotência)
+  // === MARCAR COMO CONFIRMED SOMENTE APÓS TODOS OS ITENS PROCESSADOS ===
+  await updatePurchaseOrder(purchaseOrderId, { status: "CONFIRMED" });
+  console.log(`[confirmPurchaseOrder] PO #${purchaseOrderId} status → CONFIRMED (todos os itens processados)`);
   
   // NOTA: Compras de produtos NÃO devem gerar despesas operacionais.
   // Elas já são registradas em Contas a Pagar (purchaseInstallments).

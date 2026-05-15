@@ -2246,7 +2246,6 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 ### Apontamentos v46.1 (15/05/2026) — Causa raiz sistêmica + Correções robustas
 - [x] Investigar: /api/ping (sem DB) leva 2.4-5.4s em produção = cold start puro do Cloud Run
 - [x] Fix: Guard de idempotência no confirmPurchaseOrder (verifica CONFIRMED antes de processar)
-- [x] Fix: Status muda para CONFIRMED imediatamente (antes do loop de itens), não no final
 - [x] Fix: Reject de compra CANCELLED
 - [x] Fix: deletePurchaseCompletely agora limpa productMovements e priceHistory
 - [x] Limpeza: 32 movimentos + 32 priceHistory + 10 journals órfãos da NF 24238238 removidos
@@ -2254,3 +2253,10 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Fix: Endpoint keep-alive heartbeat criado (tRPC keepAlive.setup + /api/scheduled/keep-alive)
 - [x] Fix: Heartbeat a cada 5 min para manter container quente
 - [ ] Pendente: Ativar heartbeat keep-alive após deploy (precisa publicar primeiro)
+
+### Apontamentos v47 (15/05/2026) — CRÍTICO: Guard de idempotência marcava CONFIRMED prematuramente
+- [x] BUG CRÍTICO: Guard de idempotência marcava CONFIRMED ANTES de processar itens → compra #7260001 confirmada com 0 itens
+- [x] Fix: Status CONFIRMED movido para APÓS processamento completo de todos os itens (linha 1542-1544 de db.ts)
+- [x] Fix: Guard no início apenas verifica status (CONFIRMED → return silencioso, CANCELLED → throw error) sem alterar status
+- [x] Fix: Compra #7260001 (NF 1234589) revertida para DRAFT no banco — Gabriel pode adicionar itens e confirmar
+- [ ] Pendente: Produção (abrwf.com.br) mostra dashboard zerado — provável versão desatualizada (precisa publicar checkpoint)
