@@ -250,7 +250,7 @@ export default function Vendas() {
         'Cliente': row.customerName,
         'Produto': row.productName,
         'Quantidade': row.quantity,
-        'Data/Hora': new Date(row.saleDate).toLocaleString('pt-BR'),
+        'Data/Hora': new Date(row.saleDate).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }),
         'Valor Unitário': `R$ ${parseFloat(row.unitPrice).toFixed(2).replace('.', ',')}`,
         'Valor Total': `R$ ${parseFloat(row.totalPrice).toFixed(2).replace('.', ',')}`,
         'Forma de Pagamento': row.paymentMethod || '-',

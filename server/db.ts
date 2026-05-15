@@ -122,22 +122,6 @@ function saleDateRangeWhereNoAlias(startStr: string, endStr: string): string {
   return `saleDate >= '${utcStart}' AND saleDate < '${utcEnd}'`;
 }
 
-/**
- * OTIMIZAÇÃO v45: Converter saleDate de UTC para Brasília (UTC-3) em JavaScript
- * Isso evita usar CONVERT_TZ no SELECT do SQL, permitindo que ORDER BY saleDate use índice
- */
-function convertSaleDatesToBrazil(rows: any[]): any[] {
-  if (!rows || rows.length === 0) return rows;
-  return rows.map(row => {
-    if (row.saleDate) {
-      const utcDate = new Date(row.saleDate);
-      // Subtrair 3 horas (UTC-3 = Brasília)
-      const brazilDate = new Date(utcDate.getTime() - 3 * 60 * 60 * 1000);
-      return { ...row, saleDate: brazilDate };
-    }
-    return row;
-  });
-}
 
 export async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
@@ -729,9 +713,8 @@ export async function getSales(filters?: { saleType?: string; customerId?: numbe
       ${limitClause}
     `));
     
-    // OTIMIZAÇÃO v45: Converter timezone em JS ao invés de SQL
-    // Isso permite que o ORDER BY saleDate use o índice idx_sales_company_saledate
-    return convertSaleDatesToBrazil(result[0] as unknown as any[]);
+    // OTIMIZAÇÃO v45: Retornar datas em UTC, frontend converte com timeZone: 'America/Sao_Paulo'
+    return (result[0] as unknown as any[]) || [];
   }
   
   // Query padrão sem filtro de data
@@ -762,7 +745,7 @@ export async function getSales(filters?: { saleType?: string; customerId?: numbe
     ${limitClause}
   `));
   
-  return convertSaleDatesToBrazil(result[0] as unknown as any[]);
+  return (result[0] as unknown as any[]) || [];
 }
 
 export async function getSale(id: number) {
@@ -775,7 +758,7 @@ export async function getSale(id: number) {
   const result = await db.execute(sql.raw(`
     SELECT 
       s.id, s.saleType, 
-      CONVERT_TZ(s.saleDate, '+00:00', '-03:00') as saleDate,
+      s.saleDate,
       s.customerId, s.channelId, s.platformOrderId,
       s.subtotal, s.discountAmount, s.surchargeAmount, s.finalAmount,
       s.paymentMethod, s.requiresAdminApproval, s.adminApprovedBy, s.notes,
@@ -5196,7 +5179,7 @@ export async function getSalesForExport(filters?: { companyId?: number;
       s.platformOrderId as orderNumber,
       p.name as productName,
       si.quantity,
-      CONVERT_TZ(s.saleDate, '+00:00', '-03:00') as saleDate,
+      s.saleDate,
       si.unitPrice,
       si.totalPrice,
       s.paymentMethod,
@@ -7578,7 +7561,7 @@ export async function getAllRevenueGoalHistory(year: number, companyId?: number)
       h.changedBy,
       h.changedByName,
       h.reason,
-      CONVERT_TZ(h.createdAt, '+00:00', '-03:00') as createdAt,
+      h.createdAt,
       g.year,
       g.month,
       g.notes,

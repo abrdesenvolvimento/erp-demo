@@ -2220,3 +2220,11 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Fix: Remover CONVERT_TZ do SELECT em getSales e converter timezone em JS
 - [x] Fix: Criar índice idx_sales_company_saledate (companyId, saleDate DESC)
 - [x] Resultado: Dashboard warm 281ms (antes ~1500ms sequencial), Recent sales 8ms (antes 664ms)
+
+### Bug v45.1 (15/05/2026) — Divergência de horário no frontend (dupla conversão timezone)
+- [x] Fix: Removido convertSaleDatesToBrazil() do server (dupla conversão: server -3h + frontend timeZone -3h = -6h)
+- [x] Fix: Removido CONVERT_TZ do SELECT em getSale() e getSalesForExport() — retornam UTC, frontend converte
+- [x] Fix: Removido CONVERT_TZ do SELECT em getRevenueGoalHistory() — createdAt retorna UTC
+- [x] Fix: Adicionado timeZone: 'America/Sao_Paulo' na exportação Excel de vendas
+- [x] Verificado: Queries de análise (DATE/DAY/YEARWEEK com CONVERT_TZ) estão corretas — retornam strings de data, não timestamps
+- [x] Regra: Servidor retorna datas em UTC, frontend converte com timeZone: 'America/Sao_Paulo'
