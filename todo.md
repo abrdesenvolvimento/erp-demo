@@ -2238,3 +2238,19 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Fix: canEditOrCancel em SaleDetailsModal agora usa offset -03:00 para cálculo correto
 - [x] Verificado: Query de vendas com filtro usa índice idx_sales_company_saledate (4ms DB, 9ms warm)
 - [x] Regra definitiva: Server retorna datas Brasília via CONVERT_TZ + Frontend parseia com regex (sem new Date)
+
+### Apontamentos v46 (15/05/2026) — Erro JSON na confirmação de compra + Delay nas telas
+- [x] Bug: Erro de JSON ao confirmar compra — causa: Cloud Run cold start (3-5s) + 120+ queries sequenciais = timeout
+- [x] Bug: Delay ao carregar telas — causa: Cloud Run min-instances=0, cold start em cada request
+
+### Apontamentos v46.1 (15/05/2026) — Causa raiz sistêmica + Correções robustas
+- [x] Investigar: /api/ping (sem DB) leva 2.4-5.4s em produção = cold start puro do Cloud Run
+- [x] Fix: Guard de idempotência no confirmPurchaseOrder (verifica CONFIRMED antes de processar)
+- [x] Fix: Status muda para CONFIRMED imediatamente (antes do loop de itens), não no final
+- [x] Fix: Reject de compra CANCELLED
+- [x] Fix: deletePurchaseCompletely agora limpa productMovements e priceHistory
+- [x] Limpeza: 32 movimentos + 32 priceHistory + 10 journals órfãos da NF 24238238 removidos
+- [x] Limpeza: Custo médio restaurado para 24 produtos afetados
+- [x] Fix: Endpoint keep-alive heartbeat criado (tRPC keepAlive.setup + /api/scheduled/keep-alive)
+- [x] Fix: Heartbeat a cada 5 min para manter container quente
+- [ ] Pendente: Ativar heartbeat keep-alive após deploy (precisa publicar primeiro)

@@ -1428,6 +1428,21 @@ export async function confirmPurchaseOrder(purchaseOrderId: number) {
   const purchaseOrderData = await getPurchaseOrderById(purchaseOrderId);
   if (!purchaseOrderData) throw new Error("Ordem de compra não encontrada");
   
+  // === GUARD DE IDEMPOTÊNCIA ===
+  // Se a compra já foi confirmada, retornar silenciosamente (evita duplicação)
+  if (purchaseOrderData.purchaseOrder.status === "CONFIRMED") {
+    console.log(`[confirmPurchaseOrder] PO #${purchaseOrderId} já está CONFIRMED. Ignorando.`);
+    return;
+  }
+  if (purchaseOrderData.purchaseOrder.status === "CANCELLED") {
+    throw new Error("Compra cancelada não pode ser confirmada");
+  }
+  
+  // === MARCAR STATUS COMO CONFIRMED IMEDIATAMENTE ===
+  // Isso impede que uma segunda execução (retry/duplo clique) processe novamente
+  await updatePurchaseOrder(purchaseOrderId, { status: "CONFIRMED" });
+  console.log(`[confirmPurchaseOrder] PO #${purchaseOrderId} status → CONFIRMED (guard ativado)`);
+  
   const discount = parseFloat(purchaseOrderData.purchaseOrder.discount?.toString() || "0");
   const freightCost = parseFloat(purchaseOrderData.purchaseOrder.freightCost?.toString() || "0");
   const chargesCost = parseFloat(purchaseOrderData.purchaseOrder.chargesCost?.toString() || "0");
@@ -1526,8 +1541,7 @@ export async function confirmPurchaseOrder(purchaseOrderId: number) {
     }
   }
   
-  // Atualizar status da ordem de compra
-  await updatePurchaseOrder(purchaseOrderId, { status: "CONFIRMED" });
+  // Status já foi atualizado no início (guard de idempotência)
   
   // NOTA: Compras de produtos NÃO devem gerar despesas operacionais.
   // Elas já são registradas em Contas a Pagar (purchaseInstallments).
@@ -9807,9 +9821,22 @@ export async function deletePurchaseCompletely(purchaseOrderId: number): Promise
     console.log(`[deletePurchaseCompletely] Deletando parcelas...`);
     await db.delete(purchaseInstallments).where(eq(purchaseInstallments.purchaseOrderId, purchaseOrderId));
     
-    // 5. Reverter estoque
+    // 5. Reverter estoque e limpar movimentações
     console.log(`[deletePurchaseCompletely] Revertendo estoque...`);
     const items = await getPurchaseOrderItems(purchaseOrderId);
+    const docNumber = po.purchaseOrder.docNumber || `Compra #${purchaseOrderId}`;
+    
+    // 5a. Deletar productMovements (ENTRADA) desta compra
+    console.log(`[deletePurchaseCompletely] Deletando movimentações de estoque (doc: ${docNumber})...`);
+    await db.execute(sql`DELETE FROM productMovements WHERE documentNumber = ${docNumber} AND type = 'ENTRADA'`);
+    
+    // 5b. Deletar priceHistory desta compra
+    console.log(`[deletePurchaseCompletely] Deletando histórico de preços...`);
+    await db.execute(sql`DELETE FROM priceHistory WHERE userName = ${`Compra #${docNumber}`}`);
+    // Tentar também com o formato alternativo
+    await db.execute(sql`DELETE FROM priceHistory WHERE userName = ${`Compra #${purchaseOrderId}`}`);
+    
+    // 5c. Reverter estoque dos produtos
     for (const item of items) {
       const product = await db.select().from(products).where(eq(products.id, item.productId || 0)).limit(1);
       if (product.length === 0) continue;

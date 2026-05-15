@@ -3201,6 +3201,52 @@ export const appRouter = router({
         return await db.getLastAccountingBatch(input?.companyId || 1);
       }),
   }),
+  // === KEEP-ALIVE HEARTBEAT ===
+  keepAlive: router({
+    setup: adminProcedure
+      .mutation(async ({ ctx }) => {
+        const { parse: parseCookie } = await import('cookie');
+        const { COOKIE_NAME } = await import('@shared/const');
+        const { createHeartbeatJob, listHeartbeatJobs } = await import('./_core/heartbeat');
+        
+        const sessionToken = parseCookie(ctx.req.headers.cookie ?? "")[COOKIE_NAME] ?? "";
+        
+        // Check if keep-alive job already exists
+        const existing = await listHeartbeatJobs(sessionToken);
+        const existingJob = existing.jobs.find(j => j.name === 'keep-alive');
+        if (existingJob) {
+          return { success: true, message: 'Keep-alive j\u00e1 est\u00e1 ativo', taskUid: existingJob.taskUid };
+        }
+        
+        // Create keep-alive heartbeat job - every 5 minutes
+        const job = await createHeartbeatJob({
+          name: 'keep-alive',
+          cron: '0 */5 * * * *', // Every 5 minutes
+          path: '/api/scheduled/keep-alive',
+          method: 'POST',
+          description: 'Mant\u00e9m o container Cloud Run quente para evitar cold starts',
+        }, sessionToken);
+        
+        return { success: true, message: 'Keep-alive ativado', taskUid: job.taskUid };
+      }),
+    
+    status: adminProcedure
+      .query(async ({ ctx }) => {
+        const { parse: parseCookie } = await import('cookie');
+        const { COOKIE_NAME } = await import('@shared/const');
+        const { listHeartbeatJobs } = await import('./_core/heartbeat');
+        
+        const sessionToken = parseCookie(ctx.req.headers.cookie ?? "")[COOKIE_NAME] ?? "";
+        const existing = await listHeartbeatJobs(sessionToken);
+        const keepAliveJob = existing.jobs.find(j => j.name === 'keep-alive');
+        
+        return {
+          active: !!keepAliveJob?.isEnable,
+          lastExecutedAt: keepAliveJob?.lastExecutedAt || null,
+          nextExecutionAt: keepAliveJob?.nextExecutionAt || null,
+        };
+      }),
+  }),
 });
 export type AppRouter = typeof appRouter;;
 
