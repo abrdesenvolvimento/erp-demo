@@ -1428,8 +1428,8 @@ export async function confirmPurchaseOrder(purchaseOrderId: number) {
   const purchaseOrderData = await getPurchaseOrderById(purchaseOrderId);
   if (!purchaseOrderData) throw new Error("Ordem de compra não encontrada");
   
-  // === GUARD DE IDEMPOTÊNCIA ===
-  // Se a compra já foi confirmada ou está em processo de confirmação, retornar silenciosamente
+  // === GUARD DE IDEMPOTÊNCIA (LOCK OTIMISTA) ===
+  // Se já está CONFIRMED, retornar silenciosamente (idempotente)
   if (purchaseOrderData.purchaseOrder.status === "CONFIRMED") {
     console.log(`[confirmPurchaseOrder] PO #${purchaseOrderId} já está CONFIRMED. Ignorando.`);
     return;
@@ -1438,8 +1438,17 @@ export async function confirmPurchaseOrder(purchaseOrderId: number) {
     throw new Error("Compra cancelada não pode ser confirmada");
   }
   
-  // NÃO mudar status para CONFIRMED aqui — só após processar TODOS os itens
-  console.log(`[confirmPurchaseOrder] PO #${purchaseOrderId} iniciando processamento de itens...`);
+  // === LOCK OTIMISTA: Usar UPDATE ... WHERE status = 'DRAFT' para garantir que apenas 1 request processa ===
+  // Se outro request já mudou o status, affectedRows será 0 e retornamos silenciosamente
+  const lockResult = await db.execute(
+    sql`UPDATE purchaseOrders SET status = 'CONFIRMED' WHERE id = ${purchaseOrderId} AND status = 'DRAFT'`
+  );
+  const affectedRows = (lockResult as any)[0]?.affectedRows ?? (lockResult as any).affectedRows ?? 0;
+  if (affectedRows === 0) {
+    console.log(`[confirmPurchaseOrder] PO #${purchaseOrderId} lock falhou (outro request já processou). Ignorando.`);
+    return;
+  }
+  console.log(`[confirmPurchaseOrder] PO #${purchaseOrderId} lock adquirido (status → CONFIRMED). Processando itens...`);
   
   const discount = parseFloat(purchaseOrderData.purchaseOrder.discount?.toString() || "0");
   const freightCost = parseFloat(purchaseOrderData.purchaseOrder.freightCost?.toString() || "0");
@@ -1448,6 +1457,13 @@ export async function confirmPurchaseOrder(purchaseOrderId: number) {
   
   // Buscar itens da compra
   const items = await getPurchaseOrderItems(purchaseOrderId);
+  
+  // === VALIDAÇÃO: Compra sem itens não pode ser confirmada ===
+  if (items.length === 0) {
+    // Reverter status para DRAFT pois não há itens para processar
+    await updatePurchaseOrder(purchaseOrderId, { status: "DRAFT" });
+    throw new Error("Compra sem itens não pode ser confirmada. Adicione itens antes de confirmar.");
+  }
   
   // Calcular subtotal dos produtos para rateio
   let subtotal = 0;
@@ -1539,9 +1555,9 @@ export async function confirmPurchaseOrder(purchaseOrderId: number) {
     }
   }
   
-  // === MARCAR COMO CONFIRMED SOMENTE APÓS TODOS OS ITENS PROCESSADOS ===
-  await updatePurchaseOrder(purchaseOrderId, { status: "CONFIRMED" });
-  console.log(`[confirmPurchaseOrder] PO #${purchaseOrderId} status → CONFIRMED (todos os itens processados)`);
+  // Status já foi marcado como CONFIRMED pelo lock otimista acima
+  // Apenas logar a conclusão do processamento
+  console.log(`[confirmPurchaseOrder] PO #${purchaseOrderId} todos os ${items.length} itens processados com sucesso`);
   
   // NOTA: Compras de produtos NÃO devem gerar despesas operacionais.
   // Elas já são registradas em Contas a Pagar (purchaseInstallments).
@@ -1558,7 +1574,7 @@ export async function confirmPurchaseOrder(purchaseOrderId: number) {
       supplierId: purchaseOrderData.purchaseOrder.supplierId,
       supplierName: purchaseOrderData.supplier?.tradeName || purchaseOrderData.supplier?.name || "Fornecedor",
       docNumber: purchaseOrderData.purchaseOrder.docNumber || undefined,
-      entryDate: purchaseOrderData.purchaseOrder.purchaseDate || getNowInBrazil(),
+      entryDate: purchaseOrderData.purchaseOrder.postingDate || purchaseOrderData.purchaseOrder.issueDate || getNowInBrazil(),
       createdBy: purchaseOrderData.purchaseOrder.createdBy || "system",
     });
     

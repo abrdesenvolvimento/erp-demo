@@ -2260,3 +2260,16 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Fix: Guard no início apenas verifica status (CONFIRMED → return silencioso, CANCELLED → throw error) sem alterar status
 - [x] Fix: Compra #7260001 (NF 1234589) revertida para DRAFT no banco — Gabriel pode adicionar itens e confirmar
 - [ ] Pendente: Produção (abrwf.com.br) mostra dashboard zerado — provável versão desatualizada (precisa publicar checkpoint)
+
+### Bug v47.1 (15/05/2026) — Erro "The string did not match the expected pattern" ao confirmar compra
+- [ ] Investigar: Erro de validação ao clicar "Confirmar" na tela de Compras em produção
+- [ ] Fix: Corrigir validação zod/tRPC que rejeita input na confirmação
+
+### Bug v47.2 (15/05/2026) — CRÍTICO: Guard de idempotência NÃO impede re-confirmação (3x entradas duplicadas)
+- [x] BUG: Compra NF 173937 confirmada 3 vezes (17:25, 17:26, 18:58) — 3 entradas de +500 cada no Copo Ultra 700ml
+- [x] CAUSA RAIZ: Status mudava para CONFIRMED somente APÓS processar itens → requests concorrentes passavam pelo guard
+- [x] Fix: Lock otimista via UPDATE WHERE status='DRAFT' (atomic SQL) — apenas 1 request processa
+- [x] Fix: Validação de compra sem itens (items.length === 0 → throw error + reverte status para DRAFT)
+- [x] Fix: Campo purchaseDate corrigido para postingDate || issueDate || getNowInBrazil()
+- [x] Fix: Botão Confirmar agora mostra diálogo de confirmação + desabilita durante processamento
+- [x] Limpeza: 2 movimentos duplicados deletados (ids 60990021, 61080003), estoque corrigido 1507 → 507

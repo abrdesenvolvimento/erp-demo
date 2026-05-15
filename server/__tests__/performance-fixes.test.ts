@@ -14,16 +14,20 @@ describe('Idempotency Guard: confirmPurchaseOrder', () => {
     expect(DB_TS).toContain('Ignorando');
   });
 
-  it('should set status to CONFIRMED AFTER processing all items (not before)', () => {
-    // v47 fix: Status must change to CONFIRMED AFTER all items are processed
+  it('should use optimistic lock (UPDATE WHERE status=DRAFT) to prevent concurrent confirmations', () => {
+    // v47.2 fix: Use atomic UPDATE WHERE status='DRAFT' as optimistic lock
     const confirmFnStart = DB_TS.indexOf('export async function confirmPurchaseOrder');
-    const statusUpdatePos = DB_TS.indexOf('MARCAR COMO CONFIRMED SOMENTE APÓS TODOS OS ITENS PROCESSADOS', confirmFnStart);
-    const itemLoopPos = DB_TS.indexOf('for (const item of items)', confirmFnStart);
+    const lockPos = DB_TS.indexOf('LOCK OTIMISTA', confirmFnStart);
+    const atomicUpdatePos = DB_TS.indexOf("WHERE status = 'DRAFT'", confirmFnStart) || DB_TS.indexOf("status = 'DRAFT'", confirmFnStart);
+    const affectedRowsPos = DB_TS.indexOf('affectedRows', confirmFnStart);
     
-    expect(statusUpdatePos).toBeGreaterThan(-1);
-    expect(itemLoopPos).toBeGreaterThan(-1);
-    // Status update must come AFTER the item loop, not before
-    expect(statusUpdatePos).toBeGreaterThan(itemLoopPos);
+    expect(lockPos).toBeGreaterThan(-1);
+    expect(atomicUpdatePos).toBeGreaterThan(-1);
+    expect(affectedRowsPos).toBeGreaterThan(-1);
+  });
+
+  it('should reject confirmation of purchase orders with no items', () => {
+    expect(DB_TS).toContain('Compra sem itens não pode ser confirmada');
   });
 
   it('should reject confirmation of CANCELLED purchase orders', () => {

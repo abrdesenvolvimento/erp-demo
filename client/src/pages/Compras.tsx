@@ -1177,11 +1177,15 @@ export default function Compras() {
                                       <Button
                                         size="sm"
                                         variant="outline"
-                                        onClick={() => confirmMutation.mutate({ id: purchase.purchaseOrder.id })}
-                                        disabled={confirmMutation.isPending}
+                                        onClick={() => {
+                                          if (confirm("Confirmar esta compra? O estoque será atualizado.")) {
+                                            confirmMutation.mutate({ id: purchase.purchaseOrder.id });
+                                          }
+                                        }}
+                                        disabled={confirmMutation.isPending || cancelMutation.isPending}
                                       >
                                         <Check className="h-3 w-3 mr-1" />
-                                        Confirmar
+                                        {confirmMutation.isPending ? "Confirmando..." : "Confirmar"}
                                       </Button>
                                       <Button
                                         size="sm"
