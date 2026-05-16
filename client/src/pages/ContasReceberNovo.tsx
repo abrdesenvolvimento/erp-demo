@@ -222,8 +222,14 @@ export default function ContasReceberNovo() {
       )
     : (customers || []);
 
-  // Calcular total a receber
-  const totalReceivable = customers?.reduce((sum, c) => sum + parseFloat(c.totalPending || "0"), 0) || 0;
+  // Calcular total a receber (apenas saldos positivos)
+  const totalReceivable = customers?.reduce((sum, c) => {
+    const pending = parseFloat(c.totalPending || "0");
+    return pending > 0 ? sum + pending : sum;
+  }, 0) || 0;
+
+  // Contar apenas clientes com saldo devedor
+  const customersWithDebt = customers?.filter(c => parseFloat(c.totalPending || "0") > 0).length || 0;
 
   if (selectedCustomerId && history) {
     // Tela de histórico do cliente
@@ -595,7 +601,7 @@ export default function ContasReceberNovo() {
               <p className="text-sm text-muted-foreground">Total Pendente a Receber</p>
               <p className="text-3xl font-bold text-orange-600">{formatCurrency(totalReceivable)}</p>
               <p className="text-sm text-muted-foreground mt-1">
-                {customers?.length || 0} cliente(s) com saldo devedor
+                {customersWithDebt} cliente(s) com saldo devedor
               </p>
             </div>
             <DollarSign className="h-12 w-12 text-orange-600 opacity-20" />
@@ -623,7 +629,7 @@ export default function ContasReceberNovo() {
           {loadingCustomers ? (
             <p>Carregando...</p>
           ) : filteredCustomers.length === 0 ? (
-            <p className="text-center text-muted-foreground">Nenhum cliente com saldo devedor</p>
+            <p className="text-center text-muted-foreground">Nenhum cliente encontrado</p>
           ) : (
             <div className="space-y-2">
               {filteredCustomers.map((customer) => (
@@ -635,8 +641,10 @@ export default function ContasReceberNovo() {
                   <div>
                     <p className="font-semibold">{customer.customerName}</p>
                   </div>
-                  <p className="text-xl font-bold text-red-600">
-                    {formatCurrency(parseFloat(customer.totalPending))}
+                  <p className={`text-xl font-bold ${parseFloat(customer.totalPending) > 0 ? 'text-red-600' : parseFloat(customer.totalPending) < 0 ? 'text-green-600' : 'text-muted-foreground'}`}>
+                    {parseFloat(customer.totalPending) < 0 
+                      ? `Crédito ${formatCurrency(Math.abs(parseFloat(customer.totalPending)))}` 
+                      : formatCurrency(parseFloat(customer.totalPending))}
                   </p>
                 </div>
               ))}

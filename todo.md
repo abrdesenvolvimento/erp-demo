@@ -2273,3 +2273,9 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Fix: Campo purchaseDate corrigido para postingDate || issueDate || getNowInBrazil()
 - [x] Fix: Botão Confirmar agora mostra diálogo de confirmação + desabilita durante processamento
 - [x] Limpeza: 2 movimentos duplicados deletados (ids 60990021, 61080003), estoque corrigido 1507 → 507
+
+### Bug v47.3 (16/05/2026) — Contas a Receber: cliente Luciano não aparece na busca
+- [x] BUG: Cliente "Luciano" não aparece em Contas a Receber — saldo real é -R$ 41 (crédito), filtro só mostrava saldo > 0
+- [x] Investigar: Saldo Luciano = R$ 149 vendas - R$ 190 pagamentos = -R$ 41 (crédito)
+- [x] Fix: Alterar Contas a Receber para mostrar TODOS os clientes com vendas a prazo (não apenas saldo > 0)
+- [x] Fix: Exibir clientes com saldo zero/crédito com indicação visual diferente (verde = crédito, vermelho = devedor)

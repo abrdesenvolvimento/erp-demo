@@ -4251,7 +4251,8 @@ export async function getCustomerBalance(customerId: number, companyId?: number)
 }
 
 /**
- * Lista todos os clientes com saldo devedor > 0
+ * Lista todos os clientes que possuem vendas A_PRAZO (independente do saldo)
+ * Retorna saldo devedor (positivo), zero ou crédito (negativo)
  */
 export async function getCustomersWithBalance(companyId?: number) {
   const db = await getDb();
@@ -4287,9 +4288,9 @@ export async function getCustomersWithBalance(companyId?: number) {
     })
   );
 
-  // Filtrar apenas clientes com saldo > 0 e ordenar por saldo decrescente
+  // Retornar TODOS os clientes com vendas a prazo, ordenar por saldo decrescente
   return customersWithBalances
-    .filter((c): c is NonNullable<typeof c> => c !== null && parseFloat(c.totalPending) > 0)
+    .filter((c): c is NonNullable<typeof c> => c !== null)
     .sort((a, b) => parseFloat(b.totalPending) - parseFloat(a.totalPending));
 }
 
