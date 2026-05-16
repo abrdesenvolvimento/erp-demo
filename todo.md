@@ -2279,3 +2279,8 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Investigar: Saldo Luciano = R$ 149 vendas - R$ 190 pagamentos = -R$ 41 (crédito)
 - [x] Fix: Alterar Contas a Receber para mostrar TODOS os clientes com vendas a prazo (não apenas saldo > 0)
 - [x] Fix: Exibir clientes com saldo zero/crédito com indicação visual diferente (verde = crédito, vermelho = devedor)
+
+### Bug v47.4 (16/05/2026) — Venda BALCAO: "Selecione um canal de venda primeiro"
+- [x] BUG: Ao tentar realizar venda BALCAO, erro "Selecione um canal de venda primeiro" impede a venda
+- [x] CAUSA RAIZ: useEffect de auto-select rodava antes dos canais carregarem + comparação de code não normalizava acentos
+- [x] Fix: Auto-select robusto com normalização NFD + fallback no handleAddProduct que tenta selecionar antes de dar erro

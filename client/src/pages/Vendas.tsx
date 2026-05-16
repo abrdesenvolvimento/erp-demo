@@ -315,13 +315,30 @@ export default function Vendas() {
       return;
     }
 
-    if (!channelId) {
+    // Fallback: tentar auto-selecionar canal se ainda não selecionado
+    let effectiveChannelId = channelId;
+    if (!effectiveChannelId && (saleType === "BALCAO" || saleType === "A_PRAZO") && channels.length > 0) {
+      const balcaoChannel = channels.find((ch: any) => {
+        const name = (ch.name || '').toLowerCase();
+        const code = (ch.code || '').toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        return name.includes("balcão") || name.includes("balcao") || code === "BALCAO";
+      });
+      if (balcaoChannel) {
+        effectiveChannelId = balcaoChannel.id.toString();
+        setChannelId(effectiveChannelId);
+      } else if (channels.length === 1) {
+        effectiveChannelId = channels[0].id.toString();
+        setChannelId(effectiveChannelId);
+      }
+    }
+
+    if (!effectiveChannelId) {
       toast.error("Selecione um canal de venda primeiro");
       return;
     }
 
     // Buscar preço: tentar selectedProductWithPrices primeiro, depois selectedProduct
-    const channelIdNum = parseInt(channelId);
+    const channelIdNum = parseInt(effectiveChannelId);
     let price = selectedProductWithPrices?.prices?.find((p: any) => p.channelId === channelIdNum);
     
     // Fallback: usar preços do produto carregado na lista (includePrices=true)
@@ -439,15 +456,20 @@ export default function Vendas() {
 
   // Auto-select channel for BALCAO and A_PRAZO
   useEffect(() => {
-    if ((saleType === "BALCAO" || saleType === "A_PRAZO") && channels.length > 0) {
-      const balcaoChannel = channels.find((ch: any) => 
-        ch.name.toLowerCase().includes("balcão") || ch.code === "BALCAO"
-      );
+    if ((saleType === "BALCAO" || saleType === "A_PRAZO") && channels.length > 0 && !channelId) {
+      const balcaoChannel = channels.find((ch: any) => {
+        const name = (ch.name || '').toLowerCase();
+        const code = (ch.code || '').toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        return name.includes("balcão") || name.includes("balcao") || code === "BALCAO";
+      });
       if (balcaoChannel) {
         setChannelId(balcaoChannel.id.toString());
+      } else if (channels.length === 1) {
+        // Se só tem 1 canal, auto-selecionar
+        setChannelId(channels[0].id.toString());
       }
     }
-  }, [saleType, channels]);
+  }, [saleType, channels, channelId]);
 
   // Auto-select "Pago na Plataforma" for DELIVERY
   useEffect(() => {
