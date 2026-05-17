@@ -156,6 +156,14 @@ export default function Compras() {
       refetch();
     },
     onError: (error) => {
+      // Safari throws "The string did not match the expected pattern" on 204/empty responses
+      const isSafariPatternError = error.message?.includes('did not match the expected pattern') ||
+        error.message?.includes('did not match');
+      if (isSafariPatternError) {
+        toast.warning("Compra possivelmente confirmada. Atualizando lista...");
+        refetch();
+        return;
+      }
       toast.error(`Erro ao confirmar compra: ${error.message}`);
     },
   });

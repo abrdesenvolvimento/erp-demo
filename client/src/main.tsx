@@ -93,24 +93,46 @@ queryClient.getMutationCache().subscribe(event => {
   }
 });
 
+/**
+ * Safari-safe fetch wrapper.
+ * Safari throws "The string did not match the expected pattern" when
+ * response.json() is called on a 204 No Content or empty-body response.
+ * This wrapper intercepts the response and returns a safe JSON body
+ * so tRPC/superjson never hits the Safari bug.
+ */
+async function safeFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+  const headers = new Headers(init?.headers || {});
+  const companyId = document.cookie.match(/(?:^| )activeCompanyId=([^;]+)/)?.[1];
+  const branchId = document.cookie.match(/(?:^| )activeBranchId=([^;]+)/)?.[1];
+  if (companyId) headers.set('x-company-id', companyId);
+  if (branchId) headers.set('x-branch-id', branchId);
+
+  const response = await globalThis.fetch(input, {
+    ...(init ?? {}),
+    credentials: "include",
+    headers,
+  });
+
+  // Guard against Safari's 204/empty-body .json() bug:
+  // If status is 204 or content-length is 0, return a synthetic response
+  // with an empty JSON array (tRPC batch expects an array).
+  const contentLength = response.headers.get('content-length');
+  if (response.status === 204 || contentLength === '0') {
+    return new Response('[{"result":{"data":{"json":null}}}]', {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
+  return response;
+}
+
 const trpcClient = trpc.createClient({
   links: [
     httpBatchLink({
       url: "/api/trpc",
       transformer: superjson,
-      fetch(input, init) {
-        // Injetar headers de empresa/filial ativa
-        const headers = new Headers((init as RequestInit)?.headers || {});
-        const companyId = document.cookie.match(/(?:^| )activeCompanyId=([^;]+)/)?.[1];
-        const branchId = document.cookie.match(/(?:^| )activeBranchId=([^;]+)/)?.[1];
-        if (companyId) headers.set('x-company-id', companyId);
-        if (branchId) headers.set('x-branch-id', branchId);
-        return globalThis.fetch(input, {
-          ...(init ?? {}),
-          credentials: "include",
-          headers,
-        });
-      },
+      fetch: safeFetch,
     }),
   ],
 });

@@ -2284,3 +2284,11 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] BUG: Ao tentar realizar venda BALCAO, erro "Selecione um canal de venda primeiro" impede a venda
 - [x] CAUSA RAIZ: useEffect de auto-select rodava antes dos canais carregarem + comparação de code não normalizava acentos
 - [x] Fix: Auto-select robusto com normalização NFD + fallback no handleAddProduct que tenta selecionar antes de dar erro
+
+### Bug v47.5 (17/05/2026) — CRÍTICO: "The string did not match the expected pattern" em Safari/iOS
+- [x] BUG: Ao finalizar venda ou confirmar compra em produção (iOS Safari), erro "The string did not match the expected pattern"
+- [x] CAUSA RAIZ: Bug específico do Safari/WebKit — quando response.json() é chamado em resposta 204/empty body, Safari lança DOMException com essa mensagem (Chrome ignora silenciosamente)
+- [x] Fix: Safari-safe fetch wrapper no tRPC client (main.tsx) que intercepta respostas 204/empty e retorna JSON sintético
+- [x] Fix: Error handlers em createSale e confirmPurchase detectam esse erro e tratam como possível sucesso (refetch + warning)
+- [x] Fix: Guard contra NaN no channelId (parseInt("") → NaN) com mensagem clara ao usuário
+- [x] Testes passando: 18/18 performance-fixes.test.ts

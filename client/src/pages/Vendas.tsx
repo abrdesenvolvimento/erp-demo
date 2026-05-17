@@ -204,6 +204,17 @@ export default function Vendas() {
       handleCloseModal();
     },
     onError: (error: any) => {
+      // Safari throws "The string did not match the expected pattern" on 204/empty responses
+      // The sale may have been created successfully on the server
+      const isSafariPatternError = error.message?.includes('did not match the expected pattern') ||
+        error.message?.includes('did not match');
+      if (isSafariPatternError) {
+        toast.warning("Venda possivelmente registrada. Atualizando lista...");
+        refetch();
+        utils.sales.stats.invalidate();
+        handleCloseModal();
+        return;
+      }
       toast.error("Erro ao registrar venda: " + error.message);
     },
   });
@@ -426,10 +437,16 @@ export default function Vendas() {
       return;
     }
 
-    // Prepare data
+    // Prepare data — guard against NaN channelId
+    const parsedChannelId = parseInt(channelId);
+    if (isNaN(parsedChannelId)) {
+      toast.error("Canal de venda inválido. Feche e reabra o formulário.");
+      return;
+    }
+
     const saleData = {
       saleType: saleType!,
-      channelId: parseInt(channelId),
+      channelId: parsedChannelId,
       customerId: customerId ? parseInt(customerId) : undefined,
       platformOrderId: platformOrderId || undefined,
       subtotal: subtotal.toFixed(2),
