@@ -42,7 +42,7 @@ describe('Mutation Retry Prevention', () => {
   });
 
   it('should have limited retry for queries', () => {
-    expect(MAIN_TSX).toContain('retry: 1');
+    expect(MAIN_TSX).toContain('retry: 2');
   });
 
   it('should have staleTime configured', () => {
@@ -160,5 +160,52 @@ describe('Dashboard queries parallelization', () => {
     const statsBody = ROUTERS_TS.substring(statsIdx, statsIdx + 3000);
     
     expect(statsBody).toContain('Promise.all');
+  });
+});
+
+const PRODUTOS_TSX = fs.readFileSync(path.resolve(__dirname, '../../client/src/pages/Produtos.tsx'), 'utf-8');
+
+describe('v47.6 - Products resilience improvements', () => {
+  it('should have retry: 3 for the main products.list query in Produtos.tsx', () => {
+    expect(PRODUTOS_TSX).toContain('retry: 3');
+  });
+
+  it('should have isError state handling in Produtos.tsx', () => {
+    expect(PRODUTOS_TSX).toContain('isError');
+    expect(PRODUTOS_TSX).toContain('Erro ao carregar produtos');
+  });
+
+  it('should have a Recarregar button for error and empty states', () => {
+    expect(PRODUTOS_TSX).toContain('Recarregar');
+    expect(PRODUTOS_TSX).toContain('refetch()');
+  });
+
+  it('should have isFetching state for loading indicator on retry button', () => {
+    expect(PRODUTOS_TSX).toContain('isFetching');
+    expect(PRODUTOS_TSX).toContain('Recarregando...');
+  });
+
+  it('should distinguish between error, empty-no-filters, and empty-with-filters states', () => {
+    // Error state
+    expect(PRODUTOS_TSX).toContain('isError ?');
+    // No filters empty state
+    expect(PRODUTOS_TSX).toContain('Nenhum produto cadastrado ainda');
+    // With filters empty state
+    expect(PRODUTOS_TSX).toContain('Nenhum produto encontrado');
+    expect(PRODUTOS_TSX).toContain('Tente ajustar os filtros ou a busca');
+  });
+
+  it('should have enhanced logging in getProducts for empty results', () => {
+    expect(DB_TS).toContain('[getProducts] Database not available');
+    expect(DB_TS).toContain('[getProducts] No companyId provided');
+  });
+
+  it('should have enhanced logging in products.list procedure for empty results', () => {
+    expect(ROUTERS_TS).toContain('[products.list] EMPTY RESULT');
+  });
+
+  it('should have exponential retryDelay in global QueryClient config', () => {
+    expect(MAIN_TSX).toContain('retryDelay:');
+    expect(MAIN_TSX).toContain('Math.min(500');
   });
 });

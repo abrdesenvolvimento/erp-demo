@@ -391,7 +391,14 @@ export async function getSalesChannel(id: number) {
 // ==================== PRODUTOS ====================
 export async function getProducts(filters?: { search?: string; categoryId?: number; subcategoryId?: number; activeOnly?: boolean; includePrices?: boolean; companyId?: number }) {
   const db = await getDb();
-  if (!db) return [];
+  if (!db) {
+    console.error('[getProducts] Database not available - returning empty array');
+    return [];
+  }
+  
+  if (!filters?.companyId) {
+    console.warn('[getProducts] No companyId provided - query will return products from ALL companies');  
+  }
   
   // Get products
   let query = db.select().from(products);

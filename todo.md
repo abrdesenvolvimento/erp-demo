@@ -2292,3 +2292,16 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Fix: Error handlers em createSale e confirmPurchase detectam esse erro e tratam como possível sucesso (refetch + warning)
 - [x] Fix: Guard contra NaN no channelId (parseInt("") → NaN) com mensagem clara ao usuário
 - [x] Testes passando: 18/18 performance-fixes.test.ts
+
+### Fix v47.6 (17/05/2026) — Resiliência: Tela de Produtos vazia
+- [x] BUG: Tela de Produtos mostra "Nenhum produto cadastrado ainda" intermitentemente (dados não carregam)
+- [x] INVESTIGAÇÃO: Heartbeat keep-alive ativo e funcionando (765 execuções) — cold start NÃO é a causa
+- [x] INVESTIGAÇÃO: getProducts com companyId undefined retorna todos os produtos — não deveria dar vazio
+- [x] CAUSA PROVÁVEL: Falha transiente de conexão DB (getDb retorna null → return []) ou Safari fetch bug
+- [x] Fix: React Query global retry aumentado de 1 para 2, com retryDelay exponencial rápido (500ms, 1000ms, 2000ms)
+- [x] Fix: Query products.list na tela de Produtos com retry=3 específico (mais agressivo que o global)
+- [x] Fix: UI de erro com botão "Recarregar" quando query falha (isError state)
+- [x] Fix: UI inteligente para resultado vazio — distingue "nenhum cadastrado" vs "nenhum encontrado com filtros"
+- [x] Fix: Logging aprimorado no servidor — getProducts loga quando DB não disponível e quando companyId é undefined
+- [x] Fix: products.list procedure loga EMPTY RESULT com companyId e input para diagnóstico
+- [x] Testes: 18/18 performance-fixes.test.ts passando

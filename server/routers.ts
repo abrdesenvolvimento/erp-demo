@@ -352,11 +352,11 @@ export const appRouter = router({
         includePrices: z.boolean().optional(), // OTIMIZAÇÃO: não carregar preços no autocomplete
       }).optional())
       .query(async ({ input, ctx }) => {
-        console.log('[products.list] Input:', JSON.stringify(input), 'includePrices:', input?.includePrices);
+        console.log('[products.list] Input:', JSON.stringify(input), 'companyId:', ctx.activeCompanyId, 'userId:', ctx.user?.id?.substring(0, 10));
         const products = await db.getProducts({ ...input, companyId: ctx.activeCompanyId });
-        console.log('[products.list] Total produtos:', products.length);
-        if (products.length > 0) {
-          console.log('[products.list] Primeiro produto preços:', JSON.stringify(products[0].prices));
+        console.log('[products.list] Total produtos:', products.length, 'companyId:', ctx.activeCompanyId);
+        if (products.length === 0) {
+          console.warn('[products.list] EMPTY RESULT - companyId:', ctx.activeCompanyId, 'input:', JSON.stringify(input));
         }
         
         // Se for operacional, retornar apenas campos permitidos

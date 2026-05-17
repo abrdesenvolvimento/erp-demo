@@ -43,7 +43,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { trpc } from "@/lib/trpc";
-import { Package, Plus, Search, AlertTriangle, Edit, Trash2, Check, X, ChevronsUpDown, History, Settings, Download, Filter } from "lucide-react";
+import { Package, Plus, Search, AlertTriangle, Edit, Trash2, Check, X, ChevronsUpDown, History, Settings, Download, Filter, RefreshCw } from "lucide-react";
 import * as XLSX from 'xlsx';
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
@@ -528,12 +528,15 @@ export default function Produtos() {
   const utils = trpc.useUtils();
   
   // Query principal para listagem (com preços para exportação)
-  const { data: products, isLoading, refetch } = trpc.products.list.useQuery({
+  const { data: products, isLoading, isError, refetch, isFetching } = trpc.products.list.useQuery({
     search: search || undefined,
     activeOnly: false, // Mostrar todos os produtos (ativos e inativos)
     categoryId: filterCategoryId ? parseInt(filterCategoryId) : undefined,
     subcategoryId: filterSubcategoryId ? parseInt(filterSubcategoryId) : undefined,
     includePrices: true, // Incluir preços para exportação
+  }, {
+    retry: 3, // Mais retries para a query principal de produtos
+    retryDelay: (attemptIndex) => Math.min(500 * (attemptIndex + 1), 3000),
   });
   
   // Subcategorias filtradas pela categoria selecionada
@@ -1626,17 +1629,53 @@ export default function Produtos() {
                   })}
                 </TableBody>
               </Table>
-            ) : (
+            ) : isError ? (
+              <div className="text-center py-12">
+                <AlertTriangle className="h-12 w-12 text-destructive mx-auto mb-4" />
+                <p className="text-destructive font-medium">
+                  Erro ao carregar produtos
+                </p>
+                <p className="text-sm text-muted-foreground mt-2">
+                  Verifique sua conexão e tente novamente
+                </p>
+                <Button
+                  variant="outline"
+                  className="mt-4"
+                  onClick={() => refetch()}
+                  disabled={isFetching}
+                >
+                  <RefreshCw className={`h-4 w-4 mr-2 ${isFetching ? 'animate-spin' : ''}`} />
+                  {isFetching ? 'Recarregando...' : 'Recarregar'}
+                </Button>
+              </div>
+            ) : !search && !filterCategoryId && !filterSubcategoryId ? (
               <div className="text-center py-12">
                 <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                 <p className="text-muted-foreground">
-                  {search
-                    ? "Nenhum produto encontrado"
-                    : "Nenhum produto cadastrado ainda"}
+                  Nenhum produto cadastrado ainda
                 </p>
                 <p className="text-sm text-muted-foreground mt-2">
                   Clique em "Novo Produto" para começar
                 </p>
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <Search className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-muted-foreground">
+                  Nenhum produto encontrado
+                </p>
+                <p className="text-sm text-muted-foreground mt-2">
+                  Tente ajustar os filtros ou a busca
+                </p>
+                <Button
+                  variant="outline"
+                  className="mt-4"
+                  onClick={() => refetch()}
+                  disabled={isFetching}
+                >
+                  <RefreshCw className={`h-4 w-4 mr-2 ${isFetching ? 'animate-spin' : ''}`} />
+                  {isFetching ? 'Recarregando...' : 'Recarregar'}
+                </Button>
               </div>
             )}
           </CardContent>

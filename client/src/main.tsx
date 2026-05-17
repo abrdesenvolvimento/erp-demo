@@ -11,8 +11,8 @@ import "./index.css";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      retry: 1, // Apenas 1 retry para queries (padrão é 3)
-      retryDelay: 1000,
+      retry: 2, // 2 retries para queries (resiliência contra cold starts e falhas transientes)
+      retryDelay: (attemptIndex: number) => Math.min(500 * (attemptIndex + 1), 2000), // 500ms, 1000ms, 2000ms
       staleTime: 30_000, // 30s - evita refetch desnecessário
       refetchOnWindowFocus: false, // Evita refetch ao voltar para a aba
     },
