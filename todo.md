@@ -2305,3 +2305,11 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Fix: Logging aprimorado no servidor — getProducts loga quando DB não disponível e quando companyId é undefined
 - [x] Fix: products.list procedure loga EMPTY RESULT com companyId e input para diagnóstico
 - [x] Testes: 18/18 performance-fixes.test.ts passando
+
+### Fix v47.7 (24/05/2026) — Exportação de Produtos: preços dos canais não aparecem para A Brasa
+- [x] BUG: Ao exportar produtos da A Brasa Reúne, colunas de preço dos canais de venda ficam todas vazias
+- [x] CAUSA RAIZ: Exportação usava IDs fixos (1, 2, 3, 4) da Adega; A Brasa usa IDs dinâmicos (30001, 60001, 90001)
+- [x] Fix: Exportação agora usa canais dinâmicos da empresa ativa (query salesChannels.list) ao invés de IDs hardcoded
+- [x] Fix: Colunas de preço no Excel agora são geradas dinamicamente com o nome real do canal (ex: "Preço Balcão", "Preço iFood")
+- [x] Fix: Largura das colunas no Excel também é dinâmica, adaptando-se ao número de canais da empresa
+- [x] Testes: 4/4 export-dynamic-channels.test.ts passando

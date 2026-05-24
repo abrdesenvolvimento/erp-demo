@@ -569,25 +569,14 @@ export default function Produtos() {
       console.log('[Export] Preços do primeiro produto:', productsWithPrices[0]?.prices);
       console.log('[Export] Canais disponíveis:', channels);
       
-      // IDs dos canais de venda:
-      // 1 = Balcão / A Prazo
-      // 2 = Delivery iFood
-      // 3 = Delivery 99Food
-      // 4 = Delivery Próprio
-      const BALCAO_APRAZO_ID = 1;
-      const DELIVERY_IFOOD_ID = 2;
-      const DELIVERY_99FOOD_ID = 3;
-      const DELIVERY_PROPRIO_ID = 4;
+      // Usar canais dinâmicos da empresa ativa (não IDs fixos)
+      // Ordenar canais para consistência na exportação
+      const sortedChannels = [...(channels || [])].sort((a, b) => a.id - b.id);
+      console.log('[Export] Canais ordenados para exportação:', sortedChannels.map(c => `${c.id}:${c.name}`));
       
       const exportData = productsWithPrices.map((product: any) => {
         const category = categories?.find(c => c.id === product.categoryId);
         const subcategory = subcategories?.find((s: any) => s.id === product.subcategoryId);
-        
-        // Buscar preços por canal usando IDs fixos
-        const precoBalcaoAPrazo = product.prices?.find((p: any) => p.channelId === BALCAO_APRAZO_ID)?.price || '';
-        const precoDelivery99Food = product.prices?.find((p: any) => p.channelId === DELIVERY_99FOOD_ID)?.price || '';
-        const precoDeliveryProprio = product.prices?.find((p: any) => p.channelId === DELIVERY_PROPRIO_ID)?.price || '';
-        const precoDeliveryIFood = product.prices?.find((p: any) => p.channelId === DELIVERY_IFOOD_ID)?.price || '';
         
         // Mapear destino de produção para label legível
         const destinoMap: Record<string, string> = {
@@ -607,13 +596,18 @@ export default function Produtos() {
           'Estoque Atual': product.currentStock || 0,
           'Estoque Mínimo': product.minStock || 0,
           'Custo Médio': isAdmin ? parseFloat(product.avgCost || '0').toFixed(2) : '',
-          'Preço Balcão/A Prazo': precoBalcaoAPrazo ? parseFloat(precoBalcaoAPrazo).toFixed(2) : '',
-          'Preço Delivery 99Food': precoDelivery99Food ? parseFloat(precoDelivery99Food).toFixed(2) : '',
-          'Preço Delivery Próprio': precoDeliveryProprio ? parseFloat(precoDeliveryProprio).toFixed(2) : '',
-          'Preço Delivery iFood': precoDeliveryIFood ? parseFloat(precoDeliveryIFood).toFixed(2) : '',
-          'Tipo': product.isComposite ? 'Composto' : 'Simples',
-          'Ativo': product.active ? 'Sim' : 'Não',
         };
+        
+        // Adicionar preços dinamicamente para cada canal da empresa
+        for (const channel of sortedChannels) {
+          const priceEntry = product.prices?.find((p: any) => p.channelId === channel.id);
+          const priceValue = priceEntry?.price || '';
+          baseData[`Preço ${channel.name}`] = priceValue ? parseFloat(priceValue).toFixed(2) : '';
+        }
+        
+        // Campos finais
+        baseData['Tipo'] = product.isComposite ? 'Composto' : 'Simples';
+        baseData['Ativo'] = product.active ? 'Sim' : 'Não';
         
         // Incluir colunas de salão para empresas com salão ativo
         if (isHamburgueria) {
@@ -628,7 +622,7 @@ export default function Produtos() {
       
       const ws = XLSX.utils.json_to_sheet(exportData);
       
-      // Ajustar largura das colunas
+      // Ajustar largura das colunas dinamicamente
       const baseCols = [
         { wch: 8 },   // ID
         { wch: 40 },  // Nome
@@ -639,10 +633,8 @@ export default function Produtos() {
         { wch: 12 },  // Estoque Atual
         { wch: 12 },  // Estoque Mínimo
         { wch: 12 },  // Custo Médio
-        { wch: 18 },  // Preço Balcão/A Prazo
-        { wch: 18 },  // Preço Delivery 99Food
-        { wch: 18 },  // Preço Delivery Próprio
-        { wch: 18 },  // Preço Delivery iFood
+        // Colunas de preço dinâmicas por canal
+        ...sortedChannels.map(() => ({ wch: 20 })),
         { wch: 10 },  // Tipo
         { wch: 8 },   // Ativo
       ];
