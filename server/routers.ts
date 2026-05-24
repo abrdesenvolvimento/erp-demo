@@ -386,12 +386,15 @@ export const appRouter = router({
     // Endpoint específico para exportação com preços (sempre inclui preços)
     exportWithPrices: protectedProcedure
       .query(async ({ ctx }) => {
-        console.log('[exportWithPrices] Iniciando busca de produtos com preços...');
+        console.log('[exportWithPrices] companyId:', ctx.activeCompanyId, '| userId:', ctx.user?.id?.substring(0, 10));
         const products = await db.getProducts({ activeOnly: false, includePrices: true, companyId: ctx.activeCompanyId });
-        console.log('[exportWithPrices] Total produtos:', products.length);
-        if (products.length > 0) {
-          console.log('[exportWithPrices] Primeiro produto:', products[0].name);
-          console.log('[exportWithPrices] Preços do primeiro produto:', JSON.stringify(products[0].prices));
+        const withPrices = products.filter((p: any) => p.prices && p.prices.length > 0).length;
+        console.log('[exportWithPrices] Total:', products.length, '| Com preços:', withPrices);
+        if (products.length > 0 && withPrices > 0) {
+          const first = products.find((p: any) => p.prices && p.prices.length > 0);
+          console.log('[exportWithPrices] Exemplo com preço:', first?.name, '| Preços:', JSON.stringify(first?.prices?.map((pr: any) => ({ ch: pr.channelId, price: pr.price }))));
+        } else if (products.length > 0) {
+          console.warn('[exportWithPrices] NENHUM produto com preços! Verificar productPrices para companyId:', ctx.activeCompanyId);
         }
         return products;
       }),
