@@ -2356,3 +2356,14 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Documentação de instalação do Print Agent no computador central
 - [x] Tela Impressoras: indicador de status do Print Agent + botão Sincronizar + Testar
 - [x] 24/24 testes print-agent.test.ts passando
+
+#### Enviar para Produção em Lote v48.3 (05/06/2026) ✅
+- [x] Adicionar status DRAFT ao enum de salonOrderItems
+- [x] Itens na comanda começam como DRAFT (não enviados para produção)
+- [x] Botão "Enviar para Produção" na comanda que muda status de DRAFT → PENDING em lote
+- [x] Itens DRAFT ficam visíveis apenas na comanda do garçom (não aparecem no KDS)
+- [x] KDS só detecta e imprime itens quando mudam para PENDING (após envio)
+- [x] Print Agent: ticket agrupa todos os itens do mesmo envio por comanda
+- [x] Diagnóstico: HTTPS→localhost funciona (Chrome trata localhost como secure context)
+- [x] Causa real: impressão estava no celular do garçom (agora corrigido para KDS)
+- [x] 82/82 testes passando (4 test files)

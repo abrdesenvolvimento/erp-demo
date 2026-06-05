@@ -415,8 +415,9 @@ export const salonRouter = router({
 
       // Items with no production destination (NONE) go straight to DELIVERED
       // (e.g., water, napkins — waiter picks them up directly)
+      // Items with production destination start as DRAFT until garçom sends to production
       const destination = product.productionDestination ?? "NONE";
-      const initialStatus = destination === "NONE" ? "DELIVERED" : "PENDING";
+      const initialStatus = destination === "NONE" ? "DELIVERED" : "DRAFT";
 
       const [result] = await db.insert(salonOrderItems).values({
         orderId: input.orderId,
@@ -429,14 +430,69 @@ export const salonRouter = router({
         notes: input.notes,
         productionDestination: destination,
         status: initialStatus,
-        sentAt: new Date(),
-        ...(initialStatus === "DELIVERED" ? { deliveredAt: new Date() } : {}),
+        ...(initialStatus === "DELIVERED" ? { sentAt: new Date(), deliveredAt: new Date() } : {}),
       });
 
       // Recalculate order totals
       await recalcOrderTotals(db, input.orderId);
 
       return { id: (result as any).insertId };
+    }),
+
+  // Send all DRAFT items to production in batch
+  sendToProduction: protectedProcedure
+    .input(z.object({
+      orderId: z.number(),
+      companyId: z.number(),
+    }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("DB unavailable");
+
+      // Find all DRAFT items for this order
+      const draftItems = await db
+        .select()
+        .from(salonOrderItems)
+        .where(
+          and(
+            eq(salonOrderItems.orderId, input.orderId),
+            eq(salonOrderItems.companyId, input.companyId),
+            eq(salonOrderItems.status, "DRAFT")
+          )
+        );
+
+      if (draftItems.length === 0) {
+        return { sent: 0, items: [] };
+      }
+
+      // Update all DRAFT items to PENDING with sentAt timestamp
+      const itemIds = draftItems.map(i => i.id);
+      await db
+        .update(salonOrderItems)
+        .set({ status: "PENDING", sentAt: new Date() })
+        .where(inArray(salonOrderItems.id, itemIds));
+
+      // Send push notification to kitchen/bar
+      try {
+        await sendPushToCompany(input.companyId, {
+          title: `Novo pedido - Mesa`,
+          body: `${draftItems.length} item(ns) enviado(s) para produção`,
+          data: { type: "new-order", orderId: String(input.orderId) },
+        });
+      } catch (e) {
+        console.error('[sendToProduction] Push notification failed:', e);
+      }
+
+      return {
+        sent: draftItems.length,
+        items: draftItems.map(i => ({
+          id: i.id,
+          productName: i.productName,
+          quantity: i.quantity,
+          productionDestination: i.productionDestination,
+          notes: i.notes,
+        })),
+      };
     }),
 
   removeItem: protectedProcedure

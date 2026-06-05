@@ -1340,7 +1340,7 @@ export const salonOrderItems = mysqlTable("salonOrderItems", {
   totalPrice: decimal("totalPrice", { precision: 10, scale: 2 }).notNull(),
   notes: text("notes"),
   productionDestination: mysqlEnum("productionDestination", ["KITCHEN", "BAR", "BOTH", "NONE"]).default("NONE"),
-  status: mysqlEnum("status", ["PENDING", "IN_PROGRESS", "READY", "DELIVERED", "CANCELLED"]).default("PENDING").notNull(),
+  status: mysqlEnum("status", ["DRAFT", "PENDING", "IN_PROGRESS", "READY", "DELIVERED", "CANCELLED"]).default("DRAFT").notNull(),
   sentAt: timestamp("sentAt"),
   readyAt: timestamp("readyAt"),
   deliveredAt: timestamp("deliveredAt"),

@@ -27,7 +27,8 @@ const PAYMENT_METHODS = [
 ];
 
 const ITEM_STATUS_CONFIG: Record<string, { label: string; color: string }> = {
-  PENDING: { label: "Aguardando", color: "bg-yellow-100 text-yellow-700" },
+  DRAFT: { label: "Rascunho", color: "bg-blue-100 text-blue-700" },
+  PENDING: { label: "Enviado", color: "bg-yellow-100 text-yellow-700" },
   IN_PROGRESS: { label: "Produzindo", color: "bg-orange-100 text-orange-700" },
   READY: { label: "Pronto", color: "bg-green-100 text-green-700" },
   DELIVERED: { label: "Entregue", color: "bg-gray-100 text-gray-600" },
@@ -129,6 +130,20 @@ export default function SalaoComanda() {
       setItemQty(1);
       setItemNotes("");
       setProductSearch("");
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const sendToProductionMutation = trpc.salon.sendToProduction.useMutation({
+    onSuccess: (data) => {
+      if (data.sent > 0) {
+        toast.success(`${data.sent} item(ns) enviado(s) para produção!`, {
+          icon: "\uD83D\uDE80",
+        });
+      } else {
+        toast.info("Nenhum item pendente para enviar");
+      }
+      utils.salon.getOrder.invalidate({ orderId, companyId });
     },
     onError: (e) => toast.error(e.message),
   });
@@ -476,6 +491,20 @@ export default function SalaoComanda() {
           )}
         </CardContent>
       </Card>
+
+      {/* Send to Production Button */}
+      {!isClosed && activeItems.filter((i: any) => i.status === "DRAFT").length > 0 && (
+        <Button
+          className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-6 text-base"
+          onClick={() => sendToProductionMutation.mutate({ orderId, companyId })}
+          disabled={sendToProductionMutation.isPending}
+        >
+          <Send className="h-5 w-5 mr-2" />
+          {sendToProductionMutation.isPending
+            ? "Enviando..."
+            : `Enviar para Produção (${activeItems.filter((i: any) => i.status === "DRAFT").length} item(ns))`}
+        </Button>
+      )}
 
       {/* Totals */}
       {activeItems.length > 0 && (

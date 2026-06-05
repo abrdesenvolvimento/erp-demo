@@ -52,8 +52,9 @@ describe("Auto-print architecture v48.1", () => {
       expect(kdsCozinha).toMatch(/initialLoadRef/);
     });
 
-    it("chama printProductionTicket com destination KITCHEN", () => {
-      expect(kdsCozinha).toMatch(/printProductionTicket\s*\(\s*\{[\s\S]*destination:\s*"KITCHEN"/);
+    it("chama printProductionTicketViaAgent com destination KITCHEN", () => {
+      expect(kdsCozinha).toMatch(/destination:\s*"KITCHEN"/);
+      expect(kdsCozinha).toMatch(/printProductionTicketViaAgent/);
     });
 
     it("agrupa itens por orderId antes de imprimir", () => {
@@ -79,8 +80,9 @@ describe("Auto-print architecture v48.1", () => {
       expect(kdsBar).toMatch(/printedItemIdsRef/);
     });
 
-    it("chama printProductionTicket com destination BAR", () => {
-      expect(kdsBar).toMatch(/printProductionTicket\s*\(\s*\{[\s\S]*destination:\s*"BAR"/);
+    it("chama printProductionTicketViaAgent com destination BAR", () => {
+      expect(kdsBar).toMatch(/destination:\s*"BAR"/);
+      expect(kdsBar).toMatch(/printProductionTicketViaAgent/);
     });
   });
 
