@@ -11,8 +11,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Plus, Users, Clock, DollarSign, Settings, ChefHat, X, UtensilsCrossed, RefreshCw, Bell, ShieldCheck, UserCheck, UserX, LogIn, LogOut } from "lucide-react";
-import { useLocation } from "wouter";
+import { Plus, Users, Clock, DollarSign, Settings, ChefHat, X, UtensilsCrossed, RefreshCw, Bell, ShieldCheck, UserCheck, UserX, LogIn, LogOut, Printer } from "lucide-react";
+import { Link, useLocation } from "wouter";
 import { playUrgentNotification, unlockAudio, isAudioUnlocked, getSoundEnabledFromStorage, vibrateUrgent, reactivateAudio } from "@/lib/notificationSound";
 import { requestNotificationPermission, isNotificationPermitted, sendLocalNotification, getPushGrantedFromStorage, subscribeToPush, isAlreadySubscribed, isPushManagerSupported } from "@/lib/pushNotification";
 
@@ -526,6 +526,14 @@ export default function SalaoMesas() {
               <Bell className="h-4 w-4 mr-1" />
               <span className="hidden sm:inline">Alertas Ativos</span>
             </Button>
+          )}
+          {isAdmin && (
+            <Link href="/salao/impressoras">
+              <Button variant="outline" size="sm">
+                <Printer className="h-4 w-4 mr-1" />
+                Impressoras
+              </Button>
+            </Link>
           )}
           {isAdmin && (
             <Button variant="outline" size="sm" onClick={() => setConfigModal(true)}>

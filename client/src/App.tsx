@@ -42,6 +42,7 @@ import SalaoGorjeta from "./pages/SalaoGorjeta";
 import SalaoGarcons from "./pages/SalaoGarcons";
 import SalaoFechamentoGarcom from "./pages/SalaoFechamentoGarcom";
 import SalaoTransferencia from "./pages/SalaoTransferencia";
+import Impressoras from "./pages/Impressoras";
 import AnaliseKDS from "./pages/AnaliseKDS";
 import FechamentoAnual from "./pages/FechamentoAnual";
 import { Route, Switch } from "wouter";
@@ -95,6 +96,7 @@ function Router() {
       <Route path="/salao/garcons" component={SalaoGarcons} />
       <Route path="/salao/fechamento-garcom" component={SalaoFechamentoGarcom} />
       <Route path="/salao/transferencia" component={SalaoTransferencia} />
+      <Route path="/salao/impressoras" component={Impressoras} />
       <Route path="/analise-kds" component={AnaliseKDS} />
       <Route path="/fechamento-anual" component={FechamentoAnual} />
       <Route path="/acesso-negado" component={AccessDenied} />

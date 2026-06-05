@@ -1390,3 +1390,25 @@ export const pushSubscriptions = mysqlTable("pushSubscriptions", {
 
 export type PushSubscription = typeof pushSubscriptions.$inferSelect;
 export type InsertPushSubscription = typeof pushSubscriptions.$inferInsert;
+
+// ==================== IMPRESSORAS ====================
+
+export const printers = mysqlTable("printers", {
+  id: int("id").primaryKey().autoincrement(),
+  companyId: int("companyId").notNull(),
+  name: varchar("name", { length: 100 }).notNull(),
+  department: mysqlEnum("department", ["KITCHEN", "BAR", "CASHIER"]).notNull(),
+  connectionType: mysqlEnum("connectionType", ["NETWORK", "USB", "BLUETOOTH"]).default("NETWORK").notNull(),
+  ipAddress: varchar("ipAddress", { length: 45 }),
+  port: int("port").default(9100),
+  paperWidth: mysqlEnum("paperWidth", ["58mm", "80mm"]).default("80mm").notNull(),
+  active: boolean("active").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow(),
+}, (table) => ({
+  companyIdx: index("printer_company_idx").on(table.companyId),
+  deptIdx: index("printer_dept_idx").on(table.companyId, table.department),
+}));
+
+export type Printer = typeof printers.$inferSelect;
+export type InsertPrinter = typeof printers.$inferInsert;

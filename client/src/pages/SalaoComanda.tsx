@@ -17,6 +17,7 @@ import {
   Printer, FileText, ArrowRight
 } from "lucide-react";
 import { vibrateUrgent } from "@/lib/notificationSound";
+import { printProductionTicket, printReceipt } from "@/lib/printTicket";
 
 const PAYMENT_METHODS = [
   { value: "CASH", label: "Dinheiro", icon: DollarSign },
@@ -121,6 +122,25 @@ export default function SalaoComanda() {
   const addItemMutation = trpc.salon.addItem.useMutation({
     onSuccess: () => {
       toast.success("Item adicionado!");
+      // Auto-print production ticket based on product destination
+      if (selectedProduct && selectedProduct.productionDestination && selectedProduct.productionDestination !== "NONE") {
+        const destinations = selectedProduct.productionDestination === "BOTH"
+          ? ["KITCHEN", "BAR"] as const
+          : [selectedProduct.productionDestination] as const;
+        for (const dest of destinations) {
+          printProductionTicket({
+            destination: dest as "KITCHEN" | "BAR",
+            tableNumber: order?.tableNumber ?? "?",
+            waiterName: order?.waiterName,
+            orderId,
+            items: [{
+              productName: selectedProduct.name,
+              quantity: itemQty,
+              notes: itemNotes || null,
+            }],
+          });
+        }
+      }
       utils.salon.getOrder.invalidate({ orderId, companyId });
       setAddItemModal(false);
       setSelectedProduct(null);
@@ -157,6 +177,28 @@ export default function SalaoComanda() {
   const closeOrderMutation = trpc.salon.closeOrder.useMutation({
     onSuccess: () => {
       toast.success("Conta encerrada com sucesso!");
+      // Auto-print receipt for cashier
+      if (order) {
+        const activeItems = (order.items || []).filter((i: any) => i.status !== "CANCELLED");
+        printReceipt({
+          tableNumber: order.tableNumber,
+          orderId,
+          waiterName: order.waiterName,
+          guestCount: order.guestCount,
+          openedAt: order.openedAt,
+          items: activeItems.map((i: any) => ({
+            productName: i.productName,
+            quantity: i.quantity,
+            unitPrice: i.unitPrice,
+            totalPrice: i.totalPrice,
+            status: i.status,
+          })),
+          subtotal,
+          tipPercent,
+          tipAmount,
+          totalAmount: totalWithTip,
+        });
+      }
       utils.salon.listTables.invalidate();
       setLocation("/salao/mesas");
     },

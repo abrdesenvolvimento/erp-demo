@@ -2313,3 +2313,20 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Fix: Colunas de preço no Excel agora são geradas dinamicamente com o nome real do canal (ex: "Preço Balcão", "Preço iFood")
 - [x] Fix: Largura das colunas no Excel também é dinâmica, adaptando-se ao número de canais da empresa
 - [x] Testes: 4/4 export-dynamic-channels.test.ts passando
+
+### Sprint Abertura A Brasa Reúne (07/06/2026)
+
+#### Verificação de Lentidão e Disponibilidade
+- [ ] Revisar queries críticas do módulo Salão (pedidos, comanda, KDS)
+- [ ] Verificar heartbeat e cold start para fluxos de atendimento
+- [ ] Otimizar carregamento inicial das telas de Salão/KDS/Garçom
+
+#### Impressoras por Departamento ✅
+- [x] Criar tabela `printers` no schema (id, companyId, name, department, connectionType, ipAddress, port, paperWidth, active)
+- [x] Criar procedures CRUD para impressoras (admin only)
+- [x] Criar tela de configuração de impressoras no painel admin (Salão > Impressoras)
+- [x] Integrar impressoras com fluxo de pedidos do salão (Cozinha, Bar, Caixa)
+- [x] Ao enviar pedido, rotear itens para impressora correta baseado no productionDestination do produto
+- [x] Implementar impressão de comanda no caixa ao encerrar conta
+- [x] Utilitário compartilhado `printTicket.ts` com funções reutilizáveis
+- [x] 13/13 testes passando (printers.test.ts)
