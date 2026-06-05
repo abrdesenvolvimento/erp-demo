@@ -2330,3 +2330,14 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Implementar impressão de comanda no caixa ao encerrar conta
 - [x] Utilitário compartilhado `printTicket.ts` com funções reutilizáveis
 - [x] 13/13 testes passando (printers.test.ts)
+
+#### Ajuste Arquitetura de Impressão v48.1 (05/06/2026)
+- [x] Remover auto-print do celular do garçom (SalaoComanda.tsx)
+- [x] Implementar auto-print no KDS Cozinha ao detectar novos itens PENDING
+- [x] Implementar auto-print no KDS Bar ao detectar novos itens PENDING
+- [x] Implementar auto-print no Caixa ao detectar conta fechada (nova tela SalaoCaixa)
+- [x] Manter botão manual de reimprimir no KDS como fallback
+- [x] Botão toggle de auto-print (verde=ativo) no header do KDS e Caixa
+- [x] Endpoint recentlyClosedOrders no salon router
+- [x] Rota /salao/caixa com link no SalaoMesas
+- [x] 26/26 testes auto-print-architecture.test.ts passando

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { trpc } from "@/lib/trpc";
 import { useCompany } from "@/contexts/CompanyContext";
@@ -10,6 +10,7 @@ import {
   Flame, AlertTriangle, Timer, Wine, Printer, BarChart3,
   TrendingUp, Hash, ClipboardList
 } from "lucide-react";
+import { printProductionTicket } from "@/lib/printTicket";
 
 function formatElapsed(date: Date | string | null): string {
   if (!date) return "";
@@ -110,6 +111,9 @@ export default function SalaoKDSBar() {
   const companyId = activeCompanyId ?? 0;
   const [now, setNow] = useState(Date.now());
   const [activeTab, setActiveTab] = useState<"pedidos" | "analise">("pedidos");
+  const [autoPrint, setAutoPrint] = useState(true);
+  const printedItemIdsRef = useRef<Set<number>>(new Set());
+  const initialLoadRef = useRef(true);
 
   useEffect(() => {
     const interval = setInterval(() => setNow(Date.now()), 15000);
@@ -120,6 +124,40 @@ export default function SalaoKDSBar() {
     { companyId, destination: "BAR" },
     { enabled: companyId > 0, refetchInterval: 5000 }
   );
+
+  // Auto-print: detecta novos itens PENDING e imprime automaticamente
+  useEffect(() => {
+    if (!autoPrint || items.length === 0) return;
+    if (initialLoadRef.current) {
+      items.forEach((item: any) => printedItemIdsRef.current.add(item.id));
+      initialLoadRef.current = false;
+      return;
+    }
+    const newPendingItems = items.filter(
+      (item: any) => item.status === "PENDING" && !printedItemIdsRef.current.has(item.id)
+    );
+    if (newPendingItems.length === 0) return;
+    const byOrder: Record<number, any[]> = {};
+    for (const item of newPendingItems) {
+      if (!byOrder[item.orderId]) byOrder[item.orderId] = [];
+      byOrder[item.orderId].push(item);
+      printedItemIdsRef.current.add(item.id);
+    }
+    for (const [, orderItems] of Object.entries(byOrder)) {
+      const first = orderItems[0];
+      printProductionTicket({
+        destination: "BAR",
+        tableNumber: first.tableNumber,
+        waiterName: first.waiterName,
+        orderId: first.orderId,
+        items: orderItems.map((i: any) => ({
+          productName: i.productName,
+          quantity: i.quantity,
+          notes: i.notes,
+        })),
+      });
+    }
+  }, [items, autoPrint]);
 
   const { data: stats } = trpc.salon.getKDSStats.useQuery(
     { companyId, destination: "BAR" },
@@ -240,8 +278,21 @@ export default function SalaoKDSBar() {
                 size="icon"
                 onClick={() => refetch()}
                 className="text-gray-400 hover:text-white hover:bg-gray-800/50"
+                title="Atualizar"
               >
                 <RefreshCw className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => {
+                  setAutoPrint(!autoPrint);
+                  toast.info(autoPrint ? "Impressão automática desativada" : "Impressão automática ativada");
+                }}
+                className={autoPrint ? "text-green-400 hover:text-green-300 hover:bg-green-900/30" : "text-gray-500 hover:text-white hover:bg-gray-800/50"}
+                title={autoPrint ? "Impressão automática: ATIVADA" : "Impressão automática: DESATIVADA"}
+              >
+                <Printer className="h-4 w-4" />
               </Button>
             </div>
           </div>

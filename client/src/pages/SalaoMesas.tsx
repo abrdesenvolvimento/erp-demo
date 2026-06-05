@@ -536,6 +536,14 @@ export default function SalaoMesas() {
             </Link>
           )}
           {isAdmin && (
+            <Link href="/salao/caixa">
+              <Button variant="outline" size="sm" className="border-emerald-600 text-emerald-700 hover:bg-emerald-50">
+                <DollarSign className="h-4 w-4 mr-1" />
+                Caixa
+              </Button>
+            </Link>
+          )}
+          {isAdmin && (
             <Button variant="outline" size="sm" onClick={() => setConfigModal(true)}>
               <Settings className="h-4 w-4 mr-1" />
               Configurar

@@ -309,6 +309,40 @@ export const salonRouter = router({
       return orders;
     }),
 
+  // Ordens recém-fechadas (últimos 2 minutos) para auto-print no Caixa
+  recentlyClosedOrders: protectedProcedure
+    .input(z.object({ companyId: z.number(), sinceMinutes: z.number().default(2) }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("DB unavailable");
+      const since = new Date(Date.now() - input.sinceMinutes * 60 * 1000);
+      const orders = await db
+        .select()
+        .from(salonOrders)
+        .where(
+          and(
+            eq(salonOrders.companyId, input.companyId),
+            eq(salonOrders.status, "CLOSED"),
+            gte(salonOrders.closedAt, since)
+          )
+        )
+        .orderBy(salonOrders.closedAt);
+      // For each order, get items
+      const result = await Promise.all(
+        orders.map(async (order) => {
+          const items = await db
+            .select()
+            .from(salonOrderItems)
+            .where(and(
+              eq(salonOrderItems.orderId, order.id),
+              eq(salonOrderItems.companyId, input.companyId)
+            ));
+          return { ...order, items: items.filter(i => i.status !== "CANCELLED") };
+        })
+      );
+      return result;
+    }),
+
   addItem: protectedProcedure
     .input(z.object({
       orderId: z.number(),
