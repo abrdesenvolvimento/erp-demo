@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useCompany } from "@/contexts/CompanyContext";
 import { trpc } from "@/lib/trpc";
@@ -11,8 +11,9 @@ import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Printer, Plus, Pencil, Trash2, Wifi, Usb, Bluetooth, ChefHat, Wine, CreditCard, ArrowLeft } from "lucide-react";
+import { Printer, Plus, Pencil, Trash2, Wifi, Usb, Bluetooth, ChefHat, Wine, CreditCard, ArrowLeft, Zap, ZapOff, TestTube2, RefreshCw } from "lucide-react";
 import { Link } from "wouter";
+import { checkAgentStatus, testPrinter, updateAgentConfig, PRINT_AGENT_URL } from "@/lib/printService";
 
 const DEPARTMENT_LABELS: Record<string, { label: string; icon: any; color: string }> = {
   KITCHEN: { label: "Cozinha", icon: ChefHat, color: "bg-orange-100 text-orange-700 border-orange-200" },
@@ -53,6 +54,43 @@ export default function Impressoras() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [form, setForm] = useState<PrinterForm>(defaultForm);
   const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
+  const [agentStatus, setAgentStatus] = useState<"checking" | "online" | "offline">("checking");
+  const [testingDept, setTestingDept] = useState<string | null>(null);
+
+  // Check agent status on mount
+  useEffect(() => {
+    checkAgentStatus().then(s => setAgentStatus(s.status === "online" ? "online" : "offline"));
+  }, []);
+
+  const handleTestPrinter = async (dept: "KITCHEN" | "BAR" | "CASHIER") => {
+    setTestingDept(dept);
+    const result = await testPrinter(dept);
+    setTestingDept(null);
+    if (result.success) {
+      toast.success(`Teste enviado para ${DEPARTMENT_LABELS[dept].label}!`);
+    } else {
+      toast.error(`Falha: ${result.error}`);
+    }
+  };
+
+  const handleSyncToAgent = async () => {
+    if (!printersList) return;
+    const agentPrinters = printersList
+      .filter(p => p.active && p.connectionType === "NETWORK" && p.ipAddress)
+      .map(p => ({
+        department: p.department,
+        name: p.name,
+        ip: p.ipAddress!,
+        port: p.port || 9100,
+        enabled: true,
+      }));
+    const result = await updateAgentConfig(agentPrinters);
+    if (result.success) {
+      toast.success("Configuração sincronizada com o Print Agent!");
+    } else {
+      toast.error(`Falha ao sincronizar: ${result.error}`);
+    }
+  };
 
   const { data: printersList, isLoading } = trpc.printers.list.useQuery(
     { companyId },
@@ -177,6 +215,50 @@ export default function Impressoras() {
         </Button>
       </div>
 
+      {/* Print Agent Status */}
+      <Card className={`mb-6 border ${agentStatus === 'online' ? 'border-green-300 bg-green-50/50' : agentStatus === 'offline' ? 'border-amber-300 bg-amber-50/50' : 'border-muted'}`}>
+        <CardContent className="py-4 px-5 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            {agentStatus === 'online' ? (
+              <Zap className="h-5 w-5 text-green-600" />
+            ) : agentStatus === 'offline' ? (
+              <ZapOff className="h-5 w-5 text-amber-600" />
+            ) : (
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary" />
+            )}
+            <div>
+              <p className="font-medium text-sm">
+                Print Agent: {agentStatus === 'online' ? 'Conectado' : agentStatus === 'offline' ? 'Desconectado' : 'Verificando...'}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {agentStatus === 'online'
+                  ? 'Impressão direta via ESC/POS ativa'
+                  : agentStatus === 'offline'
+                  ? `Inicie o Print Agent no computador central (${PRINT_AGENT_URL})`
+                  : 'Verificando conexão com o Print Agent local...'}
+              </p>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            {agentStatus === 'online' && (
+              <Button variant="outline" size="sm" onClick={handleSyncToAgent}>
+                Sincronizar
+              </Button>
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setAgentStatus('checking');
+                checkAgentStatus().then(s => setAgentStatus(s.status === 'online' ? 'online' : 'offline'));
+              }}
+            >
+              <RefreshCw className="h-4 w-4" />
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Summary Cards */}
       <div className="grid grid-cols-3 gap-4 mb-6">
         {(["KITCHEN", "BAR", "CASHIER"] as const).map(dept => {
@@ -260,6 +342,18 @@ export default function Impressoras() {
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
+                            {agentStatus === 'online' && printer.active && printer.connectionType === 'NETWORK' && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-blue-600"
+                                onClick={() => handleTestPrinter(printer.department as "KITCHEN" | "BAR" | "CASHIER")}
+                                disabled={testingDept === printer.department}
+                                title="Testar impressão"
+                              >
+                                <TestTube2 className={`h-3.5 w-3.5 ${testingDept === printer.department ? 'animate-pulse' : ''}`} />
+                              </Button>
+                            )}
                             <Switch
                               checked={printer.active}
                               onCheckedChange={() => handleToggleActive(printer)}
@@ -302,8 +396,8 @@ export default function Impressoras() {
             </li>
           </ul>
           <p className="text-xs text-muted-foreground mt-3 border-t border-blue-200 pt-2">
-            A impressão via rede requer que a impressora esteja conectada à mesma rede Wi-Fi do dispositivo. 
-            O navegador enviará o comando de impressão diretamente para o IP configurado.
+            <strong>Print Agent:</strong> O computador central roda o Print Agent que envia comandos ESC/POS diretamente para cada impressora via IP de rede. 
+            Basta iniciar o Print Agent e manter as telas KDS/Caixa abertas — a impressão é automática e silenciosa.
           </p>
         </CardContent>
       </Card>

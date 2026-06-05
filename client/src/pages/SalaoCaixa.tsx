@@ -10,6 +10,7 @@ import {
   Receipt, DollarSign, Users, Hash
 } from "lucide-react";
 import { printReceipt } from "@/lib/printTicket";
+import { printReceiptViaAgent } from "@/lib/printService";
 
 function formatTime(date: Date | string | null): string {
   if (!date) return "--:--";
@@ -57,7 +58,7 @@ export default function SalaoCaixa() {
       const tipAmount = subtotal * (tipPercent / 100);
       const totalAmount = typeof order.totalAmount === "string" ? parseFloat(order.totalAmount) : (order.totalAmount ?? subtotal + tipAmount);
 
-      printReceipt({
+      const receiptData = {
         tableNumber: order.tableNumber,
         orderId: order.id,
         waiterName: order.waiterName,
@@ -74,7 +75,8 @@ export default function SalaoCaixa() {
         tipPercent,
         tipAmount,
         totalAmount,
-      });
+      };
+      printReceiptViaAgent(receiptData, () => printReceipt(receiptData));
       toast.success(`Cupom Mesa ${order.tableNumber} impresso automaticamente`);
     }
   }, [recentOrders, autoPrint]);
@@ -89,7 +91,7 @@ export default function SalaoCaixa() {
     const tipAmount = subtotal * (tipPercent / 100);
     const totalAmount = typeof order.totalAmount === "string" ? parseFloat(order.totalAmount) : (order.totalAmount ?? subtotal + tipAmount);
 
-    printReceipt({
+    const receiptData = {
       tableNumber: order.tableNumber,
       orderId: order.id,
       waiterName: order.waiterName,
@@ -106,7 +108,8 @@ export default function SalaoCaixa() {
       tipPercent,
       tipAmount,
       totalAmount,
-    });
+    };
+    printReceiptViaAgent(receiptData, () => printReceipt(receiptData));
     toast.success(`Cupom Mesa ${order.tableNumber} reimpresso`);
   };
 

@@ -2341,3 +2341,18 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Endpoint recentlyClosedOrders no salon router
 - [x] Rota /salao/caixa com link no SalaoMesas
 - [x] 26/26 testes auto-print-architecture.test.ts passando
+
+#### Print Agent Nativo v48.2 (05/06/2026)
+- [x] Criar print-agent/ diretório com serviço Node.js standalone
+- [x] Implementar formatador ESC/POS para tickets de produção e cupons
+- [x] Implementar envio TCP direto para impressoras por IP
+- [x] Criar endpoint /status para health check do agent
+- [x] Criar endpoint /print para receber jobs de impressão
+- [x] Criar client-side printService.ts que detecta agent e envia comandos
+- [x] Integrar printService no KDS Cozinha (substituir window.print)
+- [x] Integrar printService no KDS Bar (substituir window.print)
+- [x] Integrar printService no Caixa (substituir window.print)
+- [x] Fallback: se agent offline, usar window.print como antes
+- [x] Documentação de instalação do Print Agent no computador central
+- [x] Tela Impressoras: indicador de status do Print Agent + botão Sincronizar + Testar
+- [x] 24/24 testes print-agent.test.ts passando

@@ -1,0 +1,25 @@
+{
+  "printers": [
+    {
+      "department": "KITCHEN",
+      "name": "Cozinha",
+      "ip": "192.168.1.100",
+      "port": 9100,
+      "enabled": true
+    },
+    {
+      "department": "BAR",
+      "name": "Bar",
+      "ip": "192.168.1.101",
+      "port": 9100,
+      "enabled": true
+    },
+    {
+      "department": "CASHIER",
+      "name": "Caixa",
+      "ip": "192.168.1.102",
+      "port": 9100,
+      "enabled": true
+    }
+  ]
+}

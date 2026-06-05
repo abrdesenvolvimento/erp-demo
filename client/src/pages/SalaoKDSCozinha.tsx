@@ -11,6 +11,7 @@ import {
   TrendingUp, Hash, ClipboardList
 } from "lucide-react";
 import { printProductionTicket } from "@/lib/printTicket";
+import { printProductionTicketViaAgent } from "@/lib/printService";
 
 function formatElapsed(date: Date | string | null): string {
   if (!date) return "";
@@ -146,11 +147,11 @@ export default function SalaoKDSCozinha() {
       byOrder[item.orderId].push(item);
       printedItemIdsRef.current.add(item.id);
     }
-    // Imprime um ticket por comanda
+    // Imprime um ticket por comanda (via Agent ESC/POS ou fallback window.print)
     for (const [, orderItems] of Object.entries(byOrder)) {
       const first = orderItems[0];
-      printProductionTicket({
-        destination: "KITCHEN",
+      const ticketData = {
+        destination: "KITCHEN" as const,
         tableNumber: first.tableNumber,
         waiterName: first.waiterName,
         orderId: first.orderId,
@@ -159,7 +160,8 @@ export default function SalaoKDSCozinha() {
           quantity: i.quantity,
           notes: i.notes,
         })),
-      });
+      };
+      printProductionTicketViaAgent(ticketData, () => printProductionTicket(ticketData));
     }
   }, [items, autoPrint]);
 
