@@ -2392,3 +2392,8 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] KDS Bar: toast diferencia "Agent offline" vs "Erro na impressora: ..."
 - [x] Print Agent: resposta HTTP 500 inclui message estruturada com IP/porta da impressora
 - [x] Print Agent: versão atualizada para v1.2 (header no console)
+
+#### Impressão Silenciosa — Comanda e Cupom via Print Agent (06/06/2026)
+- [x] "Imprimir Comanda" no celular do garçom: enviar via Print Agent para impressora do Caixa (sem window.print)
+- [x] "Emitir Cupom da Venda" no fechamento: enviar via Print Agent para impressora do Caixa (sem window.print)
+- [x] Ambos devem usar o mesmo padrão do KDS (printReceiptViaAgent com toast de erro diferenciado)

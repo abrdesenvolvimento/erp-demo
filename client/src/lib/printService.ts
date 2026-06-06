@@ -297,7 +297,17 @@ export async function printReceiptViaAgent(
     return { success: true, method: "agent" };
   }
 
-  console.warn(`[PrintService] Agent falhou (${result.error}), usando fallback window.print`);
+  if (!result.agentOnline) {
+    console.warn(`[PrintService] Agent offline (${result.error})`);
+    if (fallbackFn) {
+      fallbackFn();
+      return { success: true, method: "fallback" };
+    }
+    return { success: false, method: "agent", error: result.error };
+  }
+
+  // Agent online but printer error
+  console.warn(`[PrintService] Impressora com erro: ${result.error}`);
   if (fallbackFn) {
     fallbackFn();
     return { success: true, method: "fallback" };

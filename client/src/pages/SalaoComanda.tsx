@@ -17,7 +17,8 @@ import {
   Printer, FileText, ArrowRight
 } from "lucide-react";
 import { vibrateUrgent } from "@/lib/notificationSound";
-// Impressão automática é feita no KDS/Caixa (computador central), não no celular do garçom
+import { printReceiptViaAgent } from "@/lib/printService";
+// Impressão de comanda é enviada via Print Agent para a impressora do Caixa
 
 const PAYMENT_METHODS = [
   { value: "CASH", label: "Dinheiro", icon: DollarSign },
@@ -286,44 +287,38 @@ export default function SalaoComanda() {
     setCheckoutModal(true);
   };
 
-  const handlePrintComanda = () => {
-    if (!printRef.current) return;
-    const printContent = printRef.current.innerHTML;
-    const win = window.open("", "_blank", "width=400,height=600");
-    if (!win) {
-      toast.error("Popup bloqueado. Permita popups para imprimir.");
-      return;
+  const handlePrintComanda = async () => {
+    if (!order) return;
+    const activeItems = (order.items ?? []).filter((i: any) => i.status !== "CANCELLED");
+    const receiptData = {
+      tableNumber: order.tableNumber,
+      orderId: order.id,
+      waiterName: order.waiterName,
+      guestCount: order.guestCount,
+      openedAt: order.openedAt,
+      items: activeItems.map((i: any) => ({
+        productName: i.productName,
+        quantity: parseFloat(String(i.quantity)),
+        unitPrice: typeof i.unitPrice === "string" ? parseFloat(i.unitPrice) : (i.unitPrice ?? 0),
+        totalPrice: typeof i.totalPrice === "string" ? parseFloat(i.totalPrice) : (i.totalPrice ?? 0),
+        status: i.status,
+      })),
+      subtotal,
+      tipPercent,
+      tipAmount,
+      totalAmount: totalWithTip,
+      companyName: "Adega Beira Rio",
+    };
+    const result = await printReceiptViaAgent(receiptData);
+    if (result.success) {
+      toast.success("Comanda enviada para impressão (Caixa)");
+    } else if (result.method === "agent") {
+      // method=agent sem success = agent offline
+      toast.error("Print Agent offline \u2014 verifique o computador central");
+    } else {
+      // method=fallback com error = agent online mas impressora falhou
+      toast.error(`Erro na impressora: ${result.error}`);
     }
-    win.document.write(`
-      <!DOCTYPE html>
-      <html><head><title>Comanda #${orderId} - Mesa ${order?.tableNumber}</title>
-      <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        html, body { height: auto !important; min-height: 0 !important; }
-        body { font-family: 'Courier New', monospace; padding: 10mm 8mm 5mm 8mm; font-size: 12px; max-width: 80mm; margin: 0 auto; }
-        .header { text-align: center; margin-bottom: 8px; border-bottom: 1px dashed #000; padding-bottom: 8px; }
-        .header h2 { font-size: 16px; margin-bottom: 4px; }
-        .header p { font-size: 11px; }
-        .items { margin: 8px 0; }
-        .item { display: flex; justify-content: space-between; padding: 3px 0; border-bottom: 1px dotted #ccc; }
-        .item-name { flex: 1; }
-        .item-qty { width: 30px; text-align: center; }
-        .item-price { width: 70px; text-align: right; font-weight: bold; }
-        .print-items-table { width: 100%; border-collapse: collapse; margin: 8px 0; }
-        .print-items-table th { font-size: 11px; padding: 2px 0; border-bottom: 1px solid #000; }
-        .print-items-table td { padding: 3px 0; border-bottom: 1px dashed #ccc; font-size: 12px; }
-        .totals { border-top: 1px dashed #000; margin-top: 8px; padding-top: 8px; }
-        .total-row { display: flex; justify-content: space-between; padding: 2px 0; }
-        .total-row.grand { font-size: 16px; font-weight: bold; margin-top: 4px; border-top: 2px solid #000; padding-top: 6px; }
-        .footer { text-align: center; margin-top: 12px; font-size: 10px; border-top: 1px dashed #000; padding-top: 8px; }
-        @page { size: 80mm auto; margin: 0; }
-        @media print { html, body { height: auto !important; width: 80mm; } body { padding: 2mm 4mm; } }
-      </style></head><body>
-      ${printContent}
-      <script>window.onload = function() { window.print(); window.close(); }<\/script>
-      </body></html>
-    `);
-    win.document.close();
   };
 
   const formatCurrency = (v: number | string) =>

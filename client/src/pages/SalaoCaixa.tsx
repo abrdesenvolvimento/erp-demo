@@ -9,7 +9,6 @@ import {
   CreditCard, Clock, RefreshCw, Printer, CheckCircle2,
   Receipt, DollarSign, Users, Hash
 } from "lucide-react";
-import { printReceipt } from "@/lib/printTicket";
 import { printReceiptViaAgent } from "@/lib/printService";
 
 function formatTime(date: Date | string | null): string {
@@ -76,8 +75,15 @@ export default function SalaoCaixa() {
         tipAmount,
         totalAmount,
       };
-      printReceiptViaAgent(receiptData, () => printReceipt(receiptData));
-      toast.success(`Cupom Mesa ${order.tableNumber} impresso automaticamente`);
+      printReceiptViaAgent(receiptData).then(result => {
+        if (result.success) {
+          toast.success(`Cupom Mesa ${order.tableNumber} impresso automaticamente`);
+        } else if (result.method === "agent") {
+          toast.error(`Print Agent offline \u2014 cupom Mesa ${order.tableNumber} n\u00e3o impresso`);
+        } else {
+          toast.error(`Erro na impressora: ${result.error}`);
+        }
+      });
     }
   }, [recentOrders, autoPrint]);
 
@@ -109,8 +115,15 @@ export default function SalaoCaixa() {
       tipAmount,
       totalAmount,
     };
-    printReceiptViaAgent(receiptData, () => printReceipt(receiptData));
-    toast.success(`Cupom Mesa ${order.tableNumber} reimpresso`);
+    printReceiptViaAgent(receiptData).then(result => {
+      if (result.success) {
+        toast.success(`Cupom Mesa ${order.tableNumber} reimpresso`);
+      } else if (result.method === "agent") {
+        toast.error(`Print Agent offline \u2014 verifique o computador central`);
+      } else {
+        toast.error(`Erro na impressora: ${result.error}`);
+      }
+    });
   };
 
   return (

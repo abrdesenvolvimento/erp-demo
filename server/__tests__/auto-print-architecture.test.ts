@@ -13,8 +13,12 @@ describe("Auto-print architecture v48.1", () => {
       expect(comanda).not.toMatch(/import.*printProductionTicket.*from/);
     });
 
-    it("não importa printReceipt", () => {
-      expect(comanda).not.toMatch(/import.*printReceipt.*from/);
+    it("não importa printReceipt de printTicket (usa printReceiptViaAgent)", () => {
+      expect(comanda).not.toMatch(/import.*printReceipt.*from.*printTicket/);
+    });
+
+    it("usa printReceiptViaAgent para imprimir comanda via agent", () => {
+      expect(comanda).toMatch(/printReceiptViaAgent/);
     });
 
     it("não chama printProductionTicket", () => {
@@ -106,8 +110,8 @@ describe("Auto-print architecture v48.1", () => {
       "utf-8"
     );
 
-    it("importa printReceipt", () => {
-      expect(caixa).toMatch(/import.*printReceipt.*from.*printTicket/);
+    it("importa printReceiptViaAgent de printService (sem printTicket fallback)", () => {
+      expect(caixa).toMatch(/import.*printReceiptViaAgent.*from.*printService/);
     });
 
     it("tem estado autoPrint", () => {
@@ -122,8 +126,8 @@ describe("Auto-print architecture v48.1", () => {
       expect(caixa).toMatch(/recentlyClosedOrders/);
     });
 
-    it("chama printReceipt quando detecta nova ordem fechada", () => {
-      expect(caixa).toMatch(/printReceipt\s*\(/);
+    it("chama printReceiptViaAgent quando detecta nova ordem fechada (sem fallback window.print)", () => {
+      expect(caixa).toMatch(/printReceiptViaAgent\s*\(/);
     });
 
     it("tem botão de reimprimir manual", () => {
