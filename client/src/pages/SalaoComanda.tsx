@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useRoute, useLocation } from "wouter";
 import DashboardLayout from "@/components/DashboardLayout";
 import { trpc } from "@/lib/trpc";
@@ -199,8 +199,16 @@ export default function SalaoComanda() {
     onError: (e) => toast.error(e.message),
   });
 
-  // Computed values (safe defaults when order not yet loaded)
-  const subtotal = parseFloat(String(order?.subtotal ?? "0"));
+  // Computed values — calculate subtotal from items to avoid stale DB values
+  const computedSubtotal = useMemo(() => {
+    if (!order?.items) return 0;
+    return (order.items as any[]).filter((i: any) => i.status !== "CANCELLED")
+      .reduce((sum: number, i: any) => {
+        const tp = typeof i.totalPrice === "string" ? parseFloat(i.totalPrice) : (i.totalPrice ?? 0);
+        return sum + tp;
+      }, 0);
+  }, [order?.items]);
+  const subtotal = computedSubtotal;
   const tipAmount = subtotal * (tipPercent / 100);
   const totalWithTip = subtotal + tipAmount;
 
@@ -302,18 +310,29 @@ export default function SalaoComanda() {
     const printSubtotal = mappedItems.reduce((sum, item) => sum + item.totalPrice, 0);
     const printTipAmount = printSubtotal * (tipPercent / 100);
     const printTotal = printSubtotal + printTipAmount;
+    // Calcular permanência
+    const diffMs = order.openedAt ? Date.now() - new Date(order.openedAt).getTime() : 0;
+    const hours = Math.floor(diffMs / 3600000);
+    const mins = Math.floor((diffMs % 3600000) / 60000);
+    const permanencia = hours > 0 ? `${hours}h${String(mins).padStart(2, '0')}min` : `${mins}min`;
+    const printPerPerson = order.guestCount > 1 ? printTotal / order.guestCount : 0;
+
     const receiptData = {
       tableNumber: order.tableNumber,
       orderId: order.id,
       waiterName: order.waiterName,
       guestCount: order.guestCount,
       openedAt: order.openedAt,
+      permanencia,
       items: mappedItems,
       subtotal: printSubtotal,
       tipPercent,
       tipAmount: printTipAmount,
       totalAmount: printTotal,
+      totalSemServico: printSubtotal,
+      perPerson: printPerPerson,
       companyName: activeCompany?.companyName || activeCompany?.companyLegalName || "A Brasa Reúne",
+      gratuityLabel: salonCfg?.gratuityLabel || "Taxa de serviço",
       timestamp: new Date().toISOString(),
     };
     try {

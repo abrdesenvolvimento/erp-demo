@@ -2420,3 +2420,9 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Backoff automático em caso de erros consecutivos no polling
 - [x] Expiração de jobs PENDING > 5 minutos (evita reimpressão após restart)
 - [x] Testes vitest para toda a arquitetura
+
+### BUG-FIX: Documento Impresso - Subtotal e Formato (06/06/2026)
+- [x] Subtotal na tela e impressão agora calcula soma de TODOS os itens ativos (não usa order.subtotal do banco que pode estar desatualizado)
+- [x] Nome da empresa removido do cabeçalho — agora imprime "Pré-visualização da Conta — Mesa X" igual à tela
+- [x] Formato do recibo impresso agora espelha a pré-visualização da tela (permanência, pessoas, vlr unit, total por item, total sem serviço, por pessoa)
+- [x] Corrigido companyId no printers.json (era 1, agora 2 = A Brasa Reúne)

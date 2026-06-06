@@ -146,50 +146,83 @@ function formatProductionTicket(data) {
 }
 
 function formatReceipt(data) {
-  const { tableNumber, orderId, waiterName, items, subtotal, tipPercent, tipAmount, totalAmount, companyName, timestamp } = data;
-  const time = new Date(timestamp || Date.now()).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
-  const date = new Date(timestamp || Date.now()).toLocaleDateString("pt-BR");
+  const {
+    tableNumber, orderId, waiterName, guestCount, items,
+    subtotal, tipPercent, tipAmount, totalAmount,
+    totalSemServico, perPerson, companyName, permanencia,
+    openedAt, gratuityLabel, timestamp
+  } = data;
+
+  const time = openedAt
+    ? new Date(openedAt).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit", timeZone: "America/Sao_Paulo" })
+    : new Date(timestamp || Date.now()).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+  const date = openedAt
+    ? new Date(openedAt).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" })
+    : new Date(timestamp || Date.now()).toLocaleDateString("pt-BR");
+
+  const tipLabel = gratuityLabel || "Taxa de servico";
 
   let buf = "";
   buf += ESCPOS.INIT;
   buf += ESCPOS.ALIGN_CENTER;
   buf += ESCPOS.BOLD_ON;
-  buf += ESCPOS.DOUBLE_ON;
-  buf += `${companyName || "A Brasa Reune"}\n`;
-  buf += ESCPOS.NORMAL;
+  buf += `Pre-visualizacao da Conta\n`;
+  buf += `Mesa ${tableNumber}\n`;
   buf += ESCPOS.BOLD_OFF;
-  buf += `${date} ${time}\n`;
   buf += ESCPOS.LINE;
   buf += ESCPOS.ALIGN_LEFT;
-  buf += `Mesa: ${tableNumber}  Comanda: #${orderId}\n`;
+  buf += `Comanda #${orderId}\n`;
+  buf += `Mesa ${tableNumber} - ${guestCount || 1} pessoa(s)\n`;
   buf += `Garcom: ${waiterName || "-"}\n`;
+  buf += `\n`;
+  buf += `Abertura: ${date}, ${time}\n`;
+  buf += `Permanencia: ${permanencia || "-"}\n`;
   buf += ESCPOS.LINE;
+
+  // Items header: ITEM | QTD | VLR UNIT | TOTAL
   buf += ESCPOS.BOLD_ON;
-  buf += padRight("ITEM", 24) + padRight("QTD", 5) + padLeft("VALOR", 10) + "\n";
+  buf += padRight("ITEM", 18) + padRight("QTD", 5) + padRight("VLR UNIT", 10) + padLeft("TOTAL", 9) + "\n";
   buf += ESCPOS.BOLD_OFF;
   buf += ESCPOS.DASHED;
 
   for (const item of items) {
-    const name = truncate(item.productName, 24);
+    const name = truncate(item.productName, 18);
     const qty = String(item.quantity).padEnd(5);
-    const price = formatMoney(item.totalPrice);
-    buf += `${padRight(name, 24)}${qty}${padLeft(price, 10)}\n`;
+    const unitP = formatMoney(item.unitPrice);
+    const totalP = formatMoney(item.totalPrice);
+    buf += `${padRight(name, 18)}${qty}${padRight(unitP, 10)}${padLeft(totalP, 9)}\n`;
   }
 
   buf += ESCPOS.LINE;
-  buf += padRight("Subtotal:", 30) + padLeft(formatMoney(subtotal), 10) + "\n";
+
+  // Subtotal
+  buf += padRight("Subtotal", 30) + padLeft(formatMoney(subtotal), 12) + "\n";
+
+  // Taxa de servico
   if (tipPercent > 0) {
-    buf += padRight(`Taxa Serviço (${tipPercent}%):`, 30) + padLeft(formatMoney(tipAmount), 10) + "\n";
+    buf += padRight(`${tipLabel} (${tipPercent}%)`, 30) + padLeft(formatMoney(tipAmount), 12) + "\n";
   }
+
+  // Total com servico
   buf += ESCPOS.BOLD_ON;
-  buf += ESCPOS.DOUBLE_HEIGHT_ON;
-  buf += padRight("TOTAL:", 20) + padLeft(formatMoney(totalAmount), 12) + "\n";
-  buf += ESCPOS.NORMAL;
+  buf += padRight("Total com servico", 30) + padLeft(formatMoney(totalAmount), 12) + "\n";
   buf += ESCPOS.BOLD_OFF;
-  buf += ESCPOS.LINE;
+
+  // Total sem servico
+  buf += padRight("Total sem servico", 30) + padLeft(formatMoney(totalSemServico ?? subtotal), 12) + "\n";
+
+  // Por pessoa
+  if (guestCount > 1 && perPerson > 0) {
+    buf += padRight(`Por pessoa (${guestCount})`, 30) + padLeft(formatMoney(perPerson), 12) + "\n";
+  }
+
+  buf += "\n";
   buf += ESCPOS.ALIGN_CENTER;
+  buf += `${tipLabel} (${tipPercent || 10}%) e opcional.\n`;
+  buf += `Informe ao atendente caso nao\n`;
+  buf += `deseje incluir.\n`;
+  buf += "\n";
   buf += "Obrigado pela preferencia!\n";
-  buf += "Volte sempre!\n";
   buf += ESCPOS.FEED_5;
   buf += ESCPOS.PARTIAL_CUT;
   return buf;
