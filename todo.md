@@ -2385,3 +2385,10 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Adicionar targetAddressSpace: "local" em todos os fetch() ao agent (Chrome LNA exemption)
 - [x] Adicionar Access-Control-Allow-Private-Network header no Print Agent (Chrome PNA preflight)
 - [x] Adicionar Access-Control-Allow-Local-Network header no Print Agent
+
+#### Fix Impressão v48.9 — Diferenciar agent offline vs erro de impressora (06/06/2026)
+- [x] printService.ts: tryPrintViaAgent retorna PrintResult com agentOnline/printerError
+- [x] KDS Cozinha: toast diferencia "Agent offline" vs "Erro na impressora: ..."
+- [x] KDS Bar: toast diferencia "Agent offline" vs "Erro na impressora: ..."
+- [x] Print Agent: resposta HTTP 500 inclui message estruturada com IP/porta da impressora
+- [x] Print Agent: versão atualizada para v1.2 (header no console)

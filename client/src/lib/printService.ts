@@ -125,47 +125,76 @@ export async function forceCheckAgent(): Promise<AgentStatus> {
 // --- Print Functions ---
 
 /**
- * Tenta enviar print job diretamente ao agent.
- * Se falhar, retorna false (caller decide se usa fallback).
+ * Resultado estruturado de tentativa de impressão.
+ * - agentOnline: true se o agent respondeu (mesmo com erro de impressora)
+ * - printerError: true se o agent respondeu mas a impressora falhou
+ * - success: true se imprimiu com sucesso
  */
-async function tryPrintViaAgent(body: object): Promise<{ success: boolean; error?: string }> {
+export interface PrintResult {
+  success: boolean;
+  agentOnline: boolean;
+  printerError: boolean;
+  error?: string;
+}
+
+/**
+ * Tenta enviar print job diretamente ao agent.
+ * Diferencia: agent offline (fetch falhou) vs impressora com erro (HTTP 500).
+ */
+async function tryPrintViaAgent(body: object): Promise<PrintResult> {
   try {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 10000); // 10s para print job (agent pode demorar com timeout TCP)
+    const timeout = setTimeout(() => controller.abort(), 10000); // 10s para print job
     const res = await fetch(`${AGENT_URL}/print`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
       signal: controller.signal,
-      // @ts-ignore - Chrome LNA: marca request como local network
+      // @ts-ignore - Chrome LNA: marca request como loopback network
       targetAddressSpace: "loopback",
     } as any);
     clearTimeout(timeout);
-    const result = await res.json();
-    if (result.success) {
-      // Agent respondeu com sucesso — atualizar cache positivo
+
+    const data = await res.json().catch(() => null);
+
+    if (res.ok && data?.success) {
+      // Agent respondeu com sucesso — impressão enviada
       agentOnline = true;
       lastOnlineCheck = Date.now();
-      return { success: true };
+      return { success: true, agentOnline: true, printerError: false };
     }
-    // Agent respondeu mas print falhou (impressora offline, etc)
-    return { success: false, error: result.error || "Print failed" };
+
+    // Agent respondeu mas com erro (HTTP 500 ou success: false)
+    // Isso significa: agent ONLINE, mas impressora com problema
+    agentOnline = true;
+    lastOnlineCheck = Date.now();
+    return {
+      success: false,
+      agentOnline: true,
+      printerError: true,
+      error: data?.message || data?.error || `Erro na impressora (HTTP ${res.status})`,
+    };
   } catch (err: any) {
-    // Agent não respondeu — marcar como offline
+    // Fetch falhou completamente — agent offline ou inacessível
     agentOnline = false;
-    return { success: false, error: err.message || "Agent unreachable" };
+    return {
+      success: false,
+      agentOnline: false,
+      printerError: false,
+      error: "Print Agent offline ou inacessível",
+    };
   }
 }
 
 /**
  * Imprime ticket de produção (Cozinha ou Bar)
  * ESTRATÉGIA: Sempre tenta agent primeiro. Se falhar, usa fallback.
- * Não depende de isAgentOnline() — tenta direto.
+ * Retorna PrintResult com informação estruturada sobre o que aconteceu.
  */
 export async function printProductionTicketViaAgent(
   data: ProductionTicketData,
   fallbackFn?: () => void
-): Promise<{ success: boolean; method: "agent" | "fallback"; error?: string }> {
+): Promise<PrintResult & { method: "agent" | "fallback" }> {
   const department: PrinterDepartment = data.destination === "KITCHEN" ? "KITCHEN" : "BAR";
 
   // Tenta enviar direto ao agent (sem verificar status primeiro)
@@ -180,16 +209,22 @@ export async function printProductionTicketViaAgent(
 
   if (result.success) {
     console.log(`[PrintService] ✓ Ticket ${department} impresso via Agent`);
-    return { success: true, method: "agent" };
+    return { ...result, method: "agent" };
   }
 
-  // Agent falhou — usar fallback
-  console.warn(`[PrintService] Agent falhou (${result.error}), usando fallback window.print`);
+  if (result.agentOnline && result.printerError) {
+    // Agent online mas impressora com problema
+    console.warn(`[PrintService] Impressora com erro: ${result.error}`);
+    return { ...result, method: "agent" };
+  }
+
+  // Agent offline — usar fallback se disponível
+  console.warn(`[PrintService] Agent offline (${result.error})`);
   if (fallbackFn) {
     fallbackFn();
-    return { success: true, method: "fallback" };
+    return { success: true, agentOnline: false, printerError: false, method: "fallback" };
   }
-  return { success: false, method: "fallback", error: result.error };
+  return { ...result, method: "fallback" };
 }
 
 /**

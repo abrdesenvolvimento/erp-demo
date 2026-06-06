@@ -167,7 +167,13 @@ export default function SalaoKDSBar() {
             })),
           };
           printProductionTicketViaAgent(ticketData).then(r => {
-            if (!r.success) toast.error("Print Agent offline — verifique o computador central");
+            if (!r.success) {
+              if (r.agentOnline && r.printerError) {
+                toast.error(`Erro na impressora: ${r.error}`);
+              } else {
+                toast.error("Print Agent offline — verifique o computador central");
+              }
+            }
           });
         }
       }
@@ -200,7 +206,13 @@ export default function SalaoKDSBar() {
         })),
       };
       printProductionTicketViaAgent(ticketData).then(r => {
-        if (!r.success) toast.error("Print Agent offline — verifique o computador central");
+        if (!r.success) {
+          if (r.agentOnline && r.printerError) {
+            toast.error(`Erro na impressora: ${r.error}`);
+          } else {
+            toast.error("Print Agent offline — verifique o computador central");
+          }
+        }
       });
     }
   }, [items, autoPrint]);

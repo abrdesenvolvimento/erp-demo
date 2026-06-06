@@ -1,5 +1,5 @@
 /**
- * ABRWF Print Agent v1.0
+ * ABRWF Print Agent v1.2
  * Serviço local que recebe comandos de impressão do sistema web
  * e envia diretamente para impressoras térmicas via TCP (ESC/POS).
  * 
@@ -235,7 +235,7 @@ function sendToPrinter(printerIp, printerPort, data) {
 app.get("/status", (req, res) => {
   res.json({
     status: "online",
-    version: "1.0.0",
+    version: "1.2.0",
     printers: printersConfig.printers.map(p => ({
       department: p.department,
       name: p.name,
@@ -326,7 +326,15 @@ app.post("/print", async (req, res) => {
     res.json({ success: true, printer: printer.name, ...result });
   } catch (err) {
     console.error(`[Print] ERRO ${type} → ${printer.name}:`, err.message);
-    res.status(500).json({ success: false, error: err.message, printer: printer.name });
+    res.status(500).json({
+      success: false,
+      type: "PRINTER_ERROR",
+      error: err.message,
+      message: `Erro na impressora ${printer.name} (${printer.ip}:${printer.port}): ${err.message}`,
+      printer: printer.name,
+      printerIp: printer.ip,
+      port: printer.port,
+    });
   }
 });
 
@@ -371,7 +379,7 @@ app.post("/print-multi", async (req, res) => {
 // --- Start ---
 app.listen(PORT, "0.0.0.0", () => {
   console.log("╔══════════════════════════════════════════════╗");
-  console.log("║     ABRWF Print Agent v1.0                  ║");
+  console.log("║     ABRWF Print Agent v1.2                  ║");
   console.log("╠══════════════════════════════════════════════╣");
   console.log(`║  API: http://localhost:${PORT}                 ║`);
   console.log("║  Status: ONLINE                             ║");
