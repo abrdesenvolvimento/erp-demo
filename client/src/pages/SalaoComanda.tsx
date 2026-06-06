@@ -38,7 +38,7 @@ const ITEM_STATUS_CONFIG: Record<string, { label: string; color: string }> = {
 export default function SalaoComanda() {
   const [, params] = useRoute("/salao/comanda/:id");
   const [, setLocation] = useLocation();
-  const { activeCompanyId, activeBranchId } = useCompany();
+  const { activeCompanyId, activeBranchId, activeCompany } = useCompany();
   const utils = trpc.useUtils();
 
   const orderId = parseInt(params?.id ?? "0");
@@ -291,24 +291,29 @@ export default function SalaoComanda() {
   const handlePrintComanda = async () => {
     if (!order) return;
     const activeItems = (order.items ?? []).filter((i: any) => i.status !== "CANCELLED");
+    const mappedItems = activeItems.map((i: any) => ({
+      productName: i.productName,
+      quantity: parseFloat(String(i.quantity)),
+      unitPrice: typeof i.unitPrice === "string" ? parseFloat(i.unitPrice) : (i.unitPrice ?? 0),
+      totalPrice: typeof i.totalPrice === "string" ? parseFloat(i.totalPrice) : (i.totalPrice ?? 0),
+      status: i.status,
+    }));
+    // Recalcular subtotal a partir dos itens para garantir consistência
+    const printSubtotal = mappedItems.reduce((sum, item) => sum + item.totalPrice, 0);
+    const printTipAmount = printSubtotal * (tipPercent / 100);
+    const printTotal = printSubtotal + printTipAmount;
     const receiptData = {
       tableNumber: order.tableNumber,
       orderId: order.id,
       waiterName: order.waiterName,
       guestCount: order.guestCount,
       openedAt: order.openedAt,
-      items: activeItems.map((i: any) => ({
-        productName: i.productName,
-        quantity: parseFloat(String(i.quantity)),
-        unitPrice: typeof i.unitPrice === "string" ? parseFloat(i.unitPrice) : (i.unitPrice ?? 0),
-        totalPrice: typeof i.totalPrice === "string" ? parseFloat(i.totalPrice) : (i.totalPrice ?? 0),
-        status: i.status,
-      })),
-      subtotal,
+      items: mappedItems,
+      subtotal: printSubtotal,
       tipPercent,
-      tipAmount,
-      totalAmount: totalWithTip,
-      companyName: "Adega Beira Rio",
+      tipAmount: printTipAmount,
+      totalAmount: printTotal,
+      companyName: activeCompany?.companyName || activeCompany?.companyLegalName || "A Brasa Reúne",
       timestamp: new Date().toISOString(),
     };
     try {
