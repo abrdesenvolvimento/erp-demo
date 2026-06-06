@@ -12,7 +12,9 @@
  * - Cache NEGATIVO eliminado (se estava offline, tenta de novo na próxima impressão)
  */
 
-const AGENT_URL = "http://localhost:9100";
+// Usa 127.0.0.1 em vez de localhost para garantir que o Chrome
+// reconheça como IP privado e isente de mixed content (HTTPS→HTTP)
+const AGENT_URL = "http://127.0.0.1:9100";
 const AGENT_ONLINE_CACHE_MS = 60000; // 60s de cache quando agent está ONLINE
 const AGENT_TIMEOUT_MS = 3000; // 3s timeout para cada request ao agent
 
@@ -75,7 +77,9 @@ export async function checkAgentStatus(): Promise<AgentStatus> {
     const timeout = setTimeout(() => controller.abort(), AGENT_TIMEOUT_MS);
     const res = await fetch(`${AGENT_URL}/status`, {
       signal: controller.signal,
-    });
+      // @ts-ignore - Chrome LNA: marca request como local network (isenta de mixed content)
+      targetAddressSpace: "local",
+    } as any);
     clearTimeout(timeout);
     if (res.ok) {
       const data = await res.json();
@@ -133,7 +137,9 @@ async function tryPrintViaAgent(body: object): Promise<{ success: boolean; error
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
       signal: controller.signal,
-    });
+      // @ts-ignore - Chrome LNA: marca request como local network
+      targetAddressSpace: "local",
+    } as any);
     clearTimeout(timeout);
     const result = await res.json();
     if (result.success) {
@@ -210,7 +216,9 @@ export async function printProductionTicketMulti(
         },
       }),
       signal: controller.signal,
-    });
+      // @ts-ignore - Chrome LNA: marca request como local network
+      targetAddressSpace: "local",
+    } as any);
     clearTimeout(timeout);
     const result = await res.json();
     const allSuccess = result.results?.every((r: any) => r.success);
@@ -274,7 +282,9 @@ export async function testPrinter(department: PrinterDepartment): Promise<{ succ
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ department }),
       signal: controller.signal,
-    });
+      // @ts-ignore - Chrome LNA
+      targetAddressSpace: "local",
+    } as any);
     clearTimeout(timeout);
     return await res.json();
   } catch (err: any) {
@@ -300,7 +310,9 @@ export async function updateAgentConfig(printers: Array<{
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ printers }),
       signal: controller.signal,
-    });
+      // @ts-ignore - Chrome LNA
+      targetAddressSpace: "local",
+    } as any);
     clearTimeout(timeout);
     const data = await res.json();
     return { success: true, ...data };

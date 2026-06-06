@@ -52,9 +52,26 @@ function saveConfig() {
 // --- Middleware ---
 app.use(cors({
   origin: true, // Aceita qualquer origem (local)
-  methods: ["GET", "POST", "PUT"],
+  methods: ["GET", "POST", "PUT", "OPTIONS"],
   credentials: true,
+  allowedHeaders: ["Content-Type", "Authorization"],
 }));
+
+// Chrome Local Network Access (LNA) / Private Network Access (PNA)
+// O Chrome exige estes headers para permitir acesso de HTTPS → HTTP local
+app.use((req, res, next) => {
+  // Responde ao preflight de Private Network Access
+  res.setHeader("Access-Control-Allow-Private-Network", "true");
+  res.setHeader("Access-Control-Allow-Local-Network", "true");
+  if (req.method === "OPTIONS") {
+    res.setHeader("Access-Control-Allow-Origin", req.headers.origin || "*");
+    res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+    return res.status(204).end();
+  }
+  next();
+});
+
 app.use(express.json({ limit: "1mb" }));
 
 // --- ESC/POS Commands ---

@@ -2379,3 +2379,9 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Remover callback de fallback (printProductionTicket) das chamadas printProductionTicketViaAgent no KDS Bar
 - [x] Quando agent offline: mostrar toast.error("Print Agent offline") sem abrir popup
 - [x] Manter botão manual de reimprimir no KDS (esse pode usar window.print como último recurso)
+
+#### Fix Impressão v48.6 — Chrome Local Network Access (05/06/2026)
+- [x] Trocar AGENT_URL de http://localhost:9100 para http://127.0.0.1:9100 (IP privado = isento de mixed content)
+- [x] Adicionar targetAddressSpace: "local" em todos os fetch() ao agent (Chrome LNA exemption)
+- [x] Adicionar Access-Control-Allow-Private-Network header no Print Agent (Chrome PNA preflight)
+- [x] Adicionar Access-Control-Allow-Local-Network header no Print Agent
