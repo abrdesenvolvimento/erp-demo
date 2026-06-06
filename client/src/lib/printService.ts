@@ -78,7 +78,7 @@ export async function checkAgentStatus(): Promise<AgentStatus> {
     const res = await fetch(`${AGENT_URL}/status`, {
       signal: controller.signal,
       // @ts-ignore - Chrome LNA: marca request como local network (isenta de mixed content)
-      targetAddressSpace: "local",
+      targetAddressSpace: "loopback",
     } as any);
     clearTimeout(timeout);
     if (res.ok) {
@@ -138,7 +138,7 @@ async function tryPrintViaAgent(body: object): Promise<{ success: boolean; error
       body: JSON.stringify(body),
       signal: controller.signal,
       // @ts-ignore - Chrome LNA: marca request como local network
-      targetAddressSpace: "local",
+      targetAddressSpace: "loopback",
     } as any);
     clearTimeout(timeout);
     const result = await res.json();
@@ -217,7 +217,7 @@ export async function printProductionTicketMulti(
       }),
       signal: controller.signal,
       // @ts-ignore - Chrome LNA: marca request como local network
-      targetAddressSpace: "local",
+      targetAddressSpace: "loopback",
     } as any);
     clearTimeout(timeout);
     const result = await res.json();
@@ -283,7 +283,7 @@ export async function testPrinter(department: PrinterDepartment): Promise<{ succ
       body: JSON.stringify({ department }),
       signal: controller.signal,
       // @ts-ignore - Chrome LNA
-      targetAddressSpace: "local",
+      targetAddressSpace: "loopback",
     } as any);
     clearTimeout(timeout);
     return await res.json();
@@ -311,7 +311,7 @@ export async function updateAgentConfig(printers: Array<{
       body: JSON.stringify({ printers }),
       signal: controller.signal,
       // @ts-ignore - Chrome LNA
-      targetAddressSpace: "local",
+      targetAddressSpace: "loopback",
     } as any);
     clearTimeout(timeout);
     const data = await res.json();
