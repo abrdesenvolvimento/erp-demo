@@ -127,13 +127,53 @@ export default function SalaoKDSBar() {
   );
 
   // Auto-print: detecta novos itens PENDING e imprime automaticamente
+  // v48.4: Na carga inicial, imprime itens PENDING recentes (sentAt < 2min)
+  // para cobrir o caso onde a tela é aberta logo após o garçom enviar para produção
   useEffect(() => {
     if (!autoPrint || items.length === 0) return;
+
+    const RECENT_THRESHOLD_MS = 2 * 60 * 1000; // 2 minutos
+    const nowMs = Date.now();
+
     if (initialLoadRef.current) {
-      items.forEach((item: any) => printedItemIdsRef.current.add(item.id));
       initialLoadRef.current = false;
+      // Na primeira carga: registra IDs antigos e imprime apenas os recentes
+      const recentPendingItems: any[] = [];
+      for (const item of items as any[]) {
+        const sentTime = item.sentAt ? new Date(item.sentAt).getTime() : 0;
+        const isRecent = sentTime > 0 && (nowMs - sentTime) < RECENT_THRESHOLD_MS;
+        if (item.status === "PENDING" && isRecent) {
+          recentPendingItems.push(item);
+        }
+        printedItemIdsRef.current.add(item.id);
+      }
+      // Imprime itens recentes da carga inicial
+      if (recentPendingItems.length > 0) {
+        const byOrder: Record<number, any[]> = {};
+        for (const item of recentPendingItems) {
+          if (!byOrder[item.orderId]) byOrder[item.orderId] = [];
+          byOrder[item.orderId].push(item);
+        }
+        for (const [, orderItems] of Object.entries(byOrder)) {
+          const first = orderItems[0];
+          const ticketData = {
+            destination: "BAR" as const,
+            tableNumber: first.tableNumber,
+            waiterName: first.waiterName,
+            orderId: first.orderId,
+            items: orderItems.map((i: any) => ({
+              productName: i.productName,
+              quantity: i.quantity,
+              notes: i.notes,
+            })),
+          };
+          printProductionTicketViaAgent(ticketData, () => printProductionTicket(ticketData));
+        }
+      }
       return;
     }
+
+    // Polls subsequentes: detecta novos itens PENDING que ainda não foram impressos
     const newPendingItems = items.filter(
       (item: any) => item.status === "PENDING" && !printedItemIdsRef.current.has(item.id)
     );

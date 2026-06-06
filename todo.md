@@ -2367,3 +2367,9 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Diagnóstico: HTTPS→localhost funciona (Chrome trata localhost como secure context)
 - [x] Causa real: impressão estava no celular do garçom (agora corrigido para KDS)
 - [x] 82/82 testes passando (4 test files)
+
+#### Fix Impressão Automática v48.4 (05/06/2026)
+- [x] Fix: printService deve tentar enviar direto ao agent sem depender de cache de status (eliminar fallback desnecessário para window.print)
+- [x] Fix: KDS Bar não imprimiu - itens PENDING na carga inicial devem ser impressos se forem recentes (< 2min)
+- [x] Fix: KDS Cozinha mesmo problema - itens recentes na carga inicial devem ser impressos automaticamente
+- [x] Fix: Aumentar robustez do check de agent (retry, timeout maior, sem cache negativo)

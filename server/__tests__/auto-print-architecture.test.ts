@@ -48,8 +48,9 @@ describe("Auto-print architecture v48.1", () => {
       expect(kdsCozinha).toMatch(/printedItemIdsRef/);
     });
 
-    it("tem initialLoadRef para não imprimir na carga inicial", () => {
+    it("tem initialLoadRef para controlar carga inicial (imprime recentes < 2min)", () => {
       expect(kdsCozinha).toMatch(/initialLoadRef/);
+      expect(kdsCozinha).toMatch(/RECENT_THRESHOLD_MS/);
     });
 
     it("chama printProductionTicketViaAgent com destination KITCHEN", () => {
@@ -78,6 +79,11 @@ describe("Auto-print architecture v48.1", () => {
 
     it("tem ref printedItemIdsRef para evitar duplicatas", () => {
       expect(kdsBar).toMatch(/printedItemIdsRef/);
+    });
+
+    it("tem initialLoadRef com threshold de 2min para imprimir recentes", () => {
+      expect(kdsBar).toMatch(/initialLoadRef/);
+      expect(kdsBar).toMatch(/RECENT_THRESHOLD_MS/);
     });
 
     it("chama printProductionTicketViaAgent com destination BAR", () => {
