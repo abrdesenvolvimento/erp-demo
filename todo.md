@@ -2426,3 +2426,8 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Nome da empresa removido do cabeçalho — agora imprime "Pré-visualização da Conta — Mesa X" igual à tela
 - [x] Formato do recibo impresso agora espelha a pré-visualização da tela (permanência, pessoas, vlr unit, total por item, total sem serviço, por pessoa)
 - [x] Corrigido companyId no printers.json (era 1, agora 2 = A Brasa Reúne)
+
+### BUG-FIX: Fechamento de Conta do Salão (06/06/2026)
+- [x] Pagamento dividido não funciona — adicionado modal de confirmação final para evitar fechamento acidental
+- [x] Subtotal divergente na tela de Vendas — closeOrder agora recalcula subtotal a partir dos itens (fonte autoritativa)
+- [x] Taxa de serviço agora aparece no campo observação da venda: "Comanda #X | Mesa Y | Z pessoa(s) | SALÃO | Taxa de serviço (10%): R$ XX,XX"

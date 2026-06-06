@@ -711,7 +711,17 @@ export const salonRouter = router({
       if (!order) throw new Error("Comanda não encontrada");
       if (order.status !== "OPEN") throw new Error("Comanda não está aberta");
 
-      const subtotal = parseFloat(order.subtotal ?? "0");
+      // Recalculate subtotal from active items (not stale order.subtotal)
+      const [sumRow] = await db
+        .select({ total: sql<string>`COALESCE(SUM(totalPrice), 0)` })
+        .from(salonOrderItems)
+        .where(
+          and(
+            eq(salonOrderItems.orderId, input.orderId),
+            inArray(salonOrderItems.status, ["PENDING", "IN_PROGRESS", "READY", "DELIVERED"])
+          )
+        );
+      const subtotal = parseFloat(String(sumRow?.total ?? "0"));
       const tipAmount = subtotal * (input.tipPercent / 100);
       const totalAmount = subtotal + tipAmount;
 
@@ -719,6 +729,7 @@ export const salonRouter = router({
         .update(salonOrders)
         .set({
           status: "WAITING_PAYMENT",
+          subtotal: String(subtotal.toFixed(2)),
           tipPercent: String(input.tipPercent),
           tipAmount: String(tipAmount.toFixed(2)),
           totalAmount: String(totalAmount.toFixed(2)),
@@ -769,9 +780,14 @@ export const salonRouter = router({
           )
         );
 
-      const subtotal = parseFloat(order.subtotal ?? "0");
-      const tipAmount = parseFloat(order.tipAmount ?? "0");
-      const totalAmount = parseFloat(order.totalAmount ?? "0") || subtotal + tipAmount;
+      // Recalculate subtotal from items (authoritative source)
+      const itemsSubtotal = items.reduce((sum, item) => {
+        return sum + parseFloat(String(item.totalPrice ?? "0"));
+      }, 0);
+      const subtotal = itemsSubtotal;
+      const tipPercent = parseFloat(String(order.tipPercent ?? "0"));
+      const tipAmount = subtotal * (tipPercent / 100);
+      const totalAmount = subtotal + tipAmount;
 
       // Record payments
       for (const payment of input.payments) {
@@ -796,6 +812,17 @@ export const salonRouter = router({
         branchId: input.branchId,
       }));
 
+      // Build notes with comanda, mesa, pessoas, and taxa de serviço
+      const notesParts = [
+        `Comanda #${input.orderId}`,
+        `Mesa ${order.tableNumber}`,
+        `${order.guestCount} pessoa(s)`,
+        `SALÃO`,
+      ];
+      if (tipAmount > 0) {
+        notesParts.push(`Taxa de serviço (${tipPercent}%): R$ ${tipAmount.toFixed(2)}`);
+      }
+
       const saleId = await createSale(
         {
           companyId: input.companyId,
@@ -805,22 +832,24 @@ export const salonRouter = router({
           subtotal: String(subtotal.toFixed(2)),
           discountAmount: "0.00",
           surchargeAmount: "0.00",
-          finalAmount: String(subtotal.toFixed(2)),
+          finalAmount: String(totalAmount.toFixed(2)),
           paymentMethod,
-          notes: `Comanda #${input.orderId} - Mesa ${order.tableNumber} - ${order.guestCount} pessoa(s) - SALÃO${tipAmount > 0 ? ` | Taxa serviço: R$ ${tipAmount.toFixed(2)}` : ""}`,
+          notes: notesParts.join(" | "),
           status: "ACTIVE",
           createdBy: ctx.user?.id ?? "",
         },
         saleItems
       );
 
-      // Close order
+      // Update order with correct totals and close
       await db
         .update(salonOrders)
         .set({
           status: "CLOSED",
           closedAt: now,
           saleId,
+          subtotal: String(subtotal.toFixed(2)),
+          tipAmount: String(tipAmount.toFixed(2)),
           totalAmount: String(totalAmount.toFixed(2)),
         })
         .where(eq(salonOrders.id, input.orderId));

@@ -61,6 +61,7 @@ export default function SalaoComanda() {
   const [previewModal, setPreviewModal] = useState(false);
   const [serviceFeeModal, setServiceFeeModal] = useState(false);
   const [serviceFeeAccepted, setServiceFeeAccepted] = useState(true);
+  const [confirmPaymentModal, setConfirmPaymentModal] = useState(false);
   const printRef = useRef<HTMLDivElement>(null);
 
   // Queries
@@ -224,6 +225,11 @@ export default function SalaoComanda() {
   };
 
   const handleCheckout = () => {
+    // Show confirmation modal before actually closing
+    setConfirmPaymentModal(true);
+  };
+
+  const handleConfirmFinalPayment = () => {
     const finalTotal = tipPercent > 0 ? totalWithTip : subtotal;
     let payments: Array<{ method: string; amount: number }>;
     if (splitMode && splitPayments.length > 0) {
@@ -231,6 +237,8 @@ export default function SalaoComanda() {
     } else {
       payments = [{ method: paymentMethod, amount: finalTotal }];
     }
+    setConfirmPaymentModal(false);
+    setCheckoutModal(false);
     closeOrderMutation.mutate({
       orderId,
       companyId,
@@ -1100,6 +1108,65 @@ export default function SalaoComanda() {
             >
               <CheckCircle2 className="h-4 w-4 mr-1" />
               Incluir {(salonCfg?.gratuityLabel || "taxa").toLowerCase()} ({tipPercent}%)
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Payment Confirmation Modal (prevents accidental closes) */}
+      <Dialog open={confirmPaymentModal} onOpenChange={setConfirmPaymentModal}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Confirmar Pagamento?</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <div className="bg-muted rounded-lg p-4 space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Subtotal</span>
+                <span className="font-semibold">{formatCurrency(subtotal)}</span>
+              </div>
+              {tipPercent > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Taxa de serviço ({tipPercent}%)</span>
+                  <span>{formatCurrency(tipAmount)}</span>
+                </div>
+              )}
+              <Separator />
+              <div className="flex justify-between font-bold text-lg">
+                <span>Total</span>
+                <span>{formatCurrency(finalTotal)}</span>
+              </div>
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground uppercase tracking-wide">Forma(s) de pagamento</Label>
+              {splitMode ? (
+                splitPayments.map((p, i) => {
+                  const m = PAYMENT_METHODS.find(x => x.value === p.method);
+                  return (
+                    <div key={i} className="flex justify-between text-sm">
+                      <span>{m?.label ?? p.method}</span>
+                      <span className="font-medium">{formatCurrency(p.amount)}</span>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="flex justify-between text-sm">
+                  <span>{PAYMENT_METHODS.find(x => x.value === paymentMethod)?.label ?? paymentMethod}</span>
+                  <span className="font-medium">{formatCurrency(finalTotal)}</span>
+                </div>
+              )}
+            </div>
+          </div>
+          <DialogFooter className="flex flex-col sm:flex-row gap-2">
+            <Button variant="outline" onClick={() => setConfirmPaymentModal(false)} className="flex-1">
+              Voltar
+            </Button>
+            <Button
+              onClick={handleConfirmFinalPayment}
+              disabled={closeOrderMutation.isPending}
+              className="flex-1 bg-green-600 hover:bg-green-700"
+            >
+              {closeOrderMutation.isPending ? "Encerrando..." : "Sim, Confirmar"}
             </Button>
           </DialogFooter>
         </DialogContent>
