@@ -211,7 +211,7 @@ function sendToPrinter(printerIp, printerPort, data) {
     const timeout = setTimeout(() => {
       client.destroy();
       reject(new Error(`Timeout conectando em ${printerIp}:${printerPort}`));
-    }, 5000);
+    }, 3000); // 3s TCP timeout (reduzido para responder rápido ao site)
 
     client.connect(printerPort, printerIp, () => {
       clearTimeout(timeout);

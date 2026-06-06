@@ -16,7 +16,7 @@
 // reconheça como IP privado e isente de mixed content (HTTPS→HTTP)
 const AGENT_URL = "http://127.0.0.1:9100";
 const AGENT_ONLINE_CACHE_MS = 60000; // 60s de cache quando agent está ONLINE
-const AGENT_TIMEOUT_MS = 3000; // 3s timeout para cada request ao agent
+const AGENT_TIMEOUT_MS = 8000; // 8s timeout para status check (agent pode demorar se impressora offline)
 
 type PrinterDepartment = "KITCHEN" | "BAR" | "CASHIER";
 
@@ -131,7 +131,7 @@ export async function forceCheckAgent(): Promise<AgentStatus> {
 async function tryPrintViaAgent(body: object): Promise<{ success: boolean; error?: string }> {
   try {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 5000); // 5s para print job
+    const timeout = setTimeout(() => controller.abort(), 10000); // 10s para print job (agent pode demorar com timeout TCP)
     const res = await fetch(`${AGENT_URL}/print`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -203,7 +203,7 @@ export async function printProductionTicketMulti(
   // Tenta enviar direto ao agent
   try {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 5000);
+    const timeout = setTimeout(() => controller.abort(), 10000); // 10s para print-multi
     const res = await fetch(`${AGENT_URL}/print-multi`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
