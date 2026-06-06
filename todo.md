@@ -2397,3 +2397,26 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] "Imprimir Comanda" no celular do garçom: enviar via Print Agent para impressora do Caixa (sem window.print)
 - [x] "Emitir Cupom da Venda" no fechamento: enviar via Print Agent para impressora do Caixa (sem window.print)
 - [x] Ambos devem usar o mesmo padrão do KDS (printReceiptViaAgent com toast de erro diferenciado)
+
+#### Fix Impressão Comanda v49.1 — Relay via Servidor (06/06/2026)
+- [ ] Problema: celular do garçom não acessa localhost:9100 do computador central
+- [ ] Solução: frontend envia dados de impressão ao backend (tRPC), backend armazena job em fila, Print Agent faz polling no servidor para buscar jobs pendentes
+- [ ] Criar tabela printJobs no banco (id, type, payload, status, createdAt)
+- [ ] Criar rota tRPC: salon.requestPrint (insere job na fila)
+- [ ] Criar endpoint público GET /api/print-jobs/pending (Print Agent faz polling)
+- [ ] Criar endpoint público POST /api/print-jobs/:id/complete (Print Agent marca como concluído)
+- [ ] Atualizar Print Agent para fazer polling no servidor a cada 2s
+- [ ] Atualizar frontend: "Imprimir Comanda" usa tRPC em vez de fetch direto ao agent
+
+### FEAT: Fila de Impressão via Servidor (Print Queue) ✅ (06/06/2026)
+- [x] Tabela `printJobs` no banco (companyId, type, department, payload, status, timestamps)
+- [x] Endpoint REST GET /api/print-jobs/pending (agent polling)
+- [x] Endpoint REST POST /api/print-jobs/complete (agent reporta resultado)
+- [x] tRPC mutation salon.requestPrint (frontend envia job para fila)
+- [x] tRPC mutation salon.requestPrintMulti (múltiplos departamentos)
+- [x] SalaoComanda (garçom celular) usa fila do servidor em vez de acesso direto ao agent
+- [x] SalaoCaixa (desktop) mantém impressão direta via agent (mesmo computador)
+- [x] Print Agent v2.0 com polling automático do servidor (busca jobs PENDING a cada 2s)
+- [x] Backoff automático em caso de erros consecutivos no polling
+- [x] Expiração de jobs PENDING > 5 minutos (evita reimpressão após restart)
+- [x] Testes vitest para toda a arquitetura

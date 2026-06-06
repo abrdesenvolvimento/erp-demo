@@ -17,8 +17,7 @@ import {
   Printer, FileText, ArrowRight
 } from "lucide-react";
 import { vibrateUrgent } from "@/lib/notificationSound";
-import { printReceiptViaAgent } from "@/lib/printService";
-// Impressão de comanda é enviada via Print Agent para a impressora do Caixa
+// Impressão de comanda é enviada via fila do servidor → Print Agent busca e imprime
 
 const PAYMENT_METHODS = [
   { value: "CASH", label: "Dinheiro", icon: DollarSign },
@@ -287,6 +286,8 @@ export default function SalaoComanda() {
     setCheckoutModal(true);
   };
 
+  const requestPrintMutation = trpc.salon.requestPrint.useMutation();
+
   const handlePrintComanda = async () => {
     if (!order) return;
     const activeItems = (order.items ?? []).filter((i: any) => i.status !== "CANCELLED");
@@ -308,16 +309,18 @@ export default function SalaoComanda() {
       tipAmount,
       totalAmount: totalWithTip,
       companyName: "Adega Beira Rio",
+      timestamp: new Date().toISOString(),
     };
-    const result = await printReceiptViaAgent(receiptData);
-    if (result.success) {
+    try {
+      await requestPrintMutation.mutateAsync({
+        companyId,
+        type: "receipt",
+        department: "CASHIER",
+        payload: receiptData,
+      });
       toast.success("Comanda enviada para impressão (Caixa)");
-    } else if (result.method === "agent") {
-      // method=agent sem success = agent offline
-      toast.error("Print Agent offline \u2014 verifique o computador central");
-    } else {
-      // method=fallback com error = agent online mas impressora falhou
-      toast.error(`Erro na impressora: ${result.error}`);
+    } catch (err: any) {
+      toast.error(`Erro ao enviar impressão: ${err.message || "Tente novamente"}`);
     }
   };
 

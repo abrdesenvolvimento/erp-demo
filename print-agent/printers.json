@@ -21,5 +21,8 @@
       "port": 9100,
       "enabled": true
     }
-  ]
+  ],
+  "serverUrl": "https://abrwf.com.br",
+  "companyId": 1,
+  "pollingIntervalMs": 2000
 }

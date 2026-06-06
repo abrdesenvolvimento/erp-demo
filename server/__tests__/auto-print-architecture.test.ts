@@ -3,7 +3,7 @@ import * as fs from "fs";
 import * as path from "path";
 
 describe("Auto-print architecture v48.1", () => {
-  describe("SalaoComanda (garçom celular) - NÃO deve ter impressão", () => {
+  describe("SalaoComanda (garçom celular) - usa fila do servidor para impressão", () => {
     const comanda = fs.readFileSync(
       path.resolve(__dirname, "../../client/src/pages/SalaoComanda.tsx"),
       "utf-8"
@@ -13,24 +13,24 @@ describe("Auto-print architecture v48.1", () => {
       expect(comanda).not.toMatch(/import.*printProductionTicket.*from/);
     });
 
-    it("não importa printReceipt de printTicket (usa printReceiptViaAgent)", () => {
-      expect(comanda).not.toMatch(/import.*printReceipt.*from.*printTicket/);
+    it("não importa de printService (usa fila do servidor)", () => {
+      expect(comanda).not.toMatch(/import.*from.*printService/);
     });
 
-    it("usa printReceiptViaAgent para imprimir comanda via agent", () => {
-      expect(comanda).toMatch(/printReceiptViaAgent/);
+    it("usa trpc.salon.requestPrint para enviar via fila do servidor", () => {
+      expect(comanda).toMatch(/trpc\.salon\.requestPrint/);
     });
 
     it("não chama printProductionTicket", () => {
       expect(comanda).not.toMatch(/printProductionTicket\s*\(/);
     });
 
-    it("não chama printReceipt", () => {
+    it("não chama printReceipt diretamente", () => {
       expect(comanda).not.toMatch(/printReceipt\s*\(/);
     });
 
-    it("tem comentário explicando que impressão é no KDS/Caixa", () => {
-      expect(comanda).toMatch(/[Ii]mpress.*KDS|[Ii]mpress.*computador central|[Ii]mpress.*Caixa/);
+    it("tem comentário explicando que impressão é via fila do servidor", () => {
+      expect(comanda).toMatch(/[Ii]mpress.*fila.*servidor|[Ii]mpress.*Print Agent.*busca|[Ii]mpress.*Caixa/);
     });
   });
 

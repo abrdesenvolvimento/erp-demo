@@ -1,12 +1,15 @@
 /**
- * ABRWF Print Agent v1.2
- * Serviço local que recebe comandos de impressão do sistema web
- * e envia diretamente para impressoras térmicas via TCP (ESC/POS).
+ * ABRWF Print Agent v2.0
+ * Serviço local que:
+ *  1) Recebe comandos de impressão diretos via HTTP (desktop/KDS)
+ *  2) Faz POLLING no servidor cloud para buscar jobs da fila (mobile/garçom)
+ * 
+ * Envia diretamente para impressoras térmicas via TCP (ESC/POS).
  * 
  * Roda no computador central do restaurante.
  * 
  * Uso: node print-agent.js
- * Porta padrão: 9100 (API) | Impressoras: configuradas via /config
+ * Porta padrão: 9100 (API) | Impressoras: configuradas via /config ou printers.json
  */
 
 const express = require("express");
@@ -36,7 +39,11 @@ function loadConfig() {
       { department: "KITCHEN", name: "Cozinha", ip: "192.168.1.100", port: 9100, enabled: true },
       { department: "BAR", name: "Bar", ip: "192.168.1.101", port: 9100, enabled: true },
       { department: "CASHIER", name: "Caixa", ip: "192.168.1.102", port: 9100, enabled: true },
-    ]
+    ],
+    // Configuração do servidor cloud para polling de fila de impressão
+    serverUrl: "",   // Ex: "https://abrwf.com.br" — se vazio, polling desativado
+    companyId: null, // Ex: 1 — ID da empresa no sistema
+    pollingIntervalMs: 2000, // Intervalo de polling em ms (padrão: 2s)
   };
 }
 
@@ -229,13 +236,46 @@ function sendToPrinter(printerIp, printerPort, data) {
   });
 }
 
+/**
+ * Executa um job de impressão (usado tanto por HTTP direto quanto pelo polling)
+ */
+async function executePrintJob(type, department, data) {
+  const printer = printersConfig.printers.find(
+    p => p.department === department && p.enabled
+  );
+
+  if (!printer) {
+    throw new Error(`Nenhuma impressora ativa para departamento: ${department}`);
+  }
+
+  let formatted;
+  switch (type) {
+    case "production_ticket":
+      formatted = formatProductionTicket({ ...data, destination: department });
+      break;
+    case "receipt":
+      formatted = formatReceipt(data);
+      break;
+    case "raw":
+      formatted = data.content || "";
+      break;
+    default:
+      throw new Error(`Tipo desconhecido: ${type}`);
+  }
+
+  const result = await sendToPrinter(printer.ip, printer.port, formatted);
+  console.log(`[Print] ${type} → ${printer.name} (${printer.ip}:${printer.port}) OK`);
+  return { ...result, printer: printer.name };
+}
+
 // --- Routes ---
 
 // Health check
 app.get("/status", (req, res) => {
   res.json({
     status: "online",
-    version: "1.2.0",
+    version: "2.0.0",
+    polling: isPollingActive(),
     printers: printersConfig.printers.map(p => ({
       department: p.department,
       name: p.name,
@@ -243,6 +283,8 @@ app.get("/status", (req, res) => {
       port: p.port,
       enabled: p.enabled,
     })),
+    serverUrl: printersConfig.serverUrl || null,
+    companyId: printersConfig.companyId || null,
     timestamp: new Date().toISOString(),
   });
 });
@@ -254,13 +296,23 @@ app.get("/config", (req, res) => {
 
 // Update config
 app.put("/config", (req, res) => {
-  const { printers } = req.body;
-  if (!Array.isArray(printers)) {
-    return res.status(400).json({ error: "printers deve ser um array" });
+  const { printers, serverUrl, companyId, pollingIntervalMs } = req.body;
+  if (printers && Array.isArray(printers)) {
+    printersConfig.printers = printers;
   }
-  printersConfig.printers = printers;
+  if (serverUrl !== undefined) {
+    printersConfig.serverUrl = serverUrl;
+  }
+  if (companyId !== undefined) {
+    printersConfig.companyId = companyId;
+  }
+  if (pollingIntervalMs !== undefined) {
+    printersConfig.pollingIntervalMs = pollingIntervalMs;
+  }
   saveConfig();
-  res.json({ success: true, printers: printersConfig.printers });
+  // Restart polling with new config
+  startPolling();
+  res.json({ success: true, config: printersConfig });
 });
 
 // Test printer connection
@@ -288,7 +340,7 @@ app.post("/test", async (req, res) => {
   }
 });
 
-// Print job
+// Print job (direct HTTP — used by desktop/KDS on same machine)
 app.post("/print", async (req, res) => {
   const { type, department, data } = req.body;
 
@@ -296,44 +348,20 @@ app.post("/print", async (req, res) => {
     return res.status(400).json({ error: "Campos obrigatórios: type, department, data" });
   }
 
-  // Find printer for department
-  const printer = printersConfig.printers.find(
-    p => p.department === department && p.enabled
-  );
-
-  if (!printer) {
-    return res.status(404).json({ error: `Nenhuma impressora ativa para departamento: ${department}` });
-  }
-
   try {
-    let formatted;
-    switch (type) {
-      case "production_ticket":
-        formatted = formatProductionTicket(data);
-        break;
-      case "receipt":
-        formatted = formatReceipt(data);
-        break;
-      case "raw":
-        formatted = data.content || "";
-        break;
-      default:
-        return res.status(400).json({ error: `Tipo desconhecido: ${type}` });
-    }
-
-    const result = await sendToPrinter(printer.ip, printer.port, formatted);
-    console.log(`[Print] ${type} → ${printer.name} (${printer.ip}:${printer.port}) OK`);
-    res.json({ success: true, printer: printer.name, ...result });
+    const result = await executePrintJob(type, department, data);
+    res.json({ success: true, ...result });
   } catch (err) {
-    console.error(`[Print] ERRO ${type} → ${printer.name}:`, err.message);
+    console.error(`[Print] ERRO ${type} → ${department}:`, err.message);
+    const printer = printersConfig.printers.find(p => p.department === department);
     res.status(500).json({
       success: false,
       type: "PRINTER_ERROR",
       error: err.message,
-      message: `Erro na impressora ${printer.name} (${printer.ip}:${printer.port}): ${err.message}`,
-      printer: printer.name,
-      printerIp: printer.ip,
-      port: printer.port,
+      message: `Erro na impressora ${printer?.name || department} (${printer?.ip || "?"}:${printer?.port || "?"}): ${err.message}`,
+      printer: printer?.name || department,
+      printerIp: printer?.ip,
+      port: printer?.port,
     });
   }
 });
@@ -348,46 +376,139 @@ app.post("/print-multi", async (req, res) => {
 
   const results = [];
   for (const dept of departments) {
-    const printer = printersConfig.printers.find(p => p.department === dept && p.enabled);
-    if (!printer) {
-      results.push({ department: dept, success: false, error: "Impressora não encontrada" });
-      continue;
-    }
     try {
-      let formatted;
-      switch (type) {
-        case "production_ticket":
-          formatted = formatProductionTicket({ ...data, destination: dept });
-          break;
-        case "receipt":
-          formatted = formatReceipt(data);
-          break;
-        default:
-          formatted = data.content || "";
-      }
-      await sendToPrinter(printer.ip, printer.port, formatted);
-      results.push({ department: dept, success: true, printer: printer.name });
-      console.log(`[Print-Multi] ${type} → ${printer.name} OK`);
+      const result = await executePrintJob(type, dept, data);
+      results.push({ department: dept, success: true, printer: result.printer });
     } catch (err) {
       results.push({ department: dept, success: false, error: err.message });
-      console.error(`[Print-Multi] ERRO → ${printer.name}:`, err.message);
+      console.error(`[Print-Multi] ERRO → ${dept}:`, err.message);
     }
   }
   res.json({ results });
 });
 
+// ==================== SERVER POLLING (PRINT QUEUE) ====================
+
+let pollingInterval = null;
+let pollingActive = false;
+let consecutiveErrors = 0;
+const MAX_CONSECUTIVE_ERRORS = 10; // Backoff after 10 consecutive errors
+
+function isPollingActive() {
+  return pollingActive && !!printersConfig.serverUrl && !!printersConfig.companyId;
+}
+
+async function pollForJobs() {
+  if (!printersConfig.serverUrl || !printersConfig.companyId) return;
+
+  const url = `${printersConfig.serverUrl}/api/print-jobs/pending?companyId=${printersConfig.companyId}`;
+
+  try {
+    const response = await fetch(url, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+      signal: AbortSignal.timeout(10000), // 10s timeout
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    const { jobs } = await response.json();
+    consecutiveErrors = 0; // Reset on success
+
+    if (!jobs || jobs.length === 0) return;
+
+    console.log(`[Queue] Recebidos ${jobs.length} job(s) da fila`);
+
+    // Process each job
+    for (const job of jobs) {
+      try {
+        await executePrintJob(job.type, job.department, job.payload);
+        // Report success
+        await reportJobComplete(job.id, true);
+        console.log(`[Queue] Job #${job.id} (${job.type}/${job.department}) ✓ impresso`);
+      } catch (err) {
+        // Report failure
+        await reportJobComplete(job.id, false, err.message);
+        console.error(`[Queue] Job #${job.id} ERRO:`, err.message);
+      }
+    }
+  } catch (err) {
+    consecutiveErrors++;
+    if (consecutiveErrors <= 3 || consecutiveErrors % 10 === 0) {
+      console.error(`[Queue] Erro ao buscar jobs (${consecutiveErrors}x):`, err.message);
+    }
+    // Backoff: if too many errors, slow down polling
+    if (consecutiveErrors >= MAX_CONSECUTIVE_ERRORS) {
+      stopPolling();
+      const backoffMs = 30000; // 30s backoff
+      console.warn(`[Queue] Muitos erros consecutivos. Tentando novamente em ${backoffMs / 1000}s...`);
+      setTimeout(() => startPolling(), backoffMs);
+    }
+  }
+}
+
+async function reportJobComplete(jobId, success, error) {
+  if (!printersConfig.serverUrl) return;
+
+  const url = `${printersConfig.serverUrl}/api/print-jobs/complete`;
+  try {
+    await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ jobId, success, error }),
+      signal: AbortSignal.timeout(5000),
+    });
+  } catch (err) {
+    console.error(`[Queue] Erro ao reportar job #${jobId}:`, err.message);
+  }
+}
+
+function startPolling() {
+  stopPolling(); // Clear any existing interval
+  if (!printersConfig.serverUrl || !printersConfig.companyId) {
+    console.log("[Queue] Polling desativado (serverUrl ou companyId não configurados)");
+    return;
+  }
+
+  const interval = printersConfig.pollingIntervalMs || 2000;
+  pollingActive = true;
+  consecutiveErrors = 0;
+  pollingInterval = setInterval(pollForJobs, interval);
+  console.log(`[Queue] Polling ativado: ${printersConfig.serverUrl} a cada ${interval}ms (companyId: ${printersConfig.companyId})`);
+}
+
+function stopPolling() {
+  if (pollingInterval) {
+    clearInterval(pollingInterval);
+    pollingInterval = null;
+  }
+  pollingActive = false;
+}
+
 // --- Start ---
 app.listen(PORT, "0.0.0.0", () => {
-  console.log("╔══════════════════════════════════════════════╗");
-  console.log("║     ABRWF Print Agent v1.2                  ║");
-  console.log("╠══════════════════════════════════════════════╣");
-  console.log(`║  API: http://localhost:${PORT}                 ║`);
-  console.log("║  Status: ONLINE                             ║");
-  console.log("╠══════════════════════════════════════════════╣");
-  console.log("║  Impressoras configuradas:                  ║");
+  console.log("╔══════════════════════════════════════════════════╗");
+  console.log("║     ABRWF Print Agent v2.0                      ║");
+  console.log("╠══════════════════════════════════════════════════╣");
+  console.log(`║  API: http://localhost:${PORT}                     ║`);
+  console.log("║  Status: ONLINE                                 ║");
+  console.log("╠══════════════════════════════════════════════════╣");
+  console.log("║  Impressoras configuradas:                      ║");
   for (const p of printersConfig.printers) {
     const status = p.enabled ? "✓" : "✗";
-    console.log(`║  ${status} ${p.name.padEnd(10)} → ${p.ip}:${p.port}`.padEnd(47) + "║");
+    console.log(`║  ${status} ${p.name.padEnd(10)} → ${p.ip}:${p.port}`.padEnd(51) + "║");
   }
-  console.log("╚══════════════════════════════════════════════╝");
+  console.log("╠══════════════════════════════════════════════════╣");
+  if (printersConfig.serverUrl && printersConfig.companyId) {
+    console.log(`║  Fila: ${printersConfig.serverUrl}`.padEnd(51) + "║");
+    console.log(`║  Company: ${printersConfig.companyId}`.padEnd(51) + "║");
+  } else {
+    console.log("║  Fila: DESATIVADA (configure serverUrl/companyId)║");
+  }
+  console.log("╚══════════════════════════════════════════════════╝");
+
+  // Start polling if configured
+  startPolling();
 });

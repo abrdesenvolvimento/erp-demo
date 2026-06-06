@@ -90,6 +90,104 @@ async function startServer() {
     res.json({ ok: true, ts: new Date().toISOString() });
   });
 
+  // ==================== PRINT QUEUE ENDPOINTS (for Print Agent polling) ====================
+  // These endpoints do NOT require OAuth — the agent authenticates via companyId.
+  // The agent polls GET /api/print-jobs/pending every 2s to pick up queued jobs.
+
+  app.get('/api/print-jobs/pending', async (req, res) => {
+    try {
+      const companyId = parseInt(String(req.query.companyId), 10);
+      if (!companyId || isNaN(companyId)) {
+        return res.status(400).json({ error: 'companyId is required' });
+      }
+
+      const { getDb } = await import('../db');
+      const { printJobs } = await import('../../drizzle/schema');
+      const { eq, and, lte, inArray } = await import('drizzle-orm');
+      const db = await getDb();
+      if (!db) return res.json({ jobs: [] });
+
+      // Expire stale PENDING jobs older than 5 minutes (avoid reprinting after agent restart)
+      const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000);
+      await db
+        .update(printJobs)
+        .set({ status: 'FAILED', error: 'Expired (older than 5 minutes)', processedAt: new Date() })
+        .where(
+          and(
+            eq(printJobs.companyId, companyId),
+            eq(printJobs.status, 'PENDING'),
+            lte(printJobs.createdAt, fiveMinAgo)
+          )
+        );
+
+      // Fetch PENDING jobs and mark them PROCESSING atomically
+      const pendingJobs = await db
+        .select()
+        .from(printJobs)
+        .where(
+          and(
+            eq(printJobs.companyId, companyId),
+            eq(printJobs.status, 'PENDING')
+          )
+        )
+        .limit(20);
+
+      if (pendingJobs.length === 0) {
+        return res.json({ jobs: [] });
+      }
+
+      // Mark as PROCESSING
+      const jobIds = pendingJobs.map(j => j.id);
+      await db
+        .update(printJobs)
+        .set({ status: 'PROCESSING' })
+        .where(inArray(printJobs.id, jobIds));
+
+      // Return jobs with parsed payload
+      const jobs = pendingJobs.map(j => ({
+        id: j.id,
+        type: j.type,
+        department: j.department,
+        payload: JSON.parse(j.payload),
+        createdAt: j.createdAt,
+      }));
+
+      res.json({ jobs });
+    } catch (error: any) {
+      console.error('[PrintQueue] Error fetching pending jobs:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post('/api/print-jobs/complete', async (req, res) => {
+    try {
+      const { jobId, success, error: errorMsg } = req.body;
+      if (!jobId) {
+        return res.status(400).json({ error: 'jobId is required' });
+      }
+
+      const { getDb } = await import('../db');
+      const { printJobs } = await import('../../drizzle/schema');
+      const { eq } = await import('drizzle-orm');
+      const db = await getDb();
+      if (!db) return res.status(500).json({ error: 'DB unavailable' });
+
+      await db
+        .update(printJobs)
+        .set({
+          status: success ? 'DONE' : 'FAILED',
+          processedAt: new Date(),
+          error: errorMsg || null,
+        })
+        .where(eq(printJobs.id, jobId));
+
+      res.json({ ok: true });
+    } catch (error: any) {
+      console.error('[PrintQueue] Error completing job:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   // tRPC API
   app.use(
     "/api/trpc",

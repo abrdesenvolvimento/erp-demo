@@ -1412,3 +1412,23 @@ export const printers = mysqlTable("printers", {
 
 export type Printer = typeof printers.$inferSelect;
 export type InsertPrinter = typeof printers.$inferInsert;
+
+// ==================== FILA DE IMPRESSÃO (PRINT QUEUE) ====================
+
+export const printJobs = mysqlTable("printJobs", {
+  id: int("id").primaryKey().autoincrement(),
+  companyId: int("companyId").notNull(),
+  type: mysqlEnum("type", ["production_ticket", "receipt"]).notNull(),
+  department: mysqlEnum("department", ["KITCHEN", "BAR", "CASHIER"]).notNull(),
+  payload: text("payload").notNull(), // JSON string with print data
+  status: mysqlEnum("status", ["PENDING", "PROCESSING", "DONE", "FAILED"]).default("PENDING").notNull(),
+  createdAt: timestamp("createdAt").defaultNow(),
+  processedAt: timestamp("processedAt"),
+  error: text("error"),
+}, (table) => ({
+  companyStatusIdx: index("pj_company_status_idx").on(table.companyId, table.status),
+  createdAtIdx: index("pj_created_at_idx").on(table.createdAt),
+}));
+
+export type PrintJob = typeof printJobs.$inferSelect;
+export type InsertPrintJob = typeof printJobs.$inferInsert;

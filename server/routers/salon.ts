@@ -13,6 +13,7 @@ import {
   salesChannels,
   userCompanies,
   users,
+  printJobs,
 } from "../../drizzle/schema";
 import { eq, and, or, inArray, gte, lte, lt, sql, isNull } from "drizzle-orm";
 import { getNowInBrazil } from "../../shared/dateUtils";
@@ -2393,6 +2394,61 @@ export const salonRouter = router({
 
       transfers.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
       return transfers;
+    }),
+
+  // ==================== FILA DE IMPRESSÃO (PRINT QUEUE) ====================
+
+  requestPrint: protectedProcedure
+    .input(z.object({
+      companyId: z.number(),
+      type: z.enum(["production_ticket", "receipt"]),
+      department: z.enum(["KITCHEN", "BAR", "CASHIER"]),
+      payload: z.any(), // JSON payload with print data
+    }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("DB unavailable");
+
+      const [result] = await db
+        .insert(printJobs)
+        .values({
+          companyId: input.companyId,
+          type: input.type,
+          department: input.department,
+          payload: JSON.stringify(input.payload),
+          status: "PENDING",
+        });
+
+      return { success: true, jobId: result.insertId };
+    }),
+
+  // Bulk request print for multiple departments (e.g., BOTH → KITCHEN + BAR)
+  requestPrintMulti: protectedProcedure
+    .input(z.object({
+      companyId: z.number(),
+      type: z.enum(["production_ticket", "receipt"]),
+      departments: z.array(z.enum(["KITCHEN", "BAR", "CASHIER"])),
+      payload: z.any(),
+    }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("DB unavailable");
+
+      const jobIds: number[] = [];
+      for (const dept of input.departments) {
+        const [result] = await db
+          .insert(printJobs)
+          .values({
+            companyId: input.companyId,
+            type: input.type,
+            department: dept,
+            payload: JSON.stringify(input.payload),
+            status: "PENDING",
+          });
+        jobIds.push(result.insertId);
+      }
+
+      return { success: true, jobIds };
     }),
 });
 
