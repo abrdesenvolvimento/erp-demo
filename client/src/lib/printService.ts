@@ -2,10 +2,12 @@
  * Print Service - Client-side
  * Detecta o Print Agent local e envia comandos de impressão.
  * 
- * ESTRATÉGIA v48.4:
+ * ESTRATÉGIA v48.5:
  * - Cada tentativa de impressão TENTA enviar direto ao agent (sem cache negativo)
  * - Se agent responde → imprime via ESC/POS direto na impressora térmica
- * - Se agent não responde → fallback para window.print (popup formatada)
+ * - Se agent não responde → retorna { success: false } (caller decide o que fazer)
+ * - KDS: NÃO usa fallback window.print — mostra toast de erro
+ * - Caixa: pode usar fallback window.print se necessário
  * - Cache POSITIVO de 60s (se agent estava online, não precisa checar de novo)
  * - Cache NEGATIVO eliminado (se estava offline, tenta de novo na próxima impressão)
  */

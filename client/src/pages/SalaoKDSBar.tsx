@@ -10,7 +10,6 @@ import {
   Flame, AlertTriangle, Timer, Wine, Printer, BarChart3,
   TrendingUp, Hash, ClipboardList
 } from "lucide-react";
-import { printProductionTicket } from "@/lib/printTicket";
 import { printProductionTicketViaAgent } from "@/lib/printService";
 
 function formatElapsed(date: Date | string | null): string {
@@ -167,7 +166,9 @@ export default function SalaoKDSBar() {
               notes: i.notes,
             })),
           };
-          printProductionTicketViaAgent(ticketData, () => printProductionTicket(ticketData));
+          printProductionTicketViaAgent(ticketData).then(r => {
+            if (!r.success) toast.error("Print Agent offline — verifique o computador central");
+          });
         }
       }
       return;
@@ -198,7 +199,9 @@ export default function SalaoKDSBar() {
           notes: i.notes,
         })),
       };
-      printProductionTicketViaAgent(ticketData, () => printProductionTicket(ticketData));
+      printProductionTicketViaAgent(ticketData).then(r => {
+        if (!r.success) toast.error("Print Agent offline — verifique o computador central");
+      });
     }
   }, [items, autoPrint]);
 

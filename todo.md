@@ -2373,3 +2373,9 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Fix: KDS Bar não imprimiu - itens PENDING na carga inicial devem ser impressos se forem recentes (< 2min)
 - [x] Fix: KDS Cozinha mesmo problema - itens recentes na carga inicial devem ser impressos automaticamente
 - [x] Fix: Aumentar robustez do check de agent (retry, timeout maior, sem cache negativo)
+
+#### Fix Impressão Automática v48.5 (05/06/2026) — Eliminar fallback window.print do KDS
+- [x] Remover callback de fallback (printProductionTicket) das chamadas printProductionTicketViaAgent no KDS Cozinha
+- [x] Remover callback de fallback (printProductionTicket) das chamadas printProductionTicketViaAgent no KDS Bar
+- [x] Quando agent offline: mostrar toast.error("Print Agent offline") sem abrir popup
+- [x] Manter botão manual de reimprimir no KDS (esse pode usar window.print como último recurso)

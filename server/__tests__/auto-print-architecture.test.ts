@@ -36,8 +36,12 @@ describe("Auto-print architecture v48.1", () => {
       "utf-8"
     );
 
-    it("importa printProductionTicket", () => {
-      expect(kdsCozinha).toMatch(/import.*printProductionTicket.*from.*printTicket/);
+    it("NÃO importa printProductionTicket (sem fallback window.print)", () => {
+      expect(kdsCozinha).not.toMatch(/import.*printProductionTicket.*from.*printTicket/);
+    });
+
+    it("mostra toast.error quando agent offline", () => {
+      expect(kdsCozinha).toMatch(/toast\.error.*Print Agent offline/);
     });
 
     it("tem estado autoPrint", () => {
@@ -69,8 +73,12 @@ describe("Auto-print architecture v48.1", () => {
       "utf-8"
     );
 
-    it("importa printProductionTicket", () => {
-      expect(kdsBar).toMatch(/import.*printProductionTicket.*from.*printTicket/);
+    it("NÃO importa printProductionTicket (sem fallback window.print)", () => {
+      expect(kdsBar).not.toMatch(/import.*printProductionTicket.*from.*printTicket/);
+    });
+
+    it("mostra toast.error quando agent offline", () => {
+      expect(kdsBar).toMatch(/toast\.error.*Print Agent offline/);
     });
 
     it("tem estado autoPrint", () => {
