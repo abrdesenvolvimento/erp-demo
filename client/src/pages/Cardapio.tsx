@@ -157,7 +157,7 @@ export default function Cardapio() {
       {/* Content */}
       <main className="max-w-2xl mx-auto px-6 py-6 pb-0">
 
-        {/* === PAGE 1: Entradas, Burgers, Água e Refrigerante === */}
+        {/* === PAGE 1: Entradas, Burgers === */}
 
         {/* Food categories (Entradas, Burgers) */}
         {orderedFood.map((cat) => (
@@ -169,16 +169,7 @@ export default function Cardapio() {
           />
         ))}
 
-        {/* Água e Refrigerante */}
-        {bebidasGrouped.aguasRefri.length > 0 && (
-          <LightSection
-            title="Água e Refrigerante"
-            items={bebidasGrouped.aguasRefri}
-            twoColumns={true}
-          />
-        )}
-
-        {/* === PAGE 2: Suco, Cerveja, Drinks === */}
+        {/* === PAGE 2: Água e Refrigerante, Suco, Cerveja, Drinks === */}
 
         {/* Page break for print + repeated header on page 2 */}
         <div className="page-break-before">
@@ -194,6 +185,15 @@ export default function Cardapio() {
             </p>
           </div>
         </div>
+
+        {/* Água e Refrigerante */}
+        {bebidasGrouped.aguasRefri.length > 0 && (
+          <LightSection
+            title="Água e Refrigerante"
+            items={bebidasGrouped.aguasRefri}
+            twoColumns={true}
+          />
+        )}
 
         {/* Suco */}
         {bebidasGrouped.sucos.length > 0 && (
