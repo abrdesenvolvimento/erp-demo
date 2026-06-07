@@ -13,7 +13,7 @@ export default function AvisoInauguracao() {
         @media print {
           @page {
             size: A5 landscape;
-            margin: 8mm;
+            margin: 15mm;
           }
           html, body {
             margin: 0 !important;
@@ -50,7 +50,7 @@ export default function AvisoInauguracao() {
         }
       `}</style>
 
-      <div className="max-w-md w-full text-center">
+      <div className="max-w-md w-full text-center pt-10">
         {/* Logo */}
         <img
           src="/manus-storage/logo-abrasa-circle_54a46a8b.png"
