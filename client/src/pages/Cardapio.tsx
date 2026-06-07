@@ -49,10 +49,12 @@ export default function Cardapio() {
       {/* Header */}
       <header className="pt-8 pb-4">
         <div className="max-w-2xl mx-auto px-6 flex flex-col items-center">
-          {/* Logo placeholder - flame icon */}
-          <div className="w-20 h-20 rounded-full bg-[#2C2C2C] flex items-center justify-center mb-4 shadow-lg">
-            <Flame className="h-10 w-10 text-[#E87A2F]" />
-          </div>
+          {/* Logo */}
+          <img
+            src="/manus-storage/logo-abrasa-reune_6d271f00.svg"
+            alt="A Brasa Reúne"
+            className="w-24 h-24 rounded-full shadow-lg mb-4 object-cover"
+          />
           <h1 className="text-2xl md:text-3xl font-bold text-[#2C2C2C] tracking-[0.2em] uppercase">
             A Brasa Reúne
           </h1>
