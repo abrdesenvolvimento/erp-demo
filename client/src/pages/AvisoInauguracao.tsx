@@ -95,19 +95,10 @@ export default function AvisoInauguracao() {
           <div className="w-8 h-[1px] bg-[#E87A2F]/50" />
         </div>
 
-        {/* Service charge notice */}
-        <p className="text-[#4A3728]/60 text-xs leading-relaxed">
-          Taxa de serviço de 10% será incluída na conta.
-          <br />
-          Agradecemos a compreensão!
-        </p>
-
         {/* Footer */}
-        <div className="mt-8 pt-4 border-t border-[#E87A2F]/20">
-          <p className="text-[#4A3728]/40 text-xs tracking-[0.15em] uppercase">
-            Obrigado pela presença!
-          </p>
-        </div>
+        <p className="text-[#4A3728]/40 text-xs tracking-[0.15em] uppercase">
+          Obrigado pela presença!
+        </p>
       </div>
     </div>
   );

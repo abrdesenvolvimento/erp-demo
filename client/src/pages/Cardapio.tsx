@@ -54,7 +54,7 @@ export default function Cardapio() {
   });
 
   return (
-    <div className="min-h-screen bg-[#FAF5EF] print-container">
+    <div className="bg-[#FAF5EF] print-container">
       {/* Print styles - removes browser headers/footers, fills A4 cleanly in exactly 2 pages */}
       <style>{`
         @media print {
@@ -148,7 +148,7 @@ export default function Cardapio() {
       </header>
 
       {/* Content */}
-      <main className="max-w-2xl mx-auto px-6 py-6 pb-8">
+      <main className="max-w-2xl mx-auto px-6 py-6 pb-0">
 
         {/* === PAGE 1: Entradas, Burgers, Água e Refrigerante === */}
 
@@ -217,12 +217,7 @@ export default function Cardapio() {
           </div>
         )}
 
-        {/* Simple footer line - no inauguration message (moved to /aviso-inauguracao) */}
-        <div className="print-footer flex items-center justify-center mt-6">
-          <span className="text-[#4A3728]/40 text-xs tracking-[0.2em] uppercase">
-            A Brasa Reúne — Bar & Hamburgueria
-          </span>
-        </div>
+
       </main>
     </div>
   );
