@@ -77,8 +77,23 @@ export default function Cardapio() {
           }
           .no-print { display: none !important; }
           .print-header { display: flex !important; }
-          /* Hide Made in Manus badge */
-          [class*="manus"], #manus-badge, .manus-badge { display: none !important; }
+          /* Hide Made in Manus badge and any platform-injected elements */
+          [class*="manus"], #manus-badge, .manus-badge,
+          [data-manus], [id*="manus"],
+          body > div:last-child:not(#root),
+          body > aside, body > footer {
+            display: none !important;
+            visibility: hidden !important;
+            height: 0 !important;
+            overflow: hidden !important;
+          }
+          /* Prevent extra blank pages */
+          .print-container {
+            page-break-after: avoid;
+          }
+          main {
+            page-break-after: avoid;
+          }
         }
         @media screen {
           .print-header { display: none !important; }
@@ -205,24 +220,25 @@ function DiamondSeparator() {
   );
 }
 
-/** Sort items with custom order: Carijó before Choripan */
+/** Sort items: alphabetical but Carijó immediately before Choripan (at the end) */
 function sortItems(items: Array<{ id: number; name: string; price: number | null; description: string | null }>) {
-  return [...items].sort((a, b) => {
-    const nameA = a.name.toUpperCase();
-    const nameB = b.name.toUpperCase();
-
-    // Custom sort: Carijó should come before Choripan
-    const isACarijo = nameA.includes('CARIJ');
-    const isBCarijo = nameB.includes('CARIJ');
-    const isAChoripan = nameA.includes('CHORIPAN');
-    const isBChoripan = nameB.includes('CHORIPAN');
-
-    if (isACarijo && isBChoripan) return -1;
-    if (isAChoripan && isBCarijo) return 1;
-
-    // Default alphabetical
-    return nameA.localeCompare(nameB, 'pt-BR');
+  // First sort alphabetically
+  const sorted = [...items].sort((a, b) => {
+    return a.name.toUpperCase().localeCompare(b.name.toUpperCase(), 'pt-BR');
   });
+
+  // Then move Carijó to be immediately before Choripan
+  const carijoIdx = sorted.findIndex(i => i.name.toUpperCase().includes('CARIJ'));
+  const choripanIdx = sorted.findIndex(i => i.name.toUpperCase().includes('CHORIPAN'));
+
+  if (carijoIdx !== -1 && choripanIdx !== -1 && carijoIdx !== choripanIdx - 1) {
+    const [carijo] = sorted.splice(carijoIdx, 1);
+    // After removing Carijó, find Choripan again
+    const newChoripanIdx = sorted.findIndex(i => i.name.toUpperCase().includes('CHORIPAN'));
+    sorted.splice(newChoripanIdx, 0, carijo);
+  }
+
+  return sorted;
 }
 
 /** Light background section */
