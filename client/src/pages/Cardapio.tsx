@@ -6,7 +6,7 @@ import { Flame } from "lucide-react";
  * Displays active products grouped by category with A Brasa Reúne branding.
  * Layout matches the PDF reference: cream background, orange accents,
  * two-column beverage sections, dotted leaders, diamond separators.
- * Designed for mobile-first (QR code on tables) + print-optimized (2 pages).
+ * Designed for mobile-first (QR code on tables) + print-optimized (2 pages A4).
  *
  * Category order: Entradas → Burgers → Água e Refrigerante → Suco → Cerveja → Drinks
  * Page break for print: before "Suco" section.
@@ -53,21 +53,39 @@ export default function Cardapio() {
     return (order[a.name] || 99) - (order[b.name] || 99);
   });
 
-  // Page 1: Entradas, Burgers, Água e Refrigerante
-  // Page 2 (after print break): Suco, Cerveja, Drinks
-
   return (
-    <div className="min-h-screen bg-[#FAF5EF]">
-      {/* Print styles */}
+    <div className="min-h-screen bg-[#FAF5EF] print-container">
+      {/* Print styles - removes browser headers/footers, fills A4 cleanly */}
       <style>{`
         @media print {
-          body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-          .page-break-before { page-break-before: always; break-before: page; }
+          @page {
+            size: A4;
+            margin: 10mm 12mm;
+          }
+          html, body {
+            margin: 0 !important;
+            padding: 0 !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+          }
+          .print-container {
+            min-height: auto !important;
+          }
+          .page-break-before {
+            page-break-before: always;
+            break-before: page;
+          }
           .no-print { display: none !important; }
           .print-header { display: flex !important; }
+          /* Hide Made in Manus badge */
+          [class*="manus"], #manus-badge, .manus-badge { display: none !important; }
         }
         @media screen {
           .print-header { display: none !important; }
+        }
+        /* Print title override - prevents browser from showing page title */
+        @media print {
+          title { display: none; }
         }
       `}</style>
 
@@ -99,7 +117,7 @@ export default function Cardapio() {
           <LightSection
             key={cat.id}
             title={cat.displayName}
-            items={cat.items}
+            items={sortItems(cat.items)}
             twoColumns={false}
           />
         ))}
@@ -157,15 +175,17 @@ export default function Cardapio() {
           />
         )}
 
-        {/* Footer */}
-        <div className="mt-12 text-center pt-6">
-          <p className="text-[#4A3728]/50 text-xs">
-            Taxa de serviço (10%) opcional.
+        {/* Footer - Inauguration message */}
+        <div className="mt-10 text-center pt-6 border-t border-[#E87A2F]/30">
+          <p className="text-[#2C2C2C] text-sm leading-relaxed max-w-md mx-auto">
+            <span className="text-lg">🔥</span> <strong>Bem-vindo à nossa inauguração!</strong>
           </p>
-          <p className="text-[#4A3728]/50 text-xs mt-1">
-            Informe ao atendente caso não deseje incluir.
+          <p className="text-[#4A3728]/70 text-xs leading-relaxed mt-3 max-w-md mx-auto">
+            Preparamos uma seleção especial para garantir a melhor experiência possível neste primeiro dia.
+            Já na próxima semana, novas opções serão adicionadas ao cardápio, incluindo os exclusivos
+            Hambúrgueres da Copa do Mundo. Fique de olho nas novidades!
           </p>
-          <div className="flex items-center justify-center gap-2 mt-6">
+          <div className="flex items-center justify-center gap-2 mt-8">
             <span className="text-[#4A3728]/40 text-xs tracking-[0.2em] uppercase">
               A Brasa Reúne — Bar & Hamburgueria
             </span>
@@ -183,6 +203,26 @@ function DiamondSeparator() {
       <span className="text-[#E87A2F] text-sm">◆</span>
     </div>
   );
+}
+
+/** Sort items with custom order: Carijó before Choripan */
+function sortItems(items: Array<{ id: number; name: string; price: number | null; description: string | null }>) {
+  return [...items].sort((a, b) => {
+    const nameA = a.name.toUpperCase();
+    const nameB = b.name.toUpperCase();
+
+    // Custom sort: Carijó should come before Choripan
+    const isACarijo = nameA.includes('CARIJ');
+    const isBCarijo = nameB.includes('CARIJ');
+    const isAChoripan = nameA.includes('CHORIPAN');
+    const isBChoripan = nameB.includes('CHORIPAN');
+
+    if (isACarijo && isBChoripan) return -1;
+    if (isAChoripan && isBCarijo) return 1;
+
+    // Default alphabetical
+    return nameA.localeCompare(nameB, 'pt-BR');
+  });
 }
 
 /** Light background section */
