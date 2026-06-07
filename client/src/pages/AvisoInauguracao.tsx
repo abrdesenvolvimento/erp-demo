@@ -55,44 +55,64 @@ export default function AvisoInauguracao() {
         <img
           src="/manus-storage/logo-abrasa-circle_54a46a8b.png"
           alt="A Brasa Reúne"
-          className="w-24 h-24 mx-auto mb-4 drop-shadow-lg"
+          className="w-20 h-20 mx-auto mb-3 drop-shadow-lg"
         />
 
         {/* Title */}
-        <h1 className="text-xl font-bold text-[#2C2C2C] tracking-[0.15em] uppercase mb-1">
+        <h1 className="text-lg font-bold text-[#2C2C2C] tracking-[0.15em] uppercase mb-0.5">
           A Brasa Reúne
         </h1>
-        <p className="text-[#4A3728]/60 text-xs tracking-[0.2em] uppercase mb-6">
+        <p className="text-[#4A3728]/60 text-[10px] tracking-[0.2em] uppercase mb-4">
           Bar & Hamburgueria
         </p>
 
         {/* Divider */}
-        <div className="flex items-center justify-center gap-3 mb-6">
-          <div className="w-12 h-[2px] bg-[#E87A2F]" />
-          <Flame className="h-5 w-5 text-[#E87A2F]" />
-          <div className="w-12 h-[2px] bg-[#E87A2F]" />
+        <div className="flex items-center justify-center gap-3 mb-4">
+          <div className="w-10 h-[2px] bg-[#E87A2F]" />
+          <Flame className="h-4 w-4 text-[#E87A2F]" />
+          <div className="w-10 h-[2px] bg-[#E87A2F]" />
         </div>
 
         {/* Main message */}
-        <h2 className="text-lg font-bold text-[#2C2C2C] mb-4">
+        <h2 className="text-base font-bold text-[#2C2C2C] mb-3">
           Bem-vindo à nossa inauguração!
         </h2>
 
-        <p className="text-[#4A3728]/80 text-sm leading-relaxed mb-4">
+        <p className="text-[#4A3728]/80 text-sm leading-relaxed mb-3">
           Preparamos uma seleção especial para garantir a melhor experiência possível neste primeiro dia.
         </p>
 
-        <p className="text-[#4A3728]/80 text-sm leading-relaxed mb-6">
+        <p className="text-[#4A3728]/80 text-sm leading-relaxed mb-5">
           Já na próxima semana, novas opções serão adicionadas ao cardápio, incluindo os exclusivos
           <strong className="text-[#2C2C2C]"> Hambúrgueres da Copa do Mundo</strong>.
           Fique de olho nas novidades!
         </p>
 
-        {/* Divider */}
-        <div className="flex items-center justify-center gap-3 mb-6">
-          <div className="w-8 h-[1px] bg-[#E87A2F]/50" />
-          <span className="text-[#E87A2F] text-xs">◆</span>
-          <div className="w-8 h-[1px] bg-[#E87A2F]/50" />
+        {/* QR Codes side by side */}
+        <div className="flex items-center justify-center gap-8 mb-5">
+          {/* Instagram QR */}
+          <div className="flex flex-col items-center gap-2">
+            <img
+              src="/manus-storage/qr-instagram_6d1c9f2c.jpg"
+              alt="QR Code Instagram"
+              className="w-28 h-28 rounded-lg shadow-sm"
+            />
+            <span className="text-[#4A3728]/70 text-[10px] font-medium tracking-wide">
+              Siga-nos
+            </span>
+          </div>
+
+          {/* Google Review QR */}
+          <div className="flex flex-col items-center gap-2">
+            <img
+              src="/manus-storage/qr-google_ce0b0250.png"
+              alt="QR Code Avaliação Google"
+              className="w-28 h-28 rounded-lg shadow-sm border border-gray-200 p-2 bg-white"
+            />
+            <span className="text-[#4A3728]/70 text-[10px] font-medium tracking-wide">
+              Avalie-nos
+            </span>
+          </div>
         </div>
 
         {/* Footer */}
