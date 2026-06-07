@@ -224,10 +224,10 @@ export default function Cardapio() {
           </div>
         )}
 
-        {/* Footer text */}
-        <div className="print-footer flex items-center justify-center mt-8 pb-4">
+        {/* Footer text - positioned lower on the page */}
+        <div className="print-footer flex items-center justify-center mt-16 pb-4">
           <span className="text-[#4A3728]/40 text-xs tracking-[0.2em] uppercase">
-            A Brasa Reúne — Bar & Hamburgueria
+            A Brasa Reúne | Bar & Hamburgueria
           </span>
         </div>
 
