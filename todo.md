@@ -2431,3 +2431,10 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Pagamento dividido não funciona — adicionado modal de confirmação final para evitar fechamento acidental
 - [x] Subtotal divergente na tela de Vendas — closeOrder agora recalcula subtotal a partir dos itens (fonte autoritativa)
 - [x] Taxa de serviço agora aparece no campo observação da venda: "Comanda #X | Mesa Y | Z pessoa(s) | SALÃO | Taxa de serviço (10%): R$ XX,XX"
+
+### FEAT: Página Pública do Cardápio (07/06/2026)
+- [x] Endpoint público trpc.cardapio.getMenu (busca produtos ativos excluindo Ingredientes)
+- [x] Página /cardapio com layout mobile-first e branding A Brasa Reúne
+- [x] Agrupamento automático: Burgers, Entradas, Cervejas, Drinks, Sucos, Águas & Refrigerantes
+- [x] Nomes em maiúsculo conforme solicitado
+- [x] Acessível via abrwf.com.br/cardapio (após publicação)

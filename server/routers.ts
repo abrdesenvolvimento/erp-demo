@@ -16,6 +16,7 @@ import { auditLogRouter } from './routers/auditLog';
 import { stockMovementsRouter } from './routers/stockMovements';
 import { salonRouter } from './routers/salon';
 import { printersRouter } from './routers/printers';
+import { cardapioRouter } from './routers/cardapio';
 
 export const appRouter = router({
   system: systemRouter,
@@ -28,6 +29,7 @@ export const appRouter = router({
   stockMovements: stockMovementsRouter,
   salon: salonRouter,
   printers: printersRouter,
+  cardapio: cardapioRouter,
 
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
