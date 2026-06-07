@@ -50,7 +50,7 @@ export default function AvisoInauguracao() {
         }
       `}</style>
 
-      <div className="max-w-md w-full text-center pt-10">
+      <div className="max-w-md w-full text-center pt-10 pb-12">
         {/* Logo */}
         <img
           src="/manus-storage/logo-abrasa-circle_54a46a8b.png"
