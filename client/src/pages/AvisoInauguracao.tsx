@@ -89,14 +89,16 @@ export default function AvisoInauguracao() {
         </p>
 
         {/* QR Codes side by side */}
-        <div className="flex items-center justify-center gap-8 mb-5">
+        <div className="flex items-center justify-center gap-10 mb-5">
           {/* Instagram QR */}
           <div className="flex flex-col items-center gap-2">
-            <img
-              src="/manus-storage/qr-instagram_6d1c9f2c.jpg"
-              alt="QR Code Instagram"
-              className="w-28 h-28 rounded-lg shadow-sm"
-            />
+            <div className="w-28 h-28 bg-white rounded-lg shadow-sm border border-gray-200 p-2 flex items-center justify-center">
+              <img
+                src="/manus-storage/qr-instagram-clean_4fe1586c.png"
+                alt="QR Code Instagram"
+                className="w-full h-full object-contain"
+              />
+            </div>
             <span className="text-[#4A3728]/70 text-[10px] font-medium tracking-wide">
               Siga-nos
             </span>
@@ -104,11 +106,13 @@ export default function AvisoInauguracao() {
 
           {/* Google Review QR */}
           <div className="flex flex-col items-center gap-2">
-            <img
-              src="/manus-storage/qr-google_ce0b0250.png"
-              alt="QR Code Avaliação Google"
-              className="w-28 h-28 rounded-lg shadow-sm border border-gray-200 p-2 bg-white"
-            />
+            <div className="w-28 h-28 bg-white rounded-lg shadow-sm border border-gray-200 p-2 flex items-center justify-center">
+              <img
+                src="/manus-storage/qr-google-clean_9e945e9c.png"
+                alt="QR Code Avaliação Google"
+                className="w-full h-full object-contain"
+              />
+            </div>
             <span className="text-[#4A3728]/70 text-[10px] font-medium tracking-wide">
               Avalie-nos
             </span>
