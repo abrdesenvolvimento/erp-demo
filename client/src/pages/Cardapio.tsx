@@ -77,22 +77,39 @@ export default function Cardapio() {
           }
           .no-print { display: none !important; }
           .print-header { display: flex !important; }
-          /* Hide Made in Manus badge and any platform-injected elements */
-          [class*="manus"], #manus-badge, .manus-badge,
-          [data-manus], [id*="manus"],
-          body > div:last-child:not(#root),
-          body > aside, body > footer {
+          /* Hide Made in Manus badge and ALL platform-injected elements */
+          [class*="manus"], [class*="Manus"], #manus-badge, .manus-badge,
+          [data-manus], [id*="manus"], [id*="Manus"],
+          body > div:not(#root),
+          body > aside, body > footer, body > span,
+          body > a, body > p,
+          #root ~ *, 
+          [style*="position: fixed"],
+          [style*="position:fixed"] {
             display: none !important;
             visibility: hidden !important;
             height: 0 !important;
+            width: 0 !important;
             overflow: hidden !important;
+            position: absolute !important;
+            left: -9999px !important;
           }
           /* Prevent extra blank pages */
+          html, body, #root, .print-container {
+            height: auto !important;
+            min-height: auto !important;
+            overflow: visible !important;
+          }
           .print-container {
             page-break-after: avoid;
           }
           main {
             page-break-after: avoid;
+          }
+          /* Remove any margins/padding that cause white rebarbas */
+          #root {
+            margin: 0 !important;
+            padding: 0 !important;
           }
         }
         @media screen {
@@ -220,11 +237,19 @@ function DiamondSeparator() {
   );
 }
 
-/** Sort items: alphabetical but Carijó immediately before Choripan (at the end) */
+/** Sort items: Cheese Burger first, then alphabetical, Carijó immediately before Choripan */
 function sortItems(items: Array<{ id: number; name: string; price: number | null; description: string | null }>) {
-  // First sort alphabetically
+  // Custom order: Cheese Burger first, then alphabetical, Carijó before Choripan
   const sorted = [...items].sort((a, b) => {
-    return a.name.toUpperCase().localeCompare(b.name.toUpperCase(), 'pt-BR');
+    const nameA = a.name.toUpperCase();
+    const nameB = b.name.toUpperCase();
+
+    // Cheese Burger always first
+    if (nameA === 'CHEESE BURGER') return -1;
+    if (nameB === 'CHEESE BURGER') return 1;
+
+    // Default alphabetical
+    return nameA.localeCompare(nameB, 'pt-BR');
   });
 
   // Then move Carijó to be immediately before Choripan
@@ -233,7 +258,6 @@ function sortItems(items: Array<{ id: number; name: string; price: number | null
 
   if (carijoIdx !== -1 && choripanIdx !== -1 && carijoIdx !== choripanIdx - 1) {
     const [carijo] = sorted.splice(carijoIdx, 1);
-    // After removing Carijó, find Choripan again
     const newChoripanIdx = sorted.findIndex(i => i.name.toUpperCase().includes('CHORIPAN'));
     sorted.splice(newChoripanIdx, 0, carijo);
   }
