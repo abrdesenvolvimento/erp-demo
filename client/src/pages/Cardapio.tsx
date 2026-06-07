@@ -129,6 +129,34 @@ export default function Cardapio() {
             break-after: avoid;
             margin-bottom: 0 !important;
             padding-bottom: 0 !important;
+            margin-top: 2mm !important;
+          }
+          /* Compact page 2 spacing to fit in 2 pages */
+          .page-break-before .print-header {
+            margin-bottom: 2mm !important;
+            padding-top: 1mm !important;
+          }
+          .page-break-before .print-header img {
+            width: 12mm !important;
+            height: 12mm !important;
+          }
+          /* Reduce diamond separator spacing in print */
+          .diamond-sep {
+            margin-top: 2mm !important;
+            margin-bottom: 2mm !important;
+          }
+          /* Reduce section margins in print */
+          section {
+            margin-bottom: 0 !important;
+          }
+          /* Reduce section header margins */
+          section .flex.items-center.gap-3 {
+            margin-bottom: 1.5mm !important;
+          }
+          /* Compact dark section */
+          .last-print-section section {
+            padding-top: 3mm !important;
+            padding-bottom: 3mm !important;
           }
         }
         @media screen {
@@ -225,7 +253,7 @@ export default function Cardapio() {
         )}
 
         {/* Footer text - positioned lower on the page */}
-        <div className="print-footer flex flex-col items-center justify-center mt-16 pb-4 gap-1">
+        <div className="print-footer flex flex-col items-center justify-center mt-8 pb-4 gap-1">
           <span className="text-[#4A3728]/40 text-xs tracking-[0.2em] uppercase">
             A Brasa Reúne | Bar & Hamburgueria
           </span>
@@ -242,7 +270,7 @@ export default function Cardapio() {
 /** Diamond separator between sections */
 function DiamondSeparator() {
   return (
-    <div className="flex items-center justify-center my-6">
+    <div className="diamond-sep flex items-center justify-center my-6">
       <span className="text-[#E87A2F] text-sm">◆</span>
     </div>
   );
