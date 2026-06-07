@@ -120,6 +120,7 @@ const salonMenuItems = [
   { icon: ChefHat, label: "KDS Cozinha", path: "/salao/kds-cozinha", roles: ["admin", "operacional"] },
   { icon: UtensilsCrossed, label: "KDS Bar", path: "/salao/kds-bar", roles: ["admin", "operacional"] },
   { icon: GitCompare, label: "Transferência", path: "/salao/transferencia", roles: ["admin"] },
+  { icon: BookOpen, label: "Cardápio", path: "/cardapio", roles: ["admin", "operacional", "garcom"] },
 ];
 
 // Submenu de Auditoria

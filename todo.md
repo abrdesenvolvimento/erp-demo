@@ -2438,3 +2438,11 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Agrupamento automático: Burgers, Entradas, Cervejas, Drinks, Sucos, Águas & Refrigerantes
 - [x] Nomes em maiúsculo conforme solicitado
 - [x] Acessível via abrwf.com.br/cardapio (após publicação)
+
+### MELHORIA: Cardápio Digital - Layout e Funcionalidades (07/06/2026)
+- [x] Redesign layout conforme PDF referência (fundo creme, acentos laranja, linhas pontilhadas, separadores diamante)
+- [x] Seções com duas colunas para bebidas (Cervejas, Drinks, Águas, Sucos)
+- [x] Seção Drinks com fundo escuro conforme referência
+- [x] Água Tônica deve ficar em "Água e Refrigerante" (não em Drinks)
+- [x] Adicionar item "Cardápio" no menu lateral do ERP
+- [x] Atualização dinâmica quando nome/valor/descrição do produto mudar
