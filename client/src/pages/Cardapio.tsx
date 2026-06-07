@@ -225,9 +225,12 @@ export default function Cardapio() {
         )}
 
         {/* Footer text - positioned lower on the page */}
-        <div className="print-footer flex items-center justify-center mt-16 pb-4">
+        <div className="print-footer flex flex-col items-center justify-center mt-16 pb-4 gap-1">
           <span className="text-[#4A3728]/40 text-xs tracking-[0.2em] uppercase">
             A Brasa Reúne | Bar & Hamburgueria
+          </span>
+          <span className="text-[#4A3728]/35 text-[10px] tracking-[0.1em]">
+            @abrasareune
           </span>
         </div>
 
