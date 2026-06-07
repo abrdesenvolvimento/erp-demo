@@ -100,6 +100,13 @@ export default function Cardapio() {
             min-height: 0 !important;
             overflow: visible !important;
           }
+          /* Extend creme background to fill entire printed page */
+          html, body {
+            background-color: #FAF5EF !important;
+          }
+          #root {
+            background-color: #FAF5EF !important;
+          }
           #root {
             margin: 0 !important;
             padding: 0 !important;
@@ -217,6 +224,12 @@ export default function Cardapio() {
           </div>
         )}
 
+        {/* Footer text */}
+        <div className="print-footer flex items-center justify-center mt-8 pb-4">
+          <span className="text-[#4A3728]/40 text-xs tracking-[0.2em] uppercase">
+            A Brasa Reúne — Bar & Hamburgueria
+          </span>
+        </div>
 
       </main>
     </div>
