@@ -55,7 +55,7 @@ export default function Cardapio() {
 
   return (
     <div className="min-h-screen bg-[#FAF5EF] print-container">
-      {/* Print styles - removes browser headers/footers, fills A4 cleanly */}
+      {/* Print styles - removes browser headers/footers, fills A4 cleanly in exactly 2 pages */}
       <style>{`
         @media print {
           @page {
@@ -94,30 +94,38 @@ export default function Cardapio() {
             position: absolute !important;
             left: -9999px !important;
           }
-          /* Prevent extra blank pages */
+          /* CRITICAL: Prevent blank third page */
           html, body, #root, .print-container {
             height: auto !important;
-            min-height: auto !important;
+            min-height: 0 !important;
             overflow: visible !important;
           }
-          .print-container {
-            page-break-after: avoid;
-          }
-          main {
-            page-break-after: avoid;
-          }
-          /* Remove any margins/padding that cause white rebarbas */
           #root {
             margin: 0 !important;
             padding: 0 !important;
           }
+          .print-container {
+            padding-bottom: 0 !important;
+            margin-bottom: 0 !important;
+          }
+          main {
+            padding-bottom: 0 !important;
+            margin-bottom: 0 !important;
+          }
+          /* Prevent orphan content from pushing to third page */
+          .last-print-section {
+            page-break-after: auto;
+            break-after: auto;
+          }
+          .print-footer {
+            page-break-after: avoid;
+            break-after: avoid;
+            margin-bottom: 0 !important;
+            padding-bottom: 0 !important;
+          }
         }
         @media screen {
           .print-header { display: none !important; }
-        }
-        /* Print title override - prevents browser from showing page title */
-        @media print {
-          title { display: none; }
         }
       `}</style>
 
@@ -140,7 +148,7 @@ export default function Cardapio() {
       </header>
 
       {/* Content */}
-      <main className="max-w-2xl mx-auto px-6 py-6 pb-20">
+      <main className="max-w-2xl mx-auto px-6 py-6 pb-8">
 
         {/* === PAGE 1: Entradas, Burgers, Água e Refrigerante === */}
 
@@ -198,30 +206,22 @@ export default function Cardapio() {
           />
         )}
 
-        {/* Drinks (dark section) */}
+        {/* Drinks (dark section) - last section on page 2 */}
         {bebidasGrouped.drinks.length > 0 && (
-          <DarkSection
-            title="Drinks"
-            items={bebidasGrouped.drinks}
-            twoColumns={true}
-          />
+          <div className="last-print-section">
+            <DarkSection
+              title="Drinks"
+              items={bebidasGrouped.drinks}
+              twoColumns={true}
+            />
+          </div>
         )}
 
-        {/* Footer - Inauguration message */}
-        <div className="mt-10 text-center pt-6 border-t border-[#E87A2F]/30">
-          <p className="text-[#2C2C2C] text-sm leading-relaxed max-w-md mx-auto">
-            <span className="text-lg">🔥</span> <strong>Bem-vindo à nossa inauguração!</strong>
-          </p>
-          <p className="text-[#4A3728]/70 text-xs leading-relaxed mt-3 max-w-md mx-auto">
-            Preparamos uma seleção especial para garantir a melhor experiência possível neste primeiro dia.
-            Já na próxima semana, novas opções serão adicionadas ao cardápio, incluindo os exclusivos
-            Hambúrgueres da Copa do Mundo. Fique de olho nas novidades!
-          </p>
-          <div className="flex items-center justify-center gap-2 mt-8">
-            <span className="text-[#4A3728]/40 text-xs tracking-[0.2em] uppercase">
-              A Brasa Reúne — Bar & Hamburgueria
-            </span>
-          </div>
+        {/* Simple footer line - no inauguration message (moved to /aviso-inauguracao) */}
+        <div className="print-footer flex items-center justify-center mt-6">
+          <span className="text-[#4A3728]/40 text-xs tracking-[0.2em] uppercase">
+            A Brasa Reúne — Bar & Hamburgueria
+          </span>
         </div>
       </main>
     </div>
@@ -309,7 +309,7 @@ function DarkSection({ title, items, twoColumns }: {
   twoColumns: boolean;
 }) {
   return (
-    <section className="mb-6 -mx-6 px-6 py-6 bg-[#2C2C2C]">
+    <section className="mb-0 -mx-6 px-6 py-6 bg-[#2C2C2C]">
       {/* Section header with orange line */}
       <div className="flex items-center gap-3 mb-4">
         <h2 className="text-base md:text-lg font-bold text-[#FAF5EF] uppercase tracking-[0.15em] whitespace-nowrap">

@@ -2446,3 +2446,11 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Água Tônica deve ficar em "Água e Refrigerante" (não em Drinks)
 - [x] Adicionar item "Cardápio" no menu lateral do ERP
 - [x] Atualização dinâmica quando nome/valor/descrição do produto mudar
+
+### FIX: Cardápio - Impressão e Aviso de Inauguração (07/06/2026)
+- [x] Eliminar terceira página em branco na impressão (removido pb-20, min-height, ajustado print CSS)
+- [x] Remover mensagem de inauguração do cardápio principal (cardápio fica limpo e atemporal)
+- [x] Criar página separada /aviso-inauguracao para impressão como folha avulsa (A5 landscape)
+- [x] Aviso inclui: logo, mensagem de boas-vindas, menção Copa do Mundo, taxa de serviço 10%
+- [x] Print CSS otimizado: @page A5 landscape, esconde badge Manus, sem páginas extras
+- [x] Rota /aviso-inauguracao registrada no App.tsx
