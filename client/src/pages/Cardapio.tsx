@@ -6,7 +6,10 @@ import { Flame } from "lucide-react";
  * Displays active products grouped by category with A Brasa Reúne branding.
  * Layout matches the PDF reference: cream background, orange accents,
  * two-column beverage sections, dotted leaders, diamond separators.
- * Designed for mobile-first (QR code on tables).
+ * Designed for mobile-first (QR code on tables) + print-optimized (2 pages).
+ *
+ * Category order: Entradas → Burgers → Água e Refrigerante → Suco → Cerveja → Drinks
+ * Page break for print: before "Suco" section.
  */
 export default function Cardapio() {
   const { data, isLoading, error } = trpc.cardapio.getMenu.useQuery({ companyId: 2 });
@@ -34,18 +37,40 @@ export default function Cardapio() {
     );
   }
 
-  // Sub-group bebidas into logical sections
+  // Separate food categories from bebidas
   const bebidasCategory = data.categories.find(c => c.name === "BEBIIDAS");
-  const otherCategories = data.categories.filter(c => c.name !== "BEBIIDAS");
+  const foodCategories = data.categories.filter(c => c.name !== "BEBIIDAS");
 
   // Split bebidas into sub-sections
-  const bebidasSections = bebidasCategory ? groupBebidas(bebidasCategory.items) : [];
+  const bebidasGrouped = bebidasCategory ? groupBebidas(bebidasCategory.items) : { cervejas: [], drinks: [], sucos: [], aguasRefri: [] };
 
-  // Reorder: Entradas, Burgers first, then Sucos, Águas, Cervejas, Drinks
-  const orderedSections = reorderSections(bebidasSections);
+  // Order food categories: Entradas first, then Burgers
+  const orderedFood = [...foodCategories].sort((a, b) => {
+    const order: Record<string, number> = {
+      "ENTRADAS E ACOMPANHAMENTOS": 1,
+      "BURGERS": 2,
+    };
+    return (order[a.name] || 99) - (order[b.name] || 99);
+  });
+
+  // Page 1: Entradas, Burgers, Água e Refrigerante
+  // Page 2 (after print break): Suco, Cerveja, Drinks
 
   return (
     <div className="min-h-screen bg-[#FAF5EF]">
+      {/* Print styles */}
+      <style>{`
+        @media print {
+          body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+          .page-break-before { page-break-before: always; break-before: page; }
+          .no-print { display: none !important; }
+          .print-header { display: flex !important; }
+        }
+        @media screen {
+          .print-header { display: none !important; }
+        }
+      `}</style>
+
       {/* Header */}
       <header className="pt-8 pb-4">
         <div className="max-w-2xl mx-auto px-6 flex flex-col items-center">
@@ -67,8 +92,10 @@ export default function Cardapio() {
       {/* Content */}
       <main className="max-w-2xl mx-auto px-6 py-6 pb-20">
 
-        {/* Non-bebidas categories (Entradas, Burgers) */}
-        {otherCategories.map((cat) => (
+        {/* === PAGE 1: Entradas, Burgers, Água e Refrigerante === */}
+
+        {/* Food categories (Entradas, Burgers) */}
+        {orderedFood.map((cat) => (
           <LightSection
             key={cat.id}
             title={cat.displayName}
@@ -77,24 +104,58 @@ export default function Cardapio() {
           />
         ))}
 
-        {/* Bebidas sub-sections */}
-        {orderedSections.map((section) => (
-          section.dark ? (
-            <DarkSection
-              key={section.title}
-              title={section.title}
-              items={section.items}
-              twoColumns={section.twoColumns}
+        {/* Água e Refrigerante */}
+        {bebidasGrouped.aguasRefri.length > 0 && (
+          <LightSection
+            title="Água e Refrigerante"
+            items={bebidasGrouped.aguasRefri}
+            twoColumns={true}
+          />
+        )}
+
+        {/* === PAGE 2: Suco, Cerveja, Drinks === */}
+
+        {/* Page break for print + repeated header on page 2 */}
+        <div className="page-break-before">
+          {/* Mini header for page 2 (print only) */}
+          <div className="print-header flex-col items-center mb-6 pt-4">
+            <img
+              src="/manus-storage/logo-abrasa-circle_54a46a8b.png"
+              alt="A Brasa Reúne"
+              className="w-16 h-16 mx-auto mb-2"
             />
-          ) : (
-            <LightSection
-              key={section.title}
-              title={section.title}
-              items={section.items}
-              twoColumns={section.twoColumns}
-            />
-          )
-        ))}
+            <p className="text-center text-xs text-[#4A3728]/60 tracking-[0.2em] uppercase">
+              A Brasa Reúne — Bar & Hamburgueria
+            </p>
+          </div>
+        </div>
+
+        {/* Suco */}
+        {bebidasGrouped.sucos.length > 0 && (
+          <LightSection
+            title="Sucos"
+            items={bebidasGrouped.sucos}
+            twoColumns={true}
+          />
+        )}
+
+        {/* Cerveja */}
+        {bebidasGrouped.cervejas.length > 0 && (
+          <LightSection
+            title="Cervejas"
+            items={bebidasGrouped.cervejas}
+            twoColumns={true}
+          />
+        )}
+
+        {/* Drinks (dark section) */}
+        {bebidasGrouped.drinks.length > 0 && (
+          <DarkSection
+            title="Drinks"
+            items={bebidasGrouped.drinks}
+            twoColumns={true}
+          />
+        )}
 
         {/* Footer */}
         <div className="mt-12 text-center pt-6">
@@ -124,7 +185,7 @@ function DiamondSeparator() {
   );
 }
 
-/** Light background section (Entradas, Burgers, Sucos, Águas, Cervejas) */
+/** Light background section */
 function LightSection({ title, items, twoColumns }: {
   title: string;
   items: Array<{ id: number; name: string; price: number | null; description: string | null }>;
@@ -265,29 +326,4 @@ function groupBebidas(items: Array<{ id: number; name: string; price: number | n
   }
 
   return { cervejas, drinks, sucos, aguasRefri };
-}
-
-/** Reorder sections to match PDF reference: Sucos, Águas, Cervejas, Drinks (dark) */
-function reorderSections(grouped: ReturnType<typeof groupBebidas>) {
-  const sections: Array<{
-    title: string;
-    items: Array<{ id: number; name: string; price: number | null; description: string | null }>;
-    twoColumns: boolean;
-    dark: boolean;
-  }> = [];
-
-  if (grouped.sucos.length > 0) {
-    sections.push({ title: "Sucos", items: grouped.sucos, twoColumns: true, dark: false });
-  }
-  if (grouped.aguasRefri.length > 0) {
-    sections.push({ title: "Água e Refrigerante", items: grouped.aguasRefri, twoColumns: true, dark: false });
-  }
-  if (grouped.cervejas.length > 0) {
-    sections.push({ title: "Cervejas", items: grouped.cervejas, twoColumns: true, dark: false });
-  }
-  if (grouped.drinks.length > 0) {
-    sections.push({ title: "Drinks", items: grouped.drinks, twoColumns: true, dark: true });
-  }
-
-  return sections;
 }
