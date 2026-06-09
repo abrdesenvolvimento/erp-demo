@@ -75,15 +75,15 @@ export default function AvisoInauguracao() {
 
         {/* Main message */}
         <h2 className="text-base font-bold text-[#2C2C2C] mb-3">
-          Bem-vindo à nossa inauguração!
+          Bem-vindo à A Brasa Reúne!
         </h2>
 
         <p className="text-[#4A3728]/80 text-sm leading-relaxed mb-3">
-          Preparamos uma seleção especial para garantir a melhor experiência possível neste primeiro dia.
+          Preparamos uma seleção especial para garantir a melhor experiência possível nesses primeiros dias.
         </p>
 
         <p className="text-[#4A3728]/80 text-sm leading-relaxed mb-5">
-          Já na próxima semana, novas opções serão adicionadas ao cardápio, incluindo os exclusivos
+          A partir de quinta-feira, 12 de Junho, novas opções serão adicionadas ao cardápio, incluindo os exclusivos
           <strong className="text-[#2C2C2C]"> Hambúrgueres da Copa do Mundo</strong>.
           Fique de olho nas novidades!
         </p>
