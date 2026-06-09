@@ -75,7 +75,7 @@ export default function AvisoInauguracao() {
 
         {/* Main message */}
         <h2 className="text-base font-bold text-[#2C2C2C] mb-3">
-          Bem-vindo à A Brasa Reúne!
+          Bem-vindo! <span className="font-normal italic">A Brasa Reúne.</span>
         </h2>
 
         <p className="text-[#4A3728]/80 text-sm leading-relaxed mb-3">
