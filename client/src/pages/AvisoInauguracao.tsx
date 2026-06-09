@@ -83,7 +83,7 @@ export default function AvisoInauguracao() {
         </p>
 
         <p className="text-[#4A3728]/80 text-sm leading-relaxed mb-5">
-          A partir de quinta-feira, 12 de Junho, novas opções serão adicionadas ao cardápio, incluindo os exclusivos
+          A partir de quinta-feira, 11 de Junho, novas opções serão adicionadas ao cardápio, incluindo os exclusivos
           <strong className="text-[#2C2C2C]"> Hambúrgueres da Copa do Mundo</strong>.
           Fique de olho nas novidades!
         </p>
