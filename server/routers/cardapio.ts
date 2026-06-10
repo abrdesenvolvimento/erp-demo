@@ -35,11 +35,14 @@ export const cardapioRouter = router({
         SELECT 
           p.id, p.name, p.subcategory, p.notes,
           c.id as categoryId, c.name as categoryName,
+          s.id as subcategoryId, s.name as subcategoryName,
           pp.price
         FROM products p 
         JOIN categories c ON p.categoryId = c.id 
+        LEFT JOIN subcategories s ON p.subcategoryId = s.id
         LEFT JOIN productPrices pp ON pp.productId = p.id AND pp.channelId = ${salonChannelId}
         WHERE p.active = 1 
+          AND p.availableInSalon = 1
           AND UPPER(c.name) NOT LIKE '%INGREDIENTE%'
           AND p.companyId = ${companyId}
         ORDER BY c.name, p.name
@@ -52,24 +55,31 @@ export const cardapioRouter = router({
         notes: string | null;
         categoryId: number;
         categoryName: string;
+        subcategoryId: number | null;
+        subcategoryName: string | null;
         price: string | null;
       }>;
 
-      // Group by category
+      // Group by category, splitting BURGERS into regular and Copa do Mundo
       const categoryMap = new Map<string, {
         id: number;
         name: string;
         displayName: string;
+        sectionStyle?: string;
         items: Array<{ id: number; name: string; price: number | null; description: string | null }>;
       }>();
 
       for (const p of products) {
-        const catKey = p.categoryName;
+        // Copa do Mundo burgers get their own section
+        const isCopaDoMundo = p.subcategoryName === 'COPA DO MUNDO';
+        const catKey = isCopaDoMundo ? 'COPA DO MUNDO' : p.categoryName;
+        
         if (!categoryMap.has(catKey)) {
           categoryMap.set(catKey, {
-            id: p.categoryId,
-            name: p.categoryName,
-            displayName: formatCategoryName(p.categoryName),
+            id: isCopaDoMundo ? 99901 : p.categoryId,
+            name: catKey,
+            displayName: isCopaDoMundo ? 'Copa do Mundo' : formatCategoryName(p.categoryName),
+            sectionStyle: isCopaDoMundo ? 'copa' : (catKey === 'PARA COMPARTILHAR' ? 'dark' : 'light'),
             items: [],
           });
         }
@@ -83,8 +93,10 @@ export const cardapioRouter = router({
 
       // Define display order for categories
       const categoryOrder = [
-        'BURGERS',
         'ENTRADAS E ACOMPANHAMENTOS',
+        'BURGERS',
+        'COPA DO MUNDO',
+        'PARA COMPARTILHAR',
         'BEBIIDAS',
       ];
 
@@ -110,6 +122,9 @@ function formatCategoryName(name: string): string {
     'BEBIIDAS': 'Bebidas',
     'BURGERS': 'Burgers',
     'ENTRADAS E ACOMPANHAMENTOS': 'Entradas & Acompanhamentos',
+    'PARA COMPARTILHAR': 'Para Compartilhar',
+    'COPA DO MUNDO': 'Copa do Mundo',
+    'SOBREMESAS': 'Sobremesas',
   };
   if (fixes[name]) return fixes[name];
   return name.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');

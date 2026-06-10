@@ -8,9 +8,37 @@ import { Flame } from "lucide-react";
  * two-column beverage sections, dotted leaders, diamond separators.
  * Designed for mobile-first (QR code on tables) + print-optimized (2 pages A4).
  *
- * Category order: Entradas → Burgers → Água e Refrigerante → Suco → Cerveja → Drinks
+ * Category order: Entradas → Burgers → Copa do Mundo → Para Compartilhar → Bebidas
  * Page break for print: before "Suco" section.
  */
+
+// Country flag mapping for Copa do Mundo items
+const COUNTRY_FLAGS: Record<string, string> = {
+  'USA': '🇺🇸',
+  'EUA': '🇺🇸',
+  'MEXICO': '🇲🇽',
+  'MÉXICO': '🇲🇽',
+  'CANADA': '🇨🇦',
+  'CANADÁ': '🇨🇦',
+  'BRASIL': '🇧🇷',
+  'ARGENTINA': '🇦🇷',
+  'ITALIA': '🇮🇹',
+  'ITÁLIA': '🇮🇹',
+  'JAPAO': '🇯🇵',
+  'JAPÃO': '🇯🇵',
+  'ALEMANHA': '🇩🇪',
+  'FRANCA': '🇫🇷',
+  'FRANÇA': '🇫🇷',
+};
+
+function getCountryFlag(itemName: string): string | null {
+  const nameUpper = itemName.toUpperCase();
+  for (const [country, flag] of Object.entries(COUNTRY_FLAGS)) {
+    if (nameUpper.includes(country)) return flag;
+  }
+  return null;
+}
+
 export default function Cardapio() {
   const { data, isLoading, error } = trpc.cardapio.getMenu.useQuery({ companyId: 2 });
 
@@ -37,9 +65,13 @@ export default function Cardapio() {
     );
   }
 
-  // Separate food categories from bebidas
+  // Separate categories by type
   const bebidasCategory = data.categories.find(c => c.name === "BEBIIDAS");
-  const foodCategories = data.categories.filter(c => c.name !== "BEBIIDAS");
+  const copaDoMundo = data.categories.find(c => c.name === "COPA DO MUNDO");
+  const paraCompartilhar = data.categories.find(c => c.name === "PARA COMPARTILHAR");
+  const foodCategories = data.categories.filter(c => 
+    c.name !== "BEBIIDAS" && c.name !== "COPA DO MUNDO" && c.name !== "PARA COMPARTILHAR"
+  );
 
   // Split bebidas into sub-sections
   const bebidasGrouped = bebidasCategory ? groupBebidas(bebidasCategory.items) : { cervejas: [], drinks: [], sucos: [], aguasRefri: [] };
@@ -55,7 +87,7 @@ export default function Cardapio() {
 
   return (
     <div className="bg-[#FAF5EF] print-container">
-      {/* Print styles - removes browser headers/footers, fills A4 cleanly in exactly 2 pages */}
+      {/* Print styles */}
       <style>{`
         @media print {
           @page {
@@ -106,8 +138,6 @@ export default function Cardapio() {
           }
           #root {
             background-color: #FAF5EF !important;
-          }
-          #root {
             margin: 0 !important;
             padding: 0 !important;
           }
@@ -167,7 +197,6 @@ export default function Cardapio() {
       {/* Header */}
       <header className="pt-6 pb-3">
         <div className="max-w-2xl mx-auto px-6 flex flex-col items-center">
-          {/* Logo */}
           <img
             src="/manus-storage/logo-abrasa-circle_54a46a8b.png"
             alt="A Brasa Reúne"
@@ -185,7 +214,7 @@ export default function Cardapio() {
       {/* Content */}
       <main className="max-w-2xl mx-auto px-6 py-6 pb-0">
 
-        {/* === PAGE 1: Entradas, Burgers, Água e Refrigerante === */}
+        {/* === PAGE 1: Entradas, Burgers, Copa do Mundo, Para Compartilhar === */}
 
         {/* Food categories (Entradas, Burgers) */}
         {orderedFood.map((cat) => (
@@ -197,20 +226,24 @@ export default function Cardapio() {
           />
         ))}
 
-        {/* Água e Refrigerante */}
-        {bebidasGrouped.aguasRefri.length > 0 && (
-          <LightSection
-            title="Água e Refrigerante"
-            items={bebidasGrouped.aguasRefri}
-            twoColumns={true}
+        {/* Copa do Mundo - special gradient section */}
+        {copaDoMundo && copaDoMundo.items.length > 0 && (
+          <CopaDoMundoSection items={copaDoMundo.items} />
+        )}
+
+        {/* Para Compartilhar - dark section */}
+        {paraCompartilhar && paraCompartilhar.items.length > 0 && (
+          <DarkSection
+            title="Para Compartilhar"
+            items={paraCompartilhar.items}
+            twoColumns={false}
           />
         )}
 
-        {/* === PAGE 2: Suco, Cerveja, Drinks === */}
+        {/* === PAGE 2: Água e Refrigerante, Suco, Cerveja, Drinks === */}
 
         {/* Page break for print + repeated header on page 2 */}
         <div className="page-break-before">
-          {/* Mini header for page 2 (print only) */}
           <div className="print-header flex-col items-center mb-6 pt-4">
             <img
               src="/manus-storage/logo-abrasa-circle_54a46a8b.png"
@@ -222,6 +255,15 @@ export default function Cardapio() {
             </p>
           </div>
         </div>
+
+        {/* Água e Refrigerante */}
+        {bebidasGrouped.aguasRefri.length > 0 && (
+          <LightSection
+            title="Água e Refrigerante"
+            items={bebidasGrouped.aguasRefri}
+            twoColumns={true}
+          />
+        )}
 
         {/* Suco */}
         {bebidasGrouped.sucos.length > 0 && (
@@ -252,7 +294,7 @@ export default function Cardapio() {
           </div>
         )}
 
-        {/* Footer text - positioned lower on the page */}
+        {/* Footer text */}
         <div className="print-footer flex flex-col items-center justify-center mt-8 pb-4 gap-1">
           <span className="text-[#4A3728]/40 text-xs tracking-[0.2em] uppercase">
             A Brasa Reúne | Bar & Hamburgueria
@@ -278,7 +320,6 @@ function DiamondSeparator() {
 
 /** Sort items: Cheese Burger first, then alphabetical, Carijó immediately before Choripan */
 function sortItems(items: Array<{ id: number; name: string; price: number | null; description: string | null }>) {
-  // Custom order: Cheese Burger first, then alphabetical, Carijó before Choripan
   const sorted = [...items].sort((a, b) => {
     const nameA = a.name.toUpperCase();
     const nameB = b.name.toUpperCase();
@@ -313,7 +354,6 @@ function LightSection({ title, items, twoColumns }: {
   return (
     <>
       <section className="mb-2">
-        {/* Section header with orange line */}
         <div className="flex items-center gap-3 mb-4">
           <h2 className="text-base md:text-lg font-bold text-[#2C2C2C] uppercase tracking-[0.15em] whitespace-nowrap">
             {title}
@@ -321,7 +361,6 @@ function LightSection({ title, items, twoColumns }: {
           <div className="flex-1 h-[2px] bg-[#E87A2F]" />
         </div>
 
-        {/* Items */}
         {twoColumns ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2">
             {items.map((item) => (
@@ -341,7 +380,55 @@ function LightSection({ title, items, twoColumns }: {
   );
 }
 
-/** Dark background section (Drinks) */
+/** Copa do Mundo special section with gradient background and country flags */
+function CopaDoMundoSection({ items }: {
+  items: Array<{ id: number; name: string; price: number | null; description: string | null }>;
+}) {
+  return (
+    <>
+      <section className="mb-2 -mx-6 px-6 py-5 bg-gradient-to-b from-[#FFF8E1] to-[#FAF5EF] border-t border-b border-[#E87A2F]/20">
+        {/* Section header */}
+        <div className="flex items-center gap-3 mb-4">
+          <h2 className="text-base md:text-lg font-bold text-[#2C2C2C] uppercase tracking-[0.15em] whitespace-nowrap">
+            Copa do Mundo
+          </h2>
+          <div className="flex-1 h-[2px] bg-[#E87A2F]" />
+        </div>
+
+        {/* Items with country flags */}
+        <div className="space-y-3">
+          {items.map((item) => {
+            const flag = getCountryFlag(item.name);
+            return (
+              <div key={item.id} className="bg-white/60 rounded-lg px-4 py-3 border border-[#E87A2F]/10">
+                <div className="flex items-baseline gap-2">
+                  {flag && <span className="text-lg">{flag}</span>}
+                  <span className="text-sm font-bold text-[#2C2C2C] uppercase">
+                    {item.name}
+                  </span>
+                  <span className="flex-1 border-b border-dotted border-[#4A3728]/30 min-w-[20px] translate-y-[-3px]" />
+                  {item.price !== null ? (
+                    <span className="text-[#E87A2F] font-bold text-sm whitespace-nowrap">
+                      R$ {item.price.toFixed(2).replace('.', ',')}
+                    </span>
+                  ) : (
+                    <span className="text-[#4A3728]/60 text-xs italic">consulte</span>
+                  )}
+                </div>
+                {item.description && (
+                  <p className="text-[#4A3728]/60 text-xs mt-1 italic ml-7">{item.description}</p>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </section>
+      <DiamondSeparator />
+    </>
+  );
+}
+
+/** Dark background section (Drinks, Para Compartilhar) */
 function DarkSection({ title, items, twoColumns }: {
   title: string;
   items: Array<{ id: number; name: string; price: number | null; description: string | null }>;
@@ -349,7 +436,6 @@ function DarkSection({ title, items, twoColumns }: {
 }) {
   return (
     <section className="mb-0 -mx-6 px-6 py-6 bg-[#2C2C2C]">
-      {/* Section header with orange line */}
       <div className="flex items-center gap-3 mb-4">
         <h2 className="text-base md:text-lg font-bold text-[#FAF5EF] uppercase tracking-[0.15em] whitespace-nowrap">
           {title}
@@ -357,7 +443,6 @@ function DarkSection({ title, items, twoColumns }: {
         <div className="flex-1 h-[2px] bg-[#E87A2F]" />
       </div>
 
-      {/* Items */}
       {twoColumns ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2">
           {items.map((item) => (
@@ -423,8 +508,7 @@ function groupBebidas(items: Array<{ id: number; name: string; price: number | n
       nameUpper.includes('SPATEN') ||
       nameUpper.includes('LAGUNITAS') ||
       nameUpper.includes('BLUE MOON') ||
-      nameUpper.includes('STELLA') ||
-      nameUpper.includes('CERVEJA')
+      nameUpper.includes('STELLA')
     ) {
       cervejas.push(item);
     } else if (
