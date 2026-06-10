@@ -383,12 +383,15 @@ function CopaDoMundoSection({ items }: {
         {/* Multicolor gradient stripe inspired by Copa 2026 logo */}
         <div className="-mx-6 h-1.5 mb-5" style={{ background: 'linear-gradient(to right, #009B3A, #1E88E5, #D32F2F, #F9A825, #E87A2F)' }} />
 
-        {/* Section header with Copa branding */}
+        {/* Section header with Copa branding - multicolor gradient title */}
         <div className="flex items-center gap-3 mb-4">
-          <h2 className="text-base md:text-lg font-bold text-[#2C2C2C] uppercase tracking-[0.15em] whitespace-nowrap">
+          <h2
+            className="text-base md:text-lg font-bold uppercase tracking-[0.15em] whitespace-nowrap bg-clip-text text-transparent"
+            style={{ backgroundImage: 'linear-gradient(to right, #D4A017, #1DA1F2, #1A237E, #D32F2F, #2E7D32, #455A64)' }}
+          >
             Copa do Mundo
           </h2>
-          <div className="flex-1 h-[2px] bg-[#E87A2F]" />
+          <div className="flex-1 h-[2px]" style={{ background: 'linear-gradient(to right, #009B3A, #1E88E5, #D32F2F, #F9A825, #E87A2F)' }} />
         </div>
 
         {/* Items with country flag images */}
