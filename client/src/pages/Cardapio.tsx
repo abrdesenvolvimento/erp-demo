@@ -386,8 +386,13 @@ function CopaDoMundoSection({ items }: {
         {/* Section header with Copa branding - multicolor gradient title */}
         <div className="flex items-center gap-3 mb-4">
           <h2
-            className="text-base md:text-lg font-bold uppercase tracking-[0.15em] whitespace-nowrap bg-clip-text text-transparent"
-            style={{ backgroundImage: 'linear-gradient(to right, #D4A017, #1DA1F2, #1A237E, #D32F2F, #2E7D32, #455A64)' }}
+            className="text-base md:text-lg font-bold uppercase tracking-[0.15em] whitespace-nowrap"
+            style={{
+              backgroundImage: 'linear-gradient(to right, #D4A017, #1DA1F2, #1A237E, #D32F2F, #2E7D32, #455A64)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+            }}
           >
             Copa do Mundo
           </h2>
