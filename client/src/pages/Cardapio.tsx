@@ -13,13 +13,15 @@ import { Flame } from "lucide-react";
  */
 
 // Country flag image mapping for Copa do Mundo items
+const COPA_LOGO = '/manus-storage/copa-2026-header_b4eca5e6.png';
+
 const COUNTRY_FLAGS: Record<string, string> = {
-  'USA': '/manus-storage/flag-usa_ef664a3e.png',
-  'EUA': '/manus-storage/flag-usa_ef664a3e.png',
-  'MEXICO': '/manus-storage/flag-mexico_39b9cf6c.png',
-  'MÉXICO': '/manus-storage/flag-mexico_39b9cf6c.png',
-  'CANADA': '/manus-storage/flag-canada_4b8b58c6.png',
-  'CANADÁ': '/manus-storage/flag-canada_4b8b58c6.png',
+  'USA': '/manus-storage/flag-usa-hq_796b950b.png',
+  'EUA': '/manus-storage/flag-usa-hq_796b950b.png',
+  'MEXICO': '/manus-storage/flag-mexico-hq_99bcf4af.png',
+  'MÉXICO': '/manus-storage/flag-mexico-hq_99bcf4af.png',
+  'CANADA': '/manus-storage/flag-canada-hq_aaab03a5.png',
+  'CANADÁ': '/manus-storage/flag-canada-hq_aaab03a5.png',
 };
 
 function getCountryFlag(itemName: string): string | null {
@@ -377,8 +379,15 @@ function CopaDoMundoSection({ items }: {
 }) {
   return (
     <>
-      <section className="mb-2 -mx-6 px-6 py-5 bg-gradient-to-b from-[#FFF8E1] to-[#FAF5EF] border-t border-b border-[#E87A2F]/20">
-        {/* Section header */}
+      <section className="mb-2 -mx-6 px-6 py-5 bg-gradient-to-b from-[#FFF8E1] via-[#FFFDF5] to-[#FAF5EF] border-t border-b border-[#E87A2F]/20 relative overflow-hidden">
+        {/* Copa 2026 logo as subtle watermark */}
+        <img
+          src={COPA_LOGO}
+          alt=""
+          className="absolute top-2 right-4 w-14 h-auto opacity-30 print:opacity-20"
+        />
+
+        {/* Section header with Copa branding */}
         <div className="flex items-center gap-3 mb-4">
           <h2 className="text-base md:text-lg font-bold text-[#2C2C2C] uppercase tracking-[0.15em] whitespace-nowrap">
             Copa do Mundo
@@ -387,14 +396,14 @@ function CopaDoMundoSection({ items }: {
         </div>
 
         {/* Items with country flag images */}
-        <div className="space-y-3">
+        <div className="space-y-2.5">
           {items.map((item) => {
             const flagSrc = getCountryFlag(item.name);
             return (
-              <div key={item.id} className="bg-white/80 rounded-lg px-4 py-3 border border-[#4A3728]/10 shadow-sm">
+              <div key={item.id} className="bg-white/90 rounded-lg px-4 py-3 border border-[#4A3728]/8 shadow-sm">
                 <div className="flex items-center gap-3">
                   {flagSrc && (
-                    <img src={flagSrc} alt="" className="w-7 h-5 object-cover rounded-sm border border-[#4A3728]/10 flex-shrink-0" />
+                    <img src={flagSrc} alt="" className="w-8 h-5 object-contain flex-shrink-0" />
                   )}
                   <span className="text-sm font-bold text-[#2C2C2C] uppercase">
                     {item.name}
@@ -409,7 +418,7 @@ function CopaDoMundoSection({ items }: {
                   )}
                 </div>
                 {item.description && (
-                  <p className="text-[#4A3728]/60 text-xs mt-1 italic ml-10">{item.description}</p>
+                  <p className="text-[#4A3728]/60 text-xs mt-1 italic ml-11">{item.description}</p>
                 )}
               </div>
             );
