@@ -379,13 +379,7 @@ function CopaDoMundoSection({ items }: {
 }) {
   return (
     <>
-      <section className="mb-2 -mx-6 px-6 py-5 bg-gradient-to-b from-[#FFF8E1] via-[#FFFDF5] to-[#FAF5EF] border-t border-b border-[#E87A2F]/20 relative overflow-hidden">
-        {/* Copa 2026 logo as subtle watermark */}
-        <img
-          src={COPA_LOGO}
-          alt=""
-          className="absolute top-2 right-4 w-14 h-auto opacity-30 print:opacity-20"
-        />
+      <section className="mb-2 -mx-6 px-6 py-5 bg-gradient-to-b from-[#FFF8E1] via-[#FFFDF5] to-[#FAF5EF] border-t border-b border-[#E87A2F]/20">
 
         {/* Section header with Copa branding */}
         <div className="flex items-center gap-3 mb-4">
