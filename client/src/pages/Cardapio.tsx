@@ -383,11 +383,15 @@ function CopaDoMundoSection({ items }: {
         {/* Multicolor gradient stripe inspired by Copa 2026 logo */}
         <div className="-mx-6 h-1.5 mb-5" style={{ background: 'linear-gradient(to right, #009B3A, #1E88E5, #D32F2F, #F9A825, #E87A2F)' }} />
 
-        {/* Section header with Copa branding - multicolor gradient title */}
+        {/* Google Font for brush style title */}
+        <link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&display=swap" rel="stylesheet" />
+
+        {/* Section header with Copa branding - brush font + multicolor gradient */}
         <div className="flex items-center gap-3 mb-4">
           <h2
-            className="text-base md:text-lg font-bold uppercase tracking-[0.15em] whitespace-nowrap"
+            className="text-xl md:text-2xl whitespace-nowrap"
             style={{
+              fontFamily: "'Permanent Marker', cursive",
               backgroundImage: 'linear-gradient(to right, #D4A017, #1DA1F2, #1A237E, #D32F2F, #2E7D32, #455A64)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
