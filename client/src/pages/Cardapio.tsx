@@ -379,7 +379,9 @@ function CopaDoMundoSection({ items }: {
 }) {
   return (
     <>
-      <section className="mb-2 -mx-6 px-6 py-5 bg-gradient-to-b from-[#FFF8E1] via-[#FFFDF5] to-[#FAF5EF] border-t border-b border-[#E87A2F]/20">
+      <section className="mb-2 -mx-6 px-6 pt-0 pb-5 bg-gradient-to-b from-[#FFF8E1] via-[#FFFDF5] to-[#FAF5EF] border-b border-[#E87A2F]/20 overflow-hidden">
+        {/* Multicolor gradient stripe inspired by Copa 2026 logo */}
+        <div className="-mx-6 h-1.5 mb-5" style={{ background: 'linear-gradient(to right, #009B3A, #1E88E5, #D32F2F, #F9A825, #E87A2F)' }} />
 
         {/* Section header with Copa branding */}
         <div className="flex items-center gap-3 mb-4">
