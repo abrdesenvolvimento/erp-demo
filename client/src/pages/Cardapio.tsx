@@ -12,23 +12,14 @@ import { Flame } from "lucide-react";
  * Page break for print: before "Suco" section.
  */
 
-// Country flag mapping for Copa do Mundo items
+// Country flag image mapping for Copa do Mundo items
 const COUNTRY_FLAGS: Record<string, string> = {
-  'USA': '🇺🇸',
-  'EUA': '🇺🇸',
-  'MEXICO': '🇲🇽',
-  'MÉXICO': '🇲🇽',
-  'CANADA': '🇨🇦',
-  'CANADÁ': '🇨🇦',
-  'BRASIL': '🇧🇷',
-  'ARGENTINA': '🇦🇷',
-  'ITALIA': '🇮🇹',
-  'ITÁLIA': '🇮🇹',
-  'JAPAO': '🇯🇵',
-  'JAPÃO': '🇯🇵',
-  'ALEMANHA': '🇩🇪',
-  'FRANCA': '🇫🇷',
-  'FRANÇA': '🇫🇷',
+  'USA': '/manus-storage/flag-usa_ef664a3e.png',
+  'EUA': '/manus-storage/flag-usa_ef664a3e.png',
+  'MEXICO': '/manus-storage/flag-mexico_39b9cf6c.png',
+  'MÉXICO': '/manus-storage/flag-mexico_39b9cf6c.png',
+  'CANADA': '/manus-storage/flag-canada_4b8b58c6.png',
+  'CANADÁ': '/manus-storage/flag-canada_4b8b58c6.png',
 };
 
 function getCountryFlag(itemName: string): string | null {
@@ -395,14 +386,16 @@ function CopaDoMundoSection({ items }: {
           <div className="flex-1 h-[2px] bg-[#E87A2F]" />
         </div>
 
-        {/* Items with country flags */}
+        {/* Items with country flag images */}
         <div className="space-y-3">
           {items.map((item) => {
-            const flag = getCountryFlag(item.name);
+            const flagSrc = getCountryFlag(item.name);
             return (
-              <div key={item.id} className="bg-white/60 rounded-lg px-4 py-3 border border-[#E87A2F]/10">
-                <div className="flex items-baseline gap-2">
-                  {flag && <span className="text-lg">{flag}</span>}
+              <div key={item.id} className="bg-white/80 rounded-lg px-4 py-3 border border-[#4A3728]/10 shadow-sm">
+                <div className="flex items-center gap-3">
+                  {flagSrc && (
+                    <img src={flagSrc} alt="" className="w-7 h-5 object-cover rounded-sm border border-[#4A3728]/10 flex-shrink-0" />
+                  )}
                   <span className="text-sm font-bold text-[#2C2C2C] uppercase">
                     {item.name}
                   </span>
@@ -416,7 +409,7 @@ function CopaDoMundoSection({ items }: {
                   )}
                 </div>
                 {item.description && (
-                  <p className="text-[#4A3728]/60 text-xs mt-1 italic ml-7">{item.description}</p>
+                  <p className="text-[#4A3728]/60 text-xs mt-1 italic ml-10">{item.description}</p>
                 )}
               </div>
             );
