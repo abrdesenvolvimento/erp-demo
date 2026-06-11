@@ -497,7 +497,7 @@ function MenuItem({ item, dark }: {
   return (
     <div className="min-w-0">
       <div className="flex items-baseline gap-1">
-        <span className={`${textColor} text-sm font-bold uppercase shrink min-w-0 truncate`}>
+        <span className={`${textColor} text-sm font-bold uppercase`}>
           {item.name}
         </span>
         <span className={`flex-1 border-b border-dotted ${dotColor} min-w-[12px] translate-y-[-3px] shrink-0`} />
