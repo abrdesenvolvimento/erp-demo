@@ -2456,7 +2456,7 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Rota /aviso-inauguracao registrada no App.tsx
 
 ### Cardápio - Ajustes visuais (11/06/2026)
-- [ ] Bandeira EUA mesmo tamanho que as outras bandeiras (Canada/Mexico)
-- [ ] Aumentar espaçamento entre Para Compartilhar e Água e Refrigerante
-- [ ] Seção Sobremesa posicionada abaixo da Copa do Mundo (antes de Para Compartilhar)
-- [ ] Inserir ícone da taça da Copa ao lado do título Copa do Mundo
+- [x] Bandeira EUA mesmo tamanho que as outras bandeiras (Canada/Mexico)
+- [x] Aumentar espaçamento entre Para Compartilhar e Água e Refrigerante
+- [x] Seção Sobremesa posicionada abaixo da Copa do Mundo (antes de Para Compartilhar)
+- [x] Inserir ícone da taça da Copa ao lado do título Copa do Mundo

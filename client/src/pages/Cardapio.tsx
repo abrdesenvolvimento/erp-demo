@@ -13,11 +13,11 @@ import { Flame } from "lucide-react";
  */
 
 // Country flag image mapping for Copa do Mundo items
-const COPA_TROPHY = '/manus-storage/copa-trophy-icon_f49aca83.png';
+const COPA_TROPHY = 'https://d2xsxph8kpxj0f.cloudfront.net/310519663140687549/7RkrCeS5KipYf8hkuNqrCk/copa-trophy-detailed-DDvEwbgptcEhQ9w8RMJLJL.webp';
 
 const COUNTRY_FLAGS: Record<string, string> = {
-  'USA': '/manus-storage/flag-usa-hq_255ddede.png',
-  'EUA': '/manus-storage/flag-usa-hq_255ddede.png',
+  'USA': 'https://d2xsxph8kpxj0f.cloudfront.net/310519663140687549/7RkrCeS5KipYf8hkuNqrCk/flag-usa-clean-KA3rEGiJgUoiQwLPhgyZau.webp',
+  'EUA': 'https://d2xsxph8kpxj0f.cloudfront.net/310519663140687549/7RkrCeS5KipYf8hkuNqrCk/flag-usa-clean-KA3rEGiJgUoiQwLPhgyZau.webp',
   'MEXICO': '/manus-storage/flag-mexico-hq_c61e7666.png',
   'MÉXICO': '/manus-storage/flag-mexico-hq_c61e7666.png',
   'CANADA': '/manus-storage/flag-canada-hq_cda37091.png',
@@ -401,7 +401,7 @@ function CopaDoMundoSection({ items }: {
 
         {/* Section header with Copa branding - brush font + multicolor gradient + trophy */}
         <div className="flex items-center gap-3 mb-4">
-          <img src={COPA_TROPHY} alt="" className="w-6 h-10 object-contain flex-shrink-0" />
+          <img src={COPA_TROPHY} alt="" className="w-10 h-14 object-contain flex-shrink-0" />
           <h2
             className="text-xl md:text-2xl whitespace-nowrap"
             style={{
