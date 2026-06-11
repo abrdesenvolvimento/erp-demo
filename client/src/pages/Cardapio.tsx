@@ -16,8 +16,8 @@ import { Flame } from "lucide-react";
 const COPA_TROPHY = 'https://d2xsxph8kpxj0f.cloudfront.net/310519663140687549/7RkrCeS5KipYf8hkuNqrCk/copa-trophy-detailed-DDvEwbgptcEhQ9w8RMJLJL.webp';
 
 const COUNTRY_FLAGS: Record<string, string> = {
-  'USA': 'https://d2xsxph8kpxj0f.cloudfront.net/310519663140687549/7RkrCeS5KipYf8hkuNqrCk/flag-usa-clean-KA3rEGiJgUoiQwLPhgyZau.webp',
-  'EUA': 'https://d2xsxph8kpxj0f.cloudfront.net/310519663140687549/7RkrCeS5KipYf8hkuNqrCk/flag-usa-clean-KA3rEGiJgUoiQwLPhgyZau.webp',
+  'USA': '/manus-storage/flag-usa-pixel-perfect_ce6ab58f.png',
+  'EUA': '/manus-storage/flag-usa-pixel-perfect_ce6ab58f.png',
   'MEXICO': '/manus-storage/flag-mexico-hq_c61e7666.png',
   'MÉXICO': '/manus-storage/flag-mexico-hq_c61e7666.png',
   'CANADA': '/manus-storage/flag-canada-hq_cda37091.png',
