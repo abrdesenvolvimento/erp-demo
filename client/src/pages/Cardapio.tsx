@@ -495,18 +495,18 @@ function MenuItem({ item, dark }: {
   const dotColor = dark ? "border-[#FAF5EF]/20" : "border-[#4A3728]/30";
 
   return (
-    <div>
+    <div className="min-w-0">
       <div className="flex items-baseline gap-1">
-        <span className={`${textColor} text-sm font-bold uppercase whitespace-nowrap`}>
+        <span className={`${textColor} text-sm font-bold uppercase shrink min-w-0 truncate`}>
           {item.name}
         </span>
-        <span className={`flex-1 border-b border-dotted ${dotColor} min-w-[20px] translate-y-[-3px]`} />
+        <span className={`flex-1 border-b border-dotted ${dotColor} min-w-[12px] translate-y-[-3px] shrink-0`} />
         {item.price !== null ? (
-          <span className={`${priceColor} font-bold text-sm whitespace-nowrap min-w-[70px] text-right tabular-nums`}>
+          <span className={`${priceColor} font-bold text-sm whitespace-nowrap min-w-[70px] text-right tabular-nums shrink-0`}>
             R$ {item.price.toFixed(2).replace('.', ',')}
           </span>
         ) : (
-          <span className={`${descColor} text-xs italic min-w-[70px] text-right`}>consulte</span>
+          <span className={`${descColor} text-xs italic min-w-[70px] text-right whitespace-nowrap shrink-0`}>consulte</span>
         )}
       </div>
       {item.description && (
