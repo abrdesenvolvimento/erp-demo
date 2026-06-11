@@ -90,7 +90,7 @@ async function startServer() {
   
   // Heartbeat keep-alive endpoint (prevents Cloud Run cold starts)
   app.post('/api/scheduled/keep-alive', (req, res) => {
-    res.json({ ok: true, ts: new Date().toISOString() });
+    res.json({ ok: true, ts: new Date().toISOString(), v: 2 });
   });
 
   // ==================== PRINT QUEUE ENDPOINTS (for Print Agent polling) ====================
