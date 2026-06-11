@@ -13,15 +13,15 @@ import { Flame } from "lucide-react";
  */
 
 // Country flag image mapping for Copa do Mundo items
-const COPA_LOGO = '/manus-storage/copa-2026-header_b4eca5e6.png';
+const COPA_TROPHY = '/manus-storage/copa-trophy-icon_f49aca83.png';
 
 const COUNTRY_FLAGS: Record<string, string> = {
-  'USA': '/manus-storage/flag-usa-hq_796b950b.png',
-  'EUA': '/manus-storage/flag-usa-hq_796b950b.png',
-  'MEXICO': '/manus-storage/flag-mexico-hq_99bcf4af.png',
-  'MÉXICO': '/manus-storage/flag-mexico-hq_99bcf4af.png',
-  'CANADA': '/manus-storage/flag-canada-hq_aaab03a5.png',
-  'CANADÁ': '/manus-storage/flag-canada-hq_aaab03a5.png',
+  'USA': '/manus-storage/flag-usa-hq_255ddede.png',
+  'EUA': '/manus-storage/flag-usa-hq_255ddede.png',
+  'MEXICO': '/manus-storage/flag-mexico-hq_c61e7666.png',
+  'MÉXICO': '/manus-storage/flag-mexico-hq_c61e7666.png',
+  'CANADA': '/manus-storage/flag-canada-hq_cda37091.png',
+  'CANADÁ': '/manus-storage/flag-canada-hq_cda37091.png',
 };
 
 function getCountryFlag(itemName: string): string | null {
@@ -62,8 +62,9 @@ export default function Cardapio() {
   const bebidasCategory = data.categories.find(c => c.name === "BEBIIDAS");
   const copaDoMundo = data.categories.find(c => c.name === "COPA DO MUNDO");
   const paraCompartilhar = data.categories.find(c => c.name === "PARA COMPARTILHAR");
+  const sobremesas = data.categories.find(c => c.name === "SOBREMESAS");
   const foodCategories = data.categories.filter(c => 
-    c.name !== "BEBIIDAS" && c.name !== "COPA DO MUNDO" && c.name !== "PARA COMPARTILHAR"
+    c.name !== "BEBIIDAS" && c.name !== "COPA DO MUNDO" && c.name !== "PARA COMPARTILHAR" && c.name !== "SOBREMESAS"
   );
 
   // Split bebidas into sub-sections
@@ -224,6 +225,15 @@ export default function Cardapio() {
           <CopaDoMundoSection items={copaDoMundo.items} />
         )}
 
+        {/* Sobremesas - after Copa do Mundo */}
+        {sobremesas && sobremesas.items.length > 0 && (
+          <LightSection
+            title={sobremesas.displayName}
+            items={sortItems(sobremesas.items)}
+            twoColumns={false}
+          />
+        )}
+
         {/* Para Compartilhar - dark section */}
         {paraCompartilhar && paraCompartilhar.items.length > 0 && (
           <DarkSection
@@ -234,6 +244,9 @@ export default function Cardapio() {
         )}
 
         {/* === PAGE 2: Água e Refrigerante, Suco, Cerveja, Drinks === */}
+
+        {/* Spacing between Para Compartilhar and page 2 */}
+        <div className="h-6" />
 
         {/* Page break for print + repeated header on page 2 */}
         <div className="page-break-before">
@@ -386,8 +399,9 @@ function CopaDoMundoSection({ items }: {
         {/* Google Font for brush style title */}
         <link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&display=swap" rel="stylesheet" />
 
-        {/* Section header with Copa branding - brush font + multicolor gradient */}
+        {/* Section header with Copa branding - brush font + multicolor gradient + trophy */}
         <div className="flex items-center gap-3 mb-4">
+          <img src={COPA_TROPHY} alt="" className="w-6 h-10 object-contain flex-shrink-0" />
           <h2
             className="text-xl md:text-2xl whitespace-nowrap"
             style={{
@@ -411,7 +425,7 @@ function CopaDoMundoSection({ items }: {
               <div key={item.id} className="bg-white/90 rounded-lg px-4 py-3 border border-[#4A3728]/8 shadow-sm">
                 <div className="flex items-center gap-3">
                   {flagSrc && (
-                    <img src={flagSrc} alt="" className="w-8 h-5 object-contain flex-shrink-0" />
+                    <img src={flagSrc} alt="" className="w-9 h-6 object-cover rounded-sm flex-shrink-0" />
                   )}
                   <span className="text-sm font-bold text-[#2C2C2C] uppercase">
                     {item.name}

@@ -96,6 +96,7 @@ export const cardapioRouter = router({
         'ENTRADAS E ACOMPANHAMENTOS',
         'BURGERS',
         'COPA DO MUNDO',
+        'SOBREMESAS',
         'PARA COMPARTILHAR',
         'BEBIIDAS',
       ];
