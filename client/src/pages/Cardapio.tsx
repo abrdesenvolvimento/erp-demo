@@ -502,11 +502,11 @@ function MenuItem({ item, dark }: {
         </span>
         <span className={`flex-1 border-b border-dotted ${dotColor} min-w-[20px] translate-y-[-3px]`} />
         {item.price !== null ? (
-          <span className={`${priceColor} font-bold text-sm whitespace-nowrap`}>
+          <span className={`${priceColor} font-bold text-sm whitespace-nowrap min-w-[70px] text-right tabular-nums`}>
             R$ {item.price.toFixed(2).replace('.', ',')}
           </span>
         ) : (
-          <span className={`${descColor} text-xs italic`}>consulte</span>
+          <span className={`${descColor} text-xs italic min-w-[70px] text-right`}>consulte</span>
         )}
       </div>
       {item.description && (

@@ -2460,3 +2460,5 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Aumentar espaçamento entre Para Compartilhar e Água e Refrigerante
 - [x] Seção Sobremesa posicionada abaixo da Copa do Mundo (antes de Para Compartilhar)
 - [x] Inserir ícone da taça da Copa ao lado do título Copa do Mundo
+- [x] Guaraná Antarctica 300ML ativo mas não aparece no cardápio (corrigido: availableInSalon era 0, atualizado para 1)
+- [x] Alinhar preços nas seções de 2 colunas (Água/Refrigerante, Sucos, Cervejas) - adicionado min-w-[70px] text-right tabular-nums
