@@ -86,7 +86,7 @@ export default function Cardapio() {
         @media print {
           @page {
             size: A4;
-            margin: 8mm 4mm;
+            margin: 4mm 0mm;
           }
           html, body {
             margin: 0 !important;
@@ -141,8 +141,14 @@ export default function Cardapio() {
             margin-bottom: 0 !important;
           }
           main {
-            padding: 2mm 3mm 0 3mm !important;
+            padding: 1mm 3mm 0 3mm !important;
             margin-bottom: 0 !important;
+            max-width: 100% !important;
+          }
+          header .max-w-2xl, main.max-w-2xl {
+            max-width: 100% !important;
+            padding-left: 3mm !important;
+            padding-right: 3mm !important;
           }
           /* Header for print */
           header {
@@ -207,10 +213,10 @@ export default function Cardapio() {
           .copa-section {
             padding-top: 3mm !important;
             padding-bottom: 3mm !important;
-            margin-left: -5mm !important;
-            margin-right: -5mm !important;
-            padding-left: 5mm !important;
-            padding-right: 5mm !important;
+            margin-left: 0 !important;
+            margin-right: 0 !important;
+            padding-left: 3mm !important;
+            padding-right: 3mm !important;
           }
           .copa-section .rounded-lg {
             padding: 1.5mm 3mm !important;
@@ -230,9 +236,9 @@ export default function Cardapio() {
           }
           /* Dark sections */
           .dark-section {
-            padding: 3mm 5mm !important;
-            margin-left: -5mm !important;
-            margin-right: -5mm !important;
+            padding: 3mm 3mm !important;
+            margin-left: 0 !important;
+            margin-right: 0 !important;
           }
           /* Page 2 header */
           .page-break-before .print-header {
@@ -357,7 +363,7 @@ export default function Cardapio() {
         }
         @media screen {
           .print-header { display: none !important; }
-          .print-spacing-compartilhar-sobremesas { display: none !important; }
+
         }
       `}</style>
 
@@ -407,8 +413,8 @@ export default function Cardapio() {
           />
         )}
 
-        {/* Extra spacing between Para Compartilhar and Sobremesas in print */}
-        <div className="print-spacing-compartilhar-sobremesas" />
+        {/* Extra spacing between Para Compartilhar and Sobremesas */}
+        <div className="h-12 print-spacing-compartilhar-sobremesas" />
 
         {/* Sobremesas - last section on page 1 */}
         {sobremesas && sobremesas.items.length > 0 && (
