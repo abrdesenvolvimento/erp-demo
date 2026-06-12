@@ -8,8 +8,8 @@ import { Flame } from "lucide-react";
  * two-column beverage sections, dotted leaders, diamond separators.
  * Designed for mobile-first (QR code on tables) + print-optimized (2 pages A4).
  *
- * Category order: Entradas → Burgers → Copa do Mundo → Para Compartilhar → Bebidas
- * Page break for print: before "Suco" section.
+ * Category order: Entradas → Burgers → Copa do Mundo → Para Compartilhar → Sobremesas | Água/Refri → Sucos → Cervejas → Drinks
+ * Page break for print: before "Água e Refrigerante" section.
  */
 
 // Country flag image mapping for Copa do Mundo items
@@ -86,7 +86,11 @@ export default function Cardapio() {
         @media print {
           @page {
             size: A4;
+<<<<<<< Updated upstream
             margin: 8mm 10mm;
+=======
+            margin: 8mm 6mm;
+>>>>>>> Stashed changes
           }
           html, body {
             margin: 0 !important;
@@ -375,7 +379,11 @@ export default function Cardapio() {
       {/* Content */}
       <main className="max-w-2xl mx-auto px-6 py-6 pb-0">
 
+<<<<<<< Updated upstream
         {/* === PAGE 1: Entradas, Burgers, Copa do Mundo, Sobremesas, Para Compartilhar === */}
+=======
+        {/* === PAGE 1: Entradas, Burgers, Copa do Mundo, Para Compartilhar, Sobremesas === */}
+>>>>>>> Stashed changes
 
         {/* Food categories (Entradas, Burgers) */}
         {orderedFood.map((cat) => (
@@ -392,6 +400,7 @@ export default function Cardapio() {
           <CopaDoMundoSection items={copaDoMundo.items} />
         )}
 
+<<<<<<< Updated upstream
         {/* Sobremesas */}
         {sobremesas && sobremesas.items.length > 0 && (
           <LightSection
@@ -402,6 +411,9 @@ export default function Cardapio() {
         )}
 
         {/* Para Compartilhar - dark section */}
+=======
+        {/* Para Compartilhar - dark section (before Sobremesas) */}
+>>>>>>> Stashed changes
         {paraCompartilhar && paraCompartilhar.items.length > 0 && (
           <DarkSection
             title="Para Compartilhar"
@@ -410,6 +422,7 @@ export default function Cardapio() {
           />
         )}
 
+<<<<<<< Updated upstream
         {/* Água e Refrigerante - still on page 1 */}
         {bebidasGrouped.aguasRefri.length > 0 && (
           <LightSection
@@ -423,6 +436,21 @@ export default function Cardapio() {
 
         {/* Spacing before page 2 */}
         <div className="h-6 print-spacer" />
+=======
+        {/* Sobremesas - last section on page 1 */}
+        {sobremesas && sobremesas.items.length > 0 && (
+          <LightSection
+            title={sobremesas.displayName}
+            items={sortItems(sobremesas.items)}
+            twoColumns={false}
+          />
+        )}
+
+        {/* === PAGE 2: Água e Refrigerante, Suco, Cerveja, Drinks === */}
+
+        {/* Spacing between page 1 and page 2 on screen */}
+        <div className="h-6" />
+>>>>>>> Stashed changes
 
         {/* Page break for print + repeated header on page 2 */}
         <div className="page-break-before">
