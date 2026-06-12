@@ -86,7 +86,7 @@ export default function Cardapio() {
         @media print {
           @page {
             size: A4;
-            margin: 8mm 10mm;
+            margin: 5mm 8mm;
           }
           html, body {
             margin: 0 !important;
@@ -141,39 +141,39 @@ export default function Cardapio() {
             margin-bottom: 0 !important;
           }
           main {
-            padding: 2mm 4mm 0 4mm !important;
+            padding: 1mm 3mm 0 3mm !important;
             margin-bottom: 0 !important;
           }
           /* Compact header for print */
           header {
-            padding-top: 2mm !important;
-            padding-bottom: 1mm !important;
+            padding-top: 1mm !important;
+            padding-bottom: 0 !important;
           }
           header img {
-            width: 14mm !important;
-            height: 14mm !important;
-            margin-bottom: 1mm !important;
+            width: 10mm !important;
+            height: 10mm !important;
+            margin-bottom: 0.5mm !important;
           }
           header h1 {
-            font-size: 14pt !important;
+            font-size: 11pt !important;
             margin-bottom: 0 !important;
           }
           header p {
-            font-size: 7pt !important;
+            font-size: 6pt !important;
             margin-top: 0 !important;
           }
           /* Reduce all text sizes for print */
           .text-sm {
-            font-size: 8.5px !important;
-            line-height: 1.15 !important;
-          }
-          .text-xs {
-            font-size: 7px !important;
+            font-size: 8px !important;
             line-height: 1.1 !important;
           }
+          .text-xs {
+            font-size: 6.5px !important;
+            line-height: 1.05 !important;
+          }
           .text-base, .text-lg {
-            font-size: 10px !important;
-            line-height: 1.2 !important;
+            font-size: 9px !important;
+            line-height: 1.15 !important;
           }
           /* Compact item spacing */
           .space-y-2 > * + * {
@@ -205,38 +205,46 @@ export default function Cardapio() {
           }
           /* Compact Copa do Mundo section */
           .copa-section {
-            padding-top: 2mm !important;
-            padding-bottom: 2mm !important;
-            margin-left: -4mm !important;
-            margin-right: -4mm !important;
-            padding-left: 4mm !important;
-            padding-right: 4mm !important;
+            padding-top: 1mm !important;
+            padding-bottom: 1mm !important;
+            margin-left: -3mm !important;
+            margin-right: -3mm !important;
+            padding-left: 3mm !important;
+            padding-right: 3mm !important;
           }
           .copa-section .rounded-lg {
-            padding: 1.5mm 3mm !important;
+            padding: 0.8mm 2mm !important;
+            border: none !important;
+            box-shadow: none !important;
           }
           .copa-section img.w-9 {
-            width: 6mm !important;
-            height: 4mm !important;
+            width: 5mm !important;
+            height: 3.5mm !important;
           }
           .copa-section img.w-10 {
-            width: 8mm !important;
-            height: 10mm !important;
+            width: 6mm !important;
+            height: 8mm !important;
+          }
+          .copa-section .space-y-2\.5 > * + * {
+            margin-top: 0.3mm !important;
           }
           /* Compact dark sections */
           .dark-section {
-            padding: 2mm 4mm !important;
-            margin-left: -4mm !important;
-            margin-right: -4mm !important;
+            padding: 1.5mm 3mm !important;
+            margin-left: -3mm !important;
+            margin-right: -3mm !important;
           }
           /* Compact page 2 spacing */
           .page-break-before .print-header {
-            margin-bottom: 1mm !important;
-            padding-top: 1mm !important;
+            margin-bottom: 0.5mm !important;
+            padding-top: 0.5mm !important;
           }
           .page-break-before .print-header img {
-            width: 10mm !important;
-            height: 10mm !important;
+            width: 7mm !important;
+            height: 7mm !important;
+          }
+          .page-break-before .print-header p {
+            font-size: 6pt !important;
           }
           /* Hide spacer between pages */
           .print-spacer {
@@ -256,19 +264,40 @@ export default function Cardapio() {
           }
           /* Compact item descriptions in print */
           .print-hide-desc {
-            font-size: 6.5px !important;
-            line-height: 1.05 !important;
+            font-size: 6px !important;
+            line-height: 1 !important;
             margin-top: 0 !important;
             margin-bottom: 0 !important;
           }
           /* Copa section title font smaller in print */
           .copa-section h2 {
-            font-size: 12px !important;
+            font-size: 10px !important;
           }
           /* Reduce Copa gradient stripe */
           .copa-section .h-1\.5 {
-            height: 1mm !important;
-            margin-bottom: 2mm !important;
+            height: 0.5mm !important;
+            margin-bottom: 1mm !important;
+          }
+          /* Section title h2 compact */
+          section h2 {
+            font-size: 9px !important;
+            letter-spacing: 0.08em !important;
+          }
+          /* Section title divider line thinner */
+          section .h-\[2px\] {
+            height: 1px !important;
+          }
+          /* Reduce section header gap */
+          section .mb-4 {
+            margin-bottom: 1mm !important;
+          }
+          /* Footer compact */
+          .print-footer {
+            margin-top: 1mm !important;
+            gap: 0 !important;
+          }
+          .print-footer span {
+            font-size: 6px !important;
           }
         }
         @media screen {
@@ -296,7 +325,7 @@ export default function Cardapio() {
       {/* Content */}
       <main className="max-w-2xl mx-auto px-6 py-6 pb-0">
 
-        {/* === PAGE 1: Entradas, Burgers, Copa do Mundo, Para Compartilhar === */}
+        {/* === PAGE 1: Entradas, Burgers, Copa do Mundo, Sobremesas, Para Compartilhar === */}
 
         {/* Food categories (Entradas, Burgers) */}
         {orderedFood.map((cat) => (
@@ -313,26 +342,7 @@ export default function Cardapio() {
           <CopaDoMundoSection items={copaDoMundo.items} />
         )}
 
-        {/* === PAGE 2: Sobremesas, Para Compartilhar, Bebidas === */}
-
-        {/* Spacing before page 2 */}
-        <div className="h-6 print-spacer" />
-
-        {/* Page break for print + repeated header on page 2 */}
-        <div className="page-break-before">
-          <div className="print-header flex-col items-center mb-6 pt-4">
-            <img
-              src="/manus-storage/logo-abrasa-circle_54a46a8b.png"
-              alt="A Brasa Reúne"
-              className="w-16 h-16 mx-auto mb-2"
-            />
-            <p className="text-center text-xs text-[#4A3728]/60 tracking-[0.2em] uppercase">
-              A Brasa Reúne — Bar & Hamburgueria
-            </p>
-          </div>
-        </div>
-
-        {/* Sobremesas - first on page 2 */}
+        {/* Sobremesas */}
         {sobremesas && sobremesas.items.length > 0 && (
           <LightSection
             title={sobremesas.displayName}
@@ -350,7 +360,7 @@ export default function Cardapio() {
           />
         )}
 
-        {/* Água e Refrigerante */}
+        {/* Água e Refrigerante - still on page 1 */}
         {bebidasGrouped.aguasRefri.length > 0 && (
           <LightSection
             title="Água e Refrigerante"
@@ -358,6 +368,25 @@ export default function Cardapio() {
             twoColumns={true}
           />
         )}
+
+        {/* === PAGE 2: Sucos, Cervejas, Drinks === */}
+
+        {/* Spacing before page 2 */}
+        <div className="h-6 print-spacer" />
+
+        {/* Page break for print + repeated header on page 2 */}
+        <div className="page-break-before">
+          <div className="print-header flex-col items-center mb-6 pt-4">
+            <img
+              src="/manus-storage/logo-abrasa-circle_54a46a8b.png"
+              alt="A Brasa Reúne"
+              className="w-16 h-16 mx-auto mb-2"
+            />
+            <p className="text-center text-xs text-[#4A3728]/60 tracking-[0.2em] uppercase">
+              A Brasa Reúne — Bar & Hamburgueria
+            </p>
+          </div>
+        </div>
 
         {/* Suco */}
         {bebidasGrouped.sucos.length > 0 && (
