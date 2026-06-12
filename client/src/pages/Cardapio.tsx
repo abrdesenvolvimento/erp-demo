@@ -299,6 +299,56 @@ export default function Cardapio() {
           .print-footer span {
             font-size: 6px !important;
           }
+          /* PAGE 2: Use larger fonts and spacing to fill the page */
+          .page-2-content .text-sm {
+            font-size: 10px !important;
+            line-height: 1.4 !important;
+          }
+          .page-2-content .text-xs {
+            font-size: 8px !important;
+            line-height: 1.3 !important;
+          }
+          .page-2-content .text-base, .page-2-content .text-lg {
+            font-size: 11px !important;
+            line-height: 1.3 !important;
+          }
+          .page-2-content section h2 {
+            font-size: 12px !important;
+            letter-spacing: 0.12em !important;
+            margin-bottom: 2mm !important;
+          }
+          .page-2-content .space-y-2 > * + * {
+            margin-top: 1.5mm !important;
+          }
+          .page-2-content .gap-y-2 {
+            row-gap: 1.5mm !important;
+          }
+          .page-2-content .gap-x-8 {
+            column-gap: 6mm !important;
+          }
+          .page-2-content .diamond-sep {
+            margin-top: 3mm !important;
+            margin-bottom: 3mm !important;
+            font-size: 8px !important;
+          }
+          .page-2-content section {
+            margin-bottom: 2mm !important;
+          }
+          .page-2-content .dark-section {
+            padding: 3mm 5mm !important;
+            margin-left: -5mm !important;
+            margin-right: -5mm !important;
+          }
+          .page-2-content .print-hide-desc {
+            font-size: 8px !important;
+            line-height: 1.2 !important;
+          }
+          .page-2-content .print-footer {
+            margin-top: 8mm !important;
+          }
+          .page-2-content .print-footer span {
+            font-size: 8px !important;
+          }
         }
         @media screen {
           .print-header { display: none !important; }
@@ -388,43 +438,46 @@ export default function Cardapio() {
           </div>
         </div>
 
-        {/* Suco */}
-        {bebidasGrouped.sucos.length > 0 && (
-          <LightSection
-            title="Sucos"
-            items={bebidasGrouped.sucos}
-            twoColumns={true}
-          />
-        )}
-
-        {/* Cerveja */}
-        {bebidasGrouped.cervejas.length > 0 && (
-          <LightSection
-            title="Cervejas"
-            items={bebidasGrouped.cervejas}
-            twoColumns={true}
-          />
-        )}
-
-        {/* Drinks (dark section) - last section on page 2 */}
-        {bebidasGrouped.drinks.length > 0 && (
-          <div className="last-print-section">
-            <DarkSection
-              title="Drinks"
-              items={bebidasGrouped.drinks}
+        {/* Page 2 content wrapper for print-specific larger fonts */}
+        <div className="page-2-content">
+          {/* Suco */}
+          {bebidasGrouped.sucos.length > 0 && (
+            <LightSection
+              title="Sucos"
+              items={bebidasGrouped.sucos}
               twoColumns={true}
             />
-          </div>
-        )}
+          )}
 
-        {/* Footer text */}
-        <div className="print-footer flex flex-col items-center justify-center mt-8 pb-4 gap-1">
-          <span className="text-[#4A3728]/40 text-xs tracking-[0.2em] uppercase">
-            A Brasa Reúne | Bar & Hamburgueria
-          </span>
-          <span className="text-[#4A3728]/35 text-[10px] tracking-[0.1em]">
-            @abrasareune
-          </span>
+          {/* Cerveja */}
+          {bebidasGrouped.cervejas.length > 0 && (
+            <LightSection
+              title="Cervejas"
+              items={bebidasGrouped.cervejas}
+              twoColumns={true}
+            />
+          )}
+
+          {/* Drinks (dark section) - last section on page 2 */}
+          {bebidasGrouped.drinks.length > 0 && (
+            <div className="last-print-section">
+              <DarkSection
+                title="Drinks"
+                items={bebidasGrouped.drinks}
+                twoColumns={true}
+              />
+            </div>
+          )}
+
+          {/* Footer text */}
+          <div className="print-footer flex flex-col items-center justify-center mt-8 pb-4 gap-1">
+            <span className="text-[#4A3728]/40 text-xs tracking-[0.2em] uppercase">
+              A Brasa Reúne | Bar & Hamburgueria
+            </span>
+            <span className="text-[#4A3728]/35 text-[10px] tracking-[0.1em]">
+              @abrasareune
+            </span>
+          </div>
         </div>
 
       </main>
