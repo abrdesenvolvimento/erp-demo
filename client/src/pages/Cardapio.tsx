@@ -86,7 +86,7 @@ export default function Cardapio() {
         @media print {
           @page {
             size: A4;
-            margin: 8mm 6mm;
+            margin: 8mm 4mm;
           }
           html, body {
             margin: 0 !important;
@@ -141,7 +141,7 @@ export default function Cardapio() {
             margin-bottom: 0 !important;
           }
           main {
-            padding: 2mm 5mm 0 5mm !important;
+            padding: 2mm 3mm 0 3mm !important;
             margin-bottom: 0 !important;
           }
           /* Header for print */
@@ -236,7 +236,7 @@ export default function Cardapio() {
           }
           /* Page 2 header */
           .page-break-before .print-header {
-            margin-bottom: 2mm !important;
+            margin-bottom: 5mm !important;
             padding-top: 2mm !important;
           }
           .page-break-before .print-header img {
@@ -290,6 +290,11 @@ export default function Cardapio() {
           /* Section header gap */
           section .mb-4 {
             margin-bottom: 2mm !important;
+          }
+          /* Spacing between Para Compartilhar and Sobremesas */
+          .print-spacing-compartilhar-sobremesas {
+            height: 4mm !important;
+            display: block !important;
           }
           /* Footer */
           .print-footer {
@@ -352,6 +357,7 @@ export default function Cardapio() {
         }
         @media screen {
           .print-header { display: none !important; }
+          .print-spacing-compartilhar-sobremesas { display: none !important; }
         }
       `}</style>
 
@@ -400,6 +406,9 @@ export default function Cardapio() {
             twoColumns={false}
           />
         )}
+
+        {/* Extra spacing between Para Compartilhar and Sobremesas in print */}
+        <div className="print-spacing-compartilhar-sobremesas" />
 
         {/* Sobremesas - last section on page 1 */}
         {sobremesas && sobremesas.items.length > 0 && (
