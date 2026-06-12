@@ -12,10 +12,10 @@
   "experiments": null,
   "git_remote": {
     "repo_url": "s3://vida-prod-gitrepo/webdev-git/310519663140687549/7RkrCeS5KipYf8hkuNqrCk",
-    "access_key_id": "ASIAZV3A2ECZOYANIKTC",
-    "secret_access_key": "rMtZEzjV6MAkgJQLS0QqM21lbDjXlrSUCyiEkJqz",
-    "session_token": "IQoJb3JpZ2luX2VjEJ3//////////wEaCXVzLWVhc3QtMSJIMEYCIQCyaDlbQkA9IdorErH76inTzjm94hirXoGJoJLOggE9nwIhAMbCqZj6evYaXWVq1kNzQo+bpWQkt+j9lz2YXsXFeaWrKvYDCGYQBBoMNjY1Mzg2MDk4ODY2IgxVxc4zmNfoKw7Ogzkq0wOybCzhbHtHqLZNT/22HZafKIdR2U4ScdyDEUT5Fi5Tux5v/iwFeiWui8BEd1VxtDZApvA0Fa3wQ0gMcr6Jwt18O8NeyaHK1x0zr4MPffV+PdlacvYuWBpUxip+ALMgDmMZ1J3CVb6yg/bphZUZ1GBah9SI8W43yPbmtC6U5GWJu5d0fbxXsDlmn4joWeeS/NOuAw9bLsLoAsW3TmKJwcXDBbPFIoJv8az6tmZRgE7eXyf6oDDUZZkpP3ST9+t28HyuMelfeOUlGCxgtd/N0L6U1Kmr2goUiqhTeZWoLR2SIrZmh4t/+AMqhSvGyM8liUvlYzmo/H50DLOk5fSnh0KNdWL8Q+V4r3cHk+gT6pvSx/yQT6wC2jMKzOFxJ8Fmhs6C2CMyY0wAOpSmNAA0cCQMnChT11rE9S031cFUcsjpOIGE54iBW2v0/nLAGd4Id0dgtYJ6mtXfpcGUhASMd0JvcJPsQLbtxMf0eGbgKVSKvC5VHkxuFfnxxqMda6oJjjUqpyQzxYW9OSK07oQKEDqUOH+qlSBpLCSsQRldUbltlBkREpqHEcqc1O8l07YkYhxtBy2mX6xGML5X76gJOEkOkCDmtLyB4Sep2xsXSMO2YHnIKjC935jQBjqcAUW+qW/uSTP27I9pDLooM1lfpbR+8ZCyBqVdGD5VcxWqJionuMPRB0uTnFCRdCKR2zLkYFYYkV18xL+Z9Eg0XIFrx5Pxxv5WCfrsW4tdQC953NVKCiThUHu1ayTC/GdUYV/jfCMASaYNxoFtoa7eSJnptbYY+RM0H8eAjGRLswEtTZ3+I/1M78uh4wIpX6FpoEZVKc6iR/d4Dl/NpQ==",
-    "expiration": "2026-05-15T08:25:33.000Z"
+    "access_key_id": "ASIAZV3A2ECZIHVWPMGR",
+    "secret_access_key": "QfGUyn1XvYFLkmdHycQW1ClCnCvWAwETdocT+mcq",
+    "session_token": "IQoJb3JpZ2luX2VjEFcaCXVzLWVhc3QtMSJHMEUCIB+uvCyMux3jjYgc9mMNxJah1gQMEAmWRQK6lViv66g7AiEAqCIr2N+jnqO78ckk8TjI/RT6Nl/mu7Re77maYAVthjEq9gMIHxAEGgw2NjUzODYwOTg4NjYiDHz2n8Oa04oH3evjPyrTA0DiC4BXI8hNd6iv0j6cbavmQzpEjEJlNTYPWZtPuuAavfNUhsZKKUwyT+KZGEH06YL3dqKwlGHc/7qdGBHcNwwjgwuG0e2C08YMUq6p1idK1uSz1Zif6sM2LTUWxbwGrfqE1XGZyeIBDnWKkhRAiLCyRlBMKhPEtmaErHNTimiJG7if8gbJfeVmZNu0K1hM+yywGBBzhXXTliNpfClBhPhwBw7Im4iN80LDsV1qMwnHlNhc4HxG1LX3ZTbXksWlSKNFy/qnntFRzWJ7XMHOHXsjXKk4kK6qgY+dDXl+LXElOpNNAF+NCmMGrHCJlC72S2uiJBfzvcXxFVqXKOufWMydYWDNGC59fjIZsTMNfdwfMeSQd+Z1xB+PfGNOZ87bVtA1aFpOjdT4b7WrxSmRLd7apaM4+8iPgtqrtNsA2C0xslFNNjHB0fAbiFBynuhkBWo8eOQtKdx1quX5WNTcZAExxOALoa1GlVlSKadMkc1OxzFor4GtMXNe4oFsfzVKrUuL183UXupr0GltesHV6Phg7SKI85MW/TaXKRtOFwDo6+Ax3ZcNw//0gr99jsBmXnjDmz12sfU9qdyMuxJyiFL8sLO47OS340GPkA+lyqu6L+p5MMCGstEGOp0BL5bKHGz3Cp/Rd1U/lqwZUjlFO/uqPPJwjlIr9YbcknkeD7gd4GQsNz7RVfJrF/lVLPDZGesvGz6d3cfsajNWQ3Yc5gPknpnZdEzcABDolE/19vStG64qqpuanBnTNMWBGi1STF7k6BrKKw7S0avUfejt3/ZK7jFgbTtIny10R8wMq31kvIGbdAl+VecMyM+es8LoI0Up/YhS6BVOzQ==",
+    "expiration": "2026-06-13T10:08:00.000Z"
   },
   "name": "erp-demo",
   "path": "/home/ubuntu/erp-demo",

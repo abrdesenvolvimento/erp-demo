@@ -191,7 +191,7 @@ function formatReceipt(data) {
   buf += ESCPOS.ALIGN_CENTER;
   buf += ESCPOS.BOLD_ON;
   buf += ESCPOS.DOUBLE_ON;
-  buf += `Adega Beira Rio\n`;
+  buf += `A Brasa Reune\n`;
   buf += ESCPOS.NORMAL;
   buf += ESCPOS.BOLD_ON;
   buf += `Pre-visualizacao da Conta\n`;
