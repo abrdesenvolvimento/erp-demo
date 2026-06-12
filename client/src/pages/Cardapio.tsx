@@ -86,11 +86,7 @@ export default function Cardapio() {
         @media print {
           @page {
             size: A4;
-<<<<<<< Updated upstream
-            margin: 8mm 10mm;
-=======
             margin: 8mm 6mm;
->>>>>>> Stashed changes
           }
           html, body {
             margin: 0 !important;
@@ -168,44 +164,44 @@ export default function Cardapio() {
           }
           /* Base text sizes for print - LARGER for better readability */
           .text-sm {
-            font-size: 9.5px !important;
-            line-height: 1.3 !important;
+            font-size: 10px !important;
+            line-height: 1.4 !important;
           }
           .text-xs {
-            font-size: 7.5px !important;
-            line-height: 1.2 !important;
+            font-size: 8px !important;
+            line-height: 1.3 !important;
           }
           .text-base, .text-lg {
-            font-size: 10.5px !important;
-            line-height: 1.3 !important;
+            font-size: 11px !important;
+            line-height: 1.4 !important;
           }
           /* Item spacing - more generous */
           .space-y-2 > * + * {
-            margin-top: 1.5mm !important;
+            margin-top: 2mm !important;
           }
           .space-y-2\.5 > * + * {
-            margin-top: 1.5mm !important;
+            margin-top: 2mm !important;
           }
           /* Grid gap */
           .gap-y-2 {
-            row-gap: 1.2mm !important;
+            row-gap: 1.5mm !important;
           }
           .gap-x-8 {
-            column-gap: 5mm !important;
+            column-gap: 6mm !important;
           }
           /* Diamond separator spacing */
           .diamond-sep {
-            margin-top: 3mm !important;
-            margin-bottom: 3mm !important;
-            font-size: 7px !important;
+            margin-top: 3.5mm !important;
+            margin-bottom: 3.5mm !important;
+            font-size: 8px !important;
           }
           /* Section margins */
           section {
-            margin-bottom: 1mm !important;
+            margin-bottom: 2mm !important;
           }
           /* Section header margins */
           section .flex.items-center.gap-3 {
-            margin-bottom: 2mm !important;
+            margin-bottom: 2.5mm !important;
           }
           /* Copa do Mundo section */
           .copa-section {
@@ -284,8 +280,8 @@ export default function Cardapio() {
           }
           /* Section title h2 */
           section h2 {
-            font-size: 11px !important;
-            letter-spacing: 0.1em !important;
+            font-size: 12px !important;
+            letter-spacing: 0.12em !important;
           }
           /* Section title divider line */
           section .h-\[2px\] {
@@ -303,55 +299,55 @@ export default function Cardapio() {
           .print-footer span {
             font-size: 7px !important;
           }
-          /* PAGE 2: Even larger fonts and spacing to fill the page */
+          /* PAGE 2: Slightly larger fonts since it has more content now */
           .page-2-content .text-sm {
-            font-size: 11px !important;
-            line-height: 1.5 !important;
-          }
-          .page-2-content .text-xs {
-            font-size: 9px !important;
+            font-size: 10.5px !important;
             line-height: 1.4 !important;
           }
+          .page-2-content .text-xs {
+            font-size: 8.5px !important;
+            line-height: 1.3 !important;
+          }
           .page-2-content .text-base, .page-2-content .text-lg {
-            font-size: 12px !important;
+            font-size: 11.5px !important;
             line-height: 1.4 !important;
           }
           .page-2-content section h2 {
-            font-size: 14px !important;
-            letter-spacing: 0.15em !important;
-            margin-bottom: 3mm !important;
+            font-size: 13px !important;
+            letter-spacing: 0.12em !important;
+            margin-bottom: 2.5mm !important;
           }
           .page-2-content .space-y-2 > * + * {
-            margin-top: 2.5mm !important;
+            margin-top: 2mm !important;
           }
           .page-2-content .gap-y-2 {
-            row-gap: 2.5mm !important;
+            row-gap: 2mm !important;
           }
           .page-2-content .gap-x-8 {
-            column-gap: 8mm !important;
+            column-gap: 7mm !important;
           }
           .page-2-content .diamond-sep {
-            margin-top: 5mm !important;
-            margin-bottom: 5mm !important;
-            font-size: 9px !important;
+            margin-top: 4mm !important;
+            margin-bottom: 4mm !important;
+            font-size: 8px !important;
           }
           .page-2-content section {
-            margin-bottom: 3mm !important;
+            margin-bottom: 2.5mm !important;
           }
           .page-2-content .dark-section {
-            padding: 5mm 7mm !important;
-            margin-left: -7mm !important;
-            margin-right: -7mm !important;
+            padding: 4mm 6mm !important;
+            margin-left: -6mm !important;
+            margin-right: -6mm !important;
           }
           .page-2-content .print-hide-desc {
-            font-size: 9px !important;
+            font-size: 8.5px !important;
             line-height: 1.3 !important;
           }
           .page-2-content .print-footer {
-            margin-top: 12mm !important;
+            margin-top: 8mm !important;
           }
           .page-2-content .print-footer span {
-            font-size: 9px !important;
+            font-size: 8px !important;
           }
         }
         @media screen {
@@ -379,11 +375,7 @@ export default function Cardapio() {
       {/* Content */}
       <main className="max-w-2xl mx-auto px-6 py-6 pb-0">
 
-<<<<<<< Updated upstream
-        {/* === PAGE 1: Entradas, Burgers, Copa do Mundo, Sobremesas, Para Compartilhar === */}
-=======
         {/* === PAGE 1: Entradas, Burgers, Copa do Mundo, Para Compartilhar, Sobremesas === */}
->>>>>>> Stashed changes
 
         {/* Food categories (Entradas, Burgers) */}
         {orderedFood.map((cat) => (
@@ -400,20 +392,7 @@ export default function Cardapio() {
           <CopaDoMundoSection items={copaDoMundo.items} />
         )}
 
-<<<<<<< Updated upstream
-        {/* Sobremesas */}
-        {sobremesas && sobremesas.items.length > 0 && (
-          <LightSection
-            title={sobremesas.displayName}
-            items={sortItems(sobremesas.items)}
-            twoColumns={false}
-          />
-        )}
-
-        {/* Para Compartilhar - dark section */}
-=======
         {/* Para Compartilhar - dark section (before Sobremesas) */}
->>>>>>> Stashed changes
         {paraCompartilhar && paraCompartilhar.items.length > 0 && (
           <DarkSection
             title="Para Compartilhar"
@@ -422,21 +401,6 @@ export default function Cardapio() {
           />
         )}
 
-<<<<<<< Updated upstream
-        {/* Água e Refrigerante - still on page 1 */}
-        {bebidasGrouped.aguasRefri.length > 0 && (
-          <LightSection
-            title="Água e Refrigerante"
-            items={bebidasGrouped.aguasRefri}
-            twoColumns={true}
-          />
-        )}
-
-        {/* === PAGE 2: Sucos, Cervejas, Drinks === */}
-
-        {/* Spacing before page 2 */}
-        <div className="h-6 print-spacer" />
-=======
         {/* Sobremesas - last section on page 1 */}
         {sobremesas && sobremesas.items.length > 0 && (
           <LightSection
@@ -450,7 +414,6 @@ export default function Cardapio() {
 
         {/* Spacing between page 1 and page 2 on screen */}
         <div className="h-6" />
->>>>>>> Stashed changes
 
         {/* Page break for print + repeated header on page 2 */}
         <div className="page-break-before">
@@ -468,6 +431,15 @@ export default function Cardapio() {
 
         {/* Page 2 content wrapper for print-specific larger fonts */}
         <div className="page-2-content">
+          {/* Água e Refrigerante */}
+          {bebidasGrouped.aguasRefri.length > 0 && (
+            <LightSection
+              title="Água e Refrigerante"
+              items={bebidasGrouped.aguasRefri}
+              twoColumns={true}
+            />
+          )}
+
           {/* Suco */}
           {bebidasGrouped.sucos.length > 0 && (
             <LightSection
