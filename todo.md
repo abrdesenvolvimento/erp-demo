@@ -2462,3 +2462,4 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Inserir ícone da taça da Copa ao lado do título Copa do Mundo
 - [x] Guaraná Antarctica 300ML ativo mas não aparece no cardápio (corrigido: availableInSalon era 0, atualizado para 1)
 - [x] Alinhar preços nas seções de 2 colunas (Água/Refrigerante, Sucos, Cervejas) - adicionado min-w-[70px] text-right tabular-nums
+- [x] Corrigir impressão do cardápio - otimizado para 2 páginas (descrições mantidas, fontes compactas, page break reposicionado)

@@ -86,13 +86,14 @@ export default function Cardapio() {
         @media print {
           @page {
             size: A4;
-            margin: 10mm 12mm;
+            margin: 8mm 10mm;
           }
           html, body {
             margin: 0 !important;
             padding: 0 !important;
             -webkit-print-color-adjust: exact;
             print-color-adjust: exact;
+            font-size: 11px !important;
           }
           .print-container {
             min-height: auto !important;
@@ -120,7 +121,7 @@ export default function Cardapio() {
             position: absolute !important;
             left: -9999px !important;
           }
-          /* CRITICAL: Prevent blank third page */
+          /* CRITICAL: Prevent blank pages */
           html, body, #root, .print-container {
             height: auto !important;
             min-height: 0 !important;
@@ -140,10 +141,108 @@ export default function Cardapio() {
             margin-bottom: 0 !important;
           }
           main {
-            padding-bottom: 0 !important;
+            padding: 2mm 4mm 0 4mm !important;
             margin-bottom: 0 !important;
           }
-          /* Prevent orphan content from pushing to third page */
+          /* Compact header for print */
+          header {
+            padding-top: 2mm !important;
+            padding-bottom: 1mm !important;
+          }
+          header img {
+            width: 14mm !important;
+            height: 14mm !important;
+            margin-bottom: 1mm !important;
+          }
+          header h1 {
+            font-size: 14pt !important;
+            margin-bottom: 0 !important;
+          }
+          header p {
+            font-size: 7pt !important;
+            margin-top: 0 !important;
+          }
+          /* Reduce all text sizes for print */
+          .text-sm {
+            font-size: 8.5px !important;
+            line-height: 1.15 !important;
+          }
+          .text-xs {
+            font-size: 7px !important;
+            line-height: 1.1 !important;
+          }
+          .text-base, .text-lg {
+            font-size: 10px !important;
+            line-height: 1.2 !important;
+          }
+          /* Compact item spacing */
+          .space-y-2 > * + * {
+            margin-top: 0.5mm !important;
+          }
+          .space-y-2\.5 > * + * {
+            margin-top: 0.5mm !important;
+          }
+          /* Reduce grid gap */
+          .gap-y-2 {
+            row-gap: 0.5mm !important;
+          }
+          .gap-x-8 {
+            column-gap: 3mm !important;
+          }
+          /* Reduce diamond separator spacing in print */
+          .diamond-sep {
+            margin-top: 1mm !important;
+            margin-bottom: 1mm !important;
+            font-size: 6px !important;
+          }
+          /* Reduce section margins in print */
+          section {
+            margin-bottom: 0 !important;
+          }
+          /* Reduce section header margins */
+          section .flex.items-center.gap-3 {
+            margin-bottom: 1mm !important;
+          }
+          /* Compact Copa do Mundo section */
+          .copa-section {
+            padding-top: 2mm !important;
+            padding-bottom: 2mm !important;
+            margin-left: -4mm !important;
+            margin-right: -4mm !important;
+            padding-left: 4mm !important;
+            padding-right: 4mm !important;
+          }
+          .copa-section .rounded-lg {
+            padding: 1.5mm 3mm !important;
+          }
+          .copa-section img.w-9 {
+            width: 6mm !important;
+            height: 4mm !important;
+          }
+          .copa-section img.w-10 {
+            width: 8mm !important;
+            height: 10mm !important;
+          }
+          /* Compact dark sections */
+          .dark-section {
+            padding: 2mm 4mm !important;
+            margin-left: -4mm !important;
+            margin-right: -4mm !important;
+          }
+          /* Compact page 2 spacing */
+          .page-break-before .print-header {
+            margin-bottom: 1mm !important;
+            padding-top: 1mm !important;
+          }
+          .page-break-before .print-header img {
+            width: 10mm !important;
+            height: 10mm !important;
+          }
+          /* Hide spacer between pages */
+          .print-spacer {
+            display: none !important;
+          }
+          /* Prevent orphan content */
           .last-print-section {
             page-break-after: auto;
             break-after: auto;
@@ -153,34 +252,23 @@ export default function Cardapio() {
             break-after: avoid;
             margin-bottom: 0 !important;
             padding-bottom: 0 !important;
-            margin-top: 2mm !important;
+            margin-top: 1mm !important;
           }
-          /* Compact page 2 spacing to fit in 2 pages */
-          .page-break-before .print-header {
-            margin-bottom: 2mm !important;
-            padding-top: 1mm !important;
-          }
-          .page-break-before .print-header img {
-            width: 12mm !important;
-            height: 12mm !important;
-          }
-          /* Reduce diamond separator spacing in print */
-          .diamond-sep {
-            margin-top: 2mm !important;
-            margin-bottom: 2mm !important;
-          }
-          /* Reduce section margins in print */
-          section {
+          /* Compact item descriptions in print */
+          .print-hide-desc {
+            font-size: 6.5px !important;
+            line-height: 1.05 !important;
+            margin-top: 0 !important;
             margin-bottom: 0 !important;
           }
-          /* Reduce section header margins */
-          section .flex.items-center.gap-3 {
-            margin-bottom: 1.5mm !important;
+          /* Copa section title font smaller in print */
+          .copa-section h2 {
+            font-size: 12px !important;
           }
-          /* Compact dark section */
-          .last-print-section section {
-            padding-top: 3mm !important;
-            padding-bottom: 3mm !important;
+          /* Reduce Copa gradient stripe */
+          .copa-section .h-1\.5 {
+            height: 1mm !important;
+            margin-bottom: 2mm !important;
           }
         }
         @media screen {
@@ -225,7 +313,26 @@ export default function Cardapio() {
           <CopaDoMundoSection items={copaDoMundo.items} />
         )}
 
-        {/* Sobremesas - after Copa do Mundo */}
+        {/* === PAGE 2: Sobremesas, Para Compartilhar, Bebidas === */}
+
+        {/* Spacing before page 2 */}
+        <div className="h-6 print-spacer" />
+
+        {/* Page break for print + repeated header on page 2 */}
+        <div className="page-break-before">
+          <div className="print-header flex-col items-center mb-6 pt-4">
+            <img
+              src="/manus-storage/logo-abrasa-circle_54a46a8b.png"
+              alt="A Brasa Reúne"
+              className="w-16 h-16 mx-auto mb-2"
+            />
+            <p className="text-center text-xs text-[#4A3728]/60 tracking-[0.2em] uppercase">
+              A Brasa Reúne — Bar & Hamburgueria
+            </p>
+          </div>
+        </div>
+
+        {/* Sobremesas - first on page 2 */}
         {sobremesas && sobremesas.items.length > 0 && (
           <LightSection
             title={sobremesas.displayName}
@@ -242,25 +349,6 @@ export default function Cardapio() {
             twoColumns={false}
           />
         )}
-
-        {/* === PAGE 2: Água e Refrigerante, Suco, Cerveja, Drinks === */}
-
-        {/* Spacing between Para Compartilhar and page 2 */}
-        <div className="h-6" />
-
-        {/* Page break for print + repeated header on page 2 */}
-        <div className="page-break-before">
-          <div className="print-header flex-col items-center mb-6 pt-4">
-            <img
-              src="/manus-storage/logo-abrasa-circle_54a46a8b.png"
-              alt="A Brasa Reúne"
-              className="w-16 h-16 mx-auto mb-2"
-            />
-            <p className="text-center text-xs text-[#4A3728]/60 tracking-[0.2em] uppercase">
-              A Brasa Reúne — Bar & Hamburgueria
-            </p>
-          </div>
-        </div>
 
         {/* Água e Refrigerante */}
         {bebidasGrouped.aguasRefri.length > 0 && (
@@ -392,7 +480,7 @@ function CopaDoMundoSection({ items }: {
 }) {
   return (
     <>
-      <section className="mb-2 -mx-6 px-6 pt-0 pb-5 bg-gradient-to-b from-[#FFF8E1] via-[#FFFDF5] to-[#FAF5EF] border-b border-[#E87A2F]/20 overflow-hidden">
+      <section className="copa-section mb-2 -mx-6 px-6 pt-0 pb-5 bg-gradient-to-b from-[#FFF8E1] via-[#FFFDF5] to-[#FAF5EF] border-b border-[#E87A2F]/20 overflow-hidden">
         {/* Multicolor gradient stripe inspired by Copa 2026 logo */}
         <div className="-mx-6 h-1.5 mb-5" style={{ background: 'linear-gradient(to right, #009B3A, #1E88E5, #D32F2F, #F9A825, #E87A2F)' }} />
 
@@ -440,7 +528,7 @@ function CopaDoMundoSection({ items }: {
                   )}
                 </div>
                 {item.description && (
-                  <p className="text-[#4A3728]/60 text-xs mt-1 italic ml-11">{item.description}</p>
+                  <p className="text-[#4A3728]/60 text-xs mt-1 italic ml-11 print-hide-desc">{item.description}</p>
                 )}
               </div>
             );
@@ -459,7 +547,7 @@ function DarkSection({ title, items, twoColumns }: {
   twoColumns: boolean;
 }) {
   return (
-    <section className="mb-0 -mx-6 px-6 py-6 bg-[#2C2C2C]">
+    <section className="dark-section mb-0 -mx-6 px-6 py-6 bg-[#2C2C2C]">
       <div className="flex items-center gap-3 mb-4">
         <h2 className="text-base md:text-lg font-bold text-[#FAF5EF] uppercase tracking-[0.15em] whitespace-nowrap">
           {title}
@@ -510,7 +598,7 @@ function MenuItem({ item, dark }: {
         )}
       </div>
       {item.description && (
-        <p className={`${descColor} text-xs mt-0.5 italic`}>{item.description}</p>
+        <p className={`${descColor} text-xs mt-0.5 italic print-hide-desc`}>{item.description}</p>
       )}
     </div>
   );
