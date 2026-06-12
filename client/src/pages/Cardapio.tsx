@@ -86,14 +86,14 @@ export default function Cardapio() {
         @media print {
           @page {
             size: A4;
-            margin: 5mm 8mm;
+            margin: 8mm 10mm;
           }
           html, body {
             margin: 0 !important;
             padding: 0 !important;
             -webkit-print-color-adjust: exact;
             print-color-adjust: exact;
-            font-size: 11px !important;
+            font-size: 12px !important;
           }
           .print-container {
             min-height: auto !important;
@@ -141,110 +141,110 @@ export default function Cardapio() {
             margin-bottom: 0 !important;
           }
           main {
-            padding: 1mm 3mm 0 3mm !important;
+            padding: 2mm 5mm 0 5mm !important;
             margin-bottom: 0 !important;
           }
-          /* Compact header for print */
+          /* Header for print */
           header {
-            padding-top: 1mm !important;
-            padding-bottom: 0 !important;
+            padding-top: 3mm !important;
+            padding-bottom: 2mm !important;
           }
           header img {
-            width: 10mm !important;
-            height: 10mm !important;
-            margin-bottom: 0.5mm !important;
+            width: 12mm !important;
+            height: 12mm !important;
+            margin-bottom: 1mm !important;
           }
           header h1 {
-            font-size: 11pt !important;
-            margin-bottom: 0 !important;
+            font-size: 13pt !important;
+            margin-bottom: 0.5mm !important;
           }
           header p {
-            font-size: 6pt !important;
+            font-size: 7pt !important;
             margin-top: 0 !important;
           }
-          /* Reduce all text sizes for print */
+          /* Base text sizes for print - LARGER for better readability */
           .text-sm {
-            font-size: 8px !important;
-            line-height: 1.1 !important;
+            font-size: 9.5px !important;
+            line-height: 1.3 !important;
           }
           .text-xs {
-            font-size: 6.5px !important;
-            line-height: 1.05 !important;
+            font-size: 7.5px !important;
+            line-height: 1.2 !important;
           }
           .text-base, .text-lg {
-            font-size: 9px !important;
-            line-height: 1.15 !important;
+            font-size: 10.5px !important;
+            line-height: 1.3 !important;
           }
-          /* Compact item spacing */
+          /* Item spacing - more generous */
           .space-y-2 > * + * {
-            margin-top: 0.5mm !important;
+            margin-top: 1.5mm !important;
           }
           .space-y-2\.5 > * + * {
-            margin-top: 0.5mm !important;
+            margin-top: 1.5mm !important;
           }
-          /* Reduce grid gap */
+          /* Grid gap */
           .gap-y-2 {
-            row-gap: 0.5mm !important;
+            row-gap: 1.2mm !important;
           }
           .gap-x-8 {
-            column-gap: 3mm !important;
+            column-gap: 5mm !important;
           }
-          /* Reduce diamond separator spacing in print */
+          /* Diamond separator spacing */
           .diamond-sep {
-            margin-top: 1mm !important;
-            margin-bottom: 1mm !important;
-            font-size: 6px !important;
+            margin-top: 3mm !important;
+            margin-bottom: 3mm !important;
+            font-size: 7px !important;
           }
-          /* Reduce section margins in print */
+          /* Section margins */
           section {
-            margin-bottom: 0 !important;
-          }
-          /* Reduce section header margins */
-          section .flex.items-center.gap-3 {
             margin-bottom: 1mm !important;
           }
-          /* Compact Copa do Mundo section */
+          /* Section header margins */
+          section .flex.items-center.gap-3 {
+            margin-bottom: 2mm !important;
+          }
+          /* Copa do Mundo section */
           .copa-section {
-            padding-top: 1mm !important;
-            padding-bottom: 1mm !important;
-            margin-left: -3mm !important;
-            margin-right: -3mm !important;
-            padding-left: 3mm !important;
-            padding-right: 3mm !important;
+            padding-top: 3mm !important;
+            padding-bottom: 3mm !important;
+            margin-left: -5mm !important;
+            margin-right: -5mm !important;
+            padding-left: 5mm !important;
+            padding-right: 5mm !important;
           }
           .copa-section .rounded-lg {
-            padding: 0.8mm 2mm !important;
+            padding: 1.5mm 3mm !important;
             border: none !important;
             box-shadow: none !important;
           }
           .copa-section img.w-9 {
-            width: 5mm !important;
-            height: 3.5mm !important;
+            width: 6mm !important;
+            height: 4mm !important;
           }
           .copa-section img.w-10 {
-            width: 6mm !important;
-            height: 8mm !important;
+            width: 7mm !important;
+            height: 10mm !important;
           }
           .copa-section .space-y-2\.5 > * + * {
-            margin-top: 0.3mm !important;
+            margin-top: 1mm !important;
           }
-          /* Compact dark sections */
+          /* Dark sections */
           .dark-section {
-            padding: 1.5mm 3mm !important;
-            margin-left: -3mm !important;
-            margin-right: -3mm !important;
+            padding: 3mm 5mm !important;
+            margin-left: -5mm !important;
+            margin-right: -5mm !important;
           }
-          /* Compact page 2 spacing */
+          /* Page 2 header */
           .page-break-before .print-header {
-            margin-bottom: 0.5mm !important;
-            padding-top: 0.5mm !important;
+            margin-bottom: 2mm !important;
+            padding-top: 2mm !important;
           }
           .page-break-before .print-header img {
-            width: 7mm !important;
-            height: 7mm !important;
+            width: 8mm !important;
+            height: 8mm !important;
           }
           .page-break-before .print-header p {
-            font-size: 6pt !important;
+            font-size: 7pt !important;
           }
           /* Hide spacer between pages */
           .print-spacer {
@@ -260,94 +260,94 @@ export default function Cardapio() {
             break-after: avoid;
             margin-bottom: 0 !important;
             padding-bottom: 0 !important;
-            margin-top: 1mm !important;
+            margin-top: 3mm !important;
           }
-          /* Compact item descriptions in print */
+          /* Item descriptions in print */
           .print-hide-desc {
-            font-size: 6px !important;
-            line-height: 1 !important;
-            margin-top: 0 !important;
+            font-size: 7.5px !important;
+            line-height: 1.15 !important;
+            margin-top: 0.3mm !important;
             margin-bottom: 0 !important;
           }
-          /* Copa section title font smaller in print */
+          /* Copa section title */
           .copa-section h2 {
-            font-size: 10px !important;
+            font-size: 12px !important;
           }
-          /* Reduce Copa gradient stripe */
+          /* Copa gradient stripe */
           .copa-section .h-1\.5 {
-            height: 0.5mm !important;
-            margin-bottom: 1mm !important;
+            height: 1mm !important;
+            margin-bottom: 2mm !important;
           }
-          /* Section title h2 compact */
+          /* Section title h2 */
           section h2 {
-            font-size: 9px !important;
-            letter-spacing: 0.08em !important;
+            font-size: 11px !important;
+            letter-spacing: 0.1em !important;
           }
-          /* Section title divider line thinner */
+          /* Section title divider line */
           section .h-\[2px\] {
             height: 1px !important;
           }
-          /* Reduce section header gap */
+          /* Section header gap */
           section .mb-4 {
-            margin-bottom: 1mm !important;
+            margin-bottom: 2mm !important;
           }
-          /* Footer compact */
+          /* Footer */
           .print-footer {
-            margin-top: 1mm !important;
-            gap: 0 !important;
+            margin-top: 4mm !important;
+            gap: 1mm !important;
           }
           .print-footer span {
-            font-size: 6px !important;
+            font-size: 7px !important;
           }
-          /* PAGE 2: Use larger fonts and spacing to fill the page */
+          /* PAGE 2: Even larger fonts and spacing to fill the page */
           .page-2-content .text-sm {
-            font-size: 10px !important;
-            line-height: 1.4 !important;
+            font-size: 11px !important;
+            line-height: 1.5 !important;
           }
           .page-2-content .text-xs {
-            font-size: 8px !important;
-            line-height: 1.3 !important;
+            font-size: 9px !important;
+            line-height: 1.4 !important;
           }
           .page-2-content .text-base, .page-2-content .text-lg {
-            font-size: 11px !important;
-            line-height: 1.3 !important;
+            font-size: 12px !important;
+            line-height: 1.4 !important;
           }
           .page-2-content section h2 {
-            font-size: 12px !important;
-            letter-spacing: 0.12em !important;
-            margin-bottom: 2mm !important;
+            font-size: 14px !important;
+            letter-spacing: 0.15em !important;
+            margin-bottom: 3mm !important;
           }
           .page-2-content .space-y-2 > * + * {
-            margin-top: 1.5mm !important;
+            margin-top: 2.5mm !important;
           }
           .page-2-content .gap-y-2 {
-            row-gap: 1.5mm !important;
+            row-gap: 2.5mm !important;
           }
           .page-2-content .gap-x-8 {
-            column-gap: 6mm !important;
+            column-gap: 8mm !important;
           }
           .page-2-content .diamond-sep {
-            margin-top: 3mm !important;
-            margin-bottom: 3mm !important;
-            font-size: 8px !important;
+            margin-top: 5mm !important;
+            margin-bottom: 5mm !important;
+            font-size: 9px !important;
           }
           .page-2-content section {
-            margin-bottom: 2mm !important;
+            margin-bottom: 3mm !important;
           }
           .page-2-content .dark-section {
-            padding: 3mm 5mm !important;
-            margin-left: -5mm !important;
-            margin-right: -5mm !important;
+            padding: 5mm 7mm !important;
+            margin-left: -7mm !important;
+            margin-right: -7mm !important;
           }
           .page-2-content .print-hide-desc {
-            font-size: 8px !important;
-            line-height: 1.2 !important;
+            font-size: 9px !important;
+            line-height: 1.3 !important;
           }
           .page-2-content .print-footer {
-            margin-top: 8mm !important;
+            margin-top: 12mm !important;
           }
           .page-2-content .print-footer span {
-            font-size: 8px !important;
+            font-size: 9px !important;
           }
         }
         @media screen {
