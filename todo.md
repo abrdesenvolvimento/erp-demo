@@ -2463,3 +2463,21 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Guaraná Antarctica 300ML ativo mas não aparece no cardápio (corrigido: availableInSalon era 0, atualizado para 1)
 - [x] Alinhar preços nas seções de 2 colunas (Água/Refrigerante, Sucos, Cervejas) - adicionado min-w-[70px] text-right tabular-nums
 - [x] Corrigir impressão do cardápio - otimizado para 2 páginas (descrições mantidas, fontes compactas, page break reposicionado)
+
+## Sprint 12/06/2026 — Print Agent v3.0
+
+- [x] Print Agent: Porta da API alterada de 9100 para 9111 (evita conflito com impressoras)
+- [x] Print Agent: Polling adaptativo com backoff (5s normal → 30s em erro/429)
+- [x] Print Agent: Processamento paralelo de jobs (não bloqueia fila)
+- [x] Print Agent: Deduplicação de jobs (evita reimprimir se reportJobComplete falhar)
+- [x] Print Agent: Retry automático para conexões TCP com timeout (5s + 1 retry)
+- [x] Print Agent: Logs com timestamp (horário de São Paulo)
+- [x] Print Agent: Watchdog que reinicia polling se parar inesperadamente
+- [x] Print Agent: Graceful shutdown (SIGINT/SIGTERM)
+- [x] Print Agent: Estatísticas de uso no endpoint /status
+- [x] Print Agent: Título "Adega Beira Rio" no recibo impresso
+- [x] Print Agent: Documentação completa (README.md) com troubleshooting
+- [x] Print Agent: Script de auto-start para Windows (install-service.js)
+- [x] Print Agent: Atualizado printService.ts para usar nova porta 9111
+- [x] Fix: stockMovements.ts — corrigidos erros de TypeScript (input schema)
+- [x] Fix: Teste print-queue atualizado para v3.0

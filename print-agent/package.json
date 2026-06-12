@@ -1,7 +1,7 @@
 {
   "name": "abrwf-print-agent",
-  "version": "1.0.0",
-  "description": "Print Agent local para impressão térmica ESC/POS - A Brasa Reúne / Adega Beira Rio",
+  "version": "3.0.0",
+  "description": "ABRWF Print Agent - Serviço local para impressão térmica ESC/POS",
   "main": "print-agent.js",
   "scripts": {
     "start": "node print-agent.js",

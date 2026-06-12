@@ -24,5 +24,5 @@
   ],
   "serverUrl": "https://abrwf.com.br",
   "companyId": 2,
-  "pollingIntervalMs": 2000
+  "pollingIntervalMs": 5000
 }

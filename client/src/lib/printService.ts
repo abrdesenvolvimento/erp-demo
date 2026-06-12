@@ -14,7 +14,7 @@
 
 // Usa 127.0.0.1 em vez de localhost para garantir que o Chrome
 // reconheça como IP privado e isente de mixed content (HTTPS→HTTP)
-const AGENT_URL = "http://127.0.0.1:9100";
+const AGENT_URL = "http://127.0.0.1:9111";
 const AGENT_ONLINE_CACHE_MS = 60000; // 60s de cache quando agent está ONLINE
 const AGENT_TIMEOUT_MS = 8000; // 8s timeout para status check (agent pode demorar se impressora offline)
 

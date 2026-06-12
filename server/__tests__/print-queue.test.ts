@@ -134,8 +134,8 @@ describe("Print Queue Architecture (server-side fila de impressão)", () => {
       "utf-8"
     );
 
-    it("é versão 2.0", () => {
-      expect(agent).toMatch(/v2\.0/);
+    it("é versão 3.0", () => {
+      expect(agent).toMatch(/v3\.0/);
     });
 
     it("tem função pollForJobs", () => {

@@ -20,20 +20,19 @@ export const stockMovementsRouter = router({
       search: z.string().optional(),
       startDate: z.string().optional(),
       endDate: z.string().optional(),
-      page: z.number().optional().default(1),
-      pageSize: z.number().optional().default(50),
-    }).optional())
+      page: z.number().default(1),
+      pageSize: z.number().default(50),
+    }))
     .query(async ({ input, ctx }) => {
-      const filters = input || {};
       return await db.getAllProductMovements({
         companyId: ctx.activeCompanyId,
-        type: filters.type,
-        productId: filters.productId,
-        search: filters.search,
-        startDate: filters.startDate ? new Date(filters.startDate) : undefined,
-        endDate: filters.endDate ? new Date(filters.endDate) : undefined,
-        page: filters.page,
-        pageSize: filters.pageSize,
+        type: input.type,
+        productId: input.productId,
+        search: input.search,
+        startDate: input.startDate ? new Date(input.startDate) : undefined,
+        endDate: input.endDate ? new Date(input.endDate) : undefined,
+        page: input.page,
+        pageSize: input.pageSize,
       });
     }),
 
