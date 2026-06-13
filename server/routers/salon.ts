@@ -144,7 +144,31 @@ export const salonRouter = router({
         readyCountByOrder = new Map(readyCounts.map(r => [r.orderId, Number(r.count)]));
       }
 
-      const ordersByTable = new Map(activeOrders.map(o => [o.tableId, { ...o, readyItems: readyCountByOrder.get(o.id) ?? 0 }]));
+      // Get last note per order (most recent item with notes)
+      let lastNoteByOrder = new Map<number, string>();
+      if (orderIds.length > 0) {
+        const lastNotes = await db
+          .select({
+            orderId: salonOrderItems.orderId,
+            notes: salonOrderItems.notes,
+          })
+          .from(salonOrderItems)
+          .where(
+            and(
+              inArray(salonOrderItems.orderId, orderIds),
+              sql`${salonOrderItems.notes} IS NOT NULL AND ${salonOrderItems.notes} != ''`
+            )
+          )
+          .orderBy(sql`${salonOrderItems.id} DESC`);
+        // Keep only the first (most recent) note per order
+        for (const row of lastNotes) {
+          if (!lastNoteByOrder.has(row.orderId)) {
+            lastNoteByOrder.set(row.orderId, row.notes!);
+          }
+        }
+      }
+
+      const ordersByTable = new Map(activeOrders.map(o => [o.tableId, { ...o, readyItems: readyCountByOrder.get(o.id) ?? 0, lastNote: lastNoteByOrder.get(o.id) ?? null }]));
 
       return tables.map(t => ({
         ...t,

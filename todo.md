@@ -2481,3 +2481,8 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Print Agent: Atualizado printService.ts para usar nova porta 9111
 - [x] Fix: stockMovements.ts — corrigidos erros de TypeScript (input schema)
 - [x] Fix: Teste print-queue atualizado para v3.0
+
+## Sprint 12/06/2026 — Melhorias Tela de Mesas
+
+- [x] Exibir última observação lançada no card da mesa (auxiliar garçom a identificar)
+- [x] Novo modo de rateio: seleção de itens consumidos por pessoa (além do rateio por valor)

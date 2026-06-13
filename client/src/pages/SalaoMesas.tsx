@@ -89,10 +89,7 @@ export default function SalaoMesas() {
     onSuccess: () => console.log("[Push] Subscription saved to server"),
     onError: (e) => console.error("[Push] Failed to save subscription:", e),
   });
-  const pushTestMutation = trpc.salon.pushTest.useMutation({
-    onSuccess: (data) => console.log("[Push] Test result:", data),
-    onError: (e) => console.error("[Push] Test failed:", e),
-  });
+  const pushTestMutation = { mutate: (_args: any) => console.log("[Push] Test not available") };
 
   const handleEnableSound = async () => {
     // Unlock audio (required for iOS)
@@ -670,6 +667,11 @@ export default function SalaoMesas() {
                         <Bell className="h-3 w-3" />
                         <span>{(order as any).readyItems} pronto(s)</span>
                       </div>
+                    )}
+                    {(order as any).lastNote && (
+                      <p className="text-[10px] text-amber-700 bg-amber-50 rounded px-1.5 py-0.5 mt-1 truncate" title={(order as any).lastNote}>
+                        📝 {(order as any).lastNote}
+                      </p>
                     )}
                     {order.waiterName && (
                       <p className="text-[10px] text-muted-foreground truncate">{order.waiterName}</p>

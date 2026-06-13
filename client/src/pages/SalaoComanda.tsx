@@ -54,9 +54,13 @@ export default function SalaoComanda() {
   const [tipPercent, setTipPercent] = useState(10);
   const [paymentMethod, setPaymentMethod] = useState("DEBIT");
   const [splitPayments, setSplitPayments] = useState<Array<{ method: string; amount: number }>>([]);
-  const [splitMode, setSplitMode] = useState(false);
+  const [splitMode, setSplitMode] = useState<false | "value" | "items">(false);
   const [splitMethodToAdd, setSplitMethodToAdd] = useState("DEBIT");
   const [splitAmountToAdd, setSplitAmountToAdd] = useState("");
+  // Item-based split state
+  const [itemSplitSelections, setItemSplitSelections] = useState<Record<number, boolean>>({});
+  const [itemSplitPayments, setItemSplitPayments] = useState<Array<{ items: number[]; method: string; amount: number; label: string }>>([]);
+  const [itemSplitMethod, setItemSplitMethod] = useState("DEBIT");
   const [cancelConfirm, setCancelConfirm] = useState(false);
   const [previewModal, setPreviewModal] = useState(false);
   const [serviceFeeModal, setServiceFeeModal] = useState(false);
@@ -232,7 +236,9 @@ export default function SalaoComanda() {
   const handleConfirmFinalPayment = () => {
     const finalTotal = tipPercent > 0 ? totalWithTip : subtotal;
     let payments: Array<{ method: string; amount: number }>;
-    if (splitMode && splitPayments.length > 0) {
+    if (splitMode === "items" && itemSplitPayments.length > 0) {
+      payments = itemSplitPayments.map(p => ({ method: p.method, amount: p.amount }));
+    } else if (splitMode === "value" && splitPayments.length > 0) {
       payments = splitPayments.map(p => ({ method: p.method, amount: p.amount }));
     } else {
       payments = [{ method: paymentMethod, amount: finalTotal }];
@@ -250,7 +256,36 @@ export default function SalaoComanda() {
   const splitTotal = splitPayments.reduce((sum, p) => sum + p.amount, 0);
   const finalTotal = tipPercent > 0 ? totalWithTip : subtotal;
   const splitRemaining = Math.max(0, finalTotal - splitTotal);
-  const splitComplete = splitMode && Math.abs(splitRemaining) < 0.01;
+  const splitComplete = splitMode === "value" && Math.abs(splitRemaining) < 0.01;
+
+  // Item-based split computed values
+  const itemSplitTotal = itemSplitPayments.reduce((sum, p) => sum + p.amount, 0);
+  const itemSplitRemaining = Math.max(0, finalTotal - itemSplitTotal);
+  const itemSplitComplete = splitMode === "items" && Math.abs(itemSplitRemaining) < 0.01;
+  const selectedItemsSubtotal = useMemo(() => {
+    if (!order?.items) return 0;
+    return (order.items as any[]).filter((i: any) => i.status !== "CANCELLED" && itemSplitSelections[i.id])
+      .reduce((sum: number, i: any) => sum + (typeof i.totalPrice === "string" ? parseFloat(i.totalPrice) : (i.totalPrice ?? 0)), 0);
+  }, [order?.items, itemSplitSelections]);
+  // Proportional tip for selected items
+  const selectedItemsTip = subtotal > 0 ? (selectedItemsSubtotal / subtotal) * tipAmount : 0;
+  const selectedItemsTotal = selectedItemsSubtotal + selectedItemsTip;
+
+  const handleConfirmItemSelection = () => {
+    const selectedIds = Object.entries(itemSplitSelections).filter(([, v]) => v).map(([k]) => parseInt(k));
+    if (selectedIds.length === 0) {
+      toast.error("Selecione pelo menos um item");
+      return;
+    }
+    const label = `Pessoa ${itemSplitPayments.length + 1}`;
+    setItemSplitPayments(prev => [...prev, { items: selectedIds, method: itemSplitMethod, amount: parseFloat(selectedItemsTotal.toFixed(2)), label }]);
+    // Clear selections for next person
+    setItemSplitSelections({});
+  };
+
+  const handleRemoveItemSplitPayment = (index: number) => {
+    setItemSplitPayments(prev => prev.filter((_, i) => i !== index));
+  };
 
   const handleAddSplitPayment = () => {
     const amt = parseFloat(splitAmountToAdd);
@@ -299,6 +334,8 @@ export default function SalaoComanda() {
     setSplitMode(false);
     setSplitPayments([]);
     setSplitAmountToAdd("");
+    setItemSplitSelections({});
+    setItemSplitPayments([]);
     setCheckoutModal(true);
   };
 
@@ -912,23 +949,31 @@ export default function SalaoComanda() {
               )}
             </div>
 
-            {/* Toggle: Single vs Split */}
-            <div className="flex items-center gap-2">
+            {/* Toggle: Single vs Value Split vs Item Split */}
+            <div className="flex items-center gap-1.5">
               <button
-                onClick={() => { setSplitMode(false); setSplitPayments([]); }}
-                className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium border-2 transition-colors ${
+                onClick={() => { setSplitMode(false); setSplitPayments([]); setItemSplitPayments([]); setItemSplitSelections({}); }}
+                className={`flex-1 py-2 px-2 rounded-lg text-xs font-medium border-2 transition-colors ${
                   !splitMode ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground"
                 }`}
               >
                 Pagamento Único
               </button>
               <button
-                onClick={() => setSplitMode(true)}
-                className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium border-2 transition-colors ${
-                  splitMode ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground"
+                onClick={() => { setSplitMode("value"); setItemSplitPayments([]); setItemSplitSelections({}); }}
+                className={`flex-1 py-2 px-2 rounded-lg text-xs font-medium border-2 transition-colors ${
+                  splitMode === "value" ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground"
                 }`}
               >
-                Dividir Pagamento
+                Dividir Valor
+              </button>
+              <button
+                onClick={() => { setSplitMode("items"); setSplitPayments([]); }}
+                className={`flex-1 py-2 px-2 rounded-lg text-xs font-medium border-2 transition-colors ${
+                  splitMode === "items" ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground"
+                }`}
+              >
+                Dividir por Itens
               </button>
             </div>
 
@@ -956,8 +1001,140 @@ export default function SalaoComanda() {
                   ))}
                 </div>
               </div>
+            ) : splitMode === "items" ? (
+              /* Item-based split mode */
+              <div className="space-y-3">
+                {/* Already confirmed persons */}
+                {itemSplitPayments.length > 0 && (
+                  <div className="space-y-2">
+                    <Label className="text-xs text-muted-foreground uppercase tracking-wide">Pessoas confirmadas</Label>
+                    {itemSplitPayments.map((p, i) => {
+                      const methodInfo = PAYMENT_METHODS.find(m => m.value === p.method);
+                      return (
+                        <div key={i} className="flex items-center justify-between bg-green-50 border border-green-200 rounded-lg p-3">
+                          <div className="flex items-center gap-2">
+                            {methodInfo && <methodInfo.icon className="h-4 w-4 text-green-700" />}
+                            <div>
+                              <span className="text-sm font-medium text-green-800">{p.label}</span>
+                              <span className="text-xs text-green-600 ml-2">{p.items.length} item(ns)</span>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-bold text-green-800">{formatCurrency(p.amount)}</span>
+                            <button onClick={() => handleRemoveItemSplitPayment(i)} className="text-red-500 hover:text-red-700 p-1">
+                              <X className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Remaining balance */}
+                <div className={`rounded-lg p-3 text-center font-bold text-lg ${
+                  itemSplitComplete
+                    ? "bg-green-100 text-green-800 border border-green-300"
+                    : "bg-amber-50 text-amber-800 border border-amber-200"
+                }`}>
+                  {itemSplitComplete
+                    ? <span className="flex items-center justify-center gap-2"><CheckCircle2 className="h-5 w-5" /> Valor completo!</span>
+                    : <span>Saldo restante: {formatCurrency(itemSplitRemaining)}</span>
+                  }
+                </div>
+
+                {/* Select items for next person */}
+                {!itemSplitComplete && (
+                  <div className="border rounded-lg p-3 space-y-3">
+                    <Label className="text-xs text-muted-foreground uppercase tracking-wide">
+                      Selecione os itens da Pessoa {itemSplitPayments.length + 1}
+                    </Label>
+                    <div className="max-h-48 overflow-y-auto space-y-1">
+                      {(order?.items as any[] ?? []).filter((i: any) => i.status !== "CANCELLED").map((item: any) => {
+                        const alreadyAssigned = itemSplitPayments.some(p => p.items.includes(item.id));
+                        const isSelected = !!itemSplitSelections[item.id];
+                        return (
+                          <label
+                            key={item.id}
+                            className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors ${
+                              alreadyAssigned ? "opacity-40 cursor-not-allowed bg-gray-50" :
+                              isSelected ? "bg-primary/10 border border-primary/30" : "hover:bg-muted"
+                            }`}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              disabled={alreadyAssigned}
+                              onChange={(e) => {
+                                if (alreadyAssigned) return;
+                                setItemSplitSelections(prev => ({ ...prev, [item.id]: e.target.checked }));
+                              }}
+                              className="rounded border-gray-300 text-primary focus:ring-primary h-4 w-4"
+                            />
+                            <div className="flex-1 min-w-0">
+                              <span className="text-sm font-medium truncate block">{item.productName}</span>
+                              {item.notes && <span className="text-xs text-muted-foreground">({item.notes})</span>}
+                            </div>
+                            <div className="text-right">
+                              <span className="text-xs text-muted-foreground">{parseFloat(String(item.quantity))}x</span>
+                              <span className="text-sm font-semibold ml-2">{formatCurrency(typeof item.totalPrice === "string" ? parseFloat(item.totalPrice) : item.totalPrice)}</span>
+                            </div>
+                          </label>
+                        );
+                      })}
+                    </div>
+
+                    {/* Subtotal of selected items */}
+                    {selectedItemsSubtotal > 0 && (
+                      <div className="bg-muted rounded-lg p-2 space-y-1">
+                        <div className="flex justify-between text-xs">
+                          <span className="text-muted-foreground">Itens selecionados</span>
+                          <span>{formatCurrency(selectedItemsSubtotal)}</span>
+                        </div>
+                        {tipPercent > 0 && (
+                          <div className="flex justify-between text-xs">
+                            <span className="text-muted-foreground">Taxa proporcional</span>
+                            <span>{formatCurrency(selectedItemsTip)}</span>
+                          </div>
+                        )}
+                        <div className="flex justify-between text-sm font-bold border-t pt-1">
+                          <span>Total desta pessoa</span>
+                          <span>{formatCurrency(selectedItemsTotal)}</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Payment method for this person */}
+                    <div className="grid grid-cols-2 gap-2">
+                      {PAYMENT_METHODS.map(m => (
+                        <button
+                          key={m.value}
+                          onClick={() => setItemSplitMethod(m.value)}
+                          className={`flex items-center gap-2 p-2 rounded-lg border-2 transition-colors text-sm ${
+                            itemSplitMethod === m.value
+                              ? "border-primary bg-primary/5"
+                              : "border-border hover:border-primary/40"
+                          }`}
+                        >
+                          <m.icon className="h-3.5 w-3.5" />
+                          <span className="font-medium">{m.label}</span>
+                        </button>
+                      ))}
+                    </div>
+
+                    <Button
+                      onClick={handleConfirmItemSelection}
+                      disabled={selectedItemsSubtotal === 0}
+                      className="w-full"
+                    >
+                      <CheckCircle2 className="h-4 w-4 mr-1" />
+                      Confirmar Pessoa {itemSplitPayments.length + 1}
+                    </Button>
+                  </div>
+                )}
+              </div>
             ) : (
-              /* Split payment mode */
+              /* Value-based split payment mode */
               <div className="space-y-3">
                 {/* Already added payments */}
                 {splitPayments.length > 0 && (
@@ -1057,7 +1234,7 @@ export default function SalaoComanda() {
             <Button variant="outline" onClick={() => setCheckoutModal(false)}>Voltar</Button>
             <Button
               onClick={handleCheckout}
-              disabled={closeOrderMutation.isPending || (splitMode && !splitComplete)}
+              disabled={closeOrderMutation.isPending || (splitMode === "value" && !splitComplete) || (splitMode === "items" && !itemSplitComplete)}
               className="bg-green-600 hover:bg-green-700"
             >
               {closeOrderMutation.isPending ? "Encerrando..." : "Confirmar Pagamento"}
@@ -1139,7 +1316,17 @@ export default function SalaoComanda() {
             </div>
             <div className="space-y-1">
               <Label className="text-xs text-muted-foreground uppercase tracking-wide">Forma(s) de pagamento</Label>
-              {splitMode ? (
+              {splitMode === "items" ? (
+                itemSplitPayments.map((p, i) => {
+                  const m = PAYMENT_METHODS.find(x => x.value === p.method);
+                  return (
+                    <div key={i} className="flex justify-between text-sm">
+                      <span>{p.label} ({m?.label ?? p.method})</span>
+                      <span className="font-medium">{formatCurrency(p.amount)}</span>
+                    </div>
+                  );
+                })
+              ) : splitMode === "value" ? (
                 splitPayments.map((p, i) => {
                   const m = PAYMENT_METHODS.find(x => x.value === p.method);
                   return (
