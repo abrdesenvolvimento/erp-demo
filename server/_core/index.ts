@@ -9,7 +9,8 @@ import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import backupRouter from "../backupEndpoint";
-import { initBackupScheduler, getSchedulerStatus, triggerManualBackup } from "../scheduler";
+// Legacy node-cron scheduler removed — backup now uses Heartbeat HTTP cron
+// import { initBackupScheduler, getSchedulerStatus, triggerManualBackup } from '../scheduler';
 import { initAccountingScheduler, getAccountingSchedulerStatus, runAccountingBatch, updateAccountingSchedule } from "../accountingScheduler";
 import { initStockSnapshotJob } from "../jobs/stockSnapshot";
 
@@ -45,15 +46,28 @@ async function startServer() {
   // Backup endpoint under /api/backup
   app.use('/api', backupRouter);
   
-  // Scheduler endpoints
+  // Scheduler status endpoint (legacy, kept for UI compatibility)
   app.get('/api/scheduler/status', (req, res) => {
-    res.json(getSchedulerStatus());
+    res.json({
+      isRunning: false,
+      nextExecution: 'Gerenciado via Heartbeat (plataforma Manus)',
+      timezone: 'America/Sao_Paulo',
+      schedule: '0 0 6 * * * (Diário às 06:00 UTC = 03:00 BRT)',
+      engine: 'heartbeat',
+    });
   });
   
+  // Manual trigger still works — calls the existing /api/backup endpoint internally
   app.post('/api/scheduler/trigger', async (req, res) => {
     try {
-      await triggerManualBackup();
-      res.json({ success: true, message: 'Backup triggered' });
+      const port = process.env.PORT || 3000;
+      const response = await fetch(`http://localhost:${port}/api/backup`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ triggeredBy: 'manual' }),
+      });
+      const result = await response.json();
+      res.json(result);
     } catch (error: any) {
       res.status(500).json({ success: false, error: error.message });
     }
@@ -91,6 +105,28 @@ async function startServer() {
   // Heartbeat keep-alive endpoint (prevents Cloud Run cold starts)
   app.post('/api/scheduled/keep-alive', (req, res) => {
     res.json({ ok: true, ts: new Date().toISOString(), v: 2 });
+  });
+
+  // Heartbeat backup endpoint — triggered by Manus platform cron daily at 06:00 UTC (03:00 BRT)
+  app.post('/api/scheduled/backup', async (req, res) => {
+    console.log('[Heartbeat] Backup triggered by platform cron');
+    try {
+      const port = process.env.PORT || 3000;
+      const response = await fetch(`http://localhost:${port}/api/backup`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ triggeredBy: 'heartbeat' }),
+      });
+      const result = await response.json() as any;
+      if (result.success) {
+        res.json({ ok: true, duration: result.duration, totalSize: result.totalSize });
+      } else {
+        res.status(500).json({ ok: false, error: result.error });
+      }
+    } catch (error: any) {
+      console.error('[Heartbeat] Backup error:', error.message);
+      res.status(500).json({ ok: false, error: error.message });
+    }
   });
 
   // ==================== PRINT QUEUE ENDPOINTS (for Print Agent polling) ====================
@@ -217,7 +253,7 @@ async function startServer() {
     console.log(`Server running on http://localhost:${port}/`);
     
     // Inicializar schedulers após servidor estar rodando
-    initBackupScheduler();
+    // initBackupScheduler(); // Removed — now uses Heartbeat HTTP cron
     initAccountingScheduler();
     initStockSnapshotJob();
   });

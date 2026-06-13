@@ -135,11 +135,11 @@ export async function getSalesByChannel(startDate: string, endDate: string, comp
 
   // Calcular percentuais e ticket médio
   const results: SalesByChannel[] = [];
-  for (const [, channel] of channelMap) {
+  channelMap.forEach((channel) => {
     channel.percentage = totalRevenue > 0 ? Math.round((channel.revenue / totalRevenue) * 1000) / 10 : 0;
     channel.ticketMedio = channel.count > 0 ? Math.round((channel.revenue / channel.count) * 100) / 100 : 0;
     results.push(channel);
-  }
+  });
 
   return results.sort((a, b) => b.revenue - a.revenue);
 }

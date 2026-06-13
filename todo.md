@@ -2486,3 +2486,8 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 
 - [x] Exibir última observação lançada no card da mesa (auxiliar garçom a identificar)
 - [x] Novo modo de rateio: seleção de itens consumidos por pessoa (além do rateio por valor)
+
+## Sprint 13/06/2026 — Backup Heartbeat Migration
+- [ ] Criar endpoint /api/scheduled/backup para receber trigger externo da plataforma
+- [ ] Remover dependência de node-cron para backup (Cloud Run mata instâncias ociosas)
+- [ ] Configurar Heartbeat schedule via manus-heartbeat CLI (diário 3h Brasília = 6h UTC)

@@ -191,7 +191,7 @@ export default function SalaoMesas() {
   }, [waiterAccess]);
 
   // Admin: list waiters for check-in management
-  const { data: waitersList = [], refetch: refetchWaiters } = trpc.salon.listWaiters.useQuery(
+  const { data: waitersList = [], refetch: refetchWaiters } = trpc.salon.listWaitersWithCheckIn.useQuery(
     { companyId },
     { enabled: companyId > 0 && isAdmin }
   );

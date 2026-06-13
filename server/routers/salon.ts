@@ -1923,8 +1923,7 @@ export const salonRouter = router({
             }).catch(() => {});
             void sendPushToCompany(
               input.companyId,
-              `🔔 ${waiterName} aguardando check-in`,
-              `Acesse Salão > Configurar para liberar o acesso.`
+              { title: `🔔 ${waiterName} aguardando check-in`, body: `Acesse Salão > Configurar para liberar o acesso.` }
             ).catch(() => {});
           }
           return { allowed: false, reason: `Fora do horário (${opening} - ${closing}). Solicite liberação ao gerente.`, outsideHours: true, needsCheckIn: true };
@@ -1943,8 +1942,7 @@ export const salonRouter = router({
           }).catch(() => {});
           void sendPushToCompany(
             input.companyId,
-            `🔔 ${waiterName} aguardando check-in`,
-            `Acesse Salão > Configurar para liberar o acesso.`
+            { title: `🔔 ${waiterName} aguardando check-in`, body: `Acesse Salão > Configurar para liberar o acesso.` }
           ).catch(() => {});
         }
         return { allowed: false, reason: 'Aguardando liberação do administrador. Solicite o check-in ao gerente.', needsCheckIn: true };
@@ -1955,7 +1953,7 @@ export const salonRouter = router({
     }),
 
   // Admin: listar garçons da empresa com status de check-in de hoje
-  listWaiters: protectedProcedure
+  listWaitersWithCheckIn: protectedProcedure
     .input(z.object({ companyId: z.number() }))
     .query(async ({ input }) => {
       const db = await getDb();
@@ -2553,6 +2551,6 @@ function mapPaymentMethod(payments: Array<{ method: string; amount: number }>): 
     return map[payments[0].method] ?? "DINHEIRO";
   }
   // List each method used (e.g. "DINHEIRO + PIX")
-  const uniqueMethods = [...new Set(payments.map(p => map[p.method] ?? p.method))];
+  const uniqueMethods = Array.from(new Set(payments.map(p => map[p.method] ?? p.method)));
   return uniqueMethods.join(" + ");
 }

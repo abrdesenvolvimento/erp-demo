@@ -979,7 +979,7 @@ function WaiterPresencePanel() {
     onSuccess: () => {
       toast.success('Garçom liberado!');
       utils.salon.waiterPresence.invalidate();
-      utils.salon.listWaiters.invalidate();
+      utils.salon.listWaitersWithCheckIn.invalidate();
     },
     onError: (err) => toast.error(err.message),
   });
@@ -988,7 +988,7 @@ function WaiterPresencePanel() {
     onSuccess: () => {
       toast.success('Check-out realizado');
       utils.salon.waiterPresence.invalidate();
-      utils.salon.listWaiters.invalidate();
+      utils.salon.listWaitersWithCheckIn.invalidate();
     },
     onError: (err) => toast.error(err.message),
   });
