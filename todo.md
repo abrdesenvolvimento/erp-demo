@@ -2488,6 +2488,12 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Novo modo de rateio: seleção de itens consumidos por pessoa (além do rateio por valor)
 
 ## Sprint 13/06/2026 — Backup Heartbeat Migration
-- [ ] Criar endpoint /api/scheduled/backup para receber trigger externo da plataforma
-- [ ] Remover dependência de node-cron para backup (Cloud Run mata instâncias ociosas)
-- [ ] Configurar Heartbeat schedule via manus-heartbeat CLI (diário 3h Brasília = 6h UTC)
+- [x] Criar endpoint /api/scheduled/backup para receber trigger externo da plataforma
+- [x] Remover dependência de node-cron para backup (Cloud Run mata instâncias ociosas)
+- [x] Configurar Heartbeat schedule via manus-heartbeat CLI (diário 3h Brasília = 6h UTC) — task_uid: ivEbr4395zxWx2ah9n3CkD
+
+## Sprint 14/06/2026 — Baixa Parcial + Correções
+- [x] Corrigir título "Adega Beira Rio" na pré-visualização da conta (deve ser "A Brasa Reúne")
+- [x] Implementar baixa parcial da conta (pagamento parcial sem fechar mesa)
+- [x] Implementar mudança de mesa (transferência de comanda)
+- [x] Implementar alteração de quantidade de pessoas na mesa após abertura

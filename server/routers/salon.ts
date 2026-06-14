@@ -887,6 +887,53 @@ export const salonRouter = router({
       return { success: true, saleId, totalAmount };
     }),
 
+  // Pagamento parcial — registra pagamento sem fechar a mesa
+  partialPayment: protectedProcedure
+    .input(z.object({
+      orderId: z.number(),
+      companyId: z.number(),
+      method: z.enum(["CASH", "CREDIT", "DEBIT", "PIX", "VOUCHER"]),
+      amount: z.number().min(0.01),
+      itemIds: z.array(z.number()).optional(), // IDs dos itens que esta pessoa consumiu
+      paidBy: z.string().optional(), // Nome/identificação de quem pagou
+    }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("DB unavailable");
+
+      const [order] = await db
+        .select()
+        .from(salonOrders)
+        .where(and(eq(salonOrders.id, input.orderId), eq(salonOrders.companyId, input.companyId)))
+        .limit(1);
+
+      if (!order) throw new Error("Comanda não encontrada");
+      if (!["OPEN", "WAITING_PAYMENT"].includes(order.status)) {
+        throw new Error("Comanda já foi encerrada");
+      }
+
+      // Registrar pagamento parcial
+      await db.insert(salonOrderPayments).values({
+        orderId: input.orderId,
+        companyId: input.companyId,
+        method: input.method,
+        amount: String(input.amount.toFixed(2)),
+        isPartial: true,
+        itemIds: input.itemIds ? JSON.stringify(input.itemIds) : null,
+        paidBy: input.paidBy || null,
+      });
+
+      // Calcular total já pago
+      const allPayments = await db
+        .select()
+        .from(salonOrderPayments)
+        .where(eq(salonOrderPayments.orderId, input.orderId));
+
+      const totalPaid = allPayments.reduce((sum, p) => sum + parseFloat(String(p.amount ?? "0")), 0);
+
+      return { success: true, totalPaid, paymentId: allPayments[allPayments.length - 1]?.id };
+    }),
+
   cancelOrder: protectedProcedure
     .input(z.object({
       orderId: z.number(),
@@ -927,6 +974,91 @@ export const salonRouter = router({
         .where(eq(salonTables.id, order.tableId));
 
       return { success: true };
+    }),
+
+  // Mudança de mesa — transfere comanda para outra mesa
+  changeTable: protectedProcedure
+    .input(z.object({
+      orderId: z.number(),
+      companyId: z.number(),
+      newTableId: z.number(),
+    }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("DB unavailable");
+
+      const [order] = await db
+        .select()
+        .from(salonOrders)
+        .where(and(eq(salonOrders.id, input.orderId), eq(salonOrders.companyId, input.companyId)))
+        .limit(1);
+
+      if (!order) throw new Error("Comanda não encontrada");
+      if (!["OPEN", "WAITING_PAYMENT"].includes(order.status)) {
+        throw new Error("Comanda já foi encerrada");
+      }
+
+      // Verificar se a mesa destino está livre
+      const [newTable] = await db
+        .select()
+        .from(salonTables)
+        .where(and(eq(salonTables.id, input.newTableId), eq(salonTables.companyId, input.companyId)))
+        .limit(1);
+
+      if (!newTable) throw new Error("Mesa destino não encontrada");
+      if (newTable.status !== "FREE") throw new Error("Mesa destino não está livre");
+
+      const oldTableId = order.tableId;
+
+      // Atualizar a comanda com a nova mesa
+      await db
+        .update(salonOrders)
+        .set({ tableId: input.newTableId, tableNumber: newTable.number })
+        .where(eq(salonOrders.id, input.orderId));
+
+      // Liberar mesa antiga
+      await db
+        .update(salonTables)
+        .set({ status: "FREE" })
+        .where(eq(salonTables.id, oldTableId));
+
+      // Ocupar mesa nova
+      await db
+        .update(salonTables)
+        .set({ status: "OCCUPIED" })
+        .where(eq(salonTables.id, input.newTableId));
+
+      return { success: true, newTableNumber: newTable.number };
+    }),
+
+  // Alterar quantidade de pessoas na mesa
+  updateGuestCount: protectedProcedure
+    .input(z.object({
+      orderId: z.number(),
+      companyId: z.number(),
+      guestCount: z.number().min(1).max(50),
+    }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("DB unavailable");
+
+      const [order] = await db
+        .select()
+        .from(salonOrders)
+        .where(and(eq(salonOrders.id, input.orderId), eq(salonOrders.companyId, input.companyId)))
+        .limit(1);
+
+      if (!order) throw new Error("Comanda não encontrada");
+      if (!["OPEN", "WAITING_PAYMENT"].includes(order.status)) {
+        throw new Error("Comanda já foi encerrada");
+      }
+
+      await db
+        .update(salonOrders)
+        .set({ guestCount: input.guestCount })
+        .where(eq(salonOrders.id, input.orderId));
+
+      return { success: true, guestCount: input.guestCount };
     }),
 
   // --- Produtos disponíveis no salão ---

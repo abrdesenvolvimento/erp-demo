@@ -1363,6 +1363,9 @@ export const salonOrderPayments = mysqlTable("salonOrderPayments", {
   companyId: int("companyId").notNull(),
   method: mysqlEnum("method", ["CASH", "CREDIT", "DEBIT", "PIX", "VOUCHER"]).notNull(),
   amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  isPartial: boolean("isPartial").default(false).notNull(), // true = pagamento parcial (mesa continua aberta)
+  itemIds: text("itemIds"), // JSON array of item IDs associated with this partial payment
+  paidBy: varchar("paidBy", { length: 100 }), // Nome/identificação de quem pagou
   createdAt: timestamp("createdAt").defaultNow(),
 }, (table) => ({
   orderIdx: index("salon_payment_order_idx").on(table.orderId),

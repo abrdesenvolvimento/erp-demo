@@ -14,7 +14,7 @@ import { toast } from "sonner";
 import {
   ArrowLeft, Plus, Minus, Trash2, Send, CreditCard, DollarSign,
   QrCode, Users, Clock, ChefHat, CheckCircle2, Search, X, Bell,
-  Printer, FileText, ArrowRight
+  Printer, FileText, ArrowRight, ArrowRightLeft, Banknote
 } from "lucide-react";
 import { vibrateUrgent } from "@/lib/notificationSound";
 // Impressão de comanda é enviada via fila do servidor → Print Agent busca e imprime
@@ -66,6 +66,17 @@ export default function SalaoComanda() {
   const [serviceFeeModal, setServiceFeeModal] = useState(false);
   const [serviceFeeAccepted, setServiceFeeAccepted] = useState(true);
   const [confirmPaymentModal, setConfirmPaymentModal] = useState(false);
+  // Pagamento parcial
+  const [partialPaymentModal, setPartialPaymentModal] = useState(false);
+  const [partialAmount, setPartialAmount] = useState("");
+  const [partialMethod, setPartialMethod] = useState("DEBIT");
+  const [partialPaidBy, setPartialPaidBy] = useState("");
+  const [partialSelectedItems, setPartialSelectedItems] = useState<number[]>([]);
+  // Mudança de mesa
+  const [changeTableModal, setChangeTableModal] = useState(false);
+  // Alterar quantidade de pessoas
+  const [guestCountModal, setGuestCountModal] = useState(false);
+  const [newGuestCount, setNewGuestCount] = useState(1);
   const printRef = useRef<HTMLDivElement>(null);
 
   // Queries
@@ -195,6 +206,38 @@ export default function SalaoComanda() {
     onError: (e) => toast.error(e.message),
   });
 
+  const partialPaymentMutation = trpc.salon.partialPayment.useMutation({
+    onSuccess: (data) => {
+      toast.success(`Pagamento parcial registrado! Total pago: R$ ${data.totalPaid.toFixed(2)}`);
+      utils.salon.getOrder.invalidate({ orderId, companyId });
+      setPartialPaymentModal(false);
+      setPartialAmount("");
+      setPartialMethod("DEBIT");
+      setPartialPaidBy("");
+      setPartialSelectedItems([]);
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const changeTableMutation = trpc.salon.changeTable.useMutation({
+    onSuccess: (data) => {
+      toast.success(`Mesa alterada para Mesa ${data.newTableNumber}!`);
+      utils.salon.getOrder.invalidate({ orderId, companyId });
+      utils.salon.listTables.invalidate();
+      setChangeTableModal(false);
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const updateGuestCountMutation = trpc.salon.updateGuestCount.useMutation({
+    onSuccess: (data) => {
+      toast.success(`Quantidade de pessoas atualizada para ${data.guestCount}`);
+      utils.salon.getOrder.invalidate({ orderId, companyId });
+      setGuestCountModal(false);
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
   const deliverItemMutation = trpc.salon.updateItemStatus.useMutation({
     onSuccess: () => {
       toast.success("Item marcado como entregue!");
@@ -217,6 +260,14 @@ export default function SalaoComanda() {
   const tipAmount = subtotal * (tipPercent / 100);
   const totalWithTip = subtotal + tipAmount;
 
+  // Total já pago parcialmente
+  const partialPaidTotal = useMemo(() => {
+    if (!order?.payments) return 0;
+    return (order.payments as any[]).filter((p: any) => p.isPartial)
+      .reduce((sum: number, p: any) => sum + parseFloat(String(p.amount ?? "0")), 0);
+  }, [order?.payments]);
+  const remainingTotal = totalWithTip - partialPaidTotal;
+
   const handleAddItem = () => {
     if (!selectedProduct) return;
     addItemMutation.mutate({
@@ -234,7 +285,8 @@ export default function SalaoComanda() {
   };
 
   const handleConfirmFinalPayment = () => {
-    const finalTotal = tipPercent > 0 ? totalWithTip : subtotal;
+    // Use remainingTotal (total - partial payments already made)
+    const finalTotal = remainingTotal > 0 ? remainingTotal : (tipPercent > 0 ? totalWithTip : subtotal);
     let payments: Array<{ method: string; amount: number }>;
     if (splitMode === "items" && itemSplitPayments.length > 0) {
       payments = itemSplitPayments.map(p => ({ method: p.method, amount: p.amount }));
@@ -254,7 +306,8 @@ export default function SalaoComanda() {
   };
 
   const splitTotal = splitPayments.reduce((sum, p) => sum + p.amount, 0);
-  const finalTotal = tipPercent > 0 ? totalWithTip : subtotal;
+  const grossTotal = tipPercent > 0 ? totalWithTip : subtotal;
+  const finalTotal = grossTotal - partialPaidTotal; // Desconta pagamentos parciais
   const splitRemaining = Math.max(0, finalTotal - splitTotal);
   const splitComplete = splitMode === "value" && Math.abs(splitRemaining) < 0.01;
 
@@ -423,7 +476,7 @@ export default function SalaoComanda() {
   }
 
   const activeItems = (order.items ?? []).filter((i: any) => i.status !== "CANCELLED");
-  const perPerson = order.guestCount > 0 ? totalWithTip / order.guestCount : totalWithTip;
+  const perPerson = order.guestCount > 0 ? finalTotal / order.guestCount : finalTotal;
 
   const isClosed = order.status === "CLOSED" || order.status === "CANCELLED";
 
@@ -617,7 +670,63 @@ export default function SalaoComanda() {
         </Card>
       )}
 
-      {/* Actions */}
+      {/* Quick Actions */}
+      {!isClosed && (
+        <div className="flex flex-wrap gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => { setNewGuestCount(order?.guestCount ?? 1); setGuestCountModal(true); }}
+          >
+            <Users className="h-4 w-4 mr-1" />
+            Pessoas ({order?.guestCount})
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setChangeTableModal(true)}
+          >
+            <ArrowRightLeft className="h-4 w-4 mr-1" />
+            Mudar Mesa
+          </Button>
+          {activeItems.length > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-blue-600 border-blue-200 hover:bg-blue-50"
+              onClick={() => setPartialPaymentModal(true)}
+            >
+              <DollarSign className="h-4 w-4 mr-1" />
+              Pgto Parcial
+            </Button>
+          )}
+        </div>
+      )}
+
+      {/* Pagamentos parciais já registrados */}
+      {order?.payments && order.payments.filter((p: any) => p.isPartial).length > 0 && (
+        <Card className="border-blue-200 bg-blue-50/50">
+          <CardContent className="p-3">
+            <p className="text-xs font-semibold text-blue-700 mb-2">Pagamentos Parciais</p>
+            {order.payments.filter((p: any) => p.isPartial).map((p: any) => (
+              <div key={p.id} className="flex justify-between text-sm py-1 border-b border-blue-100 last:border-0">
+                <span className="text-blue-800">
+                  {p.paidBy || "Pessoa"} — {PAYMENT_METHODS.find(m => m.value === p.method)?.label || p.method}
+                </span>
+                <span className="font-medium text-blue-900">{formatCurrency(parseFloat(p.amount))}</span>
+              </div>
+            ))}
+            <div className="flex justify-between text-sm font-bold mt-2 pt-1 border-t border-blue-200">
+              <span className="text-blue-800">Total já pago</span>
+              <span className="text-blue-900">
+                {formatCurrency(order.payments.filter((p: any) => p.isPartial).reduce((sum: number, p: any) => sum + parseFloat(p.amount), 0))}
+              </span>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Main Actions */}
       {!isClosed && (
         <div className="flex flex-col sm:flex-row gap-2">
           <Button
@@ -931,8 +1040,20 @@ export default function SalaoComanda() {
                 </div>
               )}
               <Separator />
+              {partialPaidTotal > 0 && (
+                <>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Total bruto</span>
+                    <span>{formatCurrency(grossTotal)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm text-blue-600">
+                    <span>Já pago (parcial)</span>
+                    <span>- {formatCurrency(partialPaidTotal)}</span>
+                  </div>
+                </>
+              )}
               <div className="flex justify-between font-bold text-lg">
-                <span>{tipPercent > 0 ? "Total com serviço" : "Total"}</span>
+                <span>{partialPaidTotal > 0 ? "Saldo restante" : (tipPercent > 0 ? "Total com serviço" : "Total")}</span>
                 <span>{formatCurrency(finalTotal)}</span>
               </div>
               {tipPercent > 0 && (
@@ -1380,7 +1501,212 @@ export default function SalaoComanda() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      {/* Partial Payment Modal */}
+      <Dialog open={partialPaymentModal} onOpenChange={setPartialPaymentModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Pagamento Parcial</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Registre um pagamento parcial sem fechar a mesa. Ideal para quando alguém sai antes.
+            </p>
+
+            {/* Select items (optional) */}
+            <div>
+              <Label className="text-xs font-semibold">Selecione os itens (opcional)</Label>
+              <div className="max-h-40 overflow-y-auto space-y-1 mt-1 border rounded-lg p-2">
+                {(order?.items as any[] ?? []).filter((i: any) => i.status !== "CANCELLED").map((item: any) => {
+                  const isSelected = partialSelectedItems.includes(item.id);
+                  return (
+                    <label key={item.id} className={`flex items-center gap-2 p-1.5 rounded cursor-pointer text-sm ${isSelected ? "bg-blue-50" : "hover:bg-muted"}`}>
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setPartialSelectedItems(prev => [...prev, item.id]);
+                            // Auto-calculate amount
+                            const itemTotal = typeof item.totalPrice === "string" ? parseFloat(item.totalPrice) : item.totalPrice;
+                            const currentAmount = parseFloat(partialAmount || "0");
+                            setPartialAmount((currentAmount + itemTotal).toFixed(2));
+                          } else {
+                            setPartialSelectedItems(prev => prev.filter(id => id !== item.id));
+                            const itemTotal = typeof item.totalPrice === "string" ? parseFloat(item.totalPrice) : item.totalPrice;
+                            const currentAmount = parseFloat(partialAmount || "0");
+                            setPartialAmount(Math.max(0, currentAmount - itemTotal).toFixed(2));
+                          }
+                        }}
+                        className="rounded border-gray-300 h-3.5 w-3.5"
+                      />
+                      <span className="flex-1 truncate">{item.productName}</span>
+                      <span className="font-medium">{formatCurrency(typeof item.totalPrice === "string" ? parseFloat(item.totalPrice) : item.totalPrice)}</span>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div>
+              <Label>Valor (R$)</Label>
+              <Input
+                type="number"
+                step="0.01"
+                min="0.01"
+                value={partialAmount}
+                onChange={(e) => setPartialAmount(e.target.value)}
+                placeholder="0,00"
+              />
+            </div>
+
+            <div>
+              <Label>Quem está pagando? (opcional)</Label>
+              <Input
+                value={partialPaidBy}
+                onChange={(e) => setPartialPaidBy(e.target.value)}
+                placeholder="Ex: João"
+              />
+            </div>
+
+            <div>
+              <Label className="text-xs font-semibold">FORMA DE PAGAMENTO</Label>
+              <div className="grid grid-cols-2 gap-2 mt-1">
+                {PAYMENT_METHODS.map(m => (
+                  <Button
+                    key={m.value}
+                    variant={partialMethod === m.value ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setPartialMethod(m.value)}
+                    className="justify-start"
+                  >
+                    <m.icon className="h-4 w-4 mr-1" />
+                    {m.label}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPartialPaymentModal(false)}>Cancelar</Button>
+            <Button
+              onClick={() => {
+                const amount = parseFloat(partialAmount);
+                if (!amount || amount <= 0) { toast.error("Informe o valor"); return; }
+                partialPaymentMutation.mutate({
+                  orderId,
+                  companyId,
+                  method: partialMethod as any,
+                  amount,
+                  itemIds: partialSelectedItems.length > 0 ? partialSelectedItems : undefined,
+                  paidBy: partialPaidBy || undefined,
+                });
+              }}
+              disabled={partialPaymentMutation.isPending || !partialAmount || parseFloat(partialAmount) <= 0}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              {partialPaymentMutation.isPending ? "Registrando..." : "Confirmar Pagamento"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Change Table Modal */}
+      <Dialog open={changeTableModal} onOpenChange={setChangeTableModal}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Mudar Mesa</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground mb-2">
+            Selecione a mesa destino (apenas mesas livres):
+          </p>
+          <ChangeTableSelector
+            companyId={companyId}
+            currentTableId={order?.tableId}
+            onSelect={(tableId) => {
+              changeTableMutation.mutate({ orderId, companyId, newTableId: tableId });
+            }}
+            isPending={changeTableMutation.isPending}
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setChangeTableModal(false)}>Cancelar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Guest Count Modal */}
+      <Dialog open={guestCountModal} onOpenChange={setGuestCountModal}>
+        <DialogContent className="sm:max-w-xs">
+          <DialogHeader>
+            <DialogTitle>Alterar Pessoas</DialogTitle>
+          </DialogHeader>
+          <div className="flex items-center justify-center gap-4 py-4">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setNewGuestCount(Math.max(1, newGuestCount - 1))}
+              disabled={newGuestCount <= 1}
+            >
+              <Minus className="h-4 w-4" />
+            </Button>
+            <span className="text-3xl font-bold w-12 text-center">{newGuestCount}</span>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setNewGuestCount(newGuestCount + 1)}
+              disabled={newGuestCount >= 50}
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setGuestCountModal(false)}>Cancelar</Button>
+            <Button
+              onClick={() => updateGuestCountMutation.mutate({ orderId, companyId, guestCount: newGuestCount })}
+              disabled={updateGuestCountMutation.isPending || newGuestCount === order?.guestCount}
+            >
+              {updateGuestCountMutation.isPending ? "Salvando..." : "Confirmar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
     </DashboardLayout>
+  );
+}
+
+// Sub-component for table selection
+function ChangeTableSelector({ companyId, currentTableId, onSelect, isPending }: {
+  companyId: number;
+  currentTableId?: number;
+  onSelect: (tableId: number) => void;
+  isPending: boolean;
+}) {
+  const { data: tables = [] } = trpc.salon.listTables.useQuery(
+    { companyId },
+    { enabled: companyId > 0 }
+  );
+
+  const freeTables = (tables as any[]).filter((t: any) => t.status === "FREE" && t.id !== currentTableId);
+
+  if (freeTables.length === 0) {
+    return <p className="text-sm text-muted-foreground text-center py-4">Nenhuma mesa livre disponível</p>;
+  }
+
+  return (
+    <div className="grid grid-cols-4 gap-2 max-h-48 overflow-y-auto">
+      {freeTables.map((t: any) => (
+        <Button
+          key={t.id}
+          variant="outline"
+          size="sm"
+          onClick={() => onSelect(t.id)}
+          disabled={isPending}
+          className="h-12 flex flex-col"
+        >
+          <span className="font-bold">{t.number}</span>
+          <span className="text-[10px] text-muted-foreground">Cap. {t.capacity}</span>
+        </Button>
+      ))}
+    </div>
   );
 }
