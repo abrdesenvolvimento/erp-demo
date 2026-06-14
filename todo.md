@@ -2497,3 +2497,8 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Implementar baixa parcial da conta (pagamento parcial sem fechar mesa)
 - [x] Implementar mudança de mesa (transferência de comanda)
 - [x] Implementar alteração de quantidade de pessoas na mesa após abertura
+
+## Sprint 14/06/2026 — Bloqueio de Usuários + Fechamento Garçom
+- [x] Bloqueio de usuários: adicionar opção de bloquear/desbloquear na tela de Gerenciar Usuários
+- [x] Fechamento de Garçom: incluir data junto com horário de abertura nas comandas listadas
+- [x] Fechamento de Garçom: permitir ordenação de itens vendidos por valor e quantidade

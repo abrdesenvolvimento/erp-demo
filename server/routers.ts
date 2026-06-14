@@ -109,6 +109,16 @@ export const appRouter = router({
         return { success: true };
       }),
 
+    toggleBlock: adminProcedure
+      .input(z.object({ userId: z.string(), blocked: z.boolean() }))
+      .mutation(async ({ ctx, input }) => {
+        if (input.userId === ctx.user.id) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'Você não pode bloquear sua própria conta' });
+        }
+        await db.blockUser(input.userId, input.blocked);
+        return { success: true };
+      }),
+
     delete: adminProcedure
       .input(z.object({ userId: z.string() }))
       .mutation(async ({ ctx, input }) => {

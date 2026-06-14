@@ -250,6 +250,14 @@ export async function updateUserAvatar(userId: string, avatarUrl: string | null)
   await db.update(users).set({ avatarUrl }).where(eq(users.id, userId));
 }
 
+export async function blockUser(userId: string, blocked: boolean) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+  await db.update(users).set({ blocked }).where(eq(users.id, userId));
+}
+
 export async function deleteUser(userId: string) {
   const db = await getDb();
   if (!db) {

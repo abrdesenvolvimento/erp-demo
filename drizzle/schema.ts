@@ -83,6 +83,7 @@ export const users = mysqlTable("users", {
   loginMethod: varchar("loginMethod", { length: 64 }),
   avatarUrl: text("avatarUrl"),
   role: mysqlEnum("role", ["user", "admin", "operacional", "consultor", "garcom"]).default("user").notNull(),
+  blocked: boolean("blocked").default(false).notNull(),
   createdAt: timestamp("createdAt").defaultNow(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow(),
 });

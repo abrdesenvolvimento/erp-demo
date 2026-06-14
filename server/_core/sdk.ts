@@ -292,6 +292,11 @@ class SDKServer {
       throw ForbiddenError("User not found");
     }
 
+    // Check if user is blocked
+    if (user.blocked) {
+      throw ForbiddenError("Usuário bloqueado. Entre em contato com o administrador.");
+    }
+
     // Update lastSignedIn but don't let it break authentication
     try {
       await db.upsertUser({

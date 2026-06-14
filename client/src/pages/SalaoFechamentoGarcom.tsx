@@ -43,6 +43,7 @@ export default function SalaoFechamentoGarcom() {
   const [selectedWaiter, setSelectedWaiter] = useState<string>("all");
   const [expandedWaiter, setExpandedWaiter] = useState<string | null>(null);
   const [expandedOrder, setExpandedOrder] = useState<number | null>(null);
+  const [productSortBy, setProductSortBy] = useState<"revenue" | "quantity">("revenue");
 
   const { data: waiters = [] } = trpc.salon.listWaiters.useQuery(
     { companyId },
@@ -82,6 +83,38 @@ export default function SalaoFechamentoGarcom() {
     });
   };
 
+  const formatDateShort = (date: Date | string | null) => {
+    if (!date) return "";
+    return new Date(date).toLocaleDateString("pt-BR", {
+      timeZone: "America/Sao_Paulo",
+      day: "2-digit",
+      month: "2-digit",
+    });
+  };
+
+  const formatDateTimeShort = (date: Date | string | null) => {
+    if (!date) return "-";
+    const d = new Date(date);
+    const dateStr = d.toLocaleDateString("pt-BR", {
+      timeZone: "America/Sao_Paulo",
+      day: "2-digit",
+      month: "2-digit",
+    });
+    const timeStr = d.toLocaleTimeString("pt-BR", {
+      timeZone: "America/Sao_Paulo",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+    return `${dateStr} ${timeStr}`;
+  };
+
+  const sortProducts = (products: Array<{ productName: string; quantity: number; totalRevenue: number }>) => {
+    return [...products].sort((a, b) => {
+      if (productSortBy === "quantity") return b.quantity - a.quantity;
+      return b.totalRevenue - a.totalRevenue;
+    });
+  };
+
   const toggleWaiter = (id: string) => {
     setExpandedWaiter(expandedWaiter === id ? null : id);
     setExpandedOrder(null);
@@ -117,7 +150,7 @@ export default function SalaoFechamentoGarcom() {
             <td style="padding:4px 8px;border-bottom:1px solid #eee;font-family:monospace;">#${o.id}</td>
             <td style="padding:4px 8px;border-bottom:1px solid #eee;">Mesa ${o.tableNumber}</td>
             <td style="padding:4px 8px;border-bottom:1px solid #eee;text-align:center;">${o.guestCount}</td>
-            <td style="padding:4px 8px;border-bottom:1px solid #eee;text-align:center;">${formatTime(o.openedAt)} - ${formatTime(o.closedAt)}</td>
+            <td style="padding:4px 8px;border-bottom:1px solid #eee;text-align:center;">${formatDateTimeShort(o.openedAt)} - ${formatDateTimeShort(o.closedAt)}</td>
             <td style="padding:4px 8px;border-bottom:1px solid #eee;text-align:right;">${formatCurrency(o.subtotal)}</td>
             <td style="padding:4px 8px;border-bottom:1px solid #eee;text-align:right;color:#16a34a;">${formatCurrency(o.tipAmount)}</td>
             <td style="padding:4px 8px;border-bottom:1px solid #eee;text-align:right;font-weight:700;">${formatCurrency(o.totalAmount)}</td>
@@ -459,10 +492,30 @@ export default function SalaoFechamentoGarcom() {
                     <div className="border-t">
                       {/* Products sold */}
                       <div className="p-4">
-                        <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
-                          <ShoppingBag className="h-4 w-4 text-primary" />
-                          Produtos Vendidos
-                        </h3>
+                        <div className="flex items-center justify-between mb-3">
+                          <h3 className="text-sm font-semibold flex items-center gap-2">
+                            <ShoppingBag className="h-4 w-4 text-primary" />
+                            Produtos Vendidos
+                          </h3>
+                          <div className="flex gap-1">
+                            <Button
+                              variant={productSortBy === "revenue" ? "default" : "outline"}
+                              size="sm"
+                              className="h-7 text-xs px-2"
+                              onClick={(e) => { e.stopPropagation(); setProductSortBy("revenue"); }}
+                            >
+                              Por Valor
+                            </Button>
+                            <Button
+                              variant={productSortBy === "quantity" ? "default" : "outline"}
+                              size="sm"
+                              className="h-7 text-xs px-2"
+                              onClick={(e) => { e.stopPropagation(); setProductSortBy("quantity"); }}
+                            >
+                              Por Qtd
+                            </Button>
+                          </div>
+                        </div>
                         <div className="overflow-x-auto">
                           <table className="w-full text-sm">
                             <thead>
@@ -473,7 +526,7 @@ export default function SalaoFechamentoGarcom() {
                               </tr>
                             </thead>
                             <tbody>
-                              {w.productsSold.map((p, pIdx) => (
+                              {sortProducts(w.productsSold).map((p, pIdx) => (
                                 <tr key={pIdx} className="border-b last:border-0 hover:bg-muted/20">
                                   <td className="p-2">{p.productName}</td>
                                   <td className="p-2 text-right font-medium">{p.quantity}</td>
@@ -551,7 +604,7 @@ export default function SalaoFechamentoGarcom() {
                                         </span>
                                       </p>
                                       <p className="text-xs text-muted-foreground">
-                                        {formatTime(order.openedAt)} → {formatTime(order.closedAt)}
+                                        {formatDateTimeShort(order.openedAt)} → {formatDateTimeShort(order.closedAt)}
                                         <span className="ml-2">({formatMinutes(order.serviceTimeMin)})</span>
                                       </p>
                                     </div>

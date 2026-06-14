@@ -3,7 +3,7 @@ import { trpc } from "@/lib/trpc";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Shield, Plus, Pencil, Trash2, Clock } from "lucide-react";
+import { Shield, Plus, Pencil, Trash2, Ban, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -42,6 +42,7 @@ export default function Usuarios() {
   const createMutation = trpc.users.create.useMutation();
   const updateMutation = trpc.users.update.useMutation();
   const deleteMutation = trpc.users.delete.useMutation();
+  const toggleBlockMutation = trpc.users.toggleBlock.useMutation();
 
   const [formData, setFormData] = useState({
     name: "",
@@ -86,6 +87,18 @@ export default function Usuarios() {
       refetch();
     } catch (error: any) {
       toast.error(error.message || "Erro ao excluir usuário");
+    }
+  };
+
+  const handleToggleBlock = async (userId: string, currentBlocked: boolean) => {
+    const action = currentBlocked ? "desbloquear" : "bloquear";
+    if (!confirm(`Tem certeza que deseja ${action} este usuário?`)) return;
+    try {
+      await toggleBlockMutation.mutateAsync({ userId, blocked: !currentBlocked });
+      toast.success(currentBlocked ? "Usuário desbloqueado!" : "Usuário bloqueado!");
+      refetch();
+    } catch (error: any) {
+      toast.error(error.message || `Erro ao ${action} usuário`);
     }
   };
 
@@ -170,6 +183,7 @@ export default function Usuarios() {
                 <TableHead>Nome</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>Permissão</TableHead>
+                <TableHead>Status</TableHead>
                 <TableHead>Método de Login</TableHead>
                 <TableHead>Último Acesso</TableHead>
                 <TableHead className="text-right">Ações</TableHead>
@@ -177,10 +191,17 @@ export default function Usuarios() {
             </TableHeader>
             <TableBody>
               {users.map((user) => (
-                <TableRow key={user.id}>
+                <TableRow key={user.id} className={(user as any).blocked ? "opacity-60" : ""}>
                   <TableCell className="font-medium">{user.name}</TableCell>
                   <TableCell>{user.email}</TableCell>
                   <TableCell>{getRoleBadge(user.role)}</TableCell>
+                  <TableCell>
+                    {(user as any).blocked ? (
+                      <Badge className="bg-red-100 text-red-700">Bloqueado</Badge>
+                    ) : (
+                      <Badge className="bg-green-100 text-green-700">Ativo</Badge>
+                    )}
+                  </TableCell>
                   <TableCell className="text-muted-foreground">
                     {user.loginMethod || "-"}
                   </TableCell>
@@ -188,19 +209,35 @@ export default function Usuarios() {
                     {formatDate(user.lastSignedIn)}
                   </TableCell>
                   <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
+                    <div className="flex justify-end gap-1">
                       <Button
                         variant="ghost"
                         size="icon"
                         onClick={() => openEditModal(user)}
+                        title="Editar"
                       >
                         <Pencil className="h-4 w-4" />
                       </Button>
                       <Button
                         variant="ghost"
                         size="icon"
+                        onClick={() => handleToggleBlock(user.id, !!(user as any).blocked)}
+                        disabled={user.id === currentUser?.id}
+                        title={(user as any).blocked ? "Desbloquear" : "Bloquear"}
+                        className={(user as any).blocked ? "text-green-600 hover:text-green-700" : "text-red-600 hover:text-red-700"}
+                      >
+                        {(user as any).blocked ? (
+                          <CheckCircle className="h-4 w-4" />
+                        ) : (
+                          <Ban className="h-4 w-4" />
+                        )}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
                         onClick={() => handleDelete(user.id)}
                         disabled={user.id === currentUser?.id}
+                        title="Excluir"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
