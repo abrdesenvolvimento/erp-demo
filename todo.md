@@ -2502,3 +2502,10 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Bloqueio de usuários: adicionar opção de bloquear/desbloquear na tela de Gerenciar Usuários
 - [x] Fechamento de Garçom: incluir data junto com horário de abertura nas comandas listadas
 - [x] Fechamento de Garçom: permitir ordenação de itens vendidos por valor e quantidade
+
+## Sprint 14/06/2026 — Card Salão + Divergência Faturamento
+- [x] Tela de Vendas: adicionar card de Salão (hoje só tem Balcão, Delivery, A Prazo e Total Geral)
+- [x] Investigar e corrigir divergência de faturamento entre Dashboard, Vendas por Categoria e Faturamento por Tipo de Pagamento no Fechamento Mensal
+- [x] Vendas por Categoria: usar finalAmount proporcionalizado (total agora bate com Dashboard)
+- [x] Faturamento por Pagamento: normalizar valores e separar Gorjeta (Serviço) como linha à parte
+- [x] Dashboard: adicionar Salão no card Faturamento Mês (exibido quando > 0)

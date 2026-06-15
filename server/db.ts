@@ -974,6 +974,7 @@ export async function getSalesStats(
     balcao: { count: 0, total: "0.00" },
     delivery: { count: 0, total: "0.00" },
     aPrazo: { count: 0, total: "0.00" },
+    salao: { count: 0, total: "0.00" },
     total: { count: 0, total: "0.00" },
   };
   
@@ -1042,6 +1043,7 @@ export async function getSalesStats(
     balcao: { count: 0, total: 0 },
     delivery: { count: 0, total: 0 },
     aPrazo: { count: 0, total: 0 },
+    salao: { count: 0, total: 0 },
   };
   
   for (const row of rows) {
@@ -1054,16 +1056,19 @@ export async function getSalesStats(
       stats.delivery = { count, total };
     } else if (row.saleType === 'A_PRAZO') {
       stats.aPrazo = { count, total };
+    } else if (row.saleType === 'SALAO') {
+      stats.salao = { count, total };
     }
   }
   
-  const totalCount = stats.balcao.count + stats.delivery.count + stats.aPrazo.count;
-  const totalAmount = stats.balcao.total + stats.delivery.total + stats.aPrazo.total;
+  const totalCount = stats.balcao.count + stats.delivery.count + stats.aPrazo.count + stats.salao.count;
+  const totalAmount = stats.balcao.total + stats.delivery.total + stats.aPrazo.total + stats.salao.total;
   
   return {
     balcao: { count: stats.balcao.count, total: stats.balcao.total.toFixed(2) },
     delivery: { count: stats.delivery.count, total: stats.delivery.total.toFixed(2) },
     aPrazo: { count: stats.aPrazo.count, total: stats.aPrazo.total.toFixed(2) },
+    salao: { count: stats.salao.count, total: stats.salao.total.toFixed(2) },
     total: { count: totalCount, total: totalAmount.toFixed(2) },
   };
 }
@@ -5508,6 +5513,7 @@ export async function getDashboardMonthlyRevenue(companyId?: number) {
     balcao: 0, 
     delivery: 0, 
     aPrazo: 0,
+    salao: 0,
     count: 0 
   };
 
@@ -5520,6 +5526,7 @@ export async function getDashboardMonthlyRevenue(companyId?: number) {
       COALESCE(SUM(CASE WHEN saleType = 'BALCAO' THEN finalAmount ELSE 0 END), 0) as balcao,
       COALESCE(SUM(CASE WHEN saleType = 'DELIVERY' THEN finalAmount ELSE 0 END), 0) as delivery,
       COALESCE(SUM(CASE WHEN saleType = 'A_PRAZO' THEN finalAmount ELSE 0 END), 0) as aPrazo,
+      COALESCE(SUM(CASE WHEN saleType = 'SALAO' THEN finalAmount ELSE 0 END), 0) as salao,
       COUNT(*) as count
     FROM sales
     WHERE status != 'CANCELLED'
@@ -5535,6 +5542,7 @@ export async function getDashboardMonthlyRevenue(companyId?: number) {
     balcao: parseFloat(row.balcao || '0'),
     delivery: parseFloat(row.delivery || '0'),
     aPrazo: parseFloat(row.aPrazo || '0'),
+    salao: parseFloat(row.salao || '0'),
     count: parseInt(row.count || '0', 10)
   };
 }

@@ -2368,6 +2368,7 @@ export const appRouter = router({
       const monthRevenue = monthlyRevenue.total;
       const monthRevenueBalcao = monthlyRevenue.balcao + monthlyRevenue.aPrazo; // Balcão + A Prazo
       const monthRevenueDelivery = monthlyRevenue.delivery;
+      const monthRevenueSalao = monthlyRevenue.salao;
       const stockValueByCategory = categories.map(cat => {
         const categoryProducts = products.filter(p => p.active && !p.isComposite && p.categoryId === cat.id);
         const value = categoryProducts.reduce((sum, p) => {
@@ -2460,6 +2461,7 @@ export const appRouter = router({
         monthRevenue: monthRevenue.toFixed(2),
         monthRevenueBalcao: monthRevenueBalcao.toFixed(2),
         monthRevenueDelivery: monthRevenueDelivery.toFixed(2),
+        monthRevenueSalao: monthRevenueSalao.toFixed(2),
         totalPendingReceivables: totalPendingReceivables.toFixed(2),
         totalStockValue: totalStockValue.toFixed(2),
         stockValueByCategory,

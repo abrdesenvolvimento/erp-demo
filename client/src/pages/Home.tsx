@@ -185,6 +185,17 @@ export default function Home() {
                     </span>
                   </span>
                 </div>
+                {stats && parseFloat(stats.monthRevenueSalao || '0') > 0 && (
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-muted-foreground">Salão</span>
+                  <span className="font-medium text-blue-600">
+                    R$ {formatCurrency(stats?.monthRevenueSalao)}
+                    <span className="text-muted-foreground ml-1">
+                      ({stats && parseFloat(stats.monthRevenue) > 0 ? Math.round((parseFloat(stats.monthRevenueSalao || '0') / parseFloat(stats.monthRevenue)) * 100) : 0}%)
+                    </span>
+                  </span>
+                </div>
+                )}
               </div>
             </CardContent>
           </Card>

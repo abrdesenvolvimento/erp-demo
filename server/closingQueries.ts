@@ -151,11 +151,13 @@ export async function getSalesByCategory(startDate: string, endDate: string, com
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
+  // Buscar receita por categoria usando finalAmount proporcionalizado
+  // Isso garante que o total bata com o Dashboard (que usa SUM(finalAmount))
   const result = await db.execute(sql.raw(`
     SELECT 
       c.id as categoryId,
       c.name as categoryName,
-      SUM(si.quantity * si.unitPrice) as revenue,
+      SUM(si.quantity * si.unitPrice) as itemRevenue,
       SUM(si.quantity * p.avgCost) as cost
     FROM saleItems si
     INNER JOIN sales s ON si.saleId = s.id
@@ -166,18 +168,32 @@ export async function getSalesByCategory(startDate: string, endDate: string, com
       AND DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) <= '${endDate}'
       ${companyId ? `AND s.companyId = ${companyId}` : ''}
     GROUP BY c.id, c.name
-    ORDER BY revenue DESC
+    ORDER BY itemRevenue DESC
   `));
 
-  const rows = result[0] as unknown as any[];
-  const totalRevenue = rows.reduce((sum, row) => sum + parseFloat(row.revenue || '0'), 0);
+  // Buscar o faturamento total real (finalAmount) para proporcionalizar
+  const totalResult = await db.execute(sql.raw(`
+    SELECT SUM(s.finalAmount) as totalFinal
+    FROM sales s
+    WHERE s.status = 'ACTIVE'
+      AND DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) >= '${startDate}'
+      AND DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) <= '${endDate}'
+      ${companyId ? `AND s.companyId = ${companyId}` : ''}
+  `));
+  const totalFinalAmount = parseFloat((totalResult[0] as unknown as any[])[0]?.totalFinal || '0');
 
+  const rows = result[0] as unknown as any[];
+  const totalItemRevenue = rows.reduce((sum, row) => sum + parseFloat(row.itemRevenue || '0'), 0);
+
+  // Proporcionalizar: distribuir finalAmount pelas categorias na mesma proporção dos itens
   return rows.map(row => {
-    const revenue = parseFloat(row.revenue || '0');
+    const itemRevenue = parseFloat(row.itemRevenue || '0');
+    const proportion = totalItemRevenue > 0 ? itemRevenue / totalItemRevenue : 0;
+    const revenue = totalFinalAmount * proportion;
     const cost = parseFloat(row.cost || '0');
     const grossProfit = revenue - cost;
     const margin = revenue > 0 ? (grossProfit / revenue) * 100 : 0;
-    const percentage = totalRevenue > 0 ? (revenue / totalRevenue) * 100 : 0;
+    const percentage = totalFinalAmount > 0 ? (revenue / totalFinalAmount) * 100 : 0;
 
     return {
       categoryId: row.categoryId,
@@ -238,7 +254,7 @@ export async function getSalesByPaymentType(startDate: string, endDate: string, 
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  // 1. Non-SALAO sales: group by paymentMethod directly
+  // 1. Non-SALAO sales: group by paymentMethod directly (uses finalAmount)
   const nonSalaoResult = await db.execute(sql.raw(`
     SELECT 
       s.paymentMethod as paymentType,
@@ -255,12 +271,13 @@ export async function getSalesByPaymentType(startDate: string, endDate: string, 
     ORDER BY revenue DESC
   `));
 
-  // 2. SALAO sales: use salonOrderPayments for individual payment breakdown
-  const salaoResult = await db.execute(sql.raw(`
+  // 2. SALAO sales: get payment method proportions from salonOrderPayments
+  //    but normalize to match finalAmount (avoids data integrity issues with tips/merges)
+  const salaoPaymentsResult = await db.execute(sql.raw(`
     SELECT 
       sop.method as paymentMethod,
       COUNT(DISTINCT so.saleId) as count,
-      SUM(sop.amount) as revenue
+      SUM(sop.amount) as rawRevenue
     FROM salonOrderPayments sop
     INNER JOIN salonOrders so ON sop.orderId = so.id
     INNER JOIN sales s ON so.saleId = s.id
@@ -272,11 +289,31 @@ export async function getSalesByPaymentType(startDate: string, endDate: string, 
     GROUP BY sop.method
   `));
 
+  // Get total SALAO finalAmount (the authoritative total)
+  const salaoTotalResult = await db.execute(sql.raw(`
+    SELECT 
+      SUM(s.finalAmount) as totalFinal,
+      SUM(so.tipAmount) as totalTips
+    FROM sales s
+    INNER JOIN salonOrders so ON so.saleId = s.id
+    WHERE s.status = 'ACTIVE'
+      AND s.saleType = 'SALAO'
+      AND so.status = 'CLOSED'
+      AND DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) >= '${startDate}'
+      AND DATE(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) <= '${endDate}'
+      ${companyId ? `AND s.companyId = ${companyId}` : ''}
+  `));
+  const salaoTotalRows = salaoTotalResult[0] as unknown as any[];
+  const salaoFinalAmount = parseFloat(salaoTotalRows[0]?.totalFinal || '0');
+  const salaoTotalTips = parseFloat(salaoTotalRows[0]?.totalTips || '0');
+  // Valor de vendas do salão sem gorjeta
+  const salaoRevenueWithoutTips = salaoFinalAmount - salaoTotalTips;
+
   // Map salon payment method codes to friendly names
   const salonMethodMap: Record<string, string> = {
     CASH: 'Dinheiro',
-    CREDIT: 'Cart\u00e3o de Cr\u00e9dito',
-    DEBIT: 'Cart\u00e3o de D\u00e9bito',
+    CREDIT: 'Cartão de Crédito',
+    DEBIT: 'Cartão de Débito',
     PIX: 'PIX',
     VOUCHER: 'Voucher',
   };
@@ -286,18 +323,29 @@ export async function getSalesByPaymentType(startDate: string, endDate: string, 
 
   const nonSalaoRows = nonSalaoResult[0] as unknown as any[];
   for (const row of nonSalaoRows) {
-    const key = row.paymentType || 'N\u00e3o Informado';
+    const key = row.paymentType || 'Não Informado';
     if (!aggregated[key]) aggregated[key] = { count: 0, revenue: 0 };
     aggregated[key].count += parseInt(row.count || '0');
     aggregated[key].revenue += parseFloat(row.revenue || '0');
   }
 
-  const salaoRows = salaoResult[0] as unknown as any[];
-  for (const row of salaoRows) {
+  // For SALAO: normalize payment proportions to match salaoRevenueWithoutTips
+  const salaoPaymentRows = salaoPaymentsResult[0] as unknown as any[];
+  const rawSalaoTotal = salaoPaymentRows.reduce((sum, row) => sum + parseFloat(row.rawRevenue || '0'), 0);
+
+  for (const row of salaoPaymentRows) {
     const friendlyName = salonMethodMap[row.paymentMethod] || row.paymentMethod;
     if (!aggregated[friendlyName]) aggregated[friendlyName] = { count: 0, revenue: 0 };
     aggregated[friendlyName].count += parseInt(row.count || '0');
-    aggregated[friendlyName].revenue += parseFloat(row.revenue || '0');
+    // Proporcionalizar: usar a proporção dos pagamentos mas normalizar para o valor real sem gorjeta
+    const rawRevenue = parseFloat(row.rawRevenue || '0');
+    const proportion = rawSalaoTotal > 0 ? rawRevenue / rawSalaoTotal : 0;
+    aggregated[friendlyName].revenue += salaoRevenueWithoutTips * proportion;
+  }
+
+  // Adicionar gorjeta como linha separada se houver
+  if (salaoTotalTips > 0) {
+    aggregated['Gorjeta (Serviço)'] = { count: 0, revenue: salaoTotalTips };
   }
 
   const totalRevenue = Object.values(aggregated).reduce((sum, v) => sum + v.revenue, 0);
