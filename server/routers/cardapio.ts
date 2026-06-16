@@ -71,28 +71,30 @@ export const cardapioRouter = router({
 
       const bebidasItems: Array<{ id: number; name: string; price: number | null; description: string | null }> = [];
 
+      // Collect Burgers and Copa items separately to merge them
+      const burgersItems: Array<{ id: number; name: string; price: number | null; description: string | null }> = [];
+      const copaItems: Array<{ id: number; name: string; price: number | null; description: string | null }> = [];
+
       for (const p of products) {
         const isCopaDoMundo = p.subcategoryName === 'COPA DO MUNDO' || p.categoryName === 'COPA DO MUNDO';
         const isBebidas = p.categoryName.toUpperCase().includes('BEBII') || p.categoryName.toUpperCase().includes('BEBIDA');
+        const isBurgers = p.categoryName.toUpperCase() === 'BURGERS';
         
         if (isCopaDoMundo) {
-          const catKey = 'COPA DO MUNDO';
-          if (!categoryMap.has(catKey)) {
-            categoryMap.set(catKey, {
-              name: catKey,
-              displayName: 'Copa do Mundo',
-              sectionStyle: 'copa',
-              items: [],
-            });
-          }
-          categoryMap.get(catKey)!.items.push({
+          copaItems.push({
+            id: p.id,
+            name: p.name.toUpperCase(),
+            price: p.price ? parseFloat(p.price) : null,
+            description: p.notes || null,
+          });
+        } else if (isBurgers) {
+          burgersItems.push({
             id: p.id,
             name: p.name.toUpperCase(),
             price: p.price ? parseFloat(p.price) : null,
             description: p.notes || null,
           });
         } else if (isBebidas) {
-          // Collect all bebidas to split by subcategory later
           bebidasItems.push({
             id: p.id,
             name: p.name.toUpperCase(),
@@ -116,6 +118,23 @@ export const cardapioRouter = router({
             description: p.notes || null,
           });
         }
+      }
+
+      // Merge Burgers + Copa do Mundo into a single combined story
+      if (burgersItems.length > 0 || copaItems.length > 0) {
+        categoryMap.set('BURGERS_COPA', {
+          name: 'BURGERS_COPA',
+          displayName: 'Burgers & Copa do Mundo',
+          sectionStyle: 'burgers_copa',
+          items: burgersItems, // Will pass copaItems separately via special handling
+        });
+        // Store copa items in a special key for the generator
+        categoryMap.set('__COPA_ITEMS__', {
+          name: '__COPA_ITEMS__',
+          displayName: '',
+          sectionStyle: 'hidden',
+          items: copaItems,
+        });
       }
 
       // Split bebidas into subcategories (same logic as online cardápio)
@@ -162,10 +181,17 @@ export const cardapioRouter = router({
       const results: Array<{ categoryName: string; displayName: string; imageUrl: string }> = [];
       const timestamp = Date.now();
 
+      // Get copa items for the combined story
+      const copaItemsForStory = categoryMap.get('__COPA_ITEMS__')?.items || [];
+
       for (const [key, cat] of categoryMap) {
         if (cat.items.length === 0) continue;
+        if (key === '__COPA_ITEMS__') continue; // Skip hidden helper entry
+        if (cat.sectionStyle === 'hidden') continue;
         
-        const buffer = await generateCategoryStory(cat, logoUrl);
+        // For combined Burgers+Copa, pass copa items as extra data
+        const extraCopaItems = key === 'BURGERS_COPA' ? copaItemsForStory : undefined;
+        const buffer = await generateCategoryStory(cat, logoUrl, extraCopaItems);
         const fileName = `stories/cardapio-${key.toLowerCase().replace(/[^a-z0-9]/g, '-')}-${timestamp}.png`;
         
         const { url } = await storagePut(fileName, buffer, 'image/png');

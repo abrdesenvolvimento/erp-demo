@@ -64,6 +64,25 @@ async function resolveStorageUrl(key: string): Promise<string | undefined> {
   }
 }
 
+/** Wrap text to multiple lines within maxWidth, returns array of lines */
+function wrapText(ctx: any, text: string, maxWidth: number): string[] {
+  const words = text.split(' ');
+  const lines: string[] = [];
+  let currentLine = '';
+
+  for (const word of words) {
+    const testLine = currentLine ? `${currentLine} ${word}` : word;
+    if (ctx.measureText(testLine).width > maxWidth && currentLine) {
+      lines.push(currentLine);
+      currentLine = word;
+    } else {
+      currentLine = testLine;
+    }
+  }
+  if (currentLine) lines.push(currentLine);
+  return lines;
+}
+
 interface MenuItem {
   id: number;
   name: string;
@@ -80,176 +99,280 @@ interface CategoryData {
 
 /**
  * Generate a Story image (1080x1920) for a single category.
- * Routes to Copa do Mundo special layout when sectionStyle is 'copa'.
+ * Routes to combined Burgers+Copa layout when sectionStyle is 'burgers_copa'.
  * Returns a PNG buffer.
  */
 export async function generateCategoryStory(
   category: CategoryData,
-  logoUrl?: string
+  logoUrl?: string,
+  copaItems?: MenuItem[]
 ): Promise<Buffer> {
+  if (category.sectionStyle === 'burgers_copa') {
+    return generateBurgersCopaStory(category, logoUrl, copaItems || []);
+  }
   if (category.sectionStyle === 'copa') {
-    return generateCopaDoMundoStory(category, logoUrl);
+    return generateBurgersCopaStory({ ...category, items: [] }, logoUrl, category.items);
   }
   return generateStandardStory(category, logoUrl);
 }
 
 /**
- * Copa do Mundo special story with gradient, trophy, flags, and bold styling.
+ * Combined Burgers + Copa do Mundo story following the online cardápio layout.
+ * Burgers section on top, diamond separator, then Copa do Mundo section with gradient/flags.
  */
-async function generateCopaDoMundoStory(
+async function generateBurgersCopaStory(
   category: CategoryData,
-  logoUrl?: string
+  logoUrl?: string,
+  copaItems: MenuItem[] = []
 ): Promise<Buffer> {
   const canvas = createCanvas(WIDTH, HEIGHT);
   const ctx = canvas.getContext('2d');
 
-  // Warm gradient background (gold to cream)
-  const gradient = ctx.createLinearGradient(0, 0, 0, HEIGHT);
-  gradient.addColorStop(0, '#FFF8E1');
-  gradient.addColorStop(0.3, '#FFFDF5');
-  gradient.addColorStop(1, '#FAF5EF');
-  ctx.fillStyle = gradient;
+  // Cream background
+  ctx.fillStyle = COLORS.background;
   ctx.fillRect(0, 0, WIDTH, HEIGHT);
 
-  // Multicolor gradient stripe at top (Copa 2026 colors)
-  const stripeGrad = ctx.createLinearGradient(0, 0, WIDTH, 0);
-  stripeGrad.addColorStop(0, '#009B3A');
-  stripeGrad.addColorStop(0.25, '#1E88E5');
-  stripeGrad.addColorStop(0.5, '#D32F2F');
-  stripeGrad.addColorStop(0.75, '#F9A825');
-  stripeGrad.addColorStop(1, '#E87A2F');
-  ctx.fillStyle = stripeGrad;
-  ctx.fillRect(0, 0, WIDTH, 12);
+  // Top accent bar
+  ctx.fillStyle = COLORS.primary;
+  ctx.fillRect(0, 0, WIDTH, 8);
 
   let y = 60;
 
-  // Logo
+  // Logo (smaller for combined view)
   if (logoUrl) {
     try {
       const logoImg = await loadImage(logoUrl);
-      const logoSize = 120;
+      const logoSize = 90;
       ctx.drawImage(logoImg, (WIDTH - logoSize) / 2, y, logoSize, logoSize);
-      y += logoSize + 20;
+      y += logoSize + 12;
     } catch {
-      y += 30;
+      y += 20;
     }
   } else {
-    y += 30;
+    y += 20;
   }
 
   // Brand name
-  ctx.font = '800 32px Montserrat';
+  ctx.font = '800 28px Montserrat';
   ctx.fillStyle = COLORS.text;
   ctx.textAlign = 'center';
   ctx.fillText('A BRASA RE\u00daNE', WIDTH / 2, y);
-  y += 50;
+  y += 35;
 
-  // Trophy image
-  try {
-    const trophyImg = await loadImage(COPA_TROPHY_URL);
-    const trophyH = 160;
-    const trophyW = trophyH * (trophyImg.width / trophyImg.height);
-    ctx.drawImage(trophyImg, (WIDTH - trophyW) / 2, y, trophyW, trophyH);
-    y += trophyH + 25;
-  } catch {
-    y += 25;
-  }
+  const burgersItems = category.items;
+  const totalItems = burgersItems.length + copaItems.length;
 
-  // Copa do Mundo title
-  ctx.font = '800 48px Montserrat';
-  ctx.fillStyle = '#1A237E';
-  ctx.textAlign = 'center';
-  ctx.fillText('COPA DO MUNDO', WIDTH / 2, y);
-  y += 18;
+  // Calculate available space for items
+  const headerSpace = y;
+  const footerSpace = 100;
+  const copaHeaderSpace = copaItems.length > 0 ? 70 : 0;
+  const separatorSpace = copaItems.length > 0 ? 45 : 0;
+  const burgersHeaderSpace = burgersItems.length > 0 ? 45 : 0;
+  const availableForItems = HEIGHT - headerSpace - footerSpace - copaHeaderSpace - separatorSpace - burgersHeaderSpace;
 
-  // Multicolor divider
-  const divGrad = ctx.createLinearGradient((WIDTH - 400) / 2, 0, (WIDTH + 400) / 2, 0);
-  divGrad.addColorStop(0, '#009B3A');
-  divGrad.addColorStop(0.25, '#1E88E5');
-  divGrad.addColorStop(0.5, '#D32F2F');
-  divGrad.addColorStop(0.75, '#F9A825');
-  divGrad.addColorStop(1, '#E87A2F');
-  ctx.fillStyle = divGrad;
-  ctx.fillRect((WIDTH - 400) / 2, y, 400, 4);
-  y += 50;
+  // Dynamic item height: ensure descriptions fit (min 80px per item with description)
+  const itemHeight = Math.min(Math.max(Math.floor(availableForItems / Math.max(totalItems, 1)), 80), 130);
 
-  // Items with flags
-  const maxItems = Math.min(category.items.length, 12);
-  const availableHeight = HEIGHT - y - 180;
-  const itemHeight = Math.min(Math.floor(availableHeight / maxItems), 110);
-
-  for (let i = 0; i < maxItems; i++) {
-    const item = category.items[i];
-    const itemY = y + (i * itemHeight);
-    const cardH = itemHeight - 14;
-
-    // White card background for each item
-    ctx.fillStyle = 'rgba(255,255,255,0.85)';
-    ctx.beginPath();
-    ctx.roundRect(60, itemY - 10, WIDTH - 120, cardH, 12);
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(74,55,40,0.08)';
-    ctx.lineWidth = 1;
-    ctx.stroke();
-
-    // Flag
-    const flagKey = getCountryFlagKey(item.name);
-    let flagOffset = 0;
-    if (flagKey) {
-      try {
-        const flagUrl = await resolveStorageUrl(flagKey);
-        if (flagUrl) {
-          const flagImg = await loadImage(flagUrl);
-          const flagW = 56;
-          const flagH = 38;
-          const flagY = itemY + (cardH - flagH) / 2 - 10;
-          ctx.drawImage(flagImg, 85, flagY, flagW, flagH);
-          flagOffset = flagW + 15;
-        }
-      } catch {
-        // Skip flag if it can't be loaded
-      }
-    }
-
-    // Item name
-    ctx.font = '700 28px Montserrat';
+  // === BURGERS SECTION ===
+  if (burgersItems.length > 0) {
+    // Section title
+    ctx.font = '800 36px Montserrat';
     ctx.fillStyle = COLORS.text;
     ctx.textAlign = 'left';
-    const nameText = item.name.toUpperCase();
-    const maxNameWidth = WIDTH - 320 - flagOffset;
-    let displayName = nameText;
-    while (ctx.measureText(displayName).width > maxNameWidth && displayName.length > 3) {
-      displayName = displayName.slice(0, -1);
-    }
-    if (displayName !== nameText) displayName += '...';
-    const textY = itemY + cardH / 2 - 5;
-    ctx.fillText(displayName, 85 + flagOffset, textY);
+    ctx.fillText('BURGERS', 80, y);
 
-    // Price
-    if (item.price !== null) {
-      ctx.font = '700 28px Montserrat';
-      ctx.fillStyle = '#D32F2F'; // Red for Copa theme
-      ctx.textAlign = 'right';
-      const priceText = `R$ ${item.price.toFixed(2).replace('.', ',')}`;
-      ctx.fillText(priceText, WIDTH - 85, textY);
+    // Orange line after title
+    const titleW = ctx.measureText('BURGERS').width;
+    ctx.strokeStyle = COLORS.primary;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(80 + titleW + 15, y - 8);
+    ctx.lineTo(WIDTH - 80, y - 8);
+    ctx.stroke();
+    y += 35;
+
+    // Burger items
+    for (let i = 0; i < burgersItems.length; i++) {
+      const item = burgersItems[i];
+
+      // Item name
+      ctx.font = '600 26px Montserrat';
+      ctx.fillStyle = COLORS.text;
       ctx.textAlign = 'left';
-    }
+      const nameText = item.name.toUpperCase();
+      const maxNameWidth = WIDTH - 300;
+      let displayName = nameText;
+      while (ctx.measureText(displayName).width > maxNameWidth && displayName.length > 3) {
+        displayName = displayName.slice(0, -1);
+      }
+      if (displayName !== nameText) displayName += '...';
+      ctx.fillText(displayName, 80, y);
 
-    // Description
-    if (item.description && itemHeight > 75) {
-      ctx.font = '400 20px Montserrat';
-      ctx.fillStyle = COLORS.textMuted;
-      const descText = item.description.length > 50 ? item.description.slice(0, 47) + '...' : item.description;
-      ctx.fillText(descText, 85 + flagOffset, textY + 28);
+      // Price
+      if (item.price !== null) {
+        ctx.font = '700 26px Montserrat';
+        ctx.fillStyle = COLORS.primary;
+        ctx.textAlign = 'right';
+        ctx.fillText(`R$ ${item.price.toFixed(2).replace('.', ',')}`, WIDTH - 80, y);
+        ctx.textAlign = 'left';
+      }
+
+      // Dotted line
+      ctx.font = '600 26px Montserrat';
+      const nw = ctx.measureText(displayName).width;
+      ctx.font = '700 26px Montserrat';
+      const pw = item.price !== null ? ctx.measureText(`R$ ${item.price.toFixed(2).replace('.', ',')}`).width : 0;
+      const ds = 80 + nw + 10;
+      const de = WIDTH - 80 - pw - 10;
+      if (de > ds + 20) {
+        ctx.fillStyle = '#4A372830';
+        ctx.font = '400 20px Montserrat';
+        let dx = ds;
+        while (dx < de) { ctx.fillText('\u00b7', dx, y); dx += 10; }
+      }
+
+      // Description (full text with word wrap)
+      if (item.description) {
+        ctx.font = '400 18px Montserrat';
+        ctx.fillStyle = COLORS.textMuted;
+        const descLines = wrapText(ctx, item.description, WIDTH - 160);
+        for (let l = 0; l < Math.min(descLines.length, 2); l++) {
+          y += 22;
+          ctx.fillText(descLines[l], 80, y);
+        }
+      }
+
+      y += itemHeight - (item.description ? 15 : 0);
     }
   }
 
-  // Footer with multicolor stripe
-  ctx.fillStyle = stripeGrad;
-  ctx.fillRect(0, HEIGHT - 12, WIDTH, 12);
+  // === DIAMOND SEPARATOR ===
+  if (burgersItems.length > 0 && copaItems.length > 0) {
+    y += 10;
+    ctx.font = '400 24px Montserrat';
+    ctx.fillStyle = COLORS.primary;
+    ctx.textAlign = 'center';
+    ctx.fillText('\u25c6', WIDTH / 2, y);
+    y += 30;
+  }
 
+  // === COPA DO MUNDO SECTION ===
+  if (copaItems.length > 0) {
+    // Gradient background for Copa section
+    const copaStartY = y - 15;
+    const copaEndY = HEIGHT - footerSpace;
+    const copaGrad = ctx.createLinearGradient(0, copaStartY, 0, copaEndY);
+    copaGrad.addColorStop(0, '#FFF8E1');
+    copaGrad.addColorStop(0.5, '#FFFDF5');
+    copaGrad.addColorStop(1, '#FAF5EF');
+    ctx.fillStyle = copaGrad;
+    ctx.fillRect(0, copaStartY, WIDTH, copaEndY - copaStartY);
+
+    // Multicolor stripe
+    const stripeGrad = ctx.createLinearGradient(0, 0, WIDTH, 0);
+    stripeGrad.addColorStop(0, '#009B3A');
+    stripeGrad.addColorStop(0.25, '#1E88E5');
+    stripeGrad.addColorStop(0.5, '#D32F2F');
+    stripeGrad.addColorStop(0.75, '#F9A825');
+    stripeGrad.addColorStop(1, '#E87A2F');
+    ctx.fillStyle = stripeGrad;
+    ctx.fillRect(0, copaStartY, WIDTH, 5);
+    y += 10;
+
+    // Copa header: trophy + title
+    let trophyW = 0;
+    try {
+      const trophyImg = await loadImage(COPA_TROPHY_URL);
+      const trophyH = 50;
+      trophyW = trophyH * (trophyImg.width / trophyImg.height);
+      ctx.drawImage(trophyImg, 80, y - 15, trophyW, trophyH);
+    } catch { /* skip */ }
+
+    ctx.font = '800 32px Montserrat';
+    ctx.fillStyle = '#1A237E';
+    ctx.textAlign = 'left';
+    ctx.fillText('COPA DO MUNDO', 80 + trophyW + 12, y + 15);
+
+    // Multicolor line after title
+    const copaTitle = ctx.measureText('COPA DO MUNDO').width;
+    const lineStart = 80 + trophyW + 12 + copaTitle + 15;
+    ctx.fillStyle = stripeGrad;
+    ctx.fillRect(lineStart, y + 8, WIDTH - 80 - lineStart, 3);
+    y += 55;
+
+    // Copa items with flags and cards
+    for (let i = 0; i < copaItems.length; i++) {
+      const item = copaItems[i];
+
+      // White card background
+      const cardH = itemHeight - 8;
+      ctx.fillStyle = 'rgba(255,255,255,0.9)';
+      ctx.beginPath();
+      ctx.roundRect(60, y - 5, WIDTH - 120, cardH, 10);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(74,55,40,0.08)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      // Flag
+      const flagKey = getCountryFlagKey(item.name);
+      let flagOffset = 0;
+      if (flagKey) {
+        try {
+          const flagUrl = await resolveStorageUrl(flagKey);
+          if (flagUrl) {
+            const flagImg = await loadImage(flagUrl);
+            const flagW = 48;
+            const flagH = 32;
+            ctx.drawImage(flagImg, 80, y + (cardH - flagH) / 2 - 5, flagW, flagH);
+            flagOffset = flagW + 12;
+          }
+        } catch { /* skip */ }
+      }
+
+      // Item name
+      ctx.font = '700 24px Montserrat';
+      ctx.fillStyle = COLORS.text;
+      ctx.textAlign = 'left';
+      const nameText = item.name.toUpperCase();
+      const maxNameWidth = WIDTH - 300 - flagOffset;
+      let displayName = nameText;
+      while (ctx.measureText(displayName).width > maxNameWidth && displayName.length > 3) {
+        displayName = displayName.slice(0, -1);
+      }
+      if (displayName !== nameText) displayName += '...';
+      const nameY = y + 20;
+      ctx.fillText(displayName, 80 + flagOffset, nameY);
+
+      // Price
+      if (item.price !== null) {
+        ctx.font = '700 24px Montserrat';
+        ctx.fillStyle = COLORS.primary;
+        ctx.textAlign = 'right';
+        ctx.fillText(`R$ ${item.price.toFixed(2).replace('.', ',')}`, WIDTH - 80, nameY);
+        ctx.textAlign = 'left';
+      }
+
+      // Description (full with wrap)
+      if (item.description) {
+        ctx.font = '400 17px Montserrat';
+        ctx.fillStyle = COLORS.textMuted;
+        const descLines = wrapText(ctx, item.description, WIDTH - 160 - flagOffset);
+        for (let l = 0; l < Math.min(descLines.length, 2); l++) {
+          ctx.fillText(descLines[l], 80 + flagOffset, nameY + 22 + (l * 19));
+        }
+      }
+
+      y += cardH + 8;
+    }
+  }
+
+  // Footer
   const footerY = HEIGHT - 80;
-  ctx.font = '500 22px Montserrat';
+  ctx.fillStyle = COLORS.primary;
+  ctx.fillRect(0, HEIGHT - 8, WIDTH, 8);
+
+  ctx.font = '400 22px Montserrat';
   ctx.fillStyle = COLORS.textMuted;
   ctx.textAlign = 'center';
   ctx.fillText('Rochdale \u2014 Osasco/SP', WIDTH / 2, footerY);
@@ -332,79 +455,81 @@ async function generateStandardStory(
   ctx.stroke();
   y += 50;
 
-  // Items
-  const maxItems = Math.min(category.items.length, 18); // Limit to avoid overflow
-  const availableHeight = HEIGHT - y - 180; // Reserve space for footer
-  const itemHeight = Math.min(Math.floor(availableHeight / maxItems), 90);
+  // Items - calculate height dynamically to fit descriptions
+  const maxItems = Math.min(category.items.length, 16);
+  const availableHeight = HEIGHT - y - 180;
+  const itemHeight = Math.min(Math.floor(availableHeight / maxItems), 95);
 
   ctx.textAlign = 'left';
 
   for (let i = 0; i < maxItems; i++) {
     const item = category.items[i];
-    const itemY = y + (i * itemHeight);
 
     // Item name
-    ctx.font = '600 30px Montserrat';
+    ctx.font = '600 28px Montserrat';
     ctx.fillStyle = textColor;
     const nameText = item.name.toUpperCase();
-    const maxNameWidth = WIDTH - 320;
+    const maxNameWidth = WIDTH - 300;
     let displayName = nameText;
-    
-    // Truncate if too long
     while (ctx.measureText(displayName).width > maxNameWidth && displayName.length > 3) {
       displayName = displayName.slice(0, -1);
     }
     if (displayName !== nameText) displayName += '...';
-    
-    ctx.fillText(displayName, 80, itemY);
+    ctx.fillText(displayName, 80, y);
 
     // Price
     if (item.price !== null) {
-      ctx.font = '700 30px Montserrat';
+      ctx.font = '700 28px Montserrat';
       ctx.fillStyle = COLORS.primary;
       ctx.textAlign = 'right';
       const priceText = `R$ ${item.price.toFixed(2).replace('.', ',')}`;
-      ctx.fillText(priceText, WIDTH - 80, itemY);
+      ctx.fillText(priceText, WIDTH - 80, y);
       ctx.textAlign = 'left';
     }
 
     // Dotted line between name and price
+    ctx.font = '600 28px Montserrat';
     const nameWidth = ctx.measureText(displayName).width;
+    ctx.font = '700 28px Montserrat';
     const priceWidth = item.price !== null ? ctx.measureText(`R$ ${item.price.toFixed(2).replace('.', ',')}`).width : 0;
-    const dotsStart = 80 + nameWidth + 15;
-    const dotsEnd = WIDTH - 80 - priceWidth - 15;
-    
+    const dotsStart = 80 + nameWidth + 12;
+    const dotsEnd = WIDTH - 80 - priceWidth - 12;
+
     if (dotsEnd > dotsStart + 20) {
       ctx.fillStyle = isDark ? '#FFFFFF40' : '#4A372840';
-      ctx.font = '400 24px Montserrat';
+      ctx.font = '400 22px Montserrat';
       let dotX = dotsStart;
       while (dotX < dotsEnd) {
-        ctx.fillText('\u00b7', dotX, itemY);
-        dotX += 12;
+        ctx.fillText('\u00b7', dotX, y);
+        dotX += 10;
       }
     }
 
-    // Description (if available and space allows)
-    if (item.description && itemHeight > 55) {
-      ctx.font = '400 20px Montserrat';
+    // Description with word wrap (show full text)
+    if (item.description && itemHeight > 50) {
+      ctx.font = '400 18px Montserrat';
       ctx.fillStyle = mutedColor;
-      const descText = item.description.length > 60 ? item.description.slice(0, 57) + '...' : item.description;
-      ctx.fillText(descText, 80, itemY + 30);
+      const descLines = wrapText(ctx, item.description, WIDTH - 160);
+      for (let l = 0; l < Math.min(descLines.length, 2); l++) {
+        y += 22;
+        ctx.fillText(descLines[l], 80, y);
+      }
     }
+
+    y += itemHeight - (item.description ? 20 : 0);
   }
 
   // If there are more items than shown
   if (category.items.length > maxItems) {
-    const moreY = y + (maxItems * itemHeight) + 10;
     ctx.font = '400 22px Montserrat';
     ctx.fillStyle = mutedColor;
     ctx.textAlign = 'center';
-    ctx.fillText(`+ ${category.items.length - maxItems} itens no card\u00e1pio completo`, WIDTH / 2, moreY);
+    ctx.fillText(`+ ${category.items.length - maxItems} itens no card\u00e1pio completo`, WIDTH / 2, y + 10);
   }
 
   // Footer
   const footerY = HEIGHT - 100;
-  
+
   // Bottom accent bar
   ctx.fillStyle = COLORS.primary;
   ctx.fillRect(0, HEIGHT - 8, WIDTH, 8);
@@ -414,7 +539,7 @@ async function generateStandardStory(
   ctx.fillStyle = mutedColor;
   ctx.textAlign = 'center';
   ctx.fillText('Rochdale \u2014 Osasco/SP', WIDTH / 2, footerY);
-  
+
   ctx.font = '400 20px Montserrat';
   ctx.fillText('@abrasareune', WIDTH / 2, footerY + 35);
 
@@ -431,7 +556,7 @@ async function generateStandardStory(
  */
 export async function resolveLogoUrl(): Promise<string | undefined> {
   if (!ENV.forgeApiUrl || !ENV.forgeApiKey) return undefined;
-  
+
   try {
     const forgeUrl = new URL(
       'v1/storage/presign/get',

@@ -2520,3 +2520,7 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 ## Sprint 16/06/2026 — Ajustes Stories Instagram
 - [x] Dividir stories por subcategoria (Bebidas separar em Água/Refri, Sucos, Cervejas, Drinks)
 - [x] Layout personalizado Copa do Mundo (fonte diferenciada, taça e bandeiras dos países)
+
+## Sprint 16/06/2026 — Ajustes Stories v2
+- [x] Juntar Burgers + Copa do Mundo em um único Story (seguindo padrão da versão online)
+- [x] Corrigir descrições cortadas: permitir quebra de linha e mais espaço vertical
