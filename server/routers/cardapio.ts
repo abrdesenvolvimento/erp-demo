@@ -60,7 +60,8 @@ export const cardapioRouter = router({
         price: string | null;
       }>;
 
-      // Group by category
+      // Group by subcategory for Bebidas, by category for others
+      // Use same logic as the online cardápio: Bebidas split into Água/Refri, Sucos, Cervejas, Drinks
       const categoryMap = new Map<string, {
         name: string;
         displayName: string;
@@ -68,24 +69,90 @@ export const cardapioRouter = router({
         items: Array<{ id: number; name: string; price: number | null; description: string | null }>;
       }>();
 
+      const bebidasItems: Array<{ id: number; name: string; price: number | null; description: string | null }> = [];
+
       for (const p of products) {
-        const isCopaDoMundo = p.subcategoryName === 'COPA DO MUNDO';
-        const catKey = isCopaDoMundo ? 'COPA DO MUNDO' : p.categoryName;
+        const isCopaDoMundo = p.subcategoryName === 'COPA DO MUNDO' || p.categoryName === 'COPA DO MUNDO';
+        const isBebidas = p.categoryName.toUpperCase().includes('BEBII') || p.categoryName.toUpperCase().includes('BEBIDA');
         
-        if (!categoryMap.has(catKey)) {
-          categoryMap.set(catKey, {
-            name: catKey,
-            displayName: isCopaDoMundo ? 'Copa do Mundo' : formatCategoryName(catKey),
-            sectionStyle: catKey === 'PARA COMPARTILHAR' ? 'dark' : 'light',
-            items: [],
+        if (isCopaDoMundo) {
+          const catKey = 'COPA DO MUNDO';
+          if (!categoryMap.has(catKey)) {
+            categoryMap.set(catKey, {
+              name: catKey,
+              displayName: 'Copa do Mundo',
+              sectionStyle: 'copa',
+              items: [],
+            });
+          }
+          categoryMap.get(catKey)!.items.push({
+            id: p.id,
+            name: p.name.toUpperCase(),
+            price: p.price ? parseFloat(p.price) : null,
+            description: p.notes || null,
+          });
+        } else if (isBebidas) {
+          // Collect all bebidas to split by subcategory later
+          bebidasItems.push({
+            id: p.id,
+            name: p.name.toUpperCase(),
+            price: p.price ? parseFloat(p.price) : null,
+            description: p.notes || null,
+          });
+        } else {
+          const catKey = p.categoryName;
+          if (!categoryMap.has(catKey)) {
+            categoryMap.set(catKey, {
+              name: catKey,
+              displayName: formatCategoryName(catKey),
+              sectionStyle: catKey === 'PARA COMPARTILHAR' ? 'dark' : 'light',
+              items: [],
+            });
+          }
+          categoryMap.get(catKey)!.items.push({
+            id: p.id,
+            name: p.name.toUpperCase(),
+            price: p.price ? parseFloat(p.price) : null,
+            description: p.notes || null,
           });
         }
-        categoryMap.get(catKey)!.items.push({
-          id: p.id,
-          name: p.name.toUpperCase(),
-          price: p.price ? parseFloat(p.price) : null,
-          description: p.notes || null,
-        });
+      }
+
+      // Split bebidas into subcategories (same logic as online cardápio)
+      if (bebidasItems.length > 0) {
+        const grouped = groupBebidasForStory(bebidasItems);
+        if (grouped.aguasRefri.length > 0) {
+          categoryMap.set('AGUA_REFRI', {
+            name: 'AGUA_REFRI',
+            displayName: '\u00c1gua e Refrigerante',
+            sectionStyle: 'light',
+            items: grouped.aguasRefri,
+          });
+        }
+        if (grouped.sucos.length > 0) {
+          categoryMap.set('SUCOS', {
+            name: 'SUCOS',
+            displayName: 'Sucos',
+            sectionStyle: 'light',
+            items: grouped.sucos,
+          });
+        }
+        if (grouped.cervejas.length > 0) {
+          categoryMap.set('CERVEJAS', {
+            name: 'CERVEJAS',
+            displayName: 'Cervejas',
+            sectionStyle: 'light',
+            items: grouped.cervejas,
+          });
+        }
+        if (grouped.drinks.length > 0) {
+          categoryMap.set('DRINKS', {
+            name: 'DRINKS',
+            displayName: 'Drinks',
+            sectionStyle: 'dark',
+            items: grouped.drinks,
+          });
+        }
       }
 
       // Resolve logo URL
@@ -238,4 +305,40 @@ function formatCategoryName(name: string): string {
 /** Format product name for display — all uppercase as requested */
 function formatProductName(name: string): string {
   return name.toUpperCase();
+}
+
+/** Group bebidas into subcategories for story generation (same logic as online cardápio) */
+function groupBebidasForStory(items: Array<{ id: number; name: string; price: number | null; description: string | null }>) {
+  const cervejas: typeof items = [];
+  const drinks: typeof items = [];
+  const sucos: typeof items = [];
+  const aguasRefri: typeof items = [];
+
+  for (const item of items) {
+    const nameUpper = item.name.toUpperCase();
+    if (
+      nameUpper.includes('HEINEKEN') ||
+      nameUpper.includes('CORONA') ||
+      nameUpper.includes('ORIGINAL 6') ||
+      nameUpper.includes('SPATEN') ||
+      nameUpper.includes('LAGUNITAS') ||
+      nameUpper.includes('BLUE MOON') ||
+      nameUpper.includes('STELLA')
+    ) {
+      cervejas.push(item);
+    } else if (nameUpper.includes('SUCO')) {
+      sucos.push(item);
+    } else if (
+      nameUpper.includes('AGUA') || nameUpper.includes('ÁGUA') ||
+      nameUpper.includes('COCA') ||
+      nameUpper.includes('GUARANA') || nameUpper.includes('GUARANÁ')
+    ) {
+      aguasRefri.push(item);
+    } else {
+      // Drinks: Negroni, Aperol Spritz, Gin Tônica, Caipirinha, etc.
+      drinks.push(item);
+    }
+  }
+
+  return { cervejas, drinks, sucos, aguasRefri };
 }

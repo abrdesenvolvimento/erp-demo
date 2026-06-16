@@ -85,6 +85,27 @@ describe('storyGenerator', () => {
     expect(buffer.length).toBeGreaterThan(1000);
   });
 
+  it('generates Copa do Mundo special layout with sectionStyle copa', async () => {
+    const category = {
+      name: 'COPA DO MUNDO',
+      displayName: 'Copa do Mundo',
+      sectionStyle: 'copa',
+      items: [
+        { id: 1, name: 'BURGER USA', price: 42.00, description: 'Blend angus, cheddar, bacon' },
+        { id: 2, name: 'BURGER MÉXICO', price: 40.00, description: 'Pimenta jalapeño, guacamole' },
+        { id: 3, name: 'BURGER CANADÁ', price: 44.00, description: 'Maple bacon, queijo' },
+      ],
+    };
+
+    const buffer = await generateCategoryStory(category);
+    
+    expect(buffer).toBeInstanceOf(Buffer);
+    expect(buffer.length).toBeGreaterThan(1000);
+    // PNG magic bytes
+    expect(buffer[0]).toBe(0x89);
+    expect(buffer[1]).toBe(0x50);
+  });
+
   it('handles items with very long names (truncation)', async () => {
     const category = {
       name: 'BURGERS',
