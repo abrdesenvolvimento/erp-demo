@@ -45,6 +45,7 @@ import SalaoTransferencia from "./pages/SalaoTransferencia";
 import Impressoras from "./pages/Impressoras";
 import SalaoCaixa from "./pages/SalaoCaixa";
 import Cardapio from "./pages/Cardapio";
+import CardapioStories from "./pages/CardapioStories";
 import AvisoInauguracao from "./pages/AvisoInauguracao";
 import AnaliseKDS from "./pages/AnaliseKDS";
 import FechamentoAnual from "./pages/FechamentoAnual";
@@ -102,6 +103,7 @@ function Router() {
       <Route path="/salao/impressoras" component={Impressoras} />
       <Route path="/salao/caixa" component={SalaoCaixa} />
       <Route path="/cardapio" component={Cardapio} />
+      <Route path="/cardapio/stories" component={CardapioStories} />
       <Route path="/aviso-inauguracao" component={AvisoInauguracao} />
       <Route path="/analise-kds" component={AnaliseKDS} />
       <Route path="/fechamento-anual" component={FechamentoAnual} />

@@ -22,7 +22,7 @@ import {
 import { APP_LOGO, APP_TITLE, warmUpAndLogin } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
-import { LayoutDashboard, LogOut, PanelLeft, Users, Package, ShoppingCart, BarChart3, ShoppingBag, Receipt, DollarSign, CreditCard, UserCircle, Shield, TrendingUp, Bike, ChevronDown, ChevronRight, PieChart, GitCompare, Wallet, Target, FileText, BookOpen, Calculator, Upload, Building2, MapPin, Check, Tags, Store, Settings, History, ClipboardList, PackageOpen, UtensilsCrossed, LayoutGrid, ChefHat, BarChart2, CalendarDays } from "lucide-react";
+import { LayoutDashboard, LogOut, PanelLeft, Users, Package, ShoppingCart, BarChart3, ShoppingBag, Receipt, DollarSign, CreditCard, UserCircle, Shield, TrendingUp, Bike, ChevronDown, ChevronRight, PieChart, GitCompare, Wallet, Target, FileText, BookOpen, Calculator, Upload, Building2, MapPin, Check, Tags, Store, Settings, History, ClipboardList, PackageOpen, UtensilsCrossed, LayoutGrid, ChefHat, BarChart2, CalendarDays, Instagram } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
@@ -121,6 +121,7 @@ const salonMenuItems = [
   { icon: UtensilsCrossed, label: "KDS Bar", path: "/salao/kds-bar", roles: ["admin", "operacional"] },
   { icon: GitCompare, label: "Transferência", path: "/salao/transferencia", roles: ["admin"] },
   { icon: BookOpen, label: "Cardápio", path: "/cardapio", roles: ["admin", "operacional", "garcom"] },
+  { icon: Instagram, label: "Cardápio Stories", path: "/cardapio/stories", roles: ["admin"] },
 ];
 
 // Submenu de Auditoria

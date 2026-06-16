@@ -2509,3 +2509,10 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Vendas por Categoria: usar finalAmount proporcionalizado (total agora bate com Dashboard)
 - [x] Faturamento por Pagamento: normalizar valores e separar Gorjeta (Serviço) como linha à parte
 - [x] Dashboard: adicionar Salão no card Faturamento Mês (exibido quando > 0)
+
+## Sprint 16/06/2026 — Cardápio Instagram Stories
+- [x] Gerar imagem Story (1080x1920px) por categoria do cardápio
+- [x] Botão "Gerar Stories Instagram" na tela do Cardápio Digital (admin)
+- [x] Visual alinhado com identidade do cardápio (logo, cores, fontes)
+- [x] Download individual por categoria ou todas de uma vez
+- [x] Dados sempre atualizados (produtos ativos, preços vigentes)
