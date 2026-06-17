@@ -6,6 +6,7 @@ import Produtos from "./pages/Produtos";
 import Vendas from "./pages/Vendas";
 import Parceiros from "./pages/Parceiros";
 import Compras from "./pages/Compras";
+import VendaInterna from "./pages/VendaInterna";
 import Despesas from "./pages/Despesas";
 import ContasReceberNovo from "./pages/ContasReceberNovo";
 import ContasPagar from "./pages/ContasPagar";
@@ -63,6 +64,7 @@ function Router() {
       <Route path="/" component={Home} />
       <Route path="/produtos" component={Produtos} />
       <Route path="/compras" component={Compras} />
+      <Route path="/venda-interna" component={VendaInterna} />
       <Route path="/vendas" component={Vendas} />
       <Route path="/parceiros" component={Parceiros} />
       <Route path="/despesas" component={Despesas} />

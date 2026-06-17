@@ -1436,3 +1436,50 @@ export const printJobs = mysqlTable("printJobs", {
 
 export type PrintJob = typeof printJobs.$inferSelect;
 export type InsertPrintJob = typeof printJobs.$inferInsert;
+
+
+// Vendas Internas (transferências entre empresas)
+export const internalSales = mysqlTable("internalSales", {
+  id: int("id").primaryKey().autoincrement(),
+  sourceCompanyId: int("sourceCompanyId").notNull(),
+  sourceBranchId: int("sourceBranchId").notNull().default(1),
+  targetCompanyId: int("targetCompanyId").notNull(),
+  targetBranchId: int("targetBranchId").notNull().default(1),
+  totalAmount: decimal("totalAmount", { precision: 10, scale: 2 }).notNull(),
+  notes: text("notes"),
+  status: mysqlEnum("status", ["PENDING", "APPROVED", "REJECTED", "CANCELLED"]).default("PENDING").notNull(),
+  createdBy: varchar("createdBy", { length: 64 }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow(),
+  reviewedBy: varchar("reviewedBy", { length: 64 }),
+  reviewedAt: timestamp("reviewedAt"),
+  rejectionReason: text("rejectionReason"),
+  generatedPurchaseOrderId: int("generatedPurchaseOrderId"),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow(),
+}, (table) => ({
+  sourceCompanyIdx: index("is_source_company_idx").on(table.sourceCompanyId),
+  targetCompanyIdx: index("is_target_company_idx").on(table.targetCompanyId),
+  statusIdx: index("is_status_idx").on(table.status),
+  createdAtIdx: index("is_created_at_idx").on(table.createdAt),
+}));
+
+export type InternalSale = typeof internalSales.$inferSelect;
+export type InsertInternalSale = typeof internalSales.$inferInsert;
+
+// Itens de Venda Interna
+export const internalSaleItems = mysqlTable("internalSaleItems", {
+  id: int("id").primaryKey().autoincrement(),
+  internalSaleId: int("internalSaleId").notNull(),
+  sourceProductId: int("sourceProductId").notNull(),
+  productName: varchar("productName", { length: 200 }).notNull(),
+  quantity: decimal("quantity", { precision: 10, scale: 3 }).notNull(),
+  unitCost: decimal("unitCost", { precision: 10, scale: 4 }).notNull(),
+  totalCost: decimal("totalCost", { precision: 10, scale: 2 }).notNull(),
+  targetProductId: int("targetProductId"),
+  createdAt: timestamp("createdAt").defaultNow(),
+}, (table) => ({
+  internalSaleIdx: index("isi_internal_sale_idx").on(table.internalSaleId),
+  sourceProductIdx: index("isi_source_product_idx").on(table.sourceProductId),
+}));
+
+export type InternalSaleItem = typeof internalSaleItems.$inferSelect;
+export type InsertInternalSaleItem = typeof internalSaleItems.$inferInsert;

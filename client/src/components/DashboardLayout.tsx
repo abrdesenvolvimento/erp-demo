@@ -22,7 +22,7 @@ import {
 import { APP_LOGO, APP_TITLE, warmUpAndLogin } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
-import { LayoutDashboard, LogOut, PanelLeft, Users, Package, ShoppingCart, BarChart3, ShoppingBag, Receipt, DollarSign, CreditCard, UserCircle, Shield, TrendingUp, Bike, ChevronDown, ChevronRight, PieChart, GitCompare, Wallet, Target, FileText, BookOpen, Calculator, Upload, Building2, MapPin, Check, Tags, Store, Settings, History, ClipboardList, PackageOpen, UtensilsCrossed, LayoutGrid, ChefHat, BarChart2, CalendarDays, Instagram } from "lucide-react";
+import { LayoutDashboard, LogOut, PanelLeft, Users, Package, ShoppingCart, BarChart3, ShoppingBag, Receipt, DollarSign, CreditCard, UserCircle, Shield, TrendingUp, Bike, ChevronDown, ChevronRight, PieChart, GitCompare, Wallet, Target, FileText, BookOpen, Calculator, Upload, Building2, MapPin, Check, Tags, Store, Settings, History, ClipboardList, PackageOpen, UtensilsCrossed, LayoutGrid, ChefHat, BarChart2, CalendarDays, Instagram, ArrowLeftRight } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
@@ -100,6 +100,7 @@ const adminMenuItems = [
 // Submenu Financeiro
 const financeMenuItems = [
   { icon: ShoppingBag, label: "Compras", path: "/compras", roles: ["admin", "consultor"] },
+  { icon: ArrowLeftRight, label: "Venda Interna", path: "/venda-interna", roles: ["admin"] },
   { icon: Receipt, label: "Despesas", path: "/despesas", roles: ["admin", "consultor"] },
   { icon: Wallet, label: "Outras Receitas", path: "/outras-receitas", roles: ["admin", "consultor"] },
   { icon: DollarSign, label: "Contas a Receber", path: "/contas-receber", roles: ["admin", "operacional", "consultor"] },

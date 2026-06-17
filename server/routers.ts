@@ -17,6 +17,7 @@ import { stockMovementsRouter } from './routers/stockMovements';
 import { salonRouter } from './routers/salon';
 import { printersRouter } from './routers/printers';
 import { cardapioRouter } from './routers/cardapio';
+import { internalSalesRouter } from './routers/internalSales';
 
 export const appRouter = router({
   system: systemRouter,
@@ -30,6 +31,7 @@ export const appRouter = router({
   salon: salonRouter,
   printers: printersRouter,
   cardapio: cardapioRouter,
+  internalSales: internalSalesRouter,
 
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),

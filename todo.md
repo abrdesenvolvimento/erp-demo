@@ -2524,3 +2524,11 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 ## Sprint 16/06/2026 — Ajustes Stories v2
 - [x] Juntar Burgers + Copa do Mundo em um único Story (seguindo padrão da versão online)
 - [x] Corrigir descrições cortadas: permitir quebra de linha e mais espaço vertical
+
+## Sprint 16/06/2026 — Stories v3 + Venda Interna
+- [x] Stories: alinhar visual Copa do Mundo com padrão da versão online (cards, bandeiras, layout)
+- [x] Stories: escurecer cor das descrições para melhor legibilidade
+- [x] Venda Interna entre empresas: schema (internalSales, internalSaleItems)
+- [x] Venda Interna: backend (criar, aprovar com entrada automática, rejeitar, cancelar)
+- [x] Venda Interna: frontend (listagem, criação, detalhes, aprovação/rejeição)
+- [x] Venda Interna: menu no Financeiro (admin only)
