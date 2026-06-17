@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { eq, and, desc, sql, or, SQL } from "drizzle-orm";
+import { eq, and, desc, sql, or, ne, SQL } from "drizzle-orm";
 import { protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { internalSales, internalSaleItems, products, companies, partners, accountsPayable, receivables, receivableInstallments, productMapping } from "../../drizzle/schema";
@@ -665,7 +665,7 @@ export const internalSalesRouter = router({
         .from(companies)
         .where(and(
           eq(companies.active, true),
-          sql`${companies.id} != ${input.sourceCompanyId}`
+          ne(companies.id, input.sourceCompanyId)
         ));
 
       return result;

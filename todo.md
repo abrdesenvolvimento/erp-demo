@@ -2555,3 +2555,6 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Frontend: detalhes com confirmedAt, dueDate, margem, itens com preço de venda
 - [x] Frontend: tab De/Para com gerenciamento inline
 - [x] Testes vitest atualizados e passando (9 testes)
+
+## Bug Fix 17/06/2026 — Venda Interna: Empresa Destino mostra a própria empresa
+- [x] getTargetCompanies deve excluir a empresa ativa (sourceCompanyId) da lista de destinos

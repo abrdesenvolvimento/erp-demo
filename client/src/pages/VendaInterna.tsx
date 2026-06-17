@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
+import { useCompany } from "@/contexts/CompanyContext";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -37,7 +38,8 @@ function formatCurrency(value: number) {
 export default function VendaInterna() {
   const { user } = useAuth();
   const utils = trpc.useUtils();
-  const activeCompanyId = (user as any)?.activeCompanyId || 1;
+  const { activeCompanyId: ctxCompanyId } = useCompany();
+  const activeCompanyId = ctxCompanyId || 1;
 
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
