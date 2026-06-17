@@ -380,6 +380,7 @@ export const accountsPayable = mysqlTable("accountsPayable", {
   supplierId: int("supplierId"),
   purchaseOrderId: int("purchaseOrderId"),
   expenseId: int("expenseId"),
+  internalSaleId: int("internalSaleId"),
   notes: text("notes"),
   createdAt: timestamp("createdAt").defaultNow(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow(),
@@ -514,8 +515,9 @@ export const receivables = mysqlTable("receivables", {
   id: int("id").primaryKey().autoincrement(),
   companyId: int("companyId").notNull().default(1),
   branchId: int("branchId").notNull().default(1),
-  saleId: int("saleId").notNull(), // FK para venda
-  customerId: int("customerId").notNull(), // FK para cliente
+  saleId: int("saleId"), // FK para venda (nullable para vendas internas)
+  customerId: int("customerId"), // FK para cliente (nullable para vendas internas)
+  internalSaleId: int("internalSaleId"), // FK para venda interna
   totalAmount: decimal("totalAmount", { precision: 10, scale: 2 }).notNull(),
   receivedAmount: decimal("receivedAmount", { precision: 10, scale: 2 }).default("0.00").notNull(),
   status: mysqlEnum("status", ["PENDENTE", "PARCIAL", "QUITADO", "VENCIDO"]).default("PENDENTE").notNull(),
@@ -1445,7 +1447,12 @@ export const internalSales = mysqlTable("internalSales", {
   sourceBranchId: int("sourceBranchId").notNull().default(1),
   targetCompanyId: int("targetCompanyId").notNull(),
   targetBranchId: int("targetBranchId").notNull().default(1),
+  docNumber: varchar("docNumber", { length: 30 }),
   totalAmount: decimal("totalAmount", { precision: 10, scale: 2 }).notNull(),
+  marginPercent: decimal("marginPercent", { precision: 5, scale: 2 }).default("15.00"),
+  dueDays: int("dueDays").default(25),
+  dueDate: timestamp("dueDate"),
+  confirmedAt: timestamp("confirmedAt"),
   notes: text("notes"),
   status: mysqlEnum("status", ["PENDING", "APPROVED", "REJECTED", "CANCELLED"]).default("PENDING").notNull(),
   createdBy: varchar("createdBy", { length: 64 }).notNull(),
@@ -1474,6 +1481,8 @@ export const internalSaleItems = mysqlTable("internalSaleItems", {
   quantity: decimal("quantity", { precision: 10, scale: 3 }).notNull(),
   unitCost: decimal("unitCost", { precision: 10, scale: 4 }).notNull(),
   totalCost: decimal("totalCost", { precision: 10, scale: 2 }).notNull(),
+  unitSalePrice: decimal("unitSalePrice", { precision: 10, scale: 4 }),
+  totalSalePrice: decimal("totalSalePrice", { precision: 10, scale: 2 }),
   targetProductId: int("targetProductId"),
   createdAt: timestamp("createdAt").defaultNow(),
 }, (table) => ({

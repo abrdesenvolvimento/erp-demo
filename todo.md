@@ -2539,3 +2539,19 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Integração com aprovação: verificar mapeamento antes de dar entrada no estoque
 - [x] Se produto não mapeado: bloquear aprovação e solicitar configuração do De/Para
 - [x] Tela de gerenciamento do De/Para (admin)
+
+## Sprint 17/06/2026 — Venda Interna v2 (Financeiro Integrado)
+- [x] Schema: docNumber, marginPercent, dueDays, dueDate, confirmedAt em internalSales
+- [x] Schema: unitSalePrice, totalSalePrice em internalSaleItems
+- [x] Schema: internalSaleId em accountsPayable e receivables
+- [x] Backend: dashboardStats (Total Vendido, Saldo a Receber, Saldo a Pagar, Pendentes)
+- [x] Backend: docNumber sequencial automático (VI-YYYY-NNN)
+- [x] Backend: margem % com cálculo de preço de venda
+- [x] Backend: aprovação gera Contas a Receber (origem) + Contas a Pagar (destino)
+- [x] Backend: aprovação deduz estoque origem e dá entrada no destino (via De/Para)
+- [x] Frontend: dashboard cards (Vendido no Mês, Saldo a Receber, Saldo a Pagar, Pendentes)
+- [x] Frontend: formulário com margem %, preço de venda editável, total custo/venda/margem
+- [x] Frontend: listagem com docNumber, direção, vencimento
+- [x] Frontend: detalhes com confirmedAt, dueDate, margem, itens com preço de venda
+- [x] Frontend: tab De/Para com gerenciamento inline
+- [x] Testes vitest atualizados e passando (9 testes)

@@ -12,13 +12,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { ArrowLeftRight, Plus, Eye, Check, X, Trash2, Search, Link2, AlertTriangle } from "lucide-react";
+import { ArrowLeftRight, Plus, Eye, Check, X, Trash2, Search, Link2, AlertTriangle, DollarSign, TrendingUp, Clock, Receipt } from "lucide-react";
 
 interface CartItem {
   sourceProductId: number;
   productName: string;
   quantity: number;
   unitCost: number;
+  unitSalePrice: number;
   currentStock: number;
   uom: string;
 }
@@ -27,6 +28,10 @@ interface MappingEntry {
   sourceProductId: number;
   productName: string;
   targetProductId: number | null;
+}
+
+function formatCurrency(value: number) {
+  return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
 export default function VendaInterna() {
@@ -43,6 +48,7 @@ export default function VendaInterna() {
 
   // Create form state
   const [targetCompanyId, setTargetCompanyId] = useState<number | null>(null);
+  const [marginPercent, setMarginPercent] = useState(15);
   const [notes, setNotes] = useState("");
   const [cart, setCart] = useState<CartItem[]>([]);
   const [productSearch, setProductSearch] = useState("");
@@ -60,6 +66,11 @@ export default function VendaInterna() {
   const [editingMappingIdx, setEditingMappingIdx] = useState<number | null>(null);
 
   // Queries
+  const { data: dashboardStats } = trpc.internalSales.dashboardStats.useQuery(
+    { companyId: activeCompanyId },
+    { enabled: !!activeCompanyId }
+  );
+
   const { data: salesList, isLoading } = trpc.internalSales.list.useQuery(
     { companyId: activeCompanyId, status: statusFilter as any },
     { enabled: !!activeCompanyId }
@@ -102,20 +113,22 @@ export default function VendaInterna() {
 
   // Mutations
   const createMutation = trpc.internalSales.create.useMutation({
-    onSuccess: () => {
-      toast.success("Venda interna criada! Aguardando aprovação do admin.");
+    onSuccess: (data) => {
+      toast.success(`Venda interna ${data.docNumber} criada! Aguardando aprovação.`);
       setShowCreateDialog(false);
       resetCreateForm();
       utils.internalSales.list.invalidate();
+      utils.internalSales.dashboardStats.invalidate();
     },
     onError: (err) => toast.error(err.message),
   });
 
   const approveMutation = trpc.internalSales.approve.useMutation({
     onSuccess: () => {
-      toast.success("Venda interna aprovada! Estoque atualizado nas duas empresas.");
+      toast.success("Venda interna aprovada! Estoque e financeiro atualizados.");
       utils.internalSales.list.invalidate();
       utils.internalSales.checkMapping.invalidate();
+      utils.internalSales.dashboardStats.invalidate();
       setShowDetailDialog(false);
     },
     onError: (err) => toast.error(err.message),
@@ -127,6 +140,7 @@ export default function VendaInterna() {
       setShowRejectDialog(false);
       setRejectReason("");
       utils.internalSales.list.invalidate();
+      utils.internalSales.dashboardStats.invalidate();
       setShowDetailDialog(false);
     },
     onError: (err) => toast.error(err.message),
@@ -136,6 +150,7 @@ export default function VendaInterna() {
     onSuccess: () => {
       toast.success("Venda interna cancelada.");
       utils.internalSales.list.invalidate();
+      utils.internalSales.dashboardStats.invalidate();
       setShowDetailDialog(false);
     },
     onError: (err) => toast.error(err.message),
@@ -172,6 +187,7 @@ export default function VendaInterna() {
 
   function resetCreateForm() {
     setTargetCompanyId(null);
+    setMarginPercent(15);
     setNotes("");
     setCart([]);
     setProductSearch("");
@@ -182,17 +198,20 @@ export default function VendaInterna() {
       toast.error("Produto já adicionado");
       return;
     }
+    const cost = parseFloat(product.avgCost || "0");
+    const salePrice = cost * (1 + marginPercent / 100);
     setCart([...cart, {
       sourceProductId: product.id,
       productName: product.name,
       quantity: 1,
-      unitCost: parseFloat(product.avgCost || "0"),
+      unitCost: cost,
+      unitSalePrice: parseFloat(salePrice.toFixed(4)),
       currentStock: product.currentStock || 0,
       uom: product.uom,
     }]);
   }
 
-  function updateCartItem(index: number, field: "quantity" | "unitCost", value: number) {
+  function updateCartItem(index: number, field: "quantity" | "unitCost" | "unitSalePrice", value: number) {
     const newCart = [...cart];
     newCart[index] = { ...newCart[index], [field]: value };
     setCart(newCart);
@@ -200,6 +219,14 @@ export default function VendaInterna() {
 
   function removeFromCart(index: number) {
     setCart(cart.filter((_, i) => i !== index));
+  }
+
+  // Recalculate sale prices when margin changes
+  function applyMarginToCart() {
+    setCart(cart.map(item => ({
+      ...item,
+      unitSalePrice: parseFloat((item.unitCost * (1 + marginPercent / 100)).toFixed(4)),
+    })));
   }
 
   function handleCreate() {
@@ -214,12 +241,14 @@ export default function VendaInterna() {
     createMutation.mutate({
       sourceCompanyId: activeCompanyId,
       targetCompanyId,
+      marginPercent,
       notes: notes || undefined,
       items: cart.map(item => ({
         sourceProductId: item.sourceProductId,
         productName: item.productName,
         quantity: item.quantity,
         unitCost: item.unitCost,
+        unitSalePrice: item.unitSalePrice,
       })),
     });
   }
@@ -261,7 +290,8 @@ export default function VendaInterna() {
     approveMutation.mutate({ id: saleDetail.id });
   }
 
-  const cartTotal = useMemo(() => cart.reduce((sum, item) => sum + item.quantity * item.unitCost, 0), [cart]);
+  const cartTotalCost = useMemo(() => cart.reduce((sum, item) => sum + item.quantity * item.unitCost, 0), [cart]);
+  const cartTotalSale = useMemo(() => cart.reduce((sum, item) => sum + item.quantity * item.unitSalePrice, 0), [cart]);
 
   const statusColors: Record<string, string> = {
     PENDING: "bg-yellow-100 text-yellow-800",
@@ -287,12 +317,79 @@ export default function VendaInterna() {
               <ArrowLeftRight className="h-6 w-6" />
               Venda Interna
             </h1>
-            <p className="text-muted-foreground">Transferências de produtos entre empresas</p>
+            <p className="text-muted-foreground">Transferências de produtos entre empresas do grupo</p>
           </div>
           <Button onClick={() => setShowCreateDialog(true)}>
             <Plus className="h-4 w-4 mr-2" />
             Nova Venda Interna
           </Button>
+        </div>
+
+        {/* Dashboard Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-green-100 rounded-lg">
+                  <TrendingUp className="h-5 w-5 text-green-700" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Vendido no Mês</p>
+                  <p className="text-xl font-bold text-green-700">
+                    {formatCurrency(dashboardStats?.totalSoldThisMonth || 0)}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <DollarSign className="h-5 w-5 text-blue-700" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Saldo a Receber</p>
+                  <p className="text-xl font-bold text-blue-700">
+                    {formatCurrency(dashboardStats?.totalReceivable || 0)}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-orange-100 rounded-lg">
+                  <Receipt className="h-5 w-5 text-orange-700" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Saldo a Pagar</p>
+                  <p className="text-xl font-bold text-orange-700">
+                    {formatCurrency(dashboardStats?.totalPayable || 0)}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-yellow-100 rounded-lg">
+                  <Clock className="h-5 w-5 text-yellow-700" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Pendentes</p>
+                  <p className="text-xl font-bold text-yellow-700">
+                    {dashboardStats?.pendingCount || 0}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Tabs */}
@@ -327,7 +424,7 @@ export default function VendaInterna() {
             {/* List */}
             <Card>
               <CardHeader>
-                <CardTitle>Vendas Internas</CardTitle>
+                <CardTitle>Histórico de Vendas Internas</CardTitle>
               </CardHeader>
               <CardContent>
                 {isLoading ? (
@@ -339,20 +436,21 @@ export default function VendaInterna() {
                     <table className="w-full text-sm">
                       <thead>
                         <tr className="border-b text-left">
-                          <th className="p-2">ID</th>
+                          <th className="p-2">Doc</th>
                           <th className="p-2">Data</th>
                           <th className="p-2">Direção</th>
                           <th className="p-2">Origem</th>
                           <th className="p-2">Destino</th>
                           <th className="p-2 text-right">Valor</th>
                           <th className="p-2">Status</th>
+                          <th className="p-2">Vencimento</th>
                           <th className="p-2">Ações</th>
                         </tr>
                       </thead>
                       <tbody>
                         {salesList.map((sale) => (
                           <tr key={sale.id} className="border-b hover:bg-muted/50">
-                            <td className="p-2">#{sale.id}</td>
+                            <td className="p-2 font-mono text-xs">{sale.docNumber || `#${sale.id}`}</td>
                             <td className="p-2">
                               {sale.createdAt ? new Date(sale.createdAt).toLocaleDateString("pt-BR") : "-"}
                             </td>
@@ -364,12 +462,15 @@ export default function VendaInterna() {
                             <td className="p-2">{sale.sourceCompanyName}</td>
                             <td className="p-2">{sale.targetCompanyName}</td>
                             <td className="p-2 text-right font-medium">
-                              R$ {parseFloat(sale.totalAmount?.toString() || "0").toFixed(2)}
+                              {formatCurrency(parseFloat(sale.totalAmount?.toString() || "0"))}
                             </td>
                             <td className="p-2">
                               <Badge className={statusColors[sale.status] || ""}>
                                 {statusLabels[sale.status] || sale.status}
                               </Badge>
+                            </td>
+                            <td className="p-2 text-xs">
+                              {sale.dueDate ? new Date(sale.dueDate).toLocaleDateString("pt-BR") : "-"}
                             </td>
                             <td className="p-2">
                               <Button
@@ -420,7 +521,6 @@ export default function VendaInterna() {
                             {c.tradeName || c.name}
                           </SelectItem>
                         ))}
-                        {/* Also include active company */}
                         <SelectItem value={activeCompanyId.toString()}>
                           Empresa Atual
                         </SelectItem>
@@ -550,27 +650,49 @@ export default function VendaInterna() {
 
         {/* Create Dialog */}
         <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Nova Venda Interna</DialogTitle>
             </DialogHeader>
 
             <div className="space-y-4">
-              {/* Target Company */}
-              <div>
-                <Label>Empresa de Destino</Label>
-                <Select value={targetCompanyId?.toString() || ""} onValueChange={(v) => setTargetCompanyId(Number(v))}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione a empresa..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {targetCompanies?.map((c) => (
-                      <SelectItem key={c.id} value={c.id.toString()}>
-                        {c.tradeName || c.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              {/* Target Company + Margin */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Empresa de Destino</Label>
+                  <Select value={targetCompanyId?.toString() || ""} onValueChange={(v) => setTargetCompanyId(Number(v))}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione a empresa..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {targetCompanies?.map((c) => (
+                        <SelectItem key={c.id} value={c.id.toString()}>
+                          {c.tradeName || c.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Margem (%)</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      type="number"
+                      min={0}
+                      max={100}
+                      step={1}
+                      value={marginPercent}
+                      onChange={(e) => setMarginPercent(parseFloat(e.target.value) || 0)}
+                      className="w-24"
+                    />
+                    <Button variant="outline" size="sm" onClick={applyMarginToCart} disabled={cart.length === 0}>
+                      Aplicar
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Preço de venda = Custo + {marginPercent}%
+                  </p>
+                </div>
               </div>
 
               {/* Product Search */}
@@ -579,7 +701,7 @@ export default function VendaInterna() {
                 <div className="relative">
                   <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
-                    placeholder="Buscar produto..."
+                    placeholder="Buscar produto por nome ou EAN..."
                     value={productSearch}
                     onChange={(e) => setProductSearch(e.target.value)}
                     className="pl-9"
@@ -614,7 +736,8 @@ export default function VendaInterna() {
                           <th className="p-2 text-left">Produto</th>
                           <th className="p-2 text-center">Qtd</th>
                           <th className="p-2 text-center">Custo Unit.</th>
-                          <th className="p-2 text-right">Total</th>
+                          <th className="p-2 text-center">Preço Venda</th>
+                          <th className="p-2 text-right">Total Venda</th>
                           <th className="p-2"></th>
                         </tr>
                       </thead>
@@ -645,8 +768,18 @@ export default function VendaInterna() {
                                 className="w-24 text-center mx-auto"
                               />
                             </td>
+                            <td className="p-2 text-center">
+                              <Input
+                                type="number"
+                                min={0}
+                                step={0.01}
+                                value={item.unitSalePrice}
+                                onChange={(e) => updateCartItem(idx, "unitSalePrice", parseFloat(e.target.value) || 0)}
+                                className="w-24 text-center mx-auto"
+                              />
+                            </td>
                             <td className="p-2 text-right font-medium">
-                              R$ {(item.quantity * item.unitCost).toFixed(2)}
+                              {formatCurrency(item.quantity * item.unitSalePrice)}
                             </td>
                             <td className="p-2 text-center">
                               <Button variant="ghost" size="sm" onClick={() => removeFromCart(idx)}>
@@ -657,9 +790,21 @@ export default function VendaInterna() {
                         ))}
                       </tbody>
                       <tfoot>
+                        <tr className="bg-muted/50">
+                          <td colSpan={4} className="p-2 text-right text-muted-foreground">Total Custo:</td>
+                          <td className="p-2 text-right text-muted-foreground">{formatCurrency(cartTotalCost)}</td>
+                          <td></td>
+                        </tr>
                         <tr className="bg-muted/50 font-bold">
-                          <td colSpan={3} className="p-2 text-right">Total:</td>
-                          <td className="p-2 text-right">R$ {cartTotal.toFixed(2)}</td>
+                          <td colSpan={4} className="p-2 text-right">Total Venda:</td>
+                          <td className="p-2 text-right">{formatCurrency(cartTotalSale)}</td>
+                          <td></td>
+                        </tr>
+                        <tr className="bg-green-50">
+                          <td colSpan={4} className="p-2 text-right text-green-700 font-medium">Margem:</td>
+                          <td className="p-2 text-right text-green-700 font-medium">
+                            {formatCurrency(cartTotalSale - cartTotalCost)}
+                          </td>
                           <td></td>
                         </tr>
                       </tfoot>
@@ -694,7 +839,9 @@ export default function VendaInterna() {
         <Dialog open={showDetailDialog} onOpenChange={setShowDetailDialog}>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Venda Interna #{saleDetail?.id}</DialogTitle>
+              <DialogTitle>
+                Venda Interna {saleDetail?.docNumber || `#${saleDetail?.id}`}
+              </DialogTitle>
             </DialogHeader>
 
             {saleDetail && (
@@ -709,7 +856,7 @@ export default function VendaInterna() {
                     <p className="font-medium">{saleDetail.targetCompanyName}</p>
                   </div>
                   <div>
-                    <Label className="text-muted-foreground">Data</Label>
+                    <Label className="text-muted-foreground">Data Criação</Label>
                     <p>{saleDetail.createdAt ? new Date(saleDetail.createdAt).toLocaleString("pt-BR") : "-"}</p>
                   </div>
                   <div>
@@ -718,6 +865,24 @@ export default function VendaInterna() {
                       {statusLabels[saleDetail.status] || saleDetail.status}
                     </Badge>
                   </div>
+                  {saleDetail.confirmedAt && (
+                    <div>
+                      <Label className="text-muted-foreground">Confirmada em</Label>
+                      <p>{new Date(saleDetail.confirmedAt).toLocaleString("pt-BR")}</p>
+                    </div>
+                  )}
+                  {saleDetail.dueDate && (
+                    <div>
+                      <Label className="text-muted-foreground">Vencimento</Label>
+                      <p className="font-medium">{new Date(saleDetail.dueDate).toLocaleDateString("pt-BR")}</p>
+                    </div>
+                  )}
+                  {saleDetail.marginPercent && (
+                    <div>
+                      <Label className="text-muted-foreground">Margem</Label>
+                      <p>{parseFloat(saleDetail.marginPercent.toString())}%</p>
+                    </div>
+                  )}
                   {saleDetail.notes && (
                     <div className="col-span-2">
                       <Label className="text-muted-foreground">Observações</Label>
@@ -741,8 +906,8 @@ export default function VendaInterna() {
                         <th className="p-2 text-left">Produto (Origem)</th>
                         <th className="p-2 text-left">Produto (Destino)</th>
                         <th className="p-2 text-center">Qtd</th>
-                        <th className="p-2 text-right">Custo Unit.</th>
-                        <th className="p-2 text-right">Total</th>
+                        <th className="p-2 text-right">Custo</th>
+                        <th className="p-2 text-right">Preço Venda</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -766,8 +931,13 @@ export default function VendaInterna() {
                               )}
                             </td>
                             <td className="p-2 text-center">{parseFloat(item.quantity?.toString() || "0")}</td>
-                            <td className="p-2 text-right">R$ {parseFloat(item.unitCost?.toString() || "0").toFixed(2)}</td>
-                            <td className="p-2 text-right font-medium">R$ {parseFloat(item.totalCost?.toString() || "0").toFixed(2)}</td>
+                            <td className="p-2 text-right">{formatCurrency(parseFloat(item.unitCost?.toString() || "0"))}</td>
+                            <td className="p-2 text-right font-medium">
+                              {item.unitSalePrice
+                                ? formatCurrency(parseFloat(item.unitSalePrice.toString()))
+                                : formatCurrency(parseFloat(item.unitCost?.toString() || "0"))
+                              }
+                            </td>
                           </tr>
                         );
                       })}
@@ -775,7 +945,7 @@ export default function VendaInterna() {
                     <tfoot>
                       <tr className="bg-muted/50 font-bold">
                         <td colSpan={4} className="p-2 text-right">Total:</td>
-                        <td className="p-2 text-right">R$ {parseFloat(saleDetail.totalAmount?.toString() || "0").toFixed(2)}</td>
+                        <td className="p-2 text-right">{formatCurrency(parseFloat(saleDetail.totalAmount?.toString() || "0"))}</td>
                       </tr>
                     </tfoot>
                   </table>
@@ -842,12 +1012,6 @@ export default function VendaInterna() {
                       Cancelar Venda
                     </Button>
                   </div>
-                )}
-
-                {saleDetail.generatedPurchaseOrderId && (
-                  <p className="text-sm text-muted-foreground">
-                    Ordem de compra gerada: #{saleDetail.generatedPurchaseOrderId}
-                  </p>
                 )}
               </div>
             )}
@@ -968,5 +1132,4 @@ export default function VendaInterna() {
       </div>
     </DashboardLayout>
   );
-
 }

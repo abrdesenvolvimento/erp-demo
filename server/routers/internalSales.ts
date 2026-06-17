@@ -1,11 +1,75 @@
 import { z } from "zod";
-import { eq, and, desc, sql, or } from "drizzle-orm";
+import { eq, and, desc, sql, or, SQL } from "drizzle-orm";
 import { protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
-import { internalSales, internalSaleItems, products, companies, partners, purchaseOrders, purchaseOrderItems, productMapping } from "../../drizzle/schema";
+import { internalSales, internalSaleItems, products, companies, partners, accountsPayable, receivables, receivableInstallments, productMapping } from "../../drizzle/schema";
 import { TRPCError } from "@trpc/server";
 
 export const internalSalesRouter = router({
+  // Dashboard stats for internal sales
+  dashboardStats: protectedProcedure
+    .input(z.object({ companyId: z.number() }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
+
+      const now = new Date();
+      const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+      // Total vendido internamente no mês (como source)
+      const [soldThisMonth] = await db.select({
+        total: sql<string>`COALESCE(SUM(CAST(${internalSales.totalAmount} AS DECIMAL(10,2))), 0)`
+      })
+        .from(internalSales)
+        .where(and(
+          eq(internalSales.sourceCompanyId, input.companyId),
+          eq(internalSales.status, "APPROVED"),
+          sql`${internalSales.confirmedAt} >= ${firstDayOfMonth}`
+        ));
+
+      // Saldo a Receber (receivables linked to internalSaleId where companyId = source)
+      const [receivableBalance] = await db.select({
+        total: sql<string>`COALESCE(SUM(CAST(${receivables.totalAmount} AS DECIMAL(10,2)) - CAST(${receivables.receivedAmount} AS DECIMAL(10,2))), 0)`
+      })
+        .from(receivables)
+        .where(and(
+          eq(receivables.companyId, input.companyId),
+          sql`${receivables.internalSaleId} IS NOT NULL`,
+          sql`${receivables.status} IN ('PENDENTE', 'PARCIAL', 'VENCIDO')`
+        ));
+
+      // Saldo a Pagar (accountsPayable linked to internalSaleId where target company)
+      const [payableBalance] = await db.select({
+        total: sql<string>`COALESCE(SUM(CAST(${accountsPayable.amount} AS DECIMAL(10,2))), 0)`
+      })
+        .from(accountsPayable)
+        .where(and(
+          sql`${accountsPayable.internalSaleId} IS NOT NULL`,
+          eq(accountsPayable.status, "PENDING"),
+          sql`${accountsPayable.internalSaleId} IN (SELECT id FROM internalSales WHERE targetCompanyId = ${input.companyId})`
+        ));
+
+      // Pendentes de confirmação (where this company is source or target)
+      const [pendingCount] = await db.select({
+        count: sql<number>`COUNT(*)`
+      })
+        .from(internalSales)
+        .where(and(
+          eq(internalSales.status, "PENDING"),
+          or(
+            eq(internalSales.sourceCompanyId, input.companyId),
+            eq(internalSales.targetCompanyId, input.companyId)
+          )
+        ));
+
+      return {
+        totalSoldThisMonth: parseFloat(soldThisMonth?.total || "0"),
+        totalReceivable: parseFloat(receivableBalance?.total || "0"),
+        totalPayable: parseFloat(payableBalance?.total || "0"),
+        pendingCount: pendingCount?.count || 0,
+      };
+    }),
+
   // List internal sales (visible to both source and target companies)
   list: protectedProcedure
     .input(z.object({
@@ -16,11 +80,11 @@ export const internalSalesRouter = router({
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
 
-      const conditions = [
+      const conditions: SQL[] = [
         or(
           eq(internalSales.sourceCompanyId, input.companyId),
           eq(internalSales.targetCompanyId, input.companyId)
-        ),
+        )!,
       ];
 
       if (input.status !== "ALL") {
@@ -87,12 +151,14 @@ export const internalSalesRouter = router({
       sourceBranchId: z.number().default(1),
       targetCompanyId: z.number(),
       targetBranchId: z.number().default(1),
+      marginPercent: z.number().min(0).max(100).default(15),
       notes: z.string().optional(),
       items: z.array(z.object({
         sourceProductId: z.number(),
         productName: z.string(),
         quantity: z.number().positive(),
         unitCost: z.number().min(0),
+        unitSalePrice: z.number().min(0),
       })).min(1),
     }))
     .mutation(async ({ ctx, input }) => {
@@ -103,8 +169,24 @@ export const internalSalesRouter = router({
         throw new TRPCError({ code: "BAD_REQUEST", message: "Empresa de origem e destino não podem ser a mesma" });
       }
 
-      // Calculate total
-      const totalAmount = input.items.reduce((sum, item) => sum + (item.quantity * item.unitCost), 0);
+      // Generate sequential docNumber: VI-YYYY-NNN
+      const year = new Date().getFullYear();
+      const [lastDoc] = await db.select({ docNumber: internalSales.docNumber })
+        .from(internalSales)
+        .where(sql`${internalSales.docNumber} LIKE ${'VI-' + year + '-%'}`)
+        .orderBy(desc(internalSales.id))
+        .limit(1);
+
+      let nextNum = 1;
+      if (lastDoc?.docNumber) {
+        const parts = lastDoc.docNumber.split('-');
+        const lastNum = parseInt(parts[2] || '0', 10);
+        nextNum = lastNum + 1;
+      }
+      const docNumber = `VI-${year}-${String(nextNum).padStart(3, '0')}`;
+
+      // Calculate total using sale prices
+      const totalAmount = input.items.reduce((sum, item) => sum + (item.quantity * item.unitSalePrice), 0);
 
       // Create the internal sale
       const [result] = await db.insert(internalSales).values({
@@ -112,27 +194,34 @@ export const internalSalesRouter = router({
         sourceBranchId: input.sourceBranchId,
         targetCompanyId: input.targetCompanyId,
         targetBranchId: input.targetBranchId,
+        docNumber,
         totalAmount: totalAmount.toFixed(2),
+        marginPercent: input.marginPercent.toFixed(2),
+        dueDays: 25,
         notes: input.notes || null,
         status: "PENDING",
         createdBy: ctx.user.id,
       });
 
-      const internalSaleId = result.insertId;
+      const internalSaleId = Number(result.insertId);
 
       // Create items
       for (const item of input.items) {
+        const totalCost = item.quantity * item.unitCost;
+        const totalSalePrice = item.quantity * item.unitSalePrice;
         await db.insert(internalSaleItems).values({
-          internalSaleId: Number(internalSaleId),
+          internalSaleId,
           sourceProductId: item.sourceProductId,
           productName: item.productName,
           quantity: item.quantity.toString(),
           unitCost: item.unitCost.toFixed(4),
-          totalCost: (item.quantity * item.unitCost).toFixed(2),
+          totalCost: totalCost.toFixed(2),
+          unitSalePrice: item.unitSalePrice.toFixed(4),
+          totalSalePrice: totalSalePrice.toFixed(2),
         });
       }
 
-      return { id: Number(internalSaleId), totalAmount };
+      return { id: internalSaleId, totalAmount, docNumber };
     }),
 
   // Check unmapped products for an internal sale (used before approval)
@@ -218,7 +307,6 @@ export const internalSalesRouter = router({
         throw new TRPCError({ code: "FORBIDDEN", message: "Apenas administradores podem gerenciar o De/Para" });
       }
 
-      // Check if mapping already exists
       const [existing] = await db.select().from(productMapping)
         .where(and(
           eq(productMapping.sourceCompanyId, input.sourceCompanyId),
@@ -227,7 +315,6 @@ export const internalSalesRouter = router({
         )).limit(1);
 
       if (existing) {
-        // Update existing mapping
         await db.update(productMapping)
           .set({ targetProductId: input.targetProductId })
           .where(eq(productMapping.id, existing.id));
@@ -259,7 +346,6 @@ export const internalSalesRouter = router({
       return { success: true };
     }),
 
-  // Bulk create mappings (used from the approval modal)
   mappingBulkCreate: protectedProcedure
     .input(z.object({
       sourceCompanyId: z.number(),
@@ -308,11 +394,9 @@ export const internalSalesRouter = router({
       return { created, updated };
     }),
 
-  // Approve an internal sale (admin only) - now uses productMapping table
+  // Approve an internal sale (admin only) - v2 with financial records
   approve: protectedProcedure
-    .input(z.object({
-      id: z.number(),
-    }))
+    .input(z.object({ id: z.number() }))
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
@@ -346,6 +430,11 @@ export const internalSalesRouter = router({
         });
       }
 
+      const confirmedAt = new Date();
+      const dueDays = sale.dueDays || 25;
+      const dueDate = new Date(confirmedAt.getTime() + dueDays * 24 * 60 * 60 * 1000);
+      const totalAmount = parseFloat(sale.totalAmount?.toString() || "0");
+
       // 1. Deduct stock from source company products
       for (const item of items) {
         const [prod] = await db.select().from(products)
@@ -364,11 +453,65 @@ export const internalSalesRouter = router({
         }
       }
 
-      // 2. Find or create the source company as a supplier in the target company
+      // 2. Add stock to target company products (via De/Para mapping)
+      for (const item of items) {
+        const targetProductId = mappingMap.get(item.sourceProductId)!;
+        const qty = parseFloat(item.quantity?.toString() || "0");
+        const unitCost = parseFloat(item.unitCost?.toString() || "0");
+
+        const [targetProd] = await db.select().from(products)
+          .where(eq(products.id, targetProductId)).limit(1);
+
+        if (targetProd) {
+          const currentStock = parseFloat(targetProd.currentStock?.toString() || "0");
+          const currentAvgCost = parseFloat(targetProd.avgCost?.toString() || "0");
+          const newStock = currentStock + qty;
+          const newAvgCost = currentStock > 0
+            ? (currentStock * currentAvgCost + qty * unitCost) / newStock
+            : unitCost;
+
+          await db.update(products)
+            .set({ currentStock: Math.round(newStock), avgCost: newAvgCost.toFixed(2) })
+            .where(eq(products.id, targetProductId));
+        }
+
+        await db.update(internalSaleItems)
+          .set({ targetProductId })
+          .where(eq(internalSaleItems.id, item.id));
+      }
+
+      // 3. Create Contas a Receber in source company
       const [sourceCompany] = await db.select().from(companies).where(eq(companies.id, sale.sourceCompanyId)).limit(1);
+      const [targetCompany] = await db.select().from(companies).where(eq(companies.id, sale.targetCompanyId)).limit(1);
+
+      const [receivableResult] = await db.insert(receivables).values({
+        companyId: sale.sourceCompanyId,
+        branchId: sale.sourceBranchId,
+        internalSaleId: sale.id,
+        totalAmount: totalAmount.toFixed(2),
+        receivedAmount: "0.00",
+        status: "PENDENTE",
+        createdBy: ctx.user.id,
+      });
+
+      const receivableId = Number(receivableResult.insertId);
+
+      // Create single installment for the receivable
+      await db.insert(receivableInstallments).values({
+        companyId: sale.sourceCompanyId,
+        branchId: sale.sourceBranchId,
+        receivableId,
+        installmentNumber: 1,
+        amount: totalAmount.toFixed(2),
+        dueDate,
+        status: "PENDENTE",
+      });
+
+      // 4. Create Contas a Pagar in target company
       const sourceCompanyName = sourceCompany?.tradeName || sourceCompany?.name || `Empresa #${sale.sourceCompanyId}`;
 
-      let supplierId: number;
+      // Find or create source company as supplier in target company
+      let supplierId: number | null = null;
       const [existingPartner] = await db.select().from(partners)
         .where(and(
           eq(partners.companyId, sale.targetCompanyId),
@@ -391,60 +534,15 @@ export const internalSalesRouter = router({
         supplierId = Number(newPartner.insertId);
       }
 
-      // 3. Create a purchase order in the target company
-      const [poResult] = await db.insert(purchaseOrders).values({
-        companyId: sale.targetCompanyId,
-        branchId: sale.targetBranchId,
-        supplierId: supplierId,
-        docType: "SEM_DOCUMENTO",
-        issueDate: new Date(),
-        postingDate: new Date(),
-        totalAmount: sale.totalAmount?.toString() || "0",
-        paymentMethod: "TRANSFERENCIA_INTERNA",
-        status: "CONFIRMED",
-        notes: `Venda Interna #${sale.id} - Origem: ${sourceCompanyName}`,
-        createdBy: ctx.user.id,
+      await db.insert(accountsPayable).values({
+        description: `Venda Interna ${sale.docNumber || '#' + sale.id} - ${sourceCompanyName}`,
+        amount: totalAmount.toFixed(2),
+        dueDate,
+        status: "PENDING",
+        supplierId,
+        internalSaleId: sale.id,
+        notes: `Ref: ${sale.docNumber || 'VI-' + sale.id}`,
       });
-
-      const purchaseOrderId = Number(poResult.insertId);
-
-      // 4. Create purchase order items and update stock in target company using mappings
-      for (const item of items) {
-        const targetProductId = mappingMap.get(item.sourceProductId)!;
-        const qty = parseFloat(item.quantity?.toString() || "0");
-        const unitCost = parseFloat(item.unitCost?.toString() || "0");
-
-        await db.insert(purchaseOrderItems).values({
-          companyId: sale.targetCompanyId,
-          branchId: sale.targetBranchId,
-          purchaseOrderId,
-          productId: targetProductId,
-          quantity: qty.toString(),
-          unitCost: unitCost.toFixed(4),
-          totalCost: (qty * unitCost).toFixed(2),
-        });
-
-        // Update stock in target company
-        const [targetProd] = await db.select().from(products)
-          .where(eq(products.id, targetProductId)).limit(1);
-
-        if (targetProd) {
-          const currentStock = parseFloat(targetProd.currentStock?.toString() || "0");
-          const currentAvgCost = parseFloat(targetProd.avgCost?.toString() || "0");
-          const newStock = currentStock + qty;
-          const newAvgCost = currentStock > 0
-            ? (currentStock * currentAvgCost + qty * unitCost) / newStock
-            : unitCost;
-
-          await db.update(products)
-            .set({ currentStock: Math.round(newStock), avgCost: newAvgCost.toFixed(2) })
-            .where(eq(products.id, targetProductId));
-        }
-
-        await db.update(internalSaleItems)
-          .set({ targetProductId })
-          .where(eq(internalSaleItems.id, item.id));
-      }
 
       // 5. Update internal sale status
       await db.update(internalSales)
@@ -452,11 +550,12 @@ export const internalSalesRouter = router({
           status: "APPROVED",
           reviewedBy: ctx.user.id,
           reviewedAt: new Date(),
-          generatedPurchaseOrderId: purchaseOrderId,
+          confirmedAt,
+          dueDate,
         })
         .where(eq(internalSales.id, input.id));
 
-      return { success: true, purchaseOrderId };
+      return { success: true, dueDate, receivableId };
     }),
 
   // Reject an internal sale (admin only)
@@ -530,6 +629,7 @@ export const internalSalesRouter = router({
         currentStock: products.currentStock,
         avgCost: products.avgCost,
         uom: products.uom,
+        ean: products.ean,
       })
         .from(products)
         .where(and(
@@ -537,11 +637,14 @@ export const internalSalesRouter = router({
           eq(products.active, true),
         ))
         .orderBy(products.name)
-        .limit(200);
+        .limit(500);
 
       if (input.search) {
         const searchLower = input.search.toLowerCase();
-        return results.filter(p => p.name.toLowerCase().includes(searchLower));
+        return results.filter(p =>
+          p.name.toLowerCase().includes(searchLower) ||
+          (p.ean && p.ean.includes(input.search!))
+        );
       }
 
       return results;
