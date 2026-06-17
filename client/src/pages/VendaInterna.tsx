@@ -652,7 +652,7 @@ export default function VendaInterna() {
 
         {/* Create Dialog */}
         <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-5xl w-[95vw] max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Nova Venda Interna</DialogTitle>
             </DialogHeader>
@@ -711,7 +711,7 @@ export default function VendaInterna() {
                 </div>
                 {productSearch && companyProducts && companyProducts.length > 0 && (
                   <div className="mt-2 border rounded-md max-h-40 overflow-y-auto">
-                    {companyProducts.slice(0, 10).map((p) => (
+                    {companyProducts.filter((p) => !cart.some((c) => c.sourceProductId === p.id)).slice(0, 10).map((p) => (
                       <div
                         key={p.id}
                         className="flex items-center justify-between p-2 hover:bg-muted/50 cursor-pointer"

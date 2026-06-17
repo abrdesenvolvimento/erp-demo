@@ -2558,3 +2558,7 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 
 ## Bug Fix 17/06/2026 — Venda Interna: Empresa Destino mostra a própria empresa
 - [x] getTargetCompanies deve excluir a empresa ativa (sourceCompanyId) da lista de destinos
+
+## UI Fix 17/06/2026 — Venda Interna: Modal e Autocomplete
+- [x] Modal Nova Venda Interna: aumentar largura/altura para evitar scroll lateral e vertical
+- [x] Autocomplete de produtos: filtrar produtos já adicionados ao carrinho
