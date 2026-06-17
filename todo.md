@@ -2562,3 +2562,9 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 ## UI Fix 17/06/2026 — Venda Interna: Modal e Autocomplete
 - [x] Modal Nova Venda Interna: aumentar largura/altura para evitar scroll lateral e vertical
 - [x] Autocomplete de produtos: filtrar produtos já adicionados ao carrinho
+
+## Bug Fix 17/06/2026 — Venda Interna: Modal, Aprovação e Estoque (Round 2)
+- [x] Modal: tabela compacta com max-h-[40vh], inputs menores, totais inline (sem tfoot)
+- [x] Aprovação: inverter lógica — quem aprova é a empresa DESTINO (que recebe), não a origem
+- [x] Movimentação de estoque: gerar SAIDA na empresa origem e ENTRADA na empresa destino (productMovements) ao aprovar
+- [x] Auditoria de movimentações: confirmado que é apenas no ambiente dev, produção está ok

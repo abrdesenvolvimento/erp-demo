@@ -2,7 +2,7 @@ import { z } from "zod";
 import { eq, and, desc, sql, or, ne, SQL } from "drizzle-orm";
 import { protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
-import { internalSales, internalSaleItems, products, companies, partners, accountsPayable, receivables, receivableInstallments, productMapping } from "../../drizzle/schema";
+import { internalSales, internalSaleItems, products, companies, partners, accountsPayable, receivables, receivableInstallments, productMapping, productMovements } from "../../drizzle/schema";
 import { TRPCError } from "@trpc/server";
 
 export const internalSalesRouter = router({
@@ -411,6 +411,12 @@ export const internalSalesRouter = router({
         throw new TRPCError({ code: "BAD_REQUEST", message: `Venda interna já está com status: ${sale.status}` });
       }
 
+      // Verify that the approver is from the target (receiving) company
+      const userActiveCompanyId = ctx.activeCompanyId;
+      if (userActiveCompanyId && userActiveCompanyId !== sale.targetCompanyId) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Apenas a empresa destino (que recebe) pode aprovar a venda interna" });
+      }
+
       const items = await db.select().from(internalSaleItems).where(eq(internalSaleItems.internalSaleId, input.id));
 
       // Get mappings from productMapping table
@@ -435,7 +441,9 @@ export const internalSalesRouter = router({
       const dueDate = new Date(confirmedAt.getTime() + dueDays * 24 * 60 * 60 * 1000);
       const totalAmount = parseFloat(sale.totalAmount?.toString() || "0");
 
-      // 1. Deduct stock from source company products
+      const docRef = sale.docNumber || `VI-${sale.id}`;
+
+      // 1. Deduct stock from source company products + create SAIDA movement
       for (const item of items) {
         const [prod] = await db.select().from(products)
           .where(and(
@@ -446,14 +454,27 @@ export const internalSalesRouter = router({
         if (prod) {
           const currentStock = parseFloat(prod.currentStock?.toString() || "0");
           const qty = parseFloat(item.quantity?.toString() || "0");
-          const newStock = Math.max(0, Math.round(currentStock - qty));
+          const newStock = Math.max(0, currentStock - qty);
           await db.update(products)
             .set({ currentStock: newStock })
             .where(eq(products.id, item.sourceProductId));
+
+          // Register stock movement (SAIDA) in source company
+          await db.insert(productMovements).values({
+            companyId: sale.sourceCompanyId,
+            branchId: sale.sourceBranchId,
+            productId: item.sourceProductId,
+            date: confirmedAt,
+            type: "SAIDA",
+            quantity: (-qty).toString(),
+            documentNumber: docRef,
+            userId: ctx.user.id,
+            notes: `Venda Interna ${docRef} - Saída para ${sale.targetCompanyId === 1 ? 'Adega Beira Rio' : 'A Brasa Reune'}`,
+          });
         }
       }
 
-      // 2. Add stock to target company products (via De/Para mapping)
+      // 2. Add stock to target company products (via De/Para mapping) + create ENTRADA movement
       for (const item of items) {
         const targetProductId = mappingMap.get(item.sourceProductId)!;
         const qty = parseFloat(item.quantity?.toString() || "0");
@@ -473,6 +494,19 @@ export const internalSalesRouter = router({
           await db.update(products)
             .set({ currentStock: Math.round(newStock), avgCost: newAvgCost.toFixed(2) })
             .where(eq(products.id, targetProductId));
+
+          // Register stock movement (ENTRADA) in target company
+          await db.insert(productMovements).values({
+            companyId: sale.targetCompanyId,
+            branchId: sale.targetBranchId,
+            productId: targetProductId,
+            date: confirmedAt,
+            type: "ENTRADA",
+            quantity: qty.toString(),
+            documentNumber: docRef,
+            userId: ctx.user.id,
+            notes: `Venda Interna ${docRef} - Entrada de ${sale.sourceCompanyId === 1 ? 'Adega Beira Rio' : 'A Brasa Reune'}`,
+          });
         }
 
         await db.update(internalSaleItems)

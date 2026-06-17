@@ -730,87 +730,72 @@ export default function VendaInterna() {
               {/* Cart */}
               {cart.length > 0 && (
                 <div>
-                  <Label>Itens da Transferência</Label>
-                  <div className="border rounded-md mt-2">
+                  <Label>Itens ({cart.length})</Label>
+                  <div className="border rounded-md mt-2 max-h-[40vh] overflow-y-auto">
                     <table className="w-full text-sm">
-                      <thead>
+                      <thead className="sticky top-0 bg-background z-10">
                         <tr className="border-b bg-muted/50">
-                          <th className="p-2 text-left">Produto</th>
-                          <th className="p-2 text-center">Qtd</th>
-                          <th className="p-2 text-center">Custo Unit.</th>
-                          <th className="p-2 text-center">Preço Venda</th>
-                          <th className="p-2 text-right">Total Venda</th>
-                          <th className="p-2"></th>
+                          <th className="px-2 py-1 text-left">Produto</th>
+                          <th className="px-2 py-1 text-center w-20">Qtd</th>
+                          <th className="px-2 py-1 text-center w-24">Custo</th>
+                          <th className="px-2 py-1 text-center w-24">Venda</th>
+                          <th className="px-2 py-1 text-right w-24">Total</th>
+                          <th className="px-1 py-1 w-8"></th>
                         </tr>
                       </thead>
                       <tbody>
                         {cart.map((item, idx) => (
                           <tr key={idx} className="border-b">
-                            <td className="p-2">
-                              <div>{item.productName}</div>
-                              <div className="text-xs text-muted-foreground">Est: {item.currentStock} {item.uom}</div>
+                            <td className="px-2 py-1">
+                              <span className="text-xs">{item.productName}</span>
                             </td>
-                            <td className="p-2 text-center">
+                            <td className="px-1 py-1 text-center">
                               <Input
                                 type="number"
                                 min={0.001}
                                 step={1}
                                 value={item.quantity}
                                 onChange={(e) => updateCartItem(idx, "quantity", parseFloat(e.target.value) || 0)}
-                                className="w-20 text-center mx-auto"
+                                className="w-16 h-7 text-xs text-center mx-auto"
                               />
                             </td>
-                            <td className="p-2 text-center">
+                            <td className="px-1 py-1 text-center">
                               <Input
                                 type="number"
                                 min={0}
                                 step={0.01}
                                 value={item.unitCost}
                                 onChange={(e) => updateCartItem(idx, "unitCost", parseFloat(e.target.value) || 0)}
-                                className="w-24 text-center mx-auto"
+                                className="w-20 h-7 text-xs text-center mx-auto"
                               />
                             </td>
-                            <td className="p-2 text-center">
+                            <td className="px-1 py-1 text-center">
                               <Input
                                 type="number"
                                 min={0}
                                 step={0.01}
                                 value={item.unitSalePrice}
                                 onChange={(e) => updateCartItem(idx, "unitSalePrice", parseFloat(e.target.value) || 0)}
-                                className="w-24 text-center mx-auto"
+                                className="w-20 h-7 text-xs text-center mx-auto"
                               />
                             </td>
-                            <td className="p-2 text-right font-medium">
+                            <td className="px-2 py-1 text-right text-xs font-medium">
                               {formatCurrency(item.quantity * item.unitSalePrice)}
                             </td>
-                            <td className="p-2 text-center">
-                              <Button variant="ghost" size="sm" onClick={() => removeFromCart(idx)}>
-                                <Trash2 className="h-4 w-4 text-red-500" />
+                            <td className="px-1 py-1 text-center">
+                              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => removeFromCart(idx)}>
+                                <Trash2 className="h-3 w-3 text-red-500" />
                               </Button>
                             </td>
                           </tr>
                         ))}
                       </tbody>
-                      <tfoot>
-                        <tr className="bg-muted/50">
-                          <td colSpan={4} className="p-2 text-right text-muted-foreground">Total Custo:</td>
-                          <td className="p-2 text-right text-muted-foreground">{formatCurrency(cartTotalCost)}</td>
-                          <td></td>
-                        </tr>
-                        <tr className="bg-muted/50 font-bold">
-                          <td colSpan={4} className="p-2 text-right">Total Venda:</td>
-                          <td className="p-2 text-right">{formatCurrency(cartTotalSale)}</td>
-                          <td></td>
-                        </tr>
-                        <tr className="bg-green-50">
-                          <td colSpan={4} className="p-2 text-right text-green-700 font-medium">Margem:</td>
-                          <td className="p-2 text-right text-green-700 font-medium">
-                            {formatCurrency(cartTotalSale - cartTotalCost)}
-                          </td>
-                          <td></td>
-                        </tr>
-                      </tfoot>
                     </table>
+                  </div>
+                  <div className="flex justify-end gap-4 mt-2 text-sm">
+                    <span className="text-muted-foreground">Custo: {formatCurrency(cartTotalCost)}</span>
+                    <span className="font-bold">Venda: {formatCurrency(cartTotalSale)}</span>
+                    <span className="text-green-700 font-medium">Margem: {formatCurrency(cartTotalSale - cartTotalCost)}</span>
                   </div>
                 </div>
               )}
@@ -822,6 +807,7 @@ export default function VendaInterna() {
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   placeholder="Observações sobre a transferência..."
+                  className="h-16 resize-none"
                 />
               </div>
             </div>
@@ -981,8 +967,8 @@ export default function VendaInterna() {
                   </div>
                 )}
 
-                {/* Actions */}
-                {saleDetail.status === "PENDING" && user?.role === "admin" && (
+                {/* Actions - only target company (receiver) can approve */}
+                {saleDetail.status === "PENDING" && user?.role === "admin" && saleDetail.targetCompanyId === activeCompanyId && (
                   <div className="flex gap-2 justify-end pt-4 border-t">
                     <Button
                       variant="destructive"
