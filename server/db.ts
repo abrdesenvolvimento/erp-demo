@@ -3656,6 +3656,31 @@ export async function getAllSuppliersWithHistory(companyId?: number) {
     current.transactionCount += Number(e.count);
     supplierMap.set(e.supplierId, current);
   }
+
+  // Adicionar pendências de VENDAS INTERNAS (accountsPayable com internalSaleId)
+  const apConditions: SQL[] = [
+    eq(accountsPayable.status, "PENDING"),
+    sql`${accountsPayable.internalSaleId} IS NOT NULL`
+  ];
+  if (companyId) {
+    apConditions.push(eq(accountsPayable.companyId, companyId));
+  }
+  const apPendings = await db.select({
+    supplierId: accountsPayable.supplierId,
+    totalPending: sql<string>`SUM(CAST(${accountsPayable.amount} AS DECIMAL(10,2)))`,
+    count: sql<number>`COUNT(*)`
+  })
+  .from(accountsPayable)
+  .where(and(...apConditions))
+  .groupBy(accountsPayable.supplierId);
+
+  for (const ap of apPendings) {
+    if (!ap.supplierId) continue;
+    const current = supplierMap.get(ap.supplierId) || { totalPending: 0, transactionCount: 0 };
+    current.totalPending += parseFloat(ap.totalPending || "0");
+    current.transactionCount += Number(ap.count);
+    supplierMap.set(ap.supplierId, current);
+  }
   
   // Montar resultado
   const results = allSuppliers.map(supplier => {
@@ -3794,10 +3819,25 @@ export async function getTotalPendingPayables(companyId?: number) {
     .where(eq(expenseInstallments.status, 'PENDENTE'));
   }
   
+  // Total de vendas internas pendentes (accountsPayable com internalSaleId)
+  const apConditions: SQL[] = [
+    eq(accountsPayable.status, "PENDING"),
+    sql`${accountsPayable.internalSaleId} IS NOT NULL`
+  ];
+  if (companyId) {
+    apConditions.push(eq(accountsPayable.companyId, companyId));
+  }
+  const apResult = await db.select({
+    total: sql<string>`COALESCE(SUM(CAST(${accountsPayable.amount} AS DECIMAL(10,2))), 0)`
+  })
+  .from(accountsPayable)
+  .where(and(...apConditions));
+
   const purchaseTotal = parseFloat(purchaseResult[0]?.total || "0");
   const expenseTotal = parseFloat(expenseResult[0]?.total || "0");
+  const apTotal = parseFloat(apResult[0]?.total || "0");
   
-  return purchaseTotal + expenseTotal;
+  return purchaseTotal + expenseTotal + apTotal;
 }
 
 // Obter detalhamento completo de um fornecedor
@@ -3902,6 +3942,42 @@ export async function getSupplierPayableDetail(supplierId: number, companyId?: n
     }
   }
   
+  // 3. Buscar parcelas de VENDAS INTERNAS (accountsPayable com internalSaleId)
+  const apConditions: SQL[] = [eq(accountsPayable.supplierId, supplierId), sql`${accountsPayable.internalSaleId} IS NOT NULL`];
+  if (companyId) {
+    apConditions.push(eq(accountsPayable.companyId, companyId));
+  }
+  const apEntries = await db.select()
+    .from(accountsPayable)
+    .where(and(...apConditions))
+    .orderBy(desc(accountsPayable.createdAt));
+
+  for (const ap of apEntries) {
+    const amount = parseFloat(String(ap.amount) || "0");
+    const isPaid = ap.status === 'PAID';
+    allInstallments.push({
+      id: ap.id,
+      type: 'internalSale',
+      purchaseOrderId: null,
+      expenseId: null,
+      supplierId: ap.supplierId,
+      categoryId: null,
+      description: ap.description || `Venda Interna #${ap.internalSaleId}`,
+      installmentNumber: 1,
+      totalInstallments: 1,
+      expenseDate: ap.createdAt || new Date(),
+      dueDate: ap.dueDate || new Date(),
+      paidDate: ap.paidDate || null,
+      paymentMethod: null,
+      notes: ap.notes || null,
+      origin: 'Venda Interna',
+      status: ap.status || 'PENDING',
+      totalAmount: amount.toFixed(2),
+      paidAmount: isPaid ? amount.toFixed(2) : "0.00",
+      pendingAmount: isPaid ? "0.00" : amount.toFixed(2)
+    });
+  }
+
   // Ordenar por data de vencimento
   allInstallments.sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
   
