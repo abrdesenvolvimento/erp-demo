@@ -5394,9 +5394,34 @@ export async function getPayablesCalendar(year: number, month: number, companyId
     ORDER BY ei.dueDate ASC
   `));
 
+  // 3. Vendas Internas (accountsPayable com internalSaleId)
+  const apResult = await db.execute(sql.raw(`
+    SELECT 
+      DAY(ap.dueDate) as day,
+      ap.id as installmentId,
+      ap.amount,
+      ap.dueDate,
+      ap.status,
+      ap.internalSaleId as purchaseOrderId,
+      ap.description as docNumber,
+      'A_PRAZO' as paymentMethod,
+      COALESCE(ap.supplierId, 0) as supplierId,
+      COALESCE(p.name, 'Venda Interna') as supplierName,
+      'VENDA_INTERNA' as tipo
+    FROM accountsPayable ap
+    LEFT JOIN partners p ON ap.supplierId = p.id
+    WHERE ap.dueDate >= '${toDateString(startDate)}'
+      AND ap.dueDate <= '${toDateString(endDate)}'
+      AND ap.status IN ('PENDING', 'OVERDUE')
+      AND ap.internalSaleId IS NOT NULL
+      ${companyId ? `AND ap.companyId = ${companyId}` : ''}
+    ORDER BY ap.dueDate ASC
+  `));
+
   const purchaseRows = ((purchaseResult as any)[0] || []) as any[];
   const expenseRows = ((expenseResult as any)[0] || []) as any[];
-  const allRows = [...purchaseRows, ...expenseRows];
+  const apRows = ((apResult as any)[0] || []) as any[];
+  const allRows = [...purchaseRows, ...expenseRows, ...apRows];
 
   // Agrupar por dia
   const calendar: Record<number, {
