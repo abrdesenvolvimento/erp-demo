@@ -372,6 +372,8 @@ export type InsertPurchaseOrderItem = typeof purchaseOrderItems.$inferInsert;
 // Contas a Pagar
 export const accountsPayable = mysqlTable("accountsPayable", {
   id: int("id").primaryKey().autoincrement(),
+  companyId: int("companyId"),
+  branchId: int("branchId"),
   description: varchar("description", { length: 255 }).notNull(),
   amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
   dueDate: timestamp("dueDate").notNull(),

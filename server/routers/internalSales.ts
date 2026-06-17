@@ -569,6 +569,8 @@ export const internalSalesRouter = router({
       }
 
       await db.insert(accountsPayable).values({
+        companyId: sale.targetCompanyId,
+        branchId: sale.targetBranchId,
         description: `Venda Interna ${sale.docNumber || '#' + sale.id} - ${sourceCompanyName}`,
         amount: totalAmount.toFixed(2),
         dueDate,
