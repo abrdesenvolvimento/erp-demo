@@ -2532,3 +2532,10 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Venda Interna: backend (criar, aprovar com entrada automática, rejeitar, cancelar)
 - [x] Venda Interna: frontend (listagem, criação, detalhes, aprovação/rejeição)
 - [x] Venda Interna: menu no Financeiro (admin only)
+
+## Sprint 16/06/2026 — De/Para Venda Interna
+- [x] Tabela de mapeamento De/Para entre produtos de empresas diferentes
+- [x] CRUD do De/Para: vincular produto origem → produto destino
+- [x] Integração com aprovação: verificar mapeamento antes de dar entrada no estoque
+- [x] Se produto não mapeado: bloquear aprovação e solicitar configuração do De/Para
+- [x] Tela de gerenciamento do De/Para (admin)

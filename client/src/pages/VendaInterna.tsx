@@ -10,8 +10,9 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { ArrowLeftRight, Plus, Eye, Check, X, Trash2, Search } from "lucide-react";
+import { ArrowLeftRight, Plus, Eye, Check, X, Trash2, Search, Link2, AlertTriangle } from "lucide-react";
 
 interface CartItem {
   sourceProductId: number;
@@ -22,6 +23,12 @@ interface CartItem {
   uom: string;
 }
 
+interface MappingEntry {
+  sourceProductId: number;
+  productName: string;
+  targetProductId: number | null;
+}
+
 export default function VendaInterna() {
   const { user } = useAuth();
   const utils = trpc.useUtils();
@@ -29,8 +36,10 @@ export default function VendaInterna() {
 
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
+  const [showMappingDialog, setShowMappingDialog] = useState(false);
   const [selectedSaleId, setSelectedSaleId] = useState<number | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
+  const [activeTab, setActiveTab] = useState("vendas");
 
   // Create form state
   const [targetCompanyId, setTargetCompanyId] = useState<number | null>(null);
@@ -43,6 +52,13 @@ export default function VendaInterna() {
   const [rejectSaleId, setRejectSaleId] = useState<number | null>(null);
   const [rejectReason, setRejectReason] = useState("");
 
+  // De/Para state
+  const [mappingSourceCompany, setMappingSourceCompany] = useState<number | null>(null);
+  const [mappingTargetCompany, setMappingTargetCompany] = useState<number | null>(null);
+  const [mappingEntries, setMappingEntries] = useState<MappingEntry[]>([]);
+  const [targetProductSearch, setTargetProductSearch] = useState("");
+  const [editingMappingIdx, setEditingMappingIdx] = useState<number | null>(null);
+
   // Queries
   const { data: salesList, isLoading } = trpc.internalSales.list.useQuery(
     { companyId: activeCompanyId, status: statusFilter as any },
@@ -51,7 +67,7 @@ export default function VendaInterna() {
 
   const { data: targetCompanies } = trpc.internalSales.getTargetCompanies.useQuery(
     { sourceCompanyId: activeCompanyId },
-    { enabled: !!activeCompanyId && showCreateDialog }
+    { enabled: !!activeCompanyId }
   );
 
   const { data: companyProducts } = trpc.internalSales.getCompanyProducts.useQuery(
@@ -62,6 +78,26 @@ export default function VendaInterna() {
   const { data: saleDetail } = trpc.internalSales.getById.useQuery(
     { id: selectedSaleId! },
     { enabled: !!selectedSaleId && showDetailDialog }
+  );
+
+  const { data: mappingCheck } = trpc.internalSales.checkMapping.useQuery(
+    { id: selectedSaleId! },
+    { enabled: !!selectedSaleId && showDetailDialog }
+  );
+
+  const { data: existingMappings, refetch: refetchMappings } = trpc.internalSales.mappingList.useQuery(
+    { sourceCompanyId: mappingSourceCompany!, targetCompanyId: mappingTargetCompany! },
+    { enabled: !!mappingSourceCompany && !!mappingTargetCompany && activeTab === "depara" }
+  );
+
+  const { data: targetProducts } = trpc.internalSales.getCompanyProducts.useQuery(
+    { companyId: mappingTargetCompany || (saleDetail?.targetCompanyId ?? 0), search: targetProductSearch },
+    { enabled: (!!mappingTargetCompany || !!saleDetail?.targetCompanyId) && (showMappingDialog || activeTab === "depara") }
+  );
+
+  const { data: sourceProductsForMapping } = trpc.internalSales.getCompanyProducts.useQuery(
+    { companyId: mappingSourceCompany || 0, search: "" },
+    { enabled: !!mappingSourceCompany && activeTab === "depara" }
   );
 
   // Mutations
@@ -79,6 +115,7 @@ export default function VendaInterna() {
     onSuccess: () => {
       toast.success("Venda interna aprovada! Estoque atualizado nas duas empresas.");
       utils.internalSales.list.invalidate();
+      utils.internalSales.checkMapping.invalidate();
       setShowDetailDialog(false);
     },
     onError: (err) => toast.error(err.message),
@@ -100,6 +137,35 @@ export default function VendaInterna() {
       toast.success("Venda interna cancelada.");
       utils.internalSales.list.invalidate();
       setShowDetailDialog(false);
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const bulkMappingMutation = trpc.internalSales.mappingBulkCreate.useMutation({
+    onSuccess: (data) => {
+      toast.success(`De/Para salvo! ${data.created} criado(s), ${data.updated} atualizado(s).`);
+      setShowMappingDialog(false);
+      setMappingEntries([]);
+      utils.internalSales.checkMapping.invalidate();
+      utils.internalSales.mappingList.invalidate();
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const mappingCreateMutation = trpc.internalSales.mappingCreate.useMutation({
+    onSuccess: () => {
+      toast.success("Mapeamento salvo!");
+      utils.internalSales.mappingList.invalidate();
+      refetchMappings();
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const mappingDeleteMutation = trpc.internalSales.mappingDelete.useMutation({
+    onSuccess: () => {
+      toast.success("Mapeamento removido!");
+      utils.internalSales.mappingList.invalidate();
+      refetchMappings();
     },
     onError: (err) => toast.error(err.message),
   });
@@ -158,6 +224,43 @@ export default function VendaInterna() {
     });
   }
 
+  function openMappingForSale() {
+    if (!saleDetail) return;
+    const unmapped = mappingCheck?.unmapped || [];
+    setMappingEntries(unmapped.map(u => ({
+      sourceProductId: u.sourceProductId,
+      productName: u.productName,
+      targetProductId: null,
+    })));
+    setShowMappingDialog(true);
+  }
+
+  function handleSaveMappings() {
+    if (!saleDetail) return;
+    const validMappings = mappingEntries.filter(m => m.targetProductId !== null);
+    if (validMappings.length === 0) {
+      toast.error("Configure pelo menos um mapeamento");
+      return;
+    }
+    bulkMappingMutation.mutate({
+      sourceCompanyId: saleDetail.sourceCompanyId,
+      targetCompanyId: saleDetail.targetCompanyId,
+      mappings: validMappings.map(m => ({
+        sourceProductId: m.sourceProductId,
+        targetProductId: m.targetProductId!,
+      })),
+    });
+  }
+
+  function handleApprove() {
+    if (!saleDetail) return;
+    if (mappingCheck && !mappingCheck.allMapped) {
+      toast.error("Configure o De/Para de todos os produtos antes de aprovar.");
+      return;
+    }
+    approveMutation.mutate({ id: saleDetail.id });
+  }
+
   const cartTotal = useMemo(() => cart.reduce((sum, item) => sum + item.quantity * item.unitCost, 0), [cart]);
 
   const statusColors: Record<string, string> = {
@@ -192,87 +295,258 @@ export default function VendaInterna() {
           </Button>
         </div>
 
-        {/* Filters */}
-        <div className="flex gap-4 items-center">
-          <Label>Status:</Label>
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">Todos</SelectItem>
-              <SelectItem value="PENDING">Pendentes</SelectItem>
-              <SelectItem value="APPROVED">Aprovadas</SelectItem>
-              <SelectItem value="REJECTED">Rejeitadas</SelectItem>
-              <SelectItem value="CANCELLED">Canceladas</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+        {/* Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList>
+            <TabsTrigger value="vendas">Vendas Internas</TabsTrigger>
+            <TabsTrigger value="depara">
+              <Link2 className="h-4 w-4 mr-1" />
+              De/Para Produtos
+            </TabsTrigger>
+          </TabsList>
 
-        {/* List */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Vendas Internas</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <p className="text-muted-foreground">Carregando...</p>
-            ) : !salesList || salesList.length === 0 ? (
-              <p className="text-muted-foreground text-center py-8">Nenhuma venda interna registrada</p>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b text-left">
-                      <th className="p-2">ID</th>
-                      <th className="p-2">Data</th>
-                      <th className="p-2">Direção</th>
-                      <th className="p-2">Origem</th>
-                      <th className="p-2">Destino</th>
-                      <th className="p-2 text-right">Valor</th>
-                      <th className="p-2">Status</th>
-                      <th className="p-2">Ações</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {salesList.map((sale) => (
-                      <tr key={sale.id} className="border-b hover:bg-muted/50">
-                        <td className="p-2">#{sale.id}</td>
-                        <td className="p-2">
-                          {sale.createdAt ? new Date(sale.createdAt).toLocaleDateString("pt-BR") : "-"}
-                        </td>
-                        <td className="p-2">
-                          <Badge variant="outline" className={sale.direction === "SENT" ? "border-orange-300 text-orange-700" : "border-blue-300 text-blue-700"}>
-                            {sale.direction === "SENT" ? "Enviada" : "Recebida"}
-                          </Badge>
-                        </td>
-                        <td className="p-2">{sale.sourceCompanyName}</td>
-                        <td className="p-2">{sale.targetCompanyName}</td>
-                        <td className="p-2 text-right font-medium">
-                          R$ {parseFloat(sale.totalAmount?.toString() || "0").toFixed(2)}
-                        </td>
-                        <td className="p-2">
-                          <Badge className={statusColors[sale.status] || ""}>
-                            {statusLabels[sale.status] || sale.status}
-                          </Badge>
-                        </td>
-                        <td className="p-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => { setSelectedSaleId(sale.id); setShowDetailDialog(true); }}
+          {/* Vendas Tab */}
+          <TabsContent value="vendas" className="space-y-4">
+            {/* Filters */}
+            <div className="flex gap-4 items-center">
+              <Label>Status:</Label>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">Todos</SelectItem>
+                  <SelectItem value="PENDING">Pendentes</SelectItem>
+                  <SelectItem value="APPROVED">Aprovadas</SelectItem>
+                  <SelectItem value="REJECTED">Rejeitadas</SelectItem>
+                  <SelectItem value="CANCELLED">Canceladas</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* List */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Vendas Internas</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {isLoading ? (
+                  <p className="text-muted-foreground">Carregando...</p>
+                ) : !salesList || salesList.length === 0 ? (
+                  <p className="text-muted-foreground text-center py-8">Nenhuma venda interna registrada</p>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b text-left">
+                          <th className="p-2">ID</th>
+                          <th className="p-2">Data</th>
+                          <th className="p-2">Direção</th>
+                          <th className="p-2">Origem</th>
+                          <th className="p-2">Destino</th>
+                          <th className="p-2 text-right">Valor</th>
+                          <th className="p-2">Status</th>
+                          <th className="p-2">Ações</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {salesList.map((sale) => (
+                          <tr key={sale.id} className="border-b hover:bg-muted/50">
+                            <td className="p-2">#{sale.id}</td>
+                            <td className="p-2">
+                              {sale.createdAt ? new Date(sale.createdAt).toLocaleDateString("pt-BR") : "-"}
+                            </td>
+                            <td className="p-2">
+                              <Badge variant="outline" className={sale.direction === "SENT" ? "border-orange-300 text-orange-700" : "border-blue-300 text-blue-700"}>
+                                {sale.direction === "SENT" ? "Enviada" : "Recebida"}
+                              </Badge>
+                            </td>
+                            <td className="p-2">{sale.sourceCompanyName}</td>
+                            <td className="p-2">{sale.targetCompanyName}</td>
+                            <td className="p-2 text-right font-medium">
+                              R$ {parseFloat(sale.totalAmount?.toString() || "0").toFixed(2)}
+                            </td>
+                            <td className="p-2">
+                              <Badge className={statusColors[sale.status] || ""}>
+                                {statusLabels[sale.status] || sale.status}
+                              </Badge>
+                            </td>
+                            <td className="p-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => { setSelectedSaleId(sale.id); setShowDetailDialog(true); }}
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* De/Para Tab */}
+          <TabsContent value="depara" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Link2 className="h-5 w-5" />
+                  De/Para de Produtos
+                </CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  Configure o mapeamento entre produtos de empresas diferentes para entrada automática no estoque
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Company Selection */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>Empresa Origem (De)</Label>
+                    <Select
+                      value={mappingSourceCompany?.toString() || ""}
+                      onValueChange={(v) => { setMappingSourceCompany(Number(v)); }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {targetCompanies?.map((c) => (
+                          <SelectItem key={c.id} value={c.id.toString()}>
+                            {c.tradeName || c.name}
+                          </SelectItem>
+                        ))}
+                        {/* Also include active company */}
+                        <SelectItem value={activeCompanyId.toString()}>
+                          Empresa Atual
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Empresa Destino (Para)</Label>
+                    <Select
+                      value={mappingTargetCompany?.toString() || ""}
+                      onValueChange={(v) => { setMappingTargetCompany(Number(v)); }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {targetCompanies?.map((c) => (
+                          <SelectItem key={c.id} value={c.id.toString()}>
+                            {c.tradeName || c.name}
+                          </SelectItem>
+                        ))}
+                        <SelectItem value={activeCompanyId.toString()}>
+                          Empresa Atual
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                {/* Existing Mappings */}
+                {mappingSourceCompany && mappingTargetCompany && (
+                  <div>
+                    {existingMappings && existingMappings.length > 0 ? (
+                      <div className="border rounded-md">
+                        <table className="w-full text-sm">
+                          <thead>
+                            <tr className="border-b bg-muted/50">
+                              <th className="p-2 text-left">Produto Origem (De)</th>
+                              <th className="p-2 text-center">→</th>
+                              <th className="p-2 text-left">Produto Destino (Para)</th>
+                              <th className="p-2"></th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {existingMappings.map((m) => (
+                              <tr key={m.id} className="border-b hover:bg-muted/50">
+                                <td className="p-2">{m.sourceProductName}</td>
+                                <td className="p-2 text-center text-muted-foreground">→</td>
+                                <td className="p-2">{m.targetProductName}</td>
+                                <td className="p-2 text-right">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => mappingDeleteMutation.mutate({ id: m.id })}
+                                    disabled={mappingDeleteMutation.isPending}
+                                  >
+                                    <Trash2 className="h-4 w-4 text-red-500" />
+                                  </Button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    ) : (
+                      <p className="text-muted-foreground text-center py-4">Nenhum mapeamento configurado para este par de empresas</p>
+                    )}
+
+                    {/* Add new mapping inline */}
+                    <div className="mt-4 p-4 border rounded-md bg-muted/30">
+                      <Label className="font-medium">Adicionar Novo Mapeamento</Label>
+                      <div className="grid grid-cols-5 gap-2 mt-2 items-end">
+                        <div className="col-span-2">
+                          <Label className="text-xs">Produto Origem</Label>
+                          <Select
+                            onValueChange={(v) => {
+                              const prod = sourceProductsForMapping?.find(p => p.id === Number(v));
+                              if (prod) {
+                                setMappingEntries([{ sourceProductId: prod.id, productName: prod.name, targetProductId: null }]);
+                              }
+                            }}
                           >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione produto origem..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {sourceProductsForMapping?.map((p) => (
+                                <SelectItem key={p.id} value={p.id.toString()}>{p.name}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="text-center self-center text-muted-foreground">→</div>
+                        <div className="col-span-2">
+                          <Label className="text-xs">Produto Destino</Label>
+                          <Select
+                            onValueChange={(v) => {
+                              if (mappingEntries.length > 0 && mappingEntries[0].sourceProductId) {
+                                mappingCreateMutation.mutate({
+                                  sourceCompanyId: mappingSourceCompany!,
+                                  targetCompanyId: mappingTargetCompany!,
+                                  sourceProductId: mappingEntries[0].sourceProductId,
+                                  targetProductId: Number(v),
+                                });
+                                setMappingEntries([]);
+                              }
+                            }}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione produto destino..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {targetProducts?.map((p) => (
+                                <SelectItem key={p.id} value={p.id.toString()}>{p.name}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
 
         {/* Create Dialog */}
         <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
@@ -464,30 +738,76 @@ export default function VendaInterna() {
                   <table className="w-full text-sm mt-2 border rounded-md">
                     <thead>
                       <tr className="border-b bg-muted/50">
-                        <th className="p-2 text-left">Produto</th>
+                        <th className="p-2 text-left">Produto (Origem)</th>
+                        <th className="p-2 text-left">Produto (Destino)</th>
                         <th className="p-2 text-center">Qtd</th>
                         <th className="p-2 text-right">Custo Unit.</th>
                         <th className="p-2 text-right">Total</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {saleDetail.items.map((item) => (
-                        <tr key={item.id} className="border-b">
-                          <td className="p-2">{item.productName}</td>
-                          <td className="p-2 text-center">{parseFloat(item.quantity?.toString() || "0")}</td>
-                          <td className="p-2 text-right">R$ {parseFloat(item.unitCost?.toString() || "0").toFixed(2)}</td>
-                          <td className="p-2 text-right font-medium">R$ {parseFloat(item.totalCost?.toString() || "0").toFixed(2)}</td>
-                        </tr>
-                      ))}
+                      {saleDetail.items.map((item) => {
+                        const mappedTarget = mappingCheck?.mapped.find(m => m.sourceProductId === item.sourceProductId);
+                        const isUnmapped = mappingCheck?.unmapped.find(u => u.sourceProductId === item.sourceProductId);
+                        return (
+                          <tr key={item.id} className="border-b">
+                            <td className="p-2">{item.productName}</td>
+                            <td className="p-2">
+                              {item.targetProductId ? (
+                                <span className="text-green-700">{mappedTarget?.targetProductName || `#${item.targetProductId}`}</span>
+                              ) : mappedTarget ? (
+                                <span className="text-green-700">{mappedTarget.targetProductName}</span>
+                              ) : isUnmapped ? (
+                                <span className="text-yellow-700 flex items-center gap-1">
+                                  <AlertTriangle className="h-3 w-3" /> Não mapeado
+                                </span>
+                              ) : (
+                                <span className="text-muted-foreground">-</span>
+                              )}
+                            </td>
+                            <td className="p-2 text-center">{parseFloat(item.quantity?.toString() || "0")}</td>
+                            <td className="p-2 text-right">R$ {parseFloat(item.unitCost?.toString() || "0").toFixed(2)}</td>
+                            <td className="p-2 text-right font-medium">R$ {parseFloat(item.totalCost?.toString() || "0").toFixed(2)}</td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                     <tfoot>
                       <tr className="bg-muted/50 font-bold">
-                        <td colSpan={3} className="p-2 text-right">Total:</td>
+                        <td colSpan={4} className="p-2 text-right">Total:</td>
                         <td className="p-2 text-right">R$ {parseFloat(saleDetail.totalAmount?.toString() || "0").toFixed(2)}</td>
                       </tr>
                     </tfoot>
                   </table>
                 </div>
+
+                {/* Mapping Warning */}
+                {saleDetail.status === "PENDING" && mappingCheck && !mappingCheck.allMapped && (
+                  <div className="flex items-center gap-3 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+                    <AlertTriangle className="h-5 w-5 text-yellow-600 shrink-0" />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-yellow-800">
+                        {mappingCheck.unmapped.length} produto(s) sem De/Para configurado
+                      </p>
+                      <p className="text-xs text-yellow-700">
+                        Configure o mapeamento antes de aprovar para que a entrada no estoque seja feita corretamente.
+                      </p>
+                    </div>
+                    <Button size="sm" variant="outline" onClick={openMappingForSale}>
+                      <Link2 className="h-4 w-4 mr-1" />
+                      Configurar De/Para
+                    </Button>
+                  </div>
+                )}
+
+                {saleDetail.status === "PENDING" && mappingCheck?.allMapped && (
+                  <div className="flex items-center gap-3 p-3 bg-green-50 border border-green-200 rounded-md">
+                    <Check className="h-5 w-5 text-green-600 shrink-0" />
+                    <p className="text-sm text-green-800">
+                      Todos os produtos estão mapeados. Pronto para aprovar.
+                    </p>
+                  </div>
+                )}
 
                 {/* Actions */}
                 {saleDetail.status === "PENDING" && user?.role === "admin" && (
@@ -500,8 +820,8 @@ export default function VendaInterna() {
                       Rejeitar
                     </Button>
                     <Button
-                      onClick={() => approveMutation.mutate({ id: saleDetail.id })}
-                      disabled={approveMutation.isPending}
+                      onClick={handleApprove}
+                      disabled={approveMutation.isPending || (mappingCheck && !mappingCheck.allMapped)}
                       className="bg-green-600 hover:bg-green-700"
                     >
                       <Check className="h-4 w-4 mr-2" />
@@ -531,6 +851,89 @@ export default function VendaInterna() {
                 )}
               </div>
             )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Mapping Dialog (for pending sale approval) */}
+        <Dialog open={showMappingDialog} onOpenChange={setShowMappingDialog}>
+          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Link2 className="h-5 w-5" />
+                Configurar De/Para
+              </DialogTitle>
+              <p className="text-sm text-muted-foreground">
+                Vincule cada produto da empresa de origem ao produto correspondente na empresa de destino
+              </p>
+            </DialogHeader>
+
+            <div className="space-y-3">
+              {mappingEntries.map((entry, idx) => (
+                <div key={idx} className="grid grid-cols-5 gap-2 items-center p-3 border rounded-md">
+                  <div className="col-span-2">
+                    <Label className="text-xs text-muted-foreground">Produto Origem</Label>
+                    <p className="font-medium text-sm">{entry.productName}</p>
+                  </div>
+                  <div className="text-center text-muted-foreground">→</div>
+                  <div className="col-span-2">
+                    <Label className="text-xs text-muted-foreground">Produto Destino</Label>
+                    {editingMappingIdx === idx ? (
+                      <div>
+                        <Input
+                          placeholder="Buscar produto destino..."
+                          value={targetProductSearch}
+                          onChange={(e) => setTargetProductSearch(e.target.value)}
+                          className="text-sm"
+                          autoFocus
+                        />
+                        {targetProducts && targetProducts.length > 0 && (
+                          <div className="mt-1 border rounded-md max-h-32 overflow-y-auto">
+                            {targetProducts.slice(0, 8).map((p) => (
+                              <div
+                                key={p.id}
+                                className="p-2 hover:bg-muted/50 cursor-pointer text-sm"
+                                onClick={() => {
+                                  const newEntries = [...mappingEntries];
+                                  newEntries[idx] = { ...newEntries[idx], targetProductId: p.id };
+                                  setMappingEntries(newEntries);
+                                  setEditingMappingIdx(null);
+                                  setTargetProductSearch("");
+                                }}
+                              >
+                                {p.name}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div
+                        className="cursor-pointer p-2 border rounded hover:bg-muted/50 text-sm"
+                        onClick={() => { setEditingMappingIdx(idx); setTargetProductSearch(""); }}
+                      >
+                        {entry.targetProductId ? (
+                          <span className="text-green-700">
+                            {targetProducts?.find(p => p.id === entry.targetProductId)?.name || `Produto #${entry.targetProductId}`}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground">Clique para selecionar...</span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowMappingDialog(false)}>Cancelar</Button>
+              <Button
+                onClick={handleSaveMappings}
+                disabled={bulkMappingMutation.isPending || mappingEntries.every(m => !m.targetProductId)}
+              >
+                {bulkMappingMutation.isPending ? "Salvando..." : "Salvar De/Para"}
+              </Button>
+            </DialogFooter>
           </DialogContent>
         </Dialog>
 
@@ -565,4 +968,5 @@ export default function VendaInterna() {
       </div>
     </DashboardLayout>
   );
+
 }

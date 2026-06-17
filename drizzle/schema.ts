@@ -1483,3 +1483,21 @@ export const internalSaleItems = mysqlTable("internalSaleItems", {
 
 export type InternalSaleItem = typeof internalSaleItems.$inferSelect;
 export type InsertInternalSaleItem = typeof internalSaleItems.$inferInsert;
+
+// De/Para de Produtos entre Empresas (mapeamento para Venda Interna)
+export const productMapping = mysqlTable("productMapping", {
+  id: int("id").primaryKey().autoincrement(),
+  sourceCompanyId: int("sourceCompanyId").notNull(),
+  targetCompanyId: int("targetCompanyId").notNull(),
+  sourceProductId: int("sourceProductId").notNull(),
+  targetProductId: int("targetProductId").notNull(),
+  createdBy: varchar("createdBy", { length: 64 }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow(),
+}, (table) => ({
+  mappingIdx: uniqueIndex("pm_mapping_idx").on(table.sourceCompanyId, table.targetCompanyId, table.sourceProductId),
+  sourceIdx: index("pm_source_idx").on(table.sourceCompanyId, table.sourceProductId),
+  targetIdx: index("pm_target_idx").on(table.targetCompanyId, table.targetProductId),
+}));
+export type ProductMapping = typeof productMapping.$inferSelect;
+export type InsertProductMapping = typeof productMapping.$inferInsert;

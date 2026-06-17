@@ -2,7 +2,7 @@ import { z } from "zod";
 import { eq, and, desc, sql, or } from "drizzle-orm";
 import { protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
-import { internalSales, internalSaleItems, products, companies, partners, purchaseOrders, purchaseOrderItems } from "../../drizzle/schema";
+import { internalSales, internalSaleItems, products, companies, partners, purchaseOrders, purchaseOrderItems, productMapping } from "../../drizzle/schema";
 import { TRPCError } from "@trpc/server";
 
 export const internalSalesRouter = router({
@@ -135,14 +135,183 @@ export const internalSalesRouter = router({
       return { id: Number(internalSaleId), totalAmount };
     }),
 
-  // Approve an internal sale (admin only)
+  // Check unmapped products for an internal sale (used before approval)
+  checkMapping: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
+
+      const [sale] = await db.select().from(internalSales).where(eq(internalSales.id, input.id)).limit(1);
+      if (!sale) throw new TRPCError({ code: "NOT_FOUND", message: "Venda interna não encontrada" });
+
+      const items = await db.select().from(internalSaleItems).where(eq(internalSaleItems.internalSaleId, input.id));
+
+      // Get existing mappings for this source->target pair
+      const mappings = await db.select().from(productMapping)
+        .where(and(
+          eq(productMapping.sourceCompanyId, sale.sourceCompanyId),
+          eq(productMapping.targetCompanyId, sale.targetCompanyId)
+        ));
+
+      const mappingMap = new Map(mappings.map(m => [m.sourceProductId, m.targetProductId]));
+
+      const mapped: { sourceProductId: number; productName: string; targetProductId: number; targetProductName?: string }[] = [];
+      const unmapped: { sourceProductId: number; productName: string }[] = [];
+
+      for (const item of items) {
+        const targetId = mappingMap.get(item.sourceProductId);
+        if (targetId) {
+          const [targetProd] = await db.select({ name: products.name }).from(products).where(eq(products.id, targetId)).limit(1);
+          mapped.push({ sourceProductId: item.sourceProductId, productName: item.productName, targetProductId: targetId, targetProductName: targetProd?.name });
+        } else {
+          unmapped.push({ sourceProductId: item.sourceProductId, productName: item.productName });
+        }
+      }
+
+      return { mapped, unmapped, allMapped: unmapped.length === 0 };
+    }),
+
+  // Product Mapping CRUD (De/Para)
+  mappingList: protectedProcedure
+    .input(z.object({
+      sourceCompanyId: z.number(),
+      targetCompanyId: z.number(),
+    }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
+
+      const mappings = await db.select().from(productMapping)
+        .where(and(
+          eq(productMapping.sourceCompanyId, input.sourceCompanyId),
+          eq(productMapping.targetCompanyId, input.targetCompanyId)
+        ));
+
+      // Enrich with product names
+      const result = [];
+      for (const m of mappings) {
+        const [sourceProd] = await db.select({ name: products.name }).from(products).where(eq(products.id, m.sourceProductId)).limit(1);
+        const [targetProd] = await db.select({ name: products.name }).from(products).where(eq(products.id, m.targetProductId)).limit(1);
+        result.push({
+          ...m,
+          sourceProductName: sourceProd?.name || `Produto #${m.sourceProductId}`,
+          targetProductName: targetProd?.name || `Produto #${m.targetProductId}`,
+        });
+      }
+
+      return result;
+    }),
+
+  mappingCreate: protectedProcedure
+    .input(z.object({
+      sourceCompanyId: z.number(),
+      targetCompanyId: z.number(),
+      sourceProductId: z.number(),
+      targetProductId: z.number(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
+
+      if (ctx.user.role !== "admin") {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Apenas administradores podem gerenciar o De/Para" });
+      }
+
+      // Check if mapping already exists
+      const [existing] = await db.select().from(productMapping)
+        .where(and(
+          eq(productMapping.sourceCompanyId, input.sourceCompanyId),
+          eq(productMapping.targetCompanyId, input.targetCompanyId),
+          eq(productMapping.sourceProductId, input.sourceProductId)
+        )).limit(1);
+
+      if (existing) {
+        // Update existing mapping
+        await db.update(productMapping)
+          .set({ targetProductId: input.targetProductId })
+          .where(eq(productMapping.id, existing.id));
+        return { id: existing.id, updated: true };
+      }
+
+      const [result] = await db.insert(productMapping).values({
+        sourceCompanyId: input.sourceCompanyId,
+        targetCompanyId: input.targetCompanyId,
+        sourceProductId: input.sourceProductId,
+        targetProductId: input.targetProductId,
+        createdBy: ctx.user.id,
+      });
+
+      return { id: Number(result.insertId), updated: false };
+    }),
+
+  mappingDelete: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
+
+      if (ctx.user.role !== "admin") {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Apenas administradores podem gerenciar o De/Para" });
+      }
+
+      await db.delete(productMapping).where(eq(productMapping.id, input.id));
+      return { success: true };
+    }),
+
+  // Bulk create mappings (used from the approval modal)
+  mappingBulkCreate: protectedProcedure
+    .input(z.object({
+      sourceCompanyId: z.number(),
+      targetCompanyId: z.number(),
+      mappings: z.array(z.object({
+        sourceProductId: z.number(),
+        targetProductId: z.number(),
+      })).min(1),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
+
+      if (ctx.user.role !== "admin") {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Apenas administradores podem gerenciar o De/Para" });
+      }
+
+      let created = 0;
+      let updated = 0;
+
+      for (const m of input.mappings) {
+        const [existing] = await db.select().from(productMapping)
+          .where(and(
+            eq(productMapping.sourceCompanyId, input.sourceCompanyId),
+            eq(productMapping.targetCompanyId, input.targetCompanyId),
+            eq(productMapping.sourceProductId, m.sourceProductId)
+          )).limit(1);
+
+        if (existing) {
+          await db.update(productMapping)
+            .set({ targetProductId: m.targetProductId })
+            .where(eq(productMapping.id, existing.id));
+          updated++;
+        } else {
+          await db.insert(productMapping).values({
+            sourceCompanyId: input.sourceCompanyId,
+            targetCompanyId: input.targetCompanyId,
+            sourceProductId: m.sourceProductId,
+            targetProductId: m.targetProductId,
+            createdBy: ctx.user.id,
+          });
+          created++;
+        }
+      }
+
+      return { created, updated };
+    }),
+
+  // Approve an internal sale (admin only) - now uses productMapping table
   approve: protectedProcedure
     .input(z.object({
       id: z.number(),
-      productMapping: z.array(z.object({
-        sourceProductId: z.number(),
-        targetProductId: z.number(),
-      })).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
@@ -159,6 +328,23 @@ export const internalSalesRouter = router({
       }
 
       const items = await db.select().from(internalSaleItems).where(eq(internalSaleItems.internalSaleId, input.id));
+
+      // Get mappings from productMapping table
+      const mappings = await db.select().from(productMapping)
+        .where(and(
+          eq(productMapping.sourceCompanyId, sale.sourceCompanyId),
+          eq(productMapping.targetCompanyId, sale.targetCompanyId)
+        ));
+      const mappingMap = new Map(mappings.map(m => [m.sourceProductId, m.targetProductId]));
+
+      // Check all items are mapped
+      const unmappedItems = items.filter(item => !mappingMap.has(item.sourceProductId));
+      if (unmappedItems.length > 0) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: `Existem ${unmappedItems.length} produto(s) sem De/Para configurado. Configure o mapeamento antes de aprovar.`,
+        });
+      }
 
       // 1. Deduct stock from source company products
       for (const item of items) {
@@ -222,49 +408,42 @@ export const internalSalesRouter = router({
 
       const purchaseOrderId = Number(poResult.insertId);
 
-      // 4. Create purchase order items and update stock in target company
-      const productMappingMap = new Map(
-        (input.productMapping || []).map(m => [m.sourceProductId, m.targetProductId])
-      );
-
+      // 4. Create purchase order items and update stock in target company using mappings
       for (const item of items) {
-        const targetProductId = productMappingMap.get(item.sourceProductId);
+        const targetProductId = mappingMap.get(item.sourceProductId)!;
+        const qty = parseFloat(item.quantity?.toString() || "0");
+        const unitCost = parseFloat(item.unitCost?.toString() || "0");
 
-        if (targetProductId) {
-          const qty = parseFloat(item.quantity?.toString() || "0");
-          const unitCost = parseFloat(item.unitCost?.toString() || "0");
+        await db.insert(purchaseOrderItems).values({
+          companyId: sale.targetCompanyId,
+          branchId: sale.targetBranchId,
+          purchaseOrderId,
+          productId: targetProductId,
+          quantity: qty.toString(),
+          unitCost: unitCost.toFixed(4),
+          totalCost: (qty * unitCost).toFixed(2),
+        });
 
-          await db.insert(purchaseOrderItems).values({
-            companyId: sale.targetCompanyId,
-            branchId: sale.targetBranchId,
-            purchaseOrderId,
-            productId: targetProductId,
-            quantity: qty.toString(),
-            unitCost: unitCost.toFixed(4),
-            totalCost: (qty * unitCost).toFixed(2),
-          });
+        // Update stock in target company
+        const [targetProd] = await db.select().from(products)
+          .where(eq(products.id, targetProductId)).limit(1);
 
-          // Update stock in target company
-          const [targetProd] = await db.select().from(products)
-            .where(eq(products.id, targetProductId)).limit(1);
+        if (targetProd) {
+          const currentStock = parseFloat(targetProd.currentStock?.toString() || "0");
+          const currentAvgCost = parseFloat(targetProd.avgCost?.toString() || "0");
+          const newStock = currentStock + qty;
+          const newAvgCost = currentStock > 0
+            ? (currentStock * currentAvgCost + qty * unitCost) / newStock
+            : unitCost;
 
-          if (targetProd) {
-            const currentStock = parseFloat(targetProd.currentStock?.toString() || "0");
-            const currentAvgCost = parseFloat(targetProd.avgCost?.toString() || "0");
-            const newStock = currentStock + qty;
-            const newAvgCost = currentStock > 0
-              ? (currentStock * currentAvgCost + qty * unitCost) / newStock
-              : unitCost;
-
-            await db.update(products)
-              .set({ currentStock: Math.round(newStock), avgCost: newAvgCost.toFixed(2) })
-              .where(eq(products.id, targetProductId));
-          }
-
-          await db.update(internalSaleItems)
-            .set({ targetProductId })
-            .where(eq(internalSaleItems.id, item.id));
+          await db.update(products)
+            .set({ currentStock: Math.round(newStock), avgCost: newAvgCost.toFixed(2) })
+            .where(eq(products.id, targetProductId));
         }
+
+        await db.update(internalSaleItems)
+          .set({ targetProductId })
+          .where(eq(internalSaleItems.id, item.id));
       }
 
       // 5. Update internal sale status
