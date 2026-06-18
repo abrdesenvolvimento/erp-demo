@@ -607,7 +607,7 @@ function CopaDoMundoSection({ items }: {
           {items.map((item) => {
             const flagSrc = getCountryFlag(item.name);
             return (
-              <div key={item.id} className="bg-white/90 rounded-lg px-4 py-3 border border-[#4A3728]/8 shadow-sm">
+              <div key={item.id} className="bg-[#FAF5EF] rounded-lg px-4 py-3 border border-[#4A3728]/8 shadow-sm">
                 <div className="flex items-center gap-3">
                   {flagSrc && (
                     <img src={flagSrc} alt="" className="w-9 h-6 object-cover rounded-sm flex-shrink-0" />
