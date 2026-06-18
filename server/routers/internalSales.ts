@@ -518,9 +518,45 @@ export const internalSalesRouter = router({
       const [sourceCompany] = await db.select().from(companies).where(eq(companies.id, sale.sourceCompanyId)).limit(1);
       const [targetCompany] = await db.select().from(companies).where(eq(companies.id, sale.targetCompanyId)).limit(1);
 
+      // Find target company as a customer/partner in source company's partners table
+      const targetCompanyName = targetCompany?.tradeName || targetCompany?.name || `Empresa #${sale.targetCompanyId}`;
+      let receivableCustomerId: number | null = null;
+      const [existingCustomerPartner] = await db.select().from(partners)
+        .where(and(
+          eq(partners.companyId, sale.sourceCompanyId),
+          eq(partners.name, targetCompanyName),
+        )).limit(1);
+
+      if (existingCustomerPartner) {
+        receivableCustomerId = existingCustomerPartner.id;
+      } else {
+        // Try matching by company legal name
+        const [matchByLegalName] = await db.select().from(partners)
+          .where(and(
+            eq(partners.companyId, sale.sourceCompanyId),
+            sql`${partners.name} LIKE CONCAT('%', ${targetCompany?.name || ''}, '%')`,
+          )).limit(1);
+        if (matchByLegalName) {
+          receivableCustomerId = matchByLegalName.id;
+        } else {
+          // Create the target company as a partner in source company
+          const [newCustomerPartner] = await db.insert(partners).values({
+            companyId: sale.sourceCompanyId,
+            branchId: sale.sourceBranchId,
+            name: targetCompanyName,
+            tradeName: targetCompany?.tradeName,
+            docNumber: targetCompany?.docNumber,
+            partnerType: "CUSTOMER",
+            phone: targetCompany?.phone,
+          });
+          receivableCustomerId = Number(newCustomerPartner.insertId);
+        }
+      }
+
       const [receivableResult] = await db.insert(receivables).values({
         companyId: sale.sourceCompanyId,
         branchId: sale.sourceBranchId,
+        customerId: receivableCustomerId,
         internalSaleId: sale.id,
         totalAmount: totalAmount.toFixed(2),
         receivedAmount: "0.00",

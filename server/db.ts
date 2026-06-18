@@ -4339,11 +4339,24 @@ export async function getCustomerBalance(customerId: number, companyId?: number)
     companyId ? eq(customerPayments.companyId, companyId) : undefined
   ));
 
+  // Soma total de receivables de vendas internas (internalSaleId IS NOT NULL)
+  const [internalReceivablesResult] = await db.select({
+    total: sql<string>`COALESCE(SUM(GREATEST(0, CAST(${receivables.totalAmount} AS DECIMAL(10,2)) - CAST(${receivables.receivedAmount} AS DECIMAL(10,2)))), 0)`
+  })
+  .from(receivables)
+  .where(and(
+    eq(receivables.customerId, customerId),
+    sql`${receivables.internalSaleId} IS NOT NULL`,
+    sql`${receivables.status} IN ('PENDENTE', 'PARCIAL', 'VENCIDO')`,
+    companyId ? eq(receivables.companyId, companyId) : undefined
+  ));
+
   const totalSales = parseFloat(salesResult.total || "0");
   const totalDebits = parseFloat(debitsResult.total || "0");
   const totalPayments = parseFloat(paymentsResult.total || "0");
+  const totalInternalReceivables = parseFloat(internalReceivablesResult.total || "0");
   
-  return totalSales + totalDebits - totalPayments;
+  return totalSales + totalDebits + totalInternalReceivables - totalPayments;
 }
 
 /**
@@ -4370,9 +4383,36 @@ export async function getCustomersWithBalance(companyId?: number) {
   ))
   .groupBy(sales.customerId, partners.name);
 
-  // Para cada cliente, calcular saldo (vendas - pagamentos)
+  // Also find customers from internal sale receivables
+  const customersFromInternalSales = await db.select({
+    customerId: receivables.customerId,
+    customerName: partners.name,
+    totalSales: sql<string>`SUM(CAST(${receivables.totalAmount} AS DECIMAL(10,2)))`,
+    salesCount: sql<number>`COUNT(${receivables.id})`
+  })
+  .from(receivables)
+  .leftJoin(partners, eq(receivables.customerId, partners.id))
+  .where(and(
+    sql`${receivables.internalSaleId} IS NOT NULL`,
+    sql`${receivables.status} IN ('PENDENTE', 'PARCIAL', 'VENCIDO')`,
+    companyId ? eq(receivables.companyId, companyId) : undefined
+  ))
+  .groupBy(receivables.customerId, partners.name);
+
+  // Merge customer lists (avoid duplicates)
+  const customerMap = new Map<number, { customerId: number; customerName: string | null; salesCount: number }>();
+  for (const c of customersWithSales) {
+    if (c.customerId) customerMap.set(c.customerId, { customerId: c.customerId, customerName: c.customerName, salesCount: c.salesCount });
+  }
+  for (const c of customersFromInternalSales) {
+    if (c.customerId && !customerMap.has(c.customerId)) {
+      customerMap.set(c.customerId, { customerId: c.customerId, customerName: c.customerName, salesCount: c.salesCount });
+    }
+  }
+
+  // Para cada cliente, calcular saldo (vendas + internal receivables - pagamentos)
   const customersWithBalances = await Promise.all(
-    customersWithSales.map(async (customer) => {
+    Array.from(customerMap.values()).map(async (customer) => {
       if (!customer.customerId) return null;
       const balance = await getCustomerBalance(customer.customerId, companyId);
       return {
@@ -4384,9 +4424,9 @@ export async function getCustomersWithBalance(companyId?: number) {
     })
   );
 
-  // Retornar TODOS os clientes com vendas a prazo, ordenar por saldo decrescente
+  // Retornar TODOS os clientes com saldo, ordenar por saldo decrescente
   return customersWithBalances
-    .filter((c): c is NonNullable<typeof c> => c !== null)
+    .filter((c): c is NonNullable<typeof c> => c !== null && parseFloat(c.totalPending) > 0)
     .sort((a, b) => parseFloat(b.totalPending) - parseFloat(a.totalPending));
 }
 
@@ -4439,6 +4479,22 @@ export async function getCustomerAccountHistory(customerId: number, companyId?: 
     })
   );
 
+  // Buscar receivables de vendas internas
+  const internalSaleReceivablesList = await db.select({
+    id: receivables.id,
+    date: receivables.createdAt,
+    amount: receivables.totalAmount,
+    type: sql<string>`'INTERNAL_SALE'`,
+    description: sql<string>`CONCAT('Venda Interna #', ${receivables.internalSaleId})`,
+    paymentMethod: sql<string>`NULL`,
+  })
+  .from(receivables)
+  .where(and(
+    eq(receivables.customerId, customerId),
+    sql`${receivables.internalSaleId} IS NOT NULL`,
+    companyId ? eq(receivables.companyId, companyId) : undefined
+  ));
+
   // Buscar débitos manuais
   const debits = await db.select({
     id: customerDebits.id,
@@ -4472,7 +4528,7 @@ export async function getCustomerAccountHistory(customerId: number, companyId?: 
   ));
 
   // Combinar e ordenar por data
-  const history = [...salesWithItems, ...debits, ...payments]
+  const history = [...salesWithItems, ...internalSaleReceivablesList, ...debits, ...payments]
     .filter(item => item.date !== null)
     .sort((a, b) => new Date(a.date!).getTime() - new Date(b.date!).getTime());
 
@@ -4480,7 +4536,7 @@ export async function getCustomerAccountHistory(customerId: number, companyId?: 
   let balance = 0;
   const historyWithBalance = history.map(item => {
     const amount = parseFloat(item.amount);
-    if (item.type === 'SALE' || item.type === 'DEBIT') {
+    if (item.type === 'SALE' || item.type === 'DEBIT' || item.type === 'INTERNAL_SALE') {
       balance += amount;
     } else {
       balance -= amount;
