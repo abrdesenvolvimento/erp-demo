@@ -2,14 +2,41 @@ import PDFDocument from 'pdfkit';
 import fs from 'fs';
 import path from 'path';
 
-// Dados da Empresa
-const COMPANY_INFO = {
-  name: 'Adega Beira Rio',
-  razaoSocial: 'Adega Beira Rio Comércio de Bebidas Ltda',
-  cnpj: '50.887.052/0001-08',
-  endereco: 'Rua Israel, 286, Rochdale',
-  cidade: 'Osasco/SP',
-  cep: '06220-053',
+
+// Company branding configuration per companyId
+const COMPANY_BRANDING: Record<number, {
+  name: string;
+  razaoSocial: string;
+  cnpj: string;
+  endereco: string;
+  cidade: string;
+  cep: string;
+  primaryColor: string;
+  accentColor: string;
+  logoFile: string;
+}> = {
+  1: {
+    name: 'Adega Beira Rio',
+    razaoSocial: 'Adega Beira Rio Comércio de Bebidas Ltda',
+    cnpj: '50.887.052/0001-08',
+    endereco: 'Rua Israel, 286, Rochdale',
+    cidade: 'Osasco/SP',
+    cep: '06220-053',
+    primaryColor: '#2D5A3D',
+    accentColor: '#D4A574',
+    logoFile: 'logo-adega-pdf.png',
+  },
+  2: {
+    name: 'A Brasa Reúne',
+    razaoSocial: 'A Brasa Reune Bar e Hamburgueria Ltda',
+    cnpj: '65.218.771/0001-03',
+    endereco: 'Av. Brasil, 2009, Rochdale',
+    cidade: 'Osasco/SP',
+    cep: '06220-050',
+    primaryColor: '#2F2F2F',
+    accentColor: '#F07A00',
+    logoFile: 'logo-abrasa-pdf.png',
+  },
 };
 
 // Interface para dados do histórico de conta corrente
@@ -53,13 +80,17 @@ function formatDateBrasilia(): string {
 /**
  * Gera um PDF com o extrato de Contas a Receber para um cliente
  * Os dados já vêm filtrados do backend (apenas transações em aberto)
+ * @param data - Dados do cliente e histórico
+ * @param companyId - ID da empresa ativa (para branding dinâmico)
  */
-export async function generateReceivablesPDF(data: CustomerAccountData): Promise<any> {
-  // Tentar carregar logo local da Adega
+export async function generateReceivablesPDF(data: CustomerAccountData, companyId?: number): Promise<any> {
+  // Determinar branding da empresa
+  const branding = COMPANY_BRANDING[companyId || 1] || COMPANY_BRANDING[1];
+
+  // Tentar carregar logo local da empresa
   let logoBuffer: Buffer | null = null;
   
-  // Usar logo otimizado para PDF (menor e com transparência)
-  const localLogoPath = path.join(process.cwd(), 'client', 'public', 'logo-adega-pdf.png');
+  const localLogoPath = path.join(process.cwd(), 'client', 'public', branding.logoFile);
   try {
     if (fs.existsSync(localLogoPath)) {
       logoBuffer = fs.readFileSync(localLogoPath);
@@ -68,9 +99,9 @@ export async function generateReceivablesPDF(data: CustomerAccountData): Promise
     console.error('Erro ao carregar logo local:', error);
   }
 
-  // Cores da Empresa (Verde e Dourado)
-  const primaryColor = '#2D5A3D';
-  const accentColor = '#D4A574';
+  // Cores da Empresa (dinâmicas)
+  const primaryColor = branding.primaryColor;
+  const accentColor = branding.accentColor;
   const textColor = '#333333';
   const lightGray = '#F5F5F5';
   const borderColor = '#CCCCCC';
@@ -135,10 +166,9 @@ export async function generateReceivablesPDF(data: CustomerAccountData): Promise
   // ===== CABEÇALHO COM DADOS DA EMPRESA =====
   doc.rect(0, 0, pageWidth, 130).fill(primaryColor);
   
-  // Logo à esquerda - tamanho ajustado (logo original 355x200)
+  // Logo à esquerda - tamanho ajustado
   if (logoBuffer) {
     try {
-      // O logo tem proporção 355:200, vamos usar altura de 90px
       doc.image(logoBuffer, margin, 20, { 
         height: 90,
       });
@@ -148,7 +178,6 @@ export async function generateReceivablesPDF(data: CustomerAccountData): Promise
   }
   
   // Título e dados da empresa à direita do logo
-  // Logo tem 355:200, altura 90px = largura ~160px
   const textStartX = logoBuffer ? margin + 170 : margin;
   const textWidth = logoBuffer ? contentWidth - 170 : contentWidth;
   
@@ -156,10 +185,10 @@ export async function generateReceivablesPDF(data: CustomerAccountData): Promise
   doc.text('EXTRATO DE CONTAS A RECEBER', textStartX, 25, { width: textWidth });
 
   doc.fontSize(10).font('Helvetica').fillColor('white');
-  doc.text(COMPANY_INFO.razaoSocial, textStartX, 55, { width: textWidth });
-  doc.text(`CNPJ: ${COMPANY_INFO.cnpj}`, textStartX, 70, { width: textWidth });
-  doc.text(`${COMPANY_INFO.endereco} - ${COMPANY_INFO.cidade}`, textStartX, 85, { width: textWidth });
-  doc.text(`CEP: ${COMPANY_INFO.cep}`, textStartX, 100, { width: textWidth });
+  doc.text(branding.razaoSocial, textStartX, 55, { width: textWidth });
+  doc.text(`CNPJ: ${branding.cnpj}`, textStartX, 70, { width: textWidth });
+  doc.text(`${branding.endereco} - ${branding.cidade}`, textStartX, 85, { width: textWidth });
+  doc.text(`CEP: ${branding.cep}`, textStartX, 100, { width: textWidth });
 
   doc.y = 145;
 

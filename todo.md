@@ -2568,3 +2568,4 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Aprovação: inverter lógica — quem aprova é a empresa DESTINO (que recebe), não a origem
 - [x] Movimentação de estoque: gerar SAIDA na empresa origem e ENTRADA na empresa destino (productMovements) ao aprovar
 - [x] Auditoria de movimentações: confirmado que é apenas no ambiente dev, produção está ok
+- [x] Fix PDF extrato branding: use active company's logo, colors, name, CNPJ and address instead of hardcoded Adega Beira Rio

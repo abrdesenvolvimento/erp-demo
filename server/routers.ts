@@ -1988,7 +1988,7 @@ export const appRouter = router({
         };
         
         // Gerar PDF (função assíncrona para baixar logo)
-        const pdfStream = await generateReceivablesPDF(filteredData as any);
+        const pdfStream = await generateReceivablesPDF(filteredData as any, ctx.activeCompanyId);
         
         // Converter stream para buffer
         const chunks: Buffer[] = [];
@@ -2083,7 +2083,7 @@ export const appRouter = router({
         };
         
         // Gerar PDF
-        const pdfStream = await generateReceivablesPDF(filteredData as any);
+        const pdfStream = await generateReceivablesPDF(filteredData as any, ctx.activeCompanyId);
         
         // Converter stream para buffer
         const chunks: Buffer[] = [];
@@ -2108,7 +2108,10 @@ export const appRouter = router({
         const creditoDisponivel = Math.max(0, limiteCredito - saldoAtual);
         const disponivelFormatado = creditoDisponivel.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
         
-        const caption = `Olá ${customerDetail.customer.name.split(' ')[0]}! \n\nSegue seu extrato de Contas a Receber atualizado.\n\nSaldo Devedor: ${saldoFormatado}\nLimite de Crédito: ${limiteFormatado}\nCrédito Disponível: ${disponivelFormatado}\n\nQualquer dúvida, entre em contato!\n\nAdega Beira Rio`;
+        // Buscar nome da empresa ativa para a mensagem
+        const companyNames: Record<number, string> = { 1: 'Adega Beira Rio', 2: 'A Brasa Reúne' };
+        const activeCompanyName = companyNames[ctx.activeCompanyId || 1] || 'Adega Beira Rio';
+        const caption = `Olá ${customerDetail.customer.name.split(' ')[0]}! \n\nSegue seu extrato de Contas a Receber atualizado.\n\nSaldo Devedor: ${saldoFormatado}\nLimite de Crédito: ${limiteFormatado}\nCrédito Disponível: ${disponivelFormatado}\n\nQualquer dúvida, entre em contato!\n\n${activeCompanyName}`;
         
         // Enviar documento via WhatsApp
         const result = await sendWhatsAppDocument(
