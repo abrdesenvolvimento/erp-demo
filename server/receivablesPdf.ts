@@ -53,7 +53,7 @@ export interface CustomerAccountData {
     id: number;
     date: Date | string;
     amount: string;
-    type: 'SALE' | 'PAYMENT' | 'DEBIT';
+    type: 'SALE' | 'PAYMENT' | 'DEBIT' | 'INTERNAL_SALE';
     description: string;
     paymentMethod?: string | null;
     balance: string;
@@ -138,7 +138,7 @@ export async function generateReceivablesPDF(data: CustomerAccountData, companyI
   const history = data.history || [];
   
   // Separar vendas/débitos e pagamentos
-  const vendasEmAberto = history.filter(t => t.type === 'SALE' || t.type === 'DEBIT');
+  const vendasEmAberto = history.filter(t => t.type === 'SALE' || t.type === 'DEBIT' || t.type === 'INTERNAL_SALE');
   const pagamentosRecentes = history.filter(t => t.type === 'PAYMENT');
 
   const doc = new PDFDocument({
@@ -284,7 +284,7 @@ export async function generateReceivablesPDF(data: CustomerAccountData, companyI
         colX += col1Width;
         doc.text(item.id?.toString() || '-', colX, currentY + 5, { width: col2Width - 10, align: 'center' });
         colX += col2Width;
-        doc.text(item.description || (item.type === 'DEBIT' ? 'Débito Manual' : 'Venda a prazo'), colX, currentY + 5, { width: col3Width - 10 });
+        doc.text(item.description || (item.type === 'DEBIT' ? 'Débito Manual' : item.type === 'INTERNAL_SALE' ? 'Venda Interna' : 'Venda a prazo'), colX, currentY + 5, { width: col3Width - 10 });
         colX += col3Width;
         doc.text('-', colX, currentY + 5, { width: col4Width - 10, align: 'center' });
         colX += col4Width;

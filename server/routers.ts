@@ -1939,8 +1939,8 @@ export const appRouter = router({
           console.log('[exportPDF] Saldo zerado ou negativo, sem transações em aberto');
           transacoesEmAberto = [];
         } else {
-          // Filtrar apenas vendas e débitos
-          const vendasDebitos = history.filter(item => item.type === 'SALE' || item.type === 'DEBIT');
+          // Filtrar apenas vendas, débitos e vendas internas
+          const vendasDebitos = history.filter(item => item.type === 'SALE' || item.type === 'DEBIT' || item.type === 'INTERNAL_SALE');
           
           // Ordenar por data (mais recente primeiro)
           const vendasOrdenadas = [...vendasDebitos].sort((a, b) => {
@@ -2045,20 +2045,17 @@ export const appRouter = router({
         if (saldoAtual <= 0) {
           transacoesEmAberto = [];
         } else {
-          // Filtrar apenas vendas e débitos
-          const vendasDebitos = history.filter(item => item.type === 'SALE' || item.type === 'DEBIT');
-          
+                    // Filtrar apenas vendas, débitos e vendas internas
+          const vendasDebitos = history.filter(item => item.type === 'SALE' || item.type === 'DEBIT' || item.type === 'INTERNAL_SALE');
           // Ordenar por data (mais recente primeiro)
           const vendasOrdenadas = [...vendasDebitos].sort((a, b) => {
             const dateA = a.date ? new Date(a.date).getTime() : 0;
             const dateB = b.date ? new Date(b.date).getTime() : 0;
             return dateB - dateA;
           });
-          
           // Percorrer até atingir o saldo
           let somaAcumulada = 0;
           const vendasEmAberto: typeof history = [];
-          
           for (const venda of vendasOrdenadas) {
             const valor = parseFloat(venda.amount);
             if (somaAcumulada < saldoAtual) {
