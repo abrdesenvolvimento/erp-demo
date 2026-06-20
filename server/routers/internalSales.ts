@@ -695,6 +695,25 @@ export const internalSalesRouter = router({
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
 
+      const conditions = [
+        eq(products.companyId, input.companyId),
+        eq(products.active, true),
+      ];
+
+      // Apply search filter directly in SQL for performance and to avoid LIMIT cutting results
+      if (input.search && input.search.trim()) {
+        const searchTerm = `%${input.search.trim()}%`;
+        conditions.push(
+          or(
+            sql`${products.name} LIKE ${searchTerm}`,
+            sql`${products.ean} LIKE ${searchTerm}`
+          )! as any
+        );
+      }
+
+      // Use smaller limit when searching (autocomplete), larger when listing all (De/Para mapping)
+      const limit = (input.search && input.search.trim()) ? 50 : 2000;
+
       const results = await db.select({
         id: products.id,
         name: products.name,
@@ -704,20 +723,9 @@ export const internalSalesRouter = router({
         ean: products.ean,
       })
         .from(products)
-        .where(and(
-          eq(products.companyId, input.companyId),
-          eq(products.active, true),
-        ))
+        .where(and(...conditions))
         .orderBy(products.name)
-        .limit(500);
-
-      if (input.search) {
-        const searchLower = input.search.toLowerCase();
-        return results.filter(p =>
-          p.name.toLowerCase().includes(searchLower) ||
-          (p.ean && p.ean.includes(input.search!))
-        );
-      }
+        .limit(limit);
 
       return results;
     }),
