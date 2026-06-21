@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { eq, and, desc, sql, or, ne, SQL } from "drizzle-orm";
+import { eq, and, desc, sql, or, ne, like, SQL } from "drizzle-orm";
 import { protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { internalSales, internalSaleItems, products, companies, partners, accountsPayable, receivables, receivableInstallments, productMapping, productMovements } from "../../drizzle/schema";
@@ -691,43 +691,55 @@ export const internalSalesRouter = router({
       companyId: z.number(),
       search: z.string().optional(),
     }))
-    .query(async ({ input }) => {
+            .query(async ({ input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
 
-      const conditions = [
-        eq(products.companyId, input.companyId),
-        eq(products.active, true),
-      ];
+      const hasSearch = !!(input.search && input.search.trim());
 
-      // Apply search filter directly in SQL for performance and to avoid LIMIT cutting results
-      if (input.search && input.search.trim()) {
-        const searchTerm = `%${input.search.trim()}%`;
-        conditions.push(
-          or(
-            sql`${products.name} LIKE ${searchTerm}`,
-            sql`${products.ean} LIKE ${searchTerm}`
-          )! as any
-        );
+      if (hasSearch) {
+        // When searching: apply case-insensitive LIKE filter in SQL
+        // DB uses utf8mb4_bin collation (case-sensitive), so we use LOWER() for case-insensitive search
+        const searchTerm = `%${input.search!.trim().toLowerCase()}%`;
+        const results = await db.select({
+          id: products.id,
+          name: products.name,
+          currentStock: products.currentStock,
+          avgCost: products.avgCost,
+          uom: products.uom,
+          ean: products.ean,
+        })
+          .from(products)
+          .where(and(
+            eq(products.companyId, input.companyId),
+            eq(products.active, true),
+            or(
+              sql`LOWER(${products.name}) LIKE ${searchTerm}`,
+              sql`LOWER(${products.ean}) LIKE ${searchTerm}`
+            )
+          ))
+          .orderBy(products.name)
+          .limit(50);
+        return results;
+      } else {
+        // No search: return all active products (for De/Para mapping selects)
+        const results = await db.select({
+          id: products.id,
+          name: products.name,
+          currentStock: products.currentStock,
+          avgCost: products.avgCost,
+          uom: products.uom,
+          ean: products.ean,
+        })
+          .from(products)
+          .where(and(
+            eq(products.companyId, input.companyId),
+            eq(products.active, true),
+          ))
+          .orderBy(products.name)
+          .limit(2000);
+        return results;
       }
-
-      // Use smaller limit when searching (autocomplete), larger when listing all (De/Para mapping)
-      const limit = (input.search && input.search.trim()) ? 50 : 2000;
-
-      const results = await db.select({
-        id: products.id,
-        name: products.name,
-        currentStock: products.currentStock,
-        avgCost: products.avgCost,
-        uom: products.uom,
-        ean: products.ean,
-      })
-        .from(products)
-        .where(and(...conditions))
-        .orderBy(products.name)
-        .limit(limit);
-
-      return results;
     }),
 
   // Get available target companies (all companies except the source)
