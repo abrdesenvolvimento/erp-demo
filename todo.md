@@ -2570,10 +2570,14 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Auditoria de movimentações: confirmado que é apenas no ambiente dev, produção está ok
 - [x] Fix PDF extrato branding: use active company's logo, colors, name, CNPJ and address instead of hardcoded Adega Beira Rio
 
-- [ ] Projetar e implementar saldo histórico de faturamento pós-backup de 11/08, com empresa, período, valor, origem e auditoria definidos, sem criar vendas fictícias
-- [ ] Validar o impacto do saldo histórico em faturamento, caixa, estoque, financeiro e relatórios
+- [x] Projetar e implementar saldo histórico de faturamento pós-backup de 11/08, com empresa, período, valor, origem e auditoria definidos, sem criar vendas fictícias
+- [x] Validar o impacto do saldo histórico em faturamento, caixa, estoque, financeiro e relatórios
 - [ ] Adega Beira Rio: tratar faturamento histórico de Balcão de forma agregada e avaliar reconstrução detalhada das vendas a prazo
 - [ ] A Brasa Reúne: preparar recomposição de faturamento histórico de Salão por produto quando os dados estiverem disponíveis
 - [ ] Adega Beira Rio: consolidar os saldos de implantação de Balcão informados para 12/08 a 24/08/2026, pendentes de apuração em 22/08 e 24/08
 - [ ] Definir e implementar plano de contingência de backup com cópias redundantes, verificação de integridade, retenção e teste periódico de restauração
 - [x] Implementado rascunho auditável dos 11 ajustes diários de Balcão da Adega apurados entre 12/08 e 24/08/2026, total provisório de R$ 15.389,70, sem refletir em relatórios até aprovação
+- [x] Publicar de forma controlada os ajustes históricos já apurados da Adega nos relatórios gerenciais, mantendo pendentes 22/08 e 24/08
+- [x] Implantação histórica: incluir aprovação e cancelamento auditáveis, com motivo obrigatório para retirar valor já publicado das análises gerenciais
+- [x] Corrigir isolamento por empresa: Adega Beira Rio não deve exibir vendas do canal Salão da A Brasa Reúne em filtros, indicadores ou análises
+- [x] Reforçar as procedures de vendas para rejeitar consultas, exportações, detalhes e alterações sem empresa ativa, evitando retorno global entre empresas

@@ -20,6 +20,17 @@ import { cardapioRouter } from './routers/cardapio';
 import { internalSalesRouter } from './routers/internalSales';
 import { historicalRevenueAdjustmentsRouter } from './routers/historicalRevenueAdjustments';
 
+function requireActiveCompanyId(activeCompanyId: number | undefined): number {
+  if (!Number.isInteger(activeCompanyId) || !activeCompanyId || activeCompanyId < 1) {
+    throw new TRPCError({
+      code: "PRECONDITION_FAILED",
+      message: "Selecione uma empresa antes de consultar ou movimentar vendas.",
+    });
+  }
+
+  return activeCompanyId;
+}
+
 export const appRouter = router({
   system: systemRouter,
   accounting: accountingRouter,
@@ -986,13 +997,15 @@ export const appRouter = router({
         dateTo: z.string().optional(),   // Formato: YYYY-MM-DD
       }).optional())
       .query(async ({ input, ctx }) => {
-        return await db.getSales({ ...input, companyId: ctx.activeCompanyId });
+        const companyId = requireActiveCompanyId(ctx.activeCompanyId);
+        return await db.getSales({ ...input, companyId });
       }),
     
     get: protectedProcedure
       .input(z.object({ id: z.number() }))
-      .query(async ({ input }) => {
-        const sale = await db.getSale(input.id);
+      .query(async ({ input, ctx }) => {
+        const companyId = requireActiveCompanyId(ctx.activeCompanyId);
+        const sale = await db.getSale(input.id, companyId);
         if (!sale) return null;
         
         const items = await db.getSaleItems(input.id);
@@ -1025,13 +1038,15 @@ export const appRouter = router({
       }))
       .mutation(async ({ input, ctx }) => {
         const { items, ...saleData } = input;
+        const companyId = requireActiveCompanyId(ctx.activeCompanyId);
+        const branchId = ctx.activeBranchId ?? 0;
         
         // Validar limite de crédito para vendas a prazo
         if (saleData.saleType === 'A_PRAZO' && saleData.customerId) {
           const customer = await db.getPartner(saleData.customerId);
           if (customer) {
             // Calcular saldo devedor usando a mesma lógica de getCustomerBalance
-            const currentBalance = await db.getCustomerBalance(saleData.customerId, ctx.activeCompanyId);
+            const currentBalance = await db.getCustomerBalance(saleData.customerId, companyId);
             
             const creditLimit = parseFloat(customer.creditLimit || '0');
             const saleAmount = parseFloat(saleData.finalAmount);
@@ -1047,7 +1062,7 @@ export const appRouter = router({
         const { dueDates, ...saleDataWithoutDueDates } = saleData;
         
         const id = await db.createSale(
-          { ...saleDataWithoutDueDates, createdBy: ctx.user.id, companyId: ctx.activeCompanyId ?? 1, branchId: ctx.activeBranchId ?? 1 },
+          { ...saleDataWithoutDueDates, createdBy: ctx.user.id, companyId, branchId },
           items
         );
         
@@ -1060,7 +1075,7 @@ export const appRouter = router({
             receivedAmount: "0.00",
             status: "PENDENTE",
             createdBy: ctx.user.id,
-            companyId: ctx.activeCompanyId ?? 1,
+            companyId,
           });
           
           // Criar parcelas
@@ -1068,8 +1083,8 @@ export const appRouter = router({
             // Se dueDates foi fornecido, criar parcelas conforme especificado
             for (let i = 0; i < dueDates.length; i++) {
               await db.createReceivableInstallment({
-                companyId: ctx.activeCompanyId ?? 1,
-                branchId: ctx.activeBranchId ?? 1,
+                companyId,
+                branchId,
                 receivableId: receivableId.id,
                 installmentNumber: i + 1,
                 amount: dueDates[i].amount,
@@ -1083,8 +1098,8 @@ export const appRouter = router({
             dueDate.setDate(dueDate.getDate() + 30);
             
             await db.createReceivableInstallment({
-              companyId: ctx.activeCompanyId ?? 1,
-              branchId: ctx.activeBranchId ?? 1,
+              companyId,
+              branchId,
               receivableId: receivableId.id,
               installmentNumber: 1,
               amount: saleData.finalAmount,
@@ -1105,12 +1120,13 @@ export const appRouter = router({
         channel: z.enum(['BALCAO', 'DELIVERY', 'A_PRAZO', 'SALAO', 'all']).optional().default('all'),
       }).optional())
       .query(async ({ input, ctx }) => {
+        const companyId = requireActiveCompanyId(ctx.activeCompanyId);
         return await db.getSalesStats(
           input?.period || 'month',
           input?.dateFrom,
           input?.dateTo,
           input?.channel === 'all' ? undefined : input?.channel,
-          ctx.activeCompanyId
+          companyId
         );
       }),
     
@@ -1131,9 +1147,11 @@ export const appRouter = router({
       }))
       .mutation(async ({ input, ctx }) => {
         const { saleId, items, discountAmount, surchargeAmount, platformOrderId } = input;
+        const companyId = requireActiveCompanyId(ctx.activeCompanyId);
+        const branchId = ctx.activeBranchId ?? 0;
         
         // 1. Buscar venda existente
-        const sale = await db.getSale(saleId);
+        const sale = await db.getSale(saleId, companyId);
         if (!sale) {
           throw new TRPCError({ code: 'NOT_FOUND', message: 'Venda não encontrada' });
         }
@@ -1193,8 +1211,8 @@ export const appRouter = router({
             quantity: item.quantity,
             unitPrice: item.unitPrice,
             totalPrice: item.totalPrice,
-            companyId: ctx.activeCompanyId ?? 1,
-            branchId: ctx.activeBranchId ?? 1,
+            companyId,
+            branchId,
           });
         }
         
@@ -1250,7 +1268,8 @@ export const appRouter = router({
         reason: z.string().optional(),
       }))
       .mutation(async ({ input, ctx }) => {
-        await db.cancelSale(input.id, ctx.user.id, input.reason, ctx.activeCompanyId);
+        const companyId = requireActiveCompanyId(ctx.activeCompanyId);
+        await db.cancelSale(input.id, ctx.user.id, input.reason, companyId);
         return { success: true };
       }),
 
@@ -1263,7 +1282,8 @@ export const appRouter = router({
         paymentMethod: z.string().optional(),
       }).optional())
       .query(async ({ input, ctx }) => {
-        return await db.getSalesForExport({ ...input, companyId: ctx.activeCompanyId });
+        const companyId = requireActiveCompanyId(ctx.activeCompanyId);
+        return await db.getSalesForExport({ ...input, companyId });
       }),
 
     // Trocar cliente em venda a prazo
@@ -2466,6 +2486,7 @@ export const appRouter = router({
         monthRevenueBalcao: monthRevenueBalcao.toFixed(2),
         monthRevenueDelivery: monthRevenueDelivery.toFixed(2),
         monthRevenueSalao: monthRevenueSalao.toFixed(2),
+        monthRevenueHistorical: monthlyRevenue.historicalRevenue.toFixed(2),
         totalPendingReceivables: totalPendingReceivables.toFixed(2),
         totalStockValue: totalStockValue.toFixed(2),
         stockValueByCategory,

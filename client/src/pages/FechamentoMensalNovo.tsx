@@ -237,12 +237,17 @@ export default function FechamentoMensalNovo() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold text-blue-600">
-                    {formatCurrency(data.results.revenue)}
+                    {formatCurrency(data.managementRevenue?.total ?? data.results.revenue)}
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">
                     {data.sales.total.count} vendas no período
                   </p>
-                  {renderComparison(data.results.revenue, data.previousMonth?.revenue ?? null)}
+                  {data.managementRevenue?.historicalRevenue > 0 && (
+                    <p className="text-xs text-amber-700 mt-1">
+                      Inclui implantação: {formatCurrency(data.managementRevenue.historicalRevenue)}
+                    </p>
+                  )}
+                  {renderComparison(data.managementRevenue?.total ?? data.results.revenue, data.previousMonth?.managementRevenue?.total ?? data.previousMonth?.revenue ?? null)}
                 </CardContent>
               </Card>
 
@@ -352,6 +357,7 @@ export default function FechamentoMensalNovo() {
                             <TableCell className="text-right">{channel.count}</TableCell>
                             <TableCell className="text-right font-mono">
                               {formatCurrency(channel.revenue)}
+                              {channel.historicalRevenue > 0 && <p className="text-xs text-amber-700">inclui {formatCurrency(channel.historicalRevenue)} histórico</p>}
                             </TableCell>
                             <TableCell className="text-right text-muted-foreground">
                               {formatPercent(channel.percentage)}

@@ -120,6 +120,7 @@ export default function AnaliseFaturamento() {
 
   // Calcular total do mês e dias corridos
   const monthTotal = calendarData?.reduce((sum, day) => sum + day.total, 0) || 0;
+  const historicalMonthTotal = calendarData?.reduce((sum, day) => sum + (day.historicalRevenue || 0), 0) || 0;
   
   // Calcular dias corridos para média diária (usando timezone de Brasília)
   const currentInfo = getCurrentBrazilDateInfo();
@@ -413,6 +414,11 @@ export default function AnaliseFaturamento() {
                       <div>
                         Média Diária: <span className="font-semibold text-blue-600">{daysElapsed > 0 ? formatCurrency(monthTotal / daysElapsed) : formatCurrency(0)}</span>
                       </div>
+                      {historicalMonthTotal > 0 && (
+                        <div className="text-amber-700">
+                          Inclui implantação histórica aprovada: <span className="font-semibold">{formatCurrency(historicalMonthTotal)}</span>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>

@@ -10,6 +10,13 @@ function competenceFromDate(date: string) {
   return date.slice(0, 7);
 }
 
+function requireActiveCompanyId(companyId: number | undefined) {
+  if (!Number.isInteger(companyId) || !companyId || companyId < 1) {
+    throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Selecione uma empresa antes de gerir a implantação histórica." });
+  }
+  return companyId;
+}
+
 export const historicalRevenueAdjustmentsRouter = router({
   list: protectedProcedure
     .input(z.object({
@@ -18,12 +25,12 @@ export const historicalRevenueAdjustmentsRouter = router({
       status: statusSchema.optional(),
     }).optional())
     .query(async ({ input, ctx }) => {
-      return db.listHistoricalRevenueAdjustments(ctx.activeCompanyId || 1, input);
+      return db.listHistoricalRevenueAdjustments(requireActiveCompanyId(ctx.activeCompanyId), input);
     }),
 
   summary: protectedProcedure
     .query(async ({ ctx }) => {
-      return db.getHistoricalRevenueAdjustmentSummary(ctx.activeCompanyId || 1);
+      return db.getHistoricalRevenueAdjustmentSummary(requireActiveCompanyId(ctx.activeCompanyId));
     }),
 
   createDraft: adminProcedure
@@ -35,7 +42,7 @@ export const historicalRevenueAdjustmentsRouter = router({
       notes: z.string().trim().max(2000).optional(),
     }))
     .mutation(async ({ input, ctx }) => {
-      const companyId = ctx.activeCompanyId || 1;
+      const companyId = requireActiveCompanyId(ctx.activeCompanyId);
       try {
         return await db.createHistoricalRevenueAdjustment({
           companyId,
@@ -68,7 +75,7 @@ export const historicalRevenueAdjustmentsRouter = router({
     }))
     .mutation(async ({ input, ctx }) => {
       const { id, adjustmentDate, amount, description, notes } = input;
-      return db.updateHistoricalRevenueAdjustmentDraft(id, ctx.activeCompanyId || 1, {
+      return db.updateHistoricalRevenueAdjustmentDraft(id, requireActiveCompanyId(ctx.activeCompanyId), {
         adjustmentDate,
         competenceMonth: adjustmentDate ? competenceFromDate(adjustmentDate) : undefined,
         amount: amount !== undefined ? amount.toFixed(2) : undefined,
@@ -80,6 +87,26 @@ export const historicalRevenueAdjustmentsRouter = router({
   deleteDraft: adminProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ input, ctx }) => {
-      return db.deleteHistoricalRevenueAdjustmentDraft(input.id, ctx.activeCompanyId || 1);
+      return db.deleteHistoricalRevenueAdjustmentDraft(input.id, requireActiveCompanyId(ctx.activeCompanyId));
+    }),
+
+  approveDrafts: adminProcedure
+    .input(z.object({ ids: z.array(z.number().int().positive()).min(1) }))
+    .mutation(async ({ input, ctx }) => {
+      return db.approveHistoricalRevenueAdjustments(input.ids, requireActiveCompanyId(ctx.activeCompanyId), ctx.user.id);
+    }),
+
+  cancelApproved: adminProcedure
+    .input(z.object({
+      id: z.number().int().positive(),
+      reason: z.string().trim().min(3).max(500),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      return db.cancelApprovedHistoricalRevenueAdjustment(
+        input.id,
+        requireActiveCompanyId(ctx.activeCompanyId),
+        ctx.user.id,
+        input.reason
+      );
     }),
 });

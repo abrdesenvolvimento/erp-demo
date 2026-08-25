@@ -684,14 +684,18 @@ export async function updatePartner(id: number, data: Partial<InsertPartner>) {
 }
 
 // ==================== VENDAS ====================
-export async function getSales(filters?: { saleType?: string; customerId?: number; limit?: number; dateFrom?: string; dateTo?: string; companyId?: number }) {
+export async function getSales(filters: { saleType?: string; customerId?: number; limit?: number; dateFrom?: string; dateTo?: string; companyId: number }) {
   const db = await getDb();
   if (!db) return [];
+
+  if (!Number.isInteger(filters.companyId) || filters.companyId < 1) {
+    throw new Error("companyId válido é obrigatório para consultar vendas");
+  }
   
   // Se tem filtro de data, usar query SQL otimizada
   if (filters?.dateFrom || filters?.dateTo) {
     let whereConditions = `1=1`;
-    if (filters?.companyId) whereConditions += ` AND companyId = ${filters.companyId}`;
+    whereConditions += ` AND companyId = ${filters.companyId}`;
     
     if (filters?.saleType) {
       whereConditions += ` AND saleType = '${filters.saleType}'`;
@@ -736,7 +740,7 @@ export async function getSales(filters?: { saleType?: string; customerId?: numbe
   
   // Query padrão sem filtro de data
   let whereConditions = `1=1`;
-  if (filters?.companyId) whereConditions += ` AND companyId = ${filters.companyId}`;
+  whereConditions += ` AND companyId = ${filters.companyId}`;
   
   if (filters?.saleType) {
     whereConditions += ` AND saleType = '${filters.saleType}'`;
@@ -767,9 +771,13 @@ export async function getSales(filters?: { saleType?: string; customerId?: numbe
   return (result[0] as unknown as any[]) || [];
 }
 
-export async function getSale(id: number) {
+export async function getSale(id: number, companyId?: number) {
   const db = await getDb();
   if (!db) return undefined;
+
+  if (companyId !== undefined && (!Number.isInteger(companyId) || companyId < 1)) {
+    throw new Error("companyId inválido para consultar venda");
+  }
   
   // Usar SQL raw para converter saleDate para timezone de Brasília
   // Incluir JOIN com users para retornar o nome do vendedor
@@ -788,7 +796,7 @@ export async function getSale(id: number) {
     FROM sales s
     LEFT JOIN users u ON s.createdBy = u.id
     LEFT JOIN partners p ON s.customerId = p.id
-    WHERE s.id = ${id} 
+    WHERE s.id = ${id}${companyId !== undefined ? ` AND s.companyId = ${companyId}` : ""}
     LIMIT 1
   `));
   
@@ -968,7 +976,7 @@ export async function getSalesStats(
   dateFrom?: string,
   dateTo?: string,
   channel?: 'BALCAO' | 'DELIVERY' | 'A_PRAZO' | 'SALAO',
-  companyId?: number
+  companyId: number
 ) {
   const db = await getDb();
   if (!db) return {
@@ -984,7 +992,10 @@ export async function getSalesStats(
   
   // Construir condições WHERE
   let whereConditions = `status != 'CANCELLED'`;
-  if (companyId) whereConditions += ` AND companyId = ${companyId}`;
+  if (!Number.isInteger(companyId) || companyId < 1) {
+    throw new Error("companyId válido é obrigatório para consultar indicadores de vendas");
+  }
+  whereConditions += ` AND companyId = ${companyId}`;
   
   // Normalizar strings vazias para undefined
   const effectiveDateFrom = dateFrom && dateFrom.trim() !== '' ? dateFrom : undefined;
@@ -4270,8 +4281,8 @@ export async function getSalesCalendar(year: number, month: number, companyId?: 
   
   const rows = (result[0] as unknown as any[]) || [];
   
-  // Agrupar por dia
-  const calendar: Record<number, { day: number; balcao: number; delivery: number; aPrazo: number; total: number; count: number }> = {};
+  // Agrupar por dia. A contagem permanece limitada às vendas operacionais reais.
+  const calendar: Record<number, { day: number; balcao: number; delivery: number; aPrazo: number; total: number; count: number; historicalRevenue: number }> = {};
   
   for (const row of rows) {
     const day = parseInt(row.day, 10);
@@ -4279,7 +4290,7 @@ export async function getSalesCalendar(year: number, month: number, companyId?: 
     const count = parseInt(row.count || '0', 10);
     
     if (!calendar[day]) {
-      calendar[day] = { day, balcao: 0, delivery: 0, aPrazo: 0, total: 0, count: 0 };
+      calendar[day] = { day, balcao: 0, delivery: 0, aPrazo: 0, total: 0, count: 0, historicalRevenue: 0 };
     }
     
     calendar[day].total += total;
@@ -4291,6 +4302,23 @@ export async function getSalesCalendar(year: number, month: number, companyId?: 
       calendar[day].delivery += total;
     } else if (row.saleType === 'A_PRAZO') {
       calendar[day].aPrazo += total;
+    }
+  }
+
+  if (companyId) {
+    const historical = await getApprovedHistoricalRevenueForPeriod(companyId, firstDayOfMonth, lastDayOfMonth);
+    for (const [adjustmentDate, channels] of Object.entries(historical.byDate)) {
+      const day = Number(adjustmentDate.slice(-2));
+      if (!calendar[day]) {
+        calendar[day] = { day, balcao: 0, delivery: 0, aPrazo: 0, total: 0, count: 0, historicalRevenue: 0 };
+      }
+      for (const [channel, amount] of Object.entries(channels)) {
+        calendar[day].total += amount;
+        calendar[day].historicalRevenue += amount;
+        if (channel === "BALCAO") calendar[day].balcao += amount;
+        if (channel === "DELIVERY") calendar[day].delivery += amount;
+        if (channel === "A_PRAZO") calendar[day].aPrazo += amount;
+      }
     }
   }
 
@@ -5695,13 +5723,20 @@ export async function getDashboardMonthlyRevenue(companyId?: number) {
 
   const rows = result[0] as unknown as any[];
   const row = rows?.[0] || {};
+  const today = getCurrentBrazilDateInfo();
+  const monthStart = `${today.year}-${String(today.month).padStart(2, "0")}-01`;
+  const monthEnd = endOfMonthBrazil(today.year, today.month);
+  const historical = companyId
+    ? await getApprovedHistoricalRevenueForPeriod(companyId, monthStart, monthEnd)
+    : createEmptyHistoricalRevenuePeriod();
   return {
-    total: parseFloat(row.total || '0'),
-    balcao: parseFloat(row.balcao || '0'),
-    delivery: parseFloat(row.delivery || '0'),
-    aPrazo: parseFloat(row.aPrazo || '0'),
-    salao: parseFloat(row.salao || '0'),
-    count: parseInt(row.count || '0', 10)
+    total: parseFloat(row.total || '0') + historical.total,
+    balcao: parseFloat(row.balcao || '0') + historical.byChannel.BALCAO,
+    delivery: parseFloat(row.delivery || '0') + historical.byChannel.DELIVERY,
+    aPrazo: parseFloat(row.aPrazo || '0') + historical.byChannel.A_PRAZO,
+    salao: parseFloat(row.salao || '0') + historical.byChannel.SALAO,
+    count: parseInt(row.count || '0', 10),
+    historicalRevenue: historical.total,
   };
 }
 
@@ -5734,11 +5769,16 @@ export async function getDashboardDailyRevenue(companyId?: number) {
 
   const rows = result[0] as unknown as any[];
   const row = rows?.[0] || {};
+  const today = formatDateForInput(getNowInBrazil());
+  const historical = companyId
+    ? await getApprovedHistoricalRevenueForPeriod(companyId, today, today)
+    : createEmptyHistoricalRevenuePeriod();
   return {
-    total: parseFloat(row.total || '0'),
-    balcao: parseFloat(row.balcao || '0'),
-    delivery: parseFloat(row.delivery || '0'),
-    count: parseInt(row.count || '0', 10)
+    total: parseFloat(row.total || '0') + historical.total,
+    balcao: parseFloat(row.balcao || '0') + historical.byChannel.BALCAO + historical.byChannel.A_PRAZO,
+    delivery: parseFloat(row.delivery || '0') + historical.byChannel.DELIVERY,
+    count: parseInt(row.count || '0', 10),
+    historicalRevenue: historical.total,
   };
 }
 
@@ -6089,12 +6129,12 @@ export async function getSalesMonthlyStats(year: number, companyId?: number) {
   
   const rows = (result[0] as unknown as any[]) || [];
   
-  // Estrutura para armazenar dados por mês
-  const monthlyData: Record<number, { month: number; balcao: number; delivery: number; aPrazo: number; total: number; count: number }> = {};
+  // Estrutura para armazenar dados por mês. A contagem permanece limitada às vendas reais.
+  const monthlyData: Record<number, { month: number; balcao: number; delivery: number; aPrazo: number; total: number; count: number; historicalRevenue: number }> = {};
 
   // Inicializar todos os 12 meses
   for (let m = 1; m <= 12; m++) {
-    monthlyData[m] = { month: m, balcao: 0, delivery: 0, aPrazo: 0, total: 0, count: 0 };
+    monthlyData[m] = { month: m, balcao: 0, delivery: 0, aPrazo: 0, total: 0, count: 0, historicalRevenue: 0 };
   }
   
   for (const row of rows) {
@@ -6111,6 +6151,20 @@ export async function getSalesMonthlyStats(year: number, companyId?: number) {
       monthlyData[month].delivery += total;
     } else if (row.saleType === 'A_PRAZO') {
       monthlyData[month].aPrazo += total;
+    }
+  }
+
+  if (companyId) {
+    const historical = await getApprovedHistoricalRevenueForPeriod(companyId, firstDayOfYear, lastDayOfYear);
+    for (const [adjustmentDate, channels] of Object.entries(historical.byDate)) {
+      const month = Number(adjustmentDate.slice(5, 7));
+      for (const [channel, amount] of Object.entries(channels)) {
+        monthlyData[month].total += amount;
+        monthlyData[month].historicalRevenue += amount;
+        if (channel === "BALCAO") monthlyData[month].balcao += amount;
+        if (channel === "DELIVERY") monthlyData[month].delivery += amount;
+        if (channel === "A_PRAZO") monthlyData[month].aPrazo += amount;
+      }
     }
   }
 
@@ -7069,6 +7123,31 @@ export async function getMonthlyClosing(year: number, month: number, companyId?:
     }
   }
 
+  // Implantação histórica aprovada: compõe apenas a visão gerencial de faturamento.
+  // Não altera venda real, quantidade, ticket, CMV, caixa, recebíveis, DRE ou contabilidade.
+  const historicalRevenue = companyId
+    ? await getApprovedHistoricalRevenueForPeriod(companyId, startDate, endDate)
+    : createEmptyHistoricalRevenuePeriod();
+  const managementSalesByType: Record<string, { count: number; revenue: number; cost: number; historicalRevenue: number }> = {};
+  for (const [type, values] of Object.entries(salesByType)) {
+    managementSalesByType[type] = { ...values, historicalRevenue: 0 };
+  }
+  for (const channel of ["BALCAO", "DELIVERY", "A_PRAZO", "SALAO"] as HistoricalRevenueChannel[]) {
+    const amount = historicalRevenue.byChannel[channel];
+    if (!amount) continue;
+    const existing = managementSalesByType[channel] || { count: 0, revenue: 0, cost: 0, historicalRevenue: 0 };
+    existing.revenue += amount;
+    existing.historicalRevenue += amount;
+    managementSalesByType[channel] = existing;
+  }
+  const managementRevenue = {
+    total: totalSales.revenue + historicalRevenue.total,
+    realRevenue: totalSales.revenue,
+    historicalRevenue: historicalRevenue.total,
+    count: totalSales.count,
+    byType: managementSalesByType,
+  };
+
   // 2. COMPRAS - Total por tipo de documento
   const purchasesResult = await db.execute(sql.raw(`
     SELECT 
@@ -7381,6 +7460,40 @@ export async function getMonthlyClosing(year: number, month: number, companyId?:
       getSalesByChannel(startDate, endDate, companyId),
     ]);
 
+    if (historicalRevenue.total > 0) {
+      const channelNames: Record<HistoricalRevenueChannel, string> = {
+        BALCAO: "Balcão",
+        DELIVERY: "Delivery",
+        A_PRAZO: "A Prazo",
+        SALAO: "Salão",
+      };
+      for (const channel of ["BALCAO", "DELIVERY", "A_PRAZO", "SALAO"] as HistoricalRevenueChannel[]) {
+        const amount = historicalRevenue.byChannel[channel];
+        if (!amount) continue;
+        const item = salesByChannel.find((entry: any) => entry.channelCode === channel);
+        if (item) {
+          item.revenue += amount;
+          item.historicalRevenue = (item.historicalRevenue || 0) + amount;
+        } else {
+          salesByChannel.push({
+            channelId: 0,
+            channelName: channelNames[channel],
+            channelCode: channel,
+            count: 0,
+            revenue: amount,
+            historicalRevenue: amount,
+            percentage: 0,
+            ticketMedio: 0,
+          });
+        }
+      }
+      const channelRevenueTotal = salesByChannel.reduce((sum: number, entry: any) => sum + Number(entry.revenue || 0), 0);
+      for (const channel of salesByChannel) {
+        channel.percentage = channelRevenueTotal > 0 ? Math.round((channel.revenue / channelRevenueTotal) * 1000) / 10 : 0;
+      }
+      salesByChannel.sort((a: any, b: any) => b.revenue - a.revenue);
+    }
+
     // Buscar metas do mês
     goalsProgress = await getRevenueGoalProgress(year, month, companyId);
 
@@ -7412,6 +7525,7 @@ export async function getMonthlyClosing(year: number, month: number, companyId?:
       total: totalSales,
       byType: salesByType,
     },
+    managementRevenue,
     purchases: {
       total: totalPurchases,
       byType: purchasesByType,
@@ -10664,11 +10778,58 @@ export async function getMovementStats(companyId?: number, startDate?: Date, end
 export type HistoricalRevenueChannel = "BALCAO" | "DELIVERY" | "A_PRAZO" | "SALAO";
 export type HistoricalRevenueStatus = "DRAFT" | "APPROVED" | "CANCELLED";
 
+export type HistoricalRevenuePeriod = {
+  total: number;
+  byChannel: Record<HistoricalRevenueChannel, number>;
+  byDate: Record<string, Record<HistoricalRevenueChannel, number>>;
+};
+
+function createEmptyHistoricalRevenuePeriod(): HistoricalRevenuePeriod {
+  return {
+    total: 0,
+    byChannel: { BALCAO: 0, DELIVERY: 0, A_PRAZO: 0, SALAO: 0 },
+    byDate: {},
+  };
+}
+
 function mapHistoricalRevenueAdjustment(row: HistoricalRevenueAdjustment) {
   return {
     ...row,
     amount: Number(row.amount),
   };
+}
+
+export async function getApprovedHistoricalRevenueForPeriod(
+  companyId: number,
+  startDate: string,
+  endDate: string
+): Promise<HistoricalRevenuePeriod> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const rows = await db.select({
+    adjustmentDate: historicalRevenueAdjustments.adjustmentDate,
+    channel: historicalRevenueAdjustments.channel,
+    amount: historicalRevenueAdjustments.amount,
+  })
+    .from(historicalRevenueAdjustments)
+    .where(and(
+      eq(historicalRevenueAdjustments.companyId, companyId),
+      eq(historicalRevenueAdjustments.status, "APPROVED"),
+      gte(historicalRevenueAdjustments.adjustmentDate, startDate),
+      lte(historicalRevenueAdjustments.adjustmentDate, endDate)
+    ));
+
+  const summary = createEmptyHistoricalRevenuePeriod();
+  for (const row of rows) {
+    const amount = Number(row.amount || 0);
+    const channel = row.channel as HistoricalRevenueChannel;
+    summary.total += amount;
+    summary.byChannel[channel] += amount;
+    summary.byDate[row.adjustmentDate] ||= { BALCAO: 0, DELIVERY: 0, A_PRAZO: 0, SALAO: 0 };
+    summary.byDate[row.adjustmentDate][channel] += amount;
+  }
+  return summary;
 }
 
 export async function listHistoricalRevenueAdjustments(
@@ -10760,5 +10921,59 @@ export async function deleteHistoricalRevenueAdjustmentDraft(id: number, company
     ));
 
   if (result.affectedRows === 0) throw new Error("Rascunho não encontrado, não pertence à empresa ativa ou não pode mais ser removido");
+  return { success: true };
+}
+
+export async function approveHistoricalRevenueAdjustments(ids: number[], companyId: number, approvedBy: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const uniqueIds = [...new Set(ids)];
+  if (uniqueIds.length === 0) throw new Error("Selecione ao menos um rascunho para aprovação");
+
+  const drafts = await db.select({ id: historicalRevenueAdjustments.id })
+    .from(historicalRevenueAdjustments)
+    .where(and(
+      inArray(historicalRevenueAdjustments.id, uniqueIds),
+      eq(historicalRevenueAdjustments.companyId, companyId),
+      eq(historicalRevenueAdjustments.status, "DRAFT")
+    ));
+  if (drafts.length !== uniqueIds.length) {
+    throw new Error("Um ou mais rascunhos não pertencem à empresa ativa ou já não podem ser aprovados");
+  }
+
+  const [result] = await db.update(historicalRevenueAdjustments)
+    .set({ status: "APPROVED", approvedAt: new Date(), approvedBy })
+    .where(and(
+      inArray(historicalRevenueAdjustments.id, uniqueIds),
+      eq(historicalRevenueAdjustments.companyId, companyId),
+      eq(historicalRevenueAdjustments.status, "DRAFT")
+    ));
+  if (result.affectedRows !== uniqueIds.length) throw new Error("Não foi possível aprovar todos os rascunhos selecionados");
+  return { success: true, count: uniqueIds.length };
+}
+
+export async function cancelApprovedHistoricalRevenueAdjustment(
+  id: number,
+  companyId: number,
+  cancelledBy: string,
+  cancellationReason: string
+) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const [result] = await db.update(historicalRevenueAdjustments)
+    .set({
+      status: "CANCELLED",
+      cancelledAt: new Date(),
+      cancelledBy,
+      cancellationReason,
+    })
+    .where(and(
+      eq(historicalRevenueAdjustments.id, id),
+      eq(historicalRevenueAdjustments.companyId, companyId),
+      eq(historicalRevenueAdjustments.status, "APPROVED")
+    ));
+  if (result.affectedRows === 0) throw new Error("Ajuste aprovado não encontrado ou não pertence à empresa ativa");
   return { success: true };
 }

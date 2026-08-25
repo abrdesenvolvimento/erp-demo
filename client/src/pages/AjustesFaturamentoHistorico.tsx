@@ -5,9 +5,19 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useCompany } from "@/contexts/CompanyContext";
 import { trpc } from "@/lib/trpc";
-import { AlertTriangle, ClipboardList, FilePenLine, Loader2, Plus, Trash2 } from "lucide-react";
+import { AlertTriangle, CheckCircle2, ClipboardList, FilePenLine, Loader2, Plus, ShieldCheck, Trash2, Undo2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -47,6 +57,9 @@ export default function AjustesFaturamentoHistorico() {
   const utils = trpc.useUtils();
   const [form, setForm] = useState<DraftForm>(initialForm);
   const [showForm, setShowForm] = useState(false);
+  const [showApprovalDialog, setShowApprovalDialog] = useState(false);
+  const [cancelTarget, setCancelTarget] = useState<any>(null);
+  const [cancellationReason, setCancellationReason] = useState("");
 
   const { data: adjustments = [], isLoading } = trpc.historicalRevenueAdjustments.list.useQuery();
   const { data: summary } = trpc.historicalRevenueAdjustments.summary.useQuery();
@@ -71,8 +84,38 @@ export default function AjustesFaturamentoHistorico() {
     onError: (error) => toast.error(error.message),
   });
 
+  const refreshAfterStatusChange = () => {
+    utils.historicalRevenueAdjustments.list.invalidate();
+    utils.historicalRevenueAdjustments.summary.invalidate();
+    utils.sales.calendar.invalidate();
+    utils.sales.monthlyStats.invalidate();
+    utils.dashboard.stats.invalidate();
+    utils.invalidate();
+  };
+
+  const approveDrafts = trpc.historicalRevenueAdjustments.approveDrafts.useMutation({
+    onSuccess: (result) => {
+      toast.success(`${result.count} ajuste(s) publicados na visão gerencial.`);
+      setShowApprovalDialog(false);
+      refreshAfterStatusChange();
+    },
+    onError: (error) => toast.error(error.message),
+  });
+
+  const cancelApproved = trpc.historicalRevenueAdjustments.cancelApproved.useMutation({
+    onSuccess: () => {
+      toast.success("Ajuste cancelado e removido das análises gerenciais.");
+      setCancelTarget(null);
+      setCancellationReason("");
+      refreshAfterStatusChange();
+    },
+    onError: (error) => toast.error(error.message),
+  });
+
   const draftTotal = summary?.DRAFT.total || 0;
+  const approvedTotal = summary?.APPROVED.total || 0;
   const pendingDates = useMemo(() => ["2026-08-22", "2026-08-24"], []);
+  const draftIds = useMemo(() => adjustments.filter((adjustment) => adjustment.status === "DRAFT").map((adjustment) => adjustment.id), [adjustments]);
 
   const handleCreate = () => {
     const amount = parseCurrencyInput(form.amount);
@@ -107,12 +150,15 @@ export default function AjustesFaturamentoHistorico() {
           </Button>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-4">
           <Card>
             <CardHeader className="pb-2"><CardDescription>Empresa ativa</CardDescription><CardTitle className="text-lg">{activeCompany?.tradeName || activeCompany?.name || "Empresa"}</CardTitle></CardHeader>
           </Card>
           <Card>
             <CardHeader className="pb-2"><CardDescription>Total em rascunho</CardDescription><CardTitle className="text-2xl text-amber-700">{formatCurrency(draftTotal)}</CardTitle></CardHeader>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2"><CardDescription>Publicado em análises</CardDescription><CardTitle className="text-2xl text-emerald-700">{formatCurrency(approvedTotal)}</CardTitle></CardHeader>
           </Card>
           <Card>
             <CardHeader className="pb-2"><CardDescription>Dias ainda pendentes de apuração</CardDescription><CardTitle className="text-lg">22/08 e 24/08/2026</CardTitle></CardHeader>
@@ -122,9 +168,24 @@ export default function AjustesFaturamentoHistorico() {
         <Card className="border-amber-200 bg-amber-50/70">
           <CardContent className="flex gap-3 pt-5 text-sm text-amber-950">
             <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-700" />
-            <p><strong>Modo de segurança:</strong> rascunhos são registros auditáveis de apoio gerencial. A aprovação para refletir em análises será uma etapa posterior e não está disponível nesta tela. Assim, nenhum lançamento será confundido com venda real.</p>
+            <p><strong>Escopo controlado:</strong> ajustes aprovados entram somente no faturamento gerencial por data e canal. Eles não criam vendas, produtos, formas de pagamento, estoque, caixa, Contas a Receber, CMV, DRE ou lançamentos contábeis. Quantidade de vendas e ticket médio continuam baseados exclusivamente nas vendas reais.</p>
           </CardContent>
         </Card>
+
+        {draftIds.length > 0 && (
+          <Card className="border-emerald-200 bg-emerald-50/60">
+            <CardContent className="flex flex-col gap-4 pt-5 md:flex-row md:items-center md:justify-between">
+              <div className="flex gap-3 text-sm text-emerald-950">
+                <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-emerald-700" />
+                <p><strong>Pronto para publicação controlada:</strong> {draftIds.length} rascunho(s), total de {formatCurrency(draftTotal)}, serão disponibilizados em análises gerenciais da empresa ativa.</p>
+              </div>
+              <Button className="bg-emerald-700 hover:bg-emerald-800" onClick={() => setShowApprovalDialog(true)} disabled={approveDrafts.isPending}>
+                {approveDrafts.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle2 className="mr-2 h-4 w-4" />}
+                Publicar {draftIds.length} rascunho(s)
+              </Button>
+            </CardContent>
+          </Card>
+        )}
 
         {showForm && (
           <Card>
@@ -162,7 +223,7 @@ export default function AjustesFaturamentoHistorico() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Rascunhos cadastrados</CardTitle>
+            <CardTitle>Ajustes cadastrados</CardTitle>
             <CardDescription>Canal fixado em Balcão para esta primeira etapa da Adega Beira Rio.</CardDescription>
           </CardHeader>
           <CardContent>
@@ -183,12 +244,19 @@ export default function AjustesFaturamentoHistorico() {
                         <td className="px-3 py-3">Balcão</td>
                         <td className="px-3 py-3"><p className="font-medium">{adjustment.description}</p><p className="mt-1 max-w-xl text-xs text-muted-foreground">{adjustment.notes || "Sem observação adicional."}</p></td>
                         <td className="px-3 py-3 font-semibold">{formatCurrency(adjustment.amount)}</td>
-                        <td className="px-3 py-3"><Badge variant="outline" className="border-amber-300 bg-amber-50 text-amber-800">Rascunho</Badge></td>
-                        <td className="px-3 py-3 text-right"><Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => deleteDraft.mutate({ id: adjustment.id })} disabled={deleteDraft.isPending} aria-label={`Excluir ajuste de ${formatDate(adjustment.adjustmentDate)}`}><Trash2 className="h-4 w-4" /></Button></td>
+                        <td className="px-3 py-3">
+                          {adjustment.status === "DRAFT" && <Badge variant="outline" className="border-amber-300 bg-amber-50 text-amber-800">Rascunho</Badge>}
+                          {adjustment.status === "APPROVED" && <Badge variant="outline" className="border-emerald-300 bg-emerald-50 text-emerald-800">Publicado</Badge>}
+                          {adjustment.status === "CANCELLED" && <Badge variant="outline" className="border-slate-300 bg-slate-50 text-slate-700">Cancelado</Badge>}
+                        </td>
+                        <td className="px-3 py-3 text-right">
+                          {adjustment.status === "DRAFT" && <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => deleteDraft.mutate({ id: adjustment.id })} disabled={deleteDraft.isPending} aria-label={`Excluir ajuste de ${formatDate(adjustment.adjustmentDate)}`}><Trash2 className="h-4 w-4" /></Button>}
+                          {adjustment.status === "APPROVED" && <Button variant="ghost" size="sm" className="text-slate-700" onClick={() => setCancelTarget(adjustment)} disabled={cancelApproved.isPending}><Undo2 className="mr-1 h-4 w-4" /> Cancelar</Button>}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
-                  <tfoot><tr><td colSpan={3} className="px-3 py-4 font-semibold">Total provisório</td><td className="px-3 py-4 font-bold">{formatCurrency(draftTotal)}</td><td colSpan={2} /></tr></tfoot>
+                  <tfoot><tr><td colSpan={3} className="px-3 py-4 font-semibold">Total em rascunho</td><td className="px-3 py-4 font-bold">{formatCurrency(draftTotal)}</td><td colSpan={2} /></tr></tfoot>
                 </table>
               </div>
             )}
@@ -197,6 +265,41 @@ export default function AjustesFaturamentoHistorico() {
           </CardContent>
         </Card>
       </div>
+
+      <AlertDialog open={showApprovalDialog} onOpenChange={setShowApprovalDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Publicar implantação histórica?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Serão aprovados <strong>{draftIds.length} ajustes diários de Balcão</strong> da empresa ativa, no total de <strong>{formatCurrency(draftTotal)}</strong>. O valor passará a compor faturamento gerencial e análise por canal, mas não gerará vendas, estoque, caixa, clientes, CMV, DRE ou contabilidade.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Voltar</AlertDialogCancel>
+            <AlertDialogAction className="bg-emerald-700 hover:bg-emerald-800" onClick={() => approveDrafts.mutate({ ids: draftIds })} disabled={approveDrafts.isPending}>
+              {approveDrafts.isPending ? "Publicando..." : "Confirmar publicação"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!cancelTarget} onOpenChange={(open) => !open && setCancelTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancelar ajuste publicado?</AlertDialogTitle>
+            <AlertDialogDescription>
+              O ajuste de {cancelTarget && formatDate(cancelTarget.adjustmentDate)} será removido das análises gerenciais. Informe a justificativa para preservar a auditoria.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <textarea className="min-h-24 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={cancellationReason} onChange={(event) => setCancellationReason(event.target.value)} placeholder="Ex.: valor diário corrigido após nova apuração" />
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setCancellationReason("")}>Voltar</AlertDialogCancel>
+            <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={() => cancelTarget && cancelApproved.mutate({ id: cancelTarget.id, reason: cancellationReason })} disabled={cancelApproved.isPending || cancellationReason.trim().length < 3}>
+              {cancelApproved.isPending ? "Cancelando..." : "Confirmar cancelamento"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </DashboardLayout>
   );
 }

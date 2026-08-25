@@ -19,26 +19,39 @@ describe("Ajustes históricos de faturamento", () => {
     expect(schemaContent).not.toContain('historicalRevenueAdjustment: mysqlTable("sales"');
   });
 
-  it("inicia novos ajustes como rascunho e não expõe aprovação na API inicial", () => {
+  it("inicia novos ajustes como rascunho e exige aprovação administrativa explícita", () => {
     expect(routerContent).toContain('status: "DRAFT"');
-    expect(routerContent).not.toContain('approveDraft');
+    expect(routerContent).toContain('approveDrafts: adminProcedure');
+    expect(routerContent).toContain('cancelApproved: adminProcedure');
   });
 
   it("restringe alteração e exclusão a rascunhos da empresa ativa", () => {
-    expect(routerContent).toContain('updateHistoricalRevenueAdjustmentDraft(id, ctx.activeCompanyId || 1');
-    expect(routerContent).toContain('deleteHistoricalRevenueAdjustmentDraft(input.id, ctx.activeCompanyId || 1');
+    expect(routerContent).toContain('updateHistoricalRevenueAdjustmentDraft(id, requireActiveCompanyId(ctx.activeCompanyId)');
+    expect(routerContent).toContain('deleteHistoricalRevenueAdjustmentDraft(input.id, requireActiveCompanyId(ctx.activeCompanyId)');
   });
 
-  it("explica na interface que rascunhos não afetam relatórios, estoque, caixa ou contas a receber", () => {
+  it("explica na interface os limites operacionais dos ajustes publicados", () => {
     expect(pageContent).toContain('não afetam faturamento, estoque, caixa, Contas a Receber ou contabilidade');
-    expect(pageContent).toContain('A aprovação para refletir em análises será uma etapa posterior');
+    expect(pageContent).toContain('não criam vendas, produtos, formas de pagamento, estoque, caixa, Contas a Receber, CMV, DRE ou lançamentos contábeis');
   });
 
-  it("não inclui rascunhos no fechamento mensal atual", () => {
+  it("inclui somente ajustes aprovados na visão gerencial, mantendo o fechamento contábil real separado", () => {
     const monthlyClosingSection = dbContent.slice(
       dbContent.indexOf("export async function getMonthlyClosing"),
       dbContent.indexOf("export async function getYearlyClosing")
     );
-    expect(monthlyClosingSection).not.toContain("historicalRevenueAdjustments");
+    expect(monthlyClosingSection).toContain("getApprovedHistoricalRevenueForPeriod");
+    expect(monthlyClosingSection).toContain("managementRevenue");
+    expect(monthlyClosingSection).toContain("cashFlow:");
+  });
+
+  it("mantém a trilha de aprovação e cancelamento, e reutiliza somente o recorte APPROVED nas análises", () => {
+    expect(schemaContent).toContain('cancelledAt: timestamp("cancelledAt")');
+    expect(schemaContent).toContain('cancellationReason: varchar("cancellationReason", { length: 500 })');
+    expect(dbContent).toContain("approveHistoricalRevenueAdjustments");
+    expect(dbContent).toContain("cancelApprovedHistoricalRevenueAdjustment");
+    expect(dbContent).toContain('eq(historicalRevenueAdjustments.status, "APPROVED")');
+    expect(dbContent).toContain("getApprovedHistoricalRevenueForPeriod(companyId, firstDayOfMonth, lastDayOfMonth)");
+    expect(dbContent).toContain("getApprovedHistoricalRevenueForPeriod(companyId, firstDayOfYear, lastDayOfYear)");
   });
 });

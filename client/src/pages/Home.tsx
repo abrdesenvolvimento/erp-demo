@@ -166,6 +166,11 @@ export default function Home() {
               <div className="text-2xl font-bold text-blue-600">
                 R$ {formatCurrency(stats?.monthRevenue)}
               </div>
+              {stats && parseFloat(stats.monthRevenueHistorical || '0') > 0 && (
+                <p className="mt-1 text-xs text-amber-700">
+                  Inclui implantação histórica: R$ {formatCurrency(stats.monthRevenueHistorical)}
+                </p>
+              )}
               <div className="mt-3 space-y-1.5">
                 <div className="flex items-center justify-between text-xs">
                   <span className="text-muted-foreground">Balcão</span>
