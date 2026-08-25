@@ -40,7 +40,8 @@ import {
   accountingBatchLog, AccountingBatchLog, InsertAccountingBatchLog,
   calendarHighlights, CalendarHighlight, InsertCalendarHighlight,
   priceHistory, PriceHistory, InsertPriceHistory,
-  auditLog, AuditLog, InsertAuditLog
+  auditLog, AuditLog, InsertAuditLog,
+  historicalRevenueAdjustments, HistoricalRevenueAdjustment, InsertHistoricalRevenueAdjustment
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 import { 
@@ -10656,4 +10657,108 @@ export async function getMovementStats(companyId?: number, startDate?: Date, end
   const totalMovements = byType.reduce((sum, b) => sum + Number(b.count), 0);
 
   return { byType, topProducts, totalMovements };
+}
+
+// ==================== AJUSTES HISTÓRICOS DE FATURAMENTO ====================
+
+export type HistoricalRevenueChannel = "BALCAO" | "DELIVERY" | "A_PRAZO" | "SALAO";
+export type HistoricalRevenueStatus = "DRAFT" | "APPROVED" | "CANCELLED";
+
+function mapHistoricalRevenueAdjustment(row: HistoricalRevenueAdjustment) {
+  return {
+    ...row,
+    amount: Number(row.amount),
+  };
+}
+
+export async function listHistoricalRevenueAdjustments(
+  companyId: number,
+  filters?: { startDate?: string; endDate?: string; status?: HistoricalRevenueStatus }
+) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const conditions: SQL[] = [eq(historicalRevenueAdjustments.companyId, companyId)];
+  if (filters?.startDate) conditions.push(gte(historicalRevenueAdjustments.adjustmentDate, filters.startDate));
+  if (filters?.endDate) conditions.push(lte(historicalRevenueAdjustments.adjustmentDate, filters.endDate));
+  if (filters?.status) conditions.push(eq(historicalRevenueAdjustments.status, filters.status));
+
+  const rows = await db.select()
+    .from(historicalRevenueAdjustments)
+    .where(and(...conditions))
+    .orderBy(desc(historicalRevenueAdjustments.adjustmentDate));
+
+  return rows.map(mapHistoricalRevenueAdjustment);
+}
+
+export async function getHistoricalRevenueAdjustmentSummary(companyId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const rows = await db.select({
+    status: historicalRevenueAdjustments.status,
+    total: sql<string>`COALESCE(SUM(CAST(${historicalRevenueAdjustments.amount} AS DECIMAL(15,2))), 0)`,
+    count: sql<number>`COUNT(*)`,
+  })
+    .from(historicalRevenueAdjustments)
+    .where(eq(historicalRevenueAdjustments.companyId, companyId))
+    .groupBy(historicalRevenueAdjustments.status);
+
+  const summary = {
+    DRAFT: { total: 0, count: 0 },
+    APPROVED: { total: 0, count: 0 },
+    CANCELLED: { total: 0, count: 0 },
+  };
+
+  for (const row of rows) {
+    summary[row.status].total = Number(row.total || 0);
+    summary[row.status].count = Number(row.count || 0);
+  }
+
+  return summary;
+}
+
+export async function createHistoricalRevenueAdjustment(
+  data: Omit<InsertHistoricalRevenueAdjustment, "id" | "createdAt" | "updatedAt" | "approvedAt" | "approvedBy">
+) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const [result] = await db.insert(historicalRevenueAdjustments).values(data);
+  return { id: result.insertId };
+}
+
+export async function updateHistoricalRevenueAdjustmentDraft(
+  id: number,
+  companyId: number,
+  data: Partial<Pick<InsertHistoricalRevenueAdjustment, "adjustmentDate" | "competenceMonth" | "amount" | "description" | "notes">>
+) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const [result] = await db.update(historicalRevenueAdjustments)
+    .set(data)
+    .where(and(
+      eq(historicalRevenueAdjustments.id, id),
+      eq(historicalRevenueAdjustments.companyId, companyId),
+      eq(historicalRevenueAdjustments.status, "DRAFT")
+    ));
+
+  if (result.affectedRows === 0) throw new Error("Rascunho não encontrado, não pertence à empresa ativa ou não pode mais ser alterado");
+  return { success: true };
+}
+
+export async function deleteHistoricalRevenueAdjustmentDraft(id: number, companyId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const [result] = await db.delete(historicalRevenueAdjustments)
+    .where(and(
+      eq(historicalRevenueAdjustments.id, id),
+      eq(historicalRevenueAdjustments.companyId, companyId),
+      eq(historicalRevenueAdjustments.status, "DRAFT")
+    ));
+
+  if (result.affectedRows === 0) throw new Error("Rascunho não encontrado, não pertence à empresa ativa ou não pode mais ser removido");
+  return { success: true };
 }

@@ -9,13 +9,15 @@
   "env_vars": {
     "DATABASE_URL": "mysql://dFii8SSTCuEA646.root:PMHJyQvA2HA5c3N72JU5@gateway02.us-east-1.prod.aws.tidbcloud.com:4000/7RkrCeS5KipYf8hkuNqrCk?ssl={\"rejectUnauthorized\":true}"
   },
-  "experiments": null,
+  "experiments": [
+    "no_db_push"
+  ],
   "git_remote": {
     "repo_url": "s3://vida-prod-gitrepo/webdev-git/310519663140687549/7RkrCeS5KipYf8hkuNqrCk",
-    "access_key_id": "ASIAZV3A2ECZNGIZPOOF",
-    "secret_access_key": "z3Eyfii5IatwrrL2E/YObvCmGnXDI8+Auq0RB7PK",
-    "session_token": "IQoJb3JpZ2luX2VjEBQaCXVzLWVhc3QtMSJHMEUCIQCQ1lVb6qYZxNHTjf6EpXBal4ZD+BwJvSnn4RarDK3yKQIgaYXJwzeimVaPzG8YYcN4Z0s7Xb2n6vBBuhrVFm8YLBQq/wMI3f//////////ARAEGgw2NjUzODYwOTg4NjYiDM4tgAE/64pdmUY6fyrTA9vUcOHK3XxOtrCP3cDTiGjPwCak/EddEV36PHAWJcU8tUbgsXQ+NeVGafM+w5WDWCtVSIQI++RQPBeaIixcGUtdl9IDRVqzbkSxioKHmLhGg0KUMMNcjUpE5ewLG+qh9VMUbP4PuJDtHDSLXBdEwjjBsaRkCUg9x4+JF7bOpMeS3vo2O6wZS7D+3OAi3r7XKpA53Rtv6VCOJKHmIeVH2SaZDBk/4Q6/exNmmMVifu3XkzAPX323OviG2PJQmSh+gYogmu32ccTQIRO+BQw7UwmfPC2uJgEzNbXfD90xAm4NNyG0TKGtFGNu8RB1LXAMkQT+vXWTU67Eg4dcceuqwb4d/XyI6Jaly2+B74+IFzfNtJnjC4pI8uvT8ytAzMcog2A66+wuU2K8cuMG6DozgeG1pJWkuoOHChuIo6j5YpNjnMRiMRar9LlIv8U6A1b/+lm0m3iJMOR2hq80J8z8mTz1tU/WFDtYuPCzFYkR57WB3iaQ4Zi5IYHo9tgOi8u41WSkLanQx/SajtJHo1q8rjIKxMG1gF9wLe9fPBR7xdPH8ra2vLQSLELMacbkPpHyNeEQEs4Cm14pToTqnzUol1BJJDffyK4r38hIQ3POGGsm95dHMJjg29EGOp0Bwx45yMgeaw5RFqQ3cb7vma4ieVJqnUoa6iPlH4J4lAdXW+Rk6z2T7ZPxuLhsq1ZCOPoCjOr1MMhXrAEnuMDcjIvvLz6ubpNomRt0edYGjvHRZ7kMrIWuHNnYBNl7OVe1VIi4jm19UZfoSDttKIg7xO4OwFt1oL+5t4cpvWlnevplG+zZPdqxdGG3WKF6ZEfObGu70IvaQbrXaQxUCw==",
-    "expiration": "2026-06-21T07:55:04.000Z",
+    "access_key_id": "ASIAZV3A2ECZBWTBFHWN",
+    "secret_access_key": "SFrVO7Ke0TOp5JKpaMnliZ0sb+2qDSHPy7TlYP3k",
+    "session_token": "IQoJb3JpZ2luX2VjED0aCXVzLWVhc3QtMSJIMEYCIQCHHDGbq/+tcBMyTjNgZFVs7/sIvzAy5TU7orvCRimJYwIhAJFhA4HIlk2U/xF5K4JPdvfdtKsWWyLhwRPC0PMAV9fJKvYDCAYQBBoMNjY1Mzg2MDk4ODY2IgwJze8oXy0qcSOSYgoq0wNoZyaTj9m4TxIkhxg8s5oTfdhp3tru7BuyhciEAbF0uyUqjPDma4yLyQ9SiafpA2nnG4cQB15txa3ehcw1E5Yag8cJKctBhCbA3wolGFs8xZQwjiujUMBeMImxws2x9AmpDANvINLjfbZ2EttBSZaM8fpUp02sHJo5wQytpbynYLzTcYI02xkQ78N2hnlDRoxwrKISuG4V/st2Rg1lR2+XuFUTXtkwBn9nTUmNU1/cne9socmZ83sxCIdOVUlCpdqtWn09pqyi9Y8dUcDZn7XPraq1X/nbt2Og5bUe0oMt/PFLJcn87/PCKOW1ymwyqpFtHat0CLLKwoipGXYhse7MO25xa12/KswYqaey3zl4xkYvT2KhieoVBL6SEN9zT4Jurxr1D4yd3YFGX/B3b+c0JpqhA2ptOlxGp6tSbXQeEhnG2JAJhaVbLyBvdfT3K8dpNkOA/fnbhiig/sEr3W0DXq77iZFuaoxqjsmL/x3nq738+tRaXDVcWl0m8+oVtnfgR0x8Ca2EQGN9dZBz1xr64z9b8y75JnGHSxpcSKt0N3qURWvNyCRsDnel7sNbKf2QaxvoQ4yl05q5fqsRLxzW+OzzJCfhG5WLpRiPF77eiZD4aDCunrbUBjqcAf9ncGbLPOmsmFQg7cBrqzgkxGZ6kvV+uZjMCLxqoNEfVGEdX5VI/LTdjJKrYtliRxK1rHEJE4vNA6gTlSrgh/Vqh4bPas73geRvXTxMsZaTy6dPeCelxIJMAuxA77Qrm9LAGfSK7MYunxgM2Q7xiPtsbuYRnktujpcswUmmZhDFvldVO6IJYAcAaThZWjlp2WG0W2nd+vkw8w0wOw==",
+    "expiration": "2026-08-26T00:48:46.000Z",
     "backend": "GIT_BACKEND_S3"
   },
   "name": "erp-demo",

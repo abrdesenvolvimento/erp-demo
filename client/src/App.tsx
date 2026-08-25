@@ -50,6 +50,7 @@ import CardapioStories from "./pages/CardapioStories";
 import AvisoInauguracao from "./pages/AvisoInauguracao";
 import AnaliseKDS from "./pages/AnaliseKDS";
 import FechamentoAnual from "./pages/FechamentoAnual";
+import AjustesFaturamentoHistorico from "./pages/AjustesFaturamentoHistorico";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
@@ -109,6 +110,7 @@ function Router() {
       <Route path="/aviso-inauguracao" component={AvisoInauguracao} />
       <Route path="/analise-kds" component={AnaliseKDS} />
       <Route path="/fechamento-anual" component={FechamentoAnual} />
+      <Route path="/ajustes-faturamento-historico" component={AjustesFaturamentoHistorico} />
       <Route path="/acesso-negado" component={AccessDenied} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />

@@ -103,6 +103,7 @@ const financeMenuItems = [
   { icon: ArrowLeftRight, label: "Venda Interna", path: "/venda-interna", roles: ["admin"] },
   { icon: Receipt, label: "Despesas", path: "/despesas", roles: ["admin", "consultor"] },
   { icon: Wallet, label: "Outras Receitas", path: "/outras-receitas", roles: ["admin", "consultor"] },
+  { icon: ClipboardList, label: "Implantação Histórica", path: "/ajustes-faturamento-historico", roles: ["admin"] },
   { icon: DollarSign, label: "Contas a Receber", path: "/contas-receber", roles: ["admin", "operacional", "consultor"] },
   { icon: CreditCard, label: "Contas a Pagar", path: "/contas-pagar", roles: ["admin", "consultor"] },
 ];

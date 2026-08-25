@@ -6,6 +6,7 @@ import {
   varchar,
   int,
   decimal,
+  date,
   boolean,
   index,
   uniqueIndex,
@@ -316,6 +317,35 @@ export const saleItems = mysqlTable("saleItems", {
 
 export type SaleItem = typeof saleItems.$inferSelect;
 export type InsertSaleItem = typeof saleItems.$inferInsert;
+
+// Ajustes históricos de faturamento
+// Mantém valores agregados de implantação separados das vendas operacionais.
+// Rascunhos não devem interferir em estoque, caixa, clientes ou relatórios até aprovação futura.
+export const historicalRevenueAdjustments = mysqlTable("historicalRevenueAdjustments", {
+  id: int("id").primaryKey().autoincrement(),
+  companyId: int("companyId").notNull(),
+  branchId: int("branchId"),
+  channel: mysqlEnum("channel", ["BALCAO", "DELIVERY", "A_PRAZO", "SALAO"]).notNull(),
+  adjustmentDate: date("adjustmentDate", { mode: "string" }).notNull(),
+  competenceMonth: varchar("competenceMonth", { length: 7 }).notNull(),
+  amount: decimal("amount", { precision: 15, scale: 2 }).notNull(),
+  status: mysqlEnum("status", ["DRAFT", "APPROVED", "CANCELLED"]).notNull().default("DRAFT"),
+  source: varchar("source", { length: 80 }).notNull(),
+  description: varchar("description", { length: 255 }).notNull(),
+  notes: text("notes"),
+  approvedAt: timestamp("approvedAt"),
+  approvedBy: varchar("approvedBy", { length: 64 }),
+  createdBy: varchar("createdBy", { length: 64 }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow(),
+}, (table) => ({
+  companyDateIdx: index("historical_revenue_company_date_idx").on(table.companyId, table.adjustmentDate),
+  companyStatusIdx: index("historical_revenue_company_status_idx").on(table.companyId, table.status),
+  companyChannelDateUnique: uniqueIndex("historical_revenue_company_channel_date_uq").on(table.companyId, table.channel, table.adjustmentDate),
+}));
+
+export type HistoricalRevenueAdjustment = typeof historicalRevenueAdjustments.$inferSelect;
+export type InsertHistoricalRevenueAdjustment = typeof historicalRevenueAdjustments.$inferInsert;
 
 
 // Ordens de Compra
