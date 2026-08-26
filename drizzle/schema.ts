@@ -344,7 +344,7 @@ export const historicalRevenueAdjustments = mysqlTable("historicalRevenueAdjustm
 }, (table) => ({
   companyDateIdx: index("historical_revenue_company_date_idx").on(table.companyId, table.adjustmentDate),
   companyStatusIdx: index("historical_revenue_company_status_idx").on(table.companyId, table.status),
-  companyChannelDateUnique: uniqueIndex("historical_revenue_company_channel_date_uq").on(table.companyId, table.channel, table.adjustmentDate),
+  companyChannelDateIdx: index("historical_revenue_company_channel_date_idx").on(table.companyId, table.channel, table.adjustmentDate),
 }));
 
 export type HistoricalRevenueAdjustment = typeof historicalRevenueAdjustments.$inferSelect;
