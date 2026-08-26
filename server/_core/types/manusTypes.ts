@@ -66,4 +66,6 @@ export interface GetUserInfoWithJwtResponse {
   email?: string | null;
   platform?: string | null;
   loginMethod?: string | null;
+  /** Preenchido somente para chamadas autenticadas do Heartbeat. */
+  taskUid?: string | null;
 }

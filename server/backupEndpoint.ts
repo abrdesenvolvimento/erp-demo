@@ -455,6 +455,16 @@ router.post('/backup', async (req: Request, res: Response) => {
       return res.status(401).json({ success: false, error: 'Não autorizado' });
     }
   }
+
+  // Compatibilidade: chamadas antigas avançam somente uma etapa persistida.
+  // Isso impede que um webhook legado volte a executar dump, ZIP e uploads em uma chamada monolítica.
+  try {
+    const { advanceBackupRun } = await import('./backupWorkflow');
+    const result = await advanceBackupRun(req.body?.triggeredBy || 'legacy-api');
+    return res.status(202).json({ success: true, mode: 'incremental', ...result });
+  } catch (error: any) {
+    return res.status(500).json({ success: false, mode: 'incremental', error: error.message });
+  }
   
   const startTime = Date.now();
   const results: any[] = [];

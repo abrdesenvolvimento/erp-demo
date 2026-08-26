@@ -13,6 +13,10 @@ import backupRouter from "../backupEndpoint";
 // import { initBackupScheduler, getSchedulerStatus, triggerManualBackup } from '../scheduler';
 import { initAccountingScheduler, getAccountingSchedulerStatus, runAccountingBatch, updateAccountingSchedule } from "../accountingScheduler";
 import { initStockSnapshotJob } from "../jobs/stockSnapshot";
+import { sdk } from "./sdk";
+import { advanceBackupRun, reconcileStaleBackupRuns } from "../backupWorkflow";
+
+const BACKUP_HEARTBEAT_TASK_UID = "ivEbr4395zxWx2ah9n3CkD";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -57,17 +61,11 @@ async function startServer() {
     });
   });
   
-  // Manual trigger still works — calls the existing /api/backup endpoint internally
+  // Manual trigger avança uma etapa do backup incremental e não inicia mais um dump monolítico.
   app.post('/api/scheduler/trigger', async (req, res) => {
     try {
-      const port = process.env.PORT || 3000;
-      const response = await fetch(`http://localhost:${port}/api/backup`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ triggeredBy: 'manual' }),
-      });
-      const result = await response.json();
-      res.json(result);
+      const result = await advanceBackupRun('manual');
+      res.json({ success: true, ...result });
     } catch (error: any) {
       res.status(500).json({ success: false, error: error.message });
     }
@@ -109,23 +107,22 @@ async function startServer() {
 
   // Heartbeat backup endpoint — triggered by Manus platform cron daily at 06:00 UTC (03:00 BRT)
   app.post('/api/scheduled/backup', async (req, res) => {
-    console.log('[Heartbeat] Backup triggered by platform cron');
     try {
-      const port = process.env.PORT || 3000;
-      const response = await fetch(`http://localhost:${port}/api/backup`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ triggeredBy: 'heartbeat' }),
-      });
-      const result = await response.json() as any;
-      if (result.success) {
-        res.json({ ok: true, duration: result.duration, totalSize: result.totalSize });
-      } else {
-        res.status(500).json({ ok: false, error: result.error });
+      const user = await sdk.authenticateRequest(req);
+      if (!user.isCron || user.taskUid !== BACKUP_HEARTBEAT_TASK_UID) {
+        return res.status(403).json({ ok: false, error: 'Apenas o Heartbeat de backup autorizado pode executar esta rota.' });
       }
+      const reconciled = await reconcileStaleBackupRuns();
+      const result = await advanceBackupRun('heartbeat');
+      res.json({ ok: true, reconciled, ...result });
     } catch (error: any) {
       console.error('[Heartbeat] Backup error:', error.message);
-      res.status(500).json({ ok: false, error: error.message });
+      res.status(500).json({
+        ok: false,
+        error: error.message,
+        timestamp: new Date().toISOString(),
+        context: { path: '/api/scheduled/backup', taskUid: BACKUP_HEARTBEAT_TASK_UID },
+      });
     }
   });
 

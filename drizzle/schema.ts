@@ -877,6 +877,33 @@ export const backupLogs = mysqlTable("backupLogs", {
 export type BackupLog = typeof backupLogs.$inferSelect;
 export type InsertBackupLog = typeof backupLogs.$inferInsert;
 
+// Execução incremental do backup. Cada callback processa somente uma parte do dump,
+// permitindo retomada segura após timeout ou reinício da instância.
+export const backupRuns = mysqlTable("backupRuns", {
+  id: varchar("id", { length: 64 }).primaryKey(),
+  backupLogId: int("backupLogId").notNull(),
+  status: mysqlEnum("status", ["ACTIVE", "COMPLETE", "FAILED"]).notNull().default("ACTIVE"),
+  phase: mysqlEnum("phase", ["DATABASE", "CODE", "COMPLETE"]).notNull().default("DATABASE"),
+  currentTableIndex: int("currentTableIndex").notNull().default(0),
+  currentTableOffset: int("currentTableOffset").notNull().default(0),
+  chunksCreated: int("chunksCreated").notNull().default(0),
+  rowsExported: int("rowsExported").notNull().default(0),
+  manifestJson: text("manifestJson"),
+  databaseChecksum: varchar("databaseChecksum", { length: 64 }),
+  codeChecksum: varchar("codeChecksum", { length: 64 }),
+  codeKey: varchar("codeKey", { length: 500 }),
+  codeUrl: varchar("codeUrl", { length: 1000 }),
+  lastError: text("lastError"),
+  createdAt: timestamp("createdAt").defaultNow(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow(),
+}, (table) => ({
+  statusUpdatedIdx: index("backup_run_status_updated_idx").on(table.status, table.updatedAt),
+  logIdx: index("backup_run_log_idx").on(table.backupLogId),
+}));
+
+export type BackupRun = typeof backupRuns.$inferSelect;
+export type InsertBackupRun = typeof backupRuns.$inferInsert;
+
 // =====================================================
 // MÓDULO CONTÁBIL
 // =====================================================
