@@ -2491,6 +2491,15 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Criar endpoint /api/scheduled/backup para receber trigger externo da plataforma
 - [x] Remover dependência de node-cron para backup (Cloud Run mata instâncias ociosas)
 - [x] Configurar Heartbeat schedule via manus-heartbeat CLI (diário 3h Brasília = 6h UTC) — task_uid: ivEbr4395zxWx2ah9n3CkD
+- [x] Diagnosticar a cópia no Google Drive: autenticação e leitura funcionam, mas a escrita falha com 403 storageQuotaExceeded na conta de serviço
+- [ ] Decidir e configurar destino externo de backup com escrita garantida, após corrigir o timeout do job atual
+
+## Reconciliação pós-backup — 22 e 23/08/2026
+- [x] Analisar o Excel de lançamentos manuais dos dias 22 e 23 e classificar cada linha antes de alterar qualquer saldo
+- [x] Conciliar produtos e quantidades com o estoque atual para propor baixas auditáveis sem duplicar movimentos existentes
+- [ ] Apurar e publicar somente valores de faturamento comprovados para as datas pendentes, sem gerar efeitos financeiros indevidos
+- [x] Aplicar exclusivamente as baixas dos itens com correspondência exata no cadastro da Adega; preservar toda exceção para análise conjunta
+- [x] Aplicar as quatro baixas exatas que resultarão em saldo negativo, conforme autorização explícita do gestor, mantendo a auditoria do acerto histórico
 
 ## Sprint 14/06/2026 — Baixa Parcial + Correções
 - [x] Corrigir título "Adega Beira Rio" na pré-visualização da conta (deve ser "A Brasa Reúne")
