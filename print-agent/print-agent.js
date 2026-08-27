@@ -123,6 +123,25 @@ const ESCPOS = {
   DASHED: "- - - - - - - - - - - - - - - - - - - - - - - -\n",
 };
 
+function wrapTicketAlert(value, maxCharacters = 22) {
+  const words = String(value ?? "").trim().toUpperCase().split(/\s+/).filter(Boolean);
+  const lines = [];
+  let line = "";
+
+  for (const word of words) {
+    const candidate = line ? `${line} ${word}` : word;
+    if (candidate.length > maxCharacters && line) {
+      lines.push(line);
+      line = word;
+    } else {
+      line = candidate;
+    }
+  }
+
+  if (line) lines.push(line);
+  return lines.length > 0 ? lines : ["OBSERVAÇÃO INFORMADA"];
+}
+
 // --- Formatters ---
 function formatProductionTicket(data) {
   const { tableNumber, orderId, items, destination, timestamp, waiterName, customerLabel } = data;
@@ -158,11 +177,22 @@ function formatProductionTicket(data) {
     buf += `${qty} ${item.productName}\n`;
     buf += ESCPOS.NORMAL;
     if (item.notes) {
+      buf += ESCPOS.LINE;
+      buf += ESCPOS.ALIGN_CENTER;
       buf += ESCPOS.BOLD_ON;
-      buf += ESCPOS.DOUBLE_HEIGHT_ON;
-      buf += `>>> OBS: ${String(item.notes).toUpperCase()}\n`;
+      buf += ESCPOS.DOUBLE_ON;
+      buf += "!!! OBSERVACAO !!!\n";
       buf += ESCPOS.NORMAL;
       buf += ESCPOS.BOLD_OFF;
+      buf += ESCPOS.ALIGN_LEFT;
+      buf += ESCPOS.BOLD_ON;
+      for (const noteLine of wrapTicketAlert(item.notes)) {
+        buf += ESCPOS.DOUBLE_ON;
+        buf += `>>> ${noteLine}\n`;
+      }
+      buf += ESCPOS.NORMAL;
+      buf += ESCPOS.BOLD_OFF;
+      buf += ESCPOS.LINE;
     }
   }
 

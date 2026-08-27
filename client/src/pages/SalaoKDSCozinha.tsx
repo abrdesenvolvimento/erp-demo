@@ -617,11 +617,8 @@ export default function SalaoKDSCozinha() {
                                   {item.productName}
                                 </p>
                                 {item.notes && (
-                                  <div className="mt-3 rounded-xl border-2 border-yellow-400 bg-yellow-400/20 px-3 py-2 shadow-lg shadow-yellow-500/10">
-                                    <p className="flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wide text-yellow-300">
-                                      <AlertTriangle className="h-4 w-4 shrink-0" /> Atenção — observação
-                                    </p>
-                                    <p className="mt-1 text-base font-extrabold leading-snug text-yellow-100">
+                                  <div className="mt-2 bg-yellow-500/20 border border-yellow-500/30 rounded-lg px-2.5 py-1.5">
+                                    <p className="text-xs text-yellow-300 font-medium">
                                       {item.notes}
                                     </p>
                                   </div>

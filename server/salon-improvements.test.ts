@@ -77,12 +77,11 @@ describe("Salão — ticket de produção e leitura de observações", () => {
     expect(printAgent).toContain("Cliente: ${customerLabel}");
   });
 
-  it("trata observações como instruções operacionais de alta visibilidade", () => {
-    expect(printAgent).toContain(">>> OBS:");
-    expect(printAgent).toContain("ESCPOS.DOUBLE_HEIGHT_ON");
-    expect(kitchenKds).toContain("Atenção — observação");
-    expect(barKds).toContain("Atenção — observação");
-    expect(kitchenKds).toContain("text-base font-extrabold");
-    expect(barKds).toContain("text-base font-extrabold");
+  it("separa a observação como alerta no ticket, sem alterar a apresentação validada do KDS", () => {
+    expect(printAgent).toContain("!!! OBSERVACAO !!!");
+    expect(printAgent).toContain("wrapTicketAlert");
+    expect(printAgent).toContain("ESCPOS.DOUBLE_ON");
+    expect(kitchenKds).toContain("bg-yellow-500/20 border border-yellow-500/30");
+    expect(barKds).toContain("bg-yellow-500/20 border border-yellow-500/30");
   });
 });
