@@ -14,6 +14,9 @@
 
 ---
 
+## Varredura pré-publicação — 26/08/2026
+- [x] Consolidar as pendências ativas, validar bloqueios e apresentar a priorização antes de publicar o checkpoint de contingência de backup
+
 ## 🔴 BUGS CRÍTICOS
 
 ### BUG-01: Vendas Delivery - Número do Pedido ✅ (03/02/2026)
@@ -2495,6 +2498,7 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [ ] Decidir e configurar destino externo de backup com escrita garantida, após corrigir o timeout do job atual
 - [ ] Reestruturar o backup diário para finalizar logs interrompidos, registrar progresso e evitar que dump, compactação e upload bloqueiem o callback agendado
 - [ ] Permitir que o Heartbeat diário continue o mesmo backup incremental até a conclusão, sem criar novo backup enquanto houver execução ativa
+- [ ] Definir no fluxo de backup a abertura de novo ciclo somente após a conclusão do anterior, evitando crescimento contínuo de backups parciais em agendamentos frequentes
 - [x] Adicionar manifesto, checksum e metadados de destino para validar a integridade dos artefatos de banco e código
 - [ ] Reconciliar logs antigos presos em execução e alertar quando não houver backup íntegro recente
 - [ ] Preparar ativação segura do novo callback em produção, com substituição do agendamento diário somente após publicação

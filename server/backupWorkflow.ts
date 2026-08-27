@@ -11,6 +11,7 @@ import { storagePut } from "./storage";
 // o ciclo diário em uma janela de algumas horas quando acionado a cada cinco minutos.
 const CHUNK_ROWS = 10_000;
 const STALE_RUN_MINUTES = 26 * 60;
+const MIN_NEW_BACKUP_INTERVAL_MS = 20 * 60 * 60 * 1000;
 const RUN_PREFIX = "backups/incremental";
 
 type ManifestChunk = {
@@ -217,6 +218,15 @@ async function startRun(triggeredBy: string) {
     .limit(1);
   if (active[0]) return active[0];
 
+  const latestCompleted = await db.select().from(backupRuns)
+    .where(eq(backupRuns.status, "COMPLETE"))
+    .orderBy(asc(backupRuns.updatedAt))
+    .limit(1);
+  if (latestCompleted[0]?.updatedAt) {
+    const elapsed = Date.now() - new Date(latestCompleted[0].updatedAt).getTime();
+    if (elapsed < MIN_NEW_BACKUP_INTERVAL_MS) return null;
+  }
+
   const backupLogId = await createBackupLog(triggeredBy);
   const id = `backup-${Date.now()}-${randomUUID().slice(0, 8)}`;
   const manifest = newManifest(id);
@@ -236,6 +246,9 @@ export async function advanceBackupRun(triggeredBy: string) {
   const db = await getDb();
   if (!db) throw new Error("Banco indisponível para avançar backup");
   const run = await startRun(triggeredBy);
+  if (!run) {
+    return { runId: null, status: "SKIPPED" as const, phase: "COMPLETE" as const, table: null, rows: 0, chunksCreated: 0 };
+  }
   const manifest = parseManifest(run.manifestJson);
   manifest.runId = run.id;
 

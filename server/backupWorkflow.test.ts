@@ -21,6 +21,13 @@ describe("Contingência de backup incremental", () => {
     expect(workflow).toContain("status: \"FAILED\"");
   });
 
+  it("retoma a execução ativa e não abre novo backup completo logo após uma conclusão", () => {
+    expect(workflow).toContain("const MIN_NEW_BACKUP_INTERVAL_MS = 20 * 60 * 60 * 1000");
+    expect(workflow).toContain("if (active[0]) return active[0]");
+    expect(workflow).toContain("if (elapsed < MIN_NEW_BACKUP_INTERVAL_MS) return null");
+    expect(workflow).toContain('status: "SKIPPED" as const');
+  });
+
   it("protege o callback agendado e avança apenas uma etapa por chamada", () => {
     expect(serverEntry).toContain("await sdk.authenticateRequest(req)");
     expect(serverEntry).toContain("user.taskUid !== BACKUP_HEARTBEAT_TASK_UID");
