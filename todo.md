@@ -2321,6 +2321,16 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 
 #### Ordem de priorização pós-contingência
 - [ ] Iniciar a melhoria do módulo Salão somente após validar implantação histórica e primeira cópia íntegra do backup, começando por estabilidade, consultas críticas e carregamento
+- [ ] Permitir nome ou identificação do cliente ao abrir uma comanda, para distinguir comandas simultâneas da mesma mesa
+- [ ] Permitir exclusão segura de qualquer item lançado na comanda, inclusive itens já enviados à produção, com trilha de auditoria e regra de estorno operacional
+- [ ] Diagnosticar e corrigir a análise KDS que não está retornando dados
+- [ ] Levantar e priorizar melhorias complementares do módulo Salão orientadas a operação, acompanhamento de pedidos e gestão de atendimento
+- [ ] Exibir SLA por item no KDS, com tempo em espera, faixas visuais de atraso e alerta configurável por destino
+- [ ] Registrar motivo, responsável e horário no cancelamento de item já enviado, pronto ou entregue, com aviso à produção quando aplicável
+- [ ] Criar visão gerencial do turno: comandas abertas, tempo médio, atrasos, cancelamentos, taxa de serviço e indicadores por garçom/destino
+- [ ] Criar linha do tempo auditável da comanda, incluindo abertura, envio, preparo, pronto, entrega, pagamento e cancelamentos
+- [ ] Sinalizar indisponibilidade de produtos no Salão antes da inclusão na comanda, sem baixar estoque antecipadamente
+- [ ] Evoluir a análise de tempos de pedido para produção e entrega, segmentada por horário, produto e destino
 
 #### Verificação de Lentidão e Disponibilidade
 - [ ] Revisar queries críticas do módulo Salão (pedidos, comanda, KDS)
