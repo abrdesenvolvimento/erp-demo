@@ -2319,6 +2319,9 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 
 ### Sprint Abertura A Brasa Reúne (07/06/2026)
 
+#### Ordem de priorização pós-contingência
+- [ ] Iniciar a melhoria do módulo Salão somente após validar implantação histórica e primeira cópia íntegra do backup, começando por estabilidade, consultas críticas e carregamento
+
 #### Verificação de Lentidão e Disponibilidade
 - [ ] Revisar queries críticas do módulo Salão (pedidos, comanda, KDS)
 - [ ] Verificar heartbeat e cold start para fluxos de atendimento
@@ -2402,14 +2405,14 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Ambos devem usar o mesmo padrão do KDS (printReceiptViaAgent com toast de erro diferenciado)
 
 #### Fix Impressão Comanda v49.1 — Relay via Servidor (06/06/2026)
-- [ ] Problema: celular do garçom não acessa localhost:9100 do computador central
-- [ ] Solução: frontend envia dados de impressão ao backend (tRPC), backend armazena job em fila, Print Agent faz polling no servidor para buscar jobs pendentes
-- [ ] Criar tabela printJobs no banco (id, type, payload, status, createdAt)
-- [ ] Criar rota tRPC: salon.requestPrint (insere job na fila)
-- [ ] Criar endpoint público GET /api/print-jobs/pending (Print Agent faz polling)
-- [ ] Criar endpoint público POST /api/print-jobs/:id/complete (Print Agent marca como concluído)
-- [ ] Atualizar Print Agent para fazer polling no servidor a cada 2s
-- [ ] Atualizar frontend: "Imprimir Comanda" usa tRPC em vez de fetch direto ao agent
+- [x] Problema: celular do garçom não acessa localhost:9100 do computador central — resolvido pela fila de impressão via servidor registrada abaixo
+- [x] Solução: frontend envia dados de impressão ao backend (tRPC), backend armazena job em fila, Print Agent faz polling no servidor para buscar jobs pendentes
+- [x] Criar tabela printJobs no banco (id, type, payload, status, createdAt)
+- [x] Criar rota tRPC: salon.requestPrint (insere job na fila)
+- [x] Criar endpoint público GET /api/print-jobs/pending (Print Agent faz polling)
+- [x] Criar endpoint público POST /api/print-jobs/:id/complete (Print Agent marca como concluído)
+- [x] Atualizar Print Agent para fazer polling no servidor a cada 2s
+- [x] Atualizar frontend: "Imprimir Comanda" usa tRPC em vez de fetch direto ao agent
 
 ### FEAT: Fila de Impressão via Servidor (Print Queue) ✅ (06/06/2026)
 - [x] Tabela `printJobs` no banco (companyId, type, department, payload, status, timestamps)
