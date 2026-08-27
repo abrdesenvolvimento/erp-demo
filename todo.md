@@ -2327,6 +2327,8 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Levantar e priorizar melhorias complementares do módulo Salão orientadas a operação, acompanhamento de pedidos e gestão de atendimento
 - [ ] Exibir SLA por item no KDS, com tempo em espera, faixas visuais de atraso e alerta configurável por destino
 - [x] Registrar motivo, responsável e horário no cancelamento de item já enviado, pronto ou entregue, com aviso à produção quando aplicável
+- [x] Exibir a identificação do cliente da comanda nos tickets de produção da cozinha e do bar
+- [x] Dar destaque visual maior às observações de itens no KDS para chapeiro e montador
 - [ ] Criar visão gerencial do turno: comandas abertas, tempo médio, atrasos, cancelamentos, taxa de serviço e indicadores por garçom/destino
 - [ ] Criar linha do tempo auditável da comanda, incluindo abertura, envio, preparo, pronto, entrega, pagamento e cancelamentos
 - [ ] Sinalizar indisponibilidade de produtos no Salão antes da inclusão na comanda, sem baixar estoque antecipadamente

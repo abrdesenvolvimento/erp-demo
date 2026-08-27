@@ -69,7 +69,7 @@ function handlePrintTicket(group: any, destination: string) {
         <span class="qty">${parseFloat(String(item.quantity))}x</span>
         <span class="name">${item.productName}</span>
       </div>
-      ${item.notes ? `<div class="notes">OBS: ${item.notes}</div>` : ""}
+      ${item.notes ? `<div class="notes"><strong>ATENÇÃO — OBS:</strong> ${item.notes}</div>` : ""}
     `)
     .join("");
 
@@ -87,7 +87,8 @@ function handlePrintTicket(group: any, destination: string) {
       .item { display: flex; gap: 8px; padding: 6px 0; border-bottom: 1px dotted #ccc; align-items: baseline; }
       .item .qty { font-weight: 900; font-size: 18px; min-width: 35px; }
       .item .name { font-size: 15px; font-weight: 700; flex: 1; }
-      .notes { font-size: 12px; font-weight: 700; color: #c00; padding: 2px 0 6px 43px; text-transform: uppercase; }
+      .customer { font-size: 14px; font-weight: 900; margin: 3px 0; text-transform: uppercase; }
+      .notes { font-size: 15px; font-weight: 900; color: #a00; border: 2px solid #a00; background: #fff2f2; padding: 6px 8px; margin: 3px 0 7px 43px; text-transform: uppercase; line-height: 1.25; }
       .footer { text-align: center; margin-top: 12px; font-size: 10px; border-top: 2px dashed #000; padding-top: 8px; color: #888; }
       @page { size: 80mm auto; margin: 0; }
       @media print { html, body { height: auto !important; width: 80mm; } body { padding: 2mm 4mm; } }
@@ -95,6 +96,7 @@ function handlePrintTicket(group: any, destination: string) {
     <div class="header">
       <h2>${destination === "KITCHEN" ? "COZINHA" : "BAR"}</h2>
       <div class="mesa">MESA ${group.tableNumber}</div>
+      ${group.customerLabel ? `<div class="customer">CLIENTE: ${group.customerLabel}</div>` : ""}
       <div class="info">${now} | Garçom: ${group.waiterName || "—"}</div>
     </div>
     <div class="items">${itemsHtml}</div>
@@ -159,6 +161,7 @@ export default function SalaoKDSCozinha() {
             destination: "KITCHEN" as const,
             tableNumber: first.tableNumber,
             waiterName: first.waiterName,
+            customerLabel: first.customerLabel,
             orderId: first.orderId,
             items: orderItems.map((i: any) => ({
               productName: i.productName,
@@ -199,6 +202,7 @@ export default function SalaoKDSCozinha() {
         destination: "KITCHEN" as const,
         tableNumber: first.tableNumber,
         waiterName: first.waiterName,
+        customerLabel: first.customerLabel,
         orderId: first.orderId,
         items: orderItems.map((i: any) => ({
           productName: i.productName,
@@ -238,6 +242,7 @@ export default function SalaoKDSCozinha() {
         orderId: item.orderId,
         tableNumber: item.tableNumber,
         waiterName: item.waiterName,
+        customerLabel: item.customerLabel,
         openedAt: item.openedAt,
         items: [],
       };
@@ -584,6 +589,11 @@ export default function SalaoKDSCozinha() {
                       {group.waiterName && (
                         <p className="text-xs text-gray-400 mt-0.5">{group.waiterName}</p>
                       )}
+                      {group.customerLabel && (
+                        <p className="text-sm font-bold text-orange-200 mt-1 truncate" title={group.customerLabel}>
+                          Cliente: {group.customerLabel}
+                        </p>
+                      )}
                     </div>
 
                     {/* Items */}
@@ -607,8 +617,11 @@ export default function SalaoKDSCozinha() {
                                   {item.productName}
                                 </p>
                                 {item.notes && (
-                                  <div className="mt-2 bg-yellow-500/20 border border-yellow-500/30 rounded-lg px-2.5 py-1.5">
-                                    <p className="text-xs text-yellow-300 font-medium">
+                                  <div className="mt-3 rounded-xl border-2 border-yellow-400 bg-yellow-400/20 px-3 py-2 shadow-lg shadow-yellow-500/10">
+                                    <p className="flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wide text-yellow-300">
+                                      <AlertTriangle className="h-4 w-4 shrink-0" /> Atenção — observação
+                                    </p>
+                                    <p className="mt-1 text-base font-extrabold leading-snug text-yellow-100">
                                       {item.notes}
                                     </p>
                                   </div>

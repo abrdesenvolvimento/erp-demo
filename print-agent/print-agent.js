@@ -125,7 +125,7 @@ const ESCPOS = {
 
 // --- Formatters ---
 function formatProductionTicket(data) {
-  const { tableNumber, orderId, items, destination, timestamp, waiterName } = data;
+  const { tableNumber, orderId, items, destination, timestamp, waiterName, customerLabel } = data;
   const time = new Date(timestamp || Date.now()).toLocaleTimeString("pt-BR", {
     hour: "2-digit", minute: "2-digit", timeZone: "America/Sao_Paulo"
   });
@@ -141,6 +141,7 @@ function formatProductionTicket(data) {
   buf += ESCPOS.ALIGN_LEFT;
   buf += ESCPOS.BOLD_ON;
   buf += `Mesa: ${tableNumber}    Comanda: #${orderId}\n`;
+  if (customerLabel) buf += `Cliente: ${customerLabel}\n`;
   buf += ESCPOS.BOLD_OFF;
   buf += `Hora: ${time}`;
   if (waiterName) buf += `  Garcom: ${waiterName}`;
@@ -157,7 +158,11 @@ function formatProductionTicket(data) {
     buf += `${qty} ${item.productName}\n`;
     buf += ESCPOS.NORMAL;
     if (item.notes) {
-      buf += `      OBS: ${item.notes}\n`;
+      buf += ESCPOS.BOLD_ON;
+      buf += ESCPOS.DOUBLE_HEIGHT_ON;
+      buf += `>>> OBS: ${String(item.notes).toUpperCase()}\n`;
+      buf += ESCPOS.NORMAL;
+      buf += ESCPOS.BOLD_OFF;
     }
   }
 

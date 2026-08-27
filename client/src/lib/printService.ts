@@ -23,6 +23,8 @@ type PrinterDepartment = "KITCHEN" | "BAR" | "CASHIER";
 interface ProductionTicketData {
   tableNumber: number | string;
   orderId: number;
+  waiterName?: string | null;
+  customerLabel?: string | null;
   items: Array<{
     productName: string;
     quantity: number;

@@ -779,6 +779,7 @@ export const salonRouter = router({
           orderId: salonOrderItems.orderId,
           tableNumber: salonOrders.tableNumber,
           waiterName: salonOrders.waiterName,
+          customerLabel: salonOrders.customerLabel,
           productName: salonOrderItems.productName,
           quantity: salonOrderItems.quantity,
           notes: salonOrderItems.notes,

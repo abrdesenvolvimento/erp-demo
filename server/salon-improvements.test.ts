@@ -62,3 +62,27 @@ describe("Salão — análise KDS contextual", () => {
     expect(kdsPage).toContain("A análise considera somente itens efetivamente encaminhados à cozinha ou ao bar.");
   });
 });
+
+describe("Salão — ticket de produção e leitura de observações", () => {
+  const salonRouter = readProjectFile("server/routers/salon.ts");
+  const printAgent = readProjectFile("print-agent/print-agent.js");
+  const kitchenKds = readProjectFile("client/src/pages/SalaoKDSCozinha.tsx");
+  const barKds = readProjectFile("client/src/pages/SalaoKDSBar.tsx");
+
+  it("propaga a identificação do cliente até o ticket de produção", () => {
+    expect(salonRouter).toContain("customerLabel: salonOrders.customerLabel");
+    expect(kitchenKds).toContain("customerLabel: first.customerLabel");
+    expect(barKds).toContain("customerLabel: first.customerLabel");
+    expect(printAgent).toContain("waiterName, customerLabel");
+    expect(printAgent).toContain("Cliente: ${customerLabel}");
+  });
+
+  it("trata observações como instruções operacionais de alta visibilidade", () => {
+    expect(printAgent).toContain(">>> OBS:");
+    expect(printAgent).toContain("ESCPOS.DOUBLE_HEIGHT_ON");
+    expect(kitchenKds).toContain("Atenção — observação");
+    expect(barKds).toContain("Atenção — observação");
+    expect(kitchenKds).toContain("text-base font-extrabold");
+    expect(barKds).toContain("text-base font-extrabold");
+  });
+});
