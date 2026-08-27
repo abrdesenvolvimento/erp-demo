@@ -37,6 +37,7 @@ export default function SalaoMesas() {
   const [openOrderModal, setOpenOrderModal] = useState(false);
   const [selectedTable, setSelectedTable] = useState<any>(null);
   const [guestCount, setGuestCount] = useState(2);
+  const [customerLabel, setCustomerLabel] = useState("");
   const [addTableModal, setAddTableModal] = useState(false);
   const [newTableNumber, setNewTableNumber] = useState("");
   const [newTableCapacity, setNewTableCapacity] = useState("4");
@@ -330,6 +331,7 @@ export default function SalaoMesas() {
     if (table.status === "FREE") {
       setSelectedTable(table);
       setGuestCount(2);
+      setCustomerLabel("");
       setOpenOrderModal(true);
     } else if (table.activeOrder) {
       setLocation(`/salao/comanda/${table.activeOrder.id}`);
@@ -345,6 +347,7 @@ export default function SalaoMesas() {
       guestCount,
       waiterId: user?.id,
       waiterName: user?.name ?? undefined,
+      customerLabel: customerLabel || undefined,
     });
   };
 
@@ -646,6 +649,11 @@ export default function SalaoMesas() {
                 {/* Order info */}
                 {order ? (
                   <div className="space-y-1 mt-2">
+                    {order.customerLabel && (
+                      <p className="text-xs font-semibold text-foreground truncate" title={order.customerLabel}>
+                        {order.customerLabel}
+                      </p>
+                    )}
                     <div className="flex items-center gap-1 text-xs text-muted-foreground">
                       <Users className="h-3 w-3" />
                       <span>{order.guestCount} pax</span>
@@ -715,6 +723,18 @@ export default function SalaoMesas() {
                   +
                 </Button>
               </div>
+            </div>
+            <div>
+              <Label htmlFor="customerLabel">Cliente / identificação (opcional)</Label>
+              <Input
+                id="customerLabel"
+                value={customerLabel}
+                onChange={e => setCustomerLabel(e.target.value)}
+                placeholder="Ex.: João Silva, Família Santos"
+                maxLength={100}
+                className="mt-1.5"
+              />
+              <p className="text-xs text-muted-foreground mt-1">Útil quando houver mais de uma comanda na mesma mesa.</p>
             </div>
           </div>
           <DialogFooter>

@@ -50,6 +50,13 @@
       "when": 1761071611933,
       "tag": "0006_chemical_maverick",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "5",
+      "when": 1787798864066,
+      "tag": "0007_salon-customer-label-and-item-cancellation-audit",
+      "breakpoints": true
     }
   ]
 }

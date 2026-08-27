@@ -103,7 +103,7 @@ export const salonRouter = router({
         .filter(t => t.status !== "FREE")
         .map(t => t.id);
 
-      let activeOrders: Array<{ tableId: number; id: number; guestCount: number; totalAmount: string | null; openedAt: Date | null; waiterName: string | null; status: string }> = [];
+      let activeOrders: Array<{ tableId: number; id: number; guestCount: number; totalAmount: string | null; openedAt: Date | null; waiterName: string | null; customerLabel: string | null; status: string }> = [];
       if (occupiedTableIds.length > 0) {
         activeOrders = await db
           .select({
@@ -113,6 +113,7 @@ export const salonRouter = router({
             totalAmount: salonOrders.totalAmount,
             openedAt: salonOrders.openedAt,
             waiterName: salonOrders.waiterName,
+            customerLabel: salonOrders.customerLabel,
             status: salonOrders.status,
           })
           .from(salonOrders)
@@ -243,10 +244,26 @@ export const salonRouter = router({
       guestCount: z.number().min(1).default(1),
       waiterId: z.string().optional(),
       waiterName: z.string().optional(),
+      customerLabel: z.string().trim().max(100).optional(),
     }))
     .mutation(async ({ input, ctx }) => {
       const db = await getDb();
       if (!db) throw new Error("DB unavailable");
+      if (!ctx.activeCompanyId || ctx.activeCompanyId !== input.companyId) {
+        throw new Error("Empresa ativa inválida para abertura de comanda");
+      }
+
+      const [table] = await db.select({
+        id: salonTables.id,
+        number: salonTables.number,
+        status: salonTables.status,
+      }).from(salonTables).where(and(
+        eq(salonTables.id, input.tableId),
+        eq(salonTables.companyId, ctx.activeCompanyId),
+        eq(salonTables.active, true),
+      )).limit(1);
+      if (!table) throw new Error("Mesa não encontrada na empresa ativa");
+      if (table.status !== "FREE") throw new Error("A mesa não está disponível para abertura de comanda");
 
       // Check if table already has an open order
       const [existing] = await db
@@ -254,7 +271,8 @@ export const salonRouter = router({
         .from(salonOrders)
         .where(
           and(
-            eq(salonOrders.tableId, input.tableId),
+            eq(salonOrders.tableId, table.id),
+            eq(salonOrders.companyId, ctx.activeCompanyId),
             inArray(salonOrders.status, ["OPEN", "WAITING_PAYMENT"])
           )
         )
@@ -266,12 +284,13 @@ export const salonRouter = router({
 
       // Create order
       const [result] = await db.insert(salonOrders).values({
-        companyId: input.companyId,
-        tableId: input.tableId,
-        tableNumber: input.tableNumber,
+        companyId: ctx.activeCompanyId,
+        tableId: table.id,
+        tableNumber: table.number,
         guestCount: input.guestCount,
         waiterId: input.waiterId ?? ctx.user?.id,
         waiterName: input.waiterName ?? ctx.user?.name ?? null,
+        customerLabel: input.customerLabel || null,
         status: "OPEN",
       });
 
@@ -281,9 +300,34 @@ export const salonRouter = router({
       await db
         .update(salonTables)
         .set({ status: "OCCUPIED" })
-        .where(eq(salonTables.id, input.tableId));
+        .where(and(eq(salonTables.id, table.id), eq(salonTables.companyId, ctx.activeCompanyId)));
 
       return { id: orderId };
+    }),
+
+  updateOrderCustomerLabel: protectedProcedure
+    .input(z.object({
+      orderId: z.number(),
+      companyId: z.number(),
+      customerLabel: z.string().trim().max(100).optional(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const db = await getDb();
+      if (!db) throw new Error("DB unavailable");
+      if (!ctx.activeCompanyId || ctx.activeCompanyId !== input.companyId) {
+        throw new Error("Empresa ativa inválida para esta comanda");
+      }
+      const [order] = await db.select({ status: salonOrders.status })
+        .from(salonOrders)
+        .where(and(eq(salonOrders.id, input.orderId), eq(salonOrders.companyId, input.companyId)))
+        .limit(1);
+      if (!order) throw new Error("Comanda não encontrada");
+      if (!['OPEN', 'WAITING_PAYMENT'].includes(order.status)) throw new Error("A identificação só pode ser alterada em comanda aberta");
+
+      await db.update(salonOrders)
+        .set({ customerLabel: input.customerLabel || null })
+        .where(and(eq(salonOrders.id, input.orderId), eq(salonOrders.companyId, input.companyId)));
+      return { success: true };
     }),
 
   getOrder: protectedProcedure
@@ -525,14 +569,49 @@ export const salonRouter = router({
       itemId: z.number(),
       orderId: z.number(),
       companyId: z.number(),
+      reason: z.string().trim().max(500).optional(),
     }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       const db = await getDb();
       if (!db) throw new Error("DB unavailable");
+      if (!ctx.activeCompanyId || ctx.activeCompanyId !== input.companyId) {
+        throw new Error("Empresa ativa inválida para esta comanda");
+      }
+
+      const [item] = await db.select({
+        status: salonOrderItems.status,
+        productName: salonOrderItems.productName,
+      }).from(salonOrderItems).where(and(
+        eq(salonOrderItems.id, input.itemId),
+        eq(salonOrderItems.orderId, input.orderId),
+        eq(salonOrderItems.companyId, input.companyId)
+      )).limit(1);
+      if (!item) throw new Error("Item não encontrado na comanda");
+      if (item.status === "CANCELLED") throw new Error("Item já cancelado");
+
+      const [order] = await db.select({
+        status: salonOrders.status,
+        tableNumber: salonOrders.tableNumber,
+      }).from(salonOrders).where(and(
+        eq(salonOrders.id, input.orderId),
+        eq(salonOrders.companyId, input.companyId)
+      )).limit(1);
+      if (!order) throw new Error("Comanda não encontrada");
+      if (!['OPEN', 'WAITING_PAYMENT'].includes(order.status)) throw new Error("Item de comanda encerrada exige estorno da venda");
+
+      const requiresReason = item.status !== "DRAFT";
+      if (requiresReason && (!input.reason || input.reason.length < 3)) {
+        throw new Error("Informe o motivo do cancelamento de item já encaminhado ao atendimento");
+      }
 
       await db
         .update(salonOrderItems)
-        .set({ status: "CANCELLED" })
+        .set({
+          status: "CANCELLED",
+          cancelledAt: new Date(),
+          cancelledBy: ctx.user?.id ?? null,
+          cancellationReason: input.reason || null,
+        })
         .where(
           and(
             eq(salonOrderItems.id, input.itemId),
@@ -540,6 +619,14 @@ export const salonRouter = router({
             eq(salonOrderItems.companyId, input.companyId)
           )
         );
+
+      if (requiresReason) {
+        sendPushToCompany(input.companyId, {
+          title: "Item cancelado na comanda",
+          body: `Mesa ${order.tableNumber}: ${item.productName}${input.reason ? ` — ${input.reason}` : ""}`,
+          data: { type: "cancelled-order-item", orderId: String(input.orderId), itemId: String(input.itemId) },
+        }).catch((error) => console.error("[Salon] Falha ao avisar cancelamento de item:", error));
+      }
 
       await recalcOrderTotals(db, input.orderId);
       return { success: true };

@@ -14,7 +14,7 @@ import { toast } from "sonner";
 import {
   ArrowLeft, Plus, Minus, Trash2, Send, CreditCard, DollarSign,
   QrCode, Users, Clock, ChefHat, CheckCircle2, Search, X, Bell,
-  Printer, FileText, ArrowRight, ArrowRightLeft, Banknote
+  Printer, FileText, ArrowRight, ArrowRightLeft, Banknote, UserRound
 } from "lucide-react";
 import { vibrateUrgent } from "@/lib/notificationSound";
 // Impressão de comanda é enviada via fila do servidor → Print Agent busca e imprime
@@ -66,6 +66,11 @@ export default function SalaoComanda() {
   const [serviceFeeModal, setServiceFeeModal] = useState(false);
   const [serviceFeeAccepted, setServiceFeeAccepted] = useState(true);
   const [confirmPaymentModal, setConfirmPaymentModal] = useState(false);
+  const [cancelItemModal, setCancelItemModal] = useState(false);
+  const [itemToCancel, setItemToCancel] = useState<any>(null);
+  const [cancellationReason, setCancellationReason] = useState("");
+  const [customerLabelModal, setCustomerLabelModal] = useState(false);
+  const [customerLabelValue, setCustomerLabelValue] = useState("");
   // Pagamento parcial
   const [partialPaymentModal, setPartialPaymentModal] = useState(false);
   const [partialAmount, setPartialAmount] = useState("");
@@ -166,8 +171,20 @@ export default function SalaoComanda() {
 
   const removeItemMutation = trpc.salon.removeItem.useMutation({
     onSuccess: () => {
-      toast.success("Item removido");
+      toast.success("Item cancelado e registrado na comanda");
       utils.salon.getOrder.invalidate({ orderId, companyId });
+      setCancelItemModal(false);
+      setItemToCancel(null);
+      setCancellationReason("");
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const updateCustomerLabelMutation = trpc.salon.updateOrderCustomerLabel.useMutation({
+    onSuccess: () => {
+      toast.success("Identificação da comanda atualizada");
+      utils.salon.getOrder.invalidate({ orderId, companyId });
+      setCustomerLabelModal(false);
     },
     onError: (e) => toast.error(e.message),
   });
@@ -369,6 +386,28 @@ export default function SalaoComanda() {
     setPreviewModal(true);
   };
 
+  const handleCancelItem = () => {
+    if (!itemToCancel) return;
+    if (itemToCancel.status !== "DRAFT" && cancellationReason.trim().length < 3) {
+      toast.error("Informe o motivo do cancelamento");
+      return;
+    }
+    removeItemMutation.mutate({
+      itemId: itemToCancel.id,
+      orderId,
+      companyId,
+      reason: cancellationReason.trim() || undefined,
+    });
+  };
+
+  const handleSaveCustomerLabel = () => {
+    updateCustomerLabelMutation.mutate({
+      orderId,
+      companyId,
+      customerLabel: customerLabelValue.trim() || undefined,
+    });
+  };
+
   const handleConfirmPreviewAndPay = () => {
     // Step 2: close preview, open service fee confirmation
     setPreviewModal(false);
@@ -418,6 +457,7 @@ export default function SalaoComanda() {
     const receiptData = {
       tableNumber: order.tableNumber,
       orderId: order.id,
+      customerLabel: order.customerLabel,
       waiterName: order.waiterName,
       guestCount: order.guestCount,
       openedAt: order.openedAt,
@@ -504,6 +544,12 @@ export default function SalaoComanda() {
             {order.waiterName && (
               <span>{order.waiterName}</span>
             )}
+            {order.customerLabel && (
+              <span className="flex items-center gap-1 font-medium text-foreground">
+                <UserRound className="h-3.5 w-3.5" />
+                {order.customerLabel}
+              </span>
+            )}
           </div>
         </div>
         <Badge
@@ -582,7 +628,7 @@ export default function SalaoComanda() {
                         Entregue
                       </button>
                     )}
-                    {!isClosed && (item.status !== "DELIVERED" || item.status === "READY") && (
+                    {!isClosed && item.status !== "CANCELLED" && (
                       <div className="flex items-center gap-1">
                         {parseFloat(String(item.quantity)) > 1 && (
                           <button
@@ -595,7 +641,11 @@ export default function SalaoComanda() {
                           </button>
                         )}
                         <button
-                          onClick={() => removeItemMutation.mutate({ itemId: item.id, orderId, companyId })}
+                          onClick={() => {
+                            setItemToCancel(item);
+                            setCancellationReason("");
+                            setCancelItemModal(true);
+                          }}
                           disabled={removeItemMutation.isPending}
                           className="text-red-400 hover:text-red-600 p-0.5"
                           title="Remover item completo"
@@ -689,6 +739,17 @@ export default function SalaoComanda() {
             <ArrowRightLeft className="h-4 w-4 mr-1" />
             Mudar Mesa
           </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setCustomerLabelValue(order.customerLabel || "");
+              setCustomerLabelModal(true);
+            }}
+          >
+            <UserRound className="h-4 w-4 mr-1" />
+            {order.customerLabel ? "Cliente" : "Identificar cliente"}
+          </Button>
           {activeItems.length > 0 && (
             <Button
               variant="outline"
@@ -748,6 +809,73 @@ export default function SalaoComanda() {
           )}
         </div>
       )}
+
+      <Dialog open={customerLabelModal} onOpenChange={setCustomerLabelModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Identificação da comanda</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2 py-2">
+            <Label htmlFor="editCustomerLabel">Cliente / identificação</Label>
+            <Input
+              id="editCustomerLabel"
+              value={customerLabelValue}
+              onChange={e => setCustomerLabelValue(e.target.value)}
+              placeholder="Ex.: João Silva, Família Santos"
+              maxLength={100}
+            />
+            <p className="text-xs text-muted-foreground">Campo opcional. A identificação aparece na mesa, na comanda e no ticket.</p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCustomerLabelModal(false)}>Cancelar</Button>
+            <Button onClick={handleSaveCustomerLabel} disabled={updateCustomerLabelMutation.isPending}>
+              {updateCustomerLabelMutation.isPending ? "Salvando..." : "Salvar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={cancelItemModal} onOpenChange={(open) => {
+        setCancelItemModal(open);
+        if (!open) { setItemToCancel(null); setCancellationReason(""); }
+      }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Cancelar item da comanda</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <p className="text-sm text-muted-foreground">
+              O item será cancelado, mas continuará preservado no histórico da comanda.
+            </p>
+            {itemToCancel && (
+              <div className="rounded-md bg-muted p-3 text-sm">
+                <span className="font-medium">{itemToCancel.productName}</span>
+                <span className="text-muted-foreground"> · {itemToCancel.quantity} un.</span>
+              </div>
+            )}
+            {itemToCancel?.status !== "DRAFT" && (
+              <div className="space-y-2">
+                <Label htmlFor="cancellationReason">Motivo do cancelamento *</Label>
+                <Input
+                  id="cancellationReason"
+                  value={cancellationReason}
+                  onChange={e => setCancellationReason(e.target.value)}
+                  placeholder="Ex.: cliente desistiu, item indisponível"
+                  maxLength={500}
+                  autoFocus
+                />
+                <p className="text-xs text-muted-foreground">O motivo será registrado e comunicado à produção quando aplicável.</p>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCancelItemModal(false)}>Voltar</Button>
+            <Button variant="destructive" onClick={handleCancelItem} disabled={removeItemMutation.isPending}>
+              {removeItemMutation.isPending ? "Cancelando..." : "Confirmar cancelamento"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Add Item Modal */}
       <Dialog open={addItemModal} onOpenChange={(open) => {

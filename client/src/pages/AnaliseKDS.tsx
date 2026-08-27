@@ -14,8 +14,9 @@ function formatDate(d: Date): string {
 }
 
 export default function AnaliseKDS() {
-  const { activeCompany } = useCompany();
-  const companyId = activeCompany?.id ?? 0;
+  const { activeCompanyId, activeCompany } = useCompany();
+  const companyId = activeCompanyId ?? 0;
+  const companyName = activeCompany?.companyName || activeCompany?.companyLegalName || "empresa selecionada";
 
   const brazilToday = useMemo(() => {
     const info = getCurrentBrazilDateInfo();
@@ -32,7 +33,7 @@ export default function AnaliseKDS() {
   const [endDate, setEndDate] = useState(() => brazilToday.dateStr);
   const [destination, setDestination] = useState<"ALL" | "KITCHEN" | "BAR">("ALL");
 
-  const { data, isLoading } = trpc.salon.getKDSAnalytics.useQuery(
+  const { data, isLoading, error } = trpc.salon.getKDSAnalytics.useQuery(
     { companyId, startDate, endDate, destination },
     { enabled: companyId > 0 }
   );
@@ -116,8 +117,8 @@ export default function AnaliseKDS() {
               <div className="flex gap-2">
                 <button
                   onClick={() => {
-                    setStartDate(formatDate(today));
-                    setEndDate(formatDate(today));
+                    setStartDate(formatDate(brazilToday.date));
+                    setEndDate(formatDate(brazilToday.date));
                   }}
                   className="px-3 py-2 text-sm rounded-md border hover:bg-muted transition-colors"
                 >
@@ -125,10 +126,10 @@ export default function AnaliseKDS() {
                 </button>
                 <button
                   onClick={() => {
-                    const d = new Date(today);
+                    const d = new Date(brazilToday.date);
                     d.setDate(d.getDate() - 7);
                     setStartDate(formatDate(d));
-                    setEndDate(formatDate(today));
+                    setEndDate(formatDate(brazilToday.date));
                   }}
                   className="px-3 py-2 text-sm rounded-md border hover:bg-muted transition-colors"
                 >
@@ -136,10 +137,10 @@ export default function AnaliseKDS() {
                 </button>
                 <button
                   onClick={() => {
-                    const d = new Date(today);
+                    const d = new Date(brazilToday.date);
                     d.setDate(d.getDate() - 30);
                     setStartDate(formatDate(d));
-                    setEndDate(formatDate(today));
+                    setEndDate(formatDate(brazilToday.date));
                   }}
                   className="px-3 py-2 text-sm rounded-md border hover:bg-muted transition-colors"
                 >
@@ -154,8 +155,32 @@ export default function AnaliseKDS() {
           <div className="flex items-center justify-center py-20">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500" />
           </div>
+        ) : error ? (
+          <Card className="border-red-200 bg-red-50/50">
+            <CardContent className="py-10 text-center">
+              <p className="font-medium text-red-800">Não foi possível carregar a análise KDS</p>
+              <p className="mt-1 text-sm text-red-700">{error.message}</p>
+            </CardContent>
+          </Card>
+        ) : !companyId ? (
+          <Card>
+            <CardContent className="py-10 text-center text-muted-foreground">Selecione uma empresa para consultar a produção.</CardContent>
+          </Card>
         ) : !data ? (
-          <p className="text-center text-muted-foreground py-10">Sem dados disponíveis</p>
+          <Card>
+            <CardContent className="py-10 text-center text-muted-foreground">A consulta ainda não retornou dados.</CardContent>
+          </Card>
+        ) : data.totalItems === 0 ? (
+          <Card>
+            <CardContent className="py-10 text-center">
+              <ChefHat className="mx-auto mb-3 h-10 w-10 text-muted-foreground/40" />
+              <p className="font-medium">Nenhum item foi enviado à produção neste período</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Empresa: {companyName} · Período: {startDate.split("-").reverse().join("/")} a {endDate.split("-").reverse().join("/")} · Destino: {destination === "ALL" ? "todos" : destination === "KITCHEN" ? "cozinha" : "bar"}.
+              </p>
+              <p className="mt-3 text-xs text-muted-foreground">A análise considera somente itens efetivamente encaminhados à cozinha ou ao bar.</p>
+            </CardContent>
+          </Card>
         ) : (
           <>
             {/* Summary Cards */}

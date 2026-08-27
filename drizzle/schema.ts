@@ -1373,6 +1373,7 @@ export const salonOrders = mysqlTable("salonOrders", {
   tableNumber: int("tableNumber").notNull(),
   waiterId: varchar("waiterId", { length: 64 }),
   waiterName: varchar("waiterName", { length: 200 }),
+  customerLabel: varchar("customerLabel", { length: 100 }),
   guestCount: int("guestCount").default(1).notNull(),
   status: mysqlEnum("status", ["OPEN", "WAITING_PAYMENT", "CLOSED", "CANCELLED"]).default("OPEN").notNull(),
   subtotal: decimal("subtotal", { precision: 10, scale: 2 }).default("0.00"),
@@ -1409,6 +1410,9 @@ export const salonOrderItems = mysqlTable("salonOrderItems", {
   sentAt: timestamp("sentAt"),
   readyAt: timestamp("readyAt"),
   deliveredAt: timestamp("deliveredAt"),
+  cancelledAt: timestamp("cancelledAt"),
+  cancelledBy: varchar("cancelledBy", { length: 64 }),
+  cancellationReason: varchar("cancellationReason", { length: 500 }),
   createdAt: timestamp("createdAt").defaultNow(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow(),
 }, (table) => ({
