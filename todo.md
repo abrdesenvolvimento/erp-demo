@@ -2617,3 +2617,6 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Implantação histórica: incluir aprovação e cancelamento auditáveis, com motivo obrigatório para retirar valor já publicado das análises gerenciais
 - [x] Corrigir isolamento por empresa: Adega Beira Rio não deve exibir vendas do canal Salão da A Brasa Reúne em filtros, indicadores ou análises
 - [x] Reforçar as procedures de vendas para rejeitar consultas, exportações, detalhes e alterações sem empresa ativa, evitando retorno global entre empresas
+- [ ] Rastrear o caminho efetivo que gerou o ticket físico antigo, incluindo impressão direta do KDS, fila e agente local
+- [ ] Garantir que o ticket físico efetivo exiba customerLabel e observação em bloco destacado, sem alterar o KDS
+
