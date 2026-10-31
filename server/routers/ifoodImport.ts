@@ -141,7 +141,9 @@ export const ifoodImportRouter = router({
       }));
 
       // 2. Se houver busca, também buscar produtos ABRWF sem mapeamento iFood
-      let unmappedProducts: typeof mappingResults = [];
+      // A lista também contém produtos internos sem registro iFood; por isso
+      // ela tem origem "product", distinta dos vínculos persistidos.
+      let unmappedProducts: Array<any> = [];
       if (input.search && input.search.trim().length >= 2) {
         const searchTerm = `%${input.search.toLowerCase()}%`;
         
@@ -899,6 +901,7 @@ export const ifoodImportRouter = router({
               unitPrice: item.ifoodPrice.toFixed(2),
               totalPrice: item.lineTotal.toFixed(2),
               companyId,
+              branchId,
             });
 
             // Baixar estoque
@@ -911,6 +914,7 @@ export const ifoodImportRouter = router({
               userId: ctx.user.id,
               notes: `Venda iFood #${order.ifoodOrderCode}`,
               companyId,
+              branchId,
             });
 
             // Atualizar estoque do produto
@@ -925,10 +929,12 @@ export const ifoodImportRouter = router({
               await db.insert(ifoodPriceDivergences).values({
                 ifoodOrderId: order.ifoodOrderId,
                 productId: item.productId,
+                ifoodProductName: item.ifoodProductName,
                 ifoodPrice: item.ifoodPrice.toFixed(2),
                 abrwfPrice: item.abrwfPrice.toFixed(2),
                 divergencePercent: item.divergencePercent?.toFixed(2) || "0",
                 companyId,
+                branchId,
               });
             }
           }
@@ -940,6 +946,7 @@ export const ifoodImportRouter = router({
             saleId,
             importLogId: logId,
             companyId,
+            branchId,
           });
 
           importedCount++;

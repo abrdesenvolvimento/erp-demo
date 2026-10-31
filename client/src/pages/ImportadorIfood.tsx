@@ -21,7 +21,7 @@ interface ProcessedOrder {
   orderDate: string;
   totalValue: number;
   items: ProcessedItem[];
-  status: "ready" | "missing_product" | "price_divergence" | "normalization_error" | "already_imported";
+  status: "ready" | "missing_product" | "price_divergence" | "normalization_error" | "already_imported" | "cancelled";
   issues: string[];
 }
 
@@ -626,7 +626,7 @@ export default function ImportadorIfood() {
                         <TableRow>
                           <TableHead className="w-12">
                             <Checkbox
-                              checked={selectedOrders.size > 0 && selectedOrders.size === previewData.orders.filter(o => o.status !== "missing_product").length}
+                              checked={selectedOrders.size > 0 && selectedOrders.size === previewData.orders.filter(o => o.status === "ready" || o.status === "price_divergence").length}
                               onCheckedChange={handleSelectAll}
                             />
                           </TableHead>
@@ -640,12 +640,12 @@ export default function ImportadorIfood() {
                       </TableHeader>
                       <TableBody>
                         {previewData.orders.map((order) => (
-                          <TableRow key={order.ifoodOrderId} className={`transition-colors ${order.status === "missing_product" || order.status === "cancelled" ? "opacity-50 bg-gray-50/50" : "hover:bg-[#EA1D2C]/[0.02]"}`}>
+                          <TableRow key={order.ifoodOrderId} className={`transition-colors ${order.status !== "ready" && order.status !== "price_divergence" ? "opacity-50 bg-gray-50/50" : "hover:bg-[#EA1D2C]/[0.02]"}`}>
                             <TableCell>
                               <Checkbox
                                 checked={selectedOrders.has(order.ifoodOrderId)}
                                 onCheckedChange={(checked) => handleSelectOrder(order.ifoodOrderId, checked as boolean)}
-                                disabled={order.status === "missing_product" || order.status === "cancelled"}
+                                disabled={order.status !== "ready" && order.status !== "price_divergence"}
                               />
                             </TableCell>
                             <TableCell className="font-mono">#{order.ifoodOrderCode}</TableCell>

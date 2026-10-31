@@ -2620,3 +2620,8 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Rastrear o caminho efetivo que gerou o ticket físico antigo, incluindo impressão direta do KDS, fila e agente local
 - [x] Garantir que o ticket físico efetivo exiba customerLabel e observação em bloco destacado, sem alterar o KDS
 
+## Saneamento iFood — Outubro/2026
+- [x] Diagnosticar e normalizar 36 pedidos com preço de pacote/linha e quantidade zero interpretados incorretamente, ancorando o cálculo em `valor_total_dos_itens`
+- [x] Corrigir 35 vendas existentes, criar 1 venda ausente pelo valor oficial e cancelar 8 duplicidades com estorno auditável de estoque
+- [x] Validar os 36 UUIDs iFood corrigidos, os totais das vendas, os itens, os vínculos de idempotência e os mapeamentos de combo
+- [x] Prevenir recorrência: normalização em centavos no servidor, bloqueio de ambiguidade, revalidação do JSON na gravação e multiplicador configurável de unidades por combo

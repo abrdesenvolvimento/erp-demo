@@ -1172,6 +1172,10 @@ export const ifoodImportLogs = mysqlTable("ifoodImportLogs", {
   status: mysqlEnum("status", ["PROCESSING", "SUCCESS", "PARTIAL", "ERROR"]).default("PROCESSING").notNull(),
   errorMessage: text("errorMessage"),
   createdBy: varchar("createdBy", { length: 64 }),
+  // Colunas já presentes no banco; mantidas no schema para que inserções
+  // multiempresa sejam verificadas pelo TypeScript.
+  companyId: int("companyId"),
+  branchId: int("branchId"),
 }, (table) => ({
   importDateIdx: index("ifood_import_date_idx").on(table.importedAt),
   importStatusIdx: index("ifood_import_status_idx").on(table.status),
@@ -1186,7 +1190,11 @@ export const ifoodImportedOrders = mysqlTable("ifoodImportedOrders", {
   ifoodOrderCode: varchar("ifoodOrderCode", { length: 20 }),
   saleId: int("saleId"),
   importLogId: int("importLogId"),
+  orderDate: timestamp("orderDate"),
+  orderValue: decimal("orderValue", { precision: 10, scale: 2 }),
   importedAt: timestamp("importedAt").defaultNow(),
+  companyId: int("companyId"),
+  branchId: int("branchId"),
 }, (table) => ({
   orderIdIdx: uniqueIndex("ifood_order_id_idx").on(table.ifoodOrderId),
 }));
@@ -1199,11 +1207,14 @@ export const ifoodPriceDivergences = mysqlTable("ifoodPriceDivergences", {
   importLogId: int("importLogId"),
   ifoodOrderId: varchar("ifoodOrderId", { length: 64 }),
   productId: int("productId"),
+  ifoodProductName: varchar("ifoodProductName", { length: 255 }),
   ifoodSku: varchar("ifoodSku", { length: 50 }),
   ifoodPrice: decimal("ifoodPrice", { precision: 10, scale: 2 }),
   abrwfPrice: decimal("abrwfPrice", { precision: 10, scale: 2 }),
   divergencePercent: decimal("divergencePercent", { precision: 5, scale: 2 }),
   createdAt: timestamp("createdAt").defaultNow(),
+  companyId: int("companyId"),
+  branchId: int("branchId"),
 });
 export type IfoodPriceDivergence = typeof ifoodPriceDivergences.$inferSelect;
 export type InsertIfoodPriceDivergence = typeof ifoodPriceDivergences.$inferInsert;
