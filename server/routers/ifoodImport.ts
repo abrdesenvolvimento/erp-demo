@@ -14,6 +14,7 @@ import {
 } from "../../drizzle/schema";
 import { eq, like, and, sql, desc, inArray } from "drizzle-orm";
 import { getNowInBrazil } from '../../shared/dateUtils';
+import { centsToNumber, normalizeIfoodOrderPricing } from "../ifoodPricing";
 
 // Constantes
 const IFOOD_CHANNEL_ID = 2; // Canal iFood/Delivery
@@ -82,6 +83,7 @@ export const ifoodImportRouter = router({
         ifoodSku: ifoodProductMappings.ifoodSku,
         ifoodProductName: ifoodProductMappings.ifoodProductName,
         productId: ifoodProductMappings.productId,
+        quantityMultiplier: ifoodProductMappings.quantityMultiplier,
         situation: ifoodProductMappings.situation,
         companyId: ifoodProductMappings.companyId,
         createdBy: ifoodProductMappings.createdBy,
@@ -127,6 +129,7 @@ export const ifoodImportRouter = router({
         ifoodSku: m.ifoodSku,
         ifoodProductName: m.ifoodProductName,
         productId: m.productId,
+        quantityMultiplier: m.quantityMultiplier,
         situation: m.situation,
         companyId: m.companyId,
         createdBy: m.createdBy,
@@ -164,6 +167,7 @@ export const ifoodImportRouter = router({
           ifoodSku: p.ean || '',
           ifoodProductName: null,
           productId: p.id,
+          quantityMultiplier: 1,
           situation: 'Sem mapeamento iFood',
           companyId: companyId,
           createdBy: null,
@@ -270,6 +274,7 @@ export const ifoodImportRouter = router({
       ifoodSku: z.string(),
       ifoodProductName: z.string().nullable().optional(),
       productId: z.number().nullable(),
+      quantityMultiplier: z.number().int().positive().max(100).optional(),
       situation: z.string().optional(),
     }))
     .mutation(async ({ input, ctx }) => {
@@ -287,6 +292,7 @@ export const ifoodImportRouter = router({
         await db.update(ifoodProductMappings)
           .set({
             productId: input.productId,
+            quantityMultiplier: input.quantityMultiplier ?? existing.quantityMultiplier,
             situation: input.situation || existing.situation,
             updatedBy: ctx.user.id,
           })
@@ -297,6 +303,7 @@ export const ifoodImportRouter = router({
           ifoodSku: input.ifoodSku,
           ifoodProductName: input.ifoodProductName || input.ifoodSku,
           productId: input.productId,
+          quantityMultiplier: input.quantityMultiplier ?? 1,
           situation: input.situation || "Manual",
           createdBy: ctx.user.id,
           companyId: ctx.activeCompanyId ?? 1,
@@ -310,6 +317,7 @@ export const ifoodImportRouter = router({
       ifoodSku: z.string(),
       ifoodProductName: z.string(),
       productId: z.number().nullable(),
+      quantityMultiplier: z.number().int().positive().max(100).optional(),
       situation: z.string().optional(),
     }))
     .mutation(async ({ input, ctx }) => {
@@ -319,6 +327,7 @@ export const ifoodImportRouter = router({
         ifoodSku: input.ifoodSku,
         ifoodProductName: input.ifoodProductName,
         productId: input.productId,
+        quantityMultiplier: input.quantityMultiplier ?? 1,
         situation: input.situation || "Manual",
         createdBy: ctx.user.id,
         companyId: ctx.activeCompanyId ?? 1,
@@ -475,6 +484,7 @@ export const ifoodImportRouter = router({
         ready: [] as any[],
         unmapped: [] as any[],
         divergent: [] as any[],
+        normalizationError: [] as any[],
         alreadyImported: [] as any[],
         cancelled: [] as any[],
       };
@@ -488,10 +498,6 @@ export const ifoodImportRouter = router({
         // Suportar ambos os formatos: status_pedido (antigo) ou status (novo)
         const status = order.status_pedido || order.status;
         const orderItems = itemsByOrder[orderId] || [];
-        // Calcular total do pedido somando os itens (valor * quantidade)
-        const orderTotal = orderItems.reduce((sum: number, item: any) => {
-          return sum + (parseFloat(item.valor) || 0) * (parseInt(item.quantidade) || 1);
-        }, 0);
         // Usar inicio_da_entrega como data do pedido (formato: YYYY-MM-DD HH:MM:SS)
         const orderDate = order.inicio_da_entrega || order.data_de_finalizacao_do_pedido || order.dt_pedido;
         // Suportar ambos os formatos de forma de pagamento
@@ -516,7 +522,7 @@ export const ifoodImportRouter = router({
             ifoodOrderId: orderId,
             ifoodOrderCode: orderCode,
             orderDate: orderDate,
-            totalValue: orderTotal,
+            totalValue: 0,
             status: "cancelled" as const,
             items: [],
           });
@@ -529,24 +535,50 @@ export const ifoodImportRouter = router({
             ifoodOrderId: orderId,
             ifoodOrderCode: orderCode,
             orderDate: orderDate,
-            totalValue: orderTotal,
+            totalValue: 0,
             status: "already_imported" as const,
             items: [],
           });
           continue;
         }
 
+        const pricing = normalizeIfoodOrderPricing(
+          orderItems.map((item: any) => ({
+            ...item,
+            quantidadeMultiplicadora: mappingsMap[normalizeSku(item.sku)]?.quantityMultiplier ?? 1,
+          })),
+          order.valor_total_dos_itens,
+        );
+
+        if (!pricing.ok) {
+          categorized.normalizationError.push({
+            ifoodOrderId: orderId,
+            ifoodOrderCode: orderCode,
+            orderDate,
+            totalValue: 0,
+            paymentMethod,
+            items: [],
+            issues: [pricing.reason],
+            status: "normalization_error" as const,
+          });
+          continue;
+        }
+
+        const orderTotal = centsToNumber(pricing.officialTotalCents);
+
         // Verificar itens
         let hasUnmapped = false;
         let hasDivergence = false;
         const processedItems: any[] = [];
 
-        for (const item of orderItems) {
+        for (const normalizedItem of pricing.items) {
+          const item = orderItems[normalizedItem.sourceIndex];
           // Normalizar SKU para busca consistente
           const sku = normalizeSku(item.sku);
           const mapping = mappingsMap[sku];
-          const ifoodPrice = parseFloat(item.valor) || 0;
-          const quantity = parseInt(item.quantidade) || 1;
+          const ifoodPrice = centsToNumber(normalizedItem.unitPriceCents);
+          const lineTotal = centsToNumber(normalizedItem.lineTotalCents);
+          const quantity = normalizedItem.quantity;
 
           if (!mapping || !mapping.productId) {
             // Sem mapeamento ou mapeamento sem productId = não localizado
@@ -556,6 +588,10 @@ export const ifoodImportRouter = router({
               ifoodProductName: item.produto || sku || '',
               quantity: quantity,
               ifoodPrice: ifoodPrice,
+              lineTotal,
+              sourceQuantity: normalizedItem.sourceQuantity,
+              quantityMultiplier: normalizedItem.quantityMultiplier,
+              priceMode: normalizedItem.priceMode,
               productId: null,
               productName: null,
               abrwfPrice: null,
@@ -597,6 +633,10 @@ export const ifoodImportRouter = router({
               ifoodProductName: item.produto || sku || '',
               quantity: quantity,
               ifoodPrice: ifoodPrice,
+              lineTotal,
+              sourceQuantity: normalizedItem.sourceQuantity,
+              quantityMultiplier: normalizedItem.quantityMultiplier,
+              priceMode: normalizedItem.priceMode,
               productId: mapping.productId,
               productName: productNamesMap[mapping.productId] || null,
               abrwfPrice: hasNoPrice ? null : abrwfPrice,
@@ -641,6 +681,7 @@ export const ifoodImportRouter = router({
         ...categorized.ready,
         ...categorized.divergent,
         ...categorized.unmapped,
+        ...categorized.normalizationError,
         ...categorized.alreadyImported,
         // categorized.cancelled - NÃO incluir pedidos cancelados
       ];
@@ -652,7 +693,7 @@ export const ifoodImportRouter = router({
           readyCount: categorized.ready.length,
           priceDivergenceCount: categorized.divergent.length,
           missingProductCount: categorized.unmapped.length,
-          skippedCount: categorized.alreadyImported.length + categorized.cancelled.length,
+          skippedCount: categorized.alreadyImported.length + categorized.cancelled.length + categorized.normalizationError.length,
           totalValue: totalValueReady,
         },
       };
@@ -661,29 +702,101 @@ export const ifoodImportRouter = router({
   // Importar pedidos selecionados
   importOrders: adminProcedure
     .input(z.object({
-      orders: z.array(z.object({
-        ifoodOrderId: z.string(),
-        ifoodOrderCode: z.string(),
-        orderDate: z.string(),
-        totalValue: z.number(),
-        paymentMethod: z.string().optional(),
-        items: z.array(z.object({
-          ifoodSku: z.string(),
-          ifoodProductName: z.string().nullable().default(''),
-          quantity: z.number(),
-          ifoodPrice: z.number(),
-          productId: z.number().nullable(),
-          productName: z.string().nullable().optional(),
-          abrwfPrice: z.number().nullable().optional(),
-          hasPriceDivergence: z.boolean().optional(),
-          divergencePercent: z.number().nullable().optional(),
-          isMapped: z.boolean().optional(),
-        })),
-      })),
+      ordersJson: z.string().min(1),
+      itemsJson: z.string().min(1),
+      orderIds: z.array(z.string().min(1)).min(1),
     }))
     .mutation(async ({ input, ctx }) => {
       const db = await getDb();
       if (!db) throw new Error("Database not available");
+
+      const parseJsonOrNdjson = (jsonStr: string): any[] => {
+        const trimmed = jsonStr.trim();
+        if (trimmed.startsWith('[')) return JSON.parse(trimmed);
+        return trimmed.split('\n').filter(line => line.trim()).map(line => JSON.parse(line.trim()));
+      };
+
+      // Reprocessar os arquivos no servidor. O navegador informa apenas quais
+      // UUIDs o usuário selecionou; preço, quantidade e total são recalculados.
+      const sourceOrders = parseJsonOrNdjson(input.ordersJson);
+      const sourceItems = parseJsonOrNdjson(input.itemsJson);
+      const sourceOrdersById = new Map(sourceOrders.map((order: any) => [order.id_pedido_ifood, order]));
+      const sourceItemsByOrder = new Map<string, any[]>();
+      for (const item of sourceItems) {
+        const orderId = item.id_pedido_ifood;
+        const existing = sourceItemsByOrder.get(orderId) ?? [];
+        existing.push(item);
+        sourceItemsByOrder.set(orderId, existing);
+      }
+
+      const allSkus = [...new Set(sourceItems.map((item: any) => normalizeSku(item.sku)))];
+      const mappings = allSkus.length > 0
+        ? await db.select().from(ifoodProductMappings).where(inArray(ifoodProductMappings.ifoodSku, allSkus))
+        : [];
+      const mappingsMap = Object.fromEntries(mappings.map(mapping => [normalizeSku(mapping.ifoodSku), mapping]));
+      const productIds = mappings.flatMap(mapping => mapping.productId ? [mapping.productId] : []);
+      const prices = productIds.length > 0
+        ? await db.select({ productId: productPrices.productId, price: productPrices.price })
+          .from(productPrices)
+          .where(and(inArray(productPrices.productId, productIds), eq(productPrices.channelId, IFOOD_CHANNEL_ID)))
+        : [];
+      const pricesMap = Object.fromEntries(prices.map(price => [price.productId, Number(price.price)]));
+
+      const ordersToImport = input.orderIds.map(orderId => {
+        const sourceOrder = sourceOrdersById.get(orderId);
+        if (!sourceOrder) throw new Error(`Pedido iFood ${orderId} não está presente no arquivo de vendas.`);
+
+        const status = sourceOrder.status_pedido || sourceOrder.status;
+        if (status === "CANCELLED" || status === "DECLINED") {
+          throw new Error(`Pedido #${sourceOrder.codigo_do_pedido_no_ifood || orderId} está cancelado no iFood.`);
+        }
+
+        const sourceOrderItems = sourceItemsByOrder.get(orderId) ?? [];
+        const pricing = normalizeIfoodOrderPricing(
+          sourceOrderItems.map(item => ({
+            ...item,
+            quantidadeMultiplicadora: mappingsMap[normalizeSku(item.sku)]?.quantityMultiplier ?? 1,
+          })),
+          sourceOrder.valor_total_dos_itens,
+        );
+        if (!pricing.ok) {
+          throw new Error(`Pedido #${sourceOrder.codigo_do_pedido_no_ifood || orderId}: ${pricing.reason}`);
+        }
+
+        const items = pricing.items.map(normalizedItem => {
+          const sourceItem = sourceOrderItems[normalizedItem.sourceIndex];
+          const sku = normalizeSku(sourceItem.sku);
+          const mapping = mappingsMap[sku];
+          if (!mapping?.productId) {
+            throw new Error(`Pedido #${sourceOrder.codigo_do_pedido_no_ifood || orderId}: produto ${sourceItem.produto || sku} não está mapeado.`);
+          }
+
+          const ifoodPrice = centsToNumber(normalizedItem.unitPriceCents);
+          const abrwfPrice = pricesMap[mapping.productId];
+          const hasPriceDivergence = abrwfPrice === undefined || Math.abs(ifoodPrice - abrwfPrice) > 0.01;
+
+          return {
+            ifoodSku: sku,
+            ifoodProductName: sourceItem.produto || sku || '',
+            quantity: normalizedItem.quantity,
+            ifoodPrice,
+            lineTotal: centsToNumber(normalizedItem.lineTotalCents),
+            productId: mapping.productId,
+            abrwfPrice: abrwfPrice ?? null,
+            hasPriceDivergence,
+            divergencePercent: abrwfPrice && abrwfPrice > 0 ? ((ifoodPrice - abrwfPrice) / abrwfPrice) * 100 : null,
+          };
+        });
+
+        return {
+          ifoodOrderId: orderId,
+          ifoodOrderCode: sourceOrder.codigo_do_pedido_no_ifood || orderId.slice(-8, -4).toUpperCase(),
+          orderDate: sourceOrder.inicio_da_entrega || sourceOrder.data_de_finalizacao_do_pedido || sourceOrder.dt_pedido,
+          totalValue: centsToNumber(pricing.officialTotalCents),
+          paymentMethod: sourceOrder.forma_de_pagamento || sourceOrder.forma_pgto,
+          items,
+        };
+      });
 
       // Criar log de importação
       const now = getNowInBrazil();
@@ -694,7 +807,7 @@ export const ifoodImportRouter = router({
           importedAt: now,
           ordersFileName: "upload",
           itemsFileName: "upload",
-          totalOrders: input.orders.length,
+          totalOrders: ordersToImport.length,
           importedOrders: 0,
           skippedOrders: 0,
           ordersWithDivergence: 0,
@@ -731,7 +844,7 @@ export const ifoodImportRouter = router({
       let totalValue = 0;
       const errors: string[] = [];
 
-      for (const order of input.orders) {
+      for (const order of ordersToImport) {
         try {
           // Verificar se já foi importado
           const [existing] = await db.select()
@@ -743,8 +856,12 @@ export const ifoodImportRouter = router({
             continue; // Pular se já importado
           }
 
-          // Calcular totais
-          const subtotal = order.items.reduce((sum, item) => sum + (item.ifoodPrice * item.quantity), 0);
+          // Os totais de linha foram normalizados no servidor contra o total
+          // oficial de itens; não multiplicar novamente valor de pacote/linha.
+          const subtotal = order.items.reduce((sum, item) => sum + item.lineTotal, 0);
+          if (Math.round(subtotal * 100) !== Math.round(order.totalValue * 100)) {
+            throw new Error("O total normalizado dos itens não confere com o total oficial do pedido.");
+          }
 
           // Criar venda
           const companyId = ctx.activeCompanyId ?? 1;
@@ -780,7 +897,7 @@ export const ifoodImportRouter = router({
               productId: item.productId,
               quantity: item.quantity,
               unitPrice: item.ifoodPrice.toFixed(2),
-              totalPrice: (item.ifoodPrice * item.quantity).toFixed(2),
+              totalPrice: item.lineTotal.toFixed(2),
               companyId,
             });
 
@@ -842,7 +959,7 @@ export const ifoodImportRouter = router({
       await db.update(ifoodImportLogs)
         .set({
           importedOrders: importedCount,
-          skippedOrders: input.orders.length - importedCount,
+          skippedOrders: ordersToImport.length - importedCount,
           totalValue: totalValue.toFixed(2),
           status: finalStatus,
           errorMessage: errors.length > 0 ? errors.join("; ") : null,
@@ -852,7 +969,7 @@ export const ifoodImportRouter = router({
       return {
         success: true,
         importedCount,
-        skipped: input.orders.length - importedCount,
+        skipped: ordersToImport.length - importedCount,
         totalValue,
         errors,
       };

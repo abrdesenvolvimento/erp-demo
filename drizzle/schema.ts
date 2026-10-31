@@ -1139,6 +1139,9 @@ export const ifoodProductMappings = mysqlTable("ifoodProductMappings", {
   ifoodProductName: varchar("ifoodProductName", { length: 255 }),
   correctEan: varchar("correctEan", { length: 50 }),
   productId: int("productId"),
+  // SKU virtual de combo pode representar múltiplas unidades do produto mapeado.
+  // Ex.: "Combo 6" = quantidade recebida × 6 unidades de estoque.
+  quantityMultiplier: int("quantityMultiplier").notNull().default(1),
   situation: varchar("situation", { length: 100 }),
   active: boolean("active").default(true).notNull(),
   companyId: int("companyId"),

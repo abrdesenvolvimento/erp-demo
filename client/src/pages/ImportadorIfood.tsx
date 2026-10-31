@@ -21,7 +21,7 @@ interface ProcessedOrder {
   orderDate: string;
   totalValue: number;
   items: ProcessedItem[];
-  status: "ready" | "missing_product" | "price_divergence";
+  status: "ready" | "missing_product" | "price_divergence" | "normalization_error" | "already_imported";
   issues: string[];
 }
 
@@ -30,6 +30,10 @@ interface ProcessedItem {
   ifoodProductName: string;
   quantity: number;
   ifoodPrice: number;
+  lineTotal: number;
+  sourceQuantity: number;
+  quantityMultiplier: number;
+  priceMode: "UNIT" | "LINE_TOTAL";
   productId: number | null;
   productName: string | null;
   abrwfPrice: number | null;
@@ -73,6 +77,7 @@ export default function ImportadorIfood() {
   const [productSearch, setProductSearch] = useState("");
   const [newMappingSku, setNewMappingSku] = useState("");
   const [newMappingIfoodName, setNewMappingIfoodName] = useState("");
+  const [mappingQuantityMultiplier, setMappingQuantityMultiplier] = useState("1");
   const [currentPage, setCurrentPage] = useState(1);
   const PAGE_SIZE = 50;
   
@@ -182,10 +187,7 @@ export default function ImportadorIfood() {
   };
 
   const handleImportOrders = async () => {
-    alert('handleImportOrders chamada! selectedOrders.size = ' + selectedOrders.size);
-    console.log('[handleImportOrders] Called with selectedOrders:', selectedOrders.size);
     if (selectedOrders.size === 0) {
-      console.log('[handleImportOrders] No orders selected');
       toast.error("Selecione pelo menos um pedido para importar");
       return;
     }
@@ -202,10 +204,14 @@ export default function ImportadorIfood() {
 
     setIsImporting(true);
     try {
-      const ordersToImport = previewData?.orders.filter((o) => selectedOrders.has(o.ifoodOrderId)) || [];
+      if (!ordersFile || !itemsFile) {
+        throw new Error("Os arquivos originais precisam permanecer selecionados para validar a importação.");
+      }
       
       const result = await importOrdersMutation.mutateAsync({
-        orders: ordersToImport,
+        ordersJson: await ordersFile.text(),
+        itemsJson: await itemsFile.text(),
+        orderIds: [...selectedOrders],
       });
 
       toast.success(`${result.importedCount} pedidos importados com sucesso!`);
@@ -229,8 +235,13 @@ export default function ImportadorIfood() {
   const handleImportSingleOrder = async (order: ProcessedOrder) => {
     setIsImporting(true);
     try {
+      if (!ordersFile || !itemsFile) {
+        throw new Error("Os arquivos originais precisam permanecer selecionados para validar a importação.");
+      }
       const result = await importOrdersMutation.mutateAsync({
-        orders: [order],
+        ordersJson: await ordersFile.text(),
+        itemsJson: await itemsFile.text(),
+        orderIds: [order.ifoodOrderId],
       });
       toast.success(`${result.importedCount} pedido(s) importado(s) com sucesso!`);
       // Reprocessar arquivos para atualizar preview
@@ -259,7 +270,7 @@ export default function ImportadorIfood() {
     if (checked && previewData) {
       // Selecionar apenas pedidos que podem ser importados (ready ou price_divergence)
       const importable = previewData.orders
-        .filter((o) => o.status !== "missing_product")
+        .filter((o) => o.status === "ready" || o.status === "price_divergence")
         .map((o) => o.ifoodOrderId);
       setSelectedOrders(new Set(importable));
     } else {
@@ -275,6 +286,7 @@ export default function ImportadorIfood() {
         ifoodSku: editingMapping.ifoodSku,
         ifoodProductName: editingMapping.ifoodProductName,
         productId,
+        quantityMultiplier: Math.max(1, Number.parseInt(mappingQuantityMultiplier, 10) || 1),
         situation: "Vinculado Manualmente",
       });
       toast.success("Vínculo salvo com sucesso");
@@ -297,6 +309,7 @@ export default function ImportadorIfood() {
         ifoodSku: newMappingSku.trim(),
         ifoodProductName: newMappingIfoodName.trim() || editingMapping.productName || '',
         productId: editingMapping.productId,
+        quantityMultiplier: Math.max(1, Number.parseInt(mappingQuantityMultiplier, 10) || 1),
         situation: "Vinculado Manualmente",
       });
       toast.success("Mapeamento criado com sucesso");
@@ -338,6 +351,10 @@ export default function ImportadorIfood() {
         return <Badge className="bg-[#EA1D2C] hover:bg-[#EA1D2C]/90 text-white"><AlertCircle className="w-3 h-3 mr-1" /> Não localizado</Badge>;
       case "price_divergence":
         return <Badge className="bg-amber-500 hover:bg-amber-500/90 text-white"><AlertTriangle className="w-3 h-3 mr-1" /> Divergência de preço</Badge>;
+      case "normalization_error":
+        return <Badge variant="destructive"><AlertCircle className="w-3 h-3 mr-1" /> Revisão de cálculo</Badge>;
+      case "already_imported":
+        return <Badge variant="secondary">Já importado</Badge>;
       default:
         return <Badge variant="secondary">{status}</Badge>;
     }
@@ -799,9 +816,10 @@ export default function ImportadorIfood() {
                                     ...mapping,
                                     ifoodSku: '',
                                     ifoodProductName: '',
-                                    _isNewMapping: true,
-                                  });
+                                  _isNewMapping: true,
+                                });
                                   setProductSearch("");
+                                  setMappingQuantityMultiplier("1");
                                 }}
                               >
                                 <Package className="w-4 h-4 mr-1" />
@@ -815,6 +833,7 @@ export default function ImportadorIfood() {
                                 onClick={() => {
                                   setEditingMapping(mapping);
                                   setProductSearch("");
+                                  setMappingQuantityMultiplier(String((mapping as any).quantityMultiplier || 1));
                                 }}
                               >
                                 <Edit2 className="w-4 h-4 mr-1" />
@@ -1062,7 +1081,7 @@ export default function ImportadorIfood() {
         </Dialog>
 
         {/* Modal de Edição de Vínculo */}
-        <Dialog open={!!editingMapping} onOpenChange={() => { setEditingMapping(null); setNewMappingSku(''); setNewMappingIfoodName(''); }}>
+        <Dialog open={!!editingMapping} onOpenChange={() => { setEditingMapping(null); setNewMappingSku(''); setNewMappingIfoodName(''); setMappingQuantityMultiplier('1'); }}>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
               <DialogTitle>
@@ -1109,6 +1128,12 @@ export default function ImportadorIfood() {
                   <p className="text-xs text-muted-foreground">Se não informado, será usado o nome do produto ABRWF</p>
                 </div>
 
+                <div className="space-y-2">
+                  <Label>Unidades ABRWF por unidade iFood</Label>
+                  <Input type="number" min="1" max="100" value={mappingQuantityMultiplier} onChange={(e) => setMappingQuantityMultiplier(e.target.value)} />
+                  <p className="text-xs text-muted-foreground">Use 6 para um SKU “Combo 6”, 8 para “Combo 8”. Para item comum, mantenha 1.</p>
+                </div>
+
                 <DialogFooter className="gap-2">
                   <Button variant="outline" onClick={() => { setEditingMapping(null); setNewMappingSku(''); setNewMappingIfoodName(''); }}>
                     Cancelar
@@ -1130,6 +1155,17 @@ export default function ImportadorIfood() {
                   <p className="text-sm text-muted-foreground">Produto iFood:</p>
                   <p className="font-medium">{editingMapping.ifoodProductName || <span className="italic text-muted-foreground">-</span>}</p>
                   <p className="text-sm text-muted-foreground mt-1">SKU: {editingMapping.ifoodSku}</p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Unidades ABRWF por unidade iFood</Label>
+                  <Input type="number" min="1" max="100" value={mappingQuantityMultiplier} onChange={(e) => setMappingQuantityMultiplier(e.target.value)} />
+                  <p className="text-xs text-muted-foreground">Ex.: um SKU de “Combo 6” que aponta para a unidade deve usar multiplicador 6.</p>
+                  {editingMapping.productId && (
+                    <Button type="button" variant="outline" size="sm" onClick={() => handleSaveMapping(editingMapping.productId)}>
+                      Salvar multiplicador
+                    </Button>
+                  )}
                 </div>
 
                 {editingMapping.productName && !editingMapping._isNewMapping && (

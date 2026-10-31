@@ -14,15 +14,16 @@
   ],
   "git_remote": {
     "repo_url": "s3://vida-prod-gitrepo/webdev-git/310519663140687549/7RkrCeS5KipYf8hkuNqrCk",
-    "access_key_id": "ASIAZV3A2ECZB77IIOTB",
-    "secret_access_key": "dCbmf+sHzPDgHQFxpQruKzPS5iMNnj/AQqWv3S88",
-    "session_token": "IQoJb3JpZ2luX2VjEPj//////////wEaCXVzLWVhc3QtMSJGMEQCIHnt4wMPoWjHWX0wJ2hHn8gtRfS043k2ka4rX9/xLmilAiAp9Ld81cCYTl0zTyd+PnRFdDVIftFjvI7M/T1g4gwr2Sr/AwjA//////////8BEAQaDDY2NTM4NjA5ODg2NiIMzJY9uf7Rzg+1s/YtKtMDxCD5KHKDV+w7uYfyPdrnfauYoeBs0tl5QP5TIgzPQNcrDHjgaJhxNU374Kxumo6y4MPt75gYqBtaZj4yTQ9b8tNCIrl0yVPjugw0xPg1qizc6qVthwufusL/epmjiLlGrlSkrNL1BAqHuKcnLKhLlHoIQs1ClEaVaGy8hOw4Xx2qKiGCX4OkeVXl9/xZ4B0FmgaJ0C5bzwow/HAgY3J9w1W1D20U5y/Mhl6C7mYY8a15pgRT+5uOO7p5f4p27uWp+UjMjIV5VTvVuHR00wHO9tzQR7i44g7X/ParM0GdymQiq4Ged2MIaehKrFjH6Xj+R0hbWvLLU4yRzTFsQUQxVjgxPCNwAiBcQuq+DI81Bi/rstoVHPWzio75k45vXIRVX67L5sIIfeDaoyrXVluo7roNW/eU2fqb+uYAcV72nQwRlpPFPbV4FfUQCHB9Id3zrupad31Eo/2+b9Pq3oRQAOawteEiQynNdsHLRN7r5wbU6THijoVsYTPlM1TcCNMtS0GmMeaU3xiExQwGMOXN4D9eCCvyJN43ffDqLOmaEYSd1si+hTv6Soe5jgwEmbdNf2t/eyvkRioSpfVoCLOhIC/jwoc1tjHNhDnd87kNblF7kWkwsbuX1QY6ngEU5gJ+X+BNDQ3W7zOerhY3aB3LY3v45EdsnCafzKs6wn0tBYQlpY7XEORYIrPl6RLM2DXB2e390j+l09y1/3WKidU1OHyV/D6EKdrB07pkZN5oUM9rHShcnroBJwS8WOWHUyLkqqRKkhGEDPA7P0tPo5NCY3ju4DJH4eCHsosTdEB6uiqDzcXemwV9kVzx4ZTWYJSlsu+Fs89w+9+4xA==",
-    "expiration": "2026-09-13T11:18:09.000Z",
+    "access_key_id": "ASIAZV3A2ECZDSQLQ4ZG",
+    "secret_access_key": "OjKZtzSwX8b0FuC2IxiCdls+fheu3JiFtUJneHo9",
+    "session_token": "IQoJb3JpZ2luX2VjEHcaCXVzLWVhc3QtMSJHMEUCIDX+qC2SW2N6F/+Qed3NDyV8iC9GTJPOFVQ0Ejrc6NFVAiEAojaTNLGk85aFMmtFuwjd3V1rsBOUQyPpcigJRA/8qJkq9gMIPxAEGgw2NjUzODYwOTg4NjYiDJTzuqTXWQlEeM0aOCrTA53vftAhRXd918vq90WCAiTF4eDxHjQDCgm0kevuxTOXmbV7ONx+xjg1BQek/7Jmi1Ca3mfE1aEEfdbGxmMUZqZfj9l9qoNur2PRgjmOoUa4WGx5F7mtDgVD2YqP966RO2AemlyWi4Rfblk6b0inj61uLK20TIEKqU92qVNMN9/Lchn0UZamVw8dd420RduVXaIdAecKJ+savZ1r/efKYtSycaGx6pxxvvAmLhkJXBxv/2YnQ6Kota58BhIDNH3nN83owGRd6x68iPNC5u6u7DQu9z/xWNVd9czG8BdsDpZuJXOY91a5SfVO5wPCMta5F45gKlFhVO/tmBGxkrzSRwXKgKTjCOLAMZ4BjbQHM1+STZHSRK6yinHNBrA+z5OedA2w8RRnP+y3JqL0xMEGliFCjaijiTzjiVdE/Mj7IsWiaOMagPjsP3GE6DvLcSx1vcD7+JfLzdKxw19CZwEss7Lpwi6Wpyv/4Xo3ghRE78sCRYIP71U7WTzk0tzEgQo4FTZOBRla4Oe0TR1TOTNakmtWDKHA+VzFhiJr0Cj1ciX2D1IQfZM3YDo4AbMj+eoaOZa2oJvT+TmPP2LxaFGZlZbVMk4i8We/SUgZXb/sCZBo+GLTMJGzlNcGOp0BB5DnjoD7WsE2aZuI9OEUyuNiBnobLONrejPYBwr8jqvL8hZRMf7Fk9JHHr5kd+ZHMNBHdAawLegaGz0HaC2qFY6KVf3axHzZ7n6fyeAEKP4fVDDaVYJ/YLdagCNX5xD4PqWK3zsgG19Yy7Wc35k5RdNSLXqQxh0wFbrB0/+UyHOoZswz0LT1Z0aR9S6Z5Mi5oOvwA2ROuuKR4iuZiw==",
+    "expiration": "2026-10-31T10:26:25.000Z",
     "backend": "GIT_BACKEND_S3"
   },
   "name": "erp-demo",
   "path": "/home/ubuntu/erp-demo",
   "port": 3000,
+  "runtime_endpoints": null,
   "secrets": {
     "BACKUP_EMAIL_NOTIFICATION": "comercial@adegabeirario.com.br",
     "BUILT_IN_FORGE_API_KEY": "PQ2sSwpZLmGeAxbGXHB2H2",
