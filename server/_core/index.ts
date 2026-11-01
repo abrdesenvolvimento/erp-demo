@@ -18,6 +18,20 @@ import { advanceBackupRun, reconcileStaleBackupRuns } from "../backupWorkflow";
 
 const BACKUP_HEARTBEAT_TASK_UID = "ivEbr4395zxWx2ah9n3CkD";
 
+async function requireBackupAdmin(req: express.Request, res: express.Response): Promise<boolean> {
+  try {
+    const user = await sdk.authenticateRequest(req);
+    if (user.isCron || user.role !== "admin") {
+      res.status(403).json({ success: false, error: "Acesso administrativo necessário para operar o backup." });
+      return false;
+    }
+    return true;
+  } catch {
+    res.status(401).json({ success: false, error: "Autenticação necessária para operar o backup." });
+    return false;
+  }
+}
+
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
     const server = net.createServer();
@@ -56,13 +70,14 @@ async function startServer() {
       isRunning: false,
       nextExecution: 'Gerenciado via Heartbeat (plataforma Manus)',
       timezone: 'America/Sao_Paulo',
-      schedule: '0 0 6 * * * (Diário às 06:00 UTC = 03:00 BRT)',
+      schedule: '0 */5 6-11 * * * (a cada 5 min, 03:00–08:55 BRT)',
       engine: 'heartbeat',
     });
   });
   
   // Manual trigger avança uma etapa do backup incremental e não inicia mais um dump monolítico.
   app.post('/api/scheduler/trigger', async (req, res) => {
+    if (!await requireBackupAdmin(req, res)) return;
     try {
       const result = await advanceBackupRun('manual');
       res.json({ success: true, ...result });
@@ -105,7 +120,7 @@ async function startServer() {
     res.json({ ok: true, ts: new Date().toISOString(), v: 2 });
   });
 
-  // Heartbeat backup endpoint — triggered by Manus platform cron daily at 06:00 UTC (03:00 BRT)
+  // Heartbeat backup endpoint — disparado em etapas curtas durante a janela noturna.
   app.post('/api/scheduled/backup', async (req, res) => {
     try {
       const user = await sdk.authenticateRequest(req);

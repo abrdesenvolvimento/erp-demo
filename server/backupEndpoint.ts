@@ -18,6 +18,7 @@ import {
   getLastSuccessfulBackup
 } from './db';
 import { storagePut, storageGet } from './storage';
+import { sdk } from './_core/sdk';
 
 const router = Router();
 
@@ -25,6 +26,27 @@ const router = Router();
 const BACKUP_DIR = path.join(process.cwd(), 'backups');
 const RETENTION_DAYS = 7;
 const RETENTION_DRIVE_DAYS = 30;
+
+function hasExplicitBackupSecret(req: Request): boolean {
+  const backupSecret = process.env.BACKUP_SECRET;
+  const token = req.headers.authorization?.replace(/^Bearer\s+/i, '');
+  return Boolean(backupSecret && token && token === backupSecret);
+}
+
+async function requireBackupAccess(req: Request, res: Response): Promise<boolean> {
+  if (hasExplicitBackupSecret(req)) return true;
+  try {
+    const user = await sdk.authenticateRequest(req);
+    if (user.isCron || user.role !== 'admin') {
+      res.status(403).json({ success: false, error: 'Acesso administrativo necessário para consultar ou operar backups.' });
+      return false;
+    }
+    return true;
+  } catch {
+    res.status(401).json({ success: false, error: 'Autenticação necessária para consultar ou operar backups.' });
+    return false;
+  }
+}
 
 // Criar diretório de backups se não existir
 if (!fs.existsSync(BACKUP_DIR)) {
@@ -443,18 +465,10 @@ router.post('/backup', async (req: Request, res: Response) => {
   console.log(`Timestamp: ${new Date().toISOString()}`);
   console.log('═══════════════════════════════════════════════════\n');
   
-  // Verificar autenticação
-  const backupSecret = process.env.BACKUP_SECRET || process.env.JWT_SECRET;
-  const clientIp = req.ip || req.connection.remoteAddress || '';
-  const isLocalhost = clientIp === '127.0.0.1' || clientIp === '::1' || clientIp === '::ffff:127.0.0.1';
-  
-  if (!isLocalhost && backupSecret) {
-    const token = req.headers.authorization?.replace('Bearer ', '');
-    if (token !== backupSecret) {
-      console.log('[Backup] Acesso não autorizado');
-      return res.status(401).json({ success: false, error: 'Não autorizado' });
-    }
-  }
+  // A rota de compatibilidade não aceita mais chamadas locais anônimas nem
+  // reutiliza JWT_SECRET como token de automação. Use BACKUP_SECRET explícito
+  // ou uma sessão Manus de administrador.
+  if (!await requireBackupAccess(req, res)) return;
 
   // Compatibilidade: chamadas antigas avançam somente uma etapa persistida.
   // Isso impede que um webhook legado volte a executar dump, ZIP e uploads em uma chamada monolítica.
@@ -493,9 +507,10 @@ router.post('/backup', async (req: Request, res: Response) => {
     for (let i = 0; i < results.length; i++) {
       try {
         const s3Result = await uploadToS3(results[i].file);
-        if (s3Result) {
-          results[i].s3Key = s3Result.key;
-          results[i].s3Url = s3Result.url;
+        if (s3Result !== null) {
+          const stored = s3Result as { key: string; url: string };
+          results[i].s3Key = stored.key;
+          results[i].s3Url = stored.url;
         }
       } catch (error: any) {
         console.error(`[S3] Erro no upload de ${results[i].name}:`, error.message);
@@ -508,9 +523,10 @@ router.post('/backup', async (req: Request, res: Response) => {
     if (hasGoogleDrive) {
       for (let i = 0; i < results.length; i++) {
         const driveResult = await uploadToGoogleDrive(results[i].file);
-        if (driveResult) {
-          results[i].driveLink = driveResult.link;
-          results[i].driveId = driveResult.id;
+        if (driveResult !== null) {
+          const stored = driveResult as { id: string; link: string };
+          results[i].driveLink = stored.link;
+          results[i].driveId = stored.id;
         }
       }
     }
@@ -547,14 +563,15 @@ router.post('/backup', async (req: Request, res: Response) => {
     const totalSize = results.reduce((sum, r) => sum + r.size, 0);
     
     // Atualizar log de backup
-    if (logId) {
+    if (logId !== null) {
+      const completedLogId = logId as number;
       const dbResult = results.find(r => r.name.includes('database'));
       const codeResult = results.find(r => r.name.includes('code'));
       const hasCloudSuccess = hasS3Success || results.some(r => r.driveLink);
       
       if (hasCloudSuccess) {
         // Sucesso: S3 ou Google Drive funcionou
-        await updateBackupLogSuccess(logId, {
+        await updateBackupLogSuccess(completedLogId, {
           databaseFile: dbResult?.name || '',
           databaseSize: dbResult?.size || 0,
           codeFile: codeResult?.name || '',
@@ -569,7 +586,7 @@ router.post('/backup', async (req: Request, res: Response) => {
         });
       } else {
         // Parcial: backup local ok, mas cloud falhou
-        await updateBackupLogPartial(logId, {
+        await updateBackupLogPartial(completedLogId, {
           databaseFile: dbResult?.name || '',
           databaseSize: dbResult?.size || 0,
           codeFile: codeResult?.name || '',
@@ -604,9 +621,10 @@ router.post('/backup', async (req: Request, res: Response) => {
     console.error('\n✗ Erro durante o backup:', error.message);
     
     // Atualizar log de backup com falha
-    if (logId) {
+    if (logId !== null) {
+      const failedLogId = logId as number;
       const duration = (Date.now() - startTime) / 1000;
-      await updateBackupLogFailed(logId, error.message, duration);
+      await updateBackupLogFailed(failedLogId, error.message, duration);
     }
     
     // Enviar notificação de falha
@@ -625,6 +643,7 @@ router.post('/backup', async (req: Request, res: Response) => {
  * GET /api/backup/status
  */
 router.get('/backup/status', async (req: Request, res: Response) => {
+  if (!await requireBackupAccess(req, res)) return;
   try {
     const files = fs.readdirSync(BACKUP_DIR)
       .filter(f => f.endsWith('.sql') || f.endsWith('.zip'))
@@ -659,6 +678,7 @@ router.get('/backup/status', async (req: Request, res: Response) => {
  * GET /api/backup/history
  */
 router.get('/backup/history', async (req: Request, res: Response) => {
+  if (!await requireBackupAccess(req, res)) return;
   try {
     const logs = await listBackupLogs(20);
     
@@ -690,6 +710,7 @@ router.get('/backup/history', async (req: Request, res: Response) => {
  * GET /api/backup/last-success
  */
 router.get('/backup/last-success', async (req: Request, res: Response) => {
+  if (!await requireBackupAccess(req, res)) return;
   try {
     const lastBackup = await getLastSuccessfulBackup();
     

@@ -882,6 +882,9 @@ export type InsertBackupLog = typeof backupLogs.$inferInsert;
 export const backupRuns = mysqlTable("backupRuns", {
   id: varchar("id", { length: 64 }).primaryKey(),
   backupLogId: int("backupLogId").notNull(),
+  // Apenas a execução ACTIVE recebe o valor 1; o índice único impede dois
+  // callbacks simultâneos de abrirem ciclos concorrentes.
+  activeSlot: int("activeSlot"),
   status: mysqlEnum("status", ["ACTIVE", "COMPLETE", "FAILED"]).notNull().default("ACTIVE"),
   phase: mysqlEnum("phase", ["DATABASE", "CODE", "COMPLETE"]).notNull().default("DATABASE"),
   currentTableIndex: int("currentTableIndex").notNull().default(0),
@@ -897,6 +900,7 @@ export const backupRuns = mysqlTable("backupRuns", {
   createdAt: timestamp("createdAt").defaultNow(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow(),
 }, (table) => ({
+  activeSlotUnique: uniqueIndex("backup_single_active_idx").on(table.activeSlot),
   statusUpdatedIdx: index("backup_run_status_updated_idx").on(table.status, table.updatedAt),
   logIdx: index("backup_run_log_idx").on(table.backupLogId),
 }));

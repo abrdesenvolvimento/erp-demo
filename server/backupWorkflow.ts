@@ -2,7 +2,7 @@ import { createHash, randomUUID } from "crypto";
 import fs from "fs";
 import path from "path";
 import mysql from "mysql2/promise";
-import { and, asc, eq, lt } from "drizzle-orm";
+import { and, asc, desc, eq, lt } from "drizzle-orm";
 import { backupLogs, backupRuns } from "../drizzle/schema";
 import { createBackupLog, getDb, updateBackupLogFailed, updateBackupLogSuccess } from "./db";
 import { storagePut } from "./storage";
@@ -55,6 +55,11 @@ function parseManifest(raw: string | null): BackupManifest {
     // A execução falhará com mensagem auditável no próximo avanço.
   }
   throw new Error("Manifesto de backup inválido; a execução precisa ser revisada antes de continuar.");
+}
+
+function isDuplicateActiveRunError(error: unknown): boolean {
+  const candidate = error as { code?: string; message?: string } | undefined;
+  return candidate?.code === "ER_DUP_ENTRY" || Boolean(candidate?.message?.includes("backup_single_active_idx"));
 }
 
 function databaseConfig() {
@@ -153,7 +158,27 @@ async function exportDatabaseChunk(run: typeof backupRuns.$inferSelect) {
 async function createCodeArchive(runId: string): Promise<Buffer> {
   const archiver = (await import("archiver")).default;
   const archivePath = path.join("/tmp", `abrwf-code-${runId}.zip`);
-  const exclusions = ["node_modules", ".git", "backups", "dist", "coverage", ".next"];
+  // Backups de código não podem transportar segredos, configurações locais nem
+  // chaves privadas para o storage. As variáveis devem ser restauradas pelo
+  // ambiente seguro, e não a partir do ZIP do projeto.
+  const exclusions = [
+    "node_modules/**",
+    ".git/**",
+    "backups/**",
+    "dist/**",
+    "coverage/**",
+    ".next/**",
+    ".env",
+    ".env.*",
+    "**/.env",
+    "**/.env.*",
+    ".project-config.json",
+    ".manus/**",
+    "**/*.pem",
+    "**/*.key",
+    "**/*credential*.json",
+    "**/*credentials*.json",
+  ];
   await new Promise<void>((resolve, reject) => {
     const output = fs.createWriteStream(archivePath);
     const archive = archiver("zip", { zlib: { level: 6 } });
@@ -201,6 +226,7 @@ export async function reconcileStaleBackupRuns() {
   for (const run of staleRuns) {
     await db.update(backupRuns).set({
       status: "FAILED",
+      activeSlot: null,
       lastError: `Execução interrompida sem progresso por mais de ${STALE_RUN_MINUTES} minutos.`,
       updatedAt: new Date(),
     }).where(eq(backupRuns.id, run.id));
@@ -220,7 +246,7 @@ async function startRun(triggeredBy: string) {
 
   const latestCompleted = await db.select().from(backupRuns)
     .where(eq(backupRuns.status, "COMPLETE"))
-    .orderBy(asc(backupRuns.updatedAt))
+    .orderBy(desc(backupRuns.updatedAt))
     .limit(1);
   if (latestCompleted[0]?.updatedAt) {
     const elapsed = Date.now() - new Date(latestCompleted[0].updatedAt).getTime();
@@ -230,13 +256,28 @@ async function startRun(triggeredBy: string) {
   const backupLogId = await createBackupLog(triggeredBy);
   const id = `backup-${Date.now()}-${randomUUID().slice(0, 8)}`;
   const manifest = newManifest(id);
-  await db.insert(backupRuns).values({
-    id,
-    backupLogId,
-    status: "ACTIVE",
-    phase: "DATABASE",
-    manifestJson: JSON.stringify(manifest),
-  });
+  try {
+    await db.insert(backupRuns).values({
+      id,
+      backupLogId,
+      activeSlot: 1,
+      status: "ACTIVE",
+      phase: "DATABASE",
+      manifestJson: JSON.stringify(manifest),
+    });
+  } catch (error) {
+    // O índice único é a proteção final contra dois callbacks que tenham
+    // passado pela consulta inicial ao mesmo tempo. Nesse caso, reutiliza-se
+    // o ciclo já criado e o log órfão é marcado como falho para auditoria.
+    if (!isDuplicateActiveRunError(error)) throw error;
+    await updateBackupLogFailed(backupLogId, "Outro callback já iniciou o ciclo incremental; execução reutilizada.", 0);
+    const [existing] = await db.select().from(backupRuns)
+      .where(eq(backupRuns.status, "ACTIVE"))
+      .orderBy(asc(backupRuns.createdAt))
+      .limit(1);
+    if (existing) return existing;
+    throw error;
+  }
   const created = await db.select().from(backupRuns).where(eq(backupRuns.id, id)).limit(1);
   return created[0];
 }
@@ -287,6 +328,7 @@ export async function advanceBackupRun(triggeredBy: string) {
       await db.update(backupRuns).set({
         status: "COMPLETE",
         phase: "COMPLETE",
+        activeSlot: null,
         manifestJson: persisted.encoded,
         databaseChecksum: persisted.checksum,
         codeChecksum: checksum,
@@ -313,7 +355,7 @@ export async function advanceBackupRun(triggeredBy: string) {
     return { runId: run.id, status: run.status, phase: run.phase, table: null, rows: run.rowsExported, chunksCreated: run.chunksCreated };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    await db.update(backupRuns).set({ status: "FAILED", lastError: message, updatedAt: new Date() })
+    await db.update(backupRuns).set({ status: "FAILED", activeSlot: null, lastError: message, updatedAt: new Date() })
       .where(eq(backupRuns.id, run.id));
     await updateBackupLogFailed(run.backupLogId, message, (Date.now() - new Date(run.createdAt ?? new Date()).getTime()) / 1000);
     throw error;

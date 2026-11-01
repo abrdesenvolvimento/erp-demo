@@ -1,82 +1,96 @@
-# Backup Automático - ERP Adega Beira Rio
+# Backup incremental — ABRWF
 
-## Visão Geral
+## Estado atual
 
-O sistema possui backup automático diário configurado para enviar os dados para o Google Drive.
+O ABRWF possui um fluxo de backup incremental persistido no banco. Cada acionamento exporta uma etapa curta do banco, grava o bloco SQL no armazenamento privado, atualiza o manifesto com checksum SHA-256 e preserva o cursor para a próxima etapa.
 
-## Configuração
+> **Situação operacional em 31/10/2026:** o fluxo está implementado, mas ainda não há uma execução incremental concluída e validada por restauração. A cadência do Heartbeat precisa ser configurada após a publicação da versão que contém as proteções descritas neste documento.
 
-### Agendamento
-- **Horário:** 3h da manhã (GMT-3 / Horário de Brasília)
-- **Frequência:** Diário
+## Arquitetura
 
-### O que é feito backup
-1. **Banco de Dados (SQL):** Dump completo do banco MySQL/TiDB
-2. **Código (ZIP):** Código-fonte do projeto (excluindo node_modules, .git, etc.)
+- **Gatilho oficial:** Heartbeat Manus autenticado, apontando para `POST /api/scheduled/backup`.
+- **Autorização:** o endpoint só aceita o identificador de tarefa Heartbeat autorizado no servidor.
+- **Persistência:** `backupRuns` mantém status, fase, cursor, contagem de chunks, manifesto e checksums; `backupLogs` registra o resultado operacional.
+- **Destino primário:** Manus Storage, em `backups/incremental/<runId>/`.
+- **Fases:** `DATABASE` → `CODE` → `COMPLETE`.
+- **Banco:** exportado em blocos de até 10.000 linhas por chamada.
+- **Código:** gerado apenas após a exportação do banco e exclui dependências, artefatos e arquivos sensíveis.
 
-### Destino
-- **Google Drive:** Pasta "Backup ABRWF"
-- **Link:** https://drive.google.com/drive/folders/1NIchyOc_oKNaFYeBubJwrLJp0sBIxpaw
+## Regras de segurança
 
-### Notificações
-- Notificação enviada via sistema Manus após cada backup (sucesso ou falha)
-- Email: comercial@adegabeirario.com.br
+O ZIP de código não pode conter credenciais nem configurações locais. São excluídos, entre outros:
 
-## Credenciais
+- `.env` e `.env.*`;
+- `.project-config.json` e `.manus/`;
+- chaves `.pem` e `.key`;
+- arquivos de credencial JSON;
+- `node_modules`, `.git`, `dist`, `coverage`, `.next` e backups locais.
 
-As credenciais são armazenadas como variáveis de ambiente:
+As rotas de operação e consulta de backup exigem administrador autenticado ou, na rota de compatibilidade, o `BACKUP_SECRET` explícito. O segredo de sessão (`JWT_SECRET`) não é aceito como token de automação.
 
-| Variável | Descrição |
-|----------|-----------|
-| `GOOGLE_DRIVE_CREDENTIALS` | JSON com client_id, client_secret e refresh_token |
-| `GOOGLE_DRIVE_FOLDER_ID` | ID da pasta no Google Drive |
-| `BACKUP_EMAIL_NOTIFICATION` | Email para notificações |
+## Agendamento pretendido
 
-## Executar Backup Manualmente
+Após a publicação da versão protegida, o Heartbeat do backup deve executar na janela noturna:
 
-Para executar um backup manual:
-
-```bash
-cd /home/ubuntu/erp-demo
-node scripts/backup.mjs
+```text
+0 */5 6-11 * * *
 ```
 
-## Testar Conexão
+Isso equivale a uma chamada a cada cinco minutos entre **03:00 e 08:55**, no horário de São Paulo (06:00 a 11:55 UTC). A mesma execução `ACTIVE` é retomada a cada chamada; não deve ser aberto um ciclo paralelo.
 
-Para testar se as credenciais estão funcionando:
+Após uma conclusão, a aplicação respeita um intervalo mínimo de 20 horas antes de abrir um novo ciclo.
 
-```bash
-cd /home/ubuntu/erp-demo
-node scripts/test-backup.mjs
+## Operação manual
+
+O acionamento manual existe apenas para administrador autenticado e avança uma única etapa; não cria mais dump monolítico.
+
+Nunca usar em produção sem janela aprovada:
+
+- `scripts/backup.mjs`;
+- `scripts/test-backup.mjs`;
+- `scripts/run-one-backup-step.mjs`;
+- `scripts/setup-cron.sh`;
+- chamadas manuais ao endpoint Heartbeat.
+
+Esses scripts representam caminhos legados ou de manutenção e não são o mecanismo oficial do backup incremental.
+
+## Validação obrigatória de uma cópia
+
+Uma cópia é considerada íntegra somente quando:
+
+1. `backupRuns.status` é `COMPLETE`;
+2. o manifesto e todos os chunks possuem checksum armazenado;
+3. o ZIP de código possui checksum e chave de armazenamento;
+4. a restauração é testada em ambiente descartável;
+5. a contagem de tabelas e a abertura do banco restaurado são verificadas.
+
+Não tratar uma execução `ACTIVE`, interrompida ou apenas parcialmente exportada como cópia recuperável.
+
+## Pendências para maturidade operacional
+
+1. Publicar a versão protegida do fluxo.
+2. Desativar o agendamento legado que executa `scripts/backup.mjs`.
+3. Configurar a janela de cinco minutos no Heartbeat oficial.
+4. Encerrar formalmente a execução ativa antiga como não recuperável e iniciar um ciclo limpo.
+5. Confirmar a primeira cópia `COMPLETE`.
+6. Implementar e executar restauração controlada.
+7. Configurar alerta de ausência de cópia íntegra e política de retenção.
+8. Avaliar réplica externa independente somente depois da validação do destino primário.
+
+## Consultas de auditoria
+
+```sql
+SELECT id, status, phase, currentTableIndex, currentTableOffset,
+       chunksCreated, rowsExported, createdAt, updatedAt, lastError
+FROM backupRuns
+ORDER BY updatedAt DESC;
+
+SELECT status, COUNT(*) AS total, MAX(startedAt) AS ultimo_inicio,
+       MAX(completedAt) AS ultima_conclusao
+FROM backupLogs
+GROUP BY status;
 ```
 
-## Retenção
+## Itens fora do escopo atual
 
-- **Local:** Backups são mantidos por 7 dias no servidor
-- **Google Drive:** Backups são mantidos indefinidamente (gerenciar manualmente se necessário)
-
-## Troubleshooting
-
-### Erro "refresh_token expired"
-O refresh token pode expirar após 7 dias se o app não for verificado. Para renovar:
-1. Acesse o Google Cloud Console
-2. Gere um novo código de autorização
-3. Troque pelo refresh token
-4. Atualize a variável GOOGLE_DRIVE_CREDENTIALS
-
-### Erro de conexão com banco
-Verifique se a variável DATABASE_URL está configurada corretamente.
-
-### Erro de upload
-Verifique se a pasta do Google Drive ainda existe e se as permissões estão corretas.
-
-## Logs
-
-Os logs de backup são exibidos no console durante a execução.
-
-## Backup Nativo TiDB
-
-Além deste backup customizado, o TiDB Cloud também possui backup automático nativo:
-- Backup diário automático
-- Retenção de 7 dias
-- Restauração via console do TiDB Cloud
+Google Drive, `mysqldump`, cron local e upload via OAuth pertencem ao mecanismo legado. Eles não validam nem substituem o fluxo incremental atual.
