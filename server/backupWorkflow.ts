@@ -13,6 +13,9 @@ const CHUNK_ROWS = 10_000;
 const STALE_RUN_MINUTES = 26 * 60;
 const MIN_NEW_BACKUP_INTERVAL_MS = 20 * 60 * 60 * 1000;
 const RUN_PREFIX = "backups/incremental";
+// O callback do Heartbeat pode avançar um pequeno lote sequencial. Isso reduz
+// a duração total da cópia sem abrir paralelismo nem ultrapassar o timeout.
+export const MAX_HEARTBEAT_BACKUP_STEPS = 8;
 
 type ManifestChunk = {
   key: string;
@@ -360,4 +363,27 @@ export async function advanceBackupRun(triggeredBy: string) {
     await updateBackupLogFailed(run.backupLogId, message, (Date.now() - new Date(run.createdAt ?? new Date()).getTime()) / 1000);
     throw error;
   }
+}
+
+/**
+ * Avança um lote limitado da mesma execução ativa. Usado exclusivamente pelo
+ * Heartbeat noturno; os caminhos manuais permanecem com uma única etapa.
+ */
+export async function advanceBackupRunBatch(
+  triggeredBy: string,
+  maxSteps = MAX_HEARTBEAT_BACKUP_STEPS
+) {
+  if (!Number.isInteger(maxSteps) || maxSteps < 1 || maxSteps > MAX_HEARTBEAT_BACKUP_STEPS) {
+    throw new Error(`Quantidade de etapas inválida; use entre 1 e ${MAX_HEARTBEAT_BACKUP_STEPS}.`);
+  }
+
+  let result = await advanceBackupRun(triggeredBy);
+  let stepsProcessed = 1;
+
+  while (stepsProcessed < maxSteps && result.status === "ACTIVE") {
+    result = await advanceBackupRun(triggeredBy);
+    stepsProcessed += 1;
+  }
+
+  return { ...result, stepsProcessed };
 }

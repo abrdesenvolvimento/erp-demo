@@ -14,7 +14,12 @@ import backupRouter from "../backupEndpoint";
 import { initAccountingScheduler, getAccountingSchedulerStatus, runAccountingBatch, updateAccountingSchedule } from "../accountingScheduler";
 import { initStockSnapshotJob } from "../jobs/stockSnapshot";
 import { sdk } from "./sdk";
-import { advanceBackupRun, reconcileStaleBackupRuns } from "../backupWorkflow";
+import {
+  advanceBackupRun,
+  advanceBackupRunBatch,
+  MAX_HEARTBEAT_BACKUP_STEPS,
+  reconcileStaleBackupRuns,
+} from "../backupWorkflow";
 
 const BACKUP_HEARTBEAT_TASK_UID = "ivEbr4395zxWx2ah9n3CkD";
 
@@ -120,7 +125,7 @@ async function startServer() {
     res.json({ ok: true, ts: new Date().toISOString(), v: 2 });
   });
 
-  // Heartbeat backup endpoint — disparado em etapas curtas durante a janela noturna.
+  // Heartbeat backup endpoint — avança lote limitado na janela noturna.
   app.post('/api/scheduled/backup', async (req, res) => {
     try {
       const user = await sdk.authenticateRequest(req);
@@ -128,7 +133,7 @@ async function startServer() {
         return res.status(403).json({ ok: false, error: 'Apenas o Heartbeat de backup autorizado pode executar esta rota.' });
       }
       const reconciled = await reconcileStaleBackupRuns();
-      const result = await advanceBackupRun('heartbeat');
+      const result = await advanceBackupRunBatch('heartbeat', MAX_HEARTBEAT_BACKUP_STEPS);
       res.json({ ok: true, reconciled, ...result });
     } catch (error: any) {
       console.error('[Heartbeat] Backup error:', error.message);

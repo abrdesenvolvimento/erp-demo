@@ -4,7 +4,7 @@
 
 O ABRWF possui um fluxo de backup incremental persistido no banco. Cada acionamento exporta uma etapa curta do banco, grava o bloco SQL no armazenamento privado, atualiza o manifesto com checksum SHA-256 e preserva o cursor para a próxima etapa.
 
-> **Situação operacional em 01/11/2026:** a versão protegida está publicada, a execução incompleta iniciada em 24/10 foi encerrada como não recuperável e um novo ciclo limpo foi iniciado. O Heartbeat oficial foi configurado para avançar uma etapa a cada cinco minutos na janela noturna. Ainda não há uma cópia `COMPLETE` validada por restauração.
+> **Situação operacional em 02/11/2026:** a tarefa legada foi desativada e o primeiro ciclo limpo executou sem falhas. Como a base excede a capacidade de uma etapa por callback, o Heartbeat passa a processar um lote limitado de até oito blocos por chamada, preservando a mesma janela noturna, a trava exclusiva e os checksums. Ainda não há uma cópia `COMPLETE` validada por restauração.
 
 ## Arquitetura
 
@@ -13,7 +13,7 @@ O ABRWF possui um fluxo de backup incremental persistido no banco. Cada acioname
 - **Persistência:** `backupRuns` mantém status, fase, cursor, contagem de chunks, manifesto e checksums; `backupLogs` registra o resultado operacional.
 - **Destino primário:** Manus Storage, em `backups/incremental/<runId>/`.
 - **Fases:** `DATABASE` → `CODE` → `COMPLETE`.
-- **Banco:** exportado em blocos de até 10.000 linhas por chamada.
+- **Banco:** exportado em blocos de até 10.000 linhas; o Heartbeat pode processar até oito blocos sequenciais por callback.
 - **Código:** gerado apenas após a exportação do banco e exclui dependências, artefatos e arquivos sensíveis.
 
 ## Regras de segurança
@@ -36,7 +36,7 @@ O Heartbeat oficial executa na janela noturna:
 0 */5 6-11 * * *
 ```
 
-Isso equivale a uma chamada a cada cinco minutos entre **03:00 e 08:55**, no horário de São Paulo (06:00 a 11:55 UTC). A mesma execução `ACTIVE` é retomada a cada chamada; não deve ser aberto um ciclo paralelo.
+Isso equivale a uma chamada a cada cinco minutos entre **03:00 e 08:55**, no horário de São Paulo (06:00 a 11:55 UTC). Cada callback avança no máximo oito blocos sequenciais da mesma execução `ACTIVE`; não deve ser aberto um ciclo paralelo.
 
 Após uma conclusão, a aplicação respeita um intervalo mínimo de 20 horas antes de abrir um novo ciclo.
 
@@ -70,11 +70,10 @@ O procedimento seguro de verificação e restauração em banco descartável est
 
 ## Pendências para maturidade operacional
 
-1. **Desativar no painel Manus a tarefa legada “Backup Diário ERP Adega Beira Rio”**, que ainda chama `scripts/backup.mjs`/Google Drive. A tarefa não pode ser pausada por este ambiente colaborativo; ela não deve coexistir com o fluxo incremental.
-2. Confirmar a primeira cópia `COMPLETE`.
-3. Implementar e executar restauração controlada.
-4. Configurar alerta de ausência de cópia íntegra e política de retenção.
-5. Avaliar réplica externa independente somente depois da validação do destino primário.
+1. Confirmar a primeira cópia `COMPLETE`.
+2. Implementar e executar restauração controlada.
+3. Configurar alerta de ausência de cópia íntegra e política de retenção.
+4. Avaliar réplica externa independente somente depois da validação do destino primário.
 
 ## Consultas de auditoria
 

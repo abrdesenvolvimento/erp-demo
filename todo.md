@@ -2631,7 +2631,8 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Atualizar o Heartbeat oficial para uma etapa a cada 5 minutos entre 03:00 e 08:55 BRT e encerrar o ciclo antigo incompleto de 24/10
 - [x] Iniciar ciclo limpo e disponibilizar verificador somente leitura que baixa e confere todos os artefatos antes de qualquer SQL de restauração
 - [x] Documentar procedimento de restauração controlada em banco descartável, com bloqueio explícito ao banco de produção
-- [ ] Desativar no painel Manus a tarefa legada “Backup Diário ERP Adega Beira Rio”, que ainda executa `scripts/backup.mjs` e Google Drive
+- [x] Desativar no painel Manus a tarefa legada “Backup Diário ERP Adega Beira Rio”, que ainda executava `scripts/backup.mjs` e Google Drive
+- [x] Ajustar o Heartbeat para processar até 8 blocos sequenciais por callback, mantendo a janela noturna e a trava exclusiva, para concluir cópias grandes em uma única madrugada
 - [ ] Confirmar a primeira execução `COMPLETE` com todos os chunks e ZIP de código validados pela CLI
 - [ ] Provisionar banco descartável, implementar/aplicar restaurador controlado e concluir teste de recuperação com relatório auditável
 - [ ] Definir retenção, alerta de ausência de cópia íntegra e réplica externa independente após a primeira restauração aprovada

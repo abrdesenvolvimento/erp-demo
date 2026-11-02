@@ -44,10 +44,13 @@ describe("Contingência de backup incremental", () => {
     expect(workflow).toContain('"**/*.key"');
   });
 
-  it("protege o callback agendado e avança apenas uma etapa por chamada", () => {
+  it("protege o callback agendado e avança um lote limitado por chamada", () => {
     expect(serverEntry).toContain("await sdk.authenticateRequest(req)");
     expect(serverEntry).toContain("user.taskUid !== BACKUP_HEARTBEAT_TASK_UID");
-    expect(serverEntry).toContain("await advanceBackupRun('heartbeat')");
+    expect(serverEntry).toContain("await advanceBackupRunBatch('heartbeat', MAX_HEARTBEAT_BACKUP_STEPS)");
+    expect(workflow).toContain("export const MAX_HEARTBEAT_BACKUP_STEPS = 8");
+    expect(workflow).toContain("result.status === \"ACTIVE\"");
+    expect(serverEntry).toContain("const result = await advanceBackupRun('manual')");
   });
 
   it("encaminha o endpoint legado para o fluxo incremental em vez do dump monolítico", () => {
