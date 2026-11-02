@@ -4,7 +4,7 @@
 
 O ABRWF possui um fluxo de backup incremental persistido no banco. Cada acionamento exporta uma etapa curta do banco, grava o bloco SQL no armazenamento privado, atualiza o manifesto com checksum SHA-256 e preserva o cursor para a próxima etapa.
 
-> **Situação operacional em 31/10/2026:** o fluxo está implementado, mas ainda não há uma execução incremental concluída e validada por restauração. A cadência do Heartbeat precisa ser configurada após a publicação da versão que contém as proteções descritas neste documento.
+> **Situação operacional em 01/11/2026:** a versão protegida está publicada, a execução incompleta iniciada em 24/10 foi encerrada como não recuperável e um novo ciclo limpo foi iniciado. O Heartbeat oficial foi configurado para avançar uma etapa a cada cinco minutos na janela noturna. Ainda não há uma cópia `COMPLETE` validada por restauração.
 
 ## Arquitetura
 
@@ -28,9 +28,9 @@ O ZIP de código não pode conter credenciais nem configurações locais. São e
 
 As rotas de operação e consulta de backup exigem administrador autenticado ou, na rota de compatibilidade, o `BACKUP_SECRET` explícito. O segredo de sessão (`JWT_SECRET`) não é aceito como token de automação.
 
-## Agendamento pretendido
+## Agendamento ativo
 
-Após a publicação da versão protegida, o Heartbeat do backup deve executar na janela noturna:
+O Heartbeat oficial executa na janela noturna:
 
 ```text
 0 */5 6-11 * * *
@@ -66,16 +66,15 @@ Uma cópia é considerada íntegra somente quando:
 
 Não tratar uma execução `ACTIVE`, interrompida ou apenas parcialmente exportada como cópia recuperável.
 
+O procedimento seguro de verificação e restauração em banco descartável está em [`docs/RESTORE.md`](./RESTORE.md). A verificação baixa todos os artefatos e valida seus checksums antes de qualquer futura escrita de restauração.
+
 ## Pendências para maturidade operacional
 
-1. Publicar a versão protegida do fluxo.
-2. Desativar o agendamento legado que executa `scripts/backup.mjs`.
-3. Configurar a janela de cinco minutos no Heartbeat oficial.
-4. Encerrar formalmente a execução ativa antiga como não recuperável e iniciar um ciclo limpo.
-5. Confirmar a primeira cópia `COMPLETE`.
-6. Implementar e executar restauração controlada.
-7. Configurar alerta de ausência de cópia íntegra e política de retenção.
-8. Avaliar réplica externa independente somente depois da validação do destino primário.
+1. **Desativar no painel Manus a tarefa legada “Backup Diário ERP Adega Beira Rio”**, que ainda chama `scripts/backup.mjs`/Google Drive. A tarefa não pode ser pausada por este ambiente colaborativo; ela não deve coexistir com o fluxo incremental.
+2. Confirmar a primeira cópia `COMPLETE`.
+3. Implementar e executar restauração controlada.
+4. Configurar alerta de ausência de cópia íntegra e política de retenção.
+5. Avaliar réplica externa independente somente depois da validação do destino primário.
 
 ## Consultas de auditoria
 

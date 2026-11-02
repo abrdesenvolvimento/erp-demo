@@ -2625,3 +2625,13 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [x] Corrigir 35 vendas existentes, criar 1 venda ausente pelo valor oficial e cancelar 8 duplicidades com estorno auditável de estoque
 - [x] Validar os 36 UUIDs iFood corrigidos, os totais das vendas, os itens, os vínculos de idempotência e os mapeamentos de combo
 - [x] Prevenir recorrência: normalização em centavos no servidor, bloqueio de ambiguidade, revalidação do JSON na gravação e multiplicador configurável de unidades por combo
+
+## Contingência de backup incremental — Novembro/2026
+- [x] Publicar fluxo incremental protegido: exclusão de segredos no ZIP, autenticação administrativa, trava única de execução ativa e manifesto/checksums auditáveis
+- [x] Atualizar o Heartbeat oficial para uma etapa a cada 5 minutos entre 03:00 e 08:55 BRT e encerrar o ciclo antigo incompleto de 24/10
+- [x] Iniciar ciclo limpo e disponibilizar verificador somente leitura que baixa e confere todos os artefatos antes de qualquer SQL de restauração
+- [x] Documentar procedimento de restauração controlada em banco descartável, com bloqueio explícito ao banco de produção
+- [ ] Desativar no painel Manus a tarefa legada “Backup Diário ERP Adega Beira Rio”, que ainda executa `scripts/backup.mjs` e Google Drive
+- [ ] Confirmar a primeira execução `COMPLETE` com todos os chunks e ZIP de código validados pela CLI
+- [ ] Provisionar banco descartável, implementar/aplicar restaurador controlado e concluir teste de recuperação com relatório auditável
+- [ ] Definir retenção, alerta de ausência de cópia íntegra e réplica externa independente após a primeira restauração aprovada
