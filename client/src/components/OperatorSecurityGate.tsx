@@ -340,32 +340,30 @@ function OperatorAccessForm({ status, state, unavailable, onRecheck, productionS
   };
 
   const titles: Record<string, string> = {
-    SIGNED_OUT: "Bem-vindo à sua operação",
-    LOGIN_REQUIRED: "É hora de se identificar novamente",
-    PIN_SETUP_REQUIRED: "Crie seu PIN de operador",
-    PIN_CONFIRM_REQUIRED: "Confirme sua identidade",
-    LOCKED: "Sua operação está protegida",
+    SIGNED_OUT: "Acesse o ABRWF",
+    LOGIN_REQUIRED: "Acesse o ABRWF",
+    PIN_SETUP_REQUIRED: "Cadastre seu PIN",
+    PIN_CONFIRM_REQUIRED: "Confirme seu PIN",
+    LOCKED: "Sessão bloqueada",
     VERIFYING: unavailable ? "Conexão indisponível" : "Verificando seu acesso",
   };
   return <div>
-    <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-xl bg-[#e7eee5] text-[#285847]">
+    <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-[#e7eee5] text-[#285847]">
       {pinRequired ? <LockKeyhole size={22} aria-hidden="true" /> : <ShieldCheck size={22} aria-hidden="true" />}
     </div>
     <h2 className="text-2xl font-semibold tracking-tight leading-tight">{titles[state]}</h2>
-    <p className="mt-3 text-sm leading-relaxed text-[#597068]">
-      {state === "LOCKED" ? "A sessão foi bloqueada por segurança. Use seu PIN para continuar, se o login ainda estiver válido."
-        : setupRequired ? "Um PIN individual protege sua sessão nas pausas do dia. Ele não substitui o login completo."
-        : state === "PIN_CONFIRM_REQUIRED" ? "Login concluído. Digite seu PIN individual para liberar a operação."
-        : state === "LOGIN_REQUIRED" ? "Às 04h (America/Sao_Paulo), é necessário um novo login completo e, em seguida, a confirmação por PIN."
-        : state === "SIGNED_OUT" ? "Entre com sua conta. Depois, confirme o PIN do operador para acessar o sistema."
-        : unavailable ? "Não foi possível validar a sessão. Os dados da operação ficam ocultos até o servidor confirmar o acesso."
-        : "Aguarde a confirmação do servidor. Nenhum dado da operação é exibido antes dela."}
+    <p className="mt-2 text-sm leading-relaxed text-[#597068]">
+      {setupRequired ? "Crie um PIN de 6 números."
+        : pinRequired ? "Digite seu PIN para continuar."
+        : state === "LOGIN_REQUIRED" || state === "SIGNED_OUT" ? "Faça login para continuar."
+        : unavailable ? "Verifique a conexão e tente novamente."
+        : "Aguarde um instante."}
     </p>
     {pinRequired && status?.user && <div className="mt-5 flex items-center gap-3 rounded-xl border border-[#d6e0d4] p-3">
       {status.user.avatarUrl ? <img src={status.user.avatarUrl} alt="" className="h-10 w-10 rounded-full object-cover" /> : <UserRound size={25} aria-hidden="true" />}
-      <div className="min-w-0"><p className="truncate text-sm font-semibold">{status.user.name || "Operador identificado"}</p><p className="break-all text-xs text-[#597068]">Conta: {status.user.id}</p></div>
+      <div className="min-w-0"><p className="truncate text-sm font-semibold">{status.user.name || "Operador identificado"}</p></div>
     </div>}
-    <div className="mt-5" aria-live="polite">{message && <p className="operator-access-message" role="alert">{message}</p>}</div>
+    <div aria-live="polite">{message && <p className="operator-access-message mt-4" role="alert">{message}</p>}</div>
     {pinRequired && <form className="mt-5 space-y-4" onSubmit={submitPin} autoComplete="off">
       <div className="space-y-2"><label htmlFor={`${id}-pin`} className="text-sm font-medium">{setupRequired ? "Novo PIN · 6 números" : "Seu PIN · 6 números"}</label>
         <input id={`${id}-pin`} name="operator-pin" type="password" inputMode="numeric" pattern="[0-9]{6}" maxLength={6} minLength={6}
@@ -381,28 +379,27 @@ function OperatorAccessForm({ status, state, unavailable, onRecheck, productionS
         </div>
         <label className="flex items-start gap-3 text-xs leading-relaxed text-[#4a655c]" htmlFor={`${id}-ownership`}>
           <input id={`${id}-ownership`} type="checkbox" required checked={ownsAccount} disabled={busy} onChange={event => setOwnsAccount(event.target.checked)} />
-          <span>Confirmo que a conta de <strong>{status?.user?.name || status?.user?.id || "operador identificado"}</strong> é minha. Vou manter meu PIN individual e não compartilhá-lo.</span>
+          <span>Esta conta é minha. Não compartilharei meu PIN.</span>
         </label>
       </>}
       <p id={`${id}-help`} className="text-xs leading-relaxed text-[#597068]">{setupRequired
-        ? "Use 6 números sem sequências simples ou padrões repetidos, como 123456 ou 111111. Crie o PIN logo após o login; se o prazo terminar, entre novamente. A identificação depende também do uso responsável da conta."
-        : "Esqueceu seu PIN ou esta conta não é sua? Faça um novo login; não use a credencial de outro operador."}</p>
+        ? "Evite sequências e números repetidos."
+        : "Esqueceu seu PIN? Solicite a redefinição a um administrador."}</p>
       {cooldown > 0 && <p id={`${id}-cooldown`} className="text-sm font-medium text-[#855520]" role="status">Nova tentativa em {cooldown}s.</p>}
       <button className="operator-access-primary" type="submit" disabled={busy || cooldown > 0 || !isValidOperatorPin(pin) || (setupRequired && (!ownsAccount || pin !== confirmation))}>
         {busy ? "Confirmando…" : setupRequired ? "Criar PIN e continuar" : "Confirmar e continuar"}<ArrowRight size={17} aria-hidden="true" />
       </button>
     </form>}
     {(state === "SIGNED_OUT" || state === "LOGIN_REQUIRED") && <button type="button" className="operator-access-primary mt-6" disabled={busy} onClick={() => { void freshLogin(true); }}>
-      {connecting ? "Preparando novo login…" : "Entrar com minha conta"}<ArrowRight size={17} aria-hidden="true" />
+      {connecting ? "Entrando…" : "Entrar"}<ArrowRight size={17} aria-hidden="true" />
     </button>}
     {state === "VERIFYING" && unavailable && <button type="button" className="operator-access-primary mt-6" onClick={() => { void onRecheck(); }}>Verificar conexão novamente</button>}
     {state === "VERIFYING" && unavailable && <button type="button" className="operator-access-secondary mt-4" disabled={busy} onClick={() => { void freshLogin(true); }}>Fazer novo login completo</button>}
-    {pinRequired && <button type="button" className="operator-access-secondary mt-4" disabled={busy} onClick={() => { void freshLogin(true); }}>Trocar operador / fazer novo login</button>}
-    {state !== "SIGNED_OUT" && (state !== "VERIFYING" || unavailable) && <button type="button" className="operator-access-secondary mt-2 flex items-center gap-2" disabled={busy} onClick={() => { void freshLogin(false); }}><LogOut size={14} />Sair desta conta</button>}
+    {pinRequired && <button type="button" className="operator-access-secondary mt-4" disabled={busy} onClick={() => { void freshLogin(true); }}>Trocar operador</button>}
+    {state !== "SIGNED_OUT" && (state !== "VERIFYING" || unavailable) && <button type="button" className="operator-access-secondary mt-2 flex items-center gap-2" disabled={busy} onClick={() => { void freshLogin(false); }}><LogOut size={14} />Sair</button>}
     {(productionStation || unpairedStation) && <p className="mt-6 border-t border-[#d6e0d4] pt-4 text-xs leading-relaxed text-[#597068]">{productionStation
-      ? "Terminal de produção pareado: rotinas automáticas do KDS podem continuar sem acesso à interface. Ações humanas ainda exigem login válido e PIN."
-      : "Para manter as rotinas automáticas do KDS durante o bloqueio, um administrador deve parear este navegador em Segurança antes do primeiro uso do terminal."}</p>}
-    <p className="mt-6 text-[11px] leading-relaxed text-[#6b7e76]">Bloqueio por inatividade: {status?.idleMinutes ?? "—"} min · Login diário às 04h · America/Sao_Paulo</p>
+      ? "KDS em execução. Identifique-se para operar."
+      : "KDS não pareado. Configure este terminal em Segurança."}</p>}
   </div>;
 }
 

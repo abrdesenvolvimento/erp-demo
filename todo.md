@@ -2672,3 +2672,10 @@ O faturamento histórico foi encerrado por orientação do usuário e não integ
 - [x] Aplicar ao fundo azul-petróleo #114352 e verde #2f6d44 extraídos do logo; usar dourado #d59e15 e verde na assinatura
 - [x] Replicar a identidade na transição após login, sem alterar autenticação, PIN, prazos ou dados operacionais
 - [x] Conferir desktop/mobile e validar renderização, paleta e continuidade das regras da campanha
+
+## Simplificação das telas de acesso — 02/11/2026
+- [x] Manter o selo e o fundo aprovados, exibindo apenas “Um ano construindo uma gestão mais inteligente” no bloco comemorativo
+- [x] Retirar subtítulo, período, chamada de novembro e rodapé editorial adicional, preservando o encerramento automático da campanha
+- [x] Enxugar o card: título e instrução curtos, botão Entrar e ações contextuais de PIN/troca/saída, sem rodapé técnico ou identificador UUID
+- [x] Preservar identificação do operador, aceite de propriedade da conta, alertas, recuperação de PIN e regras de segurança
+- [x] Conferir desktop/celular e atualizar regressões visuais e guia operacional

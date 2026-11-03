@@ -33,13 +33,11 @@ A proteção reduz o uso acidental de contas alheias, mas não identifica fisica
 
 Login e bloqueio receberam identidade ABRWF, com adaptação ao celular e animação editorial curta. Durante **novembro de 2026**, o logo original ampliado e o selo dourado **1 ANO** formam uma assinatura única, acompanhada de:
 
-> **Um ano construindo uma gestão mais inteligente.**
->
-> Mais controle. Melhores decisões. Novas possibilidades.
->
-> Novembro de 2025 — Novembro de 2026.
+> **Um ano construindo uma gestão mais inteligente**
 
 A menção ao aniversário sai automaticamente no início de dezembro, no fuso de Brasília, sem nova publicação. A estrutura de acesso permanece. A animação respeita a preferência de redução de movimento, sem atrasar o formulário.
+
+O card de identificação exibe instruções curtas e as ações necessárias para cada estado: entrar, cadastrar/confirmar PIN, trocar operador ou sair. Horários, fuso e tempo de inatividade não aparecem mais no rodapé; as políticas continuam vigentes e consultáveis em Segurança e Minha Conta. Identidade do operador, confirmação de propriedade da conta, erros, limite de tentativas e orientação de recuperação de PIN foram preservados.
 
 ## Escopo e verificações
 

@@ -1,5 +1,4 @@
 import React, { useEffect, useState, type CSSProperties, type ReactNode } from "react";
-import { ArrowUpRight, ShieldCheck } from "lucide-react";
 import { isAnniversaryMonth } from "../../../shared/sessionSecurity";
 import { ANNIVERSARY_BRAND, ABRWF_ACCESS_PALETTE } from "../../../shared/anniversaryBrand";
 
@@ -50,6 +49,13 @@ export function AnniversarySignature() {
   </div>;
 }
 
+export function AnniversaryMessage() {
+  return <>
+    <AnniversarySignature />
+    <h1 className="operator-access-heading operator-access-anniversary-heading">{ANNIVERSARY_BRAND.headline}</h1>
+  </>;
+}
+
 export function AnniversaryAccess({ children, serverNow, company = null }: AnniversaryAccessProps) {
   const anniversary = useAnniversaryClock(serverNow);
   const brasa = company?.id === 2 || /brasa/i.test(company?.name ?? "");
@@ -71,7 +77,7 @@ export function AnniversaryAccess({ children, serverNow, company = null }: Anniv
         .operator-access-eyebrow{text-transform:uppercase;letter-spacing:.19em;font-size:11px;font-weight:600;color:#bccac5}
         .operator-access-heading{font-size:clamp(34px,4.3vw,64px);line-height:1.07;letter-spacing:-.045em;font-weight:600;max-width:630px;margin:18px 0 24px}
         .operator-access-anniversary-heading{font-size:clamp(34px,3.6vw,48px);line-height:1.16;margin:28px 0 18px;max-width:560px;text-wrap:balance}
-        .operator-access-signature{display:inline-flex;align-items:center;gap:18px;margin-top:26px;max-width:100%;padding:18px 26px 20px;background:linear-gradient(130deg,#fbfaf2,#eff3e4);border:1px solid #ded4aa;border-bottom:3px solid var(--access-brand-gold);border-radius:26px;box-shadow:0 18px 46px #0a283d40}
+        .operator-access-signature{display:inline-flex;align-items:center;gap:18px;max-width:100%;padding:18px 26px 20px;background:linear-gradient(130deg,#fbfaf2,#eff3e4);border:1px solid #ded4aa;border-bottom:3px solid var(--access-brand-gold);border-radius:26px;box-shadow:0 18px 46px #0a283d40}
         .operator-access-signature-logo{width:148px;height:148px;overflow:hidden;flex-shrink:0}
         .operator-access-signature-logo img{width:100%;height:100%;object-fit:contain;transform:scale(1.25);mix-blend-mode:multiply}
         .operator-access-signature-mark{display:flex;align-items:center;gap:12px;color:var(--access-brand-gold);min-width:0}
@@ -80,9 +86,6 @@ export function AnniversaryAccess({ children, serverNow, company = null }: Anniv
         .operator-access-signature-note{font-size:10px;line-height:1.6;letter-spacing:.14em;text-transform:uppercase;color:var(--access-brand-petroleum);font-weight:500}
         .operator-access-gold{color:var(--access-accent)}
         .operator-access-copy{font-size:clamp(16px,1.6vw,19px);line-height:1.65;color:#e0ece3;max-width:440px}
-        .operator-access-year{margin-top:32px;display:flex;align-items:center;gap:12px;font-size:12px;letter-spacing:.035em;color:#f5e8c5}
-        .operator-access-line{width:40px;height:1px;background:var(--access-accent)}
-        .operator-access-bottom{margin-top:52px;display:flex;align-items:center;gap:16px;color:#d8e9dd;font-size:12px}
         .operator-access-card{background:#f9faf6;color:#153332;border:1px solid #d8e2d8;border-top:4px solid var(--access-accent);border-radius:24px;padding:clamp(24px,3vw,40px);box-shadow:0 24px 80px #0005;min-width:0}
         .operator-access-company{display:flex;align-items:center;gap:10px;border-radius:12px;padding:11px 13px;background:var(--access-company);color:#fff;margin-bottom:28px;font-size:13px}
         .operator-access-company img{height:32px;width:32px;object-fit:contain;border-radius:6px;background:#fff}
@@ -98,26 +101,21 @@ export function AnniversaryAccess({ children, serverNow, company = null }: Anniv
         .operator-access button:focus-visible{outline:3px solid #93b5a8;outline-offset:3px}
         .operator-access-editorial{animation:operator-access-enter 220ms ease-out both}
         @keyframes operator-access-enter{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-        @media(max-width:760px){.operator-access-grid{grid-template-columns:1fr;gap:28px;padding:24px 20px}.operator-access-brand{margin-bottom:24px}.operator-access-logo{width:56px;height:56px}.operator-access-heading{font-size:36px;max-width:500px;margin-bottom:16px}.operator-access-anniversary-heading{font-size:30px;margin-top:24px;line-height:1.2}.operator-access-signature{gap:12px;margin-top:22px;padding:14px 18px 16px;border-radius:22px}.operator-access-signature-logo{width:108px;height:108px}.operator-access-signature-mark{gap:10px}.operator-access-signature-number{font-size:100px}.operator-access-signature-word{font-size:26px;gap:8px}.operator-access-signature-note{font-size:9px;letter-spacing:.1em}.operator-access-bottom{display:none}.operator-access-year{margin-top:20px;font-size:11px;gap:9px}.operator-access-line{width:24px;flex-shrink:0}.operator-access-card{padding:24px}}
+        @media(max-width:760px){.operator-access-grid{grid-template-columns:1fr;gap:28px;padding:24px 20px}.operator-access-brand{margin-bottom:24px}.operator-access-logo{width:56px;height:56px}.operator-access-heading{font-size:36px;max-width:500px;margin-bottom:16px}.operator-access-anniversary-heading{font-size:30px;margin-top:24px;line-height:1.2}.operator-access-signature{gap:12px;padding:14px 18px 16px;border-radius:22px}.operator-access-signature-logo{width:108px;height:108px}.operator-access-signature-mark{gap:10px}.operator-access-signature-number{font-size:100px}.operator-access-signature-word{font-size:26px;gap:8px}.operator-access-signature-note{font-size:9px;letter-spacing:.1em}.operator-access-card{padding:24px}}
         @media(max-width:360px){.operator-access-signature{padding:12px 14px 14px;gap:8px}.operator-access-signature-logo{width:96px;height:96px}.operator-access-signature-number{font-size:88px}.operator-access-signature-word{font-size:22px}.operator-access-signature-mark{gap:8px}}
         @media(prefers-reduced-motion:reduce){.operator-access *{animation:none!important;transition:none!important;transform:none!important}}
       `}</style>
       <div className="operator-access-grid">
         <section className="operator-access-editorial" aria-label="ABRWF">
-          {anniversary ? <>
-            <div className="operator-access-eyebrow operator-access-gold">{ANNIVERSARY_BRAND.eyebrow}</div>
-            <AnniversarySignature />
-          </> : <>
+          {anniversary ? <AnniversaryMessage /> : <>
             <div className="operator-access-brand">
               <img className="operator-access-logo" src="/logo-abrwf.png" alt="ABRWF" />
               <div><div className="operator-access-eyebrow">Gestão que evolui com você</div><p className="mt-2 text-sm">Adega Beira Rio · A Brasa Reúne</p></div>
             </div>
             <div className="operator-access-eyebrow operator-access-gold">Seu próximo turno começa aqui</div>
+            <h1 className="operator-access-heading">Rotina organizada.<br /><span className="operator-access-gold">Decisões melhores.</span></h1>
+            <p className="operator-access-copy">Controle, clareza e segurança para cuidar de cada etapa da operação.</p>
           </>}
-          <h1 className={`operator-access-heading${anniversary ? " operator-access-anniversary-heading" : ""}`}>{anniversary ? ANNIVERSARY_BRAND.headline : <>Rotina organizada.<br /><span className="operator-access-gold">Decisões melhores.</span></>}</h1>
-          <p className="operator-access-copy">{anniversary ? ANNIVERSARY_BRAND.supporting : "Controle, clareza e segurança para cuidar de cada etapa da operação."}</p>
-          {anniversary && <p className="operator-access-year"><span className="operator-access-line" />{ANNIVERSARY_BRAND.period}</p>}
-          <div className="operator-access-bottom"><ShieldCheck size={18} /><span>Identificação individual. Operação protegida.</span><ArrowUpRight size={16} className="ml-auto" /></div>
         </section>
         <section className="operator-access-card" aria-label="Acesso do operador">
           {company && <div className="operator-access-company">{company.logoUrl && <img src={company.logoUrl} alt="" />}<span>{company.name}</span></div>}

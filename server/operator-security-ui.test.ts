@@ -3,7 +3,7 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { AnniversaryAccess, AnniversarySignature } from "../client/src/components/AnniversaryAccess";
+import { AnniversaryAccess, AnniversarySignature, AnniversaryMessage } from "../client/src/components/AnniversaryAccess";
 import { ANNIVERSARY_BRAND } from "../shared/anniversaryBrand";
 import {
   effectiveOperatorState,
@@ -157,8 +157,9 @@ describe("Operator UI source invariants — secondary integration guardrails", (
     expect(access).toContain("prefers-reduced-motion:reduce");
     expect(access).toContain("220ms");
     expect(access).toContain("ABRWF — ");
-    expect(access).toContain("ANNIVERSARY_BRAND.period");
-    expect(ANNIVERSARY_BRAND.period).toBe("Novembro de 2025 — Novembro de 2026");
+    expect(access).not.toContain("ANNIVERSARY_BRAND.period");
+    expect(access).not.toContain("ANNIVERSARY_BRAND.supporting");
+    expect(access).not.toContain("ANNIVERSARY_BRAND.eyebrow");
   });
   it("uses shared idle choices and real production terminal APIs", () => {
     expect(page).toContain("ALLOWED_IDLE_MINUTES.map");
@@ -176,6 +177,18 @@ describe("Operator UI source invariants — secondary integration guardrails", (
     expect(page).toContain("minLength={10}");
     expect(page).toContain("revogação de todas as suas sessões");
   });
+  it("mantém login, troca e PIN essenciais sem rodapé técnico no card", () => {
+    expect(gate).toContain('LOGIN_REQUIRED: "Acesse o ABRWF"');
+    expect(gate).toContain("Faça login para continuar.");
+    expect(gate).toContain('"Entrar"');
+    expect(gate).toContain(">Trocar operador</button>");
+    expect(gate).toContain("Esta conta é minha. Não compartilharei meu PIN.");
+    expect(gate).toContain("Solicite a redefinição a um administrador.");
+    expect(gate).not.toContain("Bloqueio por inatividade:");
+    expect(gate).not.toContain("Login diário às 04h");
+    expect(gate).not.toContain("America/Sao_Paulo");
+    expect(gate).not.toContain("Conta: {status.user.id}");
+  });
 });
 
 describe("Assinatura comemorativa renderizada", () => {
@@ -190,8 +203,8 @@ describe("Assinatura comemorativa renderizada", () => {
     expect(html).not.toContain("operator-access-signature-divider");
   });
   it("usa a frase aprovada sem duplicar a antiga chamada", () => {
-    expect(ANNIVERSARY_BRAND.headline).toBe("Um ano construindo uma gestão mais inteligente.");
-    expect(ANNIVERSARY_BRAND.supporting).toBe("Mais controle. Melhores decisões. Novas possibilidades.");
+    expect(ANNIVERSARY_BRAND.headline).toBe("Um ano construindo uma gestão mais inteligente");
+    expect(Object.keys(ANNIVERSARY_BRAND).sort()).toEqual(["badge", "headline"]);
     const access = readFileSync(resolve(import.meta.dirname, "..", "client/src/components/AnniversaryAccess.tsx"), "utf8");
     expect(access).toContain("<AnniversarySignature />");
     expect(access).not.toContain("1 ano de evolução");
@@ -210,5 +223,15 @@ describe("Assinatura comemorativa renderizada", () => {
     expect(html).toContain("--access-brand-gold:#d59e15");
     expect(html).toContain("background:linear-gradient(130deg,#fbfaf2,#eff3e4)");
     expect(html).toContain("mix-blend-mode:multiply");
+  });
+  it("renderiza apenas selo e frase, sem subtítulo, período ou rodapé adicional", () => {
+    const html = renderToStaticMarkup(createElement(AnniversaryMessage));
+    expect(html).toContain('aria-label="ABRWF — 1 ANO"');
+    expect(html).toContain(ANNIVERSARY_BRAND.headline);
+    expect(html.match(/<h1 /g)).toHaveLength(1);
+    expect(html).not.toContain("Mais controle.");
+    expect(html).not.toContain("Novembro");
+    expect(html).not.toContain("Identificação individual. Operação protegida.");
+    expect(html).not.toContain("<p");
   });
 });
