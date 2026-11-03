@@ -31,10 +31,12 @@ A proteção reduz o uso acidental de contas alheias, mas não identifica fisica
 
 ## Edição comemorativa
 
-Login e bloqueio receberam identidade ABRWF, com adaptação ao celular e animação editorial curta. Durante **novembro de 2026**, exibem:
+Login e bloqueio receberam identidade ABRWF, com adaptação ao celular e animação editorial curta. Durante **novembro de 2026**, o logo original ampliado e o selo dourado **1 ANO** formam uma assinatura única, acompanhada de:
 
-> **ABRWF — 1 ano de evolução**  
-> Um ano transformando rotina em controle e dados em decisões.  
+> **Um ano construindo uma gestão mais inteligente.**
+>
+> Mais controle. Melhores decisões. Novas possibilidades.
+>
 > Novembro de 2025 — Novembro de 2026.
 
 A menção ao aniversário sai automaticamente no início de dezembro, no fuso de Brasília, sem nova publicação. A estrutura de acesso permanece. A animação respeita a preferência de redução de movimento, sem atrasar o formulário.

@@ -1,6 +1,10 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import { AnniversaryAccess, AnniversarySignature } from "../client/src/components/AnniversaryAccess";
+import { ANNIVERSARY_BRAND } from "../shared/anniversaryBrand";
 import {
   effectiveOperatorState,
   isOperatorSignal,
@@ -153,7 +157,8 @@ describe("Operator UI source invariants — secondary integration guardrails", (
     expect(access).toContain("prefers-reduced-motion:reduce");
     expect(access).toContain("220ms");
     expect(access).toContain("ABRWF — ");
-    expect(access).toContain("Novembro de 2025 — Novembro de 2026");
+    expect(access).toContain("ANNIVERSARY_BRAND.period");
+    expect(ANNIVERSARY_BRAND.period).toBe("Novembro de 2025 — Novembro de 2026");
   });
   it("uses shared idle choices and real production terminal APIs", () => {
     expect(page).toContain("ALLOWED_IDLE_MINUTES.map");
@@ -170,5 +175,31 @@ describe("Operator UI source invariants — secondary integration guardrails", (
     expect(page).toContain("reset.mutate({ userId: selectedUserId, reason: reason.trim() })");
     expect(page).toContain("minLength={10}");
     expect(page).toContain("revogação de todas as suas sessões");
+  });
+});
+
+describe("Assinatura comemorativa renderizada", () => {
+  it("integra o logo original e o selo acessível de um ano num único conjunto", () => {
+    const html = renderToStaticMarkup(createElement(AnniversarySignature));
+    expect(html).toContain('aria-label="ABRWF — 1 ANO"');
+    expect(html).toContain('src="/logo-abrwf.png"');
+    expect(html).toContain('alt="ABRWF"');
+    expect(html).toContain('operator-access-signature-number">1</span>');
+    expect(html).toContain('>ANO</span>');
+    expect(html.match(/<img /g)).toHaveLength(1);
+  });
+  it("usa a frase aprovada sem duplicar a antiga chamada", () => {
+    expect(ANNIVERSARY_BRAND.headline).toBe("Um ano construindo uma gestão mais inteligente.");
+    expect(ANNIVERSARY_BRAND.supporting).toBe("Mais controle. Melhores decisões. Novas possibilidades.");
+    const access = readFileSync(resolve(import.meta.dirname, "..", "client/src/components/AnniversaryAccess.tsx"), "utf8");
+    expect(access).toContain("<AnniversarySignature />");
+    expect(access).not.toContain("1 ano de evolução");
+  });
+  it("mantém a identidade normal e o formulário sem campanha antes da confirmação do relógio", () => {
+    const html = renderToStaticMarkup(createElement(AnniversaryAccess, { children: createElement("button", null, "Entrar") }));
+    expect(html).toContain("Rotina organizada.");
+    expect(html).toContain("Decisões melhores.");
+    expect(html).toContain(">Entrar</button>");
+    expect(html).not.toContain('aria-label="ABRWF — 1 ANO"');
   });
 });

@@ -1,6 +1,7 @@
-import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
+import React, { useEffect, useState, type CSSProperties, type ReactNode } from "react";
 import { ArrowUpRight, ShieldCheck } from "lucide-react";
 import { isAnniversaryMonth } from "../../../shared/sessionSecurity";
+import { ANNIVERSARY_BRAND } from "../../../shared/anniversaryBrand";
 
 type AccessCompany = { id: number; name: string; logoUrl: string | null } | null;
 export type AnniversaryAccessProps = {
@@ -39,6 +40,17 @@ function useAnniversaryClock(serverNow?: number) {
   return clock != null && isAnniversaryMonth(clock.now);
 }
 
+export function AnniversarySignature() {
+  return <div className="operator-access-signature" aria-label={`ABRWF — ${ANNIVERSARY_BRAND.badge}`}>
+    <div className="operator-access-signature-logo"><img src="/logo-abrwf.png" alt="ABRWF" /></div>
+    <span className="operator-access-signature-divider" aria-hidden="true" />
+    <div className="operator-access-signature-mark" aria-hidden="true">
+      <span className="operator-access-signature-number">1</span>
+      <div className="operator-access-signature-word"><span>ANO</span><span className="operator-access-signature-note">Gestão em<br />evolução</span></div>
+    </div>
+  </div>;
+}
+
 export function AnniversaryAccess({ children, serverNow, company = null }: AnniversaryAccessProps) {
   const anniversary = useAnniversaryClock(serverNow);
   const brasa = company?.id === 2 || /brasa/i.test(company?.name ?? "");
@@ -56,6 +68,15 @@ export function AnniversaryAccess({ children, serverNow, company = null }: Anniv
         .operator-access-logo{width:76px;height:76px;object-fit:contain;background:#fff;border-radius:18px;padding:8px}
         .operator-access-eyebrow{text-transform:uppercase;letter-spacing:.19em;font-size:11px;font-weight:600;color:#bccac5}
         .operator-access-heading{font-size:clamp(34px,4.3vw,64px);line-height:1.07;letter-spacing:-.045em;font-weight:600;max-width:630px;margin:18px 0 24px}
+        .operator-access-anniversary-heading{font-size:clamp(34px,3.6vw,48px);line-height:1.16;margin:28px 0 18px;max-width:560px;text-wrap:balance}
+        .operator-access-signature{display:flex;align-items:center;gap:26px;margin-top:26px;max-width:100%}
+        .operator-access-signature-logo{width:156px;height:156px;background:#fff;border-radius:24px;overflow:hidden;flex-shrink:0;box-shadow:0 12px 36px #0002}
+        .operator-access-signature-logo img{width:100%;height:100%;object-fit:contain;transform:scale(1.22)}
+        .operator-access-signature-divider{width:1px;height:102px;background:linear-gradient(transparent,#d7b46a,transparent);flex-shrink:0}
+        .operator-access-signature-mark{display:flex;align-items:center;gap:14px;color:#e4bc69;min-width:0}
+        .operator-access-signature-number{font-size:140px;line-height:.95;letter-spacing:-.065em;font-weight:500;font-variant-numeric:lining-nums}
+        .operator-access-signature-word{display:flex;flex-direction:column;gap:10px;font-size:32px;line-height:1;font-weight:500;letter-spacing:.075em}
+        .operator-access-signature-note{font-size:10px;line-height:1.6;letter-spacing:.18em;text-transform:uppercase;color:#d3c5a7;font-weight:500}
         .operator-access-gold{color:var(--access-accent)}
         .operator-access-copy{font-size:clamp(16px,1.6vw,19px);line-height:1.65;color:#c0ceca;max-width:440px}
         .operator-access-year{margin-top:32px;display:flex;align-items:center;gap:12px;font-size:12px;letter-spacing:.035em;color:#cbb98d}
@@ -76,19 +97,24 @@ export function AnniversaryAccess({ children, serverNow, company = null }: Anniv
         .operator-access button:focus-visible{outline:3px solid #93b5a8;outline-offset:3px}
         .operator-access-editorial{animation:operator-access-enter 220ms ease-out both}
         @keyframes operator-access-enter{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-        @media(max-width:760px){.operator-access-grid{grid-template-columns:1fr;gap:28px;padding:24px 20px}.operator-access-brand{margin-bottom:24px}.operator-access-logo{width:56px;height:56px}.operator-access-heading{font-size:36px;max-width:500px;margin-bottom:16px}.operator-access-bottom{display:none}.operator-access-year{margin-top:20px}.operator-access-card{padding:24px}}
+        @media(max-width:760px){.operator-access-grid{grid-template-columns:1fr;gap:28px;padding:24px 20px}.operator-access-brand{margin-bottom:24px}.operator-access-logo{width:56px;height:56px}.operator-access-heading{font-size:36px;max-width:500px;margin-bottom:16px}.operator-access-anniversary-heading{font-size:30px;margin-top:24px;line-height:1.2}.operator-access-signature{gap:18px;margin-top:22px}.operator-access-signature-logo{width:116px;height:116px;border-radius:20px}.operator-access-signature-divider{height:80px}.operator-access-signature-mark{gap:12px}.operator-access-signature-number{font-size:104px}.operator-access-signature-word{font-size:26px;gap:8px}.operator-access-signature-note{font-size:9px;letter-spacing:.12em}.operator-access-bottom{display:none}.operator-access-year{margin-top:20px;font-size:11px;gap:9px}.operator-access-line{width:24px;flex-shrink:0}.operator-access-card{padding:24px}}
         @media(prefers-reduced-motion:reduce){.operator-access *{animation:none!important;transition:none!important;transform:none!important}}
       `}</style>
       <div className="operator-access-grid">
         <section className="operator-access-editorial" aria-label="ABRWF">
-          <div className="operator-access-brand">
-            <img className="operator-access-logo" src="/logo-abrwf.png" alt="ABRWF" />
-            <div><div className="operator-access-eyebrow">Gestão que evolui com você</div><p className="mt-2 text-sm">Adega Beira Rio · A Brasa Reúne</p></div>
-          </div>
-          <div className="operator-access-eyebrow operator-access-gold">{anniversary ? "Novembro · Edição de aniversário" : "Seu próximo turno começa aqui"}</div>
-          <h1 className="operator-access-heading">{anniversary ? <>ABRWF — <span className="operator-access-gold">1 ano de evolução</span></> : <>Rotina organizada.<br /><span className="operator-access-gold">Decisões melhores.</span></>}</h1>
-          <p className="operator-access-copy">{anniversary ? "Um ano transformando rotina em controle e dados em decisões." : "Controle, clareza e segurança para cuidar de cada etapa da operação."}</p>
-          {anniversary && <p className="operator-access-year"><span className="operator-access-line" />Novembro de 2025 — Novembro de 2026</p>}
+          {anniversary ? <>
+            <div className="operator-access-eyebrow operator-access-gold">{ANNIVERSARY_BRAND.eyebrow}</div>
+            <AnniversarySignature />
+          </> : <>
+            <div className="operator-access-brand">
+              <img className="operator-access-logo" src="/logo-abrwf.png" alt="ABRWF" />
+              <div><div className="operator-access-eyebrow">Gestão que evolui com você</div><p className="mt-2 text-sm">Adega Beira Rio · A Brasa Reúne</p></div>
+            </div>
+            <div className="operator-access-eyebrow operator-access-gold">Seu próximo turno começa aqui</div>
+          </>}
+          <h1 className={`operator-access-heading${anniversary ? " operator-access-anniversary-heading" : ""}`}>{anniversary ? ANNIVERSARY_BRAND.headline : <>Rotina organizada.<br /><span className="operator-access-gold">Decisões melhores.</span></>}</h1>
+          <p className="operator-access-copy">{anniversary ? ANNIVERSARY_BRAND.supporting : "Controle, clareza e segurança para cuidar de cada etapa da operação."}</p>
+          {anniversary && <p className="operator-access-year"><span className="operator-access-line" />{ANNIVERSARY_BRAND.period}</p>}
           <div className="operator-access-bottom"><ShieldCheck size={18} /><span>Identificação individual. Operação protegida.</span><ArrowUpRight size={16} className="ml-auto" /></div>
         </section>
         <section className="operator-access-card" aria-label="Acesso do operador">

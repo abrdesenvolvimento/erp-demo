@@ -2660,3 +2660,9 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [ ] Retomar melhorias analíticas do Salão/KDS após validar segurança, Metas e primeira etapa de Consumo
 
 O faturamento histórico foi encerrado por orientação do usuário e não integra esta sequência de melhorias.
+
+## Refinamento da assinatura comemorativa — 02/11/2026
+- [x] Integrar logo original ampliado, divisor fino e selo dourado 1 ANO em um único conjunto no login e bloqueio
+- [x] Aplicar a frase aprovada “Um ano construindo uma gestão mais inteligente.” e a mensagem de apoio compartilhadas também na transição após login
+- [x] Preservar período exclusivo de novembro, retirada automática em dezembro, redução de movimento e todas as regras de PIN/login diário
+- [x] Conferir a composição em desktop e celular e acrescentar testes de renderização da assinatura
