@@ -2666,3 +2666,9 @@ O faturamento histórico foi encerrado por orientação do usuário e não integ
 - [x] Aplicar a frase aprovada “Um ano construindo uma gestão mais inteligente.” e a mensagem de apoio compartilhadas também na transição após login
 - [x] Preservar período exclusivo de novembro, retirada automática em dezembro, redução de movimento e todas as regras de PIN/login diário
 - [x] Conferir a composição em desktop e celular e acrescentar testes de renderização da assinatura
+
+## Integração de marca e paleta do logo — 02/11/2026
+- [x] Substituir a assinatura com peças separadas por um selo único creme, com logo original e 1 ANO sem divisor vertical ou placa individual
+- [x] Aplicar ao fundo azul-petróleo #114352 e verde #2f6d44 extraídos do logo; usar dourado #d59e15 e verde na assinatura
+- [x] Replicar a identidade na transição após login, sem alterar autenticação, PIN, prazos ou dados operacionais
+- [x] Conferir desktop/mobile e validar renderização, paleta e continuidade das regras da campanha

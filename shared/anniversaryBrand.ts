@@ -5,3 +5,9 @@ export const ANNIVERSARY_BRAND = {
   supporting: "Mais controle. Melhores decisões. Novas possibilidades.",
   period: "Novembro de 2025 — Novembro de 2026",
 } as const;
+
+export const ABRWF_ACCESS_PALETTE = {
+  petroleum: "#114352",
+  green: "#2f6d44",
+  gold: "#d59e15",
+} as const;

@@ -1,7 +1,7 @@
 import React, { useEffect, useState, type CSSProperties, type ReactNode } from "react";
 import { ArrowUpRight, ShieldCheck } from "lucide-react";
 import { isAnniversaryMonth } from "../../../shared/sessionSecurity";
-import { ANNIVERSARY_BRAND } from "../../../shared/anniversaryBrand";
+import { ANNIVERSARY_BRAND, ABRWF_ACCESS_PALETTE } from "../../../shared/anniversaryBrand";
 
 type AccessCompany = { id: number; name: string; logoUrl: string | null } | null;
 export type AnniversaryAccessProps = {
@@ -43,7 +43,6 @@ function useAnniversaryClock(serverNow?: number) {
 export function AnniversarySignature() {
   return <div className="operator-access-signature" aria-label={`ABRWF — ${ANNIVERSARY_BRAND.badge}`}>
     <div className="operator-access-signature-logo"><img src="/logo-abrwf.png" alt="ABRWF" /></div>
-    <span className="operator-access-signature-divider" aria-hidden="true" />
     <div className="operator-access-signature-mark" aria-hidden="true">
       <span className="operator-access-signature-number">1</span>
       <div className="operator-access-signature-word"><span>ANO</span><span className="operator-access-signature-note">Gestão em<br />evolução</span></div>
@@ -55,13 +54,16 @@ export function AnniversaryAccess({ children, serverNow, company = null }: Anniv
   const anniversary = useAnniversaryClock(serverNow);
   const brasa = company?.id === 2 || /brasa/i.test(company?.name ?? "");
   const variables = {
-    "--access-accent": brasa ? "#F07A00" : "#E4BC69",
+    "--access-accent": brasa ? "#F07A00" : "#f0cd78",
     "--access-company": brasa ? "#2F2F2F" : "#49682D",
+    "--access-brand-petroleum": ABRWF_ACCESS_PALETTE.petroleum,
+    "--access-brand-green": ABRWF_ACCESS_PALETTE.green,
+    "--access-brand-gold": ABRWF_ACCESS_PALETTE.gold,
   } as CSSProperties;
   return (
     <main className="operator-access" style={variables}>
       <style>{`
-        .operator-access{position:fixed;inset:0;z-index:99990;overflow:auto;background:#081f23;color:#eef3ed;font-family:inherit;display:flex;min-height:100dvh;isolation:isolate}
+        .operator-access{position:fixed;inset:0;z-index:99990;overflow:auto;background:radial-gradient(ellipse at 90% 10%,#2f6d4499,transparent 66%),linear-gradient(118deg,var(--access-brand-petroleum) 18%,#1c5c53 60%,var(--access-brand-green));color:#f5f6ee;font-family:inherit;display:flex;min-height:100dvh;isolation:isolate}
         .operator-access *{box-sizing:border-box}
         .operator-access-grid{width:min(1280px,100%);margin:auto;display:grid;grid-template-columns:minmax(0,1.35fr) minmax(350px,1fr);gap:clamp(36px,6vw,96px);padding:clamp(24px,5vw,72px);align-items:center}
         .operator-access-brand{display:flex;align-items:center;gap:18px;margin-bottom:clamp(32px,5vh,60px)}
@@ -69,19 +71,18 @@ export function AnniversaryAccess({ children, serverNow, company = null }: Anniv
         .operator-access-eyebrow{text-transform:uppercase;letter-spacing:.19em;font-size:11px;font-weight:600;color:#bccac5}
         .operator-access-heading{font-size:clamp(34px,4.3vw,64px);line-height:1.07;letter-spacing:-.045em;font-weight:600;max-width:630px;margin:18px 0 24px}
         .operator-access-anniversary-heading{font-size:clamp(34px,3.6vw,48px);line-height:1.16;margin:28px 0 18px;max-width:560px;text-wrap:balance}
-        .operator-access-signature{display:flex;align-items:center;gap:26px;margin-top:26px;max-width:100%}
-        .operator-access-signature-logo{width:156px;height:156px;background:#fff;border-radius:24px;overflow:hidden;flex-shrink:0;box-shadow:0 12px 36px #0002}
-        .operator-access-signature-logo img{width:100%;height:100%;object-fit:contain;transform:scale(1.22)}
-        .operator-access-signature-divider{width:1px;height:102px;background:linear-gradient(transparent,#d7b46a,transparent);flex-shrink:0}
-        .operator-access-signature-mark{display:flex;align-items:center;gap:14px;color:#e4bc69;min-width:0}
-        .operator-access-signature-number{font-size:140px;line-height:.95;letter-spacing:-.065em;font-weight:500;font-variant-numeric:lining-nums}
-        .operator-access-signature-word{display:flex;flex-direction:column;gap:10px;font-size:32px;line-height:1;font-weight:500;letter-spacing:.075em}
-        .operator-access-signature-note{font-size:10px;line-height:1.6;letter-spacing:.18em;text-transform:uppercase;color:#d3c5a7;font-weight:500}
+        .operator-access-signature{display:inline-flex;align-items:center;gap:18px;margin-top:26px;max-width:100%;padding:18px 26px 20px;background:linear-gradient(130deg,#fbfaf2,#eff3e4);border:1px solid #ded4aa;border-bottom:3px solid var(--access-brand-gold);border-radius:26px;box-shadow:0 18px 46px #0a283d40}
+        .operator-access-signature-logo{width:148px;height:148px;overflow:hidden;flex-shrink:0}
+        .operator-access-signature-logo img{width:100%;height:100%;object-fit:contain;transform:scale(1.25);mix-blend-mode:multiply}
+        .operator-access-signature-mark{display:flex;align-items:center;gap:12px;color:var(--access-brand-gold);min-width:0}
+        .operator-access-signature-number{font-size:136px;line-height:.95;letter-spacing:-.065em;font-weight:500;font-variant-numeric:lining-nums}
+        .operator-access-signature-word{display:flex;flex-direction:column;gap:10px;font-size:32px;line-height:1;font-weight:600;letter-spacing:.075em;color:var(--access-brand-green)}
+        .operator-access-signature-note{font-size:10px;line-height:1.6;letter-spacing:.14em;text-transform:uppercase;color:var(--access-brand-petroleum);font-weight:500}
         .operator-access-gold{color:var(--access-accent)}
-        .operator-access-copy{font-size:clamp(16px,1.6vw,19px);line-height:1.65;color:#c0ceca;max-width:440px}
-        .operator-access-year{margin-top:32px;display:flex;align-items:center;gap:12px;font-size:12px;letter-spacing:.035em;color:#cbb98d}
+        .operator-access-copy{font-size:clamp(16px,1.6vw,19px);line-height:1.65;color:#e0ece3;max-width:440px}
+        .operator-access-year{margin-top:32px;display:flex;align-items:center;gap:12px;font-size:12px;letter-spacing:.035em;color:#f5e8c5}
         .operator-access-line{width:40px;height:1px;background:var(--access-accent)}
-        .operator-access-bottom{margin-top:52px;display:flex;align-items:center;gap:16px;color:#aabeb7;font-size:12px}
+        .operator-access-bottom{margin-top:52px;display:flex;align-items:center;gap:16px;color:#d8e9dd;font-size:12px}
         .operator-access-card{background:#f9faf6;color:#153332;border:1px solid #d8e2d8;border-top:4px solid var(--access-accent);border-radius:24px;padding:clamp(24px,3vw,40px);box-shadow:0 24px 80px #0005;min-width:0}
         .operator-access-company{display:flex;align-items:center;gap:10px;border-radius:12px;padding:11px 13px;background:var(--access-company);color:#fff;margin-bottom:28px;font-size:13px}
         .operator-access-company img{height:32px;width:32px;object-fit:contain;border-radius:6px;background:#fff}
@@ -97,7 +98,8 @@ export function AnniversaryAccess({ children, serverNow, company = null }: Anniv
         .operator-access button:focus-visible{outline:3px solid #93b5a8;outline-offset:3px}
         .operator-access-editorial{animation:operator-access-enter 220ms ease-out both}
         @keyframes operator-access-enter{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-        @media(max-width:760px){.operator-access-grid{grid-template-columns:1fr;gap:28px;padding:24px 20px}.operator-access-brand{margin-bottom:24px}.operator-access-logo{width:56px;height:56px}.operator-access-heading{font-size:36px;max-width:500px;margin-bottom:16px}.operator-access-anniversary-heading{font-size:30px;margin-top:24px;line-height:1.2}.operator-access-signature{gap:18px;margin-top:22px}.operator-access-signature-logo{width:116px;height:116px;border-radius:20px}.operator-access-signature-divider{height:80px}.operator-access-signature-mark{gap:12px}.operator-access-signature-number{font-size:104px}.operator-access-signature-word{font-size:26px;gap:8px}.operator-access-signature-note{font-size:9px;letter-spacing:.12em}.operator-access-bottom{display:none}.operator-access-year{margin-top:20px;font-size:11px;gap:9px}.operator-access-line{width:24px;flex-shrink:0}.operator-access-card{padding:24px}}
+        @media(max-width:760px){.operator-access-grid{grid-template-columns:1fr;gap:28px;padding:24px 20px}.operator-access-brand{margin-bottom:24px}.operator-access-logo{width:56px;height:56px}.operator-access-heading{font-size:36px;max-width:500px;margin-bottom:16px}.operator-access-anniversary-heading{font-size:30px;margin-top:24px;line-height:1.2}.operator-access-signature{gap:12px;margin-top:22px;padding:14px 18px 16px;border-radius:22px}.operator-access-signature-logo{width:108px;height:108px}.operator-access-signature-mark{gap:10px}.operator-access-signature-number{font-size:100px}.operator-access-signature-word{font-size:26px;gap:8px}.operator-access-signature-note{font-size:9px;letter-spacing:.1em}.operator-access-bottom{display:none}.operator-access-year{margin-top:20px;font-size:11px;gap:9px}.operator-access-line{width:24px;flex-shrink:0}.operator-access-card{padding:24px}}
+        @media(max-width:360px){.operator-access-signature{padding:12px 14px 14px;gap:8px}.operator-access-signature-logo{width:96px;height:96px}.operator-access-signature-number{font-size:88px}.operator-access-signature-word{font-size:22px}.operator-access-signature-mark{gap:8px}}
         @media(prefers-reduced-motion:reduce){.operator-access *{animation:none!important;transition:none!important;transform:none!important}}
       `}</style>
       <div className="operator-access-grid">

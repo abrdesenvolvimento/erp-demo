@@ -7,6 +7,13 @@ describe("renderOAuthSuccessPage", () => {
     const html = renderOAuthSuccessPage(true);
 
     expect(html).toContain('src="/logo-abrwf.png"');
+    expect(html).toContain('background:linear-gradient(135deg,#114352,#2f6d44)');
+    expect(html).toContain('background:linear-gradient(135deg,#fbfaf2,#eff3e4)');
+    expect(html).toContain('border-radius:24px');
+    expect(html).toContain('mix-blend-mode:multiply');
+    expect(html).toContain('color:#d59e15');
+    expect(html).toContain('color:#2f6d44');
+    expect(html).toContain('<div class="anniversary-seal">');
     expect(html).toContain('aria-label="1 ANO"');
     expect(html).toContain('>1</span><span class="anniversary-word">ANO</span>');
     expect(html).toContain(ANNIVERSARY_BRAND.eyebrow);
@@ -39,6 +46,7 @@ describe("renderOAuthSuccessPage", () => {
 
     expect(html).toContain("Bem-vindo ao ABRWF");
     expect(html).toContain('src="/logo-abrwf.png"');
+    expect(html).not.toContain('<div class="anniversary-seal">');
     expect(html).not.toContain('<div class="anniversary-mark"');
     expect(html).not.toContain(ANNIVERSARY_BRAND.eyebrow);
     expect(html).not.toContain(ANNIVERSARY_BRAND.headline);

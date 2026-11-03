@@ -187,6 +187,7 @@ describe("Assinatura comemorativa renderizada", () => {
     expect(html).toContain('operator-access-signature-number">1</span>');
     expect(html).toContain('>ANO</span>');
     expect(html.match(/<img /g)).toHaveLength(1);
+    expect(html).not.toContain("operator-access-signature-divider");
   });
   it("usa a frase aprovada sem duplicar a antiga chamada", () => {
     expect(ANNIVERSARY_BRAND.headline).toBe("Um ano construindo uma gestão mais inteligente.");
@@ -201,5 +202,13 @@ describe("Assinatura comemorativa renderizada", () => {
     expect(html).toContain("Decisões melhores.");
     expect(html).toContain(">Entrar</button>");
     expect(html).not.toContain('aria-label="ABRWF — 1 ANO"');
+  });
+  it("aplica azul-petróleo, verde e dourado do logo em um selo de fundo comum", () => {
+    const html = renderToStaticMarkup(createElement(AnniversaryAccess, { children: createElement("button", null, "Entrar") }));
+    expect(html).toContain("--access-brand-petroleum:#114352");
+    expect(html).toContain("--access-brand-green:#2f6d44");
+    expect(html).toContain("--access-brand-gold:#d59e15");
+    expect(html).toContain("background:linear-gradient(130deg,#fbfaf2,#eff3e4)");
+    expect(html).toContain("mix-blend-mode:multiply");
   });
 });
