@@ -130,7 +130,9 @@ describe("Operator UI source invariants — secondary integration guardrails", (
     expect(gate.slice(capture, request)).toContain('setConfirmation("")');
   });
   it("awaits logout before clearing caches and beginning fresh OAuth", () => {
-    expect(gate).toMatch(/await logout\(\);[\s\S]*?await queryClient.cancelQueries\(\);[\s\S]*?queryClient.clear\(\);[\s\S]*?await warmUpAndLogin\(\)/);
+    expect(gate).toMatch(/const prepareLogin = async \(\) => \{[\s\S]*?await logout\(\);[\s\S]*?await queryClient.cancelQueries\(\);[\s\S]*?queryClient.clear\(\);/);
+    expect(gate).toContain("await warmUpAndLogin(prepareLogin)");
+    expect(gate).toContain("if (isLoginInProgress()) return");
     expect(gate).not.toMatch(/setActiveCompany\(|document\.cookie\s*=/);
   });
   it("has storage fallback payloads without PIN, cookie or token persistence", () => {

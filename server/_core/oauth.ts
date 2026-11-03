@@ -8,6 +8,7 @@ import { createOperatorSession, revokeOperatorSession } from "../operatorSecurit
 import { decodeBrowserOAuthState, OAUTH_BROWSER_NONCE_COOKIE } from "../../shared/oauthState";
 import { isAnniversaryMonth } from "../../shared/sessionSecurity";
 import { renderOAuthSuccessPage } from "../anniversaryBrand";
+import { renderOAuthRecoveryPage } from "../oauthRecovery";
 
 const IDENTITY_COOKIE_MS = 48 * 60 * 60 * 1000;
 
@@ -23,12 +24,16 @@ export function registerOAuthRoutes(app: Express) {
     const decoded = decodeBrowserOAuthState(state);
     const expected = parse(req.headers.cookie ?? "")[OAUTH_BROWSER_NONCE_COOKIE];
     res.setHeader("Cache-Control", "no-store");
+    res.setHeader("Referrer-Policy", "no-referrer");
     if (!code || !decoded || !expected || decoded.nonce !== expected) {
-      res.status(403).send("Solicitação de login inválida ou expirada. Volte ao ABRWF e inicie um novo login.");
+      // Somente categorias fixas: nunca registrar valores do callback ou cookies.
+      const reason = !code ? "missing-code" : !decoded ? "malformed-state" : !expected ? "missing-nonce" : "nonce-mismatch";
+      console.warn("[OAuth] Login rejeitado:", reason);
+      res.status(403).type("html").send(renderOAuthRecoveryPage());
       return;
     }
     // Consumo único da prova do navegador antes da troca do código.
-    res.clearCookie(OAUTH_BROWSER_NONCE_COOKIE, { path: "/", secure: true, sameSite: "lax" });
+    res.clearCookie(OAUTH_BROWSER_NONCE_COOKIE, { path: "/", secure: true, sameSite: "none" });
     try {
       const token = await sdk.exchangeCodeForToken(code, state);
       const info = await sdk.getUserInfo(token.accessToken);
@@ -54,8 +59,9 @@ export function registerOAuthRoutes(app: Express) {
       const anniversary = isAnniversaryMonth(Date.now());
       // HTTP 200 preserva Set-Cookie em Safari/iOS; não reutiliza callback nem código em retry.
       res.type("html").status(200).send(renderOAuthSuccessPage(anniversary));
-    } catch (error) {
-      console.error("[OAuth] Não foi possível concluir o login:", error instanceof Error ? error.message : "falha de autenticação");
+    } catch {
+      // Erros do SDK podem carregar URL, código ou tokens; não registrar detalhes.
+      console.error("[OAuth] Não foi possível concluir o login.");
       res.status(500).type("html").send('<!doctype html><html lang="pt-BR"><meta charset="utf-8"><title>Login ABRWF</title><body style="font-family:system-ui;padding:32px"><h1>Não foi possível concluir o login</h1><p>Volte ao sistema e inicie uma nova tentativa. Nenhuma operação foi autorizada.</p><a href="/">Voltar ao ABRWF</a></body></html>');
     }
   });

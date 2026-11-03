@@ -8,6 +8,12 @@ O bloqueio por inatividade começa em **5 minutos**. Em **Administração → Se
 
 O bloqueio é aplicado no servidor, não apenas na interface. Atualizar a página não libera uma sessão bloqueada ou vencida. Logout e bloqueio são sincronizados entre abas; dados da identidade anterior são descartados antes de liberar uma nova sessão.
 
+## Login no celular e recuperação de erro
+
+Inicie e conclua a autenticação no mesmo navegador e no mesmo endereço do ABRWF. A prévia embutida no Manus, o navegador e o aplicativo instalado podem manter cookies separados: uma tentativa iniciada em um deles não deve ser continuada em outro. Se surgir uma falha de validação, use **Voltar e tentar novamente** e inicie uma solicitação nova; não recarregue nem reaproveite a URL de retorno do provedor. Para a primeira conferência no iPhone, abra o endereço publicado diretamente no Chrome ou Safari, com cookies permitidos.
+
+A prova de navegador usa cookie host-only, Secure e SameSite=None, por dez minutos. Ela é criada somente após o aquecimento e imediatamente antes de navegar ao provedor. Uma trava compartilhada impede tentativas simultâneas na mesma página, inclusive após a remontagem do formulário. Essa trava não promete sincronização de navegadores ou abas independentes. O worker de notificações permanece, mas o callback OAuth não é cacheado nem repetido automaticamente. Falhas continuam sendo recusadas antes da troca do código, sem contorno da validação ou do PIN; os registros técnicos não contêm código, estado ou cookies.
+
 ## Primeiro uso após publicar
 
 1. Publicar em horário de menor movimento. Sessões antigas sem o novo identificador individual precisarão de novo login.

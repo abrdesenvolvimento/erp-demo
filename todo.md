@@ -2679,3 +2679,13 @@ O faturamento histórico foi encerrado por orientação do usuário e não integ
 - [x] Enxugar o card: título e instrução curtos, botão Entrar e ações contextuais de PIN/troca/saída, sem rodapé técnico ou identificador UUID
 - [x] Preservar identificação do operador, aceite de propriedade da conta, alertas, recuperação de PIN e regras de segurança
 - [x] Conferir desktop/celular e atualizar regressões visuais e guia operacional
+
+## Correção do retorno de login — 03/11/2026
+- [x] Preservar validação nonce-cookie antes da troca do código, sem aceitar state legado ou callback sem prova
+- [x] Emitir/limpar prova host-only Secure SameSite=None e criar o nonce somente após aquecimento, imediatamente antes da navegação
+- [x] Coordenar uma única preparação de login por página, adquirindo a trava antes do logout e preservando-a após remontagens
+- [x] Retirar a inscrição concorrente do worker OAuth e desativar o worker legado que repetia callbacks consumíveis; manter notificações
+- [x] Adicionar recuperação 403 com orientação, link fixo de nova tentativa e cabeçalhos contra cache/referrer; logs sem código/estado/cookies
+- [x] Executar 113 testes focados e build de produção sem novos erros TypeScript nos arquivos modificados
+- [ ] Publicar a correção e validar uma tentativa nova no iPhone, iniciada e concluída no mesmo navegador
+- [ ] Confirmar com o usuário se a falha ocorreu na prévia Manus, navegador direto ou PWA; a causa específica da captura não foi comprovada

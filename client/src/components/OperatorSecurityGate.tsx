@@ -7,7 +7,7 @@ import { ArrowRight, LockKeyhole, LogOut, ShieldCheck, UserRound } from "lucide-
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
-import { warmUpAndLogin } from "@/const";
+import { warmUpAndLogin, isLoginInProgress } from "@/const";
 import AnniversaryAccess from "./AnniversaryAccess";
 import type { OperatorSessionState, OperatorSessionStatus } from "../../../shared/sessionSecurity";
 import {
@@ -262,7 +262,7 @@ function OperatorAccessForm({ status, state, unavailable, onRecheck, productionS
   const id = useId();
   const setupRequired = state === "PIN_SETUP_REQUIRED";
   const pinRequired = setupRequired || state === "PIN_CONFIRM_REQUIRED" || state === "LOCKED";
-  const busy = connecting || unlock.isPending || setup.isPending;
+  const busy = connecting || isLoginInProgress() || unlock.isPending || setup.isPending;
   const cooldown = remainingCooldownSeconds(cooldownDeadline, cooldownNow);
 
   useEffect(() => {
@@ -279,17 +279,23 @@ function OperatorAccessForm({ status, state, unavailable, onRecheck, productionS
   }, [cooldownDeadline]);
 
   const freshLogin = async (loginAfterLogout: boolean) => {
+    if (isLoginInProgress()) return;
     setConnecting(true);
     setMessage("");
     try {
       // useAuth.logout awaits the existing trpc.auth.logout and removes company cookies.
-      await logout();
-      await queryClient.cancelQueries();
-      queryClient.clear();
-      if (loginAfterLogout) await warmUpAndLogin();
-      else window.location.assign("/");
+      const prepareLogin = async () => {
+        await logout();
+        await queryClient.cancelQueries();
+        queryClient.clear();
+      };
+      if (loginAfterLogout) await warmUpAndLogin(prepareLogin);
+      else {
+        await prepareLogin();
+        window.location.assign("/");
+      }
     } catch {
-      setMessage("Não foi possível encerrar a sessão no servidor. Verifique a conexão antes de trocar de operador.");
+      setMessage("Não foi possível preparar o login. Verifique a conexão e os cookies ou abra o ABRWF diretamente no navegador.");
       setConnecting(false);
     }
   };
