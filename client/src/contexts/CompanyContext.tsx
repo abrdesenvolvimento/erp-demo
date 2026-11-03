@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useMemo, useState, useCall
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useQueryClient } from "@tanstack/react-query";
+import { useOperatorSecuritySignal } from "@/hooks/useOperatorSecuritySignal";
 
 type CompanyAccess = {
   companyId: number;
@@ -67,6 +68,33 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
     { enabled: isAuthenticated }
   );
 
+  useOperatorSecuritySignal(signal => {
+    if (signal.type === 'logout') {
+      setActiveCompanyId(null);
+      setActiveBranchId(null);
+      setSwitching(false);
+    }
+  });
+
+  useEffect(() => {
+    if (isAuthenticated && !isLoading && companies.length > 0 && activeCompanyId && !companies.some(company => company.companyId === activeCompanyId)) {
+      setActiveCompanyId(null);
+      setActiveBranchId(null);
+      document.cookie = 'activeCompanyId=;path=/;max-age=0';
+      document.cookie = 'activeBranchId=;path=/;max-age=0';
+    }
+  }, [isAuthenticated, isLoading, companies, activeCompanyId]);
+
+  useEffect(() => {
+    const clearCompany = () => {
+      setActiveCompanyId(null);
+      setActiveBranchId(null);
+      setSwitching(false);
+    };
+    window.addEventListener('abrwf-session-logout', clearCompany);
+    return () => window.removeEventListener('abrwf-session-logout', clearCompany);
+  }, []);
+
   const setActiveMutation = trpc.company.setActive.useMutation({
     onSuccess: () => {
       // Invalidar TODAS as queries do tRPC para recarregar dados da nova empresa
@@ -82,7 +110,7 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
   // Auto-selecionar empresa padrão APENAS se o usuário tem acesso a UMA única empresa
   // Se tem múltiplas empresas, exibir tela de seleção
   useEffect(() => {
-    if (companies.length === 1 && !activeCompanyId) {
+    if (isAuthenticated && companies.length === 1 && !activeCompanyId) {
       const company = companies[0];
       setActiveCompanyId(company.companyId);
       setActiveBranchId(company.branchId);
@@ -91,7 +119,7 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
         branchId: company.branchId || 0,
       });
     }
-  }, [companies, activeCompanyId]);
+  }, [companies, activeCompanyId, isAuthenticated]);
 
   // Determinar se precisa mostrar tela de seleção
   const needsSelection = !isLoading && companies.length > 1 && !activeCompanyId;

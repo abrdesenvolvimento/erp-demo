@@ -19,6 +19,7 @@ import {
 } from './db';
 import { storagePut, storageGet } from './storage';
 import { sdk } from './_core/sdk';
+import { assertOperatorActive } from './operatorSecurity';
 
 const router = Router();
 
@@ -41,6 +42,7 @@ async function requireBackupAccess(req: Request, res: Response): Promise<boolean
       res.status(403).json({ success: false, error: 'Acesso administrativo necessário para consultar ou operar backups.' });
       return false;
     }
+    await assertOperatorActive(user, user.operatorSessionId);
     return true;
   } catch {
     res.status(401).json({ success: false, error: 'Autenticação necessária para consultar ou operar backups.' });

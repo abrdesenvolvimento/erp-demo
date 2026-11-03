@@ -28,6 +28,7 @@ import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import { Button } from "./ui/button";
 import { useCompany } from "@/contexts/CompanyContext";
+import { OperatorLockButton } from "./OperatorSecurityGate";
 
 // Paleta de cores por empresa — sidebar muda conforme empresa ativa
 const COMPANY_THEMES: Record<number, {
@@ -95,6 +96,7 @@ const adminMenuItems = [
   { icon: Shield, label: "Gerenciar Usuários", path: "/usuarios", roles: ["admin"] },
   { icon: Building2, label: "Gerenciar Acessos", path: "/gerenciar-acessos", roles: ["admin"] },
   { icon: Store, label: "Canais de Venda", path: "/canais-venda", roles: ["admin"] },
+  { icon: Shield, label: "Segurança", path: "/seguranca", roles: ["admin"] },
 ];
 
 // Submenu Financeiro
@@ -169,13 +171,13 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const { loading, user } = useAuth();
   // Ativa atalhos de teclado globais
-  useKeyboardShortcuts();
+  useKeyboardShortcuts(Boolean(user) && !loading);
   const [sidebarWidth, setSidebarWidth] = useState(() => {
     const saved = localStorage.getItem(SIDEBAR_WIDTH_KEY);
     return saved ? parseInt(saved, 10) : DEFAULT_WIDTH;
   });
-  const { loading, user } = useAuth();
 
   useEffect(() => {
     localStorage.setItem(SIDEBAR_WIDTH_KEY, sidebarWidth.toString());
@@ -1163,7 +1165,7 @@ function DashboardLayoutContent({
                   className="cursor-pointer text-destructive focus:text-destructive"
                 >
                   <LogOut className="mr-2 h-4 w-4" />
-                  <span>Sign out</span>
+                  <span>Sair / trocar operador</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -1180,6 +1182,10 @@ function DashboardLayoutContent({
       </div>
 
       <SidebarInset>
+        <div className="flex min-w-0 flex-wrap items-center justify-end gap-3 border-b bg-background px-4 py-2 text-xs">
+          <span className="max-w-[220px] truncate text-muted-foreground" title={user?.name || undefined}>Operador: <strong className="text-foreground">{user?.name || 'Identificado'}</strong></span>
+          <OperatorLockButton />
+        </div>
         {isMobile && (
           <div className="flex border-b h-14 items-center justify-between bg-background/95 px-2 backdrop-blur supports-[backdrop-filter]:backdrop-blur sticky top-0 z-40">
             <div className="flex items-center gap-2">

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { router, protectedProcedure } from "../_core/trpc";
+import { router, protectedProcedure, productionReadProcedure } from "../_core/trpc";
 import { getDb, createSale } from "../db";
 import {
   salonTables,
@@ -758,7 +758,7 @@ export const salonRouter = router({
     }),
 
   // --- KDS ---
-  getKDSItems: protectedProcedure
+  getKDSItems: productionReadProcedure
     .input(z.object({
       companyId: z.number(),
       destination: z.enum(["KITCHEN", "BAR", "BOTH", "ALL"]),
@@ -1780,7 +1780,7 @@ export const salonRouter = router({
 
   // ==================== KDS ANALYTICS ====================
 
-  getKDSStats: protectedProcedure
+  getKDSStats: productionReadProcedure
     .input(z.object({ companyId: z.number(), destination: z.enum(["KITCHEN", "BAR"]) }))
     .query(async ({ input }) => {
       const db = await getDb();

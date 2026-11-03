@@ -110,7 +110,12 @@ function handlePrintTicket(group: any, destination: string) {
 export default function SalaoKDSCozinha() {
   const { activeCompanyId } = useCompany();
   const utils = trpc.useUtils();
-  const companyId = activeCompanyId ?? 0;
+  const operatorStatus = trpc.operatorSecurity.status.useQuery(undefined, { staleTime: 0 });
+  const terminalCompanyId = operatorStatus.data?.productionTerminal?.companyId;
+  // A empresa técnica vem da credencial validada, não de um cookie alterável.
+  // Ações humanas continuam passando pelo protectedProcedure.
+  const companyId = operatorStatus.data?.state === "ACTIVE" && activeCompanyId
+    ? activeCompanyId : terminalCompanyId ?? activeCompanyId ?? 0;
   const [now, setNow] = useState(Date.now());
   const [activeTab, setActiveTab] = useState<"pedidos" | "analise">("pedidos");
   const [autoPrint, setAutoPrint] = useState(true);

@@ -51,7 +51,10 @@ import AvisoInauguracao from "./pages/AvisoInauguracao";
 import AnaliseKDS from "./pages/AnaliseKDS";
 import FechamentoAnual from "./pages/FechamentoAnual";
 import AjustesFaturamentoHistorico from "./pages/AjustesFaturamentoHistorico";
-import { Route, Switch } from "wouter";
+import Seguranca from "./pages/Seguranca";
+import OperatorSecurityGate from "./components/OperatorSecurityGate";
+import { Route, Switch, useLocation } from "wouter";
+import { trpc } from "@/lib/trpc";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { CompanyProvider, useCompany } from "./contexts/CompanyContext";
@@ -89,6 +92,7 @@ function Router() {
       <Route path="/importar-vendas" component={ImportarVendas} />
       <Route path="/importar-ifood" component={ImportadorIfood} />
       <Route path="/minha-conta" component={MinhaConta} />
+      <Route path="/seguranca" component={Seguranca} />
       <Route path="/gerenciar-acessos" component={GerenciarAcessos} />
       <Route path="/categorias" component={Categorias} />
       <Route path="/canais-venda" component={CanaisVenda} />
@@ -312,6 +316,16 @@ function CompanyGate() {
   );
 }
 
+function ProductionAwareCompanyGate() {
+  const [path] = useLocation();
+  const kds = path === '/salao/kds-cozinha' || path === '/salao/kds-bar';
+  const status = trpc.operatorSecurity.status.useQuery(undefined, { enabled: kds, staleTime: 0 });
+  // Montagem estável para conservar os IDs já impressos e a opção autoPrint.
+  // As queries têm credencial própria validada; mutações continuam exigindo operador ativo.
+  if (kds && status.data?.productionTerminal) return <Router />;
+  return <CompanyGate />;
+}
+
 function App() {
   return (
     <ErrorBoundary>
@@ -319,7 +333,7 @@ function App() {
         <CompanyProvider>
           <TooltipProvider>
             <Toaster />
-            <CompanyGate />
+            <OperatorSecurityGate><ProductionAwareCompanyGate /></OperatorSecurityGate>
           </TooltipProvider>
         </CompanyProvider>
       </ThemeProvider>

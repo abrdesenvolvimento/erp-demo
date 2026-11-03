@@ -1,6 +1,6 @@
 # ABRWF - Pendências e Melhorias
 
-**Última atualização:** 02/03/2026
+**Última atualização:** 02/11/2026
 
 ---
 
@@ -2636,3 +2636,27 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [ ] Confirmar a primeira execução `COMPLETE` com todos os chunks e ZIP de código validados pela CLI
 - [ ] Provisionar banco descartável, implementar/aplicar restaurador controlado e concluir teste de recuperação com relatório auditável
 - [ ] Definir retenção, alerta de ausência de cópia íntegra e réplica externa independente após a primeira restauração aprovada
+
+## Segurança individual e edição de aniversário — Novembro/2026
+- [x] Exigir sessão individual revogável e confirmação por PIN de seis dígitos antes de operações protegidas
+- [x] Aplicar novo login OAuth + PIN no corte diário de 04h, America/Sao_Paulo, sem renovação pelo desbloqueio
+- [x] Implementar tempo de inatividade editável por empresa (1, 3, 5, 10, 15 ou 30 minutos; padrão 5), com validação no servidor
+- [x] Adicionar bloqueio manual, identificação do operador e sincronização de bloqueio/logout entre abas
+- [x] Proteger PIN por scrypt com sal aleatório e limite global de 5 falhas/15 minutos
+- [x] Substituir os formulários não funcionais de segurança de Minha Conta por sessões reais, revogação e eventos auditáveis
+- [x] Implementar recuperação administrativa auditável do PIN de outro usuário vinculado, com revogação atômica de todas as suas sessões
+- [x] Separar consultas de KDS com credencial de terminal pareado da autorização de ações humanas, preservando montagem e referências de impressão
+- [x] Personalizar login/bloqueio com identidade ABRWF e animação leve; edição de 1 ano apenas em novembro/2026, usando novembro/2025 como marco
+- [x] Aplicar migração somente aditiva de segurança, preservar autorização técnica do Heartbeat e remover endpoints públicos de depuração OAuth
+- [x] Validar testes de sessão/PIN/OAuth/API/interface e regressões de backup/restauração/iFood; validar montagem KDS com APIs fictícias no navegador
+- [ ] Publicar esta versão em horário de menor movimento e validar o primeiro login individual no provedor real
+- [ ] Configurar PIN de cada operador e parear as estações KDS no navegador usado pela produção; conferir bloqueio e impressão física
+
+## Próxima evolução alinhada — Metas e Consumo
+- [ ] Metas: permitir escolher mês/ano no gráfico, mantendo as regras existentes de realizado, canais e empresa ativa
+- [ ] Metas: corrigir transbordamento dos quadros no celular e organizar visão de acompanhamento separada do cadastro anual
+- [ ] Consumo interno: detalhar lançamento por funcionário/produto/quantidade, custo, motivo, responsável e empresa, sem tratar consumo como faturamento
+- [ ] Consumo interno: definir permissões, baixa de estoque de produtos simples/compostos, validação de saldo e estorno auditável antes de implementar
+- [ ] Retomar melhorias analíticas do Salão/KDS após validar segurança, Metas e primeira etapa de Consumo
+
+O faturamento histórico foi encerrado por orientação do usuário e não integra esta sequência de melhorias.

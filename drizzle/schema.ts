@@ -92,6 +92,52 @@ export const users = mysqlTable("users", {
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 
+// Segurança individual: PIN nunca armazenado em texto e sessões revogáveis por navegador.
+export const operatorSessions = mysqlTable("operatorSessions", {
+  id: varchar("id", { length: 64 }).primaryKey(),
+  userId: varchar("userId", { length: 64 }).notNull(),
+  authenticatedAt: timestamp("authenticatedAt").notNull(),
+  expiresAt: timestamp("expiresAt").notNull(),
+  lastActivityAt: timestamp("lastActivityAt").notNull(),
+  lockedAt: timestamp("lockedAt"),
+  confirmedAt: timestamp("confirmedAt"),
+  revokedAt: timestamp("revokedAt"),
+  userAgent: varchar("userAgent", { length: 255 }),
+}, (table) => ({ userIdx: index("operator_session_user_idx").on(table.userId, table.expiresAt) }));
+export const operatorPins = mysqlTable("operatorPins", {
+  userId: varchar("userId", { length: 64 }).primaryKey(),
+  pinHash: varchar("pinHash", { length: 255 }).notNull(),
+  failedAttempts: int("failedAttempts").default(0).notNull(),
+  blockedUntil: timestamp("blockedUntil"),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow(),
+});
+export const securityPolicies = mysqlTable("securityPolicies", {
+  companyId: int("companyId").primaryKey(),
+  idleMinutes: int("idleMinutes").default(5).notNull(),
+  updatedBy: varchar("updatedBy", { length: 64 }).notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow(),
+});
+export const securityEvents = mysqlTable("securityEvents", {
+  id: int("id").primaryKey().autoincrement(),
+  userId: varchar("userId", { length: 64 }),
+  sessionId: varchar("sessionId", { length: 64 }),
+  companyId: int("companyId"),
+  event: varchar("event", { length: 50 }).notNull(),
+  details: text("details"),
+  createdAt: timestamp("createdAt").defaultNow(),
+}, (table) => ({ userIdx: index("security_event_user_idx").on(table.userId, table.createdAt) }));
+// Credencial limitada ao acompanhamento automático de produção, não a ações humanas.
+export const productionTerminals = mysqlTable("productionTerminals", {
+  id: varchar("id", { length: 64 }).primaryKey(),
+  companyId: int("companyId").notNull(),
+  name: varchar("name", { length: 100 }).notNull(),
+  tokenHash: varchar("tokenHash", { length: 64 }).notNull(),
+  createdBy: varchar("createdBy", { length: 64 }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow(),
+  expiresAt: timestamp("expiresAt").notNull(),
+  revokedAt: timestamp("revokedAt"),
+}, (table) => ({ companyIdx: index("production_terminal_company_idx").on(table.companyId) }));
+
 // Categorias de produtos
 export const categories = mysqlTable("categories", {
   id: int("id").primaryKey().autoincrement(),

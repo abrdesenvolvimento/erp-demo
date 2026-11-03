@@ -19,6 +19,8 @@ import { printersRouter } from './routers/printers';
 import { cardapioRouter } from './routers/cardapio';
 import { internalSalesRouter } from './routers/internalSales';
 import { historicalRevenueAdjustmentsRouter } from './routers/historicalRevenueAdjustments';
+import { operatorSecurityRouter } from './routers/operatorSecurity';
+import { resolveOperatorStatus, revokeOperatorSession, revokeSessionsForUser } from './operatorSecurity';
 
 function requireActiveCompanyId(activeCompanyId: number | undefined): number {
   if (!Number.isInteger(activeCompanyId) || !activeCompanyId || activeCompanyId < 1) {
@@ -45,14 +47,23 @@ export const appRouter = router({
   cardapio: cardapioRouter,
   internalSales: internalSalesRouter,
   historicalRevenueAdjustments: historicalRevenueAdjustmentsRouter,
+  operatorSecurity: operatorSecurityRouter,
 
   auth: router({
-    me: publicProcedure.query(opts => opts.ctx.user),
-    logout: publicProcedure.mutation(({ ctx }) => {
+    me: publicProcedure.query(async ({ ctx }) => {
+      const state = await resolveOperatorStatus(ctx.user, ctx.operatorSessionId, ctx.activeCompanyId);
+      if (state.state !== 'ACTIVE' || !ctx.user) return null;
+      const { operatorSessionId: _privateSession, ...user } = ctx.user as typeof ctx.user & { operatorSessionId?: string };
+      return user;
+    }),
+    logout: publicProcedure.mutation(async ({ ctx }) => {
+      if (ctx.user && ctx.operatorSessionId) await revokeOperatorSession(ctx.user.id, ctx.operatorSessionId);
       const cookieOptions = getSessionCookieOptions(ctx.req);
       ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
       // Also clear the non-httpOnly login marker
       ctx.res.clearCookie('logged_in', { path: '/', sameSite: 'lax', secure: cookieOptions.secure, maxAge: -1 });
+      ctx.res.clearCookie('activeCompanyId', { path: '/' });
+      ctx.res.clearCookie('activeBranchId', { path: '/' });
       return { success: true } as const;
     }),
   }),
@@ -131,6 +142,7 @@ export const appRouter = router({
           throw new TRPCError({ code: 'BAD_REQUEST', message: 'Você não pode bloquear sua própria conta' });
         }
         await db.blockUser(input.userId, input.blocked);
+        if (input.blocked) await revokeSessionsForUser(input.userId);
         return { success: true };
       }),
 

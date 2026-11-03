@@ -8,6 +8,7 @@ export type TrpcContext = {
   user: User | null;
   activeCompanyId: number | undefined;
   activeBranchId: number | undefined;
+  operatorSessionId?: string;
 };
 
 // In-memory auth log for debugging (stores last 50 attempts)
@@ -33,13 +34,16 @@ export async function createContext(
   opts: CreateExpressContextOptions
 ): Promise<TrpcContext> {
   let user: User | null = null;
+  let operatorSessionId: string | undefined;
   const hasCookie = !!opts.req.headers.cookie?.includes('app_session_id');
   const cookieLength = opts.req.headers.cookie?.length || 0;
   const path = opts.req.path || opts.req.url || 'unknown';
   const userAgent = (opts.req.headers['user-agent'] || '').substring(0, 80);
 
   try {
-    user = await sdk.authenticateRequest(opts.req);
+    const identity = await sdk.authenticateRequest(opts.req);
+    operatorSessionId = identity.operatorSessionId;
+    user = identity.isCron ? null : identity;
     
     // Log successful auth
     AUTH_LOG.push({
@@ -106,5 +110,6 @@ export async function createContext(
     user,
     activeCompanyId,
     activeBranchId,
+    operatorSessionId,
   };
 }

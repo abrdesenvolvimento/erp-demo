@@ -1,311 +1,63 @@
-import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
+import { COOKIE_NAME } from "@shared/const";
 import type { Express, Request, Response } from "express";
+import { parse } from "cookie";
 import * as db from "../db";
-import { getSessionCookieOptions, getCanonicalOrigin } from "./cookies";
-import { getAuthLog } from "./context";
+import { getSessionCookieOptions } from "./cookies";
 import { sdk } from "./sdk";
-import { ENV } from "./env";
+import { createOperatorSession, revokeOperatorSession } from "../operatorSecurity";
+import { decodeBrowserOAuthState, OAUTH_BROWSER_NONCE_COOKIE } from "../../shared/oauthState";
+import { isAnniversaryMonth } from "../../shared/sessionSecurity";
 
-function getQueryParam(req: Request, key: string): string | undefined {
-  const value = req.query[key];
-  return typeof value === "string" ? value : undefined;
-}
+const IDENTITY_COOKIE_MS = 48 * 60 * 60 * 1000;
 
 export function registerOAuthRoutes(app: Express) {
-  // Trust proxy - required for correct req.protocol behind Cloud Run/Cloudflare
-  app.set('trust proxy', true);
-
-  // Auth log endpoint - shows last 50 auth attempts
-  app.get("/api/debug/auth-log", (req: Request, res: Response) => {
-    const log = getAuthLog();
-    const summary = {
-      total: log.length,
-      successes: log.filter(e => e.success).length,
-      failures: log.filter(e => !e.success).length,
-      failuresWithCookie: log.filter(e => !e.success && e.hasCookie).length,
-      recentEntries: log.slice(-20),
-    };
-    res.json(summary);
-  });
-
-  // Debug endpoint to check request headers (temporary)
-  app.get("/api/debug/headers", (req: Request, res: Response) => {
-    const cookies = req.headers.cookie;
-    const hasCookie = cookies ? cookies.includes(COOKIE_NAME) : false;
-    res.json({
-      protocol: req.protocol,
-      secure: req.secure,
-      hostname: req.hostname,
-      host: req.get('host'),
-      xForwardedProto: req.headers['x-forwarded-proto'],
-      xForwardedFor: req.headers['x-forwarded-for'],
-      xForwardedHost: req.headers['x-forwarded-host'],
-      origin: req.headers['origin'],
-      referer: req.headers['referer'],
-      canonicalOrigin: getCanonicalOrigin(req),
-      cookieOptions: getSessionCookieOptions(req),
-      cookieHeader: cookies ? `${cookies.substring(0, 50)}...` : null,
-      hasSessionCookie: hasCookie,
-      allCookieNames: cookies ? cookies.split(';').map(c => c.trim().split('=')[0]) : [],
-    });
-  });
-
-  // Cookie test: Step 1 - Set a test cookie and redirect
-  app.get("/api/debug/cookie-set", (req: Request, res: Response) => {
-    const cookieOptions = getSessionCookieOptions(req);
-    res.cookie('debug_test', 'cookie_works_' + Date.now(), { ...cookieOptions, maxAge: 60000 });
-    console.log(`[Debug] Setting test cookie with options: ${JSON.stringify(cookieOptions)}`);
-    res.redirect(302, '/api/debug/cookie-check');
-  });
-
-  // Cookie test: Step 2 - Check if the test cookie was received
-  app.get("/api/debug/cookie-check", (req: Request, res: Response) => {
-    const cookies = req.headers.cookie;
-    const hasDebugCookie = cookies ? cookies.includes('debug_test') : false;
-    const hasSessionCookie = cookies ? cookies.includes(COOKIE_NAME) : false;
-    res.json({
-      cookieHeader: cookies || null,
-      hasDebugCookie,
-      hasSessionCookie,
-      allCookieNames: cookies ? cookies.split(';').map(c => c.trim().split('=')[0]) : [],
-      message: hasDebugCookie 
-        ? 'Cookie test PASSED - cookies work correctly'
-        : 'Cookie test FAILED - browser is not sending cookies back',
-    });
-  });
-
-  // Auth debug endpoint - shows EXACTLY where authentication fails
-  app.get("/api/debug/auth", async (req: Request, res: Response) => {
-    const result: Record<string, any> = { steps: [] };
-    try {
-      // Step 1: Parse cookies
-      const cookieHeader = req.headers.cookie;
-      result.hasCookieHeader = !!cookieHeader;
-      result.cookieNames = cookieHeader ? cookieHeader.split(';').map(c => c.trim().split('=')[0]) : [];
-      result.steps.push('1. Cookie header parsed');
-
-      // Step 2: Extract session cookie
-      const { parse } = await import('cookie');
-      const cookies = cookieHeader ? parse(cookieHeader) : {};
-      const sessionCookie = cookies[COOKIE_NAME];
-      result.hasSessionCookie = !!sessionCookie;
-      result.sessionCookieLength = sessionCookie?.length || 0;
-      result.sessionCookiePrefix = sessionCookie?.substring(0, 20) || null;
-      result.steps.push('2. Session cookie extracted: ' + (sessionCookie ? 'found' : 'NOT FOUND'));
-
-      if (!sessionCookie) {
-        result.error = 'No session cookie found';
-        res.json(result);
-        return;
-      }
-
-      // Step 3: Verify JWT
-      try {
-        const session = await sdk.verifySession(sessionCookie);
-        result.sessionValid = !!session;
-        result.sessionData = session ? { openId: session.openId?.substring(0, 10) + '...', appId: session.appId?.substring(0, 10) + '...', name: session.name } : null;
-        result.steps.push('3. JWT verified: ' + (session ? 'VALID' : 'INVALID'));
-
-        if (!session) {
-          result.error = 'JWT verification returned null';
-          res.json(result);
-          return;
-        }
-
-        // Step 4: Get user from DB
-        const { getUser } = await import('../db');
-        const user = await getUser(session.openId);
-        result.userFound = !!user;
-        result.userId = user?.id?.substring(0, 10) + '...' || null;
-        result.userName = user?.name || null;
-        result.steps.push('4. DB user lookup: ' + (user ? 'FOUND' : 'NOT FOUND'));
-
-        if (!user) {
-          result.error = 'User not found in database';
-        } else {
-          result.success = true;
-          result.message = 'Authentication would succeed';
-        }
-      } catch (jwtError: any) {
-        result.sessionValid = false;
-        result.jwtError = jwtError?.message || String(jwtError);
-        result.steps.push('3. JWT verification FAILED: ' + result.jwtError);
-        result.error = 'JWT verification threw error';
-      }
-    } catch (e: any) {
-      result.error = 'Unexpected error: ' + (e?.message || String(e));
-    }
-    res.json(result);
-  });
-
-  // Health/keep-alive endpoint - lightweight, no DB
-  app.get("/api/oauth/health", (req: Request, res: Response) => {
-    res.json({
-      status: "ok",
-      timestamp: new Date().toISOString(),
-      uptime: process.uptime(),
-    });
-  });
-
-  // Keep-alive ping endpoint - used by external cron to prevent cold starts
-  app.get("/api/ping", (req: Request, res: Response) => {
-    res.status(200).send("pong");
-  });
+  app.set("trust proxy", true);
+  // Removidos os endpoints públicos de depuração que revelavam cookies/dados de autenticação.
+  app.get("/api/oauth/health", (_req, res) => res.json({ status: "ok", timestamp: new Date().toISOString(), uptime: process.uptime() }));
+  app.get("/api/ping", (_req, res) => res.status(200).send("pong"));
 
   app.get("/api/oauth/callback", async (req: Request, res: Response) => {
-    const code = getQueryParam(req, "code");
-    const state = getQueryParam(req, "state");
-    const retryCount = parseInt(getQueryParam(req, "retry") || "0");
-    const startTime = Date.now();
-
-    // Derive the canonical public origin for this request
-    const canonicalOrigin = getCanonicalOrigin(req);
-    console.log(`[OAuth] Callback received - code length: ${code?.length || 0}, retry: ${retryCount}, canonicalOrigin: ${canonicalOrigin}, host: ${req.get('host')}`);
-
-    if (!code || !state) {
-      res.status(400).json({ error: "code and state are required" });
+    const code = typeof req.query.code === "string" ? req.query.code : "";
+    const state = typeof req.query.state === "string" ? req.query.state : "";
+    const decoded = decodeBrowserOAuthState(state);
+    const expected = parse(req.headers.cookie ?? "")[OAUTH_BROWSER_NONCE_COOKIE];
+    res.setHeader("Cache-Control", "no-store");
+    if (!code || !decoded || !expected || decoded.nonce !== expected) {
+      res.status(403).send("Solicitação de login inválida ou expirada. Volte ao ABRWF e inicie um novo login.");
       return;
     }
-
+    // Consumo único da prova do navegador antes da troca do código.
+    res.clearCookie(OAUTH_BROWSER_NONCE_COOKIE, { path: "/", secure: true, sameSite: "lax" });
     try {
-      const t1 = Date.now();
-      const tokenResponse = await sdk.exchangeCodeForToken(code, state);
-      console.log(`[OAuth] Token exchange done in ${Date.now() - t1}ms`);
-
-      const t2 = Date.now();
-      const userInfo = await sdk.getUserInfo(tokenResponse.accessToken);
-      console.log(`[OAuth] User info done in ${Date.now() - t2}ms - openId: ${userInfo.openId}`);
-
-      if (!userInfo.openId) {
-        res.status(400).json({ error: "openId missing from user info" });
+      const token = await sdk.exchangeCodeForToken(code, state);
+      const info = await sdk.getUserInfo(token.accessToken);
+      if (!info.openId) throw new Error("O provedor não identificou o usuário.");
+      await db.upsertUser({ id: info.openId, name: info.name || null, email: info.email ?? null, loginMethod: info.loginMethod ?? info.platform ?? null, lastSignedIn: new Date() });
+      const user = await db.getUser(info.openId);
+      if (!user || user.blocked) {
+        res.status(403).send("Usuário bloqueado ou indisponível. Contate o administrador.");
         return;
       }
-
-      const t3 = Date.now();
-      await db.upsertUser({
-        id: userInfo.openId,
-        name: userInfo.name || null,
-        email: userInfo.email ?? null,
-        loginMethod: userInfo.loginMethod ?? userInfo.platform ?? null,
-        lastSignedIn: new Date(),
-      });
-      console.log(`[OAuth] Upsert done in ${Date.now() - t3}ms`);
-
-      const t4 = Date.now();
-      const sessionToken = await sdk.createSessionToken(userInfo.openId, {
-        name: userInfo.name || "",
-        expiresInMs: ONE_YEAR_MS,
-      });
-      console.log(`[OAuth] Session token done in ${Date.now() - t4}ms`);
-
-      const cookieOptions = getSessionCookieOptions(req);
-      res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
-
-      // Set a NON-httpOnly marker cookie so JavaScript can detect that a session exists.
-      // The actual session cookie is httpOnly (not readable by JS), so this marker
-      // allows the frontend to know it should retry auth.me if it returns null.
-      res.cookie('logged_in', '1', {
-        path: '/',
-        sameSite: 'lax',
-        secure: cookieOptions.secure,
-        httpOnly: false, // Intentionally readable by JavaScript
-        maxAge: ONE_YEAR_MS,
-      });
-
-      console.log(`[OAuth] Callback completed successfully in ${Date.now() - startTime}ms`);
-      console.log(`[OAuth] Cookie options: ${JSON.stringify(cookieOptions)}`);
-      console.log(`[OAuth] Token length: ${sessionToken.length}`);
-
-      // IMPORTANT: Do NOT use 302 redirect here.
-      // iOS WKWebView (in-app browsers) often drops Set-Cookie headers from 302 responses.
-      // Instead, send an HTML page that:
-      // 1. Receives the Set-Cookie header in a 200 response (browser stores it)
-      // 2. Uses JavaScript/meta-refresh to navigate to / after a small delay
-      // This ensures the cookie is properly stored before navigation.
-      res.setHeader('Content-Type', 'text/html; charset=utf-8');
-      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
-      res.status(200).send(`<!DOCTYPE html>
-<html><head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Entrando...</title>
-<meta http-equiv="refresh" content="1;url=/">
-<style>
-  body { display:flex; align-items:center; justify-content:center; min-height:100vh; margin:0; font-family:system-ui,-apple-system,sans-serif; background:#f8f9fa; }
-  .loader { text-align:center; }
-  .spinner { width:40px; height:40px; border:4px solid #e5e7eb; border-top-color:#2563eb; border-radius:50%; animation:spin 0.8s linear infinite; margin:0 auto 16px; }
-  @keyframes spin { to { transform:rotate(360deg); } }
-  p { color:#6b7280; font-size:14px; }
-</style>
-</head><body>
-<div class="loader">
-  <div class="spinner"></div>
-  <p>Entrando no sistema...</p>
-</div>
-<script>
-  // Navigate after a delay to ensure cookies are fully stored.
-  // We also ping the server to keep it warm before loading the SPA.
-  function proceed() {
-    // Verify the marker cookie is accessible
-    if (document.cookie.includes('logged_in=1')) {
-      window.location.replace('/');
-    } else {
-      // Cookie not yet visible, retry in 500ms
-      setTimeout(proceed, 500);
-    }
-  }
-  // Wait 1.5s then check cookie and navigate
-  setTimeout(proceed, 1500);
-</script>
-</body></html>`);
-    } catch (error: any) {
-      const elapsed = Date.now() - startTime;
-      const errMsg = error?.response?.data ? JSON.stringify(error.response.data) : error?.message || String(error);
-      const errStatus = error?.response?.status || 'unknown';
-      console.error(`[OAuth] Callback FAILED after ${elapsed}ms - Status: ${errStatus}, Error: ${errMsg}, Retry: ${retryCount}`);
-
-      // If this is a cold start issue (token expired/invalid), redirect back to login
-      // The container is now warm, so the next attempt should succeed
-      if (retryCount < 2) {
-        // Use the STATE parameter to recover the original public redirectUri
-        // The state is base64(redirectUri) - decode it to get the original callback URL
-        let publicRedirectUri: string;
-        try {
-          const decodedState = Buffer.from(state, 'base64').toString('utf-8');
-          // If the decoded state looks like a valid URL, use its origin
-          if (decodedState.startsWith('http')) {
-            const stateUrl = new URL(decodedState);
-            publicRedirectUri = `${stateUrl.origin}/api/oauth/callback`;
-          } else {
-            publicRedirectUri = `${canonicalOrigin}/api/oauth/callback`;
-          }
-        } catch {
-          publicRedirectUri = `${canonicalOrigin}/api/oauth/callback`;
-        }
-
-        const appId = ENV.appId || process.env.VITE_APP_ID;
-        const oauthPortalUrl = process.env.VITE_OAUTH_PORTAL_URL || 'https://manus.im/app-auth';
-        const newState = Buffer.from(publicRedirectUri).toString('base64');
-        const loginUrl = `${oauthPortalUrl}?appId=${appId}&redirectUri=${encodeURIComponent(publicRedirectUri)}&state=${newState}&type=signIn&retry=${retryCount + 1}`;
-        
-        console.log(`[OAuth] Redirecting to login for retry (attempt ${retryCount + 1}), redirectUri: ${publicRedirectUri}`);
-        res.redirect(302, loginUrl);
-      } else {
-        // After 2 retries, show error page
-        res.status(500).send(`
-          <!DOCTYPE html>
-          <html>
-          <head><title>Erro de Login</title><meta charset="utf-8"></head>
-          <body style="font-family: sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background: #f5f5f5;">
-            <div style="text-align: center; padding: 2rem; background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); max-width: 400px;">
-              <h2 style="color: #333;">Erro ao fazer login</h2>
-              <p style="color: #666;">O servidor demorou para responder. Por favor, tente novamente.</p>
-              <a href="/" style="display: inline-block; margin-top: 1rem; padding: 0.75rem 1.5rem; background: #2563eb; color: white; text-decoration: none; border-radius: 8px;">Tentar novamente</a>
-            </div>
-          </body>
-          </html>
-        `);
-      }
+      // Substitui/revoga a identidade anterior deste navegador, inclusive quando OAuth usa SSO.
+      const oldToken = parse(req.headers.cookie ?? "")[COOKIE_NAME];
+      const oldIdentity = await sdk.verifySession(oldToken);
+      if (oldIdentity?.operatorSessionId) await revokeOperatorSession(oldIdentity.openId, oldIdentity.operatorSessionId);
+      const operatorSessionId = await createOperatorSession(user.id, String(req.headers["user-agent"] ?? "").slice(0, 255));
+      const identity = await sdk.createSessionToken(user.id, { name: user.name || "Operador", operatorSessionId, expiresInMs: IDENTITY_COOKIE_MS });
+      const opts = getSessionCookieOptions(req);
+      // O cookie de identidade não concede acesso: sessão no banco vence no próximo corte diário.
+      res.cookie(COOKIE_NAME, identity, { ...opts, maxAge: IDENTITY_COOKIE_MS });
+      res.cookie("logged_in", "1", { path: "/", sameSite: "lax", secure: opts.secure, httpOnly: false, maxAge: IDENTITY_COOKIE_MS });
+      res.clearCookie("activeCompanyId", { path: "/" });
+      res.clearCookie("activeBranchId", { path: "/" });
+      const anniversary = isAnniversaryMonth(Date.now());
+      // HTTP 200 preserva Set-Cookie em Safari/iOS; não reutiliza callback nem código em retry.
+      res.type("html").status(200).send(`<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Entrando no ABRWF</title><meta http-equiv="refresh" content="2;url=/"><style>
+      body{margin:0;min-height:100vh;display:grid;place-items:center;background:#143640;color:#f4f5f1;font-family:system-ui,sans-serif}main{padding:32px;max-width:440px;text-align:center}img{width:76px;height:76px;object-fit:contain}h1{font-size:22px}p{line-height:1.6;color:#d5e1df}.line{height:2px;background:#d4af37;transform-origin:left;animation:reveal .24s ease-out}.muted{font-size:13px}@keyframes reveal{from{opacity:0;transform:scaleX(.95)}to{opacity:1;transform:scaleX(1)}}@media(prefers-reduced-motion:reduce){.line{animation:none}}
+      </style></head><body><main><img src="/logo-abrwf.png" alt="ABRWF"><h1>${anniversary ? "ABRWF — 1 ano de evolução" : "Bem-vindo ao ABRWF"}</h1><div class="line"></div>${anniversary ? "<p>Um ano transformando rotina em controle e dados em decisões.</p><p class=\"muted\">Novembro de 2025 — Novembro de 2026</p>" : ""}<p>Confirmando seu acesso individual...</p></main><script>setTimeout(function(){location.replace('/')},1200)</script></body></html>`);
+    } catch (error) {
+      console.error("[OAuth] Não foi possível concluir o login:", error instanceof Error ? error.message : "falha de autenticação");
+      res.status(500).type("html").send('<!doctype html><html lang="pt-BR"><meta charset="utf-8"><title>Login ABRWF</title><body style="font-family:system-ui;padding:32px"><h1>Não foi possível concluir o login</h1><p>Volte ao sistema e inicie uma nova tentativa. Nenhuma operação foi autorizada.</p><a href="/">Voltar ao ABRWF</a></body></html>');
     }
   });
 }

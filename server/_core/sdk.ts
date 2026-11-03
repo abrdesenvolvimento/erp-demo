@@ -7,6 +7,7 @@ import { SignJWT, jwtVerify } from "jose";
 import type { User } from "../../drizzle/schema";
 import * as db from "../db";
 import { ENV } from "./env";
+import { decodeBrowserOAuthState } from "../../shared/oauthState";
 import type {
   ExchangeTokenRequest,
   ExchangeTokenResponse,
@@ -22,6 +23,7 @@ export type SessionPayload = {
   openId: string;
   appId: string;
   name: string;
+  operatorSessionId?: string;
 };
 
 const EXCHANGE_TOKEN_PATH = `/webdev.v1.WebDevAuthPublicService/ExchangeToken`;
@@ -32,6 +34,7 @@ const CRON_OPEN_ID_PREFIX = "cron_";
 export type AuthenticatedUser = User & {
   taskUid?: string;
   isCron?: boolean;
+  operatorSessionId?: string;
 };
 
 class OAuthService {
@@ -45,8 +48,9 @@ class OAuthService {
   }
 
   private decodeState(state: string): string {
-    const redirectUri = atob(state);
-    return redirectUri;
+    const parsed = decodeBrowserOAuthState(state);
+    if (!parsed) throw new Error("Estado OAuth inválido.");
+    return parsed.redirectUri;
   }
 
   async getTokenByCode(
@@ -172,13 +176,14 @@ class SDKServer {
    */
   async createSessionToken(
     userId: string,
-    options: { expiresInMs?: number; name?: string } = {}
+    options: { expiresInMs?: number; name?: string; operatorSessionId?: string } = {}
   ): Promise<string> {
     return this.signSession(
       {
         openId: userId,
         appId: ENV.appId,
         name: options.name || "",
+        operatorSessionId: options.operatorSessionId,
       },
       options
     );
@@ -197,15 +202,17 @@ class SDKServer {
       openId: payload.openId,
       appId: payload.appId,
       name: payload.name,
+      ...(payload.operatorSessionId ? { operatorSessionId: payload.operatorSessionId } : {}),
     })
       .setProtectedHeader({ alg: "HS256", typ: "JWT" })
+      .setIssuedAt()
       .setExpirationTime(expirationSeconds)
       .sign(secretKey);
   }
 
   async verifySession(
     cookieValue: string | undefined | null
-  ): Promise<{ openId: string; appId: string; name: string } | null> {
+  ): Promise<SessionPayload | null> {
     if (!cookieValue) {
       console.warn("[Auth] Missing session cookie");
       return null;
@@ -231,6 +238,7 @@ class SDKServer {
         openId,
         appId,
         name,
+        operatorSessionId: typeof payload.operatorSessionId === "string" ? payload.operatorSessionId : undefined,
       };
     } catch (error) {
       console.warn("[Auth] Session verification failed", String(error));
@@ -279,18 +287,18 @@ class SDKServer {
       }
       const now = new Date();
       return {
-        id: -1,
-        openId: session.openId,
+        id: session.openId,
         name: cronInfo.name || "Agendamento do sistema",
         email: null,
         loginMethod: null,
+        avatarUrl: null,
+        blocked: false,
         role: "user",
         createdAt: now,
-        updatedAt: now,
         lastSignedIn: now,
         taskUid: cronInfo.taskUid,
         isCron: true,
-      } as AuthenticatedUser;
+      };
     }
 
     const sessionUserId = session.openId;
@@ -324,18 +332,8 @@ class SDKServer {
       throw ForbiddenError("Usuário bloqueado. Entre em contato com o administrador.");
     }
 
-    // Update lastSignedIn but don't let it break authentication
-    try {
-      await db.upsertUser({
-        id: user.id,
-        lastSignedIn: signedInAt,
-      });
-    } catch (error) {
-      // Transient DB errors should NOT prevent authentication
-      console.warn("[Auth] Failed to update lastSignedIn (non-fatal):", error);
-    }
-
-    return user;
+    // lastSignedIn é atualizado somente em login real; polling não renova atividade.
+    return { ...user, operatorSessionId: session.operatorSessionId };
   }
 }
 

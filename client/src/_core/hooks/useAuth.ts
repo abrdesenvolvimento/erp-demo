@@ -2,6 +2,8 @@ import { getLoginUrl } from "@/const";
 import { trpc } from "@/lib/trpc";
 import { TRPCClientError } from "@trpc/client";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { broadcastOperatorSecurity } from "@/hooks/useOperatorSecuritySignal";
 
 type UseAuthOptions = {
   redirectOnUnauthenticated?: boolean;
@@ -19,9 +21,10 @@ function hasLoginMarker(): boolean {
 }
 
 export function useAuth(options?: UseAuthOptions) {
-  const { redirectOnUnauthenticated = false, redirectPath = getLoginUrl() } =
+  const { redirectOnUnauthenticated = false, redirectPath } =
     options ?? {};
   const utils = trpc.useUtils();
+  const queryClient = useQueryClient();
   const retryCountRef = useRef(0);
   const maxRetries = 4; // More retries to handle cold start
   const [isRetrying, setIsRetrying] = useState(false);
@@ -84,10 +87,11 @@ export function useAuth(options?: UseAuthOptions) {
         error instanceof TRPCClientError &&
         error.data?.code === "UNAUTHORIZED"
       ) {
-        return;
+        // A sessão já não está autorizada.
+      } else {
+        throw error;
       }
-      throw error;
-    } finally {
+    }
       // Clear the login marker cookie
       document.cookie = "logged_in=;path=/;max-age=0";
       // Clear company cookies
@@ -95,10 +99,13 @@ export function useAuth(options?: UseAuthOptions) {
       document.cookie = "activeBranchId=;path=/;max-age=0";
       retryCountRef.current = maxRetries; // Don't retry after explicit logout
       setIsRetrying(false);
+      await queryClient.cancelQueries();
+      queryClient.clear();
+      localStorage.removeItem("manus-runtime-user-info");
+      window.dispatchEvent(new Event("abrwf-session-logout"));
+      broadcastOperatorSecurity("logout");
       utils.auth.me.setData(undefined, null);
-      await utils.auth.me.invalidate();
-    }
-  }, [logoutMutation, utils]);
+  }, [logoutMutation, utils, queryClient]);
 
   const state = useMemo(() => {
     localStorage.setItem(
@@ -127,9 +134,9 @@ export function useAuth(options?: UseAuthOptions) {
     if (meQuery.isLoading || logoutMutation.isPending || isRetrying) return;
     if (state.user) return;
     if (typeof window === "undefined") return;
-    if (window.location.pathname === redirectPath) return;
+    if (redirectPath && window.location.pathname === redirectPath) return;
 
-    window.location.href = redirectPath
+    window.location.href = redirectPath || getLoginUrl();
   }, [
     redirectOnUnauthenticated,
     redirectPath,

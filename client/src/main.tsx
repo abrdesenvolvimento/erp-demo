@@ -102,6 +102,7 @@ queryClient.getMutationCache().subscribe(event => {
  */
 async function safeFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
   const headers = new Headers(init?.headers || {});
+  headers.set('x-abrwf-client', '1');
   const companyId = document.cookie.match(/(?:^| )activeCompanyId=([^;]+)/)?.[1];
   const branchId = document.cookie.match(/(?:^| )activeBranchId=([^;]+)/)?.[1];
   if (companyId) headers.set('x-company-id', companyId);

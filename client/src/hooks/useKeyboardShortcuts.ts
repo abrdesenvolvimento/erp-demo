@@ -1,14 +1,20 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useLocation } from 'wouter';
 
 /**
  * Hook para atalhos de teclado globais do sistema
  */
-export function useKeyboardShortcuts() {
+export function useKeyboardShortcuts(enabled = true) {
   const [, setLocation] = useLocation();
+  const enabledRef = useRef(enabled);
+  enabledRef.current = enabled;
 
   useEffect(() => {
+    if (!enabled) return;
+    const pendingKeys = new Set<(event: KeyboardEvent) => void>();
+    const timers = new Set<ReturnType<typeof setTimeout>>();
     const handleKeyPress = (e: KeyboardEvent) => {
+      if (!enabledRef.current || document.querySelector('.operator-access')) return;
       // Ignora se estiver digitando em input, textarea ou select
       const target = e.target as HTMLElement;
       if (
@@ -38,6 +44,8 @@ export function useKeyboardShortcuts() {
           // G + tecla: Navegação rápida
           // Aguarda próxima tecla
           const nextKey = (nextE: KeyboardEvent) => {
+            pendingKeys.delete(nextKey);
+            if (!enabledRef.current || document.querySelector('.operator-access')) return;
             switch (nextE.key.toLowerCase()) {
               case 'h':
                 // G+H: Home/Dashboard
@@ -75,12 +83,16 @@ export function useKeyboardShortcuts() {
             document.removeEventListener('keydown', nextKey);
           };
           
+          pendingKeys.add(nextKey);
           document.addEventListener('keydown', nextKey, { once: true });
           
           // Remove listener após 2 segundos se não pressionar nada
-          setTimeout(() => {
+          const timer = setTimeout(() => {
             document.removeEventListener('keydown', nextKey);
+            pendingKeys.delete(nextKey);
+            timers.delete(timer);
           }, 2000);
+          timers.add(timer);
           break;
 
         case '?':
@@ -95,8 +107,10 @@ export function useKeyboardShortcuts() {
 
     return () => {
       document.removeEventListener('keydown', handleKeyPress);
+      pendingKeys.forEach(listener => document.removeEventListener('keydown', listener));
+      timers.forEach(timer => clearTimeout(timer));
     };
-  }, [setLocation]);
+  }, [setLocation, enabled]);
 }
 
 /**
@@ -220,4 +234,3 @@ function showShortcutsHelp() {
   };
   document.addEventListener('keydown', handleEsc);
 }
-

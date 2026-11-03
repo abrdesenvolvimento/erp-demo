@@ -1,4 +1,5 @@
 import DashboardLayout from "@/components/DashboardLayout";
+import OperatorSecurityPanel from "@/components/OperatorSecurityPanel";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -256,105 +257,14 @@ export default function MinhaConta() {
             </Card>
           </TabsContent>
 
-          {/* Tab: Segurança */}
+          {/* Tab: Segurança — operações reais, sem formulário fictício de senha OAuth */}
           <TabsContent value="seguranca" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Alterar Senha</CardTitle>
-                <CardDescription>
-                  Mantenha sua conta segura com uma senha forte
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid gap-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="current-password">Senha Atual</Label>
-                    <Input id="current-password" type="password" />
-                  </div>
-
-                  <div className="grid gap-2">
-                    <Label htmlFor="new-password">Nova Senha</Label>
-                    <Input id="new-password" type="password" />
-                  </div>
-
-                  <div className="grid gap-2">
-                    <Label htmlFor="confirm-password">Confirmar Nova Senha</Label>
-                    <Input id="confirm-password" type="password" />
-                  </div>
-                </div>
-
-                <Button>Atualizar Senha</Button>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Sessões Ativas</CardTitle>
-                <CardDescription>
-                  Gerencie suas sessões ativas em diferentes dispositivos
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between p-4 border rounded-lg">
-                    <div>
-                      <p className="font-medium">Navegador Atual</p>
-                      <p className="text-sm text-muted-foreground">
-                        Último acesso: Agora
-                      </p>
-                    </div>
-                    <Button variant="outline" size="sm">
-                      Encerrar Sessão
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <OperatorSecurityPanel showEvents={false} />
           </TabsContent>
 
-          {/* Tab: Atividades */}
+          {/* Tab: Atividades — eventos reais da própria conta */}
           <TabsContent value="atividades" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Histórico de Atividades</CardTitle>
-                <CardDescription>
-                  Acompanhe suas ações recentes no sistema
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-col items-center justify-center py-8 text-center">
-                  <Activity className="h-12 w-12 text-muted-foreground/30 mb-4" />
-                  <p className="text-sm font-medium text-muted-foreground mb-2">
-                    Módulo de Auditoria em Desenvolvimento
-                  </p>
-                  <p className="text-xs text-muted-foreground max-w-md mb-6">
-                    O histórico de atividades será habilitado quando o módulo de auditoria for implementado.
-                    Ele registrará todas as ações realizadas no sistema para garantir rastreabilidade e segurança.
-                  </p>
-                  <div className="w-full max-w-md">
-                    <Separator className="mb-4" />
-                    <p className="text-xs font-medium text-muted-foreground mb-3 text-left">O que será registrado:</p>
-                    <div className="grid grid-cols-2 gap-2 text-left">
-                      {[
-                        "Logins e logouts",
-                        "Criação de vendas",
-                        "Alterações de estoque",
-                        "Cadastro de produtos",
-                        "Edição de preços",
-                        "Movimentações financeiras",
-                        "Alterações de permissões",
-                        "Troca de empresa/filial",
-                      ].map((item) => (
-                        <div key={item} className="flex items-center gap-2 text-xs text-muted-foreground/70">
-                          <div className="h-1.5 w-1.5 rounded-full bg-muted-foreground/30" />
-                          {item}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <OperatorSecurityPanel showSessions={false} />
           </TabsContent>
         </Tabs>
       </div>

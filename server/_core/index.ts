@@ -14,6 +14,7 @@ import backupRouter from "../backupEndpoint";
 import { initAccountingScheduler, getAccountingSchedulerStatus, runAccountingBatch, updateAccountingSchedule } from "../accountingScheduler";
 import { initStockSnapshotJob } from "../jobs/stockSnapshot";
 import { sdk } from "./sdk";
+import { assertOperatorActive } from "../operatorSecurity";
 import {
   advanceBackupRun,
   advanceBackupRunBatch,
@@ -30,6 +31,7 @@ async function requireBackupAdmin(req: express.Request, res: express.Response): 
       res.status(403).json({ success: false, error: "Acesso administrativo necessário para operar o backup." });
       return false;
     }
+    await assertOperatorActive(user, user.operatorSessionId);
     return true;
   } catch {
     res.status(401).json({ success: false, error: "Autenticação necessária para operar o backup." });
@@ -98,6 +100,7 @@ async function startServer() {
   });
   
   app.post('/api/accounting-scheduler/trigger', async (req, res) => {
+    if (!await requireBackupAdmin(req, res)) return;
     try {
       const { competenceMonth } = req.body;
       if (!competenceMonth) {
@@ -111,6 +114,7 @@ async function startServer() {
   });
   
   app.post('/api/accounting-scheduler/update-schedule', async (req, res) => {
+    if (!await requireBackupAdmin(req, res)) return;
     try {
       await updateAccountingSchedule();
       const status = await getAccountingSchedulerStatus();
@@ -245,6 +249,14 @@ async function startServer() {
   });
 
   // tRPC API
+  app.use('/api/trpc', (req, res, next) => {
+    res.setHeader('Cache-Control', 'no-store');
+    if (req.method === 'POST' && (req.get('x-abrwf-client') !== '1' || req.get('sec-fetch-site') === 'cross-site')) {
+      res.status(403).json({ error: 'Origem da operação não autorizada.' });
+      return;
+    }
+    next();
+  });
   app.use(
     "/api/trpc",
     createExpressMiddleware({

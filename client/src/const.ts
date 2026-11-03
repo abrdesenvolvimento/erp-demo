@@ -1,4 +1,5 @@
 export { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
+import { encodeBrowserOAuthState, OAUTH_BROWSER_NONCE_COOKIE } from "@shared/oauthState";
 
 export const APP_TITLE = import.meta.env.VITE_APP_TITLE || "ERP Adega Beira Rio";
 
@@ -9,7 +10,9 @@ export const getLoginUrl = () => {
   const oauthPortalUrl = import.meta.env.VITE_OAUTH_PORTAL_URL;
   const appId = import.meta.env.VITE_APP_ID;
   const redirectUri = `${window.location.origin}/api/oauth/callback`;
-  const state = btoa(redirectUri);
+  const nonce = crypto.randomUUID();
+  document.cookie = `${OAUTH_BROWSER_NONCE_COOKIE}=${nonce}; Path=/; Max-Age=600; SameSite=Lax; Secure`;
+  const state = encodeBrowserOAuthState({ redirectUri, nonce });
 
   const url = new URL(`${oauthPortalUrl}/app-auth`);
   url.searchParams.set("appId", appId);
