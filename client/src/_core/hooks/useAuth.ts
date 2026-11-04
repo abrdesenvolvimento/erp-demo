@@ -4,6 +4,7 @@ import { TRPCClientError } from "@trpc/client";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { broadcastOperatorSecurity } from "@/hooks/useOperatorSecuritySignal";
+import { removeOptionalStorageItem, setOptionalStorageItem } from "@/lib/optionalStorage";
 
 type UseAuthOptions = {
   redirectOnUnauthenticated?: boolean;
@@ -101,18 +102,25 @@ export function useAuth(options?: UseAuthOptions) {
       setIsRetrying(false);
       await queryClient.cancelQueries();
       queryClient.clear();
-      localStorage.removeItem("manus-runtime-user-info");
+      removeOptionalStorageItem("manus-runtime-user-info");
       window.dispatchEvent(new Event("abrwf-session-logout"));
       broadcastOperatorSecurity("logout");
       utils.auth.me.setData(undefined, null);
   }, [logoutMutation, utils, queryClient]);
 
+  // Runtime metadata is an optional cache, never a source of auth truth.
+  // Keep both serialization and restricted storage failures out of rendering.
+  useEffect(() => {
+    try {
+      if (meQuery.data == null) {
+        removeOptionalStorageItem("manus-runtime-user-info");
+      } else {
+        setOptionalStorageItem("manus-runtime-user-info", JSON.stringify(meQuery.data));
+      }
+    } catch { /* An optional metadata cache must not block access or logout. */ }
+  }, [meQuery.data]);
+
   const state = useMemo(() => {
-    localStorage.setItem(
-      "manus-runtime-user-info",
-      JSON.stringify(meQuery.data)
-    );
-    
     return {
       user: meQuery.data ?? null,
       loading: meQuery.isLoading || meQuery.isFetching || logoutMutation.isPending || isRetrying,

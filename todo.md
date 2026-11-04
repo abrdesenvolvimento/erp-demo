@@ -2689,3 +2689,14 @@ O faturamento histórico foi encerrado por orientação do usuário e não integ
 - [x] Executar 113 testes focados e build de produção sem novos erros TypeScript nos arquivos modificados
 - [ ] Publicar a correção e validar uma tentativa nova no iPhone, iniciada e concluída no mesmo navegador
 - [ ] Confirmar com o usuário se a falha ocorreu na prévia Manus, navegador direto ou PWA; a causa específica da captura não foi comprovada
+
+## Resiliência da prévia incorporada — 03/11/2026
+- [x] Reproduzir a renderização normal da entrada e a falha de renderização com localStorage bloqueado em iframe de QA
+- [x] Tornar o cache opcional do hook useAuth tolerante a getter/operações bloqueados, retirar escrita do render e preservar autenticação derivada da query
+- [x] Garantir que a falha de limpeza opcional após logout não interrompa os sinais de revogação entre abas
+- [x] Exibir shell inicial e recuperação manual se o módulo de entrada não carregar, sem substituir ou desbloquear a interface após a montagem
+- [x] Validar 136 testes focados, build de produção e ausência de novos diagnósticos TypeScript nos arquivos modificados
+- [x] Conferir no navegador a entrada renderizada em iframe normal/restrito e a recuperação quando o módulo inicial é deliberadamente indisponível
+- [ ] Confirmar a mensagem do badge “1 error” da prévia do usuário e a abertura após atualização: a causa exata do print de tela branca ainda não foi comprovada
+
+Nota de diagnóstico: após a correção, a tela de acesso renderiza mesmo com storage bloqueado. Um aviso residual no cenário artificial foi localizado no script externo de analytics, não na renderização React; nenhum script de analytics ou integração foi modificado. Não confundir esse aviso com prova da causa da tela branca do usuário. Nenhuma regra de PIN, autenticação, empresa ou dado operacional foi alterada nesta etapa.

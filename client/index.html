@@ -37,7 +37,45 @@
   </head>
 
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <section id="abrwf-boot" aria-live="polite" style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;box-sizing:border-box;background:linear-gradient(118deg,#114352,#2f6d44);font-family:system-ui,-apple-system,sans-serif;color:#153332">
+        <div style="max-width:440px;padding:32px;border-radius:22px;background:#f9faf6;border-top:4px solid #d59e15">
+          <strong style="font-size:13px;letter-spacing:.12em">ABRWF</strong>
+          <h1 id="abrwf-boot-title" style="font-size:24px;line-height:1.2;margin:18px 0 12px">Carregando o sistema</h1>
+          <p id="abrwf-boot-copy" style="font-size:14px;line-height:1.6">Aguarde um instante.</p>
+          <button id="abrwf-boot-retry" type="button" hidden style="padding:12px 18px;border:0;border-radius:10px;background:#154c44;color:white;font-weight:600;cursor:pointer">Recarregar a página</button>
+          <noscript>Ative o JavaScript no navegador para acessar o ABRWF.</noscript>
+        </div>
+      </section>
+    </div>
+    <script id="abrwf-boot-guard">
+      (function () {
+        var root = document.getElementById('root');
+        var boot = document.getElementById('abrwf-boot');
+        var title = document.getElementById('abrwf-boot-title');
+        var copy = document.getElementById('abrwf-boot-copy');
+        var retry = document.getElementById('abrwf-boot-retry');
+        function recover() {
+          // Only the pre-React shell can be changed: never cover or unlock an active app.
+          if (!root.contains(boot)) return;
+          title.textContent = 'Não foi possível abrir o ABRWF';
+          copy.textContent = 'Recarregue a prévia. Se continuar, abra-a em uma nova aba pelo botão no canto superior direito do painel.';
+          retry.hidden = false;
+        }
+        var timer = setTimeout(recover, 20000);
+        window.addEventListener('error', recover, true);
+        window.addEventListener('unhandledrejection', recover);
+        retry.addEventListener('click', function () { window.location.reload(); });
+        var observer = new MutationObserver(function () {
+          if (root.contains(boot)) return;
+          clearTimeout(timer);
+          window.removeEventListener('error', recover, true);
+          window.removeEventListener('unhandledrejection', recover);
+          observer.disconnect();
+        });
+        observer.observe(root, { childList: true });
+      })();
+    </script>
     <script type="module" src="/src/main.tsx"></script>
     <!-- Service Worker Registration for PWA Push Notifications -->
     <script>
