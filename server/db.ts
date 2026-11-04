@@ -7061,6 +7061,45 @@ export async function getRevenueGoalProgress(year: number, month: number, compan
 
 // ==================== FECHAMENTO MENSAL ====================
 
+/** Leitura anual em duas consultas, sem alterar vendas, implantação ou metas.
+ * Receita idêntica a getRevenueGoalProgress: ACTIVE/finalAmount/saleDate BRT.
+ * Escopo empresarial como o mensal, incluindo branchId legado nulo.
+ * Empresa/filial obrigatórias; o roteador valida o vínculo antes da consulta. */
+export async function getAnnualRevenueGoalProgress(year: number, companyId: number, branchId: number) {
+  if (!Number.isInteger(year) || year < 2000 || year > 2100 ||
+      !Number.isSafeInteger(companyId) || companyId < 1 ||
+      !Number.isSafeInteger(branchId) || branchId < 1) {
+    throw new Error("Período, empresa e filial válidos são obrigatórios para consultar metas anuais");
+  }
+  const database = await getDb();
+  if (!database) throw new Error("Não foi possível consultar as metas anuais");
+  const { buildAnnualGoalProgress, getGoalBrazilDate } = await import('../shared/metas');
+  const goalsResult = await database.execute(sql`
+    SELECT rg.id, rg.month, rg.channelId, rg.targetAmount,
+      COALESCE(sc.name, 'Geral') AS channelName,
+      COALESCE(sc.code, 'ALL') AS channelCode
+    FROM revenueGoals rg
+    LEFT JOIN salesChannels sc ON rg.channelId = sc.id
+      AND sc.companyId = ${companyId}
+    WHERE rg.year = ${year} AND rg.companyId = ${companyId}
+    ORDER BY rg.month, rg.id
+  `);
+  const revenueResult = await database.execute(sql`
+    SELECT MONTH(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')) AS month,
+      COALESCE(s.channelId, 0) AS channelId,
+      SUM(s.finalAmount) AS totalRevenue
+    FROM sales s
+    WHERE s.status = 'ACTIVE'
+      AND ${sql.raw(saleDateRangeWhere('s', startOfMonthBrazil(year, 1), endOfMonthBrazil(year, 12)))}
+      AND s.companyId = ${companyId}
+    GROUP BY MONTH(CONVERT_TZ(s.saleDate, '+00:00', '-03:00')), s.channelId
+  `);
+  return buildAnnualGoalProgress(year,
+    goalsResult[0] as unknown as import('../shared/metas').AnnualGoalRow[],
+    revenueResult[0] as unknown as import('../shared/metas').AnnualGoalRevenueRow[],
+    getGoalBrazilDate());
+}
+
 export async function getMonthlyClosing(year: number, month: number, companyId?: number, skipExtras = false) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");

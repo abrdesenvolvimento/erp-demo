@@ -21,6 +21,7 @@ import { internalSalesRouter } from './routers/internalSales';
 import { historicalRevenueAdjustmentsRouter } from './routers/historicalRevenueAdjustments';
 import { operatorSecurityRouter } from './routers/operatorSecurity';
 import { resolveOperatorStatus, revokeOperatorSession, revokeSessionsForUser } from './operatorSecurity';
+import { annualGoalsProgressProcedure } from './routers/goalsAnnual';
 
 function requireActiveCompanyId(activeCompanyId: number | undefined): number {
   if (!Number.isInteger(activeCompanyId) || !activeCompanyId || activeCompanyId < 1) {
@@ -3027,6 +3028,8 @@ export const appRouter = router({
       .query(async ({ input, ctx }) => {
         return await db.getRevenueGoalProgress(input.year, input.month, ctx.activeCompanyId);
       }),
+
+    annualProgress: annualGoalsProgressProcedure,
 
     history: adminProcedure
       .input(z.object({

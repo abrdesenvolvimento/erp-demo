@@ -4,9 +4,19 @@
 
 Cada pessoa utiliza sua própria conta e seu PIN de seis números. O acesso operacional exige um login autenticado e uma confirmação individual por PIN. A partir das **04h, no horário de Brasília**, a sessão anterior deixa de autorizar operações e é necessário iniciar novo login, seguido do PIN. Desbloquear uma pausa não prolonga esse prazo.
 
-O bloqueio por inatividade começa em **5 minutos**. Em **Administração → Segurança**, um administrador vinculado à empresa pode escolher 1, 3, 5, 10, 15 ou 30 minutos. Cliques, toques e teclas gerados pelo navegador mantêm a sessão ativa; consultas automáticas, timers e movimentos do mouse não contam. O botão **Bloquear** permite proteger imediatamente a tela ao sair da máquina. Ao encerrar o turno, use **Sair / trocar operador**.
+O bloqueio por inatividade começa em **5 minutos**. Em **Administração → Segurança**, um administrador vinculado à empresa pode escolher 1, 3, 5, 10, 15 ou 30 minutos. Cliques, toques, teclas, edição de campos e rolagem pela roda/trackpad gerados pelo navegador mantêm a sessão ativa; consultas automáticas, timers, rolagem programada e movimentos do mouse não contam. A confirmação de atividade tem intervalo mínimo de cinco segundos e depende da resposta do servidor, sem prolongar o prazo das 04h. O botão **Bloquear** permite proteger imediatamente a tela ao sair da máquina. Ao encerrar o turno, use **Sair / trocar operador**.
 
 O bloqueio é aplicado no servidor, não apenas na interface. Atualizar a página não libera uma sessão bloqueada ou vencida. Logout e bloqueio são sincronizados entre abas; dados da identidade anterior são descartados antes de liberar uma nova sessão.
+
+### Correção de bloqueios imediatos — 03/11/2026
+
+Foi confirmado, em consulta somente leitura, que o banco arredonda `2026-11-04 02:00:00.600` para `02:00:01` em campos de precisão de segundo. As tabelas de segurança utilizam essa precisão. Antes da correção, uma gravação com milissegundos podia ser lida como uma atividade ou autenticação no futuro e recusada pela validação de sessão. Isso explica um mecanismo concreto de bloqueio logo após a confirmação correta do PIN; não significa que toda solicitação de PIN tivesse essa mesma causa.
+
+Os horários gravados pelo módulo de segurança agora são truncados ao segundo **antes** da persistência. O relógio usado nas verificações permanece preciso e o veto a datas futuras continua vigente. A confirmação de atividade devolve o estado e os horários efetivamente registrados pelo servidor, sem aceitar um horário informado pelo navegador. Nenhuma política cadastrada pelo administrador, sessão histórica, venda ou estoque foi alterado nessa correção. Na consulta de 03/11, a política da Adega estava configurada em **1 minuto**, escolha preservada.
+
+Revalidar a mesma pessoa em uma sessão ativa não limpa mais a identificação nem remonta o editor da tela. Salvar a política ou selecionar a empresa continua fazendo a verificação real no servidor, mas não força a tela comemorativa se o acesso permanece válido. Bloqueio e saída ocultam a operação imediatamente; mudar de pessoa ou sessão descarta os dados anteriores. Uma confirmação correta de PIN mantém o formulário indisponível até receber estado fresco **ACTIVE** e confirmar a identidade, evitando uma segunda solicitação por cache antigo. Falha de conexão apresenta recuperação, sem liberar a operação nem acusar PIN incorreto indevidamente. Políticas reduzidas ainda podem causar um bloqueio legítimo se a última atividade registrada já ultrapassou o novo limite.
+
+Na validação de navegador com APIs totalmente fictícias, uma confirmação de PIN liberou a operação mesmo com resposta de estado atrasada; três revalidações ativas não exibiram aniversário; o bloqueio real voltou com um PIN; o KDS não remountou nem reimprimiu. Cliques reais do navegador no filtro de mês também produziram confirmações de atividade. Isso não substitui a conferência operacional no dispositivo do usuário após publicar.
 
 ## Login no celular e recuperação de erro
 
@@ -51,4 +61,6 @@ Foram adicionadas tabelas próprias de sessões, PINs, políticas, eventos e ter
 
 A validação inclui testes unitários e de integração com banco simulado, callback OAuth com provedor simulado, autorização de API, prazo das 04h, tentativas de PIN, isolamento de políticas, interface e regressões de backup/restauração/iFood. A validação de montagem no navegador interceptou todas as APIs com dados fictícios e confirmou a hidratação da identidade após PIN, consulta KDS sem cookie operacional, preservação da estação durante bloqueio e ausência de reimpressão. Não houve autenticação no provedor real nem impressão física nesse teste.
 
-Permanecem fora desta entrega: reformulação de Metas, módulo Consumo, melhorias analíticas do KDS, teste completo de recuperação de backup e endurecimento independente do protocolo legado do agente/fila de impressão.
+Nesta rodada, Metas recebeu seleção de mês/ano, gráfico anual de atingimento por canal e comparativo do período escolhido com os dois meses anteriores. A consulta anual mantém a definição mensal existente de faturamento e o escopo da empresa inteira, sem misturar Adega e A Brasa. Consulta somente leitura confirmou as 19 metas de 2026 da Adega, incluindo os cadastros legados sem filial, e a paridade de receita e percentual com o cálculo mensal. Nenhuma meta ou movimentação financeira foi alterada para essa verificação.
+
+Permanecem fora desta entrega: módulo Consumo, melhorias analíticas do KDS, teste completo de recuperação de backup e endurecimento independente do protocolo legado do agente/fila de impressão.

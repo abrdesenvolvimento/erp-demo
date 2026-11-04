@@ -56,7 +56,7 @@ describe("Operator UI runtime — executable security behavior", () => {
     }
   });
   it("accepts only trusted discrete interaction, not timer/movement/synthetic input", () => {
-    for (const type of ["pointerdown", "keydown", "touchstart"]) {
+    for (const type of ["pointerdown", "keydown", "touchstart", "wheel", "input"]) {
       expect(isTrustedOperatorActivity({ type, isTrusted: true })).toBe(true);
       expect(isTrustedOperatorActivity({ type, isTrusted: false })).toBe(false);
     }
@@ -116,7 +116,7 @@ describe("Operator UI source invariants — secondary integration guardrails", (
   });
   it("has bounded status retry and touches server without client timestamps", () => {
     expect(gate).toContain("retry: 2");
-    expect(gate).toContain("refetchInterval: OPERATOR_STATUS_POLL_MS");
+    expect(gate).toContain("setInterval(() => { void validateStatus(); }, OPERATOR_STATUS_POLL_MS)");
     expect(gate).toContain("activity.mutate(undefined");
     expect(gate).not.toMatch(/addEventListener\(["'](?:mousemove|pointermove|touchmove)["']/);
   });
@@ -147,6 +147,7 @@ describe("Operator UI source invariants — secondary integration guardrails", (
     expect(gate).toMatch(/await utils.auth.me.invalidate[\s\S]*?await utils.auth.me.fetch\(\)[\s\S]*?me.id !== statusRef.current\?\.user\?\.id[\s\S]*?await utils.company.myCompanies.invalidate\(\)[\s\S]*?setAuthReadyIdentity\(signature\)/);
     expect(gate).toContain("authHydrationEpoch.current");
     expect(gate).toContain("setAuthReadyIdentity(null)");
+    expect(gate).toContain("if (authReadyIdentity === signature) return;");
   });
   it("offers a fresh complete login and signout even when verification fails", () => {
     expect(gate).toContain('state === "VERIFYING" && unavailable && <button');

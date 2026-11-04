@@ -2653,8 +2653,8 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 - [ ] Configurar PIN de cada operador e parear as estações KDS no navegador usado pela produção; conferir bloqueio e impressão física
 
 ## Próxima evolução alinhada — Metas e Consumo
-- [ ] Metas: permitir escolher mês/ano no gráfico, mantendo as regras existentes de realizado, canais e empresa ativa
-- [ ] Metas: corrigir transbordamento dos quadros no celular e organizar visão de acompanhamento separada do cadastro anual
+- [x] Metas: permitir escolher mês/ano para acompanhamento, com gráfico anual do percentual atingido por canal e paridade com o cálculo mensal existente
+- [x] Metas: corrigir transbordamento dos quadros no celular e organizar visão de acompanhamento separada do cadastro anual; conferido em QA móvel de 390 px
 - [ ] Consumo interno: detalhar lançamento por funcionário/produto/quantidade, custo, motivo, responsável e empresa, sem tratar consumo como faturamento
 - [ ] Consumo interno: definir permissões, baixa de estoque de produtos simples/compostos, validação de saldo e estorno auditável antes de implementar
 - [ ] Retomar melhorias analíticas do Salão/KDS após validar segurança, Metas e primeira etapa de Consumo
@@ -2728,3 +2728,22 @@ Medição de apoio em prévia aquecida: 236 recursos de script antes, 64 após; 
 - [ ] Conferir a aparência com o usuário e publicar a versão estática se aprovada
 
 O horário público serve apenas à aparência da campanha. Não substitui autenticação, PIN, verificação de empresa, bloqueio ou prazo diário das 04h. Nenhum dado de usuário, credencial ou estado operacional é renderizado antes da validação. Falhas reais continuam exibindo orientação e recuperação.
+
+## Correções operacionais de segurança e Metas — 03/11/2026
+- [x] Confirmar por consulta sem escrita o arredondamento de TIMESTAMP(0) no banco (.600 → segundo seguinte), capaz de causar bloqueio imediato por data futura
+- [x] Truncar horários antes das gravações de segurança, preservando rejeição de datas futuras, políticas existentes, tentativas de PIN e corte diário às 04h
+- [x] Devolver o estado confirmado pelo servidor ao registrar atividade, sem aceitar horário do cliente ou renovar a sessão por polling
+- [x] Reconhecer somente eventos reais de clique/toque/tecla, edição de campos e roda/trackpad; intervalo mínimo de atividade de 5 segundos
+- [x] Preservar tela ativa e editor nas revalidações comuns; não hidratar novamente auth/empresa para a mesma identidade
+- [x] Descartar respostas anteriores a bloqueio/saída/troca de identidade e manter barreira fail-closed até confirmação fresca
+- [x] Após PIN correto, impedir outra submissão até status ACTIVE e confirmação da identidade; não confundir falha de rede com PIN incorreto
+- [x] Validar no navegador com APIs fictícias: uma confirmação por acesso/desbloqueio, zero flashes de aniversário durante 3 revalidações e KDS sem remontagem/reimpressão
+- [x] Validar que cliques reais nos filtros de Metas produzem confirmações de atividade; sem alterações no banco real
+- [x] Entregar gráfico Jan–Dez por canal, referência 100%, percentuais acima de 100%, indicação de mês parcial/futuro e lacunas sem meta
+- [x] Entregar seleção mês/ano, cartões do período escolhido e comparação com os dois meses anteriores, incluindo troca de ano
+- [x] Conferir em modo somente leitura as 19 metas de 2026 da Adega: todas incluídas, sem perder cadastros sem filial, com receita e percentual idênticos ao progresso mensal; empresa 2 permanece sem metas próprias
+- [x] Executar 288 testes focados, build de produção e typecheck sem novos diagnósticos nos arquivos de segurança e Metas; 53 diagnósticos globais antigos permanecem
+- [x] Conferir visualmente gráfico e quadros no desktop e em captura móvel de 390 px, com fixtures explicitamente identificadas como fictícias
+- [ ] Publicar o checkpoint desta correção e validar no navegador de operação: salvamento de política sem flash indevido, um PIN por desbloqueio, atividade contínua e filtro/gráfico de Metas
+
+Escopo preservado: nenhuma meta, venda, estoque, implantação histórica, conta/PIN existente ou automação foi alterada nesta rodada. Tempo da Adega encontrado em 1 minuto e mantido. A consulta anual segue a definição mensal de vendas ativas/finalAmount/saleDate em Brasília e o escopo empresarial, sem misturar Adega e A Brasa e sem incorporar implantação histórica. Animações próprias de login e troca de base permanecem; a tela comemorativa não é reexibida pela revalidação comum de acesso válido.

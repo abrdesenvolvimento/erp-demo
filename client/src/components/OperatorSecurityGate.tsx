@@ -8,18 +8,26 @@ import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { warmUpAndLogin, isLoginInProgress } from "@/const";
+import { useCompany } from "@/contexts/CompanyContext";
 import AnniversaryAccess, { AccessPendingCard } from "./AnniversaryAccess";
 import type { OperatorSessionState, OperatorSessionStatus } from "../../../shared/sessionSecurity";
 import {
+  beginOperatorStatusCheck,
   effectiveOperatorState,
+  finishOperatorStatusCheck,
+  initialOperatorUiSnapshot,
   isOperatorStatusQuery,
   isTrustedOperatorActivity,
   isValidOperatorPin,
   operatorDeadline,
   operatorIdentitySignature,
+  operatorUiServerNow,
+  OPERATOR_ACTIVITY_EVENTS,
   OPERATOR_ACTIVITY_THROTTLE_MS,
   OPERATOR_STATUS_POLL_MS,
   remainingCooldownSeconds,
+  type OperatorSignalType,
+  type OperatorUiSnapshot,
 } from "@/hooks/operatorSecurityRuntime";
 import { broadcastOperatorSecurity, useOperatorSecuritySignal } from "@/hooks/useOperatorSecuritySignal";
 
@@ -57,110 +65,148 @@ export function OperatorSecurityGate({ children }: { children: ReactNode }) {
   return <ProtectedOperatorGate path={path}>{children}</ProtectedOperatorGate>;
 }
 
-type LocalBlock = "LOCKED" | "LOGIN_REQUIRED" | "VERIFYING" | null;
-
 function ProtectedOperatorGate({ children, path }: { children: ReactNode; path: string }) {
   const queryClient = useQueryClient();
   const utils = trpc.useUtils();
+  const { activeCompanyId } = useCompany();
+  const companyRef = useRef(activeCompanyId);
+  companyRef.current = activeCompanyId;
+  // This gate owns when a response is accepted. Shared query cache (including a
+  // LOCKED snapshot from before PIN) is never itself authority to release UI.
   const statusQuery = trpc.operatorSecurity.status.useQuery(undefined, {
-    enabled: true,
-    refetchInterval: OPERATOR_STATUS_POLL_MS,
-    refetchIntervalInBackground: true,
-    refetchOnWindowFocus: "always",
-    refetchOnReconnect: "always",
+    enabled: false,
     retry: 2,
     retryDelay: attempt => Math.min(1000 * (attempt + 1), 3000),
     staleTime: 0,
   });
   const activity = trpc.operatorSecurity.activity.useMutation();
-  const [localBlock, setLocalBlock] = useState<LocalBlock>(null);
+  const [snapshot, setSnapshot] = useState(initialOperatorUiSnapshot);
+  const snapshotRef = useRef(snapshot);
+  const commit = useCallback((next: OperatorUiSnapshot) => {
+    snapshotRef.current = next;
+    setSnapshot(next);
+  }, []);
   const [clearedIdentity, setClearedIdentity] = useState<string | null>(null);
   const [authReadyIdentity, setAuthReadyIdentity] = useState<string | null>(null);
   const [authHydrationError, setAuthHydrationError] = useState(false);
+  const [authRetry, setAuthRetry] = useState(0);
   const authHydrationEpoch = useRef(0);
   const [, setClockRevision] = useState(0);
   const identityEpoch = useRef(0);
-  const validationEpoch = useRef(0);
   const lastInputSentAt = useRef(Number.NEGATIVE_INFINITY);
-  const serverClock = useRef({ offset: 0, updatedAt: 0 });
-  const status = statusQuery.data as OperatorSessionStatus | undefined;
-  // An offset is captured once per server response, not on each UI render.
-  if (status && serverClock.current.updatedAt !== statusQuery.dataUpdatedAt) {
-    serverClock.current = { offset: status.serverNow - Date.now(), updatedAt: statusQuery.dataUpdatedAt };
-  }
-  const estimatedServerNow = () => Date.now() + serverClock.current.offset;
+  const activityPending = useRef(false);
+  const activityRequest = useRef(0);
+  const mounted = useRef(true);
+  const status = snapshot.status;
   const signature = status ? operatorIdentitySignature(status) : null;
   const identityReady = signature !== null && signature === clearedIdentity;
-  const state = status ? effectiveOperatorState(status, estimatedServerNow()) : null;
+  const state = status ? effectiveOperatorState(status, operatorUiServerNow(snapshot, Date.now())) : null;
   const authReady = signature !== null && authReadyIdentity === signature;
-  const active = identityReady && authReady && state === "ACTIVE" && localBlock === null && !statusQuery.isError;
+  const localBlock = snapshot.block;
+  const active = identityReady && authReady && state === "ACTIVE" && localBlock === null && !snapshot.unavailable;
   const statusRef = useRef(status);
   const activeRef = useRef(active);
   statusRef.current = status;
   activeRef.current = active;
 
-  // Block rendering synchronously on a changed signature, then discard operator-scoped caches.
+  const validateStatus = useCallback(async (signal: OperatorSignalType = "status") => {
+    const next = beginOperatorStatusCheck(snapshotRef.current, signal);
+    if (signal !== "status") {
+      activeRef.current = false;
+      authHydrationEpoch.current++;
+      // Blocking signals must hide the operational tree before another event can run.
+      flushSync(() => { setAuthReadyIdentity(null); commit(next); });
+    } else commit(next);
+    const epoch = next.epoch;
+    const company = companyRef.current;
+    try {
+      await queryClient.cancelQueries({ predicate: query => isOperatorStatusQuery(query.queryKey) });
+      if (!mounted.current || snapshotRef.current.epoch !== epoch) return;
+      const result = await statusQuery.refetch();
+      if (!mounted.current || company !== companyRef.current) return;
+      commit(finishOperatorStatusCheck(snapshotRef.current, epoch, result.data, Date.now(), Boolean(result.error)));
+    } catch {
+      if (mounted.current) commit(finishOperatorStatusCheck(snapshotRef.current, epoch, undefined, Date.now(), true));
+    }
+  }, [commit, queryClient, statusQuery.refetch]);
+
+  // Poll/focus/reconnect validate only; none are activity or extend deadlines.
+  useEffect(() => {
+    mounted.current = true;
+    void validateStatus();
+    const poll = setInterval(() => { void validateStatus(); }, OPERATOR_STATUS_POLL_MS);
+    const recheck = () => { void validateStatus(); };
+    window.addEventListener("focus", recheck);
+    window.addEventListener("online", recheck);
+    document.addEventListener("visibilitychange", recheck);
+    return () => {
+      mounted.current = false;
+      snapshotRef.current = { ...snapshotRef.current, epoch: snapshotRef.current.epoch + 1 };
+      clearInterval(poll);
+      window.removeEventListener("focus", recheck);
+      window.removeEventListener("online", recheck);
+      document.removeEventListener("visibilitychange", recheck);
+    };
+  }, [validateStatus]);
+
+  useEffect(() => { void validateStatus(); }, [activeCompanyId, validateStatus]);
+  useEffect(() => queryClient.getQueryCache().subscribe(event => {
+    if (event.type === "updated" && event.action.type === "invalidate" && isOperatorStatusQuery(event.query.queryKey)) {
+      void validateStatus();
+    }
+  }), [queryClient, validateStatus]);
+
+  // Changed signatures block synchronously in render, then discard scoped caches.
   useEffect(() => {
     if (signature === null || signature === clearedIdentity) return;
     const epoch = ++identityEpoch.current;
+    authHydrationEpoch.current++;
+    setAuthReadyIdentity(null);
     const scoped = { predicate: (query: { queryKey: readonly unknown[] }) => !isOperatorStatusQuery(query.queryKey) };
     void (async () => {
       await queryClient.cancelQueries(scoped);
-      if (epoch !== identityEpoch.current) return;
+      if (epoch !== identityEpoch.current || !mounted.current) return;
       queryClient.removeQueries(scoped);
       queryClient.getMutationCache().clear();
-      if (epoch === identityEpoch.current) {
-        lastInputSentAt.current = Number.NEGATIVE_INFINITY;
-        setClearedIdentity(signature);
-      }
+      lastInputSentAt.current = Number.NEGATIVE_INFINITY;
+      activityRequest.current++;
+      activityPending.current = false;
+      setClearedIdentity(signature);
     })();
     return () => { identityEpoch.current++; };
   }, [signature, clearedIdentity, queryClient]);
 
-  // auth.me is null before PIN by design. Never release business children from
-  // a fresh 30-second cached null or from the previous operator's auth snapshot.
+  // ACTIVE -> ACTIVE for this identity never invalidates auth/company or editors.
+  // Initial/PIN/identity transitions still require fresh auth.me before release.
   useEffect(() => {
-    const epoch = ++authHydrationEpoch.current;
-    if (!identityReady || state !== "ACTIVE" || localBlock !== null || statusQuery.isError || !signature) {
+    if (!identityReady || state !== "ACTIVE" || localBlock !== null || !signature) {
+      authHydrationEpoch.current++;
       setAuthReadyIdentity(null);
       return;
     }
+    if (authReadyIdentity === signature) return;
+    const epoch = ++authHydrationEpoch.current;
     setAuthHydrationError(false);
     void (async () => {
       try {
         await utils.auth.me.invalidate(undefined, { refetchType: "none" });
         const me = await utils.auth.me.fetch();
         if (!me || me.id !== statusRef.current?.user?.id) throw new Error("Operator identity not confirmed");
+        if (epoch !== authHydrationEpoch.current || !mounted.current) return;
         await utils.company.myCompanies.invalidate();
-        if (epoch === authHydrationEpoch.current) setAuthReadyIdentity(signature);
+        if (epoch === authHydrationEpoch.current && mounted.current) setAuthReadyIdentity(signature);
       } catch {
-        if (epoch === authHydrationEpoch.current) {
+        if (epoch === authHydrationEpoch.current && mounted.current) {
           setAuthReadyIdentity(null);
           setAuthHydrationError(true);
         }
       }
     })();
     return () => { authHydrationEpoch.current++; };
-  }, [identityReady, signature, state, localBlock, statusQuery.isError, utils]);
-
-  const validateStatus = useCallback(async () => {
-    const epoch = ++validationEpoch.current;
-    setAuthReadyIdentity(null);
-    setLocalBlock("VERIFYING");
-    await queryClient.cancelQueries({ predicate: query => isOperatorStatusQuery(query.queryKey) });
-    const result = await statusQuery.refetch();
-    if (epoch === validationEpoch.current && !result.error && result.data) setLocalBlock(null);
-  }, [queryClient, statusQuery.refetch]);
+  }, [identityReady, signature, state, localBlock, authReadyIdentity, authRetry, utils]);
 
   useOperatorSecuritySignal(signal => {
-    if (signal.type === "status") {
-      void validateStatus();
-      return;
-    }
-    validationEpoch.current++;
-    setAuthReadyIdentity(null);
-    setLocalBlock(signal.type === "logout" ? "LOGIN_REQUIRED" : "LOCKED");
-    void statusQuery.refetch();
+    void validateStatus(signal.type === "unlocked" && activeRef.current ? "status" : signal.type);
     if (signal.type === "logout") {
       setClearedIdentity(null);
       void queryClient.cancelQueries({ predicate: query => !isOperatorStatusQuery(query.queryKey) })
@@ -168,17 +214,17 @@ function ProtectedOperatorGate({ children, path }: { children: ReactNode; path: 
     }
   });
 
-  // A server-clock deadline blocks locally without waiting for the next poll.
+  // Local idle and 04h deadlines stay fail-closed regardless of pending requests.
   useEffect(() => {
     if (!status || status.state !== "ACTIVE") return;
-    const deadline = operatorDeadline(status);
     const verifyDeadline = () => {
-      const remaining = deadline - estimatedServerNow();
-      if (remaining > 0) return;
+      if (operatorDeadline(status) > operatorUiServerNow(snapshotRef.current, Date.now())) return;
+      activeRef.current = false;
       setClockRevision(value => value + 1);
-      void statusQuery.refetch();
+      void validateStatus();
     };
-    const timer = setTimeout(verifyDeadline, Math.max(0, deadline - estimatedServerNow()) + 1);
+    const timer = setTimeout(verifyDeadline, Math.max(0,
+      operatorDeadline(status) - operatorUiServerNow(snapshotRef.current, Date.now())) + 1);
     document.addEventListener("visibilitychange", verifyDeadline);
     window.addEventListener("focus", verifyDeadline);
     return () => {
@@ -186,53 +232,76 @@ function ProtectedOperatorGate({ children, path }: { children: ReactNode; path: 
       document.removeEventListener("visibilitychange", verifyDeadline);
       window.removeEventListener("focus", verifyDeadline);
     };
-  }, [status, statusQuery.dataUpdatedAt, statusQuery.refetch]);
+  }, [status, validateStatus]);
 
-  // No mousemove, timers, polling, synthetic dispatches or heartbeat can prolong a session.
+  // No mousemove, programmatic scroll, timers or synthetic dispatch prolongs access.
   useEffect(() => {
     if (!active) return;
     const onTrustedInput = (event: Event) => {
       if (!isTrustedOperatorActivity(event) || !activeRef.current) return;
-      const current = statusRef.current;
-      if (!current || effectiveOperatorState(current, estimatedServerNow()) !== "ACTIVE") {
+      const current = snapshotRef.current;
+      if (!current.status || effectiveOperatorState(current.status, operatorUiServerNow(current, Date.now())) !== "ACTIVE") {
         event.preventDefault();
         event.stopImmediatePropagation();
+        activeRef.current = false;
         flushSync(() => setClockRevision(value => value + 1));
-        void statusQuery.refetch();
+        void validateStatus();
         return;
       }
       const now = performance.now();
-      if (now - lastInputSentAt.current < OPERATOR_ACTIVITY_THROTTLE_MS || activity.isPending) return;
+      if (now - lastInputSentAt.current < OPERATOR_ACTIVITY_THROTTLE_MS || activityPending.current) return;
       lastInputSentAt.current = now;
-      // Server asserts ACTIVE and timestamps with its own clock. No client time is sent.
-      activity.mutate(undefined, { onSettled: () => { void statusQuery.refetch(); } });
+      activityPending.current = true;
+      const request = ++activityRequest.current;
+      const epoch = current.epoch;
+      const identity = operatorIdentitySignature(current.status);
+      const company = companyRef.current;
+      // Only the committed server response can move lastActivityAt, never client input time.
+      activity.mutate(undefined, {
+        onSuccess: result => {
+          if (!mounted.current || activityRequest.current !== request || snapshotRef.current.epoch !== epoch || companyRef.current !== company ||
+            !snapshotRef.current.status || operatorIdentitySignature(snapshotRef.current.status) !== identity) return;
+          const acknowledged = (result as { status?: OperatorSessionStatus }).status;
+          if (!acknowledged || operatorIdentitySignature(acknowledged) !== identity || acknowledged.company?.id !== current.status?.company?.id) return;
+          const statusWithTerminal = { ...acknowledged,
+            productionTerminal: snapshotRef.current.status.productionTerminal };
+          commit(finishOperatorStatusCheck(snapshotRef.current, epoch, statusWithTerminal, Date.now()));
+        },
+        onError: () => {
+          if (!mounted.current || activityRequest.current !== request) return;
+          if (snapshotRef.current.epoch === epoch) {
+            commit(finishOperatorStatusCheck(snapshotRef.current, epoch, undefined, Date.now(), true));
+          }
+          toast.error("Não foi possível confirmar a atividade no servidor. Verifique a conexão.");
+        },
+        onSettled: () => {
+          if (activityRequest.current !== request) return;
+          activityPending.current = false;
+          if (mounted.current) void validateStatus();
+        },
+      });
     };
-    window.addEventListener("pointerdown", onTrustedInput, { capture: true });
-    window.addEventListener("keydown", onTrustedInput, { capture: true });
-    window.addEventListener("touchstart", onTrustedInput, { capture: true, passive: false });
+    for (const type of OPERATOR_ACTIVITY_EVENTS) window.addEventListener(type, onTrustedInput, { capture: true, passive: false });
     return () => {
-      window.removeEventListener("pointerdown", onTrustedInput, true);
-      window.removeEventListener("keydown", onTrustedInput, true);
-      window.removeEventListener("touchstart", onTrustedInput, true);
+      for (const type of OPERATOR_ACTIVITY_EVENTS) window.removeEventListener(type, onTrustedInput, true);
     };
-  }, [active, activity.isPending, activity.mutate, statusQuery.refetch]);
+  }, [active, activity.mutate, commit, validateStatus]);
 
-  const renderedState: OperatorSessionState | "VERIFYING" = !status || !identityReady || statusQuery.isError ||
+  const renderedState: OperatorSessionState | "VERIFYING" = snapshot.unavailable || !status || !identityReady ||
     (state === "ACTIVE" && localBlock === null && !authReady)
     ? "VERIFYING" : localBlock ?? state ?? "VERIFYING";
-  const productionTerminal = (status as (OperatorSessionStatus & {
-    productionTerminal?: { companyId: number; name: string } | null;
-  }) | undefined)?.productionTerminal;
+  const productionTerminal = status?.productionTerminal;
   const productionStation = Boolean(productionTerminal) && isProductionStationPath(path);
+  const recheck = async () => { setAuthHydrationError(false); setAuthRetry(value => value + 1); await validateStatus(); };
 
   return <>
     {productionStation ?
-      // Only server-paired KDS retain printing effects. Hidden/inert prevents human interaction.
+      // Server-paired KDS keep printing effects mounted even while hidden/inert.
       <div hidden={!active} inert={!active} aria-hidden={!active} style={active ? undefined : { display: "none" }}>{children}</div>
       : active ? <>{children}</> : null}
     {!active && <AnniversaryAccess serverNow={status?.serverNow} company={identityReady ? status?.company : null}>
-      <OperatorAccessForm key={`${signature}:${renderedState}`} status={status} state={renderedState}
-        unavailable={statusQuery.isError || authHydrationError} onRecheck={validateStatus}
+      <OperatorAccessForm key={signature} status={status} state={renderedState}
+        unavailable={snapshot.unavailable || authHydrationError} onRecheck={recheck}
         productionStation={productionStation} unpairedStation={isProductionStationPath(path) && !productionTerminal} />
     </AnniversaryAccess>}
   </>;
@@ -256,6 +325,9 @@ function OperatorAccessForm({ status, state, unavailable, onRecheck, productionS
   const [confirmation, setConfirmation] = useState("");
   const [ownsAccount, setOwnsAccount] = useState(false);
   const [message, setMessage] = useState("");
+  const [awaitingRelease, setAwaitingRelease] = useState(false);
+  const releaseWasVerifying = useRef(false);
+  const submissionPending = useRef(false);
   const [connecting, setConnecting] = useState(false);
   const [cooldownDeadline, setCooldownDeadline] = useState(0);
   const [cooldownNow, setCooldownNow] = useState(Date.now());
@@ -263,7 +335,19 @@ function OperatorAccessForm({ status, state, unavailable, onRecheck, productionS
   const setupRequired = state === "PIN_SETUP_REQUIRED";
   const pinRequired = setupRequired || state === "PIN_CONFIRM_REQUIRED" || state === "LOCKED";
   const busy = connecting || isLoginInProgress() || unlock.isPending || setup.isPending;
+  const pinBusy = busy || awaitingRelease;
   const cooldown = remainingCooldownSeconds(cooldownDeadline, cooldownNow);
+
+  useEffect(() => {
+    if (!awaitingRelease) return;
+    if (state === "VERIFYING") releaseWasVerifying.current = true;
+    else if (state === "LOGIN_REQUIRED" || state === "SIGNED_OUT" || (pinRequired && releaseWasVerifying.current && !unavailable)) {
+      // Fresh ACTIVE was confirmed but a new genuine lock happened before release.
+      submissionPending.current = false;
+      releaseWasVerifying.current = false;
+      setAwaitingRelease(false);
+    }
+  }, [awaitingRelease, state, pinRequired, unavailable]);
 
   useEffect(() => {
     const seconds = status?.retryAfterSeconds ?? 0;
@@ -302,7 +386,7 @@ function OperatorAccessForm({ status, state, unavailable, onRecheck, productionS
 
   const submitPin = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (busy || cooldown > 0) return;
+    if (pinBusy || submissionPending.current || cooldown > 0) return;
     setMessage("");
     if (!isValidOperatorPin(pin)) { setMessage("Digite um PIN com exatamente 6 números."); return; }
     if (setupRequired && (!isValidOperatorPin(confirmation) || pin !== confirmation)) {
@@ -313,6 +397,8 @@ function OperatorAccessForm({ status, state, unavailable, onRecheck, productionS
     }
     const submittedPin = pin;
     // Clear before each network attempt. Never put this secret in storage or messages.
+    submissionPending.current = true;
+    let succeeded = false;
     setPin("");
     setConfirmation("");
     try {
@@ -329,17 +415,21 @@ function OperatorAccessForm({ status, state, unavailable, onRecheck, productionS
           return;
         }
       }
-      broadcastOperatorSecurity("status");
+      succeeded = true;
+      setAwaitingRelease(true);
+      // A successful mutation is not permission to render. Await fresh ACTIVE + auth.me.
+      broadcastOperatorSecurity("unlocked");
     } catch (error) {
       const safeSetupMessage = setupRequired && error instanceof TRPCClientError &&
         error.data?.code === "BAD_REQUEST" ? error.message : null;
       setMessage(safeSetupMessage ?? (setupRequired
-        ? "Não foi possível criar o PIN. Se o prazo de cadastro expirou, faça um novo login completo."
-        : "Não foi possível confirmar o acesso. Se a sessão expirou, faça um novo login completo."));
+        ? "Não foi possível confirmar o cadastro no servidor. Verifique a conexão; se o prazo expirou, faça um novo login completo."
+        : "Não foi possível confirmar o acesso no servidor. Verifique a conexão; se a sessão expirou, faça um novo login completo."));
       // The server, not this form, decides whether OAuth must be performed again.
       if (error instanceof TRPCClientError &&
         ["UNAUTHORIZED", "FORBIDDEN"].includes(error.data?.code ?? "")) void onRecheck();
     } finally {
+      if (!succeeded) submissionPending.current = false;
       setPin("");
       setConfirmation("");
     }
@@ -375,18 +465,18 @@ function OperatorAccessForm({ status, state, unavailable, onRecheck, productionS
     {pinRequired && <form className="mt-5 space-y-4" onSubmit={submitPin} autoComplete="off">
       <div className="space-y-2"><label htmlFor={`${id}-pin`} className="text-sm font-medium">{setupRequired ? "Novo PIN · 6 números" : "Seu PIN · 6 números"}</label>
         <input id={`${id}-pin`} name="operator-pin" type="password" inputMode="numeric" pattern="[0-9]{6}" maxLength={6} minLength={6}
-          autoComplete="off" autoCorrect="off" spellCheck={false} required autoFocus disabled={busy || cooldown > 0}
+          autoComplete="off" autoCorrect="off" spellCheck={false} required autoFocus disabled={pinBusy || cooldown > 0}
           value={pin} onChange={event => setPin(event.target.value.replace(/[^0-9]/g, "").slice(0, 6))}
           aria-describedby={cooldown > 0 ? `${id}-cooldown` : `${id}-help`} />
       </div>
       {setupRequired && <>
         <div className="space-y-2"><label htmlFor={`${id}-confirm`} className="text-sm font-medium">Confirme o PIN</label>
           <input id={`${id}-confirm`} name="operator-pin-confirmation" type="password" inputMode="numeric" pattern="[0-9]{6}" maxLength={6} minLength={6}
-            autoComplete="off" autoCorrect="off" spellCheck={false} required disabled={busy}
+            autoComplete="off" autoCorrect="off" spellCheck={false} required disabled={pinBusy}
             value={confirmation} onChange={event => setConfirmation(event.target.value.replace(/[^0-9]/g, "").slice(0, 6))} />
         </div>
         <label className="flex items-start gap-3 text-xs leading-relaxed text-[#4a655c]" htmlFor={`${id}-ownership`}>
-          <input id={`${id}-ownership`} type="checkbox" required checked={ownsAccount} disabled={busy} onChange={event => setOwnsAccount(event.target.checked)} />
+          <input id={`${id}-ownership`} type="checkbox" required checked={ownsAccount} disabled={pinBusy} onChange={event => setOwnsAccount(event.target.checked)} />
           <span>Esta conta é minha. Não compartilharei meu PIN.</span>
         </label>
       </>}
@@ -394,8 +484,8 @@ function OperatorAccessForm({ status, state, unavailable, onRecheck, productionS
         ? "Evite sequências e números repetidos."
         : "Esqueceu seu PIN? Solicite a redefinição a um administrador."}</p>
       {cooldown > 0 && <p id={`${id}-cooldown`} className="text-sm font-medium text-[#855520]" role="status">Nova tentativa em {cooldown}s.</p>}
-      <button className="operator-access-primary" type="submit" disabled={busy || cooldown > 0 || !isValidOperatorPin(pin) || (setupRequired && (!ownsAccount || pin !== confirmation))}>
-        {busy ? "Confirmando…" : setupRequired ? "Criar PIN e continuar" : "Confirmar e continuar"}<ArrowRight size={17} aria-hidden="true" />
+      <button className="operator-access-primary" type="submit" disabled={pinBusy || cooldown > 0 || !isValidOperatorPin(pin) || (setupRequired && (!ownsAccount || pin !== confirmation))}>
+        {pinBusy ? "Confirmando…" : setupRequired ? "Criar PIN e continuar" : "Confirmar e continuar"}<ArrowRight size={17} aria-hidden="true" />
       </button>
     </form>}
     {(state === "SIGNED_OUT" || state === "LOGIN_REQUIRED") && <button type="button" className="operator-access-primary mt-6" disabled={busy} onClick={() => { void freshLogin(true); }}>

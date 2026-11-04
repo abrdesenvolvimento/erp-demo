@@ -21,6 +21,11 @@ type Executor = Database | Transaction;
 type Session = typeof operatorSessions.$inferSelect;
 type Actor = Pick<User, "id"> | null | undefined;
 
+/** TIMESTAMP(0) arredonda frações; nunca gravar um horário de segurança no futuro. */
+export function securityTimestamp(now: number): Date {
+  return new Date(Math.floor(now / 1000) * 1000);
+}
+
 async function database(): Promise<Database> {
   const db = await getDb();
   if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Serviço de segurança indisponível. Tente novamente." });
@@ -38,7 +43,7 @@ async function currentUser(db: Executor, userId: string, lock = false): Promise<
 }
 async function audit(db: Executor, userId: string, sessionId: string | null, companyId: number | undefined, event: string, details: string, now = Date.now()) {
   // Somente mensagens constantes. Nunca registrar PIN, hash, cookie ou user-agent.
-  await db.insert(securityEvents).values({ userId, sessionId, companyId: companyId ?? null, event, details, createdAt: new Date(now) });
+  await db.insert(securityEvents).values({ userId, sessionId, companyId: companyId ?? null, event, details, createdAt: securityTimestamp(now) });
 }
 function idleValue(value: number | null | undefined): number {
   return ALLOWED_IDLE_MINUTES.includes(value as typeof ALLOWED_IDLE_MINUTES[number]) ? value! : DEFAULT_IDLE_MINUTES;
@@ -97,9 +102,9 @@ async function lockedContext(tx: Transaction, userId: string, sid: string | unde
 }
 async function persistIdleLock(tx: Transaction, context: Awaited<ReturnType<typeof lockedContext>>, companyId?: number) {
   if (context.state === "LOCKED" && context.session && !context.session.lockedAt) {
-    await tx.update(operatorSessions).set({ lockedAt: new Date(context.now) }).where(and(eq(operatorSessions.id, context.session.id), eq(operatorSessions.userId, context.user.id), isNull(operatorSessions.lockedAt), isNull(operatorSessions.revokedAt)));
+    await tx.update(operatorSessions).set({ lockedAt: securityTimestamp(context.now) }).where(and(eq(operatorSessions.id, context.session.id), eq(operatorSessions.userId, context.user.id), isNull(operatorSessions.lockedAt), isNull(operatorSessions.revokedAt)));
     await audit(tx, context.user.id, context.session.id, companyId, "idle_lock", "Sessão bloqueada por inatividade.", context.now);
-    context.session.lockedAt = new Date(context.now);
+    context.session.lockedAt = securityTimestamp(context.now);
   }
 }
 
@@ -133,7 +138,7 @@ export async function createOperatorSession(userId: string, userAgent: string): 
     if (user.loginMethod === "manual") throw new TRPCError({ code: "FORBIDDEN", message: "Use um login autenticado para iniciar a sessão de segurança." });
     const now = Date.now();
     const id = randomUUID();
-    await tx.insert(operatorSessions).values({ id, userId, userAgent: (userAgent ?? "").slice(0, 255), authenticatedAt: new Date(now), expiresAt: new Date(nextDailyLoginCutoff(now)), lastActivityAt: new Date(now), lockedAt: null, confirmedAt: null, revokedAt: null });
+    await tx.insert(operatorSessions).values({ id, userId, userAgent: (userAgent ?? "").slice(0, 255), authenticatedAt: securityTimestamp(now), expiresAt: securityTimestamp(nextDailyLoginCutoff(now)), lastActivityAt: securityTimestamp(now), lockedAt: null, confirmedAt: null, revokedAt: null });
     await audit(tx, userId, id, undefined, "login", "Nova sessão autenticada.", now);
     return id;
   });
@@ -158,6 +163,17 @@ export async function resolveOperatorStatus(user: Actor, sid: string | undefined
     };
   });
 }
+function activeContextStatus(context: Awaited<ReturnType<typeof lockedContext>>): OperatorSessionStatus {
+  return {
+    state: "ACTIVE", user: { id: context.user.id, name: context.user.name, avatarUrl: context.user.avatarUrl },
+    company: context.company, idleMinutes: context.idleMinutes, serverNow: context.now,
+    sessionRef: context.session ? publicSessionId(context.session.id) : null,
+    lastActivityAt: context.session?.lastActivityAt?.getTime() ?? null,
+    expiresAt: context.session?.expiresAt?.getTime() ?? null,
+    retryAfterSeconds: Math.max(0, Math.ceil(((context.pin?.blockedUntil?.getTime() ?? 0) - context.now) / 1000)),
+    hasPin: !!context.pin,
+  };
+}
 export async function assertOperatorActive(user: Actor, sid: string | undefined, companyId?: number): Promise<void> {
   const id = requireId(user);
   const db = await database();
@@ -176,24 +192,27 @@ export async function lockOperatorSession(user: Actor, sid: string | undefined, 
     const context = await lockedContext(tx, id, sid, companyId);
     if (!context.session || context.state === "LOGIN_REQUIRED") denyState("LOGIN_REQUIRED");
     if (!context.session.lockedAt) {
-      await tx.update(operatorSessions).set({ lockedAt: new Date(context.now) }).where(and(eq(operatorSessions.id, context.session.id), eq(operatorSessions.userId, id), isNull(operatorSessions.revokedAt)));
+      await tx.update(operatorSessions).set({ lockedAt: securityTimestamp(context.now) }).where(and(eq(operatorSessions.id, context.session.id), eq(operatorSessions.userId, id), isNull(operatorSessions.revokedAt)));
       await audit(tx, id, context.session.id, companyId, "manual_lock", "Sessão bloqueada pelo usuário.", context.now);
     }
   });
 }
-export async function touchOperatorSession(user: Actor, sid: string | undefined, companyId?: number): Promise<{ success: true }> {
+export async function touchOperatorSession(user: Actor, sid: string | undefined, companyId?: number): Promise<{ success: true; status: OperatorSessionStatus }> {
   const id = requireId(user);
   const db = await database();
-  const state = await db.transaction(async tx => {
+  const result = await db.transaction(async tx => {
     const context = await lockedContext(tx, id, sid, companyId);
     await persistIdleLock(tx, context, companyId);
     if (context.state === "ACTIVE" && context.session) {
-      await tx.update(operatorSessions).set({ lastActivityAt: new Date(context.now) }).where(and(eq(operatorSessions.id, context.session.id), eq(operatorSessions.userId, id), isNull(operatorSessions.lockedAt), isNull(operatorSessions.revokedAt)));
+      const lastActivityAt = securityTimestamp(context.now);
+      await tx.update(operatorSessions).set({ lastActivityAt }).where(and(eq(operatorSessions.id, context.session.id), eq(operatorSessions.userId, id), isNull(operatorSessions.lockedAt), isNull(operatorSessions.revokedAt)));
+      context.session.lastActivityAt = lastActivityAt;
+      return { state: context.state, status: activeContextStatus(context) };
     }
-    return context.state;
+    return { state: context.state, status: null };
   });
-  if (state !== "ACTIVE") denyState(state);
-  return { success: true };
+  if (result.state !== "ACTIVE" || !result.status) denyState(result.state);
+  return { success: true, status: result.status };
 }
 export async function verifyOperatorPin(user: Actor, sid: string | undefined, pin: string, companyId?: number): Promise<{ success: boolean; retryAfterSeconds: number }> {
   const id = requireId(user);
@@ -213,13 +232,13 @@ export async function verifyOperatorPin(user: Actor, sid: string | undefined, pi
     if (!matches) {
       const attempts = (blockedUntil && blockedUntil <= now ? 0 : context.pin.failedAttempts) + 1;
       const blocked = attempts >= MAX_PIN_ATTEMPTS;
-      await tx.update(operatorPins).set({ failedAttempts: attempts, blockedUntil: blocked ? new Date(now + PIN_BLOCK_MS) : null, updatedAt: new Date(now) }).where(eq(operatorPins.userId, id));
+      await tx.update(operatorPins).set({ failedAttempts: attempts, blockedUntil: blocked ? securityTimestamp(now + PIN_BLOCK_MS) : null, updatedAt: securityTimestamp(now) }).where(eq(operatorPins.userId, id));
       await audit(tx, id, context.session.id, companyId, blocked ? "pin_blocked" : "pin_failed", blocked ? "Limite de tentativas de PIN atingido; bloqueio temporário." : "Falha na confirmação do PIN.", now);
       // Retornar (não lançar): os contadores e a auditoria precisam de commit.
       return { success: false, retryAfterSeconds: blocked ? PIN_BLOCK_MS / 1000 : 0 };
     }
-    await tx.update(operatorPins).set({ failedAttempts: 0, blockedUntil: null, updatedAt: new Date(now) }).where(eq(operatorPins.userId, id));
-    await tx.update(operatorSessions).set({ confirmedAt: new Date(now), lastActivityAt: new Date(now), lockedAt: null }).where(and(eq(operatorSessions.id, context.session.id), eq(operatorSessions.userId, id), isNull(operatorSessions.revokedAt)));
+    await tx.update(operatorPins).set({ failedAttempts: 0, blockedUntil: null, updatedAt: securityTimestamp(now) }).where(eq(operatorPins.userId, id));
+    await tx.update(operatorSessions).set({ confirmedAt: securityTimestamp(now), lastActivityAt: securityTimestamp(now), lockedAt: null }).where(and(eq(operatorSessions.id, context.session.id), eq(operatorSessions.userId, id), isNull(operatorSessions.revokedAt)));
     await audit(tx, id, context.session.id, companyId, "pin_unlock", "PIN confirmado; sessão desbloqueada.", now);
     return { success: true, retryAfterSeconds: 0 };
   });
@@ -234,8 +253,8 @@ export async function setupOperatorPin(user: Actor, sid: string | undefined, pin
     if (context.user.loginMethod === "manual") throw new TRPCError({ code: "FORBIDDEN", message: "Faça login autenticado antes de cadastrar seu PIN." });
     if (!context.session || context.state === "LOGIN_REQUIRED" || context.now - context.session.authenticatedAt.getTime() >= ENROLLMENT_MS) denyState("LOGIN_REQUIRED");
     if (context.pin) throw new TRPCError({ code: "CONFLICT", message: "O PIN já está cadastrado. Alteração ou recuperação exige fluxo específico." });
-    await tx.insert(operatorPins).values({ userId: id, pinHash, failedAttempts: 0, blockedUntil: null, updatedAt: new Date(context.now) });
-    await tx.update(operatorSessions).set({ confirmedAt: new Date(context.now), lastActivityAt: new Date(context.now), lockedAt: null }).where(and(eq(operatorSessions.id, context.session.id), eq(operatorSessions.userId, id), isNull(operatorSessions.revokedAt)));
+    await tx.insert(operatorPins).values({ userId: id, pinHash, failedAttempts: 0, blockedUntil: null, updatedAt: securityTimestamp(context.now) });
+    await tx.update(operatorSessions).set({ confirmedAt: securityTimestamp(context.now), lastActivityAt: securityTimestamp(context.now), lockedAt: null }).where(and(eq(operatorSessions.id, context.session.id), eq(operatorSessions.userId, id), isNull(operatorSessions.revokedAt)));
     await audit(tx, id, context.session.id, companyId, "pin_setup", "PIN de segurança cadastrado.", context.now);
   });
 }
@@ -251,7 +270,7 @@ export async function revokeOperatorSession(userId: string, sid: string): Promis
     }
     if (session && !session.revokedAt) {
       const now = Date.now();
-      await tx.update(operatorSessions).set({ revokedAt: new Date(now) }).where(and(eq(operatorSessions.id, session.id), eq(operatorSessions.userId, userId), isNull(operatorSessions.revokedAt)));
+      await tx.update(operatorSessions).set({ revokedAt: securityTimestamp(now) }).where(and(eq(operatorSessions.id, session.id), eq(operatorSessions.userId, userId), isNull(operatorSessions.revokedAt)));
       await audit(tx, userId, session.id, undefined, "session_revoked", "Sessão revogada.", now);
     }
   });
@@ -263,7 +282,7 @@ export async function revokeSessionsForUser(userId: string): Promise<void> {
     const sessions = await tx.select({ id: operatorSessions.id }).from(operatorSessions).where(and(eq(operatorSessions.userId, userId), isNull(operatorSessions.revokedAt))).for("update");
     if (!sessions.length) return;
     const now = Date.now();
-    await tx.update(operatorSessions).set({ revokedAt: new Date(now) }).where(and(eq(operatorSessions.userId, userId), isNull(operatorSessions.revokedAt)));
+    await tx.update(operatorSessions).set({ revokedAt: securityTimestamp(now) }).where(and(eq(operatorSessions.userId, userId), isNull(operatorSessions.revokedAt)));
     for (const session of sessions) await audit(tx, userId, session.id, undefined, "session_revoked", "Sessão revogada por revogação global do usuário.", now);
   });
 }
@@ -283,7 +302,7 @@ export async function setSecurityPolicy(user: Actor, companyId: number, idleMinu
     const context = await policyContext(tx, latest, companyId);
     if (!context.companyAdmin) throw new TRPCError({ code: "FORBIDDEN", message: "Apenas administradores vinculados como admin à empresa podem alterar sua política de segurança." });
     const now = Date.now();
-    await tx.insert(securityPolicies).values({ companyId, idleMinutes, updatedBy: id, updatedAt: new Date(now) }).onDuplicateKeyUpdate({ set: { idleMinutes, updatedBy: id, updatedAt: new Date(now) } });
+    await tx.insert(securityPolicies).values({ companyId, idleMinutes, updatedBy: id, updatedAt: securityTimestamp(now) }).onDuplicateKeyUpdate({ set: { idleMinutes, updatedBy: id, updatedAt: securityTimestamp(now) } });
     await audit(tx, id, null, companyId, "policy_changed", "Política de inatividade atualizada.", now);
   });
 }

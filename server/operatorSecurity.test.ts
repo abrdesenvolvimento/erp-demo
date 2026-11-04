@@ -7,7 +7,7 @@ import {
   getSecurityPolicy, hashPin, isValidOperatorPin, listOperatorSessions,
   listSecurityEvents, loadOperatorSession, lockOperatorSession, resolveOperatorStatus,
   revokeOperatorSession, revokeSessionsForUser, setSecurityPolicy, setupOperatorPin,
-  touchOperatorSession, verifyOperatorPin,
+  securityTimestamp, touchOperatorSession, verifyOperatorPin,
 } from "./operatorSecurity";
 
 const connection = vi.hoisted(() => ({ db: null as any }));
@@ -22,6 +22,11 @@ class MemoryDb {
   writes: { table: string; values: any }[] = [];
   private queue: Promise<unknown> = Promise.resolve();
   private dialect = new MySqlDialect();
+  // TiDB/MySQL TIMESTAMP(0): .600 é gravado no segundo seguinte, não truncado.
+  private persisted(values: Record<string, unknown>) {
+    return Object.fromEntries(Object.entries(values).map(([key, value]) =>
+      [key, value instanceof Date ? new Date(Math.round(value.getTime() / 1000) * 1000) : value]));
+  }
   matches(condition: SQL | undefined, row: any) {
     if (!condition) return true;
     const { sql, params } = this.dialect.sqlToQuery(condition);
@@ -61,7 +66,7 @@ class MemoryDb {
     const db = this, table = getTableName(value);
     return { set(values: any) { return { async where(condition: SQL) {
       db.writes.push({ table, values: { ...values } });
-      for (const row of db.data[table]) if (db.matches(condition, row)) Object.assign(row, values);
+      for (const row of db.data[table]) if (db.matches(condition, row)) Object.assign(row, db.persisted(values));
     } }; } };
   }
   insert(value: any) {
@@ -73,8 +78,8 @@ class MemoryDb {
         const existing = values[key] === undefined ? undefined : db.data[table].find(row => row[key] === values[key]);
         if (existing) {
           if (!update) throw new Error("Duplicate primary key");
-          Object.assign(existing, update.set);
-        } else db.data[table].push({ ...(table === "securityEvents" ? { id: db.data[table].length + 1 } : {}), ...values });
+          Object.assign(existing, db.persisted(update.set));
+        } else db.data[table].push({ ...(table === "securityEvents" ? { id: db.data[table].length + 1 } : {}), ...db.persisted(values) });
       };
       return {
         then(resolve: any, reject: any) { return Promise.resolve().then(() => apply()).then(resolve, reject); },
@@ -179,7 +184,7 @@ describe("sessões e relógio do servidor", () => {
     const original = { authenticatedAt: row.authenticatedAt.getTime(), expiresAt: row.expiresAt.getTime() };
     expect((await resolveOperatorStatus(actor, row.id)).state).toBe("ACTIVE");
     expect(row.lastActivityAt.getTime()).toBe(NOW - 60_000);
-    expect(await touchOperatorSession(actor, row.id)).toEqual({ success: true });
+    expect(await touchOperatorSession(actor, row.id)).toMatchObject({ success: true, status: { state: "ACTIVE", serverNow: NOW, lastActivityAt: NOW } });
     expect(row.lastActivityAt.getTime()).toBe(NOW);
     expect(row.authenticatedAt.getTime()).toBe(original.authenticatedAt);
     expect(row.expiresAt.getTime()).toBe(original.expiresAt);
@@ -222,6 +227,54 @@ describe("sessões e relógio do servidor", () => {
     expect(result[0].status).toBe("fulfilled");
     expect(result[1].status).toBe("rejected");
     expect((await resolveOperatorStatus(actor, row.id)).state).toBe("LOCKED");
+  });
+
+  it("normaliza gravações para segundos sem relaxar o bloqueio de datas futuras", () => {
+    expect(securityTimestamp(NOW + 750).getTime()).toBe(NOW);
+    const futureRow = session("future", { lastActivityAt: new Date(NOW + 1000) });
+    expect(evaluateStatus({ user: actor, session: futureRow, hasPin: true, now: NOW + 750, idleMinutes: 1 })).toBe("LOCKED");
+  });
+
+  it.each([100, 500, 999])("login com fração %i ms não expira imediatamente por arredondamento", async fraction => {
+    vi.setSystemTime(NOW + fraction);
+    const sid = await createOperatorSession(actor.id, "QA");
+    const row = await loadOperatorSession(sid, actor.id);
+    expect(row?.authenticatedAt.getTime()).toBe(NOW);
+    expect((await resolveOperatorStatus(actor, sid)).state).toBe("PIN_SETUP_REQUIRED");
+    await setupOperatorPin(actor, sid, PIN);
+    expect((await resolveOperatorStatus(actor, sid)).state).toBe("ACTIVE");
+    expect(db.data.securityEvents.every(event => event.createdAt.getTime() % 1000 === 0)).toBe(true);
+  });
+
+  it.each([1, 5])("PIN confirmado com milissegundos continua ativo sob política de %i minutos", async idleMinutes => {
+    withPin(); addCompany(1, idleMinutes);
+    const row = session("rounded-pin", { lockedAt: new Date(NOW) });
+    const originalExpiry = row.expiresAt.getTime();
+    vi.setSystemTime(NOW + 750);
+    await verifyOperatorPin(actor, row.id, PIN, 1);
+    expect(row.confirmedAt.getTime()).toBe(NOW);
+    expect(row.lastActivityAt.getTime()).toBe(NOW);
+    expect((await resolveOperatorStatus(actor, row.id, 1)).state).toBe("ACTIVE");
+    await assertOperatorActive(actor, row.id, 1);
+    expect(row.expiresAt.getTime()).toBe(originalExpiry);
+    expect(db.data.securityEvents.filter(event => event.event === "idle_lock")).toHaveLength(0);
+  });
+
+  it("atividade confirma timestamp persistido, política e sessão sem estender as 04h", async () => {
+    withPin(); addCompany(1, 1);
+    const row = session("active-input", { lastActivityAt: new Date(NOW - 30_000) });
+    const expiry = row.expiresAt.getTime();
+    vi.setSystemTime(NOW + 750);
+    const receipt = await touchOperatorSession(actor, row.id, 1);
+    expect(receipt).toMatchObject({ success: true, status: { state: "ACTIVE", serverNow: NOW + 750, lastActivityAt: NOW, idleMinutes: 1, expiresAt: expiry, company: { id: 1 } } });
+    expect(receipt.status.sessionRef).toMatch(/^[a-f0-9]{64}$/);
+    expect(receipt.status.sessionRef).not.toBe(row.id);
+    expect((await resolveOperatorStatus(actor, row.id, 1)).state).toBe("ACTIVE");
+    vi.setSystemTime(NOW + 59_900);
+    expect((await resolveOperatorStatus(actor, row.id, 1)).state).toBe("ACTIVE");
+    vi.setSystemTime(NOW + 60_000);
+    expect((await resolveOperatorStatus(actor, row.id, 1)).state).toBe("LOCKED");
+    expect(row.expiresAt.getTime()).toBe(expiry);
   });
 });
 

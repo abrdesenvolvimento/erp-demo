@@ -38,25 +38,12 @@ import {
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
 import { usePermissions } from "@/hooks/usePermissions";
+import { AnnualGoalChart } from "@/components/metas/AnnualGoalChart";
+import { GoalComparison } from "@/components/metas/GoalComparison";
+import { GOAL_MONTHS, getGoalBrazilDate, goalDailyPace, goalPeriodStatus, offsetGoalMonth } from "@shared/metas";
 
 /* ─── constantes ─── */
-const MONTHS = [
-  { value: 1, label: "Janeiro", short: "Jan" },
-  { value: 2, label: "Fevereiro", short: "Fev" },
-  { value: 3, label: "Março", short: "Mar" },
-  { value: 4, label: "Abril", short: "Abr" },
-  { value: 5, label: "Maio", short: "Mai" },
-  { value: 6, label: "Junho", short: "Jun" },
-  { value: 7, label: "Julho", short: "Jul" },
-  { value: 8, label: "Agosto", short: "Ago" },
-  { value: 9, label: "Setembro", short: "Set" },
-  { value: 10, label: "Outubro", short: "Out" },
-  { value: 11, label: "Novembro", short: "Nov" },
-  { value: 12, label: "Dezembro", short: "Dez" },
-];
-
-const currentYear = new Date().getFullYear();
-const currentMonth = new Date().getMonth() + 1;
+const MONTHS = GOAL_MONTHS;
 
 const IFOOD_LOGO_URL = "https://d2xsxph8kpxj0f.cloudfront.net/310519663140687549/7RkrCeS5KipYf8hkuNqrCk/ifood-logo-official_825ad8bc.jpg";
 const NINETY_NINE_FOOD_LOGO_URL = "https://d2xsxph8kpxj0f.cloudfront.net/310519663140687549/7RkrCeS5KipYf8hkuNqrCk/99food-logo_54a15810.png";
@@ -85,17 +72,17 @@ function channelColors(name: string) {
 }
 
 /* ─── gauge circular SVG ─── */
-function CircularGauge({ progress, achieved, size = 110, strokeWidth = 9 }: { progress: number; achieved: boolean; size?: number; strokeWidth?: number }) {
+function CircularGauge({ progress, achieved, future = false, size = 110, strokeWidth = 9 }: { progress: number | null; achieved: boolean; future?: boolean; size?: number; strokeWidth?: number }) {
   const r = (size - strokeWidth) / 2;
   const circ = 2 * Math.PI * r;
-  const clamped = Math.min(progress, 100);
+  const clamped = future ? 0 : Math.max(0, Math.min(progress ?? 0, 100));
   const offset = circ - (clamped / 100) * circ;
 
-  let color = "stroke-red-400";
+  let color = future || progress === null ? "stroke-muted-foreground" : "stroke-red-400";
   let glow = "";
   if (achieved) { color = "stroke-emerald-500"; glow = "drop-shadow(0 0 6px rgba(16,185,129,.35))"; }
-  else if (progress >= 80) color = "stroke-amber-500";
-  else if (progress >= 50) color = "stroke-orange-400";
+  else if ((progress ?? 0) >= 80) color = "stroke-amber-500";
+  else if ((progress ?? 0) >= 50) color = "stroke-orange-400";
 
   return (
     <div className="relative inline-flex items-center justify-center shrink-0" style={{ width: size, height: size, filter: glow }}>
@@ -106,7 +93,7 @@ function CircularGauge({ progress, achieved, size = 110, strokeWidth = 9 }: { pr
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
         <span className={`text-lg font-bold leading-none ${achieved ? "text-emerald-600 dark:text-emerald-400" : ""}`}>
-          {progress.toFixed(1)}%
+          {future ? "—" : progress === null ? "—" : `${progress.toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`}
         </span>
         {achieved && <Trophy className="h-3.5 w-3.5 text-amber-500 mt-1" />}
       </div>
@@ -125,10 +112,12 @@ export default function Metas() {
   const { goals: goalsPermissions } = usePermissions();
   const canEdit = goalsPermissions.canEdit;
 
-  const [selectedYear, setSelectedYear] = useState(currentYear);
+  const [initialBrazilDate] = useState(() => getGoalBrazilDate());
+  const [selectedYear, setSelectedYear] = useState(initialBrazilDate.year);
+  const [selectedMonth, setSelectedMonth] = useState(initialBrazilDate.month);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingGoal, setEditingGoal] = useState<any>(null);
-  const [formMonth, setFormMonth] = useState(currentMonth);
+  const [formMonth, setFormMonth] = useState(initialBrazilDate.month);
   const [formChannelId, setFormChannelId] = useState<string>("geral");
   const [formTargetAmount, setFormTargetAmount] = useState("");
   const [formNotes, setFormNotes] = useState("");
@@ -138,16 +127,24 @@ export default function Metas() {
   /* ── queries ── */
   const { data: goals, isLoading: goalsLoading } = trpc.goals.list.useQuery({ year: selectedYear });
   const { data: channels } = trpc.salesChannels.list.useQuery();
-  const { data: progress } = trpc.goals.progress.useQuery({ year: currentYear, month: currentMonth });
+  const annualQuery = trpc.goals.annualProgress.useQuery({ year: selectedYear });
+  const { data: annual } = annualQuery;
+  const previousAnnualQuery = trpc.goals.annualProgress.useQuery({ year: selectedYear - 1 }, { enabled: selectedMonth <= 2 });
+  const currentDate = annual?.current ?? initialBrazilDate;
+  const currentYear = currentDate.year;
+  const currentMonth = currentDate.month;
+  const selectedPeriod = { year: selectedYear, month: selectedMonth };
+  const periodStatus = goalPeriodStatus(selectedPeriod, currentDate);
+  const isActivePeriod = periodStatus === "active";
+  const isFuturePeriod = periodStatus === "future";
+  const progress = annual?.months.find(period => period.month === selectedMonth);
   const { data: history, isLoading: historyLoading } = trpc.goals.history.useQuery({ year: selectedYear });
 
-  // Comparativo: 2 meses anteriores
-  const pm1 = currentMonth === 1 ? 12 : currentMonth - 1;
-  const py1 = currentMonth === 1 ? currentYear - 1 : currentYear;
-  const pm2 = pm1 === 1 ? 12 : pm1 - 1;
-  const py2 = pm1 === 1 ? py1 - 1 : py1;
-  const { data: prev1 } = trpc.goals.progress.useQuery({ year: py1, month: pm1 });
-  const { data: prev2 } = trpc.goals.progress.useQuery({ year: py2, month: pm2 });
+  // Os dois meses anteriores são relativos ao período escolhido, incluindo a virada do ano.
+  const { month: pm1, year: py1 } = offsetGoalMonth(selectedPeriod, -1);
+  const { month: pm2, year: py2 } = offsetGoalMonth(selectedPeriod, -2);
+  const prev1 = (py1 === selectedYear ? annual : previousAnnualQuery.data)?.months.find(period => period.month === pm1);
+  const prev2 = (py2 === selectedYear ? annual : previousAnnualQuery.data)?.months.find(period => period.month === pm2);
 
   /* ── mutations ── */
   const upsertMutation = trpc.goals.upsert.useMutation({
@@ -156,6 +153,7 @@ export default function Metas() {
       utils.goals.list.invalidate();
       utils.goals.progress.invalidate();
       utils.goals.history.invalidate();
+      utils.goals.annualProgress.invalidate();
       closeDialog();
     },
     onError: (e) => toast.error("Erro ao salvar meta: " + e.message),
@@ -167,6 +165,7 @@ export default function Metas() {
       utils.goals.list.invalidate();
       utils.goals.progress.invalidate();
       utils.goals.history.invalidate();
+      utils.goals.annualProgress.invalidate();
       setDeleteConfirm(null);
     },
     onError: (e) => toast.error("Erro ao excluir meta: " + e.message),
@@ -180,18 +179,18 @@ export default function Metas() {
       setEditingGoal(goal);
       setFormMonth(goal.month);
       setFormChannelId(goal.channelId ? goal.channelId.toString() : "geral");
-      setFormTargetAmount(goal.targetAmount.toString());
+      setFormTargetAmount(Number(goal.targetAmount).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
       setFormNotes(goal.notes || "");
     } else {
       setEditingGoal(null);
-      setFormMonth(currentMonth);
+      setFormMonth(selectedMonth);
       setFormChannelId("geral");
       setFormTargetAmount("");
       setFormNotes("");
     }
     setIsDialogOpen(true);
   };
-  const closeDialog = () => { setIsDialogOpen(false); setEditingGoal(null); setFormMonth(currentMonth); setFormChannelId("geral"); setFormTargetAmount(""); setFormNotes(""); };
+  const closeDialog = () => { setIsDialogOpen(false); setEditingGoal(null); setFormMonth(selectedMonth); setFormChannelId("geral"); setFormTargetAmount(""); setFormNotes(""); };
 
   const handleSubmit = () => {
     const val = parseFloat(formTargetAmount.replace(/\./g, "").replace(",", "."));
@@ -205,15 +204,15 @@ export default function Metas() {
     return goals.reduce((acc: Record<number, any[]>, g) => { (acc[g.month] ??= []).push(g); return acc; }, {} as Record<number, any[]>);
   }, [goals]);
 
-  const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
-  const today = new Date().getDate();
+  const daysInMonth = new Date(Date.UTC(selectedYear, selectedMonth, 0)).getUTCDate();
+  const today = currentDate.day;
   const daysRemaining = daysInMonth - today;
   const monthPct = Math.round((today / daysInMonth) * 100);
 
   /* ═══════════════════════════════════ RENDER ═══════════════════════════════════ */
   return (
     <DashboardLayout>
-      <div className="space-y-6">
+      <div className="min-w-0 space-y-6">
 
         {/* ── Header ── */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -222,16 +221,20 @@ export default function Metas() {
               <Target className="h-6 w-6 text-primary" />
               Metas de Faturamento
             </h1>
-            <p className="text-muted-foreground mt-1">Configure e acompanhe as metas mensais de faturamento</p>
+            <p className="text-muted-foreground mt-1">Configure e acompanhe as metas mensais de faturamento da empresa ativa</p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Select value={selectedYear.toString()} onValueChange={v => setSelectedYear(parseInt(v))}>
-              <SelectTrigger className="w-[120px]"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="w-[120px]" aria-label="Ano de acompanhamento"><SelectValue /></SelectTrigger>
               <SelectContent>
-                {[currentYear - 1, currentYear, currentYear + 1].map(y => (
+                {Array.from({ length: 7 }, (_, index) => currentYear - 5 + index).map(y => (
                   <SelectItem key={y} value={y.toString()}>{y}</SelectItem>
                 ))}
               </SelectContent>
+            </Select>
+            <Select value={selectedMonth.toString()} onValueChange={v => setSelectedMonth(parseInt(v))}>
+              <SelectTrigger className="w-[150px]" aria-label="Mês de acompanhamento"><SelectValue /></SelectTrigger>
+              <SelectContent>{MONTHS.map(month => <SelectItem key={month.value} value={month.value.toString()}>{month.label}</SelectItem>)}</SelectContent>
             </Select>
             {canEdit && (
               <Button onClick={() => openDialog()}><Plus className="h-4 w-4 mr-2" />Nova Meta</Button>
@@ -239,15 +242,24 @@ export default function Metas() {
           </div>
         </div>
 
-        {/* ══════════ PROGRESSO DO MÊS ATUAL ══════════ */}
+        <AnnualGoalChart data={annual} year={selectedYear} loading={annualQuery.isLoading} error={annualQuery.error?.message} onRetry={() => { void annualQuery.refetch(); }} />
+
+        <div className="flex flex-wrap items-center gap-2">
+          <h2 className="text-lg font-semibold">Acompanhamento — {monthLabel(selectedMonth)}/{selectedYear}</h2>
+          <Badge variant="outline">{isActivePeriod ? "Mês atual · parcial" : isFuturePeriod ? "Não iniciado" : "Histórico · encerrado"}</Badge>
+        </div>
+        {!annualQuery.isLoading && !annualQuery.error && progress?.goals.length === 0 && <p className="rounded-lg border p-4 text-sm text-muted-foreground">Nenhuma meta configurada para {monthLabel(selectedMonth)}/{selectedYear} nesta empresa.</p>}
+
+        {/* ══════════ PROGRESSO DO PERÍODO ESCOLHIDO ══════════ */}
         {progress && progress.goals.length > 0 && (
           <>
             {/* Barra de tempo do mês */}
+            {isActivePeriod && (
             <div className="rounded-xl border bg-gradient-to-r from-muted/50 to-muted/20 p-4">
-              <div className="flex items-center justify-between mb-2">
+              <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
                 <div className="flex items-center gap-2 text-sm font-medium">
                   <Calendar className="h-4 w-4 text-muted-foreground" />
-                  <span>{monthLabel(currentMonth)} {currentYear}</span>
+                  <span>{monthLabel(selectedMonth)} {selectedYear}</span>
                 </div>
                 <span className="text-sm text-muted-foreground">
                   Dia {today} de {daysInMonth} — <span className="font-medium text-foreground">{daysRemaining} dias restantes</span>
@@ -257,28 +269,33 @@ export default function Metas() {
                 <div className="h-full bg-gradient-to-r from-primary/70 to-primary rounded-full transition-all duration-500" style={{ width: `${monthPct}%` }} />
               </div>
             </div>
+            )}
 
             {/* Cards de progresso com gauge */}
             <div className="grid gap-5 md:grid-cols-2">
               {progress.goals.map((g: any) => {
                 const c = channelColors(g.channelName);
-                const dailyNeeded = daysRemaining > 0 ? g.remaining / daysRemaining : 0;
-                const dailyCurrent = today > 0 ? g.currentRevenue / today : 0;
-                const onTrack = dailyCurrent >= (g.targetAmount / daysInMonth);
+                const pace = goalDailyPace(selectedPeriod, currentDate, g.currentRevenue, g.targetAmount);
+                const dailyNeeded = pace?.dailyNeeded;
+                const dailyCurrent = pace?.dailyCurrent ?? 0;
+                const onTrack = pace?.onTrack;
 
                 return (
-                  <Card key={g.id} className={`overflow-hidden transition-all hover:shadow-md ${g.achieved ? "ring-2 ring-emerald-300 dark:ring-emerald-700 bg-gradient-to-br from-emerald-50/80 to-white dark:from-emerald-950/20 dark:to-background" : ""}`}>
+                  <Card key={g.id} className={`min-w-0 overflow-hidden transition-all hover:shadow-md ${g.achieved ? "ring-2 ring-emerald-300 dark:ring-emerald-700 bg-gradient-to-br from-emerald-50/80 to-white dark:from-emerald-950/20 dark:to-background" : ""}`}>
                     <div className={`h-1.5 bg-gradient-to-r ${c.gradient}`} />
                     <CardContent className="p-5">
-                      <div className="flex items-start gap-5">
-                        <CircularGauge progress={g.progress} achieved={g.achieved} />
-                        <div className="flex-1 min-w-0">
+                      <div className="flex flex-wrap items-start gap-5">
+                        <CircularGauge progress={g.progress} achieved={g.achieved} future={isFuturePeriod} />
+                        <div className="flex-1 min-w-0 basis-[180px]">
                           {/* título + badge */}
-                          <div className="flex items-center gap-2 mb-3">
+                          <div className="flex flex-wrap items-center gap-2 mb-3">
                             <div className={`p-1.5 rounded-lg ${c.light}`}>
                               <ChannelIcon name={g.channelName} className={`h-6 w-6 ${c.text}`} />
                             </div>
-                            <h3 className="font-semibold text-base">{g.channelName}</h3>
+                            <h3 className="font-semibold text-base break-words">{g.channelName}</h3>
+                            {isFuturePeriod && <Badge variant="outline" className="text-xs">Não iniciado</Badge>}
+                            {!isFuturePeriod && g.progress === null && <Badge variant="outline" className="text-xs">Sem meta válida</Badge>}
+                            {periodStatus === "closed" && !g.achieved && g.progress !== null && <Badge variant="outline" className="text-xs">Encerrado · não atingida</Badge>}
                             {g.achieved && (
                               <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 border-0 text-xs">
                                 <CheckCircle2 className="h-3 w-3 mr-1" />Atingida
@@ -288,25 +305,25 @@ export default function Metas() {
 
                           {/* valores */}
                           <div className="space-y-2">
-                            <div className="flex items-baseline justify-between">
+                            <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
                               <span className="text-sm text-muted-foreground">Realizado</span>
-                              <span className="text-lg font-bold tabular-nums">{fmtCurrency(g.currentRevenue)}</span>
+                              <span className="text-lg font-bold tabular-nums break-all">{fmtCurrency(g.currentRevenue)}</span>
                             </div>
-                            <div className="flex items-baseline justify-between">
+                            <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
                               <span className="text-sm text-muted-foreground">Meta</span>
-                              <span className="text-sm font-medium text-muted-foreground tabular-nums">{fmtCurrency(g.targetAmount)}</span>
+                              <span className="text-sm font-medium text-muted-foreground tabular-nums break-all">{fmtCurrency(g.targetAmount)}</span>
                             </div>
 
                             {/* barra horizontal */}
                             <div className="h-2 bg-muted rounded-full overflow-hidden">
                               <div className={`h-full rounded-full transition-all duration-700 ease-out ${
-                                g.achieved ? "bg-emerald-500" : g.progress >= 80 ? "bg-amber-500" : g.progress >= 50 ? "bg-orange-400" : "bg-red-400"
-                              }`} style={{ width: `${Math.min(g.progress, 100)}%` }} />
+                                isFuturePeriod || g.progress === null ? "bg-muted-foreground" : g.achieved ? "bg-emerald-500" : g.progress >= 80 ? "bg-amber-500" : g.progress >= 50 ? "bg-orange-400" : "bg-red-400"
+                              }`} style={{ width: `${isFuturePeriod ? 0 : Math.max(0, Math.min(g.progress ?? 0, 100))}%` }} />
                             </div>
 
                             {/* indicadores extras */}
-                            {!g.achieved && (
-                              <div className="flex items-center justify-between pt-1">
+                            {!g.achieved && isActivePeriod && g.progress !== null && (
+                              <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
                                 <Tooltip>
                                   <TooltipTrigger asChild>
                                     <div className="flex items-center gap-1 text-xs text-muted-foreground">
@@ -316,6 +333,7 @@ export default function Metas() {
                                   </TooltipTrigger>
                                   <TooltipContent><p>Valor restante: {fmtCurrency(g.remaining)}</p></TooltipContent>
                                 </Tooltip>
+                                {dailyNeeded != null ? (
                                 <Tooltip>
                                   <TooltipTrigger asChild>
                                     <div className={`flex items-center gap-1 text-xs ${onTrack ? "text-emerald-600" : "text-amber-600"}`}>
@@ -328,6 +346,7 @@ export default function Metas() {
                                     <p>Necessário por dia: {fmtCurrency(dailyNeeded)}</p>
                                   </TooltipContent>
                                 </Tooltip>
+                                ) : <span className="text-xs text-muted-foreground">Último dia do mês</span>}
                               </div>
                             )}
                           </div>
@@ -342,86 +361,11 @@ export default function Metas() {
         )}
 
         {/* ══════════ COMPARATIVO MÊS A MÊS ══════════ */}
-        {(prev1 || prev2) && progress && progress.goals.length > 0 && (
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base flex items-center gap-2">
-                <History className="h-4 w-4 text-muted-foreground" />
-                Comparativo — Últimos 3 Meses
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="text-left py-2 pr-4 font-medium text-muted-foreground">Canal</th>
-                      {prev2 && <th className="text-center py-2 px-3 font-medium text-muted-foreground">{monthShort(pm2)}/{py2}</th>}
-                      {prev1 && <th className="text-center py-2 px-3 font-medium text-muted-foreground">{monthShort(pm1)}/{py1}</th>}
-                      <th className="text-center py-2 px-3 font-medium">
-                        <span className="px-2 py-0.5 rounded bg-primary/10 text-primary text-xs font-semibold">{monthShort(currentMonth)}/{currentYear}</span>
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {progress.goals.map((g: any) => {
-                      const p1 = prev1?.goals.find((x: any) => x.channelName === g.channelName);
-                      const p2 = prev2?.goals.find((x: any) => x.channelName === g.channelName);
-                      const c = channelColors(g.channelName);
-                      return (
-                        <tr key={g.id} className="border-b last:border-0">
-                          <td className="py-3 pr-4">
-                            <div className="flex items-center gap-2">
-                              <ChannelIcon name={g.channelName} className={`h-6 w-6 ${c.text}`} />
-                              <span className="font-medium">{g.channelName}</span>
-                            </div>
-                          </td>
-                          {prev2 && (
-                            <td className="text-center py-3 px-3">
-                              {p2 ? (
-                                <div>
-                                  <div className="font-medium tabular-nums">{fmtShort(p2.currentRevenue)}</div>
-                                  <div className="text-xs text-muted-foreground">de {fmtShort(p2.targetAmount)}</div>
-                                  <Badge variant="outline" className={`text-xs mt-1 ${p2.achieved ? "border-emerald-300 text-emerald-600" : "border-muted text-muted-foreground"}`}>
-                                    {p2.progress.toFixed(0)}%
-                                  </Badge>
-                                </div>
-                              ) : <span className="text-muted-foreground">—</span>}
-                            </td>
-                          )}
-                          {prev1 && (
-                            <td className="text-center py-3 px-3">
-                              {p1 ? (
-                                <div>
-                                  <div className="font-medium tabular-nums">{fmtShort(p1.currentRevenue)}</div>
-                                  <div className="text-xs text-muted-foreground">de {fmtShort(p1.targetAmount)}</div>
-                                  <Badge variant="outline" className={`text-xs mt-1 ${p1.achieved ? "border-emerald-300 text-emerald-600" : "border-muted text-muted-foreground"}`}>
-                                    {p1.progress.toFixed(0)}%
-                                  </Badge>
-                                </div>
-                              ) : <span className="text-muted-foreground">—</span>}
-                            </td>
-                          )}
-                          <td className="text-center py-3 px-3">
-                            <div>
-                              <div className="font-bold tabular-nums">{fmtShort(g.currentRevenue)}</div>
-                              <div className="text-xs text-muted-foreground">de {fmtShort(g.targetAmount)}</div>
-                              <Badge className={`text-xs mt-1 border-0 ${
-                                g.achieved ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300"
-                                : g.progress >= 80 ? "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300"
-                                : "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300"
-                              }`}>{g.progress.toFixed(0)}%</Badge>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+        <GoalComparison periods={[
+          { period: { year: py2, month: pm2 }, data: prev2 },
+          { period: { year: py1, month: pm1 }, data: prev1 },
+          { period: selectedPeriod, data: progress },
+        ]} loading={annualQuery.isLoading || (selectedMonth <= 2 && previousAnnualQuery.isLoading)} error={annualQuery.error?.message || (selectedMonth <= 2 ? previousAnnualQuery.error?.message : undefined)} />
 
         {/* ══════════ METAS DO ANO (cards por mês) ══════════ */}
         <Card>
@@ -457,12 +401,12 @@ export default function Metas() {
                         {mg.map((goal: any) => {
                           const c = channelColors(goal.channelName);
                           return (
-                            <div key={goal.id} className={`flex items-center justify-between p-3 rounded-md ${c.light} ${c.border} border`}>
+                            <div key={goal.id} className={`min-w-0 flex flex-wrap items-center justify-between gap-2 p-3 rounded-md ${c.light} ${c.border} border`}>
                               <div className="flex items-center gap-2 min-w-0">
                                 <ChannelIcon name={goal.channelName} className={`h-6 w-6 shrink-0 ${c.text}`} />
                                 <div className="min-w-0">
                                   <p className="text-sm font-medium truncate">{goal.channelName}</p>
-                                  <p className="text-base font-bold tabular-nums">{fmtCurrency(goal.targetAmount)}</p>
+                                  <p className="text-base font-bold tabular-nums break-all">{fmtCurrency(goal.targetAmount)}</p>
                                   {goal.notes && <p className="text-xs text-muted-foreground truncate mt-0.5" title={goal.notes}>{goal.notes}</p>}
                                 </div>
                               </div>

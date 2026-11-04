@@ -10,6 +10,8 @@ import {
 const LOCAL_EVENT = "abrwf:operator-security";
 
 /** The payload contains only an action and random nonce, never identity or PIN. */
+// "unlocked" announces a committed PIN mutation, not permission to release UI.
+// Each tab still needs its own fresh status and matching auth before rendering.
 export function broadcastOperatorSecurity(type: OperatorSignalType): void {
   const signal: OperatorSignal = { type, nonce: crypto.randomUUID() };
   window.dispatchEvent(new CustomEvent(LOCAL_EVENT, { detail: signal }));

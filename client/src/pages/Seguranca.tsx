@@ -92,10 +92,10 @@ function CompanySecuritySettings() {
                 const value = Number(event.target.value) as IdleMinutes;
                 if (ALLOWED_IDLE_MINUTES.includes(value)) setIdleMinutes(value);
               }} className="h-11 w-full rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-2 focus-visible:outline-emerald-700"><option value="" disabled>Selecione o tempo</option>{ALLOWED_IDLE_MINUTES.map(minutes => <option key={minutes} value={minutes}>{minutes} {minutes === 1 ? "minuto" : "minutos"}</option>)}</select>
-                <p className="text-xs leading-relaxed text-muted-foreground">Somente cliques/toques e teclas confiáveis contam como atividade. Atualizações automáticas e movimentos do mouse não renovam a sessão.</p></div>
+                <p className="text-xs leading-relaxed text-muted-foreground">Cliques, toques, teclas, edição de campos e rolagem pela roda ou trackpad gerados pelo navegador contam como atividade. Atualizações automáticas, rolagem programada e movimentos do mouse não renovam a sessão.</p></div>
               <Button type="submit" disabled={updatePolicy.isPending || idleMinutes === "" || idleMinutes === policy.data?.idleMinutes}>{updatePolicy.isPending ? "Salvando…" : "Salvar política"}</Button>
             </form>}
-        </CardContent>
+          </CardContent>
       </Card>
       <Card className="border-emerald-800/20 bg-emerald-950 text-emerald-50"><CardHeader><CardTitle>Identificação diária obrigatória</CardTitle><CardDescription className="text-emerald-100/75">Uma nova confirmação completa a cada dia operacional.</CardDescription></CardHeader><CardContent className="space-y-4"><p className="text-5xl font-semibold tracking-tight">{String(DAILY_LOGIN_HOUR).padStart(2, "0")}:00</p><p className="text-sm text-emerald-100/80">{SECURITY_TIME_ZONE}</p><p className="text-sm leading-relaxed text-emerald-100/80">O horário é fixo e não pode ser alterado. Após o corte diário, é necessário fazer novo login OAuth e confirmar o PIN. O PIN sozinho não renova um login expirado.</p></CardContent></Card>
     </div>
