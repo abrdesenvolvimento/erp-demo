@@ -2697,6 +2697,18 @@ O faturamento histórico foi encerrado por orientação do usuário e não integ
 - [x] Exibir shell inicial e recuperação manual se o módulo de entrada não carregar, sem substituir ou desbloquear a interface após a montagem
 - [x] Validar 136 testes focados, build de produção e ausência de novos diagnósticos TypeScript nos arquivos modificados
 - [x] Conferir no navegador a entrada renderizada em iframe normal/restrito e a recuperação quando o módulo inicial é deliberadamente indisponível
-- [ ] Confirmar a mensagem do badge “1 error” da prévia do usuário e a abertura após atualização: a causa exata do print de tela branca ainda não foi comprovada
+- [x] Receber confirmação do usuário em 03/11/2026 de que a prévia voltou a aparecer; mensagem do badge não obtida e causa exata do print anterior não declarada como comprovada
 
 Nota de diagnóstico: após a correção, a tela de acesso renderiza mesmo com storage bloqueado. Um aviso residual no cenário artificial foi localizado no script externo de analytics, não na renderização React; nenhum script de analytics ou integração foi modificado. Não confundir esse aviso com prova da causa da tela branca do usuário. Nenhuma regra de PIN, autenticação, empresa ou dado operacional foi alterada nesta etapa.
+
+## Carregamento inicial mais leve — 03/11/2026
+- [x] Dividir 51 telas por carregamento sob demanda com React.lazy no escopo do módulo, preservando as 53 entradas de rota, parâmetros, aliases e fallback
+- [x] Manter Suspense apenas dentro do Router e preservar a ordem dos providers, seleção de empresa e bloqueio de operador
+- [x] Confirmar redução do JavaScript inicial de 3.066.566 para 477.090 bytes (84,4%); gzip de 719.218 para 145.972 bytes (79,7%)
+- [x] Confirmar que a entrada anônima não baixa Home, Análise de Vendas, Importador iFood ou KDS antes de liberar a respectiva rota
+- [x] Executar 201 testes focados, build de produção e conferência sem novos diagnósticos TypeScript nos arquivos alterados
+- [x] Validar em navegador, com APIs totalmente fictícias, KDS pareado antes do PIN, hidratação após PIN, bloqueio/desbloqueio sem desmontagem ou reimpressão e atalhos bloqueados
+- [x] Remover a cópia temporária de QA e restabelecer a prévia real anônima
+- [ ] Comparar a abertura no navegador do usuário após atualizar a prévia e publicar a otimização se aprovada
+
+Medição de apoio em prévia aquecida: 236 recursos de script antes, 64 após; domContentLoaded de 646 ms para 390 ms em navegações pontuais. Essas medidas não são benchmark controlado nem garantia de tempo no dispositivo do usuário. A redução de tamanho do pacote de produção é verificável; rede, cache e cold start continuam influenciando a primeira abertura. Nenhuma API de segurança, regra de PIN, autenticação diária às 04h, financeiro, estoque ou automação foi alterada.

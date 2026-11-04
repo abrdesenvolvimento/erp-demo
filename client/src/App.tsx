@@ -1,69 +1,77 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import NotFound from "@/pages/NotFound";
-import Home from "./pages/Home";
-import Produtos from "./pages/Produtos";
-import Vendas from "./pages/Vendas";
-import Parceiros from "./pages/Parceiros";
-import Compras from "./pages/Compras";
-import VendaInterna from "./pages/VendaInterna";
-import Despesas from "./pages/Despesas";
-import ContasReceberNovo from "./pages/ContasReceberNovo";
-import ContasPagar from "./pages/ContasPagar";
-import MinhaConta from "./pages/MinhaConta";
-import Usuarios from "./pages/Usuarios";
-import AnaliseFaturamento from "./pages/Relatorios";
-import AnáliseVendas from "./pages/AnáliseVendas";
-import AnaliseDelivery from "./pages/AnaliseDelivery";
-import AnaliseCanal from "./pages/AnaliseCanal";
-import AnaliseDespesas from "./pages/AnaliseDespesas";
-import Metas from "./pages/Metas";
-import FechamentoMensal from "./pages/FechamentoMensal";
-import FechamentoMensalNovo from "./pages/FechamentoMensalNovo";
-import PlanoContas from "./pages/PlanoContas";
-import RelatoriosContabeis from "./pages/RelatoriosContabeis";
-import OutrasReceitas from "./pages/OutrasReceitas";
-import ContasGerenciais from "./pages/ContasGerenciais";
-import GovernancaContabil from "./pages/GovernancaContabil";
-import ImportadorIfood from "./pages/ImportadorIfood";
-import ImportarVendas from "./pages/ImportarVendas";
-import AnaliseEstoque from "./pages/AnaliseEstoque";
-import AccessDenied from "./pages/AccessDenied";
-import GerenciarAcessos from "./pages/GerenciarAcessos";
-import Categorias from "./pages/Categorias";
-import CanaisVenda from "./pages/CanaisVenda";
-import HistoricoPrecos from "./pages/HistoricoPrecos";
-import LogAlteracoes from "./pages/LogAlteracoes";
-import AuditoriaMovimentacoes from "./pages/AuditoriaMovimentacoes";
-import SalaoMesas from "./pages/SalaoMesas";
-import SalaoComanda from "./pages/SalaoComanda";
-import SalaoKDSCozinha from "./pages/SalaoKDSCozinha";
-import SalaoKDSBar from "./pages/SalaoKDSBar";
-import SalaoGorjeta from "./pages/SalaoGorjeta";
-import SalaoGarcons from "./pages/SalaoGarcons";
-import SalaoFechamentoGarcom from "./pages/SalaoFechamentoGarcom";
-import SalaoTransferencia from "./pages/SalaoTransferencia";
-import Impressoras from "./pages/Impressoras";
-import SalaoCaixa from "./pages/SalaoCaixa";
-import Cardapio from "./pages/Cardapio";
-import CardapioStories from "./pages/CardapioStories";
-import AvisoInauguracao from "./pages/AvisoInauguracao";
-import AnaliseKDS from "./pages/AnaliseKDS";
-import FechamentoAnual from "./pages/FechamentoAnual";
-import AjustesFaturamentoHistorico from "./pages/AjustesFaturamentoHistorico";
-import Seguranca from "./pages/Seguranca";
 import OperatorSecurityGate from "./components/OperatorSecurityGate";
 import { Route, Switch, useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { CompanyProvider, useCompany } from "./contexts/CompanyContext";
+// A seleção permanece síncrona: é renderizada pelo CompanyGate, fora do Router.
 import SelectCompany from "./pages/SelectCompany";
 import { useAuth } from "./_core/hooks/useAuth";
-import { useState, useEffect } from "react";
+import { lazy, Suspense, useState, useEffect } from "react";
+
+// Identidades estáveis: nunca declarar lazy durante render (incluindo os KDS).
+const NotFound = lazy(() => import("@/pages/NotFound"));
+const Home = lazy(() => import("./pages/Home"));
+const Produtos = lazy(() => import("./pages/Produtos"));
+const Vendas = lazy(() => import("./pages/Vendas"));
+const Parceiros = lazy(() => import("./pages/Parceiros"));
+const Compras = lazy(() => import("./pages/Compras"));
+const VendaInterna = lazy(() => import("./pages/VendaInterna"));
+const Despesas = lazy(() => import("./pages/Despesas"));
+const ContasReceberNovo = lazy(() => import("./pages/ContasReceberNovo"));
+const ContasPagar = lazy(() => import("./pages/ContasPagar"));
+const MinhaConta = lazy(() => import("./pages/MinhaConta"));
+const Usuarios = lazy(() => import("./pages/Usuarios"));
+const AnaliseFaturamento = lazy(() => import("./pages/Relatorios"));
+const AnáliseVendas = lazy(() => import("./pages/AnáliseVendas"));
+const AnaliseDelivery = lazy(() => import("./pages/AnaliseDelivery"));
+const AnaliseCanal = lazy(() => import("./pages/AnaliseCanal"));
+const AnaliseDespesas = lazy(() => import("./pages/AnaliseDespesas"));
+const Metas = lazy(() => import("./pages/Metas"));
+const FechamentoMensalNovo = lazy(() => import("./pages/FechamentoMensalNovo"));
+const PlanoContas = lazy(() => import("./pages/PlanoContas"));
+const RelatoriosContabeis = lazy(() => import("./pages/RelatoriosContabeis"));
+const OutrasReceitas = lazy(() => import("./pages/OutrasReceitas"));
+const ContasGerenciais = lazy(() => import("./pages/ContasGerenciais"));
+const GovernancaContabil = lazy(() => import("./pages/GovernancaContabil"));
+const ImportadorIfood = lazy(() => import("./pages/ImportadorIfood"));
+const ImportarVendas = lazy(() => import("./pages/ImportarVendas"));
+const AnaliseEstoque = lazy(() => import("./pages/AnaliseEstoque"));
+const AccessDenied = lazy(() => import("./pages/AccessDenied"));
+const GerenciarAcessos = lazy(() => import("./pages/GerenciarAcessos"));
+const Categorias = lazy(() => import("./pages/Categorias"));
+const CanaisVenda = lazy(() => import("./pages/CanaisVenda"));
+const HistoricoPrecos = lazy(() => import("./pages/HistoricoPrecos"));
+const LogAlteracoes = lazy(() => import("./pages/LogAlteracoes"));
+const AuditoriaMovimentacoes = lazy(() => import("./pages/AuditoriaMovimentacoes"));
+const SalaoMesas = lazy(() => import("./pages/SalaoMesas"));
+const SalaoComanda = lazy(() => import("./pages/SalaoComanda"));
+const SalaoKDSCozinha = lazy(() => import("./pages/SalaoKDSCozinha"));
+const SalaoKDSBar = lazy(() => import("./pages/SalaoKDSBar"));
+const SalaoGorjeta = lazy(() => import("./pages/SalaoGorjeta"));
+const SalaoGarcons = lazy(() => import("./pages/SalaoGarcons"));
+const SalaoFechamentoGarcom = lazy(() => import("./pages/SalaoFechamentoGarcom"));
+const SalaoTransferencia = lazy(() => import("./pages/SalaoTransferencia"));
+const Impressoras = lazy(() => import("./pages/Impressoras"));
+const SalaoCaixa = lazy(() => import("./pages/SalaoCaixa"));
+const Cardapio = lazy(() => import("./pages/Cardapio"));
+const CardapioStories = lazy(() => import("./pages/CardapioStories"));
+const AvisoInauguracao = lazy(() => import("./pages/AvisoInauguracao"));
+const AnaliseKDS = lazy(() => import("./pages/AnaliseKDS"));
+const FechamentoAnual = lazy(() => import("./pages/FechamentoAnual"));
+const AjustesFaturamentoHistorico = lazy(() => import("./pages/AjustesFaturamentoHistorico"));
+const Seguranca = lazy(() => import("./pages/Seguranca"));
 
 function Router() {
   return (
+    <Suspense fallback={
+      <div role="status" aria-live="polite" aria-busy="true"
+        className="min-h-[12rem] flex items-center justify-center bg-background text-muted-foreground">
+        <p className="text-sm">Carregando tela...</p>
+      </div>
+    }>
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/produtos" component={Produtos} />
@@ -119,6 +127,7 @@ function Router() {
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>
+    </Suspense>
   );
 }
 
