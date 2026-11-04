@@ -16,7 +16,7 @@ export function AnnualGoalChart({ data, year, loading, error, onRetry }: Props) 
     const values: Record<string, number | string | null> = { month: month.month, label: GOAL_MONTHS[month.month - 1].short };
     for (const series of data.series) {
       const goal = month.goals.find(goal => goal.channelId === series.channelId);
-      // Futuro não é fracasso de 0%: lacuna no gráfico e status explícito na tabela.
+      // Futuro não é fracasso de 0%: lacuna no gráfico e status explícito no detalhe.
       values[series.key] = month.status === "future" ? null : goal?.progress ?? null;
     }
     return values;
@@ -36,7 +36,7 @@ export function AnnualGoalChart({ data, year, loading, error, onRetry }: Props) 
             <div className="flex flex-wrap gap-x-5 gap-y-2 text-sm" aria-label="Legenda do gráfico">
               {data.series.map((series, index) => <span key={series.key} className="flex items-center gap-2"><span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: COLORS[index % COLORS.length] }} />{series.name}</span>)}
             </div>
-            <div className="h-[300px] w-full min-w-0" role="img" aria-label={`Gráfico de atingimento percentual mensal de ${year}; dados completos na tabela abaixo.`}>
+            <div className="h-[300px] w-full min-w-0" role="group" aria-label={`Gráfico de atingimento percentual mensal de ${year}; consulte realizado, meta e percentual nos pontos do gráfico.`}>
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={chartData} margin={{ top: 18, right: 26, left: 0, bottom: 8 }} accessibilityLayer>
                   <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
@@ -62,19 +62,6 @@ export function AnnualGoalChart({ data, year, loading, error, onRetry }: Props) 
               </ResponsiveContainer>
             </div>
             <p className="text-xs text-muted-foreground">Linha de referência: 100%. Valores acima de 100% são preservados. Sem meta (ou meta não positiva): lacuna; meses futuros: não iniciado. Receita segue as mesmas regras das metas mensais (vendas ativas), sem ajustes de implantação histórica.</p>
-            <details className="rounded-lg border p-3">
-              <summary className="cursor-pointer text-sm font-medium focus-visible:outline-2">Ver dados mensais em tabela</summary>
-              <div className="mt-3 overflow-x-auto">
-                <table className="w-full text-sm">
-                  <caption className="sr-only">Realizado, meta e atingimento por mês e canal em {year}</caption>
-                  <thead><tr className="border-b text-left"><th scope="col" className="p-2">Mês</th><th scope="col" className="p-2">Situação</th><th scope="col" className="p-2">Canal</th><th scope="col" className="p-2 text-right">Realizado</th><th scope="col" className="p-2 text-right">Meta</th><th scope="col" className="p-2 text-right">Atingimento</th></tr></thead>
-                  <tbody>{data.months.flatMap(month => data.series.map(series => {
-                    const goal = month.goals.find(item => item.channelId === series.channelId);
-                    return <tr key={`${month.month}-${series.key}`} className="border-b last:border-0"><th scope="row" className="p-2 text-left font-normal">{GOAL_MONTHS[month.month - 1].short}/{year}</th><td className="p-2 whitespace-nowrap">{statusLabel(month.status)}</td><td className="p-2">{series.name}</td><td className="p-2 text-right whitespace-nowrap tabular-nums">{goal ? currency(goal.currentRevenue) : "—"}</td><td className="p-2 text-right whitespace-nowrap tabular-nums">{goal ? currency(goal.targetAmount) : "—"}</td><td className="p-2 text-right whitespace-nowrap tabular-nums">{month.status === "future" ? "Não iniciado" : percent(goal?.progress ?? null)}</td></tr>;
-                  }))}</tbody>
-                </table>
-              </div>
-            </details>
           </>}
       </CardContent>
     </Card>

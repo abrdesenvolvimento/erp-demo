@@ -31,13 +31,17 @@ describe("Metas — regressões do contrato de interface", () => {
     expect(chart).toContain("Math.max(110, Math.ceil(max / 20) * 20)");
     expect(chart).not.toContain("Math.min");
   });
-  it("exibe valores financeiros, percentual com uma casa e tabela acessível", () => {
+  it("mantém valores financeiros e percentual com uma casa no gráfico, sem tabela complementar", () => {
     expect(chart).toContain("Realizado:");
     expect(chart).toContain("Meta:");
     expect(chart).toContain("Atingimento:");
     expect(chart).toContain("minimumFractionDigits: 1, maximumFractionDigits: 1");
-    expect(chart).toContain("<details");
-    expect(chart).toContain("<caption");
+    expect(chart).not.toContain("<details");
+    expect(chart).not.toContain("<table");
+    expect(chart).not.toContain("Ver dados mensais em tabela");
+    expect(chart).not.toContain("tabela abaixo");
+    expect(chart).toContain("accessibilityLayer");
+    expect(chart).toContain('role="group"');
     expect(chart).toContain("Não iniciado");
     expect(chart).toContain("empresa ativa (todas as filiais)");
   });

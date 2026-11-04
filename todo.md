@@ -2747,3 +2747,12 @@ O horário público serve apenas à aparência da campanha. Não substitui auten
 - [ ] Publicar o checkpoint desta correção e validar no navegador de operação: salvamento de política sem flash indevido, um PIN por desbloqueio, atividade contínua e filtro/gráfico de Metas
 
 Escopo preservado: nenhuma meta, venda, estoque, implantação histórica, conta/PIN existente ou automação foi alterada nesta rodada. Tempo da Adega encontrado em 1 minuto e mantido. A consulta anual segue a definição mensal de vendas ativas/finalAmount/saleDate em Brasília e o escopo empresarial, sem misturar Adega e A Brasa e sem incorporar implantação histórica. Animações próprias de login e troca de base permanecem; a tela comemorativa não é reexibida pela revalidação comum de acesso válido.
+
+## Ajuste visual de Metas e retorno operacional — 03/11/2026, 23h26
+- [x] Receber confirmação do usuário de que o PIN não reapareceu durante a navegação no teste mais recente
+- [x] Retirar do gráfico anual a opção “Ver dados mensais em tabela” e a tabela complementar, mantendo gráfico, detalhes de realizado/meta/percentual, seleção de período, cartões e comparativo
+- [x] Atualizar o rótulo acessível do gráfico para não apontar para uma tabela inexistente, preservando navegação por teclado
+- [x] Validar 174 testes focados e confirmar em navegador com APIs fictícias: gráfico renderizado, tabela complementar ausente, dois filtros de período e sem transbordamento horizontal
+- [ ] Se a tela comemorativa reaparecer entre módulos, identificar a origem/destino e reproduzir antes de alterar a política de sessão
+
+Auditoria somente leitura: o retorno de /cardapio ou /aviso-inauguracao para uma rota protegida remonta o gate e pode exibir a verificação inicial sem PIN. Esse caminho é uma hipótese concreta de código, não uma causa confirmada do relato isolado. A navegação comum entre módulos protegidos não remonta o gate. Nenhuma regra de PIN, expiração, autenticação ou troca de base foi modificada neste ajuste; nenhuma meta ou dado financeiro foi alterado.
