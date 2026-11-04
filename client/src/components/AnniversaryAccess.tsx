@@ -9,9 +9,20 @@ export type AnniversaryAccessProps = {
   company?: AccessCompany;
 };
 
-/** Clock independent from the login date; no anniversary before server time arrives. */
+/** Only a visual timestamp; it never grants access or restores any operator. */
+function initialAccessClock(serverNow?: number) {
+  let now = serverNow;
+  if (now == null && typeof document !== "undefined") {
+    const value = document.getElementById("root")?.getAttribute("data-abrwf-server-now");
+    if (value && /^\d{13}$/.test(value)) now = Number(value);
+  }
+  return now != null && Number.isFinite(now)
+    ? { now, offset: now - Date.now() } : null;
+}
+
+/** The HTML and React share the server clock, avoiding a branding swap at boot. */
 function useAnniversaryClock(serverNow?: number) {
-  const [clock, setClock] = useState<{ now: number; offset: number } | null>(null);
+  const [clock, setClock] = useState<{ now: number; offset: number } | null>(() => initialAccessClock(serverNow));
   useEffect(() => {
     if (serverNow == null || !Number.isFinite(serverNow)) return;
     const offset = serverNow - Date.now();
@@ -54,6 +65,22 @@ export function AnniversaryMessage() {
     <AnniversarySignature />
     <h1 className="operator-access-heading operator-access-anniversary-heading">{ANNIVERSARY_BRAND.headline}</h1>
   </>;
+}
+
+/** Static presentation only: authentication still waits for the protected gate. */
+export function AccessPendingCard({ boot = false }: { boot?: boolean }) {
+  return <div>
+    <div style={{ marginBottom: 16, display: "flex", width: 44, height: 44, alignItems: "center", justifyContent: "center", borderRadius: 12, background: "#e7eee5", color: "#285847" }}>
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M12 22s8-4 8-11V5l-8-3-8 3v6c0 7 8 11 8 11Z" /><path d="m9 12 2 2 4-4" />
+      </svg>
+    </div>
+    <h2 id={boot ? "abrwf-boot-title" : undefined} style={{ fontSize: 24, fontWeight: 600, lineHeight: 1.25, letterSpacing: "-.025em", margin: 0 }}>Acesse o ABRWF</h2>
+    <p id={boot ? "abrwf-boot-copy" : undefined} style={{ margin: "8px 0 0", fontSize: 14, lineHeight: 1.625, color: "#597068" }}>Faça login para continuar.</p>
+    <button id={boot ? "abrwf-boot-enter" : undefined} type="button" className="operator-access-primary" style={{ marginTop: 24 }} disabled aria-busy="true" aria-label="Entrar — validação de acesso em andamento">
+      Entrar<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14m-7-7 7 7-7 7" /></svg>
+    </button>
+  </div>;
 }
 
 export function AnniversaryAccess({ children, serverNow, company = null }: AnniversaryAccessProps) {
@@ -99,8 +126,6 @@ export function AnniversaryAccess({ children, serverNow, company = null }: Anniv
         .operator-access-secondary{color:#345c51;font-size:13px;text-decoration:underline;text-underline-offset:4px;background:transparent;padding:5px 2px}
         .operator-access-message{color:#9c312c;background:#fff0ed;border:1px solid #ebc6be;border-radius:10px;padding:12px;font-size:13px;line-height:1.5}
         .operator-access button:focus-visible{outline:3px solid #93b5a8;outline-offset:3px}
-        .operator-access-editorial{animation:operator-access-enter 220ms ease-out both}
-        @keyframes operator-access-enter{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
         @media(max-width:760px){.operator-access-grid{grid-template-columns:1fr;gap:28px;padding:24px 20px}.operator-access-brand{margin-bottom:24px}.operator-access-logo{width:56px;height:56px}.operator-access-heading{font-size:36px;max-width:500px;margin-bottom:16px}.operator-access-anniversary-heading{font-size:30px;margin-top:24px;line-height:1.2}.operator-access-signature{gap:12px;padding:14px 18px 16px;border-radius:22px}.operator-access-signature-logo{width:108px;height:108px}.operator-access-signature-mark{gap:10px}.operator-access-signature-number{font-size:100px}.operator-access-signature-word{font-size:26px;gap:8px}.operator-access-signature-note{font-size:9px;letter-spacing:.1em}.operator-access-card{padding:24px}}
         @media(max-width:360px){.operator-access-signature{padding:12px 14px 14px;gap:8px}.operator-access-signature-logo{width:96px;height:96px}.operator-access-signature-number{font-size:88px}.operator-access-signature-word{font-size:22px}.operator-access-signature-mark{gap:8px}}
         @media(prefers-reduced-motion:reduce){.operator-access *{animation:none!important;transition:none!important;transform:none!important}}

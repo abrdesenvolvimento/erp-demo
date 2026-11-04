@@ -5,6 +5,7 @@ import { nanoid } from "nanoid";
 import path from "path";
 import { createServer as createViteServer } from "vite";
 import viteConfig from "../../vite.config";
+import { injectAccessBoot } from "../accessBoot";
 
 export async function setupVite(app: Express, server: Server) {
   const serverOptions = {
@@ -38,8 +39,9 @@ export async function setupVite(app: Express, server: Server) {
         `src="/src/main.tsx"`,
         `src="/src/main.tsx?v=${nanoid()}"`
       );
-      const page = await vite.transformIndexHtml(url, template);
-      res.status(200).set({ "Content-Type": "text/html" }).end(page);
+      const transformed = await vite.transformIndexHtml(url, template);
+      const page = injectAccessBoot(transformed);
+      res.status(200).set({ "Content-Type": "text/html", "Cache-Control": "no-cache" }).end(page);
     } catch (e) {
       vite.ssrFixStacktrace(e as Error);
       next(e);
@@ -58,10 +60,19 @@ export function serveStatic(app: Express) {
     );
   }
 
-  app.use(express.static(distPath));
+  const sendIndex: express.RequestHandler = async (_req, res, next) => {
+    try {
+      const template = await fs.promises.readFile(path.resolve(distPath, "index.html"), "utf-8");
+      res.status(200).set({ "Content-Type": "text/html", "Cache-Control": "no-cache" }).end(injectAccessBoot(template));
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  // Handle explicit index requests before static middleware, so the raw template never leaks.
+  app.get(["/", "/index.html"], sendIndex);
+  app.use(express.static(distPath, { index: false }));
 
   // fall through to index.html if the file doesn't exist
-  app.use("*", (_req, res) => {
-    res.sendFile(path.resolve(distPath, "index.html"));
-  });
+  app.use("*", sendIndex);
 }

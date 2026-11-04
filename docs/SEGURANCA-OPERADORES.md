@@ -37,11 +37,11 @@ A proteção reduz o uso acidental de contas alheias, mas não identifica fisica
 
 ## Edição comemorativa
 
-Login e bloqueio receberam identidade ABRWF, com adaptação ao celular e animação editorial curta. Durante **novembro de 2026**, o logo original ampliado e o selo dourado **1 ANO** formam uma assinatura única, acompanhada de:
+Login e bloqueio receberam identidade ABRWF, com adaptação ao celular e apresentação estática, sem efeito de entrada. Durante **novembro de 2026**, o logo original ampliado e o selo dourado **1 ANO** formam uma assinatura única, acompanhada de:
 
 > **Um ano construindo uma gestão mais inteligente**
 
-A menção ao aniversário sai automaticamente no início de dezembro, no fuso de Brasília, sem nova publicação. A estrutura de acesso permanece. A animação respeita a preferência de redução de movimento, sem atrasar o formulário.
+A menção ao aniversário sai automaticamente no início de dezembro, no fuso de Brasília, sem nova publicação. O HTML inicial e a interface utilizam o mesmo horário do servidor para evitar uma troca de identidade visual na abertura. A apresentação não exibe “Carregando o sistema” ou “Verificando seu acesso”: o card permanece estático enquanto as verificações acontecem, com o botão Entrar desabilitado até o estado ser conhecido. O horário visual não autoriza nenhuma operação. Falhas reais ainda exibem recuperação. A transição após o login e as animações próprias de troca de empresa foram preservadas.
 
 O card de identificação exibe instruções curtas e as ações necessárias para cada estado: entrar, cadastrar/confirmar PIN, trocar operador ou sair. Horários, fuso e tempo de inatividade não aparecem mais no rodapé; as políticas continuam vigentes e consultáveis em Segurança e Minha Conta. Identidade do operador, confirmação de propriedade da conta, erros, limite de tentativas e orientação de recuperação de PIN foram preservados.
 

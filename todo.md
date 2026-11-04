@@ -2712,3 +2712,19 @@ Nota de diagnóstico: após a correção, a tela de acesso renderiza mesmo com s
 - [ ] Comparar a abertura no navegador do usuário após atualizar a prévia e publicar a otimização se aprovada
 
 Medição de apoio em prévia aquecida: 236 recursos de script antes, 64 após; domContentLoaded de 646 ms para 390 ms em navegações pontuais. Essas medidas não são benchmark controlado nem garantia de tempo no dispositivo do usuário. A redução de tamanho do pacote de produção é verificável; rede, cache e cold start continuam influenciando a primeira abertura. Nenhuma API de segurança, regra de PIN, autenticação diária às 04h, financeiro, estoque ou automação foi alterada.
+
+## Entrada estática, sem sequência de carregamento — 03/11/2026
+- [x] Remover a animação editorial de entrada; preservar logo + 1 ANO, frase única e paleta aprovados
+- [x] Eliminar “Carregando o sistema”, “Verificando seu acesso” e “Aguarde um instante” da abertura normal
+- [x] Reutilizar o mesmo card público estático no HTML inicial e na verificação React, com Entrar desabilitado antes da confirmação do estado
+- [x] Iniciar a campanha visual com o horário da resposta HTML do servidor, sem troca de quadro normal para aniversário na montagem; manter retirada automática em dezembro
+- [x] Aplicar o mesmo HTML em prévia e produção, incluindo /index.html; manter cache dos assets e HTML no-cache
+- [x] Preservar recuperação de falha antes da montagem, sem substituir ou liberar uma interface já montada
+- [x] Preservar sem alterações os arquivos de transição após login, callback OAuth e animação de troca de empresa
+- [x] Executar 232 testes focados, build de produção e ausência de novos diagnósticos TypeScript nos arquivos alterados
+- [x] Validar no navegador com consulta de acesso fictícia atrasada em 3 segundos: logo/frase e geometria do card iguais antes/durante/depois, zero animações e botão liberado somente após resposta
+- [x] Validar com APIs fictícias que o KDS pareado consulta antes do PIN, hidrata após PIN e não remonta ou reimprime no bloqueio/desbloqueio
+- [x] Conferir HTTP 200 e HTML público injetado em /, /index.html e rota SPA usando os arquivos compilados; remover cópias públicas temporárias de QA
+- [ ] Conferir a aparência com o usuário e publicar a versão estática se aprovada
+
+O horário público serve apenas à aparência da campanha. Não substitui autenticação, PIN, verificação de empresa, bloqueio ou prazo diário das 04h. Nenhum dado de usuário, credencial ou estado operacional é renderizado antes da validação. Falhas reais continuam exibindo orientação e recuperação.

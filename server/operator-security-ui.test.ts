@@ -3,7 +3,7 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { AnniversaryAccess, AnniversarySignature, AnniversaryMessage } from "../client/src/components/AnniversaryAccess";
+import { AnniversaryAccess, AnniversarySignature, AnniversaryMessage, AccessPendingCard } from "../client/src/components/AnniversaryAccess";
 import { ANNIVERSARY_BRAND } from "../shared/anniversaryBrand";
 import {
   effectiveOperatorState,
@@ -153,11 +153,13 @@ describe("Operator UI source invariants — secondary integration guardrails", (
     expect(gate).toContain("Fazer novo login completo");
     expect(gate).toContain('(state !== "VERIFYING" || unavailable)');
   });
-  it("uses server-based anniversary clock, short editorial motion and reduced-motion support", () => {
+  it("uses a server-based visual clock and a static entrance without editorial animation", () => {
     expect(access).toContain("serverNow - Date.now()");
     expect(access).toContain("setInterval(tick, 60_000)");
+    expect(access).toContain('getAttribute("data-abrwf-server-now")');
     expect(access).toContain("prefers-reduced-motion:reduce");
-    expect(access).toContain("220ms");
+    expect(access).not.toContain("operator-access-enter");
+    expect(access).not.toContain("@keyframes");
     expect(access).toContain("ABRWF — ");
     expect(access).not.toContain("ANNIVERSARY_BRAND.period");
     expect(access).not.toContain("ANNIVERSARY_BRAND.supporting");
@@ -191,6 +193,19 @@ describe("Operator UI source invariants — secondary integration guardrails", (
     expect(gate).not.toContain("America/Sao_Paulo");
     expect(gate).not.toContain("Conta: {status.user.id}");
   });
+  it("silently checks access with the shared disabled card, preserving identity and auth checks", () => {
+    expect(gate).toContain('if (state === "VERIFYING" && !unavailable) return <AccessPendingCard />');
+    expect(gate).not.toContain("Verificando seu acesso");
+    expect(gate).not.toContain("Aguarde um instante.");
+    expect(gate).toContain('identityReady && authReady && state === "ACTIVE"');
+    const html = renderToStaticMarkup(createElement(AccessPendingCard));
+    expect(html).toContain("Acesse o ABRWF");
+    expect(html).toContain("Faça login para continuar.");
+    expect(html).toContain('disabled=""');
+    expect(html).toContain('aria-busy="true"');
+    expect(html).not.toContain("Carregando");
+    expect(html).not.toContain("onClick");
+  });
 });
 
 describe("Assinatura comemorativa renderizada", () => {
@@ -217,6 +232,13 @@ describe("Assinatura comemorativa renderizada", () => {
     expect(html).toContain("Decisões melhores.");
     expect(html).toContain(">Entrar</button>");
     expect(html).not.toContain('aria-label="ABRWF — 1 ANO"');
+  });
+  it("renders the anniversary immediately from the server timestamp, without a pre-campaign frame", () => {
+    const html = renderToStaticMarkup(createElement(AnniversaryAccess, { serverNow: now, children: createElement(AccessPendingCard) }));
+    expect(html).toContain('aria-label="ABRWF — 1 ANO"');
+    expect(html).toContain(ANNIVERSARY_BRAND.headline);
+    expect(html).not.toContain("Rotina organizada.");
+    expect(html).not.toContain("Carregando o sistema");
   });
   it("aplica azul-petróleo, verde e dourado do logo em um selo de fundo comum", () => {
     const html = renderToStaticMarkup(createElement(AnniversaryAccess, { children: createElement("button", null, "Entrar") }));

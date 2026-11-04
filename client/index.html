@@ -34,19 +34,31 @@
 
     <!-- Meta Description -->
     <meta name="description" content="Análise Baseada em Resultados" />
+    <style>
+      body { margin: 0; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #114352; }
+      #abrwf-boot [hidden] { display: none !important; }
+    </style>
   </head>
 
   <body>
-    <div id="root">
-      <section id="abrwf-boot" aria-live="polite" style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;box-sizing:border-box;background:linear-gradient(118deg,#114352,#2f6d44);font-family:system-ui,-apple-system,sans-serif;color:#153332">
-        <div style="max-width:440px;padding:32px;border-radius:22px;background:#f9faf6;border-top:4px solid #d59e15">
-          <strong style="font-size:13px;letter-spacing:.12em">ABRWF</strong>
-          <h1 id="abrwf-boot-title" style="font-size:24px;line-height:1.2;margin:18px 0 12px">Carregando o sistema</h1>
-          <p id="abrwf-boot-copy" style="font-size:14px;line-height:1.6">Aguarde um instante.</p>
-          <button id="abrwf-boot-retry" type="button" hidden style="padding:12px 18px;border:0;border-radius:10px;background:#154c44;color:white;font-weight:600;cursor:pointer">Recarregar a página</button>
-          <noscript>Ative o JavaScript no navegador para acessar o ABRWF.</noscript>
-        </div>
-      </section>
+    <div id="root" data-abrwf-server-now="__ABRWF_SERVER_NOW__">
+      <!-- abrwf-access-start -->
+      <main style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;box-sizing:border-box;background:linear-gradient(118deg,#114352,#2f6d44);color:#153332">
+        <section style="width:100%;max-width:440px;padding:32px;border-radius:24px;background:#f9faf6;border-top:4px solid #f0cd78;box-sizing:border-box" aria-label="Acesso ao ABRWF">
+          <img src="/logo-abrwf.png" alt="ABRWF" style="width:76px;height:76px;object-fit:contain;margin-bottom:24px" />
+          <div id="abrwf-boot" aria-live="polite">
+            <div aria-hidden="true" style="width:44px;height:44px;border-radius:12px;background:#e7eee5;display:flex;align-items:center;justify-content:center;margin-bottom:20px">
+              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-8 9-8 9s-8-4-8-9V5l8-3 8 3z"></path><path d="m9 12 2 2 4-4"></path></svg>
+            </div>
+            <h2 id="abrwf-boot-title" style="margin:0;font-size:24px;line-height:1.25;font-weight:600">Acesse o ABRWF</h2>
+            <p id="abrwf-boot-copy" style="font-size:14px;line-height:1.6;margin:8px 0 0;color:#4a625a">Faça login para continuar</p>
+            <button id="abrwf-boot-enter" type="button" disabled style="margin-top:24px;width:100%;min-height:44px;padding:12px 18px;border:0;border-radius:11px;background:#154c44;color:#fff;font-size:14px;font-weight:600;font-family:inherit;opacity:.55;cursor:not-allowed">Entrar</button>
+            <button id="abrwf-boot-retry" type="button" hidden style="margin-top:24px;width:100%;padding:12px 18px;border:0;border-radius:11px;background:#154c44;color:#fff;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer">Recarregar a página</button>
+            <noscript>Ative o JavaScript no navegador para acessar o ABRWF.</noscript>
+          </div>
+        </section>
+      </main>
+      <!-- abrwf-access-end -->
     </div>
     <script id="abrwf-boot-guard">
       (function () {
@@ -54,12 +66,14 @@
         var boot = document.getElementById('abrwf-boot');
         var title = document.getElementById('abrwf-boot-title');
         var copy = document.getElementById('abrwf-boot-copy');
+        var enter = document.getElementById('abrwf-boot-enter');
         var retry = document.getElementById('abrwf-boot-retry');
         function recover() {
           // Only the pre-React shell can be changed: never cover or unlock an active app.
           if (!root.contains(boot)) return;
           title.textContent = 'Não foi possível abrir o ABRWF';
           copy.textContent = 'Recarregue a prévia. Se continuar, abra-a em uma nova aba pelo botão no canto superior direito do painel.';
+          enter.hidden = true;
           retry.hidden = false;
         }
         var timer = setTimeout(recover, 20000);

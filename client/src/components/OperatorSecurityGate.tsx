@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { warmUpAndLogin, isLoginInProgress } from "@/const";
-import AnniversaryAccess from "./AnniversaryAccess";
+import AnniversaryAccess, { AccessPendingCard } from "./AnniversaryAccess";
 import type { OperatorSessionState, OperatorSessionStatus } from "../../../shared/sessionSecurity";
 import {
   effectiveOperatorState,
@@ -345,13 +345,15 @@ function OperatorAccessForm({ status, state, unavailable, onRecheck, productionS
     }
   };
 
+  if (state === "VERIFYING" && !unavailable) return <AccessPendingCard />;
+
   const titles: Record<string, string> = {
     SIGNED_OUT: "Acesse o ABRWF",
     LOGIN_REQUIRED: "Acesse o ABRWF",
     PIN_SETUP_REQUIRED: "Cadastre seu PIN",
     PIN_CONFIRM_REQUIRED: "Confirme seu PIN",
     LOCKED: "Sessão bloqueada",
-    VERIFYING: unavailable ? "Conexão indisponível" : "Verificando seu acesso",
+    VERIFYING: unavailable ? "Conexão indisponível" : "Acesse o ABRWF",
   };
   return <div>
     <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-[#e7eee5] text-[#285847]">
@@ -363,7 +365,7 @@ function OperatorAccessForm({ status, state, unavailable, onRecheck, productionS
         : pinRequired ? "Digite seu PIN para continuar."
         : state === "LOGIN_REQUIRED" || state === "SIGNED_OUT" ? "Faça login para continuar."
         : unavailable ? "Verifique a conexão e tente novamente."
-        : "Aguarde um instante."}
+        : "Faça login para continuar."}
     </p>
     {pinRequired && status?.user && <div className="mt-5 flex items-center gap-3 rounded-xl border border-[#d6e0d4] p-3">
       {status.user.avatarUrl ? <img src={status.user.avatarUrl} alt="" className="h-10 w-10 rounded-full object-cover" /> : <UserRound size={25} aria-hidden="true" />}
