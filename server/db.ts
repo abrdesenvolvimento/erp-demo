@@ -685,7 +685,7 @@ export async function updatePartner(id: number, data: Partial<InsertPartner>) {
 }
 
 // ==================== VENDAS ====================
-/** Stored origin takes precedence. Legacy evidence is UUID + saleId + same company, never a short code/channel. */
+/** Read-only precedence: stored origin, same-company UUID import, exact same-company channel code. */
 export function effectiveDeliveryPlatformSql(alias: "sales" | "s" = "sales"): string {
   return `(CASE WHEN ${alias}.saleType <> 'DELIVERY' THEN NULL
     WHEN ${alias}.deliveryPlatform IS NOT NULL THEN
@@ -693,6 +693,12 @@ export function effectiveDeliveryPlatformSql(alias: "sales" | "s" = "sales"): st
     WHEN EXISTS (SELECT 1 FROM ifoodImportedOrders io
       WHERE io.saleId = ${alias}.id AND io.companyId = ${alias}.companyId
         AND io.ifoodOrderId REGEXP '${IFOOD_ORDER_UUID_PATTERN}') THEN 'IFOOD'
+    WHEN EXISTS (SELECT 1 FROM salesChannels dpc
+      WHERE dpc.id = ${alias}.channelId AND dpc.companyId = ${alias}.companyId
+        AND BINARY dpc.code = 'IFOOD') THEN 'IFOOD'
+    WHEN EXISTS (SELECT 1 FROM salesChannels dpc
+      WHERE dpc.id = ${alias}.channelId AND dpc.companyId = ${alias}.companyId
+        AND BINARY dpc.code = '99FOOD') THEN '99FOOD'
     ELSE NULL END)`;
 }
 
@@ -4176,6 +4182,7 @@ export async function updateSale(saleId: number, data: {
   platformOrderId?: string;
   deliveryPlatform?: DeliveryPlatform | null;
 }, companyId?: number) {
+  if (data.deliveryPlatform !== undefined) throw new Error("A plataforma só pode ser escolhida ao criar a venda");
   if (companyId !== undefined && (!Number.isInteger(companyId) || companyId < 1)) throw new Error("Empresa inválida");
   const database = await getDb();
   if (!database) throw new Error("Database not available");
@@ -4187,7 +4194,6 @@ export async function updateSale(saleId: number, data: {
   if (data.surchargeAmount !== undefined) updateData.surchargeAmount = data.surchargeAmount;
   if (data.finalAmount !== undefined) updateData.finalAmount = data.finalAmount;
   if (data.platformOrderId !== undefined) updateData.platformOrderId = data.platformOrderId;
-  if (data.deliveryPlatform !== undefined) updateData.deliveryPlatform = data.deliveryPlatform;
   
   if (Object.keys(updateData).length === 0) return;
   

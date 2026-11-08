@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
-import { DELIVERY_PLATFORMS, DELIVERY_PLATFORM_LABELS, formatDeliveryPlatform, type DeliveryPlatform, type DeliveryPlatformFilter } from "@shared/deliveryPlatforms";
+import { DELIVERY_PLATFORMS, DELIVERY_PLATFORM_LABELS, deliveryPlatformFromChannelCode, formatDeliveryPlatform, type DeliveryPlatform, type DeliveryPlatformFilter } from "@shared/deliveryPlatforms";
 import { formatDateForInput, getTodayInBrazil } from "@shared/dateUtils";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
@@ -65,8 +65,7 @@ export default function Vendas() {
   const [filterSaleType, setFilterSaleType] = useState<string>("");
   const [filterDeliveryPlatform, setFilterDeliveryPlatform] = useState<DeliveryPlatformFilter | "all">("all");
   const [deliveryPlatform, setDeliveryPlatform] = useState<DeliveryPlatform | "">("");
-  const [platformEditSale, setPlatformEditSale] = useState<any>(null);
-  const [editedDeliveryPlatform, setEditedDeliveryPlatform] = useState<DeliveryPlatform | "NAO_INFORMADO">("NAO_INFORMADO");
+  const [deliveryPlatformManuallySelected, setDeliveryPlatformManuallySelected] = useState(false);
   
   // Form states
   const [channelId, setChannelId] = useState<string>("");
@@ -228,15 +227,6 @@ export default function Vendas() {
     },
   });
 
-  const updateDeliveryPlatform = trpc.sales.updateDeliveryPlatform.useMutation({
-    onSuccess: async () => {
-      toast.success("Plataforma atualizada com registro de auditoria");
-      setPlatformEditSale(null);
-      await Promise.all([utils.sales.list.invalidate(), utils.sales.stats.invalidate(), utils.sales.get.invalidate(), utils.sales.exportSales.invalidate()]);
-    },
-    onError: error => toast.error(error.message),
-  });
-
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setSaleType(null);
@@ -247,6 +237,7 @@ export default function Vendas() {
     setSelectedCustomer(null);
     setPlatformOrderId("");
     setDeliveryPlatform("");
+    setDeliveryPlatformManuallySelected(false);
     setSaleItems([]);
     setProductSearch("");
     setSelectedProduct(null);
@@ -329,6 +320,36 @@ export default function Vendas() {
     setSaleType(type);
     if (type !== "DELIVERY") setDeliveryPlatform("");
     setStep("form");
+  };
+
+  // Fill only on the channel selection event, never an effect that can overwrite a later manual edit.
+  const handleSelectChannel = (value: string) => {
+    setChannelId(value);
+    if (saleType !== "DELIVERY") return;
+    const channel = channels.find(ch => ch.id === Number(value));
+    const channelPlatform = deliveryPlatformFromChannelCode(channel?.code);
+    if (channelPlatform) {
+      if (deliveryPlatformManuallySelected && deliveryPlatform && deliveryPlatform !== channelPlatform) {
+        toast.error(`O canal selecionado corresponde a ${formatDeliveryPlatform(channelPlatform)}. Ajuste a plataforma ou o canal antes de finalizar.`);
+        return;
+      }
+      if (deliveryPlatform !== channelPlatform) {
+        setDeliveryPlatform(channelPlatform);
+        toast.info(`Plataforma preenchida pelo canal: ${formatDeliveryPlatform(channelPlatform)}`);
+      }
+    } else if (!deliveryPlatformManuallySelected) {
+      setDeliveryPlatform("");
+    }
+  };
+
+  const handleSelectDeliveryPlatform = (value: string) => {
+    setDeliveryPlatform(value as DeliveryPlatform);
+    setDeliveryPlatformManuallySelected(true);
+    const channel = channels.find(ch => ch.id === Number(channelId));
+    const channelPlatform = deliveryPlatformFromChannelCode(channel?.code);
+    if (channelPlatform && value !== channelPlatform) {
+      toast.error(`Este canal corresponde a ${formatDeliveryPlatform(channelPlatform)}. Ajuste o canal ou a plataforma antes de finalizar.`);
+    }
   };
 
   const handleAddProduct = () => {
@@ -447,6 +468,13 @@ export default function Vendas() {
       return;
     }
 
+    const selectedChannel = channels.find(ch => ch.id === Number(channelId));
+    const channelPlatform = deliveryPlatformFromChannelCode(selectedChannel?.code);
+    if (saleType === "DELIVERY" && channelPlatform && deliveryPlatform !== channelPlatform) {
+      toast.error("A plataforma selecionada não corresponde ao canal de venda");
+      return;
+    }
+
     if (saleType === "A_PRAZO" && !customerId) {
       toast.error("Selecione um cliente para venda a prazo");
       return;
@@ -524,10 +552,7 @@ export default function Vendas() {
 
   const filteredChannels = channels.filter((ch: any) => {
     if (saleType === "DELIVERY") {
-      return ch.type === "DELIVERY" || 
-             ch.name.toLowerCase().includes("ifood") ||
-             ch.name.toLowerCase().includes("99") ||
-             ch.name.toLowerCase().includes("próprio");
+      return ch.type === "DELIVERY" || deliveryPlatformFromChannelCode(ch.code) !== null;
     }
     // For BALCAO and A_PRAZO, return balcao channel
     return ch.name.toLowerCase().includes("balcão") || ch.code === "BALCAO";
@@ -800,7 +825,6 @@ export default function Vendas() {
                     <TableHead>Pedido</TableHead>
                     <TableHead>Valor Total</TableHead>
                     <TableHead>Pagamento</TableHead>
-                    {permissions.sales.canEdit && <TableHead>Ações</TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -823,14 +847,6 @@ export default function Vendas() {
                       </TableCell>
                       <TableCell className="font-semibold">{formatCurrency(parseFloat(sale.finalAmount))}</TableCell>
                       <TableCell>{formatPaymentMethod(sale.paymentMethod)}</TableCell>
-                      {permissions.sales.canEdit && <TableCell>
-                        {sale.saleType === "DELIVERY" && <Button variant="outline" size="sm" onClick={event => {
-                          event.stopPropagation();
-                          setPlatformEditSale(sale);
-                          // Editing starts from the STORED field, never persists a derived legacy iFood label implicitly.
-                          setEditedDeliveryPlatform(sale.deliveryPlatform ?? "NAO_INFORMADO");
-                        }}>Editar plataforma</Button>}
-                      </TableCell>}
                     </TableRow>
                   ))}
                 </TableBody>
@@ -838,31 +854,6 @@ export default function Vendas() {
             )}
           </CardContent>
         </Card>
-
-        <Dialog open={!!platformEditSale} onOpenChange={open => { if (!open) setPlatformEditSale(null); }}>
-          <DialogContent className="max-w-md">
-            <DialogHeader><DialogTitle>Editar plataforma — Venda #{platformEditSale?.id}</DialogTitle></DialogHeader>
-            <p className="text-sm text-muted-foreground">Esta alteração registra somente a plataforma, com auditoria. Pedido, canal, datas, valores e estoque não serão alterados.</p>
-            {platformEditSale?.deliveryPlatform == null && platformEditSale?.effectiveDeliveryPlatform === "IFOOD" &&
-              <p className="text-sm text-muted-foreground">iFood é exibido por um registro de importação vinculado à empresa. O campo salvo continua não informado.</p>}
-            <Label htmlFor="edited-delivery-platform">Plataforma</Label>
-            <Select value={editedDeliveryPlatform} onValueChange={value => setEditedDeliveryPlatform(value as DeliveryPlatform | "NAO_INFORMADO")}>
-              <SelectTrigger id="edited-delivery-platform"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {DELIVERY_PLATFORMS.map(platform => <SelectItem key={platform} value={platform}>{DELIVERY_PLATFORM_LABELS[platform]}</SelectItem>)}
-                <SelectItem value="NAO_INFORMADO">Não informada</SelectItem>
-              </SelectContent>
-            </Select>
-            <p className="text-xs text-muted-foreground">Não informada mantém o campo nulo; evidência legada válida de importação ainda poderá exibir iFood.</p>
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setPlatformEditSale(null)}>Cancelar</Button>
-              <Button disabled={updateDeliveryPlatform.isPending} onClick={() => {
-                if (!platformEditSale) return;
-                updateDeliveryPlatform.mutate({ saleId: platformEditSale.id, deliveryPlatform: editedDeliveryPlatform === "NAO_INFORMADO" ? null : editedDeliveryPlatform });
-              }}>{updateDeliveryPlatform.isPending ? "Salvando..." : "Salvar plataforma"}</Button>
-            </div>
-          </DialogContent>
-        </Dialog>
 
         {/* Modal de Nova Venda */}
         <Dialog open={isModalOpen} onOpenChange={open => { if (open) setIsModalOpen(true); else handleCloseModal(); }}>
@@ -924,8 +915,8 @@ export default function Vendas() {
                 {saleType === "DELIVERY" && (
                   <div className="space-y-2">
                     <Label htmlFor="channel">Canal de Venda *</Label>
-                    <Select value={channelId} onValueChange={setChannelId}>
-                      <SelectTrigger>
+                    <Select value={channelId} onValueChange={handleSelectChannel}>
+                      <SelectTrigger id="channel">
                         <SelectValue placeholder="Selecione o canal" />
                       </SelectTrigger>
                       <SelectContent>
@@ -991,12 +982,13 @@ export default function Vendas() {
                 {saleType === "DELIVERY" && (
                   <div className="space-y-2">
                     <Label htmlFor="delivery-platform">Plataforma *</Label>
-                    <Select value={deliveryPlatform} onValueChange={value => setDeliveryPlatform(value as DeliveryPlatform)}>
+                    <Select value={deliveryPlatform} onValueChange={handleSelectDeliveryPlatform}>
                       <SelectTrigger id="delivery-platform"><SelectValue placeholder="Selecione a plataforma" /></SelectTrigger>
                       <SelectContent>
                         {DELIVERY_PLATFORMS.map(platform => <SelectItem key={platform} value={platform}>{DELIVERY_PLATFORM_LABELS[platform]}</SelectItem>)}
                       </SelectContent>
                     </Select>
+                    <p className="text-xs text-muted-foreground">Canais iFood e 99Food com código identificado preenchem a plataforma. Nos demais canais, selecione manualmente. O canal continua definindo o preço dos produtos.</p>
                     <Label htmlFor="platformOrderId">Pedido</Label>
                     <Input
                       id="platformOrderId"

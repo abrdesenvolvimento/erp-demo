@@ -20,16 +20,23 @@ export function formatDeliveryPlatform(value: unknown): string {
 
 export const IFOOD_ORDER_UUID_PATTERN = "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$";
 
-/** Only explicit, scoped import evidence can identify a legacy sale. Never infer from channel/code/notes. */
+/** Only these exact channel codes identify a platform; names and generic DELIVERY codes do not. */
+export function deliveryPlatformFromChannelCode(code: unknown): "IFOOD" | "99FOOD" | null {
+  return code === "IFOOD" || code === "99FOOD" ? code : null;
+}
+
+/** Read-only precedence: stored origin, scoped UUID import, then exact same-company channel code. */
 export function resolveDeliveryPlatform(
-  sale: { id: number; companyId: number; saleType: string; deliveryPlatform?: string | null },
+  sale: { id: number; companyId: number; saleType: string; deliveryPlatform?: string | null; channelId?: number | null },
   imports: ReadonlyArray<{ saleId: number | null; companyId: number | null; ifoodOrderId: string }>,
+  channels: ReadonlyArray<{ id: number; companyId: number | null; code: string; type?: string }> = [],
 ): DeliveryPlatform | null {
   if (sale.saleType !== "DELIVERY") return null;
   if (sale.deliveryPlatform != null) return isDeliveryPlatform(sale.deliveryPlatform) ? sale.deliveryPlatform : null;
   const uuid = new RegExp(IFOOD_ORDER_UUID_PATTERN);
-  return imports.some(row => row.companyId === sale.companyId && row.saleId === sale.id && uuid.test(row.ifoodOrderId))
-    ? "IFOOD" : null;
+  if (imports.some(row => row.companyId === sale.companyId && row.saleId === sale.id && uuid.test(row.ifoodOrderId))) return "IFOOD";
+  const channel = channels.find(row => row.id === sale.channelId && row.companyId === sale.companyId);
+  return deliveryPlatformFromChannelCode(channel?.code);
 }
 
 /** undefined is a backward-compatible patch: preserve stored origin. Non-delivery always clears it. */

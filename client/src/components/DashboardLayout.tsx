@@ -29,6 +29,7 @@ import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import { Button } from "./ui/button";
 import { useCompany } from "@/contexts/CompanyContext";
 import { OperatorLockButton } from "./OperatorSecurityGate";
+import { routePreloadIntent } from "@/lib/routePreload";
 
 // Paleta de cores por empresa — sidebar muda conforme empresa ativa
 const COMPANY_THEMES: Record<number, {
@@ -681,6 +682,7 @@ function DashboardLayoutContent({
                   <SidebarMenuItem key={item.path}>
                     <SidebarMenuButton
                       isActive={isActive}
+                      {...routePreloadIntent(item.path)}
                       onClick={() => setLocation(item.path)}
                       tooltip={item.label}
                       className={`h-10 transition-all font-normal`}
@@ -728,6 +730,7 @@ function DashboardLayoutContent({
                           <SidebarMenuItem key={item.path}>
                             <SidebarMenuButton
                               isActive={isActive}
+                              {...routePreloadIntent(item.path)}
                               onClick={() => setLocation(item.path)}
                               tooltip={item.label}
                               className={`h-9 transition-all font-normal text-sm`}
@@ -750,6 +753,7 @@ function DashboardLayoutContent({
                       <SidebarMenuItem key={item.path}>
                         <SidebarMenuButton
                           isActive={isActive}
+                          {...routePreloadIntent(item.path)}
                           onClick={() => setLocation(item.path)}
                           tooltip={item.label}
                           className={`h-10 transition-all font-normal`}
@@ -799,6 +803,7 @@ function DashboardLayoutContent({
                           <SidebarMenuItem key={item.path}>
                             <SidebarMenuButton
                               isActive={isActive}
+                              {...routePreloadIntent(item.path)}
                               onClick={() => setLocation(item.path)}
                               tooltip={item.label}
                               className={`h-9 transition-all font-normal text-sm`}
@@ -821,6 +826,7 @@ function DashboardLayoutContent({
                       <SidebarMenuItem key={item.path}>
                         <SidebarMenuButton
                           isActive={isActive}
+                          {...routePreloadIntent(item.path)}
                           onClick={() => setLocation(item.path)}
                           tooltip={item.label}
                           className={`h-10 transition-all font-normal`}
@@ -870,6 +876,7 @@ function DashboardLayoutContent({
                           <SidebarMenuItem key={item.path}>
                             <SidebarMenuButton
                               isActive={isActive}
+                              {...routePreloadIntent(item.path)}
                               onClick={() => setLocation(item.path)}
                               tooltip={item.label}
                               className={`h-9 transition-all font-normal text-sm`}
@@ -892,6 +899,7 @@ function DashboardLayoutContent({
                       <SidebarMenuItem key={item.path}>
                         <SidebarMenuButton
                           isActive={isActive}
+                          {...routePreloadIntent(item.path)}
                           onClick={() => setLocation(item.path)}
                           tooltip={item.label}
                           className={`h-10 transition-all font-normal`}
@@ -941,6 +949,7 @@ function DashboardLayoutContent({
                           <SidebarMenuItem key={item.path}>
                             <SidebarMenuButton
                               isActive={isActive}
+                              {...routePreloadIntent(item.path)}
                               onClick={() => setLocation(item.path)}
                               tooltip={item.label}
                               className={`h-9 transition-all font-normal text-sm`}
@@ -963,6 +972,7 @@ function DashboardLayoutContent({
                       <SidebarMenuItem key={item.path}>
                         <SidebarMenuButton
                           isActive={isActive}
+                          {...routePreloadIntent(item.path)}
                           onClick={() => setLocation(item.path)}
                           tooltip={item.label}
                           className={`h-10 transition-all font-normal`}
@@ -1007,6 +1017,7 @@ function DashboardLayoutContent({
                           <SidebarMenuItem key={item.path}>
                             <SidebarMenuButton
                               isActive={isActive}
+                              {...routePreloadIntent(item.path)}
                               onClick={() => setLocation(item.path)}
                               tooltip={item.label}
                               className={`h-9 transition-all font-normal text-sm`}
@@ -1025,6 +1036,7 @@ function DashboardLayoutContent({
                       <SidebarMenuItem key={item.path}>
                         <SidebarMenuButton
                           isActive={isActive}
+                          {...routePreloadIntent(item.path)}
                           onClick={() => setLocation(item.path)}
                           tooltip={item.label}
                           className={`h-10 transition-all font-normal`}
@@ -1072,6 +1084,7 @@ function DashboardLayoutContent({
                           <SidebarMenuItem key={item.path}>
                             <SidebarMenuButton
                               isActive={isActive}
+                              {...routePreloadIntent(item.path)}
                               onClick={() => setLocation(item.path)}
                               tooltip={item.label}
                               className={`h-9 transition-all font-normal text-sm`}
@@ -1094,6 +1107,7 @@ function DashboardLayoutContent({
                       <SidebarMenuItem key={item.path}>
                         <SidebarMenuButton
                           isActive={isActive}
+                          {...routePreloadIntent(item.path)}
                           onClick={() => setLocation(item.path)}
                           tooltip={item.label}
                           className={`h-10 transition-all font-normal`}
@@ -1155,6 +1169,7 @@ function DashboardLayoutContent({
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
                 <DropdownMenuItem
+                  {...routePreloadIntent("/minha-conta")}
                   onClick={() => setLocation("/minha-conta")}
                   className="cursor-pointer"
                 >

@@ -28,13 +28,18 @@ const imports = [
   { saleId: 4, companyId: 1, ifoodOrderId: "67890" },
   { saleId: 5, companyId: 1, ifoodOrderId: uuid }, // stored 99Food wins
 ];
+const channels = [
+  { id: 2, companyId: 1, code: "IFOOD" },
+  { id: 3, companyId: 1, code: "99FOOD" },
+  { id: 9, companyId: 2, code: "99FOOD" },
+];
 const sales = [
-  { id: 1, companyId: 1, saleType: "DELIVERY", deliveryPlatform: "IFOOD", finalAmount: 10, status: "ACTIVE" },
-  { id: 2, companyId: 1, saleType: "DELIVERY", deliveryPlatform: null, finalAmount: 20, status: "ACTIVE" },
-  { id: 3, companyId: 1, saleType: "DELIVERY", deliveryPlatform: null, finalAmount: 30, status: "ACTIVE" },
-  { id: 4, companyId: 1, saleType: "DELIVERY", deliveryPlatform: null, finalAmount: 40, status: "ACTIVE" },
-  { id: 5, companyId: 1, saleType: "DELIVERY", deliveryPlatform: "99FOOD", finalAmount: 50, status: "ACTIVE" },
-  { id: 6, companyId: 1, saleType: "BALCAO", deliveryPlatform: null, finalAmount: 60, status: "ACTIVE" },
+  { id: 1, companyId: 1, channelId: 3, saleType: "DELIVERY", deliveryPlatform: "IFOOD", finalAmount: 10, status: "ACTIVE" },
+  { id: 2, companyId: 1, channelId: 3, saleType: "DELIVERY", deliveryPlatform: null, finalAmount: 20, status: "ACTIVE" },
+  { id: 3, companyId: 1, channelId: 9, saleType: "DELIVERY", deliveryPlatform: null, finalAmount: 30, status: "ACTIVE" },
+  { id: 4, companyId: 1, channelId: 3, saleType: "DELIVERY", deliveryPlatform: null, finalAmount: 40, status: "ACTIVE" },
+  { id: 5, companyId: 1, channelId: 2, saleType: "DELIVERY", deliveryPlatform: "99FOOD", finalAmount: 50, status: "ACTIVE" },
+  { id: 6, companyId: 1, channelId: 3, saleType: "BALCAO", deliveryPlatform: null, finalAmount: 60, status: "ACTIVE" },
   { id: 7, companyId: 2, saleType: "DELIVERY", deliveryPlatform: "99FOOD", finalAmount: 700, status: "ACTIVE" },
   { id: 8, companyId: 1, saleType: "DELIVERY", deliveryPlatform: "IFOOD", finalAmount: 80, status: "CANCELLED" },
 ];
@@ -50,7 +55,7 @@ beforeEach(() => {
 
 function expectScopedPredicate(query: string, platform: DeliveryPlatformFilter | undefined, alias: "s" | "sales" = "s") {
   expect(query).toMatch(/(?:s\.)?companyId = 1/);
-  expect(query).not.toMatch(/branchId\s*=|JOIN ifoodImportedOrders|\bUPDATE\b|\bINSERT\b|\bDELETE\b/);
+  expect(query).not.toMatch(/branchId\s*=|JOIN (?:ifoodImportedOrders|salesChannels)|\bUPDATE\b|\bINSERT\b|\bDELETE\b/);
   expect(query).toMatch(/^\s*SELECT/);
   expect(query).toContain("status != 'CANCELLED'");
   if (platform) {
@@ -58,6 +63,9 @@ function expectScopedPredicate(query: string, platform: DeliveryPlatformFilter |
     expect(query).toContain(`io.saleId = ${alias}.id AND io.companyId = ${alias}.companyId`);
     expect(query).toContain("io.ifoodOrderId REGEXP");
     expect(query).toContain(`WHEN ${alias}.deliveryPlatform IS NOT NULL`);
+    expect(query).toContain(`dpc.id = ${alias}.channelId AND dpc.companyId = ${alias}.companyId`);
+    expect(query).toContain("BINARY dpc.code = 'IFOOD'");
+    expect(query).toContain("BINARY dpc.code = '99FOOD'");
   } else {
     expect(query).not.toContain("ifoodImportedOrders");
     expect(query).not.toContain("deliveryPlatform");
@@ -82,6 +90,7 @@ describe("Origem nas análises — SQL compilado e mockado, sem conexão", () =>
         const subqueryPredicate = deliveryPlatformFilterSql(deliveryPlatform, "s").replace(/\bs\./g, "s2.");
         expect(query).toContain(subqueryPredicate);
         expect(query).toContain("s2.companyId = 1");
+        if (deliveryPlatform) expect(query).toContain("dpc.id = s2.channelId AND dpc.companyId = s2.companyId");
         expect(query).toContain("p2.id IN (7,8)");
         expect(query).toContain("p2.subcategoryId = 4");
         expect(query).toContain("s2.saleType IN ('DELIVERY')");
@@ -138,22 +147,24 @@ describe("Origem nas análises — SQL compilado e mockado, sem conexão", () =>
       const company = Number(text.match(/(?:s\.)?companyId = (\d+)/)?.[1]);
       const platform = text.match(/ELSE NULL END\) (= '(IFOOD|99FOOD|PROPRIO|OUTRO)'|IS NULL)/)?.[2];
       const selected = sales.filter(row => row.companyId === company && row.status !== "CANCELLED" &&
-        (!text.includes("sales.saleType = 'DELIVERY'") || (row.saleType === "DELIVERY" && resolveDeliveryPlatform(row, imports) === (platform ?? null))));
+        (!text.includes("sales.saleType = 'DELIVERY'") || (row.saleType === "DELIVERY" && resolveDeliveryPlatform(row, imports, channels) === (platform ?? null))));
       return [[{ totalRevenue: selected.reduce((sum, row) => sum + row.finalAmount, 0), totalSales: selected.length }], []];
     });
     expect(await getSalesAnalysisSummary(...dates, 1, { deliveryPlatform: "IFOOD" })).toMatchObject({ totalRevenue: 30, totalSales: 2 });
-    expect(await getSalesAnalysisSummary(...dates, 1, { deliveryPlatform: "NAO_INFORMADO" })).toMatchObject({ totalRevenue: 70, totalSales: 2 });
-    expect(await getSalesAnalysisSummary(...dates, 1, { deliveryPlatform: "99FOOD" })).toMatchObject({ totalRevenue: 50, totalSales: 1 });
+    expect(await getSalesAnalysisSummary(...dates, 1, { deliveryPlatform: "NAO_INFORMADO" })).toMatchObject({ totalRevenue: 30, totalSales: 1 });
+    expect(await getSalesAnalysisSummary(...dates, 1, { deliveryPlatform: "99FOOD" })).toMatchObject({ totalRevenue: 90, totalSales: 2 });
     expect(await getSalesAnalysisSummary(...dates, 2, { deliveryPlatform: "99FOOD" })).toMatchObject({ totalRevenue: 700, totalSales: 1 });
     expect(await getSalesAnalysisSummary(...dates, 1)).toMatchObject({ totalRevenue: 210, totalSales: 6 });
     expect(sales[1].deliveryPlatform).toBeNull();
+    expect(sales[3].deliveryPlatform).toBeNull();
+    expect(sales[3].channelId).toBe(3);
     expect(queries.every(q => /^\s*SELECT/.test(q))).toBe(true);
   });
 
   it("rateio e margens continuam por canal: origem filtra pedidos/produtos, não escolhe taxa", async () => {
     mocks.execute.mockImplementation(async query => {
       const text = dialect.sqlToQuery(query).sql; queries.push(text);
-      if (text.includes("FROM salesChannels")) return [[{ name: "Canal comercial", commissionPercent: "10", fixedFeePerOrder: "2" }], []];
+      if (/^SELECT name, commissionPercent, fixedFeePerOrder FROM salesChannels/.test(text)) return [[{ name: "Canal comercial", commissionPercent: "10", fixedFeePerOrder: "2" }], []];
       if (text.includes("as totalOrders")) return [[{ totalOrders: 2 }], []];
       return [[{ productId: 7, productName: "Produto", totalQuantity: "3", totalRevenue: "100", totalCost: "40" }], []];
     });
@@ -171,7 +182,8 @@ describe("Origem nas análises — SQL compilado e mockado, sem conexão", () =>
     await getSalesAnalysisByValue(...dates, 1, { deliveryPlatform: "99FOOD", channels: ["BALCAO"] });
     expect(queries[0]).toContain("s.saleType IN ('BALCAO')");
     expect(queries[0]).toContain("AND s.saleType = 'DELIVERY'");
-    expect(queries[0]).not.toContain("channelId");
+    expect(queries[0]).not.toMatch(/AND s\.channelId = \d+/);
+    expect(queries[0]).toContain("dpc.id = s.channelId AND dpc.companyId = s.companyId");
   });
 
   it("nega empresa ausente ou inválida em todos os helpers antes de SQL, sem fallback global", async () => {

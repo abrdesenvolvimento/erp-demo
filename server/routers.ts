@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { DELIVERY_PLATFORMS, DELIVERY_PLATFORM_FILTERS, deliveryPlatformForWrite } from "../shared/deliveryPlatforms";
+import { DELIVERY_PLATFORMS, DELIVERY_PLATFORM_FILTERS, deliveryPlatformForWrite, deliveryPlatformFromChannelCode } from "../shared/deliveryPlatforms";
 import { TRPCError } from "@trpc/server";
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
@@ -1033,7 +1033,7 @@ export const appRouter = router({
       .input(z.object({
         saleType: z.enum(["BALCAO", "DELIVERY", "A_PRAZO", "SALAO"]),
         customerId: z.number().optional(),
-        channelId: z.number().optional(),
+        channelId: z.number().int().positive().optional(),
         platformOrderId: z.string().optional(),
         deliveryPlatform: z.enum(DELIVERY_PLATFORMS).nullable().optional(),
         subtotal: z.string(),
@@ -1063,6 +1063,17 @@ export const appRouter = router({
         saleData.deliveryPlatform = deliveryPlatformForWrite(saleData.saleType, saleData.deliveryPlatform);
         const companyId = requireActiveCompanyId(ctx.activeCompanyId);
         const branchId = ctx.activeBranchId ?? 0;
+
+        if (saleData.channelId !== undefined) {
+          const channel = await db.getSalesChannel(saleData.channelId);
+          if (!channel || channel.companyId !== companyId) {
+            throw new TRPCError({ code: "BAD_REQUEST", message: "Canal de venda não pertence à empresa ativa" });
+          }
+          const channelPlatform = deliveryPlatformFromChannelCode(channel.code);
+          if (saleData.saleType === "DELIVERY" && channelPlatform && saleData.deliveryPlatform !== channelPlatform) {
+            throw new TRPCError({ code: "BAD_REQUEST", message: "A plataforma selecionada não corresponde ao canal de venda" });
+          }
+        }
         
         // Validar limite de crédito para vendas a prazo
         if (saleData.saleType === 'A_PRAZO' && saleData.customerId) {
@@ -1172,7 +1183,10 @@ export const appRouter = router({
         deliveryPlatform: z.enum(DELIVERY_PLATFORMS).nullable().optional(),
       }))
       .mutation(async ({ input, ctx }) => {
-        const { saleId, items, discountAmount, surchargeAmount, platformOrderId, deliveryPlatform } = input;
+        const { saleId, items, discountAmount, surchargeAmount, platformOrderId } = input;
+        if (input.deliveryPlatform !== undefined) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "A plataforma só pode ser escolhida ao criar a venda" });
+        }
         const companyId = requireActiveCompanyId(ctx.activeCompanyId);
         const branchId = ctx.activeBranchId ?? 0;
         
@@ -1258,16 +1272,7 @@ export const appRouter = router({
           surchargeAmount: surcharge.toFixed(2),
           finalAmount,
           ...(platformOrderId !== undefined && { platformOrderId }),
-          ...(deliveryPlatform !== undefined && { deliveryPlatform: deliveryPlatformForWrite(sale.saleType, deliveryPlatform) }),
-          ...(sale.saleType !== "DELIVERY" && { deliveryPlatform: null }),
         }, companyId);
-        if (deliveryPlatform !== undefined && sale.deliveryPlatform !== deliveryPlatformForWrite(sale.saleType, deliveryPlatform)) {
-          await db.createAuditLog({ companyId, branchId: sale.branchId ?? branchId, entityType: "VENDA", entityId: saleId,
-            entityName: `Venda #${saleId}`, action: "EDICAO", userId: ctx.user.id, userName: ctx.user.name || undefined,
-            changes: [{ field: "deliveryPlatform", label: "Plataforma", oldValue: sale.deliveryPlatform ?? null,
-              newValue: deliveryPlatformForWrite(sale.saleType, deliveryPlatform) ?? null }],
-          });
-        }
         
         // 10. Atualizar recebível (se for venda A_PRAZO)
         if (sale.saleType === 'A_PRAZO') {
@@ -1279,27 +1284,6 @@ export const appRouter = router({
         return { success: true, newTotal: finalAmount };
       }),
     
-    // Metadata-only edit: explicit user action, no historical backfill or financial/stock reprocessing.
-    updateDeliveryPlatform: adminProcedure
-      .input(z.object({
-        saleId: z.number().int().positive(),
-        deliveryPlatform: z.enum(DELIVERY_PLATFORMS).nullable(),
-      }))
-      .mutation(async ({ input, ctx }) => {
-        const companyId = requireActiveCompanyId(ctx.activeCompanyId);
-        const sale = await db.getSale(input.saleId, companyId);
-        if (!sale) throw new TRPCError({ code: "NOT_FOUND", message: "Venda não encontrada" });
-        if (sale.saleType !== "DELIVERY") throw new TRPCError({ code: "BAD_REQUEST", message: "Plataforma é aplicável somente a delivery" });
-        if ((sale.deliveryPlatform ?? null) === input.deliveryPlatform) return { success: true };
-        await db.updateSale(input.saleId, { deliveryPlatform: input.deliveryPlatform }, companyId);
-        await db.createAuditLog({ companyId, branchId: sale.branchId ?? ctx.activeBranchId ?? 0,
-          entityType: "VENDA", entityId: input.saleId, entityName: `Venda #${input.saleId}`,
-          action: "EDICAO", userId: ctx.user.id, userName: ctx.user.name || undefined,
-          changes: [{ field: "deliveryPlatform", label: "Plataforma", oldValue: sale.deliveryPlatform ?? null, newValue: input.deliveryPlatform }],
-        });
-        return { success: true };
-      }),
-
     calendar: protectedProcedure
       .input(z.object({
         year: z.number(),

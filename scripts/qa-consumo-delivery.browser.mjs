@@ -45,7 +45,16 @@ export async function installConsumptionDeliveryQA(target = '/consumo', awaitRen
     }
     if (path === 'sales.list') return filterSales(input);
     if (path === 'sales.stats') { const rows = filterSales(input), total = { count: rows.length, total: (rows.length * 30).toFixed(2) }, empty = { count: 0, total: '0.00' }; return { balcao: empty, delivery: total, aPrazo: empty, salao: empty, total }; }
-    if (path === 'salesChannels.list') return [{ id: 11, companyId: 2, branchId: 2, name: 'Delivery', code: 'DELIVERY', type: 'DELIVERY', active: true }];
+    if (path === 'salesChannels.list') return [
+      { id: 11, companyId: 2, branchId: 2, name: 'Delivery', code: 'DELIVERY', type: 'DELIVERY', active: true },
+      { id: 12, companyId: 2, branchId: 2, name: 'Delivery 99Food — QA fictício', code: '99FOOD', type: 'DELIVERY', active: true },
+    ];
+    if (path === 'products.list') return [{ ...products[0], prices: [{ channelId: 12, price: '8.00' }] }];
+    if (path === 'products.getWithPrices') return { ...products[0], prices: [{ channelId: 12, price: '8.00' }] };
+    if (path === 'sales.create') {
+      if (input.saleType !== 'DELIVERY' || input.channelId !== 12 || input.deliveryPlatform !== '99FOOD') throw Error('QA: origem manual diferente da seleção 99Food');
+      return { id: 1004, success: true };
+    }
     if (path === 'sales.getById') return sales.find(s => s.id === input.id);
     return [];
   }
@@ -93,4 +102,39 @@ export async function runConsumptionCreateQA() {
   const creates = window.__consumptionDeliveryQA.calls.filter(c => c.path === 'consumption.create');
   if (creates.length !== 1) throw Error('QA: submissão duplicada');
   return { submittedOnce: true, scope: { companyId: creates[0].input.companyId, branchId: creates[0].input.branchId }, requestKeyPresent: Boolean(creates[0].input.requestKey), revenuePayloadAbsent: !('subtotal' in creates[0].input), fixture: true };
+}
+
+export async function runManual99FoodQA() {
+  if (document.body.innerText.includes('Editar plataforma')) throw Error('QA: edição posterior ainda visível');
+  await qaClick('Nova Venda');
+  const deliveryCard = [...document.querySelectorAll('h3')].find(e => e.textContent === 'DELIVERY');
+  if (!deliveryCard) throw Error('QA: opção Delivery ausente');
+  deliveryCard.closest('[data-slot="card"]').click();
+  await waitFor(() => document.getElementById('channel'));
+  document.getElementById('channel').click();
+  await waitFor(() => [...document.querySelectorAll('[role="option"]')].some(e => e.textContent.includes('Delivery 99Food')));
+  [...document.querySelectorAll('[role="option"]')].find(e => e.textContent.includes('Delivery 99Food')).click();
+  await waitFor(() => document.getElementById('delivery-platform')?.textContent.includes('99Food'));
+  const prefilled = document.getElementById('delivery-platform').textContent.includes('99Food');
+  await qaFill('platformOrderId', '9951-QA');
+  const search = document.querySelector('input[placeholder="Buscar produto por nome ou EAN..."]');
+  if (!search) throw Error('QA: pesquisa de produto ausente');
+  search.id = 'qa-product-search';
+  await qaFill('qa-product-search', 'Refrigerante');
+  await waitFor(() => [...document.querySelectorAll('div.cursor-pointer')].some(e => e.textContent.includes('Refrigerante — QA fictício')));
+  [...document.querySelectorAll('div.cursor-pointer')].find(e => e.textContent.includes('Refrigerante — QA fictício')).click();
+  await waitFor(() => document.body.innerText.includes('Disp: 20'));
+  search.closest('.flex').querySelector('button').click();
+  await waitFor(() => document.body.innerText.includes('Preço Un.'));
+  const payment = document.querySelector('label[for="payment"]')?.parentElement.querySelector('[role="combobox"]');
+  if (!payment) throw Error('QA: pagamento ausente');
+  payment.click();await waitFor(() => document.querySelector('[role="option"]'));
+  const paid = [...document.querySelectorAll('[role="option"]')].find(e => e.textContent === 'Pago na Plataforma');
+  if (!paid) throw Error('QA: pagamento na plataforma ausente');
+  paid.click();await new Promise(r => setTimeout(r,120));
+  await qaClick('Finalizar Venda');
+  await waitFor(() => window.__consumptionDeliveryQA.calls.some(c => c.path === 'sales.create'));
+  const creates = window.__consumptionDeliveryQA.calls.filter(c => c.path === 'sales.create');
+  if (creates.length !== 1) throw Error('QA: criação repetida');
+  return { fixture: true, prefilledFromSelectedChannel: prefilled, channel: creates[0].input.channelId, submittedPlatform: creates[0].input.deliveryPlatform, submittedOnce: true, postCreationEditAbsent: !document.body.innerText.includes('Editar plataforma') };
 }

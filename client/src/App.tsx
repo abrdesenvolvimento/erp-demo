@@ -10,67 +10,68 @@ import { CompanyProvider, useCompany } from "./contexts/CompanyContext";
 import SelectCompany from "./pages/SelectCompany";
 import { useAuth } from "./_core/hooks/useAuth";
 import { lazy, Suspense, useState, useEffect } from "react";
+import { routeLoaders } from "./lib/routePreload";
 
 // Identidades estáveis: nunca declarar lazy durante render (incluindo os KDS).
-const NotFound = lazy(() => import("@/pages/NotFound"));
-const Home = lazy(() => import("./pages/Home"));
-const Produtos = lazy(() => import("./pages/Produtos"));
-const Vendas = lazy(() => import("./pages/Vendas"));
-const Consumo = lazy(() => import("./pages/Consumo"));
-const Parceiros = lazy(() => import("./pages/Parceiros"));
-const Compras = lazy(() => import("./pages/Compras"));
-const VendaInterna = lazy(() => import("./pages/VendaInterna"));
-const Despesas = lazy(() => import("./pages/Despesas"));
-const ContasReceberNovo = lazy(() => import("./pages/ContasReceberNovo"));
-const ContasPagar = lazy(() => import("./pages/ContasPagar"));
-const MinhaConta = lazy(() => import("./pages/MinhaConta"));
-const Usuarios = lazy(() => import("./pages/Usuarios"));
-const AnaliseFaturamento = lazy(() => import("./pages/Relatorios"));
-const AnáliseVendas = lazy(() => import("./pages/AnáliseVendas"));
-const AnaliseDelivery = lazy(() => import("./pages/AnaliseDelivery"));
-const AnaliseCanal = lazy(() => import("./pages/AnaliseCanal"));
-const AnaliseDespesas = lazy(() => import("./pages/AnaliseDespesas"));
-const Metas = lazy(() => import("./pages/Metas"));
-const FechamentoMensalNovo = lazy(() => import("./pages/FechamentoMensalNovo"));
-const PlanoContas = lazy(() => import("./pages/PlanoContas"));
-const RelatoriosContabeis = lazy(() => import("./pages/RelatoriosContabeis"));
-const OutrasReceitas = lazy(() => import("./pages/OutrasReceitas"));
-const ContasGerenciais = lazy(() => import("./pages/ContasGerenciais"));
-const GovernancaContabil = lazy(() => import("./pages/GovernancaContabil"));
-const ImportadorIfood = lazy(() => import("./pages/ImportadorIfood"));
-const ImportarVendas = lazy(() => import("./pages/ImportarVendas"));
-const AnaliseEstoque = lazy(() => import("./pages/AnaliseEstoque"));
-const AccessDenied = lazy(() => import("./pages/AccessDenied"));
-const GerenciarAcessos = lazy(() => import("./pages/GerenciarAcessos"));
-const Categorias = lazy(() => import("./pages/Categorias"));
-const CanaisVenda = lazy(() => import("./pages/CanaisVenda"));
-const HistoricoPrecos = lazy(() => import("./pages/HistoricoPrecos"));
-const LogAlteracoes = lazy(() => import("./pages/LogAlteracoes"));
-const AuditoriaMovimentacoes = lazy(() => import("./pages/AuditoriaMovimentacoes"));
-const SalaoMesas = lazy(() => import("./pages/SalaoMesas"));
-const SalaoComanda = lazy(() => import("./pages/SalaoComanda"));
-const SalaoKDSCozinha = lazy(() => import("./pages/SalaoKDSCozinha"));
-const SalaoKDSBar = lazy(() => import("./pages/SalaoKDSBar"));
-const SalaoGorjeta = lazy(() => import("./pages/SalaoGorjeta"));
-const SalaoGarcons = lazy(() => import("./pages/SalaoGarcons"));
-const SalaoFechamentoGarcom = lazy(() => import("./pages/SalaoFechamentoGarcom"));
-const SalaoTransferencia = lazy(() => import("./pages/SalaoTransferencia"));
-const Impressoras = lazy(() => import("./pages/Impressoras"));
-const SalaoCaixa = lazy(() => import("./pages/SalaoCaixa"));
-const Cardapio = lazy(() => import("./pages/Cardapio"));
-const CardapioStories = lazy(() => import("./pages/CardapioStories"));
-const AvisoInauguracao = lazy(() => import("./pages/AvisoInauguracao"));
-const AnaliseKDS = lazy(() => import("./pages/AnaliseKDS"));
-const FechamentoAnual = lazy(() => import("./pages/FechamentoAnual"));
-const AjustesFaturamentoHistorico = lazy(() => import("./pages/AjustesFaturamentoHistorico"));
-const Seguranca = lazy(() => import("./pages/Seguranca"));
+const NotFound = lazy(routeLoaders.NotFound);
+const Home = lazy(routeLoaders.Home);
+const Produtos = lazy(routeLoaders.Produtos);
+const Vendas = lazy(routeLoaders.Vendas);
+const Consumo = lazy(routeLoaders.Consumo);
+const Parceiros = lazy(routeLoaders.Parceiros);
+const Compras = lazy(routeLoaders.Compras);
+const VendaInterna = lazy(routeLoaders.VendaInterna);
+const Despesas = lazy(routeLoaders.Despesas);
+const ContasReceberNovo = lazy(routeLoaders.ContasReceberNovo);
+const ContasPagar = lazy(routeLoaders.ContasPagar);
+const MinhaConta = lazy(routeLoaders.MinhaConta);
+const Usuarios = lazy(routeLoaders.Usuarios);
+const AnaliseFaturamento = lazy(routeLoaders.AnaliseFaturamento);
+const AnáliseVendas = lazy(routeLoaders.AnáliseVendas);
+const AnaliseDelivery = lazy(routeLoaders.AnaliseDelivery);
+const AnaliseCanal = lazy(routeLoaders.AnaliseCanal);
+const AnaliseDespesas = lazy(routeLoaders.AnaliseDespesas);
+const Metas = lazy(routeLoaders.Metas);
+const FechamentoMensalNovo = lazy(routeLoaders.FechamentoMensalNovo);
+const PlanoContas = lazy(routeLoaders.PlanoContas);
+const RelatoriosContabeis = lazy(routeLoaders.RelatoriosContabeis);
+const OutrasReceitas = lazy(routeLoaders.OutrasReceitas);
+const ContasGerenciais = lazy(routeLoaders.ContasGerenciais);
+const GovernancaContabil = lazy(routeLoaders.GovernancaContabil);
+const ImportadorIfood = lazy(routeLoaders.ImportadorIfood);
+const ImportarVendas = lazy(routeLoaders.ImportarVendas);
+const AnaliseEstoque = lazy(routeLoaders.AnaliseEstoque);
+const AccessDenied = lazy(routeLoaders.AccessDenied);
+const GerenciarAcessos = lazy(routeLoaders.GerenciarAcessos);
+const Categorias = lazy(routeLoaders.Categorias);
+const CanaisVenda = lazy(routeLoaders.CanaisVenda);
+const HistoricoPrecos = lazy(routeLoaders.HistoricoPrecos);
+const LogAlteracoes = lazy(routeLoaders.LogAlteracoes);
+const AuditoriaMovimentacoes = lazy(routeLoaders.AuditoriaMovimentacoes);
+const SalaoMesas = lazy(routeLoaders.SalaoMesas);
+const SalaoComanda = lazy(routeLoaders.SalaoComanda);
+const SalaoKDSCozinha = lazy(routeLoaders.SalaoKDSCozinha);
+const SalaoKDSBar = lazy(routeLoaders.SalaoKDSBar);
+const SalaoGorjeta = lazy(routeLoaders.SalaoGorjeta);
+const SalaoGarcons = lazy(routeLoaders.SalaoGarcons);
+const SalaoFechamentoGarcom = lazy(routeLoaders.SalaoFechamentoGarcom);
+const SalaoTransferencia = lazy(routeLoaders.SalaoTransferencia);
+const Impressoras = lazy(routeLoaders.Impressoras);
+const SalaoCaixa = lazy(routeLoaders.SalaoCaixa);
+const Cardapio = lazy(routeLoaders.Cardapio);
+const CardapioStories = lazy(routeLoaders.CardapioStories);
+const AvisoInauguracao = lazy(routeLoaders.AvisoInauguracao);
+const AnaliseKDS = lazy(routeLoaders.AnaliseKDS);
+const FechamentoAnual = lazy(routeLoaders.FechamentoAnual);
+const AjustesFaturamentoHistorico = lazy(routeLoaders.AjustesFaturamentoHistorico);
+const Seguranca = lazy(routeLoaders.Seguranca);
 
 function Router() {
   return (
     <Suspense fallback={
       <div role="status" aria-live="polite" aria-busy="true"
-        className="min-h-[12rem] flex items-center justify-center bg-background text-muted-foreground">
-        <p className="text-sm">Carregando tela...</p>
+        className="min-h-screen w-full bg-background text-foreground">
+        <span className="sr-only">Abrindo página</span>
       </div>
     }>
     <Switch>

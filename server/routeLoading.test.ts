@@ -11,6 +11,11 @@ import ts from "typescript";
 const root = resolve(import.meta.dirname, "..");
 const source = readFileSync(resolve(root, "client/src/App.tsx"), "utf8");
 const app = ts.createSourceFile("App.tsx", source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+const preloadSource = readFileSync(resolve(root, "client/src/lib/routePreload.ts"), "utf8");
+const preloadAst = ts.createSourceFile("routePreload.ts", preloadSource, ts.ScriptTarget.Latest, true);
+const compiledPreload = ts.transpileModule(preloadSource, {
+  compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
+}).outputText;
 
 // Baseline captured from the original App: order, aliases, params and final fallback.
 const originalRoutes: ReadonlyArray<readonly [string | null, string]> = [
@@ -90,14 +95,13 @@ const lazyDeclarations = descendants(app, node => ts.isVariableDeclaration(node)
   ts.isCallExpression(node.initializer) && node.initializer.expression.getText(app) === "lazy")) as ts.VariableDeclaration[];
 const lazyNames = lazyDeclarations.map(node => node.name.getText(app));
 const routedNames = [...new Set(originalRoutes.map(([, name]) => name))];
-const moduleFor = (name: string) => name === "NotFound" ? "@/pages/NotFound"
-  : `./pages/${name === "AnaliseFaturamento" ? "Relatorios" : name}`;
+const moduleFor = (name: string) => `../pages/${name === "AnaliseFaturamento" ? "Relatorios" : name}`;
 
 const compiledApp = ts.transpileModule(source, {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX, esModuleInterop: true },
 }).outputText;
 
-type HarnessOptions = { released?: boolean; needsSelection?: boolean; companyLoading?: boolean; productionTerminal?: boolean };
+type HarnessOptions = { released?: boolean; needsSelection?: boolean; companyLoading?: boolean; productionTerminal?: boolean; delayedPage?: string };
 
 /** Real React.lazy/Suspense and wouter, with only API/providers/pages replaced.
  * No login, database, browser or real page effects are invoked by these tests.
@@ -109,10 +113,20 @@ function harness(options: HarnessOptions = {}) {
   const pass = ({ children }: { children?: React.ReactNode }) => React.createElement(React.Fragment, null, children);
   const page = (name: string) => ({ __esModule: true, default: (props: { params?: { orderId?: string } }) =>
     React.createElement("div", { "data-page": name, "data-order-id": props.params?.orderId }, name) });
+  let releaseImport!: () => void;
+  const delayed = new Promise<void>(resolveImport => { releaseImport = resolveImport; });
+  const preloadModule: { routeLoaders: Record<string, () => Promise<unknown>>; preloadRoute: (path: string) => Promise<void> } =
+    new Function("require", "exports", `${compiledPreload}\nreturn exports;`)((specifier: string) => {
+      if (!specifier.startsWith("../pages/")) throw new Error(`Unexpected preload dependency ${specifier}`);
+      loaded.push(specifier);
+      const name = specifier.split("/").at(-1)!;
+      return name === state.delayedPage ? delayed.then(() => page(name)) : page(name);
+    }, {});
   const injectedRequire = (specifier: string): unknown => {
     if (specifier === "react") return React;
     if (specifier === "react/jsx-runtime") return jsxRuntime;
     if (specifier === "wouter") return wouter;
+    if (specifier === "./lib/routePreload") return preloadModule;
     if (/^(?:\.\/|@\/)pages\//.test(specifier)) {
       const name = specifier.split("/").at(-1)!;
       if (name !== "SelectCompany") loaded.push(specifier);
@@ -147,7 +161,7 @@ function harness(options: HarnessOptions = {}) {
     App: React.ComponentType; Router: React.ComponentType; pages: Record<string, React.LazyExoticComponent<React.ComponentType>>;
   };
   const element = (path: string) => React.createElement(wouter.Router, { ssrPath: path }, React.createElement(module.App));
-  return { state, loaded, queries, module, element };
+  return { state, loaded, queries, module, element, preloadModule, releaseImport };
 }
 
 function renderResolved(element: React.ReactElement): Promise<string> {
@@ -184,14 +198,21 @@ describe("route loading — structural safety invariants", () => {
       const initializer = declaration.initializer as ts.CallExpression;
       expect(initializer.arguments).toHaveLength(1);
       const loader = initializer.arguments[0];
-      expect(ts.isArrowFunction(loader)).toBe(true);
-      const body = (loader as ts.ArrowFunction).body as ts.CallExpression;
+      const name = declaration.name.getText(app);
+      expect(loader.getText(app)).toBe(`routeLoaders.${name}`);
+      const registryProperty = descendants(preloadAst, node => ts.isPropertyAssignment(node) && node.name.getText(preloadAst) === name)[0] as ts.PropertyAssignment;
+      expect(registryProperty).toBeDefined();
+      const memoized = registryProperty.initializer as ts.CallExpression;
+      expect(memoized.expression.getText(preloadAst)).toBe("memoizeRouteLoader");
+      expect(memoized.arguments).toHaveLength(1);
+      expect(ts.isArrowFunction(memoized.arguments[0])).toBe(true);
+      const body = (memoized.arguments[0] as ts.ArrowFunction).body as ts.CallExpression;
       expect(ts.isCallExpression(body) && body.expression.kind === ts.SyntaxKind.ImportKeyword).toBe(true);
       expect(body.arguments).toHaveLength(1);
       expect(ts.isStringLiteral(body.arguments[0])).toBe(true);
       const specifier = (body.arguments[0] as ts.StringLiteral).text;
-      expect(specifier).toBe(moduleFor(declaration.name.getText(app)));
-      const pagePath = resolve(root, specifier.replace(/^@\//, "client/src/").replace(/^\.\//, "client/src/") + ".tsx");
+      expect(specifier).toBe(moduleFor(name));
+      const pagePath = resolve(root, "client/src/lib", specifier + ".tsx");
       const pageSource = ts.createSourceFile(pagePath, readFileSync(pagePath, "utf8"), ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
       expect(pageSource.statements.some(statement => ts.isExportAssignment(statement) ||
         ts.canHaveModifiers(statement) && ts.getModifiers(statement)?.some(modifier => modifier.kind === ts.SyntaxKind.DefaultKeyword))).toBe(true);
@@ -216,8 +237,10 @@ describe("route loading — structural safety invariants", () => {
     expect(fallback.getText(app)).toContain('role="status"');
     expect(fallback.getText(app)).toContain('aria-live="polite"');
     expect(fallback.getText(app)).toContain('aria-busy="true"');
-    expect(fallback.getText(app)).toContain("min-h-[12rem]");
-    expect(fallback.getText(app)).toContain("Carregando tela...");
+    expect(fallback.getText(app)).toContain("min-h-screen w-full bg-background text-foreground");
+    expect(fallback.getText(app)).toContain('className="sr-only"');
+    expect(fallback.getText(app)).toContain("Abrindo página");
+    expect(fallback.getText(app)).not.toMatch(/animate-|animation|Carregando tela|min-h-\[12rem\]/);
     expect(descendants(fallback, node => ts.isJsxElement(node) && /^[A-Z]/.test(node.openingElement.tagName.getText(app)))).toHaveLength(0);
   });
 
@@ -266,22 +289,42 @@ describe("route loading — executable React.lazy + wouter behavior", () => {
   });
 
   it("shows the route fallback during the first unresolved import after guard release", async () => {
-    const test = harness();
+    const test = harness({ delayedPage: "Produtos" });
     const html = renderToString(test.element("/produtos"));
     expect(html).toContain('role="status"');
     expect(html).toContain('aria-live="polite"');
     expect(html).toContain('aria-busy="true"');
-    expect(html).toContain("Carregando tela...");
+    expect(html).toContain('class="min-h-screen w-full bg-background text-foreground"');
+    expect(html).toContain('<span class="sr-only">Abrindo página</span>');
+    expect(html).not.toContain("Carregando tela...");
     expect(html).not.toContain('data-page="Produtos"');
+    await Promise.resolve();
+    expect(renderToString(test.element("/produtos"))).toContain('aria-busy="true"');
+    test.releaseImport();
     expect(await renderResolved(test.element("/produtos"))).toContain('data-page="Produtos"');
-    expect(test.loaded).toEqual(["./pages/Produtos"]);
+    expect(test.loaded).toEqual(["../pages/Produtos"]);
+  });
+
+  it("intent and navigation share the same request and preserve React.lazy identity", async () => {
+    const test = harness({ delayedPage: "Produtos" });
+    const identity = test.module.pages.Produtos;
+    const preload = test.preloadModule.preloadRoute("/produtos");
+    expect(renderToString(test.element("/produtos"))).toContain('aria-busy="true"');
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(test.loaded).toEqual(["../pages/Produtos"]);
+    test.releaseImport();
+    await preload;
+    expect(await renderResolved(test.element("/produtos"))).toContain('data-page="Produtos"');
+    expect(test.module.pages.Produtos).toBe(identity);
+    expect(test.loaded).toEqual(["../pages/Produtos"]);
   });
 
   it("imports no business page and shows no route fallback while operator release is closed", async () => {
     const test = harness({ released: false });
     const html = await renderResolved(test.element("/relatorios"));
     expect(html).toContain('data-security-gate="closed"');
-    expect(html).not.toContain("Carregando tela...");
+    expect(html).not.toContain('aria-busy="true"');
     expect(html).not.toContain("data-page");
     expect(test.loaded).toEqual([]);
     expect(test.queries).toEqual([]);
@@ -292,7 +335,7 @@ describe("route loading — executable React.lazy + wouter behavior", () => {
       const test = harness(options);
       const html = await renderResolved(test.element("/vendas"));
       expect(test.loaded).toEqual([]);
-      expect(html).not.toContain("Carregando tela...");
+      expect(html).not.toContain('aria-busy="true"');
       expect(html).not.toContain('data-page="Vendas"');
       if (options.needsSelection) expect(html).toContain('data-page="SelectCompany"');
       else expect(html).toContain("Carregando...");

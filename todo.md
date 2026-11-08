@@ -2767,9 +2767,9 @@ Auditoria somente leitura: o retorno de /cardapio ou /aviso-inauguracao para uma
 - [x] Aplicar apenas quatro tabelas novas de Consumo e sales.deliveryPlatform nullable, sem alteração de vendas, custos financeiros ou estoque histórico
 - [x] Separar Plataforma (iFood, 99Food, Próprio, Outro) de canal e do identificador Pedido; exigir plataforma nas novas vendas Delivery manuais
 - [x] Marcar como iFood apenas NOVAS importações no importador existente; preservar integralmente a lógica de combos e duplicidades
-- [x] Resolver visualmente legados iFood apenas com UUID importado, saleId e empresa coincidentes; demais permanecem Não informada, sem backfill
+- [x] Resolver legados por evidência de importação na primeira versão; ampliar nesta correção a códigos explícitos IFOOD/99FOOD do canal vinculado à mesma empresa, sem backfill
 - [x] Filtrar origem de forma consistente em lista, indicadores e exportação funcional de Vendas, Análise de Vendas e Análise Delivery
-- [x] Permitir corrigir somente a plataforma de uma venda em ação administrativa auditada, sem recalcular valores, itens ou estoque
+- [x] Entregar inicialmente edição metadata-only; RETIRADA em 08/11/2026 por orientação do usuário — origem definida somente na criação/importação
 - [x] Conferir consultas reais somente leitura nas duas empresas: tabelas vazias, produtos acessíveis no contexto e predicados/listas/agregados de origem executando corretamente
 - [x] Executar 464 testes focados em 20 arquivos e build de produção; pnpm check mantém 52 diagnósticos globais anteriores, sem novos diagnósticos nos arquivos novos de Consumo/origem
 - [x] Validar navegador com TODAS as APIs fictícias: lançamento único, cancelamento único, payload sem faturamento e filtro 99Food igual na lista e nos indicadores
@@ -2777,7 +2777,29 @@ Auditoria somente leitura: o retorno de /cardapio ou /aviso-inauguracao para uma
 - [x] Documentar uso e limites em docs/CONSUMO.md e docs/ORIGEM-DELIVERY.md
 - [ ] Publicar este checkpoint e cadastrar os funcionários reais da empresa escolhida
 - [ ] Validar o primeiro lançamento operacional de Consumo, custo, saldo e cancelamento administrativo no fluxo real
-- [ ] Identificar manualmente a plataforma dos legados sem evidência, apenas quando houver documentação confiável; não presumir 99Food
+- [x] Descartar a proposta de edição manual posterior de origem conforme orientação do usuário; registros sem prova suficiente continuam Não informada
 - [ ] Desenvolver importador 99Food em etapa separada, quando houver fonte/arquivo adequado
 
 Limites: estoque atual é inteiro; composição que gera baixa fracionada não é arredondada e fica bloqueada. Consumo não gera receita, contas ou contabilização automática; custos médios zero continuam zero. Taxas/margens seguem as regras de canal existentes, não são automaticamente substituídas pela plataforma. As análises recebem o filtro de origem, mas isso não implementa handlers de exportação que já não existiam ali. Nenhum dado fictício foi gravado na base operacional. A geração automática ampla de migrações foi interrompida por incluir mudanças/renomeações antigas fora do escopo; foram aplicados somente os arquivos aditivos revisados 0010 e 0011, conferidos em information_schema. O journal/snapshots históricos não foi modificado nesta tarefa.
+
+## Origem manual 99Food e transições entre módulos — 08/11/2026, 13h03
+- [x] Receber aprovação operacional do usuário para Consumo na Adega; preservar o módulo sem novas alterações nesta rodada
+- [x] Conferir somente por SELECT os oito pedidos do print: todos têm channelId 3 / código exato 99FOOD / empresa 1; sete possuem plataforma armazenada NULL e o pedido 4980 já possui 99FOOD
+- [x] Ampliar a resolução efetiva para o código explícito do canal, vinculado à venda e à mesma empresa, após plataforma armazenada e prova UUID iFood
+- [x] Usar comparação exata de códigos e não inferir a partir de nomes, observações, número de Pedido, canal genérico ou empresa diferente
+- [x] Confirmar os oito pedidos em 99Food nas leituras corrigidas, com detalhe isolado, lista/indicadores concordantes e consultas de exportação/análises executando corretamente
+- [x] Preencher plataforma na escolha do canal explícito iFood/99Food e validar no servidor a existência/empresa/compatibilidade do canal antes de qualquer gravação
+- [x] Retirar botão, coluna de ações exclusivas, modal e endpoint de edição posterior; rejeitar alteração explícita de plataforma na atualização geral da venda e no helper
+- [x] Corrigir o fallback Suspense curto que expunha o body azul da tela de acesso: agora neutro, estático e de viewport inteira, sem “Carregando tela...” visível
+- [x] Compartilhar registro de imports lazy e antecipar somente a página alvo por hover, foco ou pointerdown no menu, com cache single-flight e retry de falha especulativa
+- [x] Preservar rotas, aliases, empresa ativa, proteção de PIN, autenticação, telas de aniversário/login, transição de empresa, Consumo e importador iFood
+- [x] Executar 543 testes focados em 24 arquivos e build final limpo; typecheck global permanece em 52 diagnósticos anteriores, sem novos diagnósticos nos trechos alterados
+- [x] Validar navegador com APIs fictícias: escolha do canal preenche 99Food, um único envio de venda contém channelId e plataforma corretos, nenhuma edição posterior disponível
+- [x] Observar 40 quadros do fallback numa primeira abertura real de módulo: viewport inteira, fundo branco/neutro, sem animação, aniversário ou texto visível “Carregando tela...”
+- [x] Validar intenção no menu: módulo Consumo baixado sem montagem nem consultas antecipadas; consulta só começou ao navegar
+- [x] Validar KDS com API/impressão fictícias: uma confirmação por desbloqueio, zero flashes de revalidação, um ticket, sem desmontagem ou reimpressão
+- [x] Remover scripts públicos de QA e restabelecer a prévia real anônima antes da consolidação
+- [ ] Publicar esta correção e atualizar a página de operação; não relançar os pedidos do print
+- [ ] Confirmar no navegador do usuário a identificação dos oito pedidos e a navegação sem fundo de aniversário; registrar origem/destino se houver outra aparição
+
+Nota de diagnóstico: a captura antiga mostrou Não informada inclusive no pedido 4980, embora esse registro atualmente tenha 99FOOD armazenado e a leitura local o retorne corretamente. Essa discrepância específica de versão/cache da interface antiga não foi comprovada; não atribuir uma causa exata sem evidência. A omissão nos outros sete pedidos foi comprovada e corrigida pela escolha explícita de canal já persistida. Nenhuma venda histórica, valor, item, estoque, funcionário ou regra de segurança foi alterado por SQL nesta rodada. Não existe promessa de carregamento instantâneo: na primeira visita o módulo e os dados ainda podem precisar de rede; o pré-carregamento por intenção reduz a espera e o fundo temporário agora é neutro.
