@@ -16,6 +16,7 @@ const NotFound = lazy(() => import("@/pages/NotFound"));
 const Home = lazy(() => import("./pages/Home"));
 const Produtos = lazy(() => import("./pages/Produtos"));
 const Vendas = lazy(() => import("./pages/Vendas"));
+const Consumo = lazy(() => import("./pages/Consumo"));
 const Parceiros = lazy(() => import("./pages/Parceiros"));
 const Compras = lazy(() => import("./pages/Compras"));
 const VendaInterna = lazy(() => import("./pages/VendaInterna"));
@@ -78,6 +79,7 @@ function Router() {
       <Route path="/compras" component={Compras} />
       <Route path="/venda-interna" component={VendaInterna} />
       <Route path="/vendas" component={Vendas} />
+      <Route path="/consumo" component={Consumo} />
       <Route path="/parceiros" component={Parceiros} />
       <Route path="/despesas" component={Despesas} />
       <Route path="/contas-receber" component={ContasReceberNovo} />

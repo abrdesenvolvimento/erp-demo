@@ -870,6 +870,7 @@ export const ifoodImportRouter = router({
           const branchId = ctx.activeBranchId ?? 1;
           const [saleResult] = await db.insert(sales).values({
             saleType: "DELIVERY",
+            deliveryPlatform: "IFOOD",
             saleDate: parseIfoodDate(order.orderDate),
             customerId: IFOOD_CUSTOMER_ID,
             channelId: IFOOD_CHANNEL_ID,

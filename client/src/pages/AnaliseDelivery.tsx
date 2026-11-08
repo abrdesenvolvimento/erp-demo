@@ -11,8 +11,11 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { Link } from "wouter";
 import { useState, useMemo } from "react";
 import { useDebounce } from "@/hooks/useDebounce";
+import { useCompany } from "@/contexts/CompanyContext";
+import { DELIVERY_PLATFORM_FILTERS, formatDeliveryPlatform, type DeliveryPlatformFilter } from "@shared/deliveryPlatforms";
 
 export default function AnaliseDelivery() {
+  const { activeCompanyId, switching } = useCompany();
   const [sortBy, setSortBy] = useState<'netProfit' | 'netMargin' | 'revenue' | 'quantity' | 'cost' | 'grossMargin' | 'ifoodFee'>('netProfit');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
 
@@ -35,6 +38,7 @@ export default function AnaliseDelivery() {
   const [endDate, setEndDate] = useState('');
   const [categoryId, setCategoryId] = useState<number | undefined>(undefined);
   const [channelId, setChannelId] = useState<number | undefined>(undefined);
+  const [deliveryPlatform, setDeliveryPlatform] = useState<DeliveryPlatformFilter | "all">("all");
   const [marginStatus, setMarginStatus] = useState<'all' | 'excellent' | 'attention' | 'critical'>('all');
   
   // Buscar canais de delivery
@@ -43,12 +47,16 @@ export default function AnaliseDelivery() {
   
   // Queries com filtros
   const queryParams = useMemo(() => ({
+    companyId: activeCompanyId ?? undefined,
+    deliveryPlatform: deliveryPlatform === "all" ? undefined : deliveryPlatform,
     ...(startDate && endDate ? { startDate, endDate } : {}),
     ...(categoryId ? { categoryId } : {}),
     ...(channelId ? { channelId } : {}),
-  }), [startDate, endDate, categoryId, channelId]);
+  }), [startDate, endDate, categoryId, channelId, deliveryPlatform, activeCompanyId]);
   
-  const { data: analysisData, isLoading: isProductsLoading } = trpc.dashboard.deliveryProductAnalysis.useQuery(queryParams);
+  const { data: analysisData, isLoading: isProductsLoading } = trpc.dashboard.deliveryProductAnalysis.useQuery(queryParams, {
+    enabled: !!activeCompanyId && !switching,
+  });
   
   // Extrair produtos e info do canal
   const products = analysisData?.products || (Array.isArray(analysisData) ? analysisData : []);
@@ -244,8 +252,8 @@ export default function AnaliseDelivery() {
             </div>
           </CardHeader>
           <CardContent>
-            {/* Filtros de Período, Canal, Categoria e Status */}
-            <div className="mb-4 grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+            {/* Filtros de Período, Canal, Origem, Categoria e Status */}
+            <div className="mb-4 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {/* Filtro de Data Início */}
               <div>
                 <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
@@ -301,6 +309,24 @@ export default function AnaliseDelivery() {
                 </Select>
               </div>
               
+              <div>
+                <label htmlFor="delivery-analysis-platform" className="text-xs font-medium text-muted-foreground mb-1.5 block">
+                  Origem do delivery
+                </label>
+                <Select value={deliveryPlatform} onValueChange={value => setDeliveryPlatform(value as DeliveryPlatformFilter | "all")}>
+                  <SelectTrigger id="delivery-analysis-platform" className="w-full">
+                    <SelectValue placeholder="Todas as origens" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas as origens</SelectItem>
+                    {DELIVERY_PLATFORM_FILTERS.map(platform => (
+                      <SelectItem key={platform} value={platform}>{formatDeliveryPlatform(platform)}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground mt-1">Origem não altera o canal nem suas taxas.</p>
+              </div>
+
               {/* Filtro de Categoria */}
               <div>
                 <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
@@ -347,6 +373,17 @@ export default function AnaliseDelivery() {
                 </Select>
               </div>
             </div>
+            <Button variant="outline" size="sm" className="mb-4" onClick={() => {
+              setStartDate('');
+              setEndDate('');
+              setCategoryId(undefined);
+              setChannelId(undefined);
+              setDeliveryPlatform("all");
+              setMarginStatus('all');
+              setSearchTerm('');
+            }}>
+              Limpar Filtros
+            </Button>
             
             {/* Legenda de Status */}
             <div className="mb-4 p-4 bg-muted/30 rounded-lg">

@@ -88,6 +88,7 @@ const mainMenuItems = [
   { icon: Tags, label: "Categorias", path: "/categorias", roles: ["admin", "consultor"] },
   { icon: ShoppingCart, label: "Vendas", path: "/vendas", roles: ["admin", "operacional", "consultor"] },
   { icon: Upload, label: "Importar Vendas", path: "/importar-vendas", roles: ["admin", "consultor"] },
+  { icon: UtensilsCrossed, label: "Consumo", path: "/consumo", roles: ["admin", "operacional", "consultor"] },
   { icon: Users, label: "Parceiros", path: "/parceiros", roles: ["admin", "operacional", "consultor"] },
 ];
 

@@ -324,6 +324,7 @@ export const sales = mysqlTable("sales", {
   customerId: int("customerId"),
   channelId: int("channelId"),
   platformOrderId: varchar("platformOrderId", { length: 100 }),
+  deliveryPlatform: varchar("deliveryPlatform", { length: 32 }),
   subtotal: decimal("subtotal", { precision: 10, scale: 2 }).notNull(),
   discountAmount: decimal("discountAmount", { precision: 10, scale: 2 }).default("0.00"),
   surchargeAmount: decimal("surchargeAmount", { precision: 10, scale: 2 }).default("0.00"),
@@ -1640,3 +1641,76 @@ export const productMapping = mysqlTable("productMapping", {
 }));
 export type ProductMapping = typeof productMapping.$inferSelect;
 export type InsertProductMapping = typeof productMapping.$inferInsert;
+
+// ==================== CONSUMO DE FUNCIONÁRIOS ====================
+// Consumo não é venda: somente auditoria de custo e movimentação de estoque.
+export const consumptionEmployees = mysqlTable("consumptionEmployees", {
+  id: int("id").primaryKey().autoincrement(),
+  companyId: int("companyId").notNull(),
+  name: varchar("name", { length: 200 }).notNull(),
+  active: boolean("active").default(true).notNull(),
+  createdBy: varchar("createdBy", { length: 64 }).notNull(),
+  updatedBy: varchar("updatedBy", { length: 64 }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({ companyIdx: index("consumption_employee_company_idx").on(table.companyId, table.active) }));
+
+export const consumptionRecords = mysqlTable("consumptionRecords", {
+  id: int("id").primaryKey().autoincrement(),
+  companyId: int("companyId").notNull(),
+  branchId: int("branchId").notNull(),
+  employeeId: int("employeeId").notNull(),
+  employeeName: varchar("employeeName", { length: 200 }).notNull(),
+  consumedAt: timestamp("consumedAt", { fsp: 3 }).notNull(),
+  reason: varchar("reason", { length: 2000 }).notNull(),
+  totalCost: decimal("totalCost", { precision: 15, scale: 2 }).notNull(),
+  totalUnits: int("totalUnits").notNull(),
+  status: mysqlEnum("status", ["ACTIVE", "CANCELLED"]).default("ACTIVE").notNull(),
+  requestKey: varchar("requestKey", { length: 36 }).notNull(),
+  payloadHash: varchar("payloadHash", { length: 64 }).notNull(),
+  createdBy: varchar("createdBy", { length: 64 }).notNull(),
+  createdByName: varchar("createdByName", { length: 200 }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  cancelledAt: timestamp("cancelledAt", { fsp: 3 }),
+  cancelledBy: varchar("cancelledBy", { length: 64 }),
+  cancelledByName: varchar("cancelledByName", { length: 200 }),
+  cancellationReason: varchar("cancellationReason", { length: 2000 }),
+}, (table) => ({
+  requestIdx: uniqueIndex("consumption_company_request_idx").on(table.companyId, table.requestKey),
+  companyBranchDateIdx: index("consumption_company_branch_date_idx").on(table.companyId, table.branchId, table.consumedAt),
+  employeeIdx: index("consumption_company_employee_idx").on(table.companyId, table.employeeId),
+}));
+
+export const consumptionItems = mysqlTable("consumptionItems", {
+  id: int("id").primaryKey().autoincrement(),
+  companyId: int("companyId").notNull(),
+  branchId: int("branchId").notNull(),
+  consumptionId: int("consumptionId").notNull(),
+  productId: int("productId").notNull(),
+  productName: varchar("productName", { length: 200 }).notNull(),
+  uom: varchar("uom", { length: 10 }).notNull(),
+  quantity: int("quantity").notNull(),
+  unitCost: decimal("unitCost", { precision: 15, scale: 2 }).notNull(),
+  totalCost: decimal("totalCost", { precision: 15, scale: 2 }).notNull(),
+}, (table) => ({ recordIdx: index("consumption_item_record_idx").on(table.companyId, table.branchId, table.consumptionId) }));
+
+// Folhas efetivamente baixadas, agregadas. Estorno usa este snapshot, nunca a composição atual.
+export const consumptionStockItems = mysqlTable("consumptionStockItems", {
+  id: int("id").primaryKey().autoincrement(),
+  companyId: int("companyId").notNull(),
+  branchId: int("branchId").notNull(),
+  consumptionId: int("consumptionId").notNull(),
+  productId: int("productId").notNull(),
+  productName: varchar("productName", { length: 200 }).notNull(),
+  uom: varchar("uom", { length: 10 }).notNull(),
+  quantity: int("quantity").notNull(),
+  unitCost: decimal("unitCost", { precision: 15, scale: 2 }).notNull(),
+  totalCost: decimal("totalCost", { precision: 15, scale: 2 }).notNull(),
+  movementId: int("movementId").notNull(),
+  reversalMovementId: int("reversalMovementId"),
+}, (table) => ({ recordProductIdx: uniqueIndex("consumption_stock_record_product_idx").on(table.companyId, table.branchId, table.consumptionId, table.productId) }));
+
+export type ConsumptionEmployee = typeof consumptionEmployees.$inferSelect;
+export type ConsumptionRecord = typeof consumptionRecords.$inferSelect;
+export type ConsumptionItem = typeof consumptionItems.$inferSelect;
+export type ConsumptionStockItem = typeof consumptionStockItems.$inferSelect;

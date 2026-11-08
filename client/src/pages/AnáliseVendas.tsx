@@ -13,6 +13,8 @@ import { ptBR } from "date-fns/locale";
 import { trpc } from "@/lib/trpc";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useCompany } from "@/contexts/CompanyContext";
+import { DELIVERY_PLATFORM_FILTERS, formatDeliveryPlatform, type DeliveryPlatformFilter } from "@shared/deliveryPlatforms";
 
 const formatCurrency = (value: string | number) => {
   const num = typeof value === "string" ? parseFloat(value) : value;
@@ -66,6 +68,9 @@ const SortIcon = ({ field, activeField, activeDir }: { field: SortField; activeF
 export default function AnáliseVendas() {
   const { user } = useAuth();
   const isAdmin = user?.role === "admin";
+  const { activeCompanyId, switching } = useCompany();
+  const canQueryAnalysis = isAdmin && !!activeCompanyId && !switching;
+  const [fallbackDate] = useState(() => new Date());
 
   // Novos filtros de período
   const [selectedMonths, setSelectedMonths] = useState<number[]>([new Date().getMonth() + 1]); // Mês atual selecionado por padrão
@@ -79,6 +84,7 @@ export default function AnáliseVendas() {
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<number[]>([]);
   const [selectedChannels, setSelectedChannels] = useState<string[]>([]);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string | undefined>();
+  const [selectedDeliveryPlatform, setSelectedDeliveryPlatform] = useState<DeliveryPlatformFilter | "all">("all");
   const [productSearch, setProductSearch] = useState("");
   const [subcategorySearch, setSubcategorySearch] = useState("");
   const [categorySearch, setCategorySearch] = useState("");
@@ -174,6 +180,21 @@ export default function AnáliseVendas() {
     return { from, to };
   }, [selectedMonths, selectedYears, selectedDays]);
 
+  // Um único payload estável para todos os agregados e uma chave por empresa.
+  const analysisFilters = useMemo(() => ({
+    companyId: activeCompanyId ?? undefined,
+    productIds: selectedProductIds.length > 0 ? selectedProductIds : undefined,
+    subcategoryId: selectedSubcategoryId,
+    channels: selectedChannels.length > 0 ? selectedChannels : undefined,
+    paymentMethod: selectedPaymentMethod,
+    deliveryPlatform: selectedDeliveryPlatform === "all" ? undefined : selectedDeliveryPlatform,
+  }), [activeCompanyId, selectedProductIds, selectedSubcategoryId, selectedChannels, selectedPaymentMethod, selectedDeliveryPlatform]);
+  const analysisQueryParams = useMemo(() => ({
+    ...analysisFilters,
+    startDate: dateRange?.from ?? fallbackDate,
+    endDate: dateRange?.to ?? fallbackDate,
+  }), [analysisFilters, dateRange, fallbackDate]);
+
   // Filtrar produtos e subcategorias baseado na busca
   const filteredProducts = products?.filter(p => 
     p.name.toLowerCase().includes(productSearch.toLowerCase()) &&
@@ -190,66 +211,31 @@ export default function AnáliseVendas() {
 
   // Queries com filtros (por produto)
   const { data: valueData, isLoading: isValueLoading } = trpc.salesAnalysis.byValue.useQuery(
-    { 
-      startDate: dateRange?.from ?? new Date(), 
-      endDate: dateRange?.to ?? new Date(),
-      productIds: selectedProductIds.length > 0 ? selectedProductIds : undefined,
-      subcategoryId: selectedSubcategoryId,
-      channels: selectedChannels.length > 0 ? selectedChannels : undefined,
-      paymentMethod: selectedPaymentMethod,
-    },
-    { enabled: isAdmin && groupBy === "product" && !!dateRange }
+    analysisQueryParams,
+    { enabled: canQueryAnalysis && groupBy === "product" && !!dateRange }
   );
 
   const { data: quantityData, isLoading: isQuantityLoading } = trpc.salesAnalysis.byQuantity.useQuery(
-    { 
-      startDate: dateRange?.from ?? new Date(), 
-      endDate: dateRange?.to ?? new Date(),
-      productIds: selectedProductIds.length > 0 ? selectedProductIds : undefined,
-      subcategoryId: selectedSubcategoryId,
-      channels: selectedChannels.length > 0 ? selectedChannels : undefined,
-      paymentMethod: selectedPaymentMethod,
-    },
-    { enabled: isAdmin && groupBy === "product" && !!dateRange }
+    analysisQueryParams,
+    { enabled: canQueryAnalysis && groupBy === "product" && !!dateRange }
   );
 
   const { data: categoryDataRaw, isLoading: isCategoryLoading } = trpc.salesAnalysis.byCategoryValue.useQuery(
-    { 
-      startDate: dateRange?.from ?? new Date(), 
-      endDate: dateRange?.to ?? new Date(),
-      productIds: selectedProductIds.length > 0 ? selectedProductIds : undefined,
-      subcategoryId: selectedSubcategoryId,
-      channels: selectedChannels.length > 0 ? selectedChannels : undefined,
-      paymentMethod: selectedPaymentMethod,
-    },
-    { enabled: isAdmin && groupBy === "product" && !!dateRange }
+    analysisQueryParams,
+    { enabled: canQueryAnalysis && groupBy === "product" && !!dateRange }
   );
 
   // Query para resumo usando sales.finalAmount (valor correto para totais)
   // Quando filtro de produto é aplicado, calcula apenas para produtos selecionados
   const { data: summaryData, isLoading: isSummaryLoading } = trpc.salesAnalysis.summary.useQuery(
-    { 
-      startDate: dateRange?.from ?? new Date(), 
-      endDate: dateRange?.to ?? new Date(),
-      channels: selectedChannels.length > 0 ? selectedChannels : undefined,
-      paymentMethod: selectedPaymentMethod,
-      productIds: selectedProductIds.length > 0 ? selectedProductIds : undefined,
-      subcategoryId: selectedSubcategoryId,
-    },
-    { enabled: isAdmin && !!dateRange }
+    analysisQueryParams,
+    { enabled: canQueryAnalysis && !!dateRange }
   );
 
   // Queries temporais
   const { data: dayDataRaw, isLoading: isDayLoading } = trpc.salesAnalysis.byDay.useQuery(
-    { 
-      startDate: dateRange?.from ?? new Date(), 
-      endDate: dateRange?.to ?? new Date(),
-      productIds: selectedProductIds.length > 0 ? selectedProductIds : undefined,
-      subcategoryId: selectedSubcategoryId,
-      channels: selectedChannels.length > 0 ? selectedChannels : undefined,
-      paymentMethod: selectedPaymentMethod,
-    },
-    { enabled: isAdmin && groupBy === "day" && !!dateRange }
+    analysisQueryParams,
+    { enabled: canQueryAnalysis && groupBy === "day" && !!dateRange }
   );
 
   // Filtrar dayData considerando apenas os dias selecionados
@@ -264,40 +250,19 @@ export default function AnáliseVendas() {
   }, [dayDataRaw, selectedDays]);
 
   const { data: weekData, isLoading: isWeekLoading } = trpc.salesAnalysis.byWeek.useQuery(
-    { 
-      startDate: dateRange?.from ?? new Date(), 
-      endDate: dateRange?.to ?? new Date(),
-      productIds: selectedProductIds.length > 0 ? selectedProductIds : undefined,
-      subcategoryId: selectedSubcategoryId,
-      channels: selectedChannels.length > 0 ? selectedChannels : undefined,
-      paymentMethod: selectedPaymentMethod,
-    },
-    { enabled: isAdmin && groupBy === "week" && !!dateRange }
+    analysisQueryParams,
+    { enabled: canQueryAnalysis && groupBy === "week" && !!dateRange }
   );
 
   // Query para matriz produto×dia (Evolução Diária) - movido para antes do monthData pois é usado no filtro
   const { data: matrixData, isLoading: isMatrixLoading } = trpc.salesAnalysis.byProductAndDate.useQuery(
-    { 
-      startDate: dateRange?.from ?? new Date(), 
-      endDate: dateRange?.to ?? new Date(),
-      productIds: selectedProductIds.length > 0 ? selectedProductIds : undefined,
-      subcategoryId: selectedSubcategoryId,
-      channels: selectedChannels.length > 0 ? selectedChannels : undefined,
-      paymentMethod: selectedPaymentMethod,
-    },
-    { enabled: isAdmin && !!dateRange }
+    analysisQueryParams,
+    { enabled: canQueryAnalysis && !!dateRange }
   );
 
   const { data: monthDataRaw, isLoading: isMonthLoading } = trpc.salesAnalysis.byMonth.useQuery(
-    { 
-      startDate: dateRange?.from ?? new Date(), 
-      endDate: dateRange?.to ?? new Date(),
-      productIds: selectedProductIds.length > 0 ? selectedProductIds : undefined,
-      subcategoryId: selectedSubcategoryId,
-      channels: selectedChannels.length > 0 ? selectedChannels : undefined,
-      paymentMethod: selectedPaymentMethod,
-    },
-    { enabled: isAdmin && groupBy === "month" && !!dateRange }
+    analysisQueryParams,
+    { enabled: canQueryAnalysis && groupBy === "month" && !!dateRange }
   );
 
   // Filtrar monthData considerando meses/anos selecionados e recalcular se dias específicos foram selecionados
@@ -512,24 +477,23 @@ export default function AnáliseVendas() {
     };
   }, [dateRange, selectedMonths, selectedYears, comparisonMode]);
 
-  // Query para comparação de períodos (usando períodos calculados automaticamente)
-  const { data: comparisonData, isLoading: isComparisonLoading } = trpc.salesAnalysis.comparePeriods.useQuery(
-    {
-      period1: {
-        startDate: comparisonPeriods?.current.from ?? new Date(),
-        endDate: comparisonPeriods?.current.to ?? new Date(),
-      },
-      period2: {
-        startDate: comparisonPeriods?.compare.from ?? new Date(),
-        endDate: comparisonPeriods?.compare.to ?? new Date(),
-      },
-      comparisonType: comparisonType,
-      productIds: selectedProductIds.length > 0 ? selectedProductIds : undefined,
-      subcategoryId: selectedSubcategoryId,
-      channels: selectedChannels.length > 0 ? selectedChannels : undefined,
-      paymentMethod: selectedPaymentMethod,
+  const comparisonQueryParams = useMemo(() => ({
+    ...analysisFilters,
+    period1: {
+      startDate: comparisonPeriods?.current.from ?? fallbackDate,
+      endDate: comparisonPeriods?.current.to ?? fallbackDate,
     },
-    { enabled: isAdmin && enableComparison && !!comparisonPeriods }
+    period2: {
+      startDate: comparisonPeriods?.compare.from ?? fallbackDate,
+      endDate: comparisonPeriods?.compare.to ?? fallbackDate,
+    },
+    comparisonType,
+  }), [analysisFilters, comparisonPeriods, comparisonType, fallbackDate]);
+
+  // Os dois períodos e seus totais recebem os mesmos filtros de segmentação.
+  const { data: comparisonData, isLoading: isComparisonLoading } = trpc.salesAnalysis.comparePeriods.useQuery(
+    comparisonQueryParams,
+    { enabled: canQueryAnalysis && enableComparison && !!comparisonPeriods }
   );
 
   // Redirecionar se não for admin
@@ -911,6 +875,23 @@ export default function AnáliseVendas() {
                 </div>
               </div>
 
+              {/* Origem é independente do canal comercial e de suas taxas. */}
+              <div className="space-y-2">
+                <Label htmlFor="sales-analysis-platform">Origem do delivery</Label>
+                <select
+                  id="sales-analysis-platform"
+                  className="w-full border rounded-md px-3 py-2 text-sm"
+                  value={selectedDeliveryPlatform}
+                  onChange={(e) => setSelectedDeliveryPlatform(e.target.value as DeliveryPlatformFilter | "all")}
+                >
+                  <option value="all">Todas as origens</option>
+                  {DELIVERY_PLATFORM_FILTERS.map(platform => (
+                    <option key={platform} value={platform}>{formatDeliveryPlatform(platform)}</option>
+                  ))}
+                </select>
+                <p className="text-xs text-muted-foreground">Filtra somente vendas delivery; não muda o canal nem suas taxas.</p>
+              </div>
+
               {/* Filtro de Forma de Pagamento */}
               <div className="space-y-2">
                 <Label>Forma de Pagamento</Label>
@@ -929,7 +910,7 @@ export default function AnáliseVendas() {
             </div>
 
             {/* Botão Limpar Filtros */}
-            {(selectedProductIds.length > 0 || selectedSubcategoryId || selectedChannels.length > 0 || selectedPaymentMethod) && (
+            {(selectedProductIds.length > 0 || selectedSubcategoryId || selectedChannels.length > 0 || selectedPaymentMethod || selectedDeliveryPlatform !== "all") && (
               <div className="mt-4">
                 <Button
                   variant="outline"
@@ -939,6 +920,7 @@ export default function AnáliseVendas() {
                     setSelectedSubcategoryId(undefined);
                     setSelectedChannels([]);
                     setSelectedPaymentMethod(undefined);
+                    setSelectedDeliveryPlatform("all");
                     setProductSearch("");
                     setSubcategorySearch("");
                   }}

@@ -1,6 +1,6 @@
 # ABRWF - Pendências e Melhorias
 
-**Última atualização:** 02/11/2026
+**Última atualização:** 08/11/2026
 
 ---
 
@@ -2655,8 +2655,8 @@ Exemplo: R$10.000 em 2 parcelas (10/03 e 10/04) → R$5.000 em Março e R$5.000 
 ## Próxima evolução alinhada — Metas e Consumo
 - [x] Metas: permitir escolher mês/ano para acompanhamento, com gráfico anual do percentual atingido por canal e paridade com o cálculo mensal existente
 - [x] Metas: corrigir transbordamento dos quadros no celular e organizar visão de acompanhamento separada do cadastro anual; conferido em QA móvel de 390 px
-- [ ] Consumo interno: detalhar lançamento por funcionário/produto/quantidade, custo, motivo, responsável e empresa, sem tratar consumo como faturamento
-- [ ] Consumo interno: definir permissões, baixa de estoque de produtos simples/compostos, validação de saldo e estorno auditável antes de implementar
+- [x] Consumo interno: detalhar e implementar lançamento por funcionário/produto/quantidade, custo, motivo, responsável, empresa e filial, sem gerar faturamento
+- [x] Consumo interno: implementar permissões, baixa transacional de simples/compostos, validação de saldo, repetição segura e estorno auditável
 - [ ] Retomar melhorias analíticas do Salão/KDS após validar segurança, Metas e primeira etapa de Consumo
 
 O faturamento histórico foi encerrado por orientação do usuário e não integra esta sequência de melhorias.
@@ -2756,3 +2756,28 @@ Escopo preservado: nenhuma meta, venda, estoque, implantação histórica, conta
 - [ ] Se a tela comemorativa reaparecer entre módulos, identificar a origem/destino e reproduzir antes de alterar a política de sessão
 
 Auditoria somente leitura: o retorno de /cardapio ou /aviso-inauguracao para uma rota protegida remonta o gate e pode exibir a verificação inicial sem PIN. Esse caminho é uma hipótese concreta de código, não uma causa confirmada do relato isolado. A navegação comum entre módulos protegidos não remonta o gate. Nenhuma regra de PIN, expiração, autenticação ou troca de base foi modificada neste ajuste; nenhuma meta ou dado financeiro foi alterado.
+
+## Consumo interno e origem do delivery — 08/11/2026
+- [x] Implementar Consumo no menu e rota sob demanda /consumo, sem reformular a navegação ou a segurança existente
+- [x] Criar cadastro de funcionários por empresa, sem exigir conta de login, com ativação/desativação e histórico preservado
+- [x] Registrar funcionário, produtos, quantidades, motivo, responsável e custo; acompanhar período, status e resumo por funcionário
+- [x] Baixar estoque em transação de produtos simples/compostos, agregando componentes finais e impedindo saldo insuficiente/negativo
+- [x] Preservar custos e composição efetiva no lançamento; impedir baixa duplicada por repetição de solicitação
+- [x] Implementar cancelamento administrativo com motivo e estorno único dos produtos/quantidades originais, preservando histórico
+- [x] Aplicar apenas quatro tabelas novas de Consumo e sales.deliveryPlatform nullable, sem alteração de vendas, custos financeiros ou estoque histórico
+- [x] Separar Plataforma (iFood, 99Food, Próprio, Outro) de canal e do identificador Pedido; exigir plataforma nas novas vendas Delivery manuais
+- [x] Marcar como iFood apenas NOVAS importações no importador existente; preservar integralmente a lógica de combos e duplicidades
+- [x] Resolver visualmente legados iFood apenas com UUID importado, saleId e empresa coincidentes; demais permanecem Não informada, sem backfill
+- [x] Filtrar origem de forma consistente em lista, indicadores e exportação funcional de Vendas, Análise de Vendas e Análise Delivery
+- [x] Permitir corrigir somente a plataforma de uma venda em ação administrativa auditada, sem recalcular valores, itens ou estoque
+- [x] Conferir consultas reais somente leitura nas duas empresas: tabelas vazias, produtos acessíveis no contexto e predicados/listas/agregados de origem executando corretamente
+- [x] Executar 464 testes focados em 20 arquivos e build de produção; pnpm check mantém 52 diagnósticos globais anteriores, sem novos diagnósticos nos arquivos novos de Consumo/origem
+- [x] Validar navegador com TODAS as APIs fictícias: lançamento único, cancelamento único, payload sem faturamento e filtro 99Food igual na lista e nos indicadores
+- [x] Conferir Consumo e Vendas em largura móvel de 390 px; remover HTML/JS públicos de QA antes do build final e restaurar prévia anônima real
+- [x] Documentar uso e limites em docs/CONSUMO.md e docs/ORIGEM-DELIVERY.md
+- [ ] Publicar este checkpoint e cadastrar os funcionários reais da empresa escolhida
+- [ ] Validar o primeiro lançamento operacional de Consumo, custo, saldo e cancelamento administrativo no fluxo real
+- [ ] Identificar manualmente a plataforma dos legados sem evidência, apenas quando houver documentação confiável; não presumir 99Food
+- [ ] Desenvolver importador 99Food em etapa separada, quando houver fonte/arquivo adequado
+
+Limites: estoque atual é inteiro; composição que gera baixa fracionada não é arredondada e fica bloqueada. Consumo não gera receita, contas ou contabilização automática; custos médios zero continuam zero. Taxas/margens seguem as regras de canal existentes, não são automaticamente substituídas pela plataforma. As análises recebem o filtro de origem, mas isso não implementa handlers de exportação que já não existiam ali. Nenhum dado fictício foi gravado na base operacional. A geração automática ampla de migrações foi interrompida por incluir mudanças/renomeações antigas fora do escopo; foram aplicados somente os arquivos aditivos revisados 0010 e 0011, conferidos em information_schema. O journal/snapshots históricos não foi modificado nesta tarefa.

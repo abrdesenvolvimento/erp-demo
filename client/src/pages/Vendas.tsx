@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
+import { DELIVERY_PLATFORMS, DELIVERY_PLATFORM_LABELS, formatDeliveryPlatform, type DeliveryPlatform, type DeliveryPlatformFilter } from "@shared/deliveryPlatforms";
 import { formatDateForInput, getTodayInBrazil } from "@shared/dateUtils";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
@@ -62,6 +63,10 @@ export default function Vendas() {
   const [filterFromDate, setFilterFromDate] = useState<string>("");
   const [filterToDate, setFilterToDate] = useState<string>("");
   const [filterSaleType, setFilterSaleType] = useState<string>("");
+  const [filterDeliveryPlatform, setFilterDeliveryPlatform] = useState<DeliveryPlatformFilter | "all">("all");
+  const [deliveryPlatform, setDeliveryPlatform] = useState<DeliveryPlatform | "">("");
+  const [platformEditSale, setPlatformEditSale] = useState<any>(null);
+  const [editedDeliveryPlatform, setEditedDeliveryPlatform] = useState<DeliveryPlatform | "NAO_INFORMADO">("NAO_INFORMADO");
   
   // Form states
   const [channelId, setChannelId] = useState<string>("");
@@ -95,7 +100,8 @@ export default function Vendas() {
   const { data: sales = [], refetch, isLoading: salesLoading } = trpc.sales.list.useQuery({
     dateFrom: filterFromDate || undefined,
     dateTo: filterToDate || undefined,
-    saleType: filterSaleType && filterSaleType !== "all" ? (filterSaleType as "BALCAO" | "DELIVERY" | "A_PRAZO") : undefined,
+    saleType: filterSaleType && filterSaleType !== "all" ? (filterSaleType as "BALCAO" | "DELIVERY" | "A_PRAZO" | "SALAO") : undefined,
+    deliveryPlatform: filterDeliveryPlatform === "all" ? undefined : filterDeliveryPlatform,
   }, {
     enabled: !!filterFromDate || !!filterToDate, // Só busca quando tem filtro de data
     staleTime: 30000, // Cache por 30 segundos
@@ -104,7 +110,9 @@ export default function Vendas() {
   const { data: stats } = trpc.sales.stats.useQuery({ 
     dateFrom: filterFromDate || undefined,
     dateTo: filterToDate || undefined,
-    channel: filterSaleType === "" ? 'all' : (filterSaleType as 'BALCAO' | 'DELIVERY' | 'A_PRAZO')
+    period: 'all',
+    channel: !filterSaleType || filterSaleType === "all" ? 'all' : (filterSaleType as 'BALCAO' | 'DELIVERY' | 'A_PRAZO' | 'SALAO'),
+    deliveryPlatform: filterDeliveryPlatform === "all" ? undefined : filterDeliveryPlatform
   }, {
     refetchOnMount: true,
     staleTime: 30000, // Cache por 30 segundos
@@ -115,7 +123,8 @@ export default function Vendas() {
     {
       startDate: filterFromDate ? new Date(filterFromDate + 'T12:00:00') : undefined,
       endDate: filterToDate ? new Date(filterToDate + 'T12:00:00') : undefined,
-      saleType: filterSaleType ? (filterSaleType as "BALCAO" | "DELIVERY" | "A_PRAZO") : undefined,
+      saleType: filterSaleType && filterSaleType !== "all" ? (filterSaleType as "BALCAO" | "DELIVERY" | "A_PRAZO" | "SALAO") : undefined,
+      deliveryPlatform: filterDeliveryPlatform === "all" ? undefined : filterDeliveryPlatform,
     },
     { enabled: false } // Não executar automaticamente
   );
@@ -219,6 +228,15 @@ export default function Vendas() {
     },
   });
 
+  const updateDeliveryPlatform = trpc.sales.updateDeliveryPlatform.useMutation({
+    onSuccess: async () => {
+      toast.success("Plataforma atualizada com registro de auditoria");
+      setPlatformEditSale(null);
+      await Promise.all([utils.sales.list.invalidate(), utils.sales.stats.invalidate(), utils.sales.get.invalidate(), utils.sales.exportSales.invalidate()]);
+    },
+    onError: error => toast.error(error.message),
+  });
+
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setSaleType(null);
@@ -228,6 +246,7 @@ export default function Vendas() {
     setCustomerSearch("");
     setSelectedCustomer(null);
     setPlatformOrderId("");
+    setDeliveryPlatform("");
     setSaleItems([]);
     setProductSearch("");
     setSelectedProduct(null);
@@ -257,7 +276,8 @@ export default function Vendas() {
       const excelData = result.data.map((row: any) => ({
         'ID da Venda': row.saleId,
         'Canal': row.channel === 'BALCAO' ? 'Balcão' : row.channel === 'DELIVERY' ? 'Delivery' : 'A Prazo',
-        'Número do Pedido': row.orderNumber || '-',
+        'Plataforma': row.channel === 'DELIVERY' ? formatDeliveryPlatform(row.effectiveDeliveryPlatform) : '-',
+        'Pedido': row.orderNumber || '-',
         'Cliente': row.customerName,
         'Produto': row.productName,
         'Quantidade': row.quantity,
@@ -278,7 +298,8 @@ export default function Vendas() {
       ws['!cols'] = [
         { wch: 12 }, // ID da Venda
         { wch: 12 }, // Canal
-        { wch: 20 }, // Número do Pedido
+        { wch: 18 }, // Plataforma
+        { wch: 20 }, // Pedido
         { wch: 30 }, // Cliente
         { wch: 40 }, // Produto
         { wch: 12 }, // Quantidade
@@ -306,6 +327,7 @@ export default function Vendas() {
 
   const handleSelectType = (type: SaleType) => {
     setSaleType(type);
+    if (type !== "DELIVERY") setDeliveryPlatform("");
     setStep("form");
   };
 
@@ -416,6 +438,10 @@ export default function Vendas() {
 
   const handleFinalizeSale = () => {
     // Validations
+    if (saleType === "DELIVERY" && !deliveryPlatform) {
+      toast.error("Selecione a plataforma do delivery");
+      return;
+    }
     if (!channelId) {
       toast.error("Selecione um canal de venda");
       return;
@@ -449,6 +475,7 @@ export default function Vendas() {
       channelId: parsedChannelId,
       customerId: customerId ? parseInt(customerId) : undefined,
       platformOrderId: platformOrderId || undefined,
+      deliveryPlatform: saleType === "DELIVERY" ? (deliveryPlatform as DeliveryPlatform) : null,
       subtotal: subtotal.toFixed(2),
       discountAmount: discount.toFixed(2),
       surchargeAmount: surcharge.toFixed(2),
@@ -690,7 +717,7 @@ export default function Vendas() {
           </CardHeader>
           <CardContent>
             {/* Filtros */}
-            <div className="mb-6 grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="mb-6 grid grid-cols-1 md:grid-cols-5 gap-4">
               <div>
                 <Label htmlFor="filter-from-date" className="text-sm">De</Label>
                 <Input
@@ -726,6 +753,17 @@ export default function Vendas() {
                   </SelectContent>
                 </Select>
               </div>
+              <div>
+                <Label htmlFor="filter-platform" className="text-sm">Plataforma</Label>
+                <Select value={filterDeliveryPlatform} onValueChange={value => setFilterDeliveryPlatform(value as DeliveryPlatformFilter | "all")}>
+                  <SelectTrigger id="filter-platform" className="mt-1"><SelectValue placeholder="Todas" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas</SelectItem>
+                    {DELIVERY_PLATFORMS.map(platform => <SelectItem key={platform} value={platform}>{DELIVERY_PLATFORM_LABELS[platform]}</SelectItem>)}
+                    <SelectItem value="NAO_INFORMADO">Não informada</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="flex items-end">
                 <Button
                   variant="outline"
@@ -734,6 +772,7 @@ export default function Vendas() {
                     setFilterFromDate(todayStr);
                     setFilterToDate(todayStr);
                     setFilterSaleType("all");
+                    setFilterDeliveryPlatform("all");
                   }}
                   className="w-full"
                 >
@@ -756,10 +795,12 @@ export default function Vendas() {
                     <TableHead>ID</TableHead>
                     <TableHead>Data/Hora</TableHead>
                     <TableHead>Tipo</TableHead>
+                    <TableHead>Plataforma</TableHead>
                     <TableHead>Cliente</TableHead>
                     <TableHead>Pedido</TableHead>
                     <TableHead>Valor Total</TableHead>
                     <TableHead>Pagamento</TableHead>
+                    {permissions.sales.canEdit && <TableHead>Ações</TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -775,14 +816,21 @@ export default function Vendas() {
                       <TableCell>#{sale.id}</TableCell>
                       <TableCell>{formatDateTime(sale.saleDate || sale.createdAt)}</TableCell>
                       <TableCell>{getSaleTypeBadge(sale.saleType, sale.status)}</TableCell>
+                      <TableCell>{sale.saleType === "DELIVERY" ? formatDeliveryPlatform(sale.effectiveDeliveryPlatform) : "—"}</TableCell>
                       <TableCell>{sale.customerName || "Venda Avulsa"}</TableCell>
                       <TableCell>
-                        {sale.saleType === "DELIVERY" && sale.platformOrderId 
-                          ? sale.platformOrderId 
-                          : (sale.channelName || "-")}
+                        {sale.platformOrderId || "-"}
                       </TableCell>
                       <TableCell className="font-semibold">{formatCurrency(parseFloat(sale.finalAmount))}</TableCell>
                       <TableCell>{formatPaymentMethod(sale.paymentMethod)}</TableCell>
+                      {permissions.sales.canEdit && <TableCell>
+                        {sale.saleType === "DELIVERY" && <Button variant="outline" size="sm" onClick={event => {
+                          event.stopPropagation();
+                          setPlatformEditSale(sale);
+                          // Editing starts from the STORED field, never persists a derived legacy iFood label implicitly.
+                          setEditedDeliveryPlatform(sale.deliveryPlatform ?? "NAO_INFORMADO");
+                        }}>Editar plataforma</Button>}
+                      </TableCell>}
                     </TableRow>
                   ))}
                 </TableBody>
@@ -791,8 +839,33 @@ export default function Vendas() {
           </CardContent>
         </Card>
 
+        <Dialog open={!!platformEditSale} onOpenChange={open => { if (!open) setPlatformEditSale(null); }}>
+          <DialogContent className="max-w-md">
+            <DialogHeader><DialogTitle>Editar plataforma — Venda #{platformEditSale?.id}</DialogTitle></DialogHeader>
+            <p className="text-sm text-muted-foreground">Esta alteração registra somente a plataforma, com auditoria. Pedido, canal, datas, valores e estoque não serão alterados.</p>
+            {platformEditSale?.deliveryPlatform == null && platformEditSale?.effectiveDeliveryPlatform === "IFOOD" &&
+              <p className="text-sm text-muted-foreground">iFood é exibido por um registro de importação vinculado à empresa. O campo salvo continua não informado.</p>}
+            <Label htmlFor="edited-delivery-platform">Plataforma</Label>
+            <Select value={editedDeliveryPlatform} onValueChange={value => setEditedDeliveryPlatform(value as DeliveryPlatform | "NAO_INFORMADO")}>
+              <SelectTrigger id="edited-delivery-platform"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {DELIVERY_PLATFORMS.map(platform => <SelectItem key={platform} value={platform}>{DELIVERY_PLATFORM_LABELS[platform]}</SelectItem>)}
+                <SelectItem value="NAO_INFORMADO">Não informada</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">Não informada mantém o campo nulo; evidência legada válida de importação ainda poderá exibir iFood.</p>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setPlatformEditSale(null)}>Cancelar</Button>
+              <Button disabled={updateDeliveryPlatform.isPending} onClick={() => {
+                if (!platformEditSale) return;
+                updateDeliveryPlatform.mutate({ saleId: platformEditSale.id, deliveryPlatform: editedDeliveryPlatform === "NAO_INFORMADO" ? null : editedDeliveryPlatform });
+              }}>{updateDeliveryPlatform.isPending ? "Salvando..." : "Salvar plataforma"}</Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
         {/* Modal de Nova Venda */}
-        <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <Dialog open={isModalOpen} onOpenChange={open => { if (open) setIsModalOpen(true); else handleCloseModal(); }}>
           <DialogContent className="max-w-5xl h-[92vh] overflow-y-auto flex flex-col p-4">
             <DialogHeader>
               <DialogTitle>
@@ -917,7 +990,14 @@ export default function Vendas() {
                 {/* ID do Pedido na Plataforma - Apenas para DELIVERY */}
                 {saleType === "DELIVERY" && (
                   <div className="space-y-2">
-                    <Label htmlFor="platformOrderId">ID do Pedido na Plataforma</Label>
+                    <Label htmlFor="delivery-platform">Plataforma *</Label>
+                    <Select value={deliveryPlatform} onValueChange={value => setDeliveryPlatform(value as DeliveryPlatform)}>
+                      <SelectTrigger id="delivery-platform"><SelectValue placeholder="Selecione a plataforma" /></SelectTrigger>
+                      <SelectContent>
+                        {DELIVERY_PLATFORMS.map(platform => <SelectItem key={platform} value={platform}>{DELIVERY_PLATFORM_LABELS[platform]}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                    <Label htmlFor="platformOrderId">Pedido</Label>
                     <Input
                       id="platformOrderId"
                       placeholder="Ex: 99-12345, IFOOD-67890"
@@ -1148,4 +1228,3 @@ export default function Vendas() {
     </DashboardLayout>
   );
 }
-

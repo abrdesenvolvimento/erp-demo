@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { DELIVERY_PLATFORMS, DELIVERY_PLATFORM_FILTERS, deliveryPlatformForWrite } from "../shared/deliveryPlatforms";
 import { TRPCError } from "@trpc/server";
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
@@ -22,6 +23,7 @@ import { historicalRevenueAdjustmentsRouter } from './routers/historicalRevenueA
 import { operatorSecurityRouter } from './routers/operatorSecurity';
 import { resolveOperatorStatus, revokeOperatorSession, revokeSessionsForUser } from './operatorSecurity';
 import { annualGoalsProgressProcedure } from './routers/goalsAnnual';
+import { consumptionRouter } from './routers/consumption';
 
 function requireActiveCompanyId(activeCompanyId: number | undefined): number {
   if (!Number.isInteger(activeCompanyId) || !activeCompanyId || activeCompanyId < 1) {
@@ -49,6 +51,7 @@ export const appRouter = router({
   internalSales: internalSalesRouter,
   historicalRevenueAdjustments: historicalRevenueAdjustmentsRouter,
   operatorSecurity: operatorSecurityRouter,
+  consumption: consumptionRouter,
 
   auth: router({
     me: publicProcedure.query(async ({ ctx }) => {
@@ -1008,6 +1011,7 @@ export const appRouter = router({
         limit: z.number().optional().default(500), // Reduzido - usar filtro de data para performance
         dateFrom: z.string().optional(), // Formato: YYYY-MM-DD
         dateTo: z.string().optional(),   // Formato: YYYY-MM-DD
+        deliveryPlatform: z.enum(DELIVERY_PLATFORM_FILTERS).optional(),
       }).optional())
       .query(async ({ input, ctx }) => {
         const companyId = requireActiveCompanyId(ctx.activeCompanyId);
@@ -1031,6 +1035,7 @@ export const appRouter = router({
         customerId: z.number().optional(),
         channelId: z.number().optional(),
         platformOrderId: z.string().optional(),
+        deliveryPlatform: z.enum(DELIVERY_PLATFORMS).nullable().optional(),
         subtotal: z.string(),
         discountAmount: z.string().optional().default("0.00"),
         surchargeAmount: z.string().optional().default("0.00"),
@@ -1048,9 +1053,14 @@ export const appRouter = router({
           date: z.date(),
           amount: z.string(),
         })).optional(), // Para vendas A_PRAZO
+      }).superRefine((sale, validation) => {
+        if (sale.saleType === "DELIVERY" && !sale.deliveryPlatform) {
+          validation.addIssue({ code: "custom", path: ["deliveryPlatform"], message: "Selecione a plataforma do delivery" });
+        }
       }))
       .mutation(async ({ input, ctx }) => {
         const { items, ...saleData } = input;
+        saleData.deliveryPlatform = deliveryPlatformForWrite(saleData.saleType, saleData.deliveryPlatform);
         const companyId = requireActiveCompanyId(ctx.activeCompanyId);
         const branchId = ctx.activeBranchId ?? 0;
         
@@ -1131,6 +1141,7 @@ export const appRouter = router({
         dateFrom: z.string().optional(), // Formato: YYYY-MM-DD
         dateTo: z.string().optional(),   // Formato: YYYY-MM-DD
         channel: z.enum(['BALCAO', 'DELIVERY', 'A_PRAZO', 'SALAO', 'all']).optional().default('all'),
+        deliveryPlatform: z.enum(DELIVERY_PLATFORM_FILTERS).optional(),
       }).optional())
       .query(async ({ input, ctx }) => {
         const companyId = requireActiveCompanyId(ctx.activeCompanyId);
@@ -1139,7 +1150,8 @@ export const appRouter = router({
           input?.dateFrom,
           input?.dateTo,
           input?.channel === 'all' ? undefined : input?.channel,
-          companyId
+          companyId,
+          input?.deliveryPlatform
         );
       }),
     
@@ -1156,10 +1168,11 @@ export const appRouter = router({
         })),
         discountAmount: z.string().optional(),
         surchargeAmount: z.string().optional(),
-        platformOrderId: z.string().optional(), // Número do pedido delivery (padronizado)
+        platformOrderId: z.string().optional(), // Pedido, separado da plataforma/canal
+        deliveryPlatform: z.enum(DELIVERY_PLATFORMS).nullable().optional(),
       }))
       .mutation(async ({ input, ctx }) => {
-        const { saleId, items, discountAmount, surchargeAmount, platformOrderId } = input;
+        const { saleId, items, discountAmount, surchargeAmount, platformOrderId, deliveryPlatform } = input;
         const companyId = requireActiveCompanyId(ctx.activeCompanyId);
         const branchId = ctx.activeBranchId ?? 0;
         
@@ -1245,7 +1258,16 @@ export const appRouter = router({
           surchargeAmount: surcharge.toFixed(2),
           finalAmount,
           ...(platformOrderId !== undefined && { platformOrderId }),
-        });
+          ...(deliveryPlatform !== undefined && { deliveryPlatform: deliveryPlatformForWrite(sale.saleType, deliveryPlatform) }),
+          ...(sale.saleType !== "DELIVERY" && { deliveryPlatform: null }),
+        }, companyId);
+        if (deliveryPlatform !== undefined && sale.deliveryPlatform !== deliveryPlatformForWrite(sale.saleType, deliveryPlatform)) {
+          await db.createAuditLog({ companyId, branchId: sale.branchId ?? branchId, entityType: "VENDA", entityId: saleId,
+            entityName: `Venda #${saleId}`, action: "EDICAO", userId: ctx.user.id, userName: ctx.user.name || undefined,
+            changes: [{ field: "deliveryPlatform", label: "Plataforma", oldValue: sale.deliveryPlatform ?? null,
+              newValue: deliveryPlatformForWrite(sale.saleType, deliveryPlatform) ?? null }],
+          });
+        }
         
         // 10. Atualizar recebível (se for venda A_PRAZO)
         if (sale.saleType === 'A_PRAZO') {
@@ -1257,6 +1279,27 @@ export const appRouter = router({
         return { success: true, newTotal: finalAmount };
       }),
     
+    // Metadata-only edit: explicit user action, no historical backfill or financial/stock reprocessing.
+    updateDeliveryPlatform: adminProcedure
+      .input(z.object({
+        saleId: z.number().int().positive(),
+        deliveryPlatform: z.enum(DELIVERY_PLATFORMS).nullable(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const companyId = requireActiveCompanyId(ctx.activeCompanyId);
+        const sale = await db.getSale(input.saleId, companyId);
+        if (!sale) throw new TRPCError({ code: "NOT_FOUND", message: "Venda não encontrada" });
+        if (sale.saleType !== "DELIVERY") throw new TRPCError({ code: "BAD_REQUEST", message: "Plataforma é aplicável somente a delivery" });
+        if ((sale.deliveryPlatform ?? null) === input.deliveryPlatform) return { success: true };
+        await db.updateSale(input.saleId, { deliveryPlatform: input.deliveryPlatform }, companyId);
+        await db.createAuditLog({ companyId, branchId: sale.branchId ?? ctx.activeBranchId ?? 0,
+          entityType: "VENDA", entityId: input.saleId, entityName: `Venda #${input.saleId}`,
+          action: "EDICAO", userId: ctx.user.id, userName: ctx.user.name || undefined,
+          changes: [{ field: "deliveryPlatform", label: "Plataforma", oldValue: sale.deliveryPlatform ?? null, newValue: input.deliveryPlatform }],
+        });
+        return { success: true };
+      }),
+
     calendar: protectedProcedure
       .input(z.object({
         year: z.number(),
@@ -1293,6 +1336,7 @@ export const appRouter = router({
         saleType: z.enum(["BALCAO", "DELIVERY", "A_PRAZO", "SALAO"]).optional(),
         customerId: z.number().optional(),
         paymentMethod: z.string().optional(),
+        deliveryPlatform: z.enum(DELIVERY_PLATFORM_FILTERS).optional(),
       }).optional())
       .query(async ({ input, ctx }) => {
         const companyId = requireActiveCompanyId(ctx.activeCompanyId);
@@ -2551,8 +2595,14 @@ export const appRouter = router({
         endDate: z.string().optional(),
         categoryId: z.number().optional(),
         channelId: z.number().optional(),
+        deliveryPlatform: z.enum(DELIVERY_PLATFORM_FILTERS).optional(),
+        companyId: z.number().int().positive().optional(),
       }).optional())
       .query(async ({ input, ctx }) => {
+      const companyId = requireActiveCompanyId(ctx.activeCompanyId);
+      if (input?.companyId !== undefined && input.companyId !== companyId) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "A empresa do filtro deve ser a empresa ativa." });
+      }
       // Determinar strings de data para filtro
       let startDateStr: string;
       let endDateStr: string;
@@ -2570,7 +2620,7 @@ export const appRouter = router({
       }
       
       // Usar query SQL otimizada com CONVERT_TZ e comissão do canal
-      return await db.getDeliveryProductAnalysis(startDateStr, endDateStr, input?.categoryId, ctx.activeCompanyId, input?.channelId);
+      return await db.getDeliveryProductAnalysis(startDateStr, endDateStr, input?.categoryId, companyId, input?.channelId, input?.deliveryPlatform);
     }),
     
     // Margem líquida delivery (deduzindo 7% de taxa iFood)
@@ -2586,6 +2636,8 @@ export const appRouter = router({
     // Quando filtro de produto é aplicado, calcula apenas para produtos selecionados
     summary: adminProcedure
       .input(z.object({
+        deliveryPlatform: z.enum(DELIVERY_PLATFORM_FILTERS).optional(),
+        companyId: z.number().int().positive().optional(),
         startDate: z.date(),
         endDate: z.date(),
         channels: z.array(z.string()).optional(),
@@ -2594,32 +2646,24 @@ export const appRouter = router({
         subcategoryId: z.number().optional(),
       }))
       .query(async ({ input, ctx }) => {
-        return await db.getSalesAnalysisSummary(input.startDate, input.endDate, ctx.activeCompanyId, {
+        const companyId = requireActiveCompanyId(ctx.activeCompanyId);
+        if (input.companyId !== undefined && input.companyId !== companyId) {
+          throw new TRPCError({ code: "FORBIDDEN", message: "A empresa do filtro deve ser a empresa ativa." });
+        }
+        return await db.getSalesAnalysisSummary(input.startDate, input.endDate, companyId, {
           channels: input.channels,
           paymentMethod: input.paymentMethod,
           productIds: input.productIds,
           subcategoryId: input.subcategoryId,
+          deliveryPlatform: input.deliveryPlatform,
         });
       }),
 
     // Contagem de vendas por canal (para Análise por Canal)
     countByChannel: adminProcedure
       .input(z.object({
-        startDate: z.date(),
-        endDate: z.date(),
-        productIds: z.array(z.number()).optional(),
-        subcategoryId: z.number().optional(),
-      }))
-      .query(async ({ input, ctx }) => {
-        return await db.getSalesCountByChannel(input.startDate, input.endDate, ctx.activeCompanyId, {
-          productIds: input.productIds,
-          subcategoryId: input.subcategoryId,
-        });
-      }),
-
-    // Análise por valores (faturamento, margem, lucro)
-    byValue: adminProcedure
-      .input(z.object({
+        deliveryPlatform: z.enum(DELIVERY_PLATFORM_FILTERS).optional(),
+        companyId: z.number().int().positive().optional(),
         startDate: z.date(),
         endDate: z.date(),
         productIds: z.array(z.number()).optional(),
@@ -2628,9 +2672,40 @@ export const appRouter = router({
         paymentMethod: z.string().optional(),
       }))
       .query(async ({ input, ctx }) => {
-        return await db.getSalesAnalysisByValue(input.startDate, input.endDate, ctx.activeCompanyId, {
+        const companyId = requireActiveCompanyId(ctx.activeCompanyId);
+        if (input.companyId !== undefined && input.companyId !== companyId) {
+          throw new TRPCError({ code: "FORBIDDEN", message: "A empresa do filtro deve ser a empresa ativa." });
+        }
+        return await db.getSalesCountByChannel(input.startDate, input.endDate, companyId, {
           productIds: input.productIds,
           subcategoryId: input.subcategoryId,
+          deliveryPlatform: input.deliveryPlatform,
+          channels: input.channels,
+          paymentMethod: input.paymentMethod,
+        });
+      }),
+
+    // Análise por valores (faturamento, margem, lucro)
+    byValue: adminProcedure
+      .input(z.object({
+        deliveryPlatform: z.enum(DELIVERY_PLATFORM_FILTERS).optional(),
+        companyId: z.number().int().positive().optional(),
+        startDate: z.date(),
+        endDate: z.date(),
+        productIds: z.array(z.number()).optional(),
+        subcategoryId: z.number().optional(),
+        channels: z.array(z.string()).optional(),
+        paymentMethod: z.string().optional(),
+      }))
+      .query(async ({ input, ctx }) => {
+        const companyId = requireActiveCompanyId(ctx.activeCompanyId);
+        if (input.companyId !== undefined && input.companyId !== companyId) {
+          throw new TRPCError({ code: "FORBIDDEN", message: "A empresa do filtro deve ser a empresa ativa." });
+        }
+        return await db.getSalesAnalysisByValue(input.startDate, input.endDate, companyId, {
+          productIds: input.productIds,
+          subcategoryId: input.subcategoryId,
+          deliveryPlatform: input.deliveryPlatform,
           channels: input.channels,
           paymentMethod: input.paymentMethod,
         });
@@ -2639,6 +2714,8 @@ export const appRouter = router({
     // Análise por quantidades (unidades vendidas, mix)
     byQuantity: adminProcedure
       .input(z.object({
+        deliveryPlatform: z.enum(DELIVERY_PLATFORM_FILTERS).optional(),
+        companyId: z.number().int().positive().optional(),
         startDate: z.date(),
         endDate: z.date(),
         productIds: z.array(z.number()).optional(),
@@ -2647,9 +2724,14 @@ export const appRouter = router({
         paymentMethod: z.string().optional(),
       }))
       .query(async ({ input, ctx }) => {
-        return await db.getSalesAnalysisByQuantity(input.startDate, input.endDate, ctx.activeCompanyId, {
+        const companyId = requireActiveCompanyId(ctx.activeCompanyId);
+        if (input.companyId !== undefined && input.companyId !== companyId) {
+          throw new TRPCError({ code: "FORBIDDEN", message: "A empresa do filtro deve ser a empresa ativa." });
+        }
+        return await db.getSalesAnalysisByQuantity(input.startDate, input.endDate, companyId, {
           productIds: input.productIds,
           subcategoryId: input.subcategoryId,
+          deliveryPlatform: input.deliveryPlatform,
           channels: input.channels,
           paymentMethod: input.paymentMethod,
         });
@@ -2658,6 +2740,8 @@ export const appRouter = router({
     // Análise por categoria (valores)
     byCategoryValue: adminProcedure
       .input(z.object({
+        deliveryPlatform: z.enum(DELIVERY_PLATFORM_FILTERS).optional(),
+        companyId: z.number().int().positive().optional(),
         startDate: z.date(),
         endDate: z.date(),
         productIds: z.array(z.number()).optional(),
@@ -2666,9 +2750,14 @@ export const appRouter = router({
         paymentMethod: z.string().optional(),
       }))
       .query(async ({ input, ctx }) => {
-        return await db.getSalesAnalysisByCategoryValue(input.startDate, input.endDate, ctx.activeCompanyId, {
+        const companyId = requireActiveCompanyId(ctx.activeCompanyId);
+        if (input.companyId !== undefined && input.companyId !== companyId) {
+          throw new TRPCError({ code: "FORBIDDEN", message: "A empresa do filtro deve ser a empresa ativa." });
+        }
+        return await db.getSalesAnalysisByCategoryValue(input.startDate, input.endDate, companyId, {
           productIds: input.productIds,
           subcategoryId: input.subcategoryId,
+          deliveryPlatform: input.deliveryPlatform,
           channels: input.channels,
           paymentMethod: input.paymentMethod,
         });
@@ -2677,6 +2766,8 @@ export const appRouter = router({
     // Análise por dia
     byDay: adminProcedure
       .input(z.object({
+        deliveryPlatform: z.enum(DELIVERY_PLATFORM_FILTERS).optional(),
+        companyId: z.number().int().positive().optional(),
         startDate: z.date(),
         endDate: z.date(),
         productIds: z.array(z.number()).optional(),
@@ -2685,9 +2776,14 @@ export const appRouter = router({
         paymentMethod: z.string().optional(),
       }))
       .query(async ({ input, ctx }) => {
-        return await db.getSalesAnalysisByDay(input.startDate, input.endDate, ctx.activeCompanyId, {
+        const companyId = requireActiveCompanyId(ctx.activeCompanyId);
+        if (input.companyId !== undefined && input.companyId !== companyId) {
+          throw new TRPCError({ code: "FORBIDDEN", message: "A empresa do filtro deve ser a empresa ativa." });
+        }
+        return await db.getSalesAnalysisByDay(input.startDate, input.endDate, companyId, {
           productIds: input.productIds,
           subcategoryId: input.subcategoryId,
+          deliveryPlatform: input.deliveryPlatform,
           channels: input.channels,
           paymentMethod: input.paymentMethod,
         });
@@ -2696,6 +2792,8 @@ export const appRouter = router({
     // Análise por semana
     byWeek: adminProcedure
       .input(z.object({
+        deliveryPlatform: z.enum(DELIVERY_PLATFORM_FILTERS).optional(),
+        companyId: z.number().int().positive().optional(),
         startDate: z.date(),
         endDate: z.date(),
         productIds: z.array(z.number()).optional(),
@@ -2704,9 +2802,14 @@ export const appRouter = router({
         paymentMethod: z.string().optional(),
       }))
       .query(async ({ input, ctx }) => {
-        return await db.getSalesAnalysisByWeek(input.startDate, input.endDate, ctx.activeCompanyId, {
+        const companyId = requireActiveCompanyId(ctx.activeCompanyId);
+        if (input.companyId !== undefined && input.companyId !== companyId) {
+          throw new TRPCError({ code: "FORBIDDEN", message: "A empresa do filtro deve ser a empresa ativa." });
+        }
+        return await db.getSalesAnalysisByWeek(input.startDate, input.endDate, companyId, {
           productIds: input.productIds,
           subcategoryId: input.subcategoryId,
+          deliveryPlatform: input.deliveryPlatform,
           channels: input.channels,
           paymentMethod: input.paymentMethod,
         });
@@ -2715,6 +2818,8 @@ export const appRouter = router({
     // Análise por mês
     byMonth: adminProcedure
       .input(z.object({
+        deliveryPlatform: z.enum(DELIVERY_PLATFORM_FILTERS).optional(),
+        companyId: z.number().int().positive().optional(),
         startDate: z.date(),
         endDate: z.date(),
         productIds: z.array(z.number()).optional(),
@@ -2723,9 +2828,14 @@ export const appRouter = router({
         paymentMethod: z.string().optional(),
       }))
       .query(async ({ input, ctx }) => {
-        return await db.getSalesAnalysisByMonth(input.startDate, input.endDate, ctx.activeCompanyId, {
+        const companyId = requireActiveCompanyId(ctx.activeCompanyId);
+        if (input.companyId !== undefined && input.companyId !== companyId) {
+          throw new TRPCError({ code: "FORBIDDEN", message: "A empresa do filtro deve ser a empresa ativa." });
+        }
+        return await db.getSalesAnalysisByMonth(input.startDate, input.endDate, companyId, {
           productIds: input.productIds,
           subcategoryId: input.subcategoryId,
+          deliveryPlatform: input.deliveryPlatform,
           channels: input.channels,
           paymentMethod: input.paymentMethod,
         });
@@ -2734,6 +2844,8 @@ export const appRouter = router({
     // Matriz Produto × Dia (para Evolução Diária)
     byProductAndDate: adminProcedure
       .input(z.object({
+        deliveryPlatform: z.enum(DELIVERY_PLATFORM_FILTERS).optional(),
+        companyId: z.number().int().positive().optional(),
         startDate: z.date(),
         endDate: z.date(),
         productIds: z.array(z.number()).optional(),
@@ -2742,9 +2854,14 @@ export const appRouter = router({
         paymentMethod: z.string().optional(),
       }))
       .query(async ({ input, ctx }) => {
-        return await db.getSalesByProductAndDate(input.startDate, input.endDate, ctx.activeCompanyId, {
+        const companyId = requireActiveCompanyId(ctx.activeCompanyId);
+        if (input.companyId !== undefined && input.companyId !== companyId) {
+          throw new TRPCError({ code: "FORBIDDEN", message: "A empresa do filtro deve ser a empresa ativa." });
+        }
+        return await db.getSalesByProductAndDate(input.startDate, input.endDate, companyId, {
           productIds: input.productIds,
           subcategoryId: input.subcategoryId,
+          deliveryPlatform: input.deliveryPlatform,
           channels: input.channels,
           paymentMethod: input.paymentMethod,
         });
@@ -2753,6 +2870,8 @@ export const appRouter = router({
     // Comparação de Períodos
     comparePeriods: adminProcedure
       .input(z.object({
+        deliveryPlatform: z.enum(DELIVERY_PLATFORM_FILTERS).optional(),
+        companyId: z.number().int().positive().optional(),
         period1: z.object({
           startDate: z.date(),
           endDate: z.date(),
@@ -2768,9 +2887,14 @@ export const appRouter = router({
         paymentMethod: z.string().optional(),
       }))
       .query(async ({ input, ctx }) => {
+        const companyId = requireActiveCompanyId(ctx.activeCompanyId);
+        if (input.companyId !== undefined && input.companyId !== companyId) {
+          throw new TRPCError({ code: "FORBIDDEN", message: "A empresa do filtro deve ser a empresa ativa." });
+        }
         const filters = {
           productIds: input.productIds,
           subcategoryId: input.subcategoryId,
+          deliveryPlatform: input.deliveryPlatform,
           channels: input.channels,
           paymentMethod: input.paymentMethod,
         };
@@ -2782,10 +2906,10 @@ export const appRouter = router({
 
         // Buscar dados dos dois períodos em paralelo + totais usando finalAmount
         const [period1Data, period2Data, period1Summary, period2Summary] = await Promise.all([
-          fetchFunction(input.period1.startDate, input.period1.endDate, ctx.activeCompanyId, filters),
-          fetchFunction(input.period2.startDate, input.period2.endDate, ctx.activeCompanyId, filters),
-          db.getSalesAnalysisSummary(input.period1.startDate, input.period1.endDate, ctx.activeCompanyId, filters),
-          db.getSalesAnalysisSummary(input.period2.startDate, input.period2.endDate, ctx.activeCompanyId, filters),
+          fetchFunction(input.period1.startDate, input.period1.endDate, companyId, filters),
+          fetchFunction(input.period2.startDate, input.period2.endDate, companyId, filters),
+          db.getSalesAnalysisSummary(input.period1.startDate, input.period1.endDate, companyId, filters),
+          db.getSalesAnalysisSummary(input.period2.startDate, input.period2.endDate, companyId, filters),
         ]);
 
         return {

@@ -19,6 +19,7 @@ const originalRoutes: ReadonlyArray<readonly [string | null, string]> = [
   ["/compras", "Compras"],
   ["/venda-interna", "VendaInterna"],
   ["/vendas", "Vendas"],
+  ["/consumo", "Consumo"],
   ["/parceiros", "Parceiros"],
   ["/despesas", "Despesas"],
   ["/contas-receber", "ContasReceberNovo"],
@@ -160,11 +161,11 @@ function renderResolved(element: React.ReactElement): Promise<string> {
       onAllReady: () => stream.pipe(destination),
       onError: reject,
     });
-  });
+});
 }
 
 describe("route loading — structural safety invariants", () => {
-  it("preserves all 53 original routes, names, order, aliases and orderId", () => {
+  it("preserves all original routes and adds Consumo with stable names, order, aliases and orderId", () => {
     const routes = descendants(functionNode("Router"), node => ts.isJsxSelfClosingElement(node) && node.tagName.getText(app) === "Route") as ts.JsxSelfClosingElement[];
     const actual = routes.map(route => {
       const path = route.attributes.properties.find(attribute => ts.isJsxAttribute(attribute) && attribute.name.getText(app) === "path") as ts.JsxAttribute | undefined;

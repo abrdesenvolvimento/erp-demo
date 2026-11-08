@@ -1,5 +1,6 @@
 import { eq, desc, or, like, and, sql, gte, lte, lt, ne, inArray, SQL } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
+import { DELIVERY_PLATFORM_FILTERS, IFOOD_ORDER_UUID_PATTERN, deliveryPlatformForWrite, type DeliveryPlatform, type DeliveryPlatformFilter } from "../shared/deliveryPlatforms";
 import { 
   InsertUser, users,
   categories, Category, InsertCategory,
@@ -684,90 +685,64 @@ export async function updatePartner(id: number, data: Partial<InsertPartner>) {
 }
 
 // ==================== VENDAS ====================
-export async function getSales(filters: { saleType?: string; customerId?: number; limit?: number; dateFrom?: string; dateTo?: string; companyId: number }) {
-  const db = await getDb();
-  if (!db) return [];
+/** Stored origin takes precedence. Legacy evidence is UUID + saleId + same company, never a short code/channel. */
+export function effectiveDeliveryPlatformSql(alias: "sales" | "s" = "sales"): string {
+  return `(CASE WHEN ${alias}.saleType <> 'DELIVERY' THEN NULL
+    WHEN ${alias}.deliveryPlatform IS NOT NULL THEN
+      CASE WHEN ${alias}.deliveryPlatform IN ('IFOOD', '99FOOD', 'PROPRIO', 'OUTRO') THEN ${alias}.deliveryPlatform ELSE NULL END
+    WHEN EXISTS (SELECT 1 FROM ifoodImportedOrders io
+      WHERE io.saleId = ${alias}.id AND io.companyId = ${alias}.companyId
+        AND io.ifoodOrderId REGEXP '${IFOOD_ORDER_UUID_PATTERN}') THEN 'IFOOD'
+    ELSE NULL END)`;
+}
 
+/** One shared predicate for list, totals and exports; EXISTS cannot multiply joined sale rows. */
+export function deliveryPlatformFilterSql(platform?: DeliveryPlatformFilter, alias: "sales" | "s" = "sales"): string {
+  if (platform === undefined) return "";
+  if (!(DELIVERY_PLATFORM_FILTERS as readonly string[]).includes(platform)) throw new Error("Plataforma inválida");
+  const comparison = platform === "NAO_INFORMADO" ? "IS NULL" : `= '${platform}'`;
+  return ` AND ${alias}.saleType = 'DELIVERY' AND ${effectiveDeliveryPlatformSql(alias)} ${comparison}`;
+}
+
+export async function getSales(filters: { saleType?: string; customerId?: number; limit?: number; dateFrom?: string; dateTo?: string; deliveryPlatform?: DeliveryPlatformFilter; companyId: number }) {
   if (!Number.isInteger(filters.companyId) || filters.companyId < 1) {
     throw new Error("companyId válido é obrigatório para consultar vendas");
   }
-  
-  // Se tem filtro de data, usar query SQL otimizada
-  if (filters?.dateFrom || filters?.dateTo) {
-    let whereConditions = `1=1`;
-    whereConditions += ` AND companyId = ${filters.companyId}`;
-    
-    if (filters?.saleType) {
-      whereConditions += ` AND saleType = '${filters.saleType}'`;
-    }
-    
-    if (filters?.customerId) {
-      whereConditions += ` AND customerId = ${filters.customerId}`;
-    }
-    
-    // OTIMIZAÇÃO: Usar range de timestamps ao invés de CONVERT_TZ
-    // Isso permite usar o índice em saleDate
-    // Brasília = UTC-3, então adicionamos 3 horas para converter para UTC
-    if (filters?.dateFrom) {
-      // Início do dia em Brasília (00:00) = 03:00 UTC
-      whereConditions += ` AND saleDate >= '${filters.dateFrom} 03:00:00'`;
-    }
-    if (filters?.dateTo) {
-      // Fim do dia em Brasília (23:59:59) = próximo dia 02:59:59 UTC
-      whereConditions += ` AND saleDate < DATE_ADD('${filters.dateTo}', INTERVAL 1 DAY) + INTERVAL 3 HOUR`;
-    }
-    
-    const limitClause = filters?.limit ? `LIMIT ${filters.limit}` : 'LIMIT 500';
-    
-    const result = await db.execute(sql.raw(`
-      SELECT 
-        id, saleType, 
-        CONVERT_TZ(saleDate, '+00:00', '-03:00') as saleDate,
-        customerId, channelId, platformOrderId,
-        subtotal, discountAmount, surchargeAmount, finalAmount,
-        paymentMethod, requiresAdminApproval, adminApprovedBy, notes,
-        status, cancelledAt, cancelledBy, cancellationReason,
-        createdBy, createdAt
-      FROM sales 
-      WHERE ${whereConditions}
-      ORDER BY saleDate DESC
-      ${limitClause}
-    `));
-    
-    // Retorna datas já convertidas para Brasília - frontend NÃO deve usar timeZone
-    return (result[0] as unknown as any[]) || [];
-  }
-  
-  // Query padrão sem filtro de data
+  const db = await getDb();
+  if (!db) return [];
   let whereConditions = `1=1`;
   whereConditions += ` AND companyId = ${filters.companyId}`;
-  
-  if (filters?.saleType) {
+  if (filters.saleType) {
+    if (!["BALCAO", "DELIVERY", "A_PRAZO", "SALAO"].includes(filters.saleType)) throw new Error("Tipo de venda inválido");
     whereConditions += ` AND saleType = '${filters.saleType}'`;
   }
-  
-  if (filters?.customerId) {
+  if (filters.customerId !== undefined) {
+    if (!Number.isInteger(filters.customerId) || filters.customerId < 1) throw new Error("Cliente inválido");
     whereConditions += ` AND customerId = ${filters.customerId}`;
   }
-  
-  const limitClause = filters?.limit ? `LIMIT ${filters.limit}` : 'LIMIT 500';
-  
+  // Brasília 00:00 = UTC 03:00; keep historical date semantics and indexed ranges.
+  for (const date of [filters.dateFrom, filters.dateTo]) {
+    if (date && !/^\d{4}-\d{2}-\d{2}$/.test(date)) throw new Error("Data inválida");
+  }
+  if (filters.dateFrom) whereConditions += ` AND saleDate >= '${filters.dateFrom} 03:00:00'`;
+  if (filters.dateTo) whereConditions += ` AND saleDate < DATE_ADD('${filters.dateTo}', INTERVAL 1 DAY) + INTERVAL 3 HOUR`;
+  whereConditions += deliveryPlatformFilterSql(filters.deliveryPlatform);
+  const limit = filters.limit ?? 500;
+  if (!Number.isInteger(limit) || limit < 1) throw new Error("Limite inválido");
   const result = await db.execute(sql.raw(`
-    SELECT 
-      id, saleType, 
+    SELECT id, saleType,
       CONVERT_TZ(saleDate, '+00:00', '-03:00') as saleDate,
-      customerId, channelId, platformOrderId,
+      customerId, channelId, platformOrderId, deliveryPlatform,
+      ${effectiveDeliveryPlatformSql()} as effectiveDeliveryPlatform,
       subtotal, discountAmount, surchargeAmount, finalAmount,
       paymentMethod, requiresAdminApproval, adminApprovedBy, notes,
       status, cancelledAt, cancelledBy, cancellationReason,
-      createdBy, createdAt
-    FROM sales 
+      createdBy, createdAt, companyId, branchId
+    FROM sales
     WHERE ${whereConditions}
     ORDER BY saleDate DESC
-    ${limitClause}
+    LIMIT ${limit}
   `));
-  
-  // Retorna datas já convertidas para Brasília - frontend NÃO deve usar timeZone
   return (result[0] as unknown as any[]) || [];
 }
 
@@ -786,7 +761,8 @@ export async function getSale(id: number, companyId?: number) {
     SELECT 
       s.id, s.saleType, 
       CONVERT_TZ(s.saleDate, '+00:00', '-03:00') as saleDate,
-      s.customerId, s.channelId, s.platformOrderId,
+      s.customerId, s.channelId, s.platformOrderId, s.deliveryPlatform,
+      ${effectiveDeliveryPlatformSql("s")} as effectiveDeliveryPlatform,
       s.subtotal, s.discountAmount, s.surchargeAmount, s.finalAmount,
       s.paymentMethod, s.requiresAdminApproval, s.adminApprovedBy, s.notes,
       s.status, s.cancelledAt, s.cancelledBy, s.cancellationReason,
@@ -850,6 +826,7 @@ export async function getSaleItemsBySaleIds(saleIds: number[]) {
 }
 
 export async function createSale(saleData: InsertSale, items: Omit<InsertSaleItem, 'saleId'>[]) {
+  saleData = { ...saleData, deliveryPlatform: deliveryPlatformForWrite(saleData.saleType, saleData.deliveryPlatform as DeliveryPlatform | null | undefined) };
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
@@ -972,12 +949,16 @@ export async function createSale(saleData: InsertSale, items: Omit<InsertSaleIte
 }
 
 export async function getSalesStats(
-  period?: 'today' | 'week' | 'month' | 'all',
-  dateFrom?: string,
-  dateTo?: string,
-  channel?: 'BALCAO' | 'DELIVERY' | 'A_PRAZO' | 'SALAO',
-  companyId: number
+  period: 'today' | 'week' | 'month' | 'all' | undefined,
+  dateFrom: string | undefined,
+  dateTo: string | undefined,
+  channel: 'BALCAO' | 'DELIVERY' | 'A_PRAZO' | 'SALAO' | undefined,
+  companyId: number,
+  deliveryPlatform?: DeliveryPlatformFilter
 ) {
+  if (!Number.isInteger(companyId) || companyId < 1) {
+    throw new Error("companyId válido é obrigatório para consultar indicadores de vendas");
+  }
   const db = await getDb();
   if (!db) return {
     balcao: { count: 0, total: "0.00" },
@@ -1038,6 +1019,8 @@ export async function getSalesStats(
     whereConditions += ` AND saleType = '${channel}'`;
   }
   
+  whereConditions += deliveryPlatformFilterSql(deliveryPlatform);
+
   // Query SQL otimizada com GROUP BY
   const result = await db.execute(sql.raw(`
     SELECT 
@@ -4191,7 +4174,9 @@ export async function updateSale(saleId: number, data: {
   surchargeAmount?: string;
   finalAmount?: string;
   platformOrderId?: string;
-}) {
+  deliveryPlatform?: DeliveryPlatform | null;
+}, companyId?: number) {
+  if (companyId !== undefined && (!Number.isInteger(companyId) || companyId < 1)) throw new Error("Empresa inválida");
   const database = await getDb();
   if (!database) throw new Error("Database not available");
   
@@ -4202,12 +4187,13 @@ export async function updateSale(saleId: number, data: {
   if (data.surchargeAmount !== undefined) updateData.surchargeAmount = data.surchargeAmount;
   if (data.finalAmount !== undefined) updateData.finalAmount = data.finalAmount;
   if (data.platformOrderId !== undefined) updateData.platformOrderId = data.platformOrderId;
+  if (data.deliveryPlatform !== undefined) updateData.deliveryPlatform = data.deliveryPlatform;
   
   if (Object.keys(updateData).length === 0) return;
   
   await database.update(sales)
     .set(updateData)
-    .where(eq(sales.id, saleId));
+    .where(and(eq(sales.id, saleId), companyId !== undefined ? eq(sales.companyId, companyId) : undefined));
 }
 
 export async function getReceivableBySaleId(saleId: number) {
@@ -4838,6 +4824,13 @@ export async function getGrossMarginByCategory(companyId?: number) {
  * Análise de Vendas - Por Valores
  * Retorna faturamento, custo, margem e lucro por produto
  */
+/** These analysis paths never fall back to a global company scope. */
+function requireSalesAnalysisCompanyId(companyId: number | undefined): asserts companyId is number {
+  if (!Number.isInteger(companyId) || !companyId || companyId < 1) {
+    throw new Error("companyId válido é obrigatório para consultar análises de vendas");
+  }
+}
+
 export async function getSalesAnalysisByValue(
   startDate: Date, 
   endDate: Date,
@@ -4847,8 +4840,10 @@ export async function getSalesAnalysisByValue(
     subcategoryId?: number;
     channels?: string[];
     paymentMethod?: string;
+    deliveryPlatform?: DeliveryPlatformFilter;
   }
 ) {
+  requireSalesAnalysisCompanyId(companyId);
   const db = await getDb();
   if (!db) return [];
 
@@ -4859,7 +4854,8 @@ export async function getSalesAnalysisByValue(
   // Construir condições WHERE dinâmicas
   // Usar CONVERT_TZ para converter UTC para horário local do Brasil (GMT-3)
   let whereConditions = `s.status != 'CANCELLED' AND ${saleDateRangeWhere('s', startStr, endStr)}`;
-  if (companyId) whereConditions += ` AND s.companyId = ${companyId}`;
+  whereConditions += ` AND s.companyId = ${companyId}`;
+  whereConditions += deliveryPlatformFilterSql(filters?.deliveryPlatform, "s");
   
   if (filters?.productIds && filters.productIds.length > 0) {
     whereConditions += ` AND p.id IN (${filters.productIds.join(',')})`;
@@ -4921,8 +4917,10 @@ export async function getSalesAnalysisByQuantity(
     subcategoryId?: number;
     channels?: string[];
     paymentMethod?: string;
+    deliveryPlatform?: DeliveryPlatformFilter;
   }
 ) {
+  requireSalesAnalysisCompanyId(companyId);
   const db = await getDb();
   if (!db) return [];
 
@@ -4933,9 +4931,12 @@ export async function getSalesAnalysisByQuantity(
   // Construir condições WHERE dinâmicas
   // Usar CONVERT_TZ para converter UTC para horário local do Brasil (GMT-3)
   let whereConditions = `s.status != 'CANCELLED' AND ${saleDateRangeWhere('s', startStr, endStr)}`;
-  if (companyId) whereConditions += ` AND s.companyId = ${companyId}`;
+  whereConditions += ` AND s.companyId = ${companyId}`;
+  whereConditions += deliveryPlatformFilterSql(filters?.deliveryPlatform, "s");
   let subqueryWhere = `s2.status != 'CANCELLED' AND ${saleDateRangeWhere('s2', startStr, endStr)}`;
-  if (companyId) subqueryWhere += ` AND s2.companyId = ${companyId}`;
+  subqueryWhere += ` AND s2.companyId = ${companyId}`;
+  // Reuse the shared predicate with the correlated subquery's local sales alias.
+  subqueryWhere += deliveryPlatformFilterSql(filters?.deliveryPlatform, "s").replace(/\bs\./g, "s2.");
   
   if (filters?.productIds && filters.productIds.length > 0) {
     whereConditions += ` AND p.id IN (${filters.productIds.join(',')})`;
@@ -5002,8 +5003,10 @@ export async function getSalesAnalysisByCategoryValue(
     subcategoryId?: number;
     channels?: string[];
     paymentMethod?: string;
+    deliveryPlatform?: DeliveryPlatformFilter;
   }
 ) {
+  requireSalesAnalysisCompanyId(companyId);
   const db = await getDb();
   if (!db) return [];
 
@@ -5014,7 +5017,8 @@ export async function getSalesAnalysisByCategoryValue(
   // Construir condições WHERE dinâmicas
   // Usar CONVERT_TZ para converter UTC para horário local do Brasil (GMT-3)
   let whereConditions = `s.status != 'CANCELLED' AND ${saleDateRangeWhere('s', startStr, endStr)}`;
-  if (companyId) whereConditions += ` AND s.companyId = ${companyId}`;
+  whereConditions += ` AND s.companyId = ${companyId}`;
+  whereConditions += deliveryPlatformFilterSql(filters?.deliveryPlatform, "s");
   
   if (filters?.productIds && filters.productIds.length > 0) {
     whereConditions += ` AND p.id IN (${filters.productIds.join(',')})`;
@@ -5072,8 +5076,10 @@ export async function getSalesAnalysisByDay(
     subcategoryId?: number;
     channels?: string[];
     paymentMethod?: string;
+    deliveryPlatform?: DeliveryPlatformFilter;
   }
 ) {
+  requireSalesAnalysisCompanyId(companyId);
   const db = await getDb();
   if (!db) return [];
 
@@ -5084,7 +5090,8 @@ export async function getSalesAnalysisByDay(
   // Construir condições WHERE dinâmicas
   // Usar CONVERT_TZ para converter UTC para horário local do Brasil (GMT-3)
   let whereConditions = `s.status != 'CANCELLED' AND ${saleDateRangeWhere('s', startStr, endStr)}`;
-  if (companyId) whereConditions += ` AND s.companyId = ${companyId}`;
+  whereConditions += ` AND s.companyId = ${companyId}`;
+  whereConditions += deliveryPlatformFilterSql(filters?.deliveryPlatform, "s");
   
   if (filters?.productIds && filters.productIds.length > 0) {
     whereConditions += ` AND p.id IN (${filters.productIds.join(',')})`;
@@ -5141,8 +5148,10 @@ export async function getSalesAnalysisByWeek(
     subcategoryId?: number;
     channels?: string[];
     paymentMethod?: string;
+    deliveryPlatform?: DeliveryPlatformFilter;
   }
 ) {
+  requireSalesAnalysisCompanyId(companyId);
   const db = await getDb();
   if (!db) return [];
 
@@ -5153,7 +5162,8 @@ export async function getSalesAnalysisByWeek(
   // Construir condições WHERE dinâmicas
   // Usar CONVERT_TZ para converter UTC para horário local do Brasil (GMT-3)
   let whereConditions = `s.status != 'CANCELLED' AND ${saleDateRangeWhere('s', startStr, endStr)}`;
-  if (companyId) whereConditions += ` AND s.companyId = ${companyId}`;
+  whereConditions += ` AND s.companyId = ${companyId}`;
+  whereConditions += deliveryPlatformFilterSql(filters?.deliveryPlatform, "s");
   
   if (filters?.productIds && filters.productIds.length > 0) {
     whereConditions += ` AND p.id IN (${filters.productIds.join(',')})`;
@@ -5212,8 +5222,10 @@ export async function getSalesAnalysisByMonth(
     subcategoryId?: number;
     channels?: string[];
     paymentMethod?: string;
+    deliveryPlatform?: DeliveryPlatformFilter;
   }
 ) {
+  requireSalesAnalysisCompanyId(companyId);
   const db = await getDb();
   if (!db) return [];
 
@@ -5224,7 +5236,8 @@ export async function getSalesAnalysisByMonth(
   // Construir condições WHERE dinâmicas
   // Usar CONVERT_TZ para converter UTC para horário local do Brasil (GMT-3)
   let whereConditions = `s.status != 'CANCELLED' AND ${saleDateRangeWhere('s', startStr, endStr)}`;
-  if (companyId) whereConditions += ` AND s.companyId = ${companyId}`;
+  whereConditions += ` AND s.companyId = ${companyId}`;
+  whereConditions += deliveryPlatformFilterSql(filters?.deliveryPlatform, "s");
   
   if (filters?.productIds && filters.productIds.length > 0) {
     whereConditions += ` AND p.id IN (${filters.productIds.join(',')})`;
@@ -5283,8 +5296,10 @@ export async function getSalesByProductAndDate(
     subcategoryId?: number;
     channels?: string[];
     paymentMethod?: string;
+    deliveryPlatform?: DeliveryPlatformFilter;
   }
 ) {
+  requireSalesAnalysisCompanyId(companyId);
   const db = await getDb();
   if (!db) return [];
 
@@ -5295,7 +5310,8 @@ export async function getSalesByProductAndDate(
   // Construir condições WHERE dinâmicas
   // Usar CONVERT_TZ para converter UTC para horário local do Brasil (GMT-3)
   let whereConditions = `s.status != 'CANCELLED' AND ${saleDateRangeWhere('s', startStr, endStr)}`;
-  if (companyId) whereConditions += ` AND s.companyId = ${companyId}`;
+  whereConditions += ` AND s.companyId = ${companyId}`;
+  whereConditions += deliveryPlatformFilterSql(filters?.deliveryPlatform, "s");
   
   if (filters?.productIds && filters.productIds.length > 0) {
     whereConditions += ` AND p.id IN (${filters.productIds.join(',')})`;
@@ -5350,7 +5366,9 @@ export async function getSalesForExport(filters?: { companyId?: number;
   saleType?: string; 
   customerId?: number;
   paymentMethod?: string;
+  deliveryPlatform?: DeliveryPlatformFilter;
 }) {
+  if (!filters?.companyId || !Number.isInteger(filters.companyId) || filters.companyId < 1) throw new Error("Empresa obrigatória para exportar vendas");
   const db = await getDb();
   if (!db) return [];
 
@@ -5387,11 +5405,15 @@ export async function getSalesForExport(filters?: { companyId?: number;
     whereConditions += ` AND s.paymentMethod = '${filters.paymentMethod}'`;
   }
 
+  whereConditions += deliveryPlatformFilterSql(filters?.deliveryPlatform, "s");
+
   const result = await db.execute(sql.raw(`
     SELECT 
       s.id as saleId,
       s.saleType as channel,
       s.platformOrderId as orderNumber,
+      s.deliveryPlatform,
+      ${effectiveDeliveryPlatformSql("s")} as effectiveDeliveryPlatform,
       p.name as productName,
       si.quantity,
       CONVERT_TZ(s.saleDate, '+00:00', '-03:00') as saleDate,
@@ -5411,6 +5433,8 @@ export async function getSalesForExport(filters?: { companyId?: number;
     saleId: number;
     channel: string;
     orderNumber: string | null;
+    deliveryPlatform: DeliveryPlatform | null;
+    effectiveDeliveryPlatform: DeliveryPlatform | null;
     productName: string;
     quantity: number;
     saleDate: Date;
@@ -5831,8 +5855,10 @@ export async function getDeliveryProductAnalysis(
   endDate: string,
   categoryId?: number,
   companyId?: number,
-  channelId?: number
+  channelId?: number,
+  deliveryPlatform?: DeliveryPlatformFilter
 ) {
+  requireSalesAnalysisCompanyId(companyId);
   const db = await getDb();
   if (!db) return { products: [], channelInfo: null };
 
@@ -5843,7 +5869,7 @@ export async function getDeliveryProductAnalysis(
   
   if (channelId) {
     const channelResult = await db.execute(sql.raw(
-      `SELECT name, commissionPercent, fixedFeePerOrder FROM salesChannels WHERE id = ${channelId}`
+      `SELECT name, commissionPercent, fixedFeePerOrder FROM salesChannels WHERE id = ${channelId} AND companyId = ${companyId}`
     ));
     const channelRows = (channelResult[0] as unknown as any[]) || [];
     if (channelRows.length > 0) {
@@ -5855,7 +5881,8 @@ export async function getDeliveryProductAnalysis(
 
   // Construir condições WHERE
   let whereConditions = `s.status != 'CANCELLED' AND s.saleType = 'DELIVERY' AND ${saleDateRangeWhere('s', startDate, endDate)}`;
-  if (companyId) whereConditions += ` AND s.companyId = ${companyId}`;
+  whereConditions += ` AND s.companyId = ${companyId}`;
+  whereConditions += deliveryPlatformFilterSql(deliveryPlatform, "s");
   if (channelId) whereConditions += ` AND s.channelId = ${channelId}`;
   
   if (categoryId) {
@@ -5948,8 +5975,10 @@ export async function getSalesAnalysisSummary(
     paymentMethod?: string;
     productIds?: number[];
     subcategoryId?: number;
+    deliveryPlatform?: DeliveryPlatformFilter;
   }
 ) {
+  requireSalesAnalysisCompanyId(companyId);
   const db = await getDb();
   if (!db) return { totalRevenue: 0, totalSales: 0, totalCost: 0 };
 
@@ -5963,7 +5992,8 @@ export async function getSalesAnalysisSummary(
   if (hasProductFilter) {
     // Query baseada em saleItems para filtrar por produtos específicos
     let whereConditions = `s.status != 'CANCELLED' AND ${saleDateRangeWhere('s', startStr, endStr)}`;
-    if (companyId) whereConditions += ` AND s.companyId = ${companyId}`;
+    whereConditions += ` AND s.companyId = ${companyId}`;
+    whereConditions += deliveryPlatformFilterSql(filters?.deliveryPlatform, "s");
     
     if (filters?.channels && filters.channels.length > 0) {
       const channelList = filters.channels.map(ch => `'${ch}'`).join(',');
@@ -6002,7 +6032,8 @@ export async function getSalesAnalysisSummary(
 
   // Query original usando sales.finalAmount (sem filtro de produto)
   let whereConditions = `status != 'CANCELLED' AND ${saleDateRangeWhereNoAlias(startStr, endStr)}`;
-  if (companyId) whereConditions += ` AND companyId = ${companyId}`;
+  whereConditions += ` AND companyId = ${companyId}`;
+  whereConditions += deliveryPlatformFilterSql(filters?.deliveryPlatform);
   
   if (filters?.channels && filters.channels.length > 0) {
     const channelList = filters.channels.map(ch => `'${ch}'`).join(',');
@@ -6042,8 +6073,12 @@ export async function getSalesCountByChannel(
   filters?: {
     productIds?: number[];
     subcategoryId?: number;
+    deliveryPlatform?: DeliveryPlatformFilter;
+    channels?: string[];
+    paymentMethod?: string;
   }
 ) {
+  requireSalesAnalysisCompanyId(companyId);
   const db = await getDb();
   if (!db) return [];
 
@@ -6051,7 +6086,16 @@ export async function getSalesCountByChannel(
   const endStr = toDateString(endDate);
 
   let whereConditions = `s.status != 'CANCELLED' AND ${saleDateRangeWhere('s', startStr, endStr)}`;
-  if (companyId) whereConditions += ` AND s.companyId = ${companyId}`;
+  whereConditions += ` AND s.companyId = ${companyId}`;
+  whereConditions += deliveryPlatformFilterSql(filters?.deliveryPlatform, "s");
+
+  if (filters?.channels && filters.channels.length > 0) {
+    const channelList = filters.channels.map(ch => `'${ch}'`).join(',');
+    whereConditions += ` AND s.saleType IN (${channelList})`;
+  }
+  if (filters?.paymentMethod) {
+    whereConditions += ` AND s.paymentMethod = '${filters.paymentMethod}'`;
+  }
 
   // Se tem filtro de produto, contar apenas vendas que contenham esses produtos
   if (filters?.productIds && filters.productIds.length > 0) {
