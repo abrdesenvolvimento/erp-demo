@@ -12,7 +12,9 @@ describe("Contingência de backup incremental", () => {
     expect(workflow).toContain("LIMIT ${CHUNK_ROWS} OFFSET ${offset}");
     expect(workflow).toContain("manifest.chunks.push");
     expect(workflow).toContain("createHash(\"sha256\")");
-    expect(workflow).toContain("manifest.json");
+    expect(workflow).toContain("/manifests/rev-${owner}-");
+    expect(workflow).toContain("ORDER BY ${orderBy}");
+    expect(workflow).toContain("manifestKey: persisted.stored.key");
   });
 
   it("reconcilia execuções e logs antigos presos antes de iniciar novo ciclo", () => {
@@ -26,7 +28,9 @@ describe("Contingência de backup incremental", () => {
     expect(workflow).toContain("if (active[0]) return active[0]");
     expect(workflow).toContain("if (elapsed < MIN_NEW_BACKUP_INTERVAL_MS) return null");
     expect(workflow).toContain(".orderBy(desc(backupRuns.updatedAt))");
-    expect(workflow).toContain('status: "SKIPPED" as const');
+    expect(workflow).toContain('status: run?.status ?? "SKIPPED"');
+    expect(workflow).toContain("claimBackupLease(db, run)");
+    expect(workflow).toContain("progressProtocol: BACKUP_PROGRESS_PROTOCOL");
   });
 
   it("usa uma trava persistida para impedir dois backups ativos em callbacks concorrentes", () => {
@@ -49,7 +53,9 @@ describe("Contingência de backup incremental", () => {
     expect(serverEntry).toContain("user.taskUid !== BACKUP_HEARTBEAT_TASK_UID");
     expect(serverEntry).toContain("await advanceBackupRunBatch('heartbeat', MAX_HEARTBEAT_BACKUP_STEPS)");
     expect(workflow).toContain("export const MAX_HEARTBEAT_BACKUP_STEPS = 8");
-    expect(workflow).toContain("result.status === \"ACTIVE\"");
+    expect(workflow).toContain("lease.run.status === \"ACTIVE\"");
+    expect(workflow).toContain("Date.now() < deadline");
+    expect(workflow).toContain("stepsProcessed, leaseSkipped, timedOut");
     expect(serverEntry).toContain("const result = await advanceBackupRun('manual')");
   });
 

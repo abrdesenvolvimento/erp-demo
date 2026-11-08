@@ -130,7 +130,9 @@ export function validateCompleteManifest(raw: unknown, runId: string): BackupMan
   });
 
   requireSafeKey(manifest.code.key, `${prefix}code/`, "Arquivo de código");
-  if (manifest.code.key !== `${prefix}code/abrwf-source.zip`) {
+  const codeRelativeKey = manifest.code.key.slice(`${prefix}code/`.length);
+  const immutableCodeKey = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}\/abrwf-source\.zip$/i;
+  if (codeRelativeKey !== "abrwf-source.zip" && !immutableCodeKey.test(codeRelativeKey)) {
     throw new Error("Chave inesperada para o arquivo de código.");
   }
   requireChecksum(manifest.code.checksum, "Checksum do arquivo de código");

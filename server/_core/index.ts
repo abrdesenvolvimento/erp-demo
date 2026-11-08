@@ -15,9 +15,11 @@ import { initAccountingScheduler, getAccountingSchedulerStatus, runAccountingBat
 import { initStockSnapshotJob } from "../jobs/stockSnapshot";
 import { sdk } from "./sdk";
 import { assertOperatorActive } from "../operatorSecurity";
+import { checkAndNotifyBackupHealth } from "../backupHealth";
 import {
   advanceBackupRun,
   advanceBackupRunBatch,
+  BACKUP_PROTOCOL_VERSION,
   MAX_HEARTBEAT_BACKUP_STEPS,
   reconcileStaleBackupRuns,
 } from "../backupWorkflow";
@@ -70,6 +72,12 @@ async function startServer() {
   registerOAuthRoutes(app);
   // Backup endpoint under /api/backup
   app.use('/api', backupRouter);
+
+  // Apenas capacidades públicas: sem identidade, estado de dados ou disparo de backup.
+  app.get('/api/health/backup-protocol', (_req, res) => {
+    res.setHeader('Cache-Control', 'no-store');
+    res.json({ protocolVersion: BACKUP_PROTOCOL_VERSION, maxSteps: MAX_HEARTBEAT_BACKUP_STEPS, stepLease: true, snapshot: false });
+  });
   
   // Scheduler status endpoint (legacy, kept for UI compatibility)
   app.get('/api/scheduler/status', (req, res) => {
@@ -131,18 +139,23 @@ async function startServer() {
 
   // Heartbeat backup endpoint — avança lote limitado na janela noturna.
   app.post('/api/scheduled/backup', async (req, res) => {
+    let backupCallerAuthorized = false;
     try {
       const user = await sdk.authenticateRequest(req);
       if (!user.isCron || user.taskUid !== BACKUP_HEARTBEAT_TASK_UID) {
         return res.status(403).json({ ok: false, error: 'Apenas o Heartbeat de backup autorizado pode executar esta rota.' });
       }
+      backupCallerAuthorized = true;
       const reconciled = await reconcileStaleBackupRuns();
       const result = await advanceBackupRunBatch('heartbeat', MAX_HEARTBEAT_BACKUP_STEPS);
-      res.json({ ok: true, reconciled, ...result });
+      const backupHealth = await checkAndNotifyBackupHealth().catch(() => ({ notification: 'UNAVAILABLE' }));
+      res.json({ ok: true, reconciled, ...result, backupHealth });
     } catch (error: any) {
       console.error('[Heartbeat] Backup error:', error.message);
+      if (backupCallerAuthorized) await checkAndNotifyBackupHealth().catch(() => undefined);
       res.status(500).json({
         ok: false,
+        protocolVersion: BACKUP_PROTOCOL_VERSION,
         error: error.message,
         timestamp: new Date().toISOString(),
         context: { path: '/api/scheduled/backup', taskUid: BACKUP_HEARTBEAT_TASK_UID },

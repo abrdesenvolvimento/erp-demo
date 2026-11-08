@@ -1,94 +1,62 @@
 # Backup incremental — ABRWF
 
-## Estado atual
+## Estado em 08/11/2026
 
-O ABRWF possui um fluxo de backup incremental persistido no banco. Cada acionamento exporta uma etapa curta do banco, grava o bloco SQL no armazenamento privado, atualiza o manifesto com checksum SHA-256 e preserva o cursor para a próxima etapa.
+A cópia `backup-1793858873889-a322fe51`, concluída em 07/11, foi efetivamente recuperada em MySQL descartável: **70 tabelas, 695.344 registros e 132 artefatos verificados**. Todas as contagens conferiram. O banco de teste foi encerrado e seus dados, SQL, ZIP e credenciais locais removidos; relatórios privados e cópias originais no storage foram preservados. Ver procedimento em [RESTORE.md](./RESTORE.md).
 
-> **Situação operacional em 02/11/2026:** a tarefa legada foi desativada e o primeiro ciclo limpo executou sem falhas. Como a base excede a capacidade de uma etapa por callback, o Heartbeat passa a processar um lote limitado de até oito blocos por chamada, preservando a mesma janela noturna, a trava exclusiva e os checksums. Ainda não há uma cópia `COMPLETE` validada por restauração.
+**A recuperação dessa cópia está comprovada; a rotina diária ainda depende da publicação e da validação do protocolo 2.** COMPLETE isoladamente não prova integridade, restauração ou consistência temporal. O dump é sequencial: a cópia começou em 05/11 e terminou em 07/11, não representa um snapshot único no instante da conclusão e não contém as tabelas de Consumo adicionadas em 08/11.
 
-## Arquitetura
+## Diagnóstico da duração
 
-- **Gatilho oficial:** Heartbeat Manus autenticado, apontando para `POST /api/scheduled/backup`.
-- **Autorização:** o endpoint só aceita o identificador de tarefa Heartbeat autorizado no servidor.
-- **Persistência:** `backupRuns` mantém status, fase, cursor, contagem de chunks, manifesto e checksums; `backupLogs` registra o resultado operacional.
-- **Destino primário:** Manus Storage, em `backups/incremental/<runId>/`.
-- **Fases:** `DATABASE` → `CODE` → `COMPLETE`.
-- **Banco:** exportado em blocos de até 10.000 linhas; o Heartbeat pode processar até oito blocos sequenciais por callback.
-- **Código:** gerado apenas após a exportação do banco e exclui dependências, artefatos e arquivos sensíveis.
+O ciclo auditado durou 49h56m34s. O código arquivado e 133 recibos bem-sucedidos do ciclo mostravam uma única etapa por callback, sem `stepsProcessed`, apesar do lote já preparado no código de desenvolvimento. O tempo somado de execução foi 345,097 segundos; a maior parte da duração foi espera entre chamadas/janelas. Houve também seis falhas de callback no período. A auditoria comprova o comportamento daquele período, mas não determina o mecanismo de publicação/roteamento que manteve o código antigo.
 
-## Regras de segurança
+Uma cópia anterior, iniciada em 02/11, tinha offsets repetidos/descontínuos e não deve ser preferida à cópia de 07/11 validada. O ciclo parcial `backup-1794118001886-a791fb14`, iniciado em 08/11, foi encerrado auditavelmente em 08/11 para a migração: seu protocolo antigo não tinha inventário/ordenação congelados. Manifesto e objetos foram preservados; não foi tratado como fonte recuperável.
 
-O ZIP de código não pode conter credenciais nem configurações locais. São excluídos, entre outros:
+## Protocolo 2 preparado
 
-- `.env` e `.env.*`;
-- `.project-config.json` e `.manus/`;
-- chaves `.pem` e `.key`;
-- arquivos de credencial JSON;
-- `node_modules`, `.git`, `dist`, `coverage`, `.next` e backups locais.
+- Até oito etapas sequenciais por callback, com orçamento de 45 segundos para I/O de exportação, ZIP e storage.
+- `activeSlot` impede ciclos simultâneos; lease UUID, vencimento de 75 segundos e versão comparada atomicamente impedem avanços concorrentes do mesmo ciclo.
+- Progresso, falha, conclusão e log terminal são confirmados somente pelo detentor válido da posse. Um retorno atrasado não pode sobrescrever o estado do vencedor.
+- Chunks, versões de manifesto e ZIP usam chaves imutáveis por posse; objetos de operações abandonadas não são incorporados ao manifesto confirmado.
+- Inventário ordenado e DDL ficam congelados em `planJson` para novos ciclos. Mudança de tabelas ou schema interrompe o ciclo antes de um novo artefato; AUTO_INCREMENT variável não é considerado alteração estrutural.
+- Exportação ordenada por PK, com paginação OFFSET compatível com o manifesto existente. Tabela sem PK falha de forma explícita. **Isso não elimina deslocamento de páginas por alterações concorrentes nem cria snapshot global.**
+- Ciclos parciais de protocolo 1 não são retomados sobre o inventário atual.
+- Reconciliação considera último progresso e posse, não apenas a data de início. Sucesso limpa mensagens antigas de erro.
+- ZIP exclui arquivos e diretórios sensíveis com globs completos, incluindo `.env`, variantes, configurações locais, credenciais e chaves.
 
-As rotas de operação e consulta de backup exigem administrador autenticado ou, na rota de compatibilidade, o `BACKUP_SECRET` explícito. O segredo de sessão (`JWT_SECRET`) não é aceito como token de automação.
+O orçamento não é um timeout absoluto de todo controle Drizzle. Um upload iniciado pode terminar como objeto órfão no storage após expirar a espera, mas não confirma estado tardio. Não habilitar snapshot TiDB por horas/dias apenas com AS OF: a retenção GC observada era 10 minutos e precisaria de desenho e proteção próprios.
 
-## Agendamento ativo
+## Agendamento
 
-O Heartbeat oficial executa na janela noturna:
+Heartbeat oficial `ivEbr4395zxWx2ah9n3CkD`, POST `/api/scheduled/backup`:
 
 ```text
 0 */5 6-11 * * *
 ```
 
-Isso equivale a uma chamada a cada cinco minutos entre **03:00 e 08:55**, no horário de São Paulo (06:00 a 11:55 UTC). Cada callback avança no máximo oito blocos sequenciais da mesma execução `ACTIVE`; não deve ser aberto um ciclo paralelo.
+Janela 03:00–08:55 de São Paulo, a cada cinco minutos. Uma nova execução completa não inicia antes de 20 horas após a conclusão anterior. A tarefa legada permanece desativada. Nenhum agendamento foi alterado nesta etapa.
 
-Após uma conclusão, a aplicação respeita um intervalo mínimo de 20 horas antes de abrir um novo ciclo.
+O avanço manual exige administrador desbloqueado e processa uma etapa. O endpoint Heartbeat aceita exclusivamente a tarefa técnica autorizada; uma sessão humana não pode substituí-la. Não usar scripts monolíticos, cron local ou endpoints legados como teste deste fluxo.
 
-## Operação manual
+## Publicação e verificação obrigatórias
 
-O acionamento manual existe apenas para administrador autenticado e avança uma única etapa; não cria mais dump monolítico.
+As migrações aditivas 0012 e 0013 foram revisadas e aplicadas fora da janela de callbacks, após preservar/encerrar o ciclo parcial antigo. Elas adicionam seis colunas de metadados em `backupRuns` e a tabela `backupHealthAlerts`. Nenhuma tabela de negócio foi alterada por SQL.
 
-Nunca usar em produção sem janela aprovada:
+1. Publicar o checkpoint desta entrega.
+2. Abrir `GET /api/health/backup-protocol` no domínio publicado. Deve retornar `protocolVersion: 2`, `maxSteps: 8`, `stepLease: true`. Essa rota pública informa apenas capacidades, não dados ou credenciais, e não executa backup.
+3. Só depois de confirmar a versão publicada, executar um avanço autorizado ou aguardar a janela oficial. Não disparar callbacks contra backend antigo.
+4. Confirmar recibos com `protocolVersion: 2` e `stepsProcessed`, ciclo novo com `progressProtocol: 2`, progresso contínuo e ausência de manifesto inconsistente.
+5. Aguardar uma conclusão nova; executar validação de todos os objetos. A restauração de 07/11 não valida automaticamente essa nova cópia.
+6. Encerrar a aceitação operacional depois de comprovar conclusão na janela, arquivos recuperáveis e avisos funcionando.
 
-- `scripts/backup.mjs`;
-- `scripts/test-backup.mjs`;
-- `scripts/run-one-backup-step.mjs`;
-- `scripts/setup-cron.sh`;
-- chamadas manuais ao endpoint Heartbeat.
+## Alertas
 
-Esses scripts representam caminhos legados ou de manutenção e não são o mecanismo oficial do backup incremental.
+O novo handler avalia a idade da última execução completa elegível: ausência ou idade de pelo menos 36 horas gera aviso ao administrador. A tabela `backupHealthAlerts` limita a um registro/aviso por dia UTC, mesmo entre instâncias. Falha no envio fica registrada e não declara sucesso; notificações não são disparadas neste teste.
 
-## Validação obrigatória de uma cópia
+Esse alerta mede metadados de execução, **não realiza restauração nem comprova integridade dos objetos**. Só roda quando o endpoint é alcançado: indisponibilidade total que impeça todos os callbacks exige monitor independente em etapa posterior. A validação dos avisos reais depende de publicação.
 
-Uma cópia é considerada íntegra somente quando:
+## Retenção e réplica
 
-1. `backupRuns.status` é `COMPLETE`;
-2. o manifesto e todos os chunks possuem checksum armazenado;
-3. o ZIP de código possui checksum e chave de armazenamento;
-4. a restauração é testada em ambiente descartável;
-5. a contagem de tabelas e a abertura do banco restaurado são verificadas.
+Nesta etapa **nenhuma cópia original foi apagada**. A política inicial recomendada é manter sete cópias diárias válidas, quatro referências semanais e três mensais, deduplicando uma cópia que cumpra mais de uma faixa. Isso é recomendação, não rotina de exclusão ativa. Só avaliar descarte após o novo fluxo e uma cópia recente estarem validados; arquivos órfãos/invalidos exigem inventário e autorização próprios.
 
-Não tratar uma execução `ACTIVE`, interrompida ou apenas parcialmente exportada como cópia recuperável.
-
-O procedimento seguro de verificação e restauração em banco descartável está em [`docs/RESTORE.md`](./RESTORE.md). A verificação baixa todos os artefatos e valida seus checksums antes de qualquer futura escrita de restauração.
-
-## Pendências para maturidade operacional
-
-1. Confirmar a primeira cópia `COMPLETE`.
-2. Implementar e executar restauração controlada.
-3. Configurar alerta de ausência de cópia íntegra e política de retenção.
-4. Avaliar réplica externa independente somente depois da validação do destino primário.
-
-## Consultas de auditoria
-
-```sql
-SELECT id, status, phase, currentTableIndex, currentTableOffset,
-       chunksCreated, rowsExported, createdAt, updatedAt, lastError
-FROM backupRuns
-ORDER BY updatedAt DESC;
-
-SELECT status, COUNT(*) AS total, MAX(startedAt) AS ultimo_inicio,
-       MAX(completedAt) AS ultima_conclusao
-FROM backupLogs
-GROUP BY status;
-```
-
-## Itens fora do escopo atual
-
-Google Drive, `mysqldump`, cron local e upload via OAuth pertencem ao mecanismo legado. Eles não validam nem substituem o fluxo incremental atual.
+Réplica independente em Google Drive/OneDrive permanece uma próxima etapa. Recuperação do banco, frequência diária, retenção, alerta independente e réplica são critérios distintos; não confundir uma restauração aprovada com maturidade de toda a contingência.

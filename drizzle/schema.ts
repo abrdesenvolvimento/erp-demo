@@ -2,6 +2,7 @@ import {
   mysqlEnum,
   mysqlTable,
   text,
+  longtext,
   timestamp,
   varchar,
   int,
@@ -932,6 +933,12 @@ export const backupRuns = mysqlTable("backupRuns", {
   // Apenas a execução ACTIVE recebe o valor 1; o índice único impede dois
   // callbacks simultâneos de abrirem ciclos concorrentes.
   activeSlot: int("activeSlot"),
+  leaseOwner: varchar("leaseOwner", { length: 36 }),
+  leaseExpiresAt: timestamp("leaseExpiresAt"),
+  leaseVersion: int("leaseVersion").notNull().default(0),
+  progressProtocol: int("progressProtocol").notNull().default(1),
+  planJson: longtext("planJson"),
+  manifestKey: varchar("manifestKey", { length: 500 }),
   status: mysqlEnum("status", ["ACTIVE", "COMPLETE", "FAILED"]).notNull().default("ACTIVE"),
   phase: mysqlEnum("phase", ["DATABASE", "CODE", "COMPLETE"]).notNull().default("DATABASE"),
   currentTableIndex: int("currentTableIndex").notNull().default(0),
@@ -1714,3 +1721,12 @@ export type ConsumptionEmployee = typeof consumptionEmployees.$inferSelect;
 export type ConsumptionRecord = typeof consumptionRecords.$inferSelect;
 export type ConsumptionItem = typeof consumptionItems.$inferSelect;
 export type ConsumptionStockItem = typeof consumptionStockItems.$inferSelect;
+
+/** Metadados do aviso diário de backup; não contém dados operacionais nem credenciais. */
+export const backupHealthAlerts = mysqlTable("backupHealthAlerts", {
+  id: varchar("id", { length: 64 }).primaryKey(),
+  reason: varchar("reason", { length: 32 }).notNull(),
+  status: varchar("status", { length: 16 }).notNull(),
+  createdAt: timestamp("createdAt", { fsp: 3 }).defaultNow().notNull(),
+  finishedAt: timestamp("finishedAt", { fsp: 3 }),
+}, table => ({ createdIndex: index("backup_health_created_idx").on(table.createdAt) }));

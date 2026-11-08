@@ -2803,3 +2803,26 @@ Limites: estoque atual é inteiro; composição que gera baixa fracionada não �
 - [ ] Confirmar no navegador do usuário a identificação dos oito pedidos e a navegação sem fundo de aniversário; registrar origem/destino se houver outra aparição
 
 Nota de diagnóstico: a captura antiga mostrou Não informada inclusive no pedido 4980, embora esse registro atualmente tenha 99FOOD armazenado e a leitura local o retorne corretamente. Essa discrepância específica de versão/cache da interface antiga não foi comprovada; não atribuir uma causa exata sem evidência. A omissão nos outros sete pedidos foi comprovada e corrigida pela escolha explícita de canal já persistida. Nenhuma venda histórica, valor, item, estoque, funcionário ou regra de segurança foi alterado por SQL nesta rodada. Não existe promessa de carregamento instantâneo: na primeira visita o módulo e os dados ainda podem precisar de rede; o pré-carregamento por intenção reduz a espera e o fundo temporário agora é neutro.
+
+## Fechamento técnico de backup — 08/11/2026
+- [x] Validar integralmente a cópia completa de 07/11: 132 artefatos com tamanho/SHA-256 conferentes
+- [x] Implementar restaurador com destino explícito isolado, dupla confirmação e SQL restrito; nunca usar DATABASE_URL como destino
+- [x] Recuperar de fato 70 tabelas e 695.344 registros em MySQL local descartável, com todas as contagens do manifesto conferentes e sem IDs duplicados nas tabelas principais auditadas
+- [x] Conferir somente por leitura três alertas relacionais: mesmos cinco itens órfãos, um vínculo iFood órfão e um movimento com empresa diferente estão na fonte atual; nenhuma correção histórica aplicada
+- [x] Encerrar banco local e remover seus dados, credenciais e SQL/ZIP de staging; preservar relatórios privados e objetos originais do storage
+- [x] Comprovar pelos recibos/código arquivado de 07/11 a execução antiga de uma etapa por callback e duração de 49h56m34s; não presumir a causa de publicação/roteamento nem a versão atual sem probe
+- [x] Implementar protocolo 2: posse temporária de passo, fence por versão, confirmações atômicas, lote até oito etapas e orçamento de 45s para I/O
+- [x] Congelar inventário/DDL para novos ciclos, ordenar exportação por PK, recusar ciclo parcial legado e não reutilizar páginas sobre inventário modificado
+- [x] Versionar chaves de SQL/manifesto/ZIP por posse, ampliar validador de ZIP somente para UUIDs seguros e corrigir globs de exclusão de configurações
+- [x] Aplicar somente seis colunas aditivas em backupRuns e a tabela backupHealthAlerts; encerrar ciclo parcial antigo fora da janela, com manifesto/metadados preservados e cópia completa de 07/11 intacta
+- [x] Preparar aviso ao administrador após ausência/36h sem execução completa elegível, com deduplicação diária e registro de falha de envio; testes simulados, nenhum aviso real disparado
+- [x] Expor capacidades não sensíveis em GET /api/health/backup-protocol, sem banco ou disparo de backup; prévia confirmou protocolVersion=2/maxSteps=8
+- [x] Validar 211 testes focados em onze arquivos e build final; handler real testado com dependências simuladas recusa aviso/avanço sem autorização; 52 diagnósticos TypeScript antigos permanecem, sem novos diagnósticos nos arquivos de backup/restauração
+- [x] Atualizar docs/BACKUP.md e docs/RESTORE.md com limites de consistência, implantação, alertas e critérios de aceitação
+- [ ] Publicar esta versão e confirmar protocolo 2 no domínio e nos recibos reais ANTES de avançar/alterar automações
+- [ ] Comprovar um ciclo novo completo com metadados/schema atuais e validar todos os artefatos; a cópia de 07/11 não contém Consumo implantado em 08/11
+- [ ] Validar aviso real do administrador e avaliar monitor independente para indisponibilidade total
+- [ ] Implantar retenção somente após inventário/validação e autorização de descarte; nenhuma cópia original foi apagada
+- [ ] Avaliar réplica Google Drive/OneDrive depois da estabilização do destino primário
+
+Sequência de melhorias aprovada pelo usuário: 1) Promoções, inicialmente A Brasa; 2) Salão/KDS. Consumo e identificação 99Food permanecem preservados e aprovados. Histórico financeiro continua encerrado, sem reabrir saneamento. Limite declarado do backup: ORDER BY PK com OFFSET não é snapshot global nem keyset; alterações concorrentes podem deslocar páginas. Recuperação comprovada da cópia testada não garante automaticamente frequência diária, todas as cópias futuras, retenção ou réplica. Não anunciar encerramento operacional até publicação/recibo/ciclo novo verificados.

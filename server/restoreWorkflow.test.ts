@@ -77,6 +77,16 @@ describe("restaurador incremental — validações pré-escrita", () => {
     ]);
   });
 
+  it("aceita código imutável por UUID de posse e recusa caminhos não autorizados", () => {
+    const manifest = validManifest();
+    manifest.code.key = `${prefix}/code/12345678-1234-1234-1234-123456789abc/abrwf-source.zip`;
+    expect(validateCompleteManifest(manifest, runId).code.key).toBe(manifest.code.key);
+    manifest.code.key = `${prefix}/code/qualquer/abrwf-source.zip`;
+    expect(() => validateCompleteManifest(manifest, runId)).toThrow("Chave inesperada");
+    manifest.code.key = `${prefix}/code/12345678-1234-1234-1234-123456789abc/outro.zip`;
+    expect(() => validateCompleteManifest(manifest, runId)).toThrow("Chave inesperada");
+  });
+
   it("rejeita backup parcial, com erro ou contador divergente", () => {
     const partial = validRun();
     partial.status = "ACTIVE";
